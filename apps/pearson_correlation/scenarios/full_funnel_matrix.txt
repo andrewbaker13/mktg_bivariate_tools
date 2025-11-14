@@ -1,0 +1,29 @@
+# Title
+Full-Funnel KPI Matrix
+
+# Description
+A growth analytics pod collected 12 weekly observations for four KPIs: paid media spend (in $K), aided awareness (%), consideration (%), and free-trial conversions. They want to understand how the funnel stages move together before planning Q1 allocations.
+
+# Alpha
+0.05
+
+# Input Mode
+matrix
+
+# Paired Columns
+spend_k,awareness,consideration,conversions
+38,45,31,285
+40,47,32,300
+42,46,33,295
+45,49,34,318
+48,52,35,325
+50,51,36,332
+53,54,37,342
+55,55,38,350
+58,57,39,358
+60,59,40,368
+63,60,41,377
+65,62,42,386
+
+# Raw Data File
+file=scenarios/data/full_funnel_matrix.csv

@@ -1,0 +1,252 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pearson Correlation </title>
+    <!-- Global shared styles -->
+    <link rel="stylesheet" href="../../shared/css/main.css">
+    <!-- App-specific styles -->
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+    <header class="intro hero-header">
+        <div class="hero-header__top">
+            <h1>Pearson Correlation Studio</h1>
+        </div>
+        <p class="hero-header__lede">Explore how two metrics move together with narratives, diagnostics, and ready-to-share visuals.</p>
+    </header>
+
+    <main>
+        <section class="intro">
+            <p><strong>Context:</strong> Marketing analysts use correlation to quickly see whether two KPIs move together. Bring in a preset scenario or upload your own paired metrics to generate a modern narrative, diagnostics, and visuals tailored for stakeholders.</p>
+            <p>This workspace summarizes the Pearson product-moment correlation, highlights statistical diagnostics, and packages confidence intervals plus hypothesis tests in the same shareable canvas.</p>
+        </section>
+
+        <section class="intro key-equations">
+            <h2>Key Equations</h2>
+            <p>The Pearson product-moment correlation summarizes whether two paired variables move together in a linear fashion.</p>
+            <p class="equation">
+                $$\bar{x} = \frac{1}{n} \sum_{i=1}^{n} x_i \quad \bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i$$
+            </p>
+            <p class="equation">
+                $$r = \frac{\sum_{i=1}^{n} (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum (x_i - \bar{x})^2 \sum (y_i - \bar{y})^2}}$$
+            </p>
+            <p class="equation">
+                $$t = r \sqrt{\frac{n - 2}{1 - r^2}} \qquad df = n - 2$$
+            </p>
+            <ul>
+                <li>\( r \) ranges from -1 (perfect negative association) to +1 (perfect positive association).</li>
+                <li>The two-tailed p-value comes from the Student's t distribution with \( n - 2 \) degrees of freedom.</li>
+                <li>Confidence intervals are computed on the Fisher z scale and then transformed back to \( r \).</li>
+            </ul>
+        </section>
+
+        <section class="scenario-section card">
+            <div class="scenario-header">
+                <h2>Practical Scenario</h2>
+                <div class="scenario-controls">
+                    <label for="scenario-select">Load a marketing use case:</label>
+                    <select id="scenario-select">
+                        <option value="">Manual inputs (no preset)</option>
+                    </select>
+                    <button id="scenario-download" class="secondary hidden" disabled>Download scenario dataset</button>
+                </div>
+            </div>
+            <div id="scenario-description">
+                <p>Select a preset to auto-fill inputs and narratives for common marketing analytics use cases (e.g., spend vs. conversions, awareness vs. consideration, or two survey metrics). Each preset can expose the raw CSV so you can inspect the required formatting.</p>
+            </div>
+        </section>
+
+        <section class="card input-card">
+            <div class="input-header">
+                <h2>Data Entry</h2>
+                <div class="alpha-controls">
+                    <label for="alpha">Significance level (&alpha;):</label>
+                    <input type="number" id="alpha" min="0.001" max="0.20" step="0.001" value="0.050">
+                    <div class="confidence-buttons" role="group" aria-label="Select confidence level">
+                        <button type="button" class="confidence-button" data-level="0.90">90% CI</button>
+                        <button type="button" class="confidence-button active" data-level="0.95">95% CI</button>
+                        <button type="button" class="confidence-button" data-level="0.99">99% CI</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
+                <button type="button" class="mode-button active" data-mode="paired">Paired upload</button>
+                <button type="button" class="mode-button" data-mode="manual">Manual entry</button>
+                <button type="button" class="mode-button" data-mode="matrix">Correlation matrix (upload)</button>
+            </div>
+
+            <div id="import-tools">
+                <div id="file-dropzone" class="dropzone" aria-live="polite">
+                    <div class="dropzone-content">
+                        <p class="dropzone-title">Drop a .csv, .tsv, or .txt with headers</p>
+                        <p id="dropzone-instructions">Provide two named numeric columns such as <code>x,y</code>. Blank rows are ignored.</p>
+                        <button type="button" id="browse-files" class="secondary">Browse files</button>
+                        <p class="dropzone-note">We only scan files locally&mdash;no uploads leave your browser. Up to 2,000 rows per file.</p>
+                    </div>
+                    <input type="file" id="file-input" accept=".csv,.tsv,.txt" hidden>
+                </div>
+                <div class="template-buttons">
+                    <button type="button" id="download-paired-template">Download paired template</button>
+                    <button type="button" id="download-matrix-template">Download matrix template</button>
+                </div>
+                <p id="file-feedback" role="status" aria-live="polite"></p>
+            </div>
+
+            <div class="mode-panels">
+                <div class="mode-panel active" data-mode="paired" id="paired-panel">
+                    <p>Upload a file with two aligned columns (e.g., spend and conversions, metric_x and metric_y). We will parse it immediately and let you know how many rows were accepted.</p>
+                    <p id="paired-upload-status" class="upload-status">No file uploaded yet.</p>
+                </div>
+                <div class="mode-panel" data-mode="matrix" id="matrix-panel">
+                    <p>Upload a wide file with two or more numeric columns (comma or tab separated). Each column header becomes a variable in the correlation matrix.</p>
+                    <p id="matrix-upload-status" class="upload-status">No file uploaded yet.</p>
+                </div>
+
+                <div class="mode-panel" data-mode="manual" id="manual-panel">
+                    <p>Type smaller paired datasets directly. Enter Variable X and Variable Y for each row, then set how many rows you need (maximum of 50). For bigger tables, switch to the upload mode.</p>
+                    <div class="manual-controls">
+                        <label>
+                            Row count (max 50)
+                            <input type="number" id="manual-row-count" min="2" max="50" value="8">
+                        </label>
+                    </div>
+                    <p class="manual-hint">Need more than 50 rows? Head to the upload mode.</p>
+                    <div class="manual-table" data-structure="paired">
+                        <div class="data-table" role="region" aria-label="Manual paired input table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Row</th>
+                                        <th scope="col">Variable X</th>
+                                        <th scope="col">Variable Y</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paired-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="card advanced-card">
+            <details class="advanced-details">
+                <summary>Advanced analysis settings</summary>
+                <p class="advanced-lede">By default we report Pearson&rsquo;s r for linear, jointly normal relationships. Switch to Spearman&rsquo;s rho for a rank-based estimate that down-weights outliers and handles ordinal or monotonic trends.</p>
+                <div class="method-options" role="group" aria-label="Select correlation estimator">
+                    <label class="method-option" for="method-pearson">
+                        <input type="radio" name="correlation-method" id="method-pearson" value="pearson" checked>
+                        <div>
+                            <span class="method-title">Pearson product-moment</span>
+                            <p class="method-note">Tracks linear association and matches the equations above. Works best when both metrics are roughly normal and measured on interval scales.</p>
+                        </div>
+                    </label>
+                    <label class="method-option" for="method-spearman">
+                        <input type="radio" name="correlation-method" id="method-spearman" value="spearman">
+                        <div>
+                            <span class="method-title">Spearman rank correlation</span>
+                            <p class="method-note">Ranks each metric before correlating, surfacing monotonic or ordinal relationships while reducing the influence of extreme points.</p>
+                        </div>
+                    </label>
+                </div>
+                <p class="method-reminder">This selection drives every card, chart, narrative, and diagnostic once data are provided.</p>
+            </details>
+        </section>
+
+        <section id="analysis-status" class="card">
+            <h2>Analysis Status</h2>
+            <p id="status-message">Enter data to compute the selected correlation.</p>
+        </section>
+
+        <section class="results-grid single-only">
+            <article class="result-card" id="test-result-card">
+                <h3 id="correlation-heading">Pearson correlation</h3>
+                <p id="test-statistic">r = --</p>
+                <p id="p-value">p = --</p>
+                <p id="ci-summary">95% CI: [--, --]</p>
+            </article>
+            <article class="result-card">
+                <h3>Signal details</h3>
+                <p id="effect-size">t(--)=--</p>
+                <p id="hedges-g">R<sup>2</sup> = --</p>
+                <p id="mean-diff">Means: --</p>
+            </article>
+            <article class="result-card">
+                <h3>Overview</h3>
+                <p id="sample-summary">n = -- pairs</p>
+                <p id="mode-summary">Mode: Paired upload</p>
+            </article>
+        </section>
+
+        <section class="chart-grid">
+            <article class="chart-card single-only">
+                <h3>Correlation estimate with confidence interval</h3>
+                <div id="mean-diff-chart" class="chart-placeholder" aria-label="Correlation estimate chart"></div>
+                <p id="mean-diff-chart-note" class="chart-note">Provide data to summarize the correlation estimate and confidence interval.</p>
+            </article>
+            <article class="chart-card">
+                <h3>Scatterplot (X vs Y)</h3>
+                <div class="scatter-controls">
+                    <label for="scatterpair-select">Scatter pair:</label>
+                    <select id="scatterpair-select" disabled>
+                        <option value="">No pairs available</option>
+                    </select>
+                </div>
+                <div id="difference-chart" class="chart-placeholder" aria-label="Scatterplot of paired data"></div>
+                <p id="difference-chart-note" class="chart-note">Provide paired raw data to explore the scatterplot.</p>
+            </article>
+            <article class="chart-card matrix-only hidden" id="matrix-heatmap-card">
+                <h3>Correlation matrix heatmap</h3>
+                <div id="matrix-heatmap" class="chart-placeholder" aria-label="Correlation matrix heatmap"></div>
+                <p id="matrix-heatmap-note" class="chart-note">Upload multi-column data to view the correlation heatmap.</p>
+                <div id="variable-stats"></div>
+            </article>
+        </section>
+
+        <section class="card narrative-section">
+            <div class="narrative-grid">
+                <article>
+                    <h3>APA style</h3>
+                    <p id="apa-report">Summary will appear after analysis.</p>
+                </article>
+                <article>
+                    <h3>Managerial interpretation</h3>
+                    <p id="managerial-report">Business-facing copy will appear after analysis.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="card diagnostics-section">
+            <details class="diagnostics-details">
+                <summary>Assumption checks</summary>
+                <div id="diagnostics-content">
+                    <p>After you run an analysis, this panel summarizes sample size, variance, skew, outliers, and whether Pearson or Spearman best fits the relationship.</p>
+                </div>
+            </details>
+        </section>
+    </main>
+
+    <footer>
+        <p>Built for analysts exploring how KPIs move together across campaigns, surveys, and experiments.</p>
+        <p class="page-timestamps">Created: <span id="created-date"></span> &middot; Last updated: <span id="modified-date"></span></p>
+    </footer>
+
+    <script src="../../shared/js/csv_utils.js"></script>
+    <script src="../../shared/js/ui_utils.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
+
+
+
+

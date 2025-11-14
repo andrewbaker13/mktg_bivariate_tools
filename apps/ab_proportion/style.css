@@ -1,0 +1,20 @@
+/* Instructions & Questions Boxes */
+#questions {
+  margin-top: 30px;
+  padding: 20px;
+  border: 1px solid #a5b4fc;
+  background-color: #f0f4ff;
+  border-radius: 8px;
+}
+
+#questions ol {
+  margin: 15px 0;
+  padding-left: 25px;
+}
+
+/* Plotly container styling */
+#distributionPlot {
+  width: 100%;
+  height: 500px;
+  margin-top: 20px;
+}

@@ -1,0 +1,30 @@
+# Title
+Paid Social Spend vs Trial Signups
+
+# Description
+A commerce team piloted an always-on paid social program in 10 metro areas. Spend reflects weekly media investment (in $K) while signups captures the number of free-trial registrations during the same week.
+
+Leads asked whether diminishing returns have already kicked in or if they can safely double the program next month.
+
+# Alpha
+0.05
+
+# Input Mode
+paired
+
+# Paired Columns
+spend_k,signups
+40,305
+43,332
+45,318
+47,350
+50,338
+52,360
+55,365
+58,382
+60,370
+63,398
+66,410
+
+# Raw Data File
+file=scenarios/data/spend_vs_signups.csv

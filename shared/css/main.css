@@ -1,0 +1,169 @@
+/* Global Styles - Use a modern, clean font */
+body {
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background-color: #f4f7f9;
+  color: #333;
+}
+
+h1, h2, h3 {
+  color: #1e40af; /* Deep blue for titles */
+}
+
+/* Introductory Section */
+.intro {
+  margin-bottom: 30px;
+  padding: 20px;
+  border-left: 5px solid #3b82f6; /* Blue border to highlight context */
+  background-color: #e0f2fe; /* Light blue background */
+  border-radius: 8px;
+}
+
+.intro .equation {
+  font-size: 16px;
+  font-weight: normal;
+  margin: 10px 0;
+  background-color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid #bae6fd;
+}
+
+.timestamp-meta {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.page-timestamps {
+  margin-top: 16px;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.hero-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hero-header__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hero-header__top h1 {
+  margin: 0;
+}
+
+.hero-header__lede {
+  margin: 0;
+  font-size: 1rem;
+  color: #1f2933;
+}
+
+/* Controls Layout */
+.controls-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.control-column {
+  flex: 1 1 45%; /* Flexible columns */
+  min-width: 300px;
+  padding: 15px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.control-group {
+  margin-bottom: 20px;
+}
+
+.control-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #4b5563;
+}
+
+.control-group input[type="range"] {
+  width: calc(100% - 100px);
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.control-group input[type="number"] {
+  width: 80px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.display-value {
+  display: inline-block;
+  min-width: 40px;
+  text-align: right;
+  font-weight: bold;
+  color: #1e40af;
+  margin-left: 10px;
+}
+
+.plain-language {
+    font-size: 0.85em;
+    color: #6b7280;
+    margin-top: 5px;
+    padding-left: 5px;
+    border-left: 2px solid #a5b4fc;
+}
+
+/* Metrics and Output */
+.metrics-panel {
+    background-color: #d1fae5; /* Light green for important metrics */
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.metric-output {
+  font-size: 1.2em;
+  margin: 10px 0;
+  font-weight: 500;
+}
+
+/* Increase only the dynamic values by 50% for emphasis */
+.dynamic-value {
+  font-size: 150%;
+  font-weight: bold;
+  color: #059669; /* Darker green for emphasis */
+}
+
+
+
+/* Separator Styling */
+.separator {
+  border: 0;
+  border-top: 1px solid #ccc;
+  margin: 30px 0;
+}
+
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .controls-container {
+    flex-direction: column;
+  }
+  .control-column {
+    min-width: 100%;
+  }
+}

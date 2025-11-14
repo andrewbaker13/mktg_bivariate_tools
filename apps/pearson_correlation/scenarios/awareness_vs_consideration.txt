@@ -1,0 +1,30 @@
+# Title
+Awareness vs Consideration — Q3 Brand Tracker
+
+# Description
+Your Q3 tracker asked 10k panelists to rate unprompted awareness and likelihood to consider the brand on a 0-100 scale. Each row aggregates one key market.
+
+Insights showed that creative bursts in the West drove top-of-funnel lift but the Northeast underperformed on consideration, so the team wants to inspect the correlation before budgeting Q4 PR.
+
+# Alpha
+0.05
+
+# Input Mode
+paired
+
+# Paired Columns
+awareness,consideration
+52,39
+54,42
+56,41
+57,45
+59,46
+61,48
+63,50
+65,52
+68,55
+70,54
+73,58
+
+# Raw Data File
+file=scenarios/data/awareness_vs_consideration.csv

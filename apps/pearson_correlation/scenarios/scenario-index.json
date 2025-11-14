@@ -1,0 +1,22 @@
+[
+    {
+        "id": "awareness-vs-consideration",
+        "label": "Awareness vs Consideration (Brand Tracker)",
+        "file": "scenarios/awareness_vs_consideration.txt"
+    },
+    {
+        "id": "spend-vs-signups",
+        "label": "Paid Social Spend vs Trial Signups",
+        "file": "scenarios/spend_vs_signups.txt"
+    },
+    {
+        "id": "retention-vs-nps",
+        "label": "Loyalty Retention vs NPS",
+        "file": "scenarios/retention_vs_nps.txt"
+    },
+    {
+        "id": "full-funnel-matrix",
+        "label": "Full-Funnel KPI Matrix",
+        "file": "scenarios/full_funnel_matrix.txt"
+    }
+]
