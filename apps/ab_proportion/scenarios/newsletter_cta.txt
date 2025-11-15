@@ -1,0 +1,19 @@
+﻿# Title
+Newsletter CTA Optimization
+
+# Description
+The **StudyFlow** lifecycle squad is testing two CTA scripts in the weekly newsletter that reaches 45,000 students. The control keeps the friendly "Start your session" tone, while the variant leans into urgency with "Claim your session now." We are splitting audiences evenly for two weeks, tracking the open-to-click funnel, and watching whether the urgency copy lifts conversions without hurting downstream sign-ups.
+
+Primary metric: click-to-start conversion rate from the weekly **StudyFlow** newsletter.
+Decision focus: which CTA should run as the default in next month's newsletter series?
+
+# Control
+Newsletter Control CTA|0.118|1250
+
+# Variant
+Urgency CTA|0.138|1240
+
+# Settings
+alpha=0.05
+delta0=0
+

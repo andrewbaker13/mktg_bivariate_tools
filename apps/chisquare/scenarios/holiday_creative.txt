@@ -1,0 +1,20 @@
+﻿# Title
+Holiday creative vs. story subject line
+
+# Description
+During the holiday stretch the team compared a practical, benefits-focused subject line to a more narrative-driven story. The goal: prove that the version emphasizing concrete savings still lifts click-throughs before the budget is locked in for the final campaign.
+
+# Alpha
+0.05
+
+# Rows
+Utility-first subject line
+Story-driven subject line
+
+# Columns
+Clicked
+Did not click
+
+# Matrix
+132|88
+158|72

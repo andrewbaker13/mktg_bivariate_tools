@@ -1,0 +1,24 @@
+# Title
+Global Streaming Launch Creative Test
+
+# Description
+The brand studio is in final rehearsals for a multi-continent streaming bundle launch. Three radically different creative ideas are vying for the hero slot on connected TV, social video, and digital out‑of‑home. One is a lush, big-budget short film that tugs at heart strings; another is a promotion-forward carousel that shouts introductory pricing; the third is a playful influencer cameo reel stitched from creators across markets. Media is live in 14 DMAs and the KPI is incremental revenue per household exposure, normalized for reach.
+
+Product marketing believes the cinematic film creates halo value that justifies its production spend, but the growth team suspects the scrappier executions will scale more efficiently. This preset packages the observed means, variability, and sample sizes so you can see which creative is truly bending the overall mean before the global rollout is locked.
+
+# Alpha
+0.05
+
+# Groups
+Emotion-led Hero Film|48.5|5.4|140
+Promotion-Heavy Carousel|45.9|4.8|150
+Influencer Cameo Reel|47.4|5.0|138
+
+# Planned Comparisons
+Emotion-led Hero Film|Influencer Cameo Reel
+Emotion-led Hero Film|Promotion-Heavy Carousel
+
+# Additional Inputs
+axis_min=
+axis_max=
+mean_reference=

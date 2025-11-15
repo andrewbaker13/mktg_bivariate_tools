@@ -1,0 +1,19 @@
+﻿# Title
+Retargeting Offer Test
+
+# Description
+The **Paid Media** desk is running a retargeting split test between a price-forward banner and a limited-time bonus bundle across the same landing page. Control creatives lean into the **Price Anchor Banner** messaging, while the variant highlights the **Bonus Bundle** with countdown urgency. After ten days of matched audience exposure, the team is comparing conversions to tell whether higher perceived savings outweigh the increased complexity of the bundle.
+
+Primary metric: click-to-conversion rate from retargeting impressions to completed sign-ups.
+Decision focus: does the bonus bundle messaging create a lift large enough to justify the added offer complexity?
+
+# Control
+Price Anchor Banner|0.152|980
+
+# Variant
+Bonus Bundle Banner|0.176|1020
+
+# Settings
+alpha=0.04
+delta0=0
+

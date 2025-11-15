@@ -1,0 +1,21 @@
+# Title
+Flagship Retail Promotions Matrix
+
+# Description
+The flagship apparel chain is rewriting its in-store promotions calendar ahead of peak back-to-school traffic. Four regional clusters are piloting wildly different discount philosophies: a dependable 15% off message to build trust, a tiered ladder that deepens discounts on high-margin assortments, sporadic flash-sale weekends built for urgency, and a loyalty bundle that pairs lighter discounts with app-exclusive perks. Each cluster reports weekly gross-margin dollars per store, adjusted for traffic and staffing.
+
+Merchandising leaders are debating whether “steady Eddie” pricing protects perception, while the loyalty team argues that bundling perks keeps high-value shoppers engaged. This preset loads the observed results so you can measure how each storyline pulls on the grand mean before committing to one playbook for 1,200 stores.
+
+# Alpha
+0.10
+
+# Groups
+Steady 15 Percent|32.4|3.9|85
+Tiered Promo Calendar|34.1|4.5|82
+Flash Sale Bursts|30.8|4.2|78
+Loyalty Bundle Weekends|33.6|4.0|88
+
+# Additional Inputs
+axis_min=
+axis_max=
+mean_reference=

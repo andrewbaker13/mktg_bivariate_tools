@@ -1,0 +1,22 @@
+# Title
+Loyalty Upsell Experiment
+
+# Description
+Marketing wants to know if loyalty members spend more when the email copy highlights a personalized reward vs. a generic loyalty update.
+This preset gives you per-recipient spend, variability, and sample size so you can decide whether the observed lift is large and stable enough to support a full loyalty-program rollout.
+
+# Alpha
+0.05
+
+# Groups
+Personalized Loyalty Email|50.2|7.4|162
+Generic Loyalty Email|47.1|6.9|158
+
+# Additional Inputs
+delta0=2
+means-axis-lock=true
+means-axis-min=30
+means-axis-max=70
+diff-axis-mode=custom
+diff-axis-min=-5
+diff-axis-max=10

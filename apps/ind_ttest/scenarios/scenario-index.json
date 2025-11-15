@@ -1,0 +1,17 @@
+[
+    {
+        "id": "holiday_subject_line",
+        "label": "Holiday Email Subject Line Test",
+        "file": "scenarios/holiday_subject_line.txt"
+    },
+    {
+        "id": "loyalty_upsell",
+        "label": "Loyalty Email Upsell Test",
+        "file": "scenarios/loyalty_upsell.txt"
+    },
+    {
+        "id": "refer_a_friend",
+        "label": "Refer-a-Friend Revenue Pilot",
+        "file": "scenarios/refer_a_friend.txt"
+    }
+]

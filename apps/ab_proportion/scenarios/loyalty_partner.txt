@@ -1,0 +1,19 @@
+﻿# Title
+Channel Partner Loyalty Push
+
+# Description
+The **Partnership Marketing** crew is experimenting with a loyalty incentive in co-branded emails to **Channel Partner** lists. The control email reminds customers about standard loyalty benefits, while the variant highlights a new tiered bonus for partner purchases and a dedicated customer success hotline. Traffic flowed over seven days with matched small-business segments; now the analysts are studying whether the tiered approach nudges buyers beyond the usual reorder behavior.
+
+Primary metric: email-to-purchase conversion rate on partner-branded loyalty emails.
+Decision focus: should the team roll out the tiered loyalty bonus broadly across **Channel Partner** campaigns?
+
+# Control
+Standard Loyalty Reminder|0.164|890
+
+# Variant
+Tiered Bonus Loyalty Offer|0.191|905
+
+# Settings
+alpha=0.05
+delta0=0
+

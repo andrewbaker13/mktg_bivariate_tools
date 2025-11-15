@@ -1,0 +1,22 @@
+# Title
+Refer-a-Friend Revenue Pilot
+
+# Description
+The product team is testing a refer-a-friend incentive versus the historic control to see how much incremental downstream revenue each recipient generates.
+This preset gives you average revenue per recipient, variability, and sample sizes so you can translate a mean difference into projected incremental revenue before deciding whether to scale the incentive.
+
+# Alpha
+0.05
+
+# Groups
+Refer-a-Friend Incentive|212.4|24.1|130
+Baseline Control|198.1|26.3|133
+
+# Additional Inputs
+delta0=10
+means-axis-lock=true
+means-axis-min=160
+means-axis-max=240
+diff-axis-mode=custom
+diff-axis-min=-20
+diff-axis-max=40

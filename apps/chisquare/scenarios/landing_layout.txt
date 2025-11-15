@@ -1,0 +1,25 @@
+﻿# Title
+Landing page layout by action
+
+# Description
+Before committing to a responsive overhaul, product marketing is reviewing whether the desktop hero layout or a slimmer mobile-first layout leads to more form submits or phone calls. These counts help you explore whether the same layout is driving the pattern of actions across devices.
+
+# Alpha
+0.10
+
+# Rows
+Desktop layout (A)
+Mobile layout (B)
+
+# Columns
+Form submit
+Phone call
+No action
+
+# Matrix
+45|22|133
+60|15|125
+
+# Additional Inputs
+chartXAxis=rows
+cellLabelMode=observed

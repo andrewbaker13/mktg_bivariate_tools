@@ -1,0 +1,22 @@
+# Title
+Holiday Subject Line Lift
+
+# Description
+The brand is rolling out its annual holiday email stretch and wants to know if a curated, benefits-focused subject line can push average revenue per recipient higher than the plain-English control.
+This preset gives you average dollars per recipient, variability, and sample size for each version so you can translate a mean difference into estimated incremental holiday revenue before the hero subject line is locked in.
+
+# Alpha
+0.05
+
+# Groups
+Optimized Holiday Subject Line|92.4|22.1|148
+Control Subject Line|86.7|21.8|154
+
+# Additional Inputs
+delta0=5
+means-axis-lock=true
+means-axis-min=40
+means-axis-max=130
+diff-axis-mode=custom
+diff-axis-min=-10
+diff-axis-max=25

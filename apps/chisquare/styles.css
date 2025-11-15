@@ -1,0 +1,178 @@
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Inline fraction layout for clear equations */
+.frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 2px;
+}
+.frac .num {
+  padding: 0 4px;
+}
+.frac .den {
+  padding: 0 4px;
+  border-top: 1px solid #111827;
+  margin-top: 2px;
+}
+
+/* Alpha buttons styling */
+.alpha-buttons {
+  display: inline-flex;
+  gap: 8px;
+}
+.alpha-buttons button {
+  background: #eef2ff;
+  color: #1e40af;
+  border: 1px solid #c7d2fe;
+}
+.alpha-buttons button.active {
+  background: #c7d2fe;
+  border-color: #818cf8;
+}
+
+/* Table styling */
+#tableContainer {
+  overflow: auto;
+}
+.grid-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.grid-table th,
+.grid-table td {
+  border: 1px solid #e5e7eb;
+  padding: 6px;
+  text-align: right;
+}
+.grid-table th {
+  background: #f1f5f9;
+  text-align: center;
+  color: #334155;
+  font-weight: 600;
+}
+.grid-table th[contenteditable="true"] {
+  cursor: text;
+  background: #eef2ff;
+  outline: none;
+}
+.grid-table tfoot td,
+.grid-table .total {
+  background: #f8fafc;
+  font-weight: 600;
+}
+.grid-table input {
+  width: 90px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #111827;
+  text-align: right;
+}
+.editable-hint {
+  margin: 6px 0 10px;
+  color: #1e40af;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-left: 4px solid #6366f1;
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+.cell-label {
+  display: block;
+  text-align: right;
+  color: #6b7280;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.note {
+  color: #b45309;
+  margin: 10px 6px;
+  font-size: 13px;
+}
+.error {
+  color: #ef4444;
+}
+
+/* Mini table for expected counts */
+.mini-table {
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 10px;
+  background: #ffffff;
+  overflow: auto;
+}
+.mini-table table {
+  border-collapse: collapse;
+}
+.mini-table td {
+  border: 1px solid #e5e7eb;
+  padding: 4px 6px;
+  text-align: right;
+}
+
+/* Edit dialog overlay */
+.edit-panel {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.edit-panel .edit-dialog {
+  width: min(560px, 92vw);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* Chart styling */
+.chart-container {
+  width: 100%;
+  height: 360px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.chart-legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.chart-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}

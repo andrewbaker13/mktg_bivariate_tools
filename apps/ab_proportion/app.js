@@ -66,6 +66,243 @@ function ciDiff(p1, n1, p2, n2, z){
 function pct(x){ return (x*100).toFixed(1) + "%"; }
 
 // ---- rendering ----
+const scenarioState = {
+  manifest: [],
+  defaultDescription: ''
+};
+
+async function fetchScenarioIndex(){
+  try{
+    const response = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
+    if(!response.ok) throw new Error(response.statusText);
+    const data = await response.json();
+    if(Array.isArray(data)){
+      scenarioState.manifest = data;
+    }
+  }catch(err){
+    console.error('Scenario index error:', err);
+    scenarioState.manifest = [];
+  }
+  populateScenarioOptions();
+}
+
+function populateScenarioOptions(){
+  const select = document.getElementById('scenario-select');
+  if(!select) return;
+  const current = select.value;
+  select.innerHTML = '<option value=\"\">Manual inputs (no preset)</option>';
+  scenarioState.manifest.forEach(entry => {
+    const option = document.createElement('option');
+    option.value = entry.id;
+    option.textContent = entry.label || entry.id;
+    if(entry.id === current){
+      option.selected = true;
+    }
+    select.appendChild(option);
+  });
+}
+
+function renderScenarioDescription(title, description){
+  const container = document.getElementById('scenario-description');
+  if(!container) return;
+  if(!description){
+    if(scenarioState.defaultDescription){
+      container.innerHTML = scenarioState.defaultDescription;
+    }
+    return;
+  }
+  const paragraphs = description.split(/\\n{2,}/).map(p => p.trim()).filter(Boolean);
+  const heading = title ? `<p><strong>${title}</strong></p>` : '';
+  container.innerHTML = heading + (paragraphs.length ? paragraphs.map(text => `<p>${text}</p>`).join('') : `<p>${description}</p>`);
+}
+
+function parseScenarioText(text){
+  const lines = text.replace(/\\r/g,'').split('\\n');
+  const result = { title:'', description:[], control:null, variant:null, settings:{} };
+  let section = '';
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if(trimmed.startsWith('# ')){
+      section = trimmed.slice(2).toLowerCase();
+      return;
+    }
+    if(!section) return;
+    if(section === 'title' && trimmed){
+      result.title = trimmed;
+    }else if(section === 'description'){
+      result.description.push(line);
+    }else if(section === 'control' || section === 'variant'){
+      const parts = trimmed.split('|').map(part => part.trim());
+      if(parts.length >= 3){
+        const [name, pStr, nStr] = parts;
+        const proportion = parseFloat(pStr);
+        const n = parseInt(nStr, 10);
+        if(name && isFinite(proportion) && Number.isInteger(n)){
+          result[section] = { name, proportion, n };
+        }
+      }
+    }else if(section === 'settings'){
+      if(!trimmed || !trimmed.includes('=')) return;
+      const [key, ...rest] = trimmed.split('=');
+      result.settings[key.trim().toLowerCase()] = rest.join('=').trim();
+    }
+  });
+  result.description = result.description.join('\\n').trim();
+  return result;
+}
+
+function applyScenarioPreset(preset, entry){
+  if(!preset) return;
+  const assignValues = (value, ids = []) => {
+    if(!isFinite(value)) return;
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(el.type === 'radio'){
+        el.checked = true;
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }else if('value' in el){
+        el.value = value;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+  };
+  const triggerRender = () => {
+    if(typeof updateNameSpans === 'function') updateNameSpans();
+    if(typeof render === 'function'){
+      render();
+      return;
+    }
+    if(typeof renderCharts === 'function'){
+      renderCharts();
+    }
+  };
+  if(preset.control){
+    const { name, proportion, n } = preset.control;
+    const g1Input = document.getElementById('g1name');
+    if(g1Input){
+      g1Input.value = name || 'Control';
+      g1Input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    assignValues(proportion, ['p1','p1num']);
+    assignValues(n, ['n1','n1num']);
+  }
+  if(preset.variant){
+    const { name, proportion, n } = preset.variant;
+    const g2Input = document.getElementById('g2name');
+    if(g2Input){
+      g2Input.value = name || 'Variant';
+      g2Input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    assignValues(proportion, ['p2','p2num']);
+    assignValues(n, ['n2','n2num']);
+  }
+  if(preset.settings){
+    if(preset.settings.alpha){
+      const alphaVal = parseFloat(preset.settings.alpha);
+      if(isFinite(alphaVal)){
+        const ciTarget = (1 - alphaVal).toFixed(2);
+        const radio = document.querySelector(`#ciLevelGroup input[value="${ciTarget}"]`);
+        if(radio){
+          radio.checked = true;
+          radio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }
+    if(preset.settings.delta0){
+      assignValues(parseFloat(preset.settings.delta0), ['delta','deltanum']);
+    }
+  }
+  renderScenarioDescription(preset.title || entry?.label, preset.description);
+  const downloadButton = document.getElementById('scenario-download');
+  if(downloadButton){
+    if(entry?.file){
+      downloadButton.classList.remove('hidden');
+      downloadButton.disabled = false;
+      downloadButton.dataset.file = entry.file;
+    }else{
+      downloadButton.classList.add('hidden');
+      downloadButton.disabled = true;
+      downloadButton.dataset.file = '';
+    }
+  }
+  triggerRender();
+}
+
+async function loadScenarioById(id){
+  const scenario = scenarioState.manifest.find(entry => entry.id === id);
+  if(!scenario){
+    renderScenarioDescription('', '');
+    const downloadButton = document.getElementById('scenario-download');
+    if(downloadButton){
+      downloadButton.classList.add('hidden');
+      downloadButton.disabled = true;
+      downloadButton.dataset.file = '';
+    }
+    return;
+  }
+  try{
+    const response = await fetch(scenario.file, { cache: 'no-cache' });
+    if(!response.ok) throw new Error(response.statusText);
+    const text = await response.text();
+    const parsed = parseScenarioText(text);
+    applyScenarioPreset(parsed, scenario);
+  }catch(err){
+    console.error('Scenario load error:', err);
+  }
+}
+
+function setupScenarioSelector(){
+  const select = document.getElementById('scenario-select');
+  if(!select) return;
+  select.addEventListener('change', () => {
+    const value = select.value;
+    if(!value){
+      renderScenarioDescription('', '');
+      const downloadButton = document.getElementById('scenario-download');
+      if(downloadButton){
+        downloadButton.classList.add('hidden');
+        downloadButton.disabled = true;
+        downloadButton.dataset.file = '';
+      }
+      return;
+    }
+    loadScenarioById(value);
+  });
+  const downloadButton = document.getElementById('scenario-download');
+  if(downloadButton){
+    downloadButton.addEventListener('click', async () => {
+      const file = downloadButton.dataset.file;
+      if(!file) return;
+      try{
+        const response = await fetch(file, { cache: 'no-cache' });
+        if(!response.ok) throw new Error(response.statusText);
+        const text = await response.text();
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = file.split('/').pop() || 'scenario.txt';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }catch(err){
+        console.error('Scenario download error:', err);
+      }
+    });
+  }
+}
+
+function initializeScenarios(){
+  const description = document.getElementById('scenario-description');
+  if(description){
+    scenarioState.defaultDescription = description.innerHTML;
+  }
+  setupScenarioSelector();
+  fetchScenarioIndex();
+}
+
 function renderCharts(){
   const {p1, p2, alpha, n1, n2} = currentParams();
   const delta = currentDelta();
@@ -160,6 +397,7 @@ function attachCiListeners(){
 
 // initialize on first load
 document.addEventListener("DOMContentLoaded", () => {
+  initializeScenarios();
   attachCiListeners();
   renderCharts();
 });

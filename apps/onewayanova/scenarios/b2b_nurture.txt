@@ -1,0 +1,19 @@
+# Title
+B2B Nurture Content Tracks
+
+# Description
+A SaaS demand team is resurrecting a massive pool of dormant enterprise leads. Two nurture “worlds” are live: the Tutorial Deep Dive series that drip-feeds hands-on product walkthroughs, and an Executive ROI story track that delivers board-level business cases to economic buyers. Each track reports qualified pipeline dollars created per contacted lead, segmented across six verticals with different buying committees.
+
+Sales leadership wants evidence on whether helpful, how-to content actually carries prospects further than inspirational ROI stories, or if senior decision makers need an executive tone to re-engage. Load this preset to see which track is reshaping the overall mean before the next two quarters of nurture creative are funded.
+
+# Alpha
+0.01
+
+# Groups
+Tutorial Deep Dive Series|56.2|6.3|64
+Executive ROI Story Track|59.7|5.8|70
+
+# Additional Inputs
+axis_min=
+axis_max=
+mean_reference=

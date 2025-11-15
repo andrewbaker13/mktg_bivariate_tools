@@ -8,7 +8,7 @@
     <!-- Global shared styles -->
     <link rel="stylesheet" href="../../shared/css/main.css">
     <!-- App-specific styles -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="main_pearson.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -22,7 +22,7 @@
         <p class="hero-header__lede">Explore how two metrics move together with narratives, diagnostics, and ready-to-share visuals.</p>
     </header>
 
-    <main>
+    <main class="app-main">
         <section class="intro">
             <p><strong>Context:</strong> Marketing analysts use correlation to quickly see whether two KPIs move together. Bring in a preset scenario or upload your own paired metrics to generate a modern narrative, diagnostics, and visuals tailored for stakeholders.</p>
             <p>This workspace summarizes the Pearson product-moment correlation, highlights statistical diagnostics, and packages confidence intervals plus hypothesis tests in the same shareable canvas.</p>
@@ -227,7 +227,7 @@
 
         <section class="card diagnostics-section">
             <details class="diagnostics-details">
-                <summary>Assumption checks</summary>
+                <summary>Diagnostics &amp; Assumption Tests</summary>
                 <div id="diagnostics-content">
                     <p>After you run an analysis, this panel summarizes sample size, variance, skew, outliers, and whether Pearson or Spearman best fits the relationship.</p>
                 </div>
@@ -235,9 +235,10 @@
         </section>
     </main>
 
-    <footer>
+    <footer class="app-footer">
         <p>Built for analysts exploring how KPIs move together across campaigns, surveys, and experiments.</p>
         <p class="page-timestamps">Created: <span id="created-date"></span> &middot; Last updated: <span id="modified-date"></span></p>
+        <p class="citation">Cite as: Baker, Andrew. (2025). Pearson Correlation Tool. Marketing Bivariate Tools. https://github.com/andre/mktg_bivariate_tools/apps/pearson_correlation/main_pearson.html</p>
     </footer>
 
     <script src="../../shared/js/csv_utils.js"></script>

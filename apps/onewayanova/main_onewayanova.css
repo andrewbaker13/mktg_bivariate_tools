@@ -1,0 +1,272 @@
+/* Theme variables */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #c0392b;
+    --accent-soft: rgba(192, 57, 43, 0.12);
+    --accent-medium: rgba(192, 57, 43, 0.2);
+    --accent-strong: rgba(192, 57, 43, 0.32);
+    --light-gray: #ecf0f1;
+    --border-radius: 6px;
+    --card-shadow: 0 8px 18px rgba(44, 62, 80, 0.08);
+    --app-bg: #f5f7fa;
+    --app-card-bg: #ffffff;
+    --app-text: #2c3e50;
+    --app-muted: #5f6b7a;
+    --app-border: #d0d8e4;
+    --app-accent: #c0392b;
+    --app-accent-dark: #8c2f23;
+    --app-success: #2f9d58;
+    --app-danger: #c0392b;
+    --app-warning: #f3b440;
+}
+
+.equation-section p,
+.scenario-section p {
+    margin: 0.75rem 0;
+}
+
+.equation-display {
+    margin: 1rem 0;
+    padding: 0.75rem;
+    background: #f8f9fb;
+    border-radius: var(--border-radius);
+    box-shadow: inset 0 0 0 1px #e1e7f0;
+}
+
+.equation-definitions {
+    background: #f8f9fb;
+    border-radius: var(--border-radius);
+    padding: 0.9rem 1rem;
+    margin: 0.75rem 0 1rem;
+    border-left: 3px solid rgba(44, 62, 80, 0.2);
+}
+
+.equation-definitions ul {
+    margin: 0.4rem 0 0;
+    padding-left: 1.25rem;
+}
+
+.equation-definitions.compact {
+    margin: 0.5rem 0 0;
+    padding: 0.75rem 0.85rem;
+    border-left-color: rgba(3, 155, 229, 0.3);
+}
+
+.scenario-section span {
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+#scenario-description p {
+    margin: 0.6rem 0;
+}
+
+.group-controls h2,
+.group-input-block h2,
+.analysis-settings h2 {
+    margin-top: 0;
+}
+
+.group-card h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+.visual-options {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border: 1px solid #e4e9f0;
+    border-radius: var(--border-radius);
+    background: #fafbfc;
+}
+
+.mean-type-options {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding-left: 1.5rem;
+}
+
+.mean-type-options input[disabled] + span {
+    color: #9aa5b5;
+}
+
+.warning {
+    background: rgba(192, 57, 43, 0.1);
+    color: #8c2f23;
+    border: 1px solid rgba(192, 57, 43, 0.3);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.warning.hidden {
+    display: none;
+}
+
+.tukey-equation {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: var(--border-radius);
+    background: #f8f9fb;
+    border-left: 3px solid rgba(3, 155, 229, 0.3);
+}
+
+.math-block {
+    text-align: center;
+    font-size: 1.05rem;
+    margin: 0.5rem 0 0.75rem;
+}
+
+.advanced-menu {
+    margin-top: 1.25rem;
+    border: 1px solid #e4e9f0;
+    border-radius: var(--border-radius);
+    padding: 0.75rem 1rem 1rem;
+    background: #fdfdfd;
+}
+
+.advanced-menu summary {
+    font-weight: 600;
+    color: var(--secondary-color);
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+
+.planned-panel {
+    margin-top: 1rem;
+    border-top: 1px solid #e4e9f0;
+    padding-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.planned-panel.hidden {
+    display: none;
+}
+
+.planned-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.comparison-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 0.75rem;
+    background: #f5f7fb;
+    border-radius: var(--border-radius);
+}
+
+.comparison-select {
+    flex: 1 1 160px;
+    padding: 0.45rem 0.5rem;
+    border: 1px solid #ccd6e3;
+    border-radius: var(--border-radius);
+    font-size: 0.95rem;
+}
+
+.vs-label {
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+
+.remove-comparison {
+    border: none;
+    background: transparent;
+    color: var(--accent-color);
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.remove-comparison:hover {
+    color: #96281b;
+}
+
+.comparison-list {
+    padding-left: 1.25rem;
+    margin: 0.5rem 0 0;
+}
+
+.diagnostics details {
+    cursor: pointer;
+}
+
+.diagnostics summary {
+    font-weight: 600;
+    color: var(--secondary-color);
+    margin-bottom: 0.5rem;
+}
+
+.diagnostic-section {
+    margin-bottom: 1rem;
+}
+
+.diagnostic-status {
+    font-weight: 600;
+}
+
+.diagnostic-status.good {
+    color: #2e7d32;
+}
+
+.diagnostic-status.caution {
+    color: #f9a825;
+}
+
+.diagnostic-status.alert {
+    color: #c0392b;
+}
+
+.diagnostics ul {
+    margin: 0.4rem 0 0;
+    padding-left: 1.25rem;
+}
+
+/* Visualization */
+.visualization-wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+.plot-container {
+    width: 100%;
+    min-height: 320px;
+}
+
+.interpretation-details h4 {
+    color: var(--secondary-color);
+    margin-bottom: 0.5rem;
+}
+
+.educational-note {
+    background: #f8f9fb;
+    padding: 1.2rem;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--accent-color);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .visualization-wrapper {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .range-inputs {
+        flex-direction: column;
+    }
+
+    .input-group.inline {
+        flex: 1 1 100%;
+    }
+}

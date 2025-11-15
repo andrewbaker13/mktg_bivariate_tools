@@ -1,0 +1,26 @@
+﻿# Title
+Acquisition channel by purchase action
+
+# Description
+The analytics group is comparing how email nurture, paid search, and organic social campaigns are performing relative to purchasing behavior. We want to know whether the engagement funnel looks different across channels when the only outcomes tracked are purchases or browsing without buying.
+
+# Alpha
+0.01
+
+# Rows
+Email nurture
+Paid search
+Organic social
+
+# Columns
+Purchase
+Browse only
+
+# Matrix
+74|46
+82|38
+54|52
+
+# Additional Inputs
+chartXAxis=columns
+cellLabelMode=table_pct

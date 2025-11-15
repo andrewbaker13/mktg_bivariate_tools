@@ -10,13 +10,12 @@
   <link rel="stylesheet" href="../../shared/css/main.css">
 
   <!-- App-specific styles -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="main_ab_proportion.css">
 
   <!-- Plotly for visualization -->
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
   <!-- MathJax for LaTeX rendering (Statistical Equations) -->
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async
     src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
@@ -48,6 +47,8 @@
     .row.axis { display:grid; grid-template-columns: 200px 1fr 100px 100px; column-gap:10px; align-items:center; }
     .btn { padding:6px 10px; border:1px solid #cbd5e1; border-radius:8px; background:#f8fafc; cursor:pointer; font-weight:600; }
     .btn:hover { background:#eef2f7; }
+    .diagnostics-details ul { margin:8px 0 0 0; padding-left:20px; }
+    .diagnostics-details li { margin-bottom:6px; }
   </style>
 </head>
 <body>
@@ -59,39 +60,50 @@
   </header>
 
   <!-- ======== PRESERVED ORIGINAL INTRO SECTION (unchanged) ======== -->
-  <div class="intro">
+  <section class="intro" aria-labelledby="test-details-heading">
+    <h2 id="test-details-heading">Test Details &amp; Equations</h2>
     <p>
-      <strong>Context:</strong> As a Data Analyst for StudyFlow (a student study-habit SaaS), your task is to compare the observed conversion rates for two marketing channels: the current partner <strong>Influencer Alpha</strong> (Control, <code>P1</code>) and the new partner <strong>Influencer Beta</strong> (Variant, <code>P2</code>).
-    </p>
-    <p>
-      This interactive tool helps you analyze A/B test results using the observed sample sizes and conversion rates. It computes confidence intervals, visualizes uncertainty with fan bands, and performs a two-proportion z-test to assess whether the difference is statistically meaningful.
+      Use this tool to compare two conversion rates (for example, Control vs Variant in an A/B test), estimate how large the difference is, and judge whether it is statistically reliable.
     </p>
     <p class="equation">
-      <strong>Core Test (two-proportion z-test with hypothesized difference Δ₀):</strong>
+      <strong>Core test (two-proportion z-test with hypothesized difference \(\Delta_0\)):</strong>
       $$z = \frac{P_2 - P_1 - \Delta_0}{\sqrt{\dfrac{P_1(1-P_1)}{n_1} + \dfrac{P_2(1-P_2)}{n_2}}} \quad\text{(Wald / unpooled)}$$
       <br />
       <em>Null hypothesis: \(H_0:\ \Delta = \Delta_0\). By default \(\Delta_0 = 0\) (no difference).</em>
     </p>
     <p class="equation">
-      <strong>Confidence Interval for the difference (Δ = P2 − P1):</strong>
+      <strong>Confidence interval for the difference (\(\Delta = P_2 - P_1\)):</strong>
       $$\Delta \pm z_{1-\alpha/2}\sqrt{\frac{P_1(1-P_1)}{n_1}+\frac{P_2(1-P_2)}{n_2}}$$
     </p>
-    
-  </div>
-
-  <!-- ======== PRESERVED ORIGINAL METRICS PANEL (unchanged) ======== -->
-  <div id="metrics" class="metrics-panel">
-      <h2>A/B Test Outcomes</h2>
-      <p id="sample_size" class="metric-output"></p>
-      <p id="p2_rate" class="metric-output"></p>
+    <details class="intro-notes" style="margin-top:12px;">
+      <summary>Additional notes</summary>
+      <p>The two-proportion z-test assumes independent groups, sufficiently large samples for the normal approximation, and a hypothesized difference \(\Delta_0\) you can set based on business risk (for example, \(\Delta_0 = 0\) for “no lift,” or \(\Delta_0 = 0.05\) for a 5 percentage point lift).</p>
+      <p>This implementation uses an unpooled (Wald) standard error, which keeps the calculation transparent while remaining reasonably conservative when sample sizes are moderate to large.</p>
+    </details>
   </div>
 
   <hr class="separator" />
 
-  <!-- ======== PRESERVED ORIGINAL CONTROLS HEADER (left in place) ======== -->
-  <h3>Test Parameters (What You Decide)</h3>
+  <section class="scenario-section card">
+    <h2>Marketing Scenarios</h2>
+    <div class="scenario-controls" style="margin-top:12px;">
+      <label for="scenario-select">Load a marketing use case:</label>
+      <div class="scenario-controls__input">
+        <select id="scenario-select">
+          <option value="">Manual inputs (no preset)</option>
+        </select>
+        <button id="scenario-download" class="secondary hidden" type="button" disabled>Download preset</button>
+      </div>
+    </div>
+    <div id="scenario-description">
+      <p>Select a preset marketing scenario to auto-fill the control/variant inputs (or upload instructions once supported), or leave this on "Manual inputs" to enter values yourself below.</p>
+    </div>
+  </section>
 
-  <!-- ======== NEW/ADDED CONTROLS (kept separate, does not remove originals) ======== -->
+  <hr class="separator" />
+
+  <section class="card inputs-panel">
+    <h2>Inputs &amp; Settings</h2>
   <div class="controls">
     <!-- BOX A: Groups & Inputs -->
     <div class="card" id="boxA">
@@ -131,15 +143,15 @@
         <input id="n2num" type="number" min="1" step="1" value="300">
       </div>
 
-      <p class="hint">Slide \(n_1\)/\(n_2\) between 10–2000, or type any value directly into the number box.</p>
+      <p class="hint">Slide \(n_1\)/\(n_2\) between 10 and 2,000, or type any value directly into the number box.</p>
     </div>
 
     <!-- BOX B: Confidence & Reporting -->
     <div class="card" id="boxB">
-      <h3>Confidence Level & Reporting</h3>
+      <h3>Confidence Level &amp; Reporting</h3>
 
       <div class="toolbar">
-        <div><strong>Confidence level (affects outer band & test decision):</strong></div>
+        <div><strong>Confidence level (higher = wider intervals, harder to declare a win):</strong></div>
         <div class="segmented" id="ciLevelGroup">
           <input type="radio" id="ci90" name="ci" value="0.90">
           <label for="ci90">90%</label>
@@ -151,89 +163,104 @@
       </div>
       
       <div style="margin-top:12px;">
-        <label>Hypothesized difference Δ₀ (proportion points, default = 0)</label>
+        <label>Hypothesized difference \(\Delta_0\) (proportion points, default = 0)</label>
         <div class="row">
           <input id="delta" type="range" min="-1" max="1" step="0.01" value="0.00">
           <input id="deltanum" type="number" min="-1" max="1" step="0.01" value="0.00">
         </div>
-        <p class="hint">Set the null hypothesis difference Δ₀ (e.g., 0.05 = 5 percentage points). Default is 0 (no difference).</p>
+        <p class="hint">Set \(\Delta_0\), the null hypothesis difference in proportion points (for example, 0.05 = 5 percentage points). Default is 0 (no difference).</p>
       </div>
 
-      <div id="writeups">
-        <h4>APA-Style Statistical Reporting</h4>
-        <p id="apaWriteup"></p>
-        <h4>Managerial Interpretation</h4>
-        <p id="mgrWriteup"></p>
-      </div>
     </div>
   </div>
+    <details class="advanced-settings" style="margin-top:16px;">
+      <summary>Advanced settings</summary>
+      <p>No advanced settings.</p>
+    </details>
+  </section>
 
   <hr class="separator" />
 
   <!-- Removed old exploratory questions per request -->
 
   <!-- ======== NEW: Charts & Titles ======== -->
-  <h3 id="propTitle">Proportions with Fan Chart</h3>
+  <h3 id="propTitle">Proportions for Control and Variant (Fan Chart)</h3>
   <div id="propChart" role="img" aria-label="Proportions fan chart showing estimated proportions for Control and Variant"></div>
   <div id="propInterpret" class="hint" aria-live="polite" style="margin-top:8px;"></div>
 
-  <h3 id="diffTitle">Difference (Δ) with Fan Chart</h3>
-  <div id="diffChart" role="img" aria-label="Difference fan chart showing the distribution of Δ (Variant − Control) in percentage points"></div>
+  <h3 id="diffTitle">Difference (Variant − Control) with Fan Chart</h3>
+  <div id="diffChart" role="img" aria-label="Difference fan chart showing the distribution of the proportion difference (Variant minus Control) in percentage points"></div>
   <div id="diffInterpret" class="hint" aria-live="polite" style="margin-top:8px;"></div>
 
   <!-- NEW: Chart Axis Settings (below charts) -->
-  <div class="card" id="boxC">
-    <h3>Chart Axis Settings</h3>
-    <div class="row axis">
-      <label><input type="checkbox" id="lockPropAxis"> Lock proportions x-axis</label>
-      <span class="muted">Range (%):</span>
-      <input id="propMin" type="number" step="1" value="0">
-      <input id="propMax" type="number" step="1" value="60">
+  <section class="card visual-output-settings">
+    <details open>
+      <summary>Visual Output Settings</summary>
+      <div class="settings-content">
+        <div class="row axis">
+          <label><input type="checkbox" id="lockPropAxis"> Lock proportions x-axis</label>
+          <span class="muted">Range (%):</span>
+          <input id="propMin" type="number" step="1" value="0">
+          <input id="propMax" type="number" step="1" value="60">
+        </div>
+        <p class="hint muted">When locked, the Proportions chart uses the given percent range (for example, 0 to 60 shows 0%–60%).</p>
+
+        <div class="row axis" style="margin-top:12px;">
+          <label><input type="checkbox" id="lockDiffAxis"> Lock difference x-axis</label>
+          <span class="muted">Range:</span>
+          <input id="diffMin" type="number" step="1" value="-20">
+          <input id="diffMax" type="number" step="1" value="20">
+        </div>
+        <p class="hint muted">When locked, the Difference chart uses the given bounds in percentage points (for example, −20 to 20).</p>
+
+        <div style="margin-top:12px;">
+          <button id="resetAxes" class="btn" type="button">Reset axes to auto</button>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="card reporting-section">
+    <h3>Reporting &amp; Interpretation</h3>
+    <div class="reporting-grid">
+      <div>
+        <h4>APA-Style Statistical Reporting</h4>
+        <p id="apaWriteup"></p>
+      </div>
+      <div>
+        <h4>Managerial Interpretation</h4>
+        <p id="mgrWriteup"></p>
+      </div>
     </div>
-    <p class="hint muted">When locked, the Proportions chart uses the given percent range (e.g., 0 to 60 shows 0%–60%).</p>
+  </section>
 
-    <div class="row axis" style="margin-top:12px;">
-      <label><input type="checkbox" id="lockDiffAxis"> Lock difference x-axis</label>
-      <span class="muted">Range:</span>
-      <input id="diffMin" type="number" step="1" value="-20">
-      <input id="diffMax" type="number" step="1" value="20">
+  <section class="card" id="statisticalResults">
+    <h3>Summary Table of Results</h3>
+    <div class="summary-wrap">
+      <table class="summary">
+        <thead>
+          <tr>
+            <th>Measure</th>
+            <th>Label</th>
+            <th class="mono">Proportion / Δ (pct pts)</th>
+            <th class="mono" id="ciLowerHeader">CI Lower</th>
+            <th class="mono" id="ciUpperHeader">CI Upper</th>
+            <th class="mono">n</th>
+          </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
     </div>
-    <p class="hint muted">When locked, the Difference chart uses the given bounds in percentage points (e.g., −20 to 20).</p>
+  </section>
 
-    <div style="margin-top:12px;">
-      <button id="resetAxes" class="btn" type="button">Reset axes to auto</button>
-    </div>
-  </div>
-
-  <!-- NEW: Summary Table -->
-  <div class="summary-wrap">
-    <h3>Summary Table</h3>
-    <table class="summary">
-      <thead>
-        <tr>
-          <th>Measure</th>
-          <th>Label</th>
-          <th class="mono">Proportion / Δ</th>
-          <th class="mono" id="ciLowerHeader">CI Lower</th>
-          <th class="mono" id="ciUpperHeader">CI Upper</th>
-          <th class="mono">n</th>
-        </tr>
-      </thead>
-      <tbody id="summaryBody"></tbody>
-    </table>
-  </div>
-
-  <!-- NEW: Critical Thinking Questions -->
-  <div class="card" id="criticalThinking" style="margin-top:20px;">
-    <h3>Critical Thinking Questions</h3>
-    <ol>
-      <li>How would you separate statistical significance from practical significance for this test? Give an example where a small but significant lift is not worth the cost.</li>
-      <li>Which assumptions underlie the z-test and the Wald confidence intervals used here? How might violations (rare events, small n) affect conclusions?</li>
-      <li>If the 95% CI barely excludes Δ₀ but the sample sizes are small, what additional checks or data would you request before making a business decision?</li>
-      <li>How would you incorporate cost, revenue, or customer lifetime value into a decision rule that uses the observed Δ and its CI?</li>
-      <li>Design a short experiment modification (blocking, stratification, or longer run) that could reduce uncertainty for this comparison.</li>
-    </ol>
-  </div>
+  <section class="card diagnostics-section">
+    <details class="diagnostics-details">
+      <summary>Diagnostics &amp; Assumption Tests</summary>
+      <div id="diagnostics-content">
+        <p>Diagnostics highlight whether the sample sizes, normal approximation, and hypothesis precision are stable enough for the Wald z-test.</p>
+      </div>
+    </details>
+  </section>
 
   <!-- Bottom metadata -->
   <div class="page-timestamps">
@@ -319,6 +346,233 @@
       q("g2label_n").textContent = g2;
     }
 
+    // ---- Marketing scenarios ----
+    const scenarioState = { manifest: [], defaultDescription: '' };
+
+    async function fetchScenarioIndex(){
+      try{
+        const response = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
+        if(!response.ok) throw new Error(response.statusText);
+        const data = await response.json();
+        if(Array.isArray(data)) scenarioState.manifest = data;
+      }catch(err){
+        console.error('Scenario index error:', err);
+        scenarioState.manifest = [];
+      }
+    }
+
+    function populateScenarioOptions(){
+      const select = q("scenario-select");
+      if(!select) return;
+      const current = select.value;
+      select.innerHTML = '<option value=\"\">Manual inputs (no preset)</option>';
+      scenarioState.manifest.forEach(entry => {
+        const option = document.createElement('option');
+        option.value = entry.id;
+        option.textContent = entry.label || entry.id;
+        if(entry.id === current){
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+    }
+
+    function formatScenarioMarkup(text){
+      return text
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`(.+?)`/g, '<code>$1</code>')
+        .replace(/\n/g, '<br>');
+    }
+
+    function renderScenarioDescription(title, description){
+      const container = q('scenario-description');
+      if(!container) return;
+      if(!description){
+        container.innerHTML = scenarioState.defaultDescription;
+        return;
+      }
+      const heading = title ? `<p><strong>${title}</strong></p>` : '';
+      const paragraphs = description
+        .split(/\n{2,}/)
+        .map(p => p.trim())
+        .filter(Boolean)
+        .map(text => `<p>${formatScenarioMarkup(text)}</p>`)
+        .join('');
+      container.innerHTML = heading + (paragraphs || `<p>${formatScenarioMarkup(description)}</p>`);
+    }
+
+    function parseScenarioText(text){
+      const lines = text.replace(/\r/g,'').split('\n');
+      const result = { title:'', description:[], control:null, variant:null, settings:{} };
+      let section = '';
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if(trimmed.startsWith('# ')){
+          section = trimmed.slice(2).toLowerCase();
+          return;
+        }
+        if(!section) return;
+        if(section === 'title' && trimmed){
+          result.title = trimmed;
+        }else if(section === 'description'){
+          result.description.push(line);
+        }else if(section === 'control' || section === 'variant'){
+          const parts = trimmed.split('|').map(part => part.trim());
+          if(parts.length >= 3){
+            const [name, pStr, nStr] = parts;
+            const proportion = parseFloat(pStr);
+            const n = parseInt(nStr, 10);
+            if(name && isFinite(proportion) && Number.isInteger(n)){
+              result[section] = { name, proportion, n };
+            }
+          }
+        }else if(section === 'settings' && trimmed.includes('=')){
+          const [key, ...rest] = trimmed.split('=');
+          result.settings[key.trim().toLowerCase()] = rest.join('=').trim();
+        }
+      });
+      result.description = result.description.join('\n').trim();
+      return result;
+    }
+
+    function assignScenarioValues(value, ids = []){
+      if(!isFinite(value)) return;
+      ids.forEach(id => {
+        const el = q(id);
+        if(!el) return;
+        el.value = value;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    }
+
+    function applyScenarioPreset(preset, entry){
+      if(!preset) return;
+      if(preset.control){
+        const { name, proportion, n } = preset.control;
+        if(q('g1name')){
+          q('g1name').value = name || 'Control';
+          q('g1name').dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        assignScenarioValues(proportion, ['p1','p1num']);
+        assignScenarioValues(n, ['n1','n1num']);
+      }
+      if(preset.variant){
+        const { name, proportion, n } = preset.variant;
+        if(q('g2name')){
+          q('g2name').value = name || 'Variant';
+          q('g2name').dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        assignScenarioValues(proportion, ['p2','p2num']);
+        assignScenarioValues(n, ['n2','n2num']);
+      }
+      if(preset.settings){
+        if(preset.settings.delta0){
+          assignScenarioValues(parseFloat(preset.settings.delta0), ['delta','deltanum']);
+        }
+        if(preset.settings.alpha){
+          const alphaVal = parseFloat(preset.settings.alpha);
+          if(isFinite(alphaVal)){
+            const ciTarget = (1 - alphaVal).toFixed(2);
+            const radio = document.querySelector(`#ciLevelGroup input[value="${ciTarget}"]`);
+            if(radio){
+              radio.checked = true;
+              radio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          }
+        }
+      }
+      renderScenarioDescription(preset.title || entry?.label, preset.description);
+      const downloadButton = q('scenario-download');
+      if(downloadButton){
+        if(entry?.file){
+          downloadButton.classList.remove('hidden');
+          downloadButton.disabled = false;
+          downloadButton.dataset.file = entry.file;
+        }else{
+          downloadButton.classList.add('hidden');
+          downloadButton.disabled = true;
+          downloadButton.dataset.file = '';
+        }
+      }
+      render();
+    }
+
+    async function loadScenarioById(id){
+      const scenario = scenarioState.manifest.find(entry => entry.id === id);
+      if(!scenario){
+        renderScenarioDescription('', '');
+        const downloadButton = q('scenario-download');
+        if(downloadButton){
+          downloadButton.classList.add('hidden');
+          downloadButton.disabled = true;
+          downloadButton.dataset.file = '';
+        }
+        return;
+      }
+      try{
+        const response = await fetch(scenario.file, { cache: 'no-cache' });
+        if(!response.ok) throw new Error(response.statusText);
+        const text = await response.text();
+        const parsed = parseScenarioText(text);
+        applyScenarioPreset(parsed, scenario);
+      }catch(err){
+        console.error('Scenario load error:', err);
+      }
+    }
+
+    function setupScenarioSelector(){
+      const select = q('scenario-select');
+      if(!select) return;
+      select.addEventListener('change', () => {
+        const value = select.value;
+        if(!value){
+          renderScenarioDescription('', '');
+          const downloadButton = q('scenario-download');
+          if(downloadButton){
+            downloadButton.classList.add('hidden');
+            downloadButton.disabled = true;
+            downloadButton.dataset.file = '';
+          }
+          return;
+        }
+        loadScenarioById(value);
+      });
+      const downloadButton = q('scenario-download');
+      if(downloadButton){
+        downloadButton.addEventListener('click', async () => {
+          const file = downloadButton.dataset.file;
+          if(!file) return;
+          try{
+            const response = await fetch(file, { cache: 'no-cache' });
+            if(!response.ok) throw new Error(response.statusText);
+            const text = await response.text();
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = file.split('/').pop() || 'scenario.txt';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }catch(err){
+            console.error('Scenario download error:', err);
+          }
+        });
+      }
+    }
+
+    async function initializeScenarios(){
+      const description = q('scenario-description');
+      if(description){
+        scenarioState.defaultDescription = description.innerHTML;
+      }
+      await fetchScenarioIndex();
+      populateScenarioOptions();
+      setupScenarioSelector();
+    }
+
     // annotations
     function pointAnnotation(x, yNum, text){
       return { x, y: yNum, text, xref: "x", yref: "y", showarrow: false,
@@ -339,7 +593,7 @@
 
     // write-ups
     function buildWriteups({g1,g2}, p1, n1, p2, n2, alpha, z, p, cd, levelPct){
-      // look up current hypothesized delta from control (UI may set this)
+      // look up current hypothesized difference Δ0 from the UI (if set)
       const delta0 = Number.isFinite(parseFloat(q("delta")?.value)) ? parseFloat(q("delta").value) : 0;
       const p1s = pct(p1,1), p2s = pct(p2,1);
       const dsPP  = ppLabel(cd.d,1);
@@ -347,7 +601,7 @@
       const hiPP  = ppLabel(cd.hi,1);
 
       const significant = Number.isFinite(p) && p < alpha;
-      const decisionClause = significant ? "Therefore, we reject H₀." : "Therefore, we fail to reject H₀.";
+      const decisionClause = significant ? "Therefore, we reject the null hypothesis." : "Therefore, we fail to reject the null hypothesis.";
 
       const apa =
         `A two-proportion z test (two-tailed) compared ${g2} (p = ${p2s}, n = ${n2}) with ` +
@@ -365,11 +619,59 @@
       return { apa, mgr };
     }
 
+    function updateDiagnostics(p1, n1, p2, n2, cd, delta0){
+      const container = q("diagnostics-content");
+      if(!container) return;
+      const arms = [
+        { label: q("g1label_p").textContent || "Control", success: p1 * n1, failure: (1 - p1) * n1 },
+        { label: q("g2label_p").textContent || "Variant", success: p2 * n2, failure: (1 - p2) * n2 }
+      ];
+      const marginalArms = arms.filter(arm => arm.success < 5 || arm.failure < 5);
+      const approxMessage = marginalArms.length
+        ? `${marginalArms.map(arm => arm.label).join(" & ")} have fewer than five expected successes or failures. Treat z-based CIs and p-values as rough guides.`
+        : "Large-sample conditions look reasonable (np ≥ 5 and n(1−p) ≥ 5 for both groups).";
+      const ratio = Math.min(n1, n2) / Math.max(n1, n2 || 1);
+      const balanceMessage = ratio >= 0.65
+        ? `Sample sizes are balanced (${n1.toLocaleString()} vs ${n2.toLocaleString()}).`
+        : `Sample sizes differ (${n1.toLocaleString()} vs ${n2.toLocaleString()}); this can influence precision.`;
+      const ciWidthPct = ((cd.hi - cd.lo) * 100).toFixed(1);
+      const precisionMessage = ciWidthPct < 15
+        ? `CI width is ${ciWidthPct} percentage points around the hypothesized difference of ${(delta0*100).toFixed(1)} pct. pts.`
+        : `CI width of ${ciWidthPct} percentage points signals moderate precision; treat the result as directional and consider running longer or increasing sample size.`;
+      const diagnostics = [
+        {
+          title: "Sample size & balance",
+          status: "good",
+          message: balanceMessage
+        },
+        {
+          title: "Normal approximation",
+          status: marginalArms.length ? "caution" : "good",
+          message: approxMessage
+        },
+        {
+          title: "CI precision",
+          status: ciWidthPct < 15 ? "good" : "caution",
+          message: precisionMessage
+        }
+      ];
+      const items = diagnostics.map(item => `
+        <div class="diagnostic-item ${item.status}">
+          <strong>${item.title}</strong>
+          <p>${item.message}</p>
+        </div>
+      `).join("");
+      container.innerHTML = `
+        <p>Diagnostics summarize whether the Wald z-test assumptions are reasonably met for this A/B comparison.</p>
+        ${items}
+      `;
+    }
+
     function renderTable({g1,g2}, p1, n1, c1, p2, n2, c2, cd, levelPct){
       const rows = [
         { measure: "Proportion", label: g1, val: pct(p1,1), lo: pct(c1.lo,1), hi: pct(c1.hi,1), n: n1.toLocaleString() },
         { measure: "Proportion", label: g2, val: pct(p2,1), lo: pct(c2.lo,1), hi: pct(c2.hi,1), n: n2.toLocaleString() },
-        { measure: "Difference (pct.pts)", label: `${g2} − ${g1}`, val: ppLabel(cd.d,1), lo: ppLabel(cd.lo,1), hi: ppLabel(cd.hi,1), n: `${n2.toLocaleString()} vs ${n1.toLocaleString()}` }
+        { measure: "Difference (pct.pts)", label: `${g2} G ${g1}`, val: ppLabel(cd.d,1), lo: ppLabel(cd.lo,1), hi: ppLabel(cd.hi,1), n: `${n2.toLocaleString()} vs ${n1.toLocaleString()}` }
       ];
       q("ciLowerHeader").textContent = `CI Lower (${levelPct}%)`;
       q("ciUpperHeader").textContent = `CI Upper (${levelPct}%)`;
@@ -492,7 +794,7 @@
         annotations: propAnn
       };
       Plotly.react("propChart", [propTrace], propLayout, {displayModeBar:false});
-      q("propTitle").textContent = `Proportions for ${g1} and ${g2} — Fan Chart (50/80/${levelPct}%)`;
+      q("propTitle").textContent = `Proportions for ${g1} and ${g2} G Fan Chart (50/80/${levelPct}%)`;
 
       // ---------- Difference chart ----------
       const yD = 0, diffHalf = 0.22, diffLabelOffset = 0.10;
@@ -507,7 +809,7 @@
         makeBandRect(cd_50.lo, cd_50.hi, yD, diffHalf*0.7, "#6f8cff", 0.45),
         makeBandRect(cd_80.lo, cd_80.hi, yD, diffHalf*0.9, "#9bb1ff", 0.35),
         makeBandRect(cd.lo,    cd.hi,    yD, diffHalf,     "#d8e2ff", 0.25),
-        // vertical reference line at hypothesized difference Δ0 (x = Δ0)
+        // vertical reference line at hypothesized difference +0 (x = +0)
         { type: "line", xref: "x", yref: "paper", x0: delta0, x1: delta0, y0: 0, y1: 1, line: { width: 1, dash: "dot", color: "#777" } }
       ];
 
@@ -527,23 +829,24 @@
       ];
 
       const diffLayout = {
-        title: `Difference in Proportions (${g2} − ${g1}) with Fan Bands (50%, 80%, ${levelPct}%)`,
+        title: `Difference in Proportions (${g2} G ${g1}) with Fan Bands (50%, 80%, ${levelPct}%)`,
         xaxis: { title: "Difference", range: diffRange, tickformat: "+,.1%", showgrid: true, gridcolor: "#f3f4f6", gridwidth: 1, zeroline: false },
-        yaxis: { title: "", tickvals: [yD], ticktext: [`Δ = ${g2} − ${g1}`], range: [-1.0, 0.8], fixedrange: true, showgrid: false, zeroline: false },
+        yaxis: { title: "", tickvals: [yD], ticktext: [`+ = ${g2} G ${g1}`], range: [-1.0, 0.8], fixedrange: true, showgrid: false, zeroline: false },
         margin: { t: 60, l: 220, r: 20, b: 60 },
         showlegend: false,
         shapes: diffShapes,
         annotations: diffAnn
       };
       Plotly.react("diffChart", [diffTrace], diffLayout, {displayModeBar:false});
-      q("diffTitle").textContent = `Difference in Proportions (${g2} − ${g1}) — Fan Chart (50/80/${levelPct}%)`;
+      q("diffTitle").textContent = `Difference in Proportions (${g2} G ${g1}) G Fan Chart (50/80/${levelPct}%)`;
 
       // write-ups + table
       const { z, p } = zTestTwoProp(p1, n1, p2, n2, delta0);
       const { apa, mgr } = buildWriteups({g1,g2}, p1, n1, p2, n2, alpha, z, p, cd, levelPct);
       q("apaWriteup").textContent = apa;
-      q("mgrWriteup").textContent = mgr;
-      renderTable({g1,g2}, p1, n1, c1, p2, n2, c2, cd, levelPct);
+        q("mgrWriteup").textContent = mgr;
+        renderTable({g1,g2}, p1, n1, c1, p2, n2, c2, cd, levelPct);
+        updateDiagnostics(p1, n1, p2, n2, cd, delta0);
 
       // -------------------- Interpretation text for Proportions chart --------------------
       try{
@@ -553,7 +856,7 @@
         const se1 = (c1.se).toFixed(4), se2 = (c2.se).toFixed(4);
         const propMsg = `<strong>${g1}:</strong> estimate = ${p1s} (n=${n1.toLocaleString()}), ${levelPct}% CI [${c1lo}, ${c1hi}], SE=${se1}. `+
                         `<strong>${g2}:</strong> estimate = ${p2s} (n=${n2.toLocaleString()}), ${levelPct}% CI [${c2lo}, ${c2hi}], SE=${se2}. `+
-                        `Fan bands show the 50% (inner), 80% (middle), and ${levelPct}% (outer) intervals — wider bands indicate more uncertainty. `+
+                        `Fan bands show the 50% (inner), 80% (middle), and ${levelPct}% (outer) intervals G wider bands indicate more uncertainty. `+
                         `If the bands/intervals for the two groups overlap substantially, the evidence for a true difference is weak.`;
         q('propInterpret').innerHTML = propMsg;
       }catch(e){ q('propInterpret').textContent = ''; }
@@ -562,15 +865,15 @@
       try{
         const dObs = ppLabel(cd.d,1);
         const dlo = ppLabel(cd.lo,1), dhi = ppLabel(cd.hi,1);
-        const pvalText = Number.isFinite(p) ? (p < 0.001 ? '< .001' : fmt(p,3)) : '—';
-        const zText = Number.isFinite(z) ? fmt(z,3) : '—';
+        const pvalText = Number.isFinite(p) ? (p < 0.001 ? '< .001' : fmt(p,3)) : 'G';
+        const zText = Number.isFinite(z) ? fmt(z,3) : 'G';
         const includesDelta0 = (cd.lo <= delta0 && cd.hi >= delta0);
         const includeText = includesDelta0 ? 'includes' : 'does not include';
         const sig = Number.isFinite(p) && p < alpha;
-        const decision = sig ? 'statistically significant at the selected α' : 'not statistically significant at the selected α';
-        const diffMsg = `Observed difference Δ = ${dObs} with ${levelPct}% CI [${dlo}, ${dhi}]. `+
-                        `Test vs H₀: Δ = ${ppLabel(delta0,1)} → z = ${zText}, p = ${pvalText} (${decision}). `+
-                        `The ${levelPct}% CI ${includeText} the hypothesized Δ₀, so the visual estimate ${includeText} that value.`;
+        const decision = sig ? 'statistically significant at the selected +' : 'not statistically significant at the selected +';
+        const diffMsg = `Observed difference + = ${dObs} with ${levelPct}% CI [${dlo}, ${dhi}]. `+
+                        `Test vs HG: + = ${ppLabel(delta0,1)} G z = ${zText}, p = ${pvalText} (${decision}). `+
+                        `The ${levelPct}% CI ${includeText} the hypothesized +G, so the visual estimate ${includeText} that value.`;
         q('diffInterpret').innerHTML = diffMsg;
       }catch(e){ q('diffInterpret').textContent = ''; }
 
@@ -600,11 +903,13 @@
       render();
     });
 
-    // initial draw
+    // initial draw + scenario setup
+    initializeScenarios();
     render();
   </script>
 
-  <!-- Preserve original external JS include if you had one -->
-  <script src="app.js" defer></script>
+  <footer class="app-footer">
+    <p class="citation">Cite as: Baker, Andrew. (2025). A/B Proportion Tool. Marketing Bivariate Tools. https://github.com/andre/mktg_bivariate_tools/apps/ab_proportion/main_ab_proportion.html</p>
+  </footer>
 </body>
 </html>

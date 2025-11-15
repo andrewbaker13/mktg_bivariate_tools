@@ -1,0 +1,17 @@
+﻿[
+  {
+    "id": "holiday_creative",
+    "label": "Holiday creative subject line",
+    "file": "scenarios/holiday_creative.txt"
+  },
+  {
+    "id": "channel_purchase",
+    "label": "Acquisition channel by purchase action",
+    "file": "scenarios/channel_purchase.txt"
+  },
+  {
+    "id": "landing_layout",
+    "label": "Landing page layout outcomes",
+    "file": "scenarios/landing_layout.txt"
+  }
+]

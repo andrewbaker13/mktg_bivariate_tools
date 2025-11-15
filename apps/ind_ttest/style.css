@@ -1,0 +1,39 @@
+/* Theme variables */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #c0392b;
+    --accent-soft: rgba(192, 57, 43, 0.12);
+    --border-radius: 6px;
+    --card-shadow: 0 8px 18px rgba(44, 62, 80, 0.08);
+}
+
+.conf-level-btn {
+    border: 1px solid var(--accent-color);
+    background: white;
+    color: var(--accent-color);
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 600;
+}
+
+.conf-level-btn.selected,
+.conf-level-btn:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+.axis-settings {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    display: grid;
+    gap: 1.5rem;
+}
+
+.axis-card h3 {
+    color: var(--primary-color);
+}
