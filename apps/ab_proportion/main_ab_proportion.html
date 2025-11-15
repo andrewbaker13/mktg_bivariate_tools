@@ -60,51 +60,56 @@
   </header>
 
   <!-- ======== PRESERVED ORIGINAL INTRO SECTION (unchanged) ======== -->
-  <section class="intro" aria-labelledby="test-details-heading">
-    <h2 id="test-details-heading">Test Details &amp; Equations</h2>
-    <p>
-      Use this tool to compare two conversion rates (for example, Control vs Variant in an A/B test), estimate how large the difference is, and judge whether it is statistically reliable.
-    </p>
-    <p class="equation">
-      <strong>Core test (two-proportion z-test with hypothesized difference \(\Delta_0\)):</strong>
-      $$z = \frac{P_2 - P_1 - \Delta_0}{\sqrt{\dfrac{P_1(1-P_1)}{n_1} + \dfrac{P_2(1-P_2)}{n_2}}} \quad\text{(Wald / unpooled)}$$
-      <br />
-      <em>Null hypothesis: \(H_0:\ \Delta = \Delta_0\). By default \(\Delta_0 = 0\) (no difference).</em>
-    </p>
-    <p class="equation">
-      <strong>Confidence interval for the difference (\(\Delta = P_2 - P_1\)):</strong>
-      $$\Delta \pm z_{1-\alpha/2}\sqrt{\frac{P_1(1-P_1)}{n_1}+\frac{P_2(1-P_2)}{n_2}}$$
-    </p>
-    <details class="intro-notes" style="margin-top:12px;">
-      <summary>Additional notes</summary>
-      <p>The two-proportion z-test assumes independent groups, sufficiently large samples for the normal approximation, and a hypothesized difference \(\Delta_0\) you can set based on business risk (for example, \(\Delta_0 = 0\) for “no lift,” or \(\Delta_0 = 0.05\) for a 5 percentage point lift).</p>
-      <p>This implementation uses an unpooled (Wald) standard error, which keeps the calculation transparent while remaining reasonably conservative when sample sizes are moderate to large.</p>
-    </details>
-  </div>
-
-  <hr class="separator" />
-
-  <section class="scenario-section card">
-    <h2>Marketing Scenarios</h2>
-    <div class="scenario-controls" style="margin-top:12px;">
-      <label for="scenario-select">Load a marketing use case:</label>
-      <div class="scenario-controls__input">
-        <select id="scenario-select">
-          <option value="">Manual inputs (no preset)</option>
-        </select>
-        <button id="scenario-download" class="secondary hidden" type="button" disabled>Download preset</button>
-      </div>
-    </div>
-    <div id="scenario-description">
-      <p>Select a preset marketing scenario to auto-fill the control/variant inputs (or upload instructions once supported), or leave this on "Manual inputs" to enter values yourself below.</p>
+  <section class="test-overview" aria-labelledby="test-details-heading">
+    <h2 id="test-details-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
+    <div class="card">
+      <p>
+        Use this tool to compare two conversion rates (for example, Control vs Variant in an A/B test), estimate how large the difference is, and judge whether it is statistically reliable.
+      </p>
+      <p class="equation">
+        <strong>Core test (two-proportion z-test with hypothesized difference \(\Delta_0\)):</strong>
+        $$z = \frac{P_2 - P_1 - \Delta_0}{\sqrt{\dfrac{P_1(1-P_1)}{n_1} + \dfrac{P_2(1-P_2)}{n_2}}} \quad\text{(Wald / unpooled)}$$
+        <br />
+        <em>Null hypothesis: \(H_0:\ \Delta = \Delta_0\). By default \(\Delta_0 = 0\) (no difference).</em>
+      </p>
+      <p class="equation">
+        <strong>Confidence interval for the difference (\(\Delta = P_2 - P_1\)):</strong>
+        $$\Delta \pm z_{1-\alpha/2}\sqrt{\frac{P_1(1-P_1)}{n_1}+\frac{P_2(1-P_2)}{n_2}}$$
+      </p>
+      <details class="intro-notes" style="margin-top:12px;">
+        <summary>Additional notes</summary>
+        <p>The two-proportion z-test assumes independent groups, sufficiently large samples for the normal approximation, and a hypothesized difference \(\Delta_0\) you can set based on business risk (for example, \(\Delta_0 = 0\) for “no lift,” or \(\Delta_0 = 0.05\) for a 5 percentage point lift).</p>
+        <p>This implementation uses an unpooled (Wald) standard error, which keeps the calculation transparent while remaining reasonably conservative when sample sizes are moderate to large.</p>
+      </details>
     </div>
   </section>
 
   <hr class="separator" />
 
-  <section class="card inputs-panel">
-    <h2>Inputs &amp; Settings</h2>
-  <div class="controls">
+  <section class="scenario-section">
+    <h2>MARKETING SCENARIOS</h2>
+    <div class="card">
+      <div class="scenario-controls" style="margin-top:12px;">
+        <label for="scenario-select">Load a marketing use case:</label>
+        <div class="scenario-controls__input">
+          <select id="scenario-select">
+            <option value="">Manual inputs (no preset)</option>
+          </select>
+          <button id="scenario-download" class="secondary hidden" type="button" disabled>Download preset</button>
+        </div>
+      </div>
+      <div id="scenario-description">
+        <p>Select a preset marketing scenario to auto-fill the control/variant inputs (or upload instructions once supported), or leave this on "Manual inputs" to enter values yourself below.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="separator" />
+
+  <section class="inputs-panel">
+    <h2>INPUTS &amp; SETTINGS</h2>
+    <div class="card">
+      <div class="controls">
     <!-- BOX A: Groups & Inputs -->
     <div class="card" id="boxA">
       <h3>Group Inputs</h3>
@@ -171,12 +176,14 @@
         <p class="hint">Set \(\Delta_0\), the null hypothesis difference in proportion points (for example, 0.05 = 5 percentage points). Default is 0 (no difference).</p>
       </div>
 
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <details class="advanced-settings">
+          <summary>Advanced settings</summary>
+          <p>No advanced settings.</p>
+        </details>
+      </div>
     </div>
-  </div>
-    <details class="advanced-settings" style="margin-top:16px;">
-      <summary>Advanced settings</summary>
-      <p>No advanced settings.</p>
-    </details>
   </section>
 
   <hr class="separator" />
@@ -184,17 +191,20 @@
   <!-- Removed old exploratory questions per request -->
 
   <!-- ======== NEW: Charts & Titles ======== -->
+  <section class="visual-output" aria-labelledby="visual-output-heading">
+    <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+    <div class="card">
   <h3 id="propTitle">Proportions for Control and Variant (Fan Chart)</h3>
   <div id="propChart" role="img" aria-label="Proportions fan chart showing estimated proportions for Control and Variant"></div>
   <div id="propInterpret" class="hint" aria-live="polite" style="margin-top:8px;"></div>
 
-  <h3 id="diffTitle">Difference (Variant − Control) with Fan Chart</h3>
+  <h3 id="diffTitle">Difference (Variant &minus; Control) with Fan Chart</h3>
   <div id="diffChart" role="img" aria-label="Difference fan chart showing the distribution of the proportion difference (Variant minus Control) in percentage points"></div>
   <div id="diffInterpret" class="hint" aria-live="polite" style="margin-top:8px;"></div>
 
   <!-- NEW: Chart Axis Settings (below charts) -->
-  <section class="card visual-output-settings">
-    <details open>
+    <div class="card visual-output-settings">
+    <details>
       <summary>Visual Output Settings</summary>
       <div class="settings-content">
         <div class="row axis">
@@ -218,54 +228,53 @@
         </div>
       </div>
     </details>
+    </div>
+    </div>
   </section>
 
-  <section class="card reporting-section">
-    <h3>Reporting &amp; Interpretation</h3>
-    <div class="reporting-grid">
-      <div>
-        <h4>APA-Style Statistical Reporting</h4>
+  <section class="test-results" aria-labelledby="test-results-heading">
+    <h2 id="test-results-heading">TEST RESULTS</h2>
+    <div class="dual-panels">
+      <article class="card dual-panel">
+        <h3>APA-Style Statistical Reporting</h3>
         <p id="apaWriteup"></p>
-      </div>
-      <div>
-        <h4>Managerial Interpretation</h4>
+      </article>
+      <article class="card dual-panel">
+        <h3>Managerial Interpretation</h3>
         <p id="mgrWriteup"></p>
+      </article>
+    </div>
+
+    <div class="card" id="statisticalResults">
+      <h3>Summary Table of Results</h3>
+      <div class="summary-wrap">
+        <table class="summary">
+          <thead>
+            <tr>
+              <th>Measure</th>
+              <th>Label</th>
+              <th class="mono">Proportion / I" (pct pts)</th>
+              <th class="mono" id="ciLowerHeader">CI Lower</th>
+              <th class="mono" id="ciUpperHeader">CI Upper</th>
+              <th class="mono">n</th>
+            </tr>
+          </thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
       </div>
     </div>
   </section>
-
-  <section class="card" id="statisticalResults">
-    <h3>Summary Table of Results</h3>
-    <div class="summary-wrap">
-      <table class="summary">
-        <thead>
-          <tr>
-            <th>Measure</th>
-            <th>Label</th>
-            <th class="mono">Proportion / Δ (pct pts)</th>
-            <th class="mono" id="ciLowerHeader">CI Lower</th>
-            <th class="mono" id="ciUpperHeader">CI Upper</th>
-            <th class="mono">n</th>
-          </tr>
-        </thead>
-        <tbody id="summaryBody"></tbody>
-      </table>
+  <section class="diagnostics-section">
+    <h2>DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+    <div class="card">
+      <details class="diagnostics-details">
+        <summary>Diagnostics &amp; Assumption Tests</summary>
+        <div id="diagnostics-content">
+          <p class="muted">Provide both group inputs to evaluate sample sizes, balance, and confidence interval precision.</p>
+        </div>
+      </details>
     </div>
   </section>
-
-  <section class="card diagnostics-section">
-    <details class="diagnostics-details">
-      <summary>Diagnostics &amp; Assumption Tests</summary>
-      <div id="diagnostics-content">
-        <p>Diagnostics highlight whether the sample sizes, normal approximation, and hypothesis precision are stable enough for the Wald z-test.</p>
-      </div>
-    </details>
-  </section>
-
-  <!-- Bottom metadata -->
-  <div class="page-timestamps">
-    Created: <span id="ab-created-date"></span> &middot; Last updated: <span id="ab-last-updated"></span>
-  </div>
 
   <!-- ======== SCRIPT: everything needed for the added features lives here; your app.js still loads if present ======== -->
   <script>
@@ -619,48 +628,59 @@
       return { apa, mgr };
     }
 
-    function updateDiagnostics(p1, n1, p2, n2, cd, delta0){
+    function updateDiagnostics(p1, n1, p2, n2, cd, delta0, alpha, levelPct){
       const container = q("diagnostics-content");
       if(!container) return;
-      const arms = [
-        { label: q("g1label_p").textContent || "Control", success: p1 * n1, failure: (1 - p1) * n1 },
-        { label: q("g2label_p").textContent || "Variant", success: p2 * n2, failure: (1 - p2) * n2 }
+      const labels = [
+        q("g1label_p").textContent || "Control",
+        q("g2label_p").textContent || "Variant"
       ];
+      const arms = [
+        { label: labels[0], success: p1 * n1, failure: (1 - p1) * n1 },
+        { label: labels[1], success: p2 * n2, failure: (1 - p2) * n2 }
+      ];
+      const minArmSize = Math.min(n1, n2);
+      const sizeStatus = minArmSize >= 400 ? "good" : minArmSize >= 200 ? "caution" : "alert";
+      const sizeMessage = `Smallest arm currently has ${minArmSize.toLocaleString()} observations. ${sizeStatus === "good" ? "Plenty of data for stable estimates." : sizeStatus === "caution" ? "More data would tighten the estimates." : "Add traffic before making a final decision."}`;
+
       const marginalArms = arms.filter(arm => arm.success < 5 || arm.failure < 5);
+      const approxStatus = marginalArms.length ? (marginalArms.some(arm => arm.success < 3 || arm.failure < 3) ? "alert" : "caution") : "good";
       const approxMessage = marginalArms.length
         ? `${marginalArms.map(arm => arm.label).join(" & ")} have fewer than five expected successes or failures. Treat z-based CIs and p-values as rough guides.`
-        : "Large-sample conditions look reasonable (np ≥ 5 and n(1−p) ≥ 5 for both groups).";
-      const ratio = Math.min(n1, n2) / Math.max(n1, n2 || 1);
-      const balanceMessage = ratio >= 0.65
+        : "Large-sample conditions look reasonable (np >= 5 and n(1-p) >= 5 for both groups).";
+
+      const balanceRatio = Math.min(n1, n2) / Math.max(n1, n2 || 1);
+      const balanceStatus = balanceRatio >= 0.7 ? "good" : balanceRatio >= 0.5 ? "caution" : "alert";
+      const balanceMessage = balanceStatus === "good"
         ? `Sample sizes are balanced (${n1.toLocaleString()} vs ${n2.toLocaleString()}).`
         : `Sample sizes differ (${n1.toLocaleString()} vs ${n2.toLocaleString()}); this can influence precision.`;
-      const ciWidthPct = ((cd.hi - cd.lo) * 100).toFixed(1);
-      const precisionMessage = ciWidthPct < 15
-        ? `CI width is ${ciWidthPct} percentage points around the hypothesized difference of ${(delta0*100).toFixed(1)} pct. pts.`
-        : `CI width of ${ciWidthPct} percentage points signals moderate precision; treat the result as directional and consider running longer or increasing sample size.`;
+
+      const ciWidthPct = Math.abs((cd.hi - cd.lo) * 100);
+      const precisionStatus = ciWidthPct <= 10 ? "good" : ciWidthPct <= 20 ? "caution" : "alert";
+      const effectiveLevel = Number.isFinite(levelPct) ? levelPct : Math.round((1 - (alpha ?? 0.05)) * 100);
+      const precisionMessage = `The ${effectiveLevel}% CI spans ${ciWidthPct.toFixed(1)} percentage points around the hypothesized difference of ${(delta0*100).toFixed(1)} pct pts.`;
+
+      const includesNull = cd.lo <= delta0 && cd.hi >= delta0;
+      const effectStatus = includesNull ? "caution" : "good";
+      const effectMessage = includesNull
+        ? `The confidence interval still includes the hypothesized difference (${(delta0*100).toFixed(1)} pct pts). More data may be needed to rule out the null.`
+        : `The confidence interval excludes the hypothesized difference (${(delta0*100).toFixed(1)} pct pts), indicating a practical lift.`;
+
       const diagnostics = [
-        {
-          title: "Sample size & balance",
-          status: "good",
-          message: balanceMessage
-        },
-        {
-          title: "Normal approximation",
-          status: marginalArms.length ? "caution" : "good",
-          message: approxMessage
-        },
-        {
-          title: "CI precision",
-          status: ciWidthPct < 15 ? "good" : "caution",
-          message: precisionMessage
-        }
+        { title: "Per-arm sample size", status: sizeStatus, message: sizeMessage },
+        { title: "Normal approximation", status: approxStatus, message: approxMessage },
+        { title: "Sample balance", status: balanceStatus, message: balanceMessage },
+        { title: "CI precision", status: precisionStatus, message: precisionMessage },
+        { title: "Lift vs. null", status: effectStatus, message: effectMessage }
       ];
+
       const items = diagnostics.map(item => `
         <div class="diagnostic-item ${item.status}">
           <strong>${item.title}</strong>
           <p>${item.message}</p>
         </div>
       `).join("");
+
       container.innerHTML = `
         <p>Diagnostics summarize whether the Wald z-test assumptions are reasonably met for this A/B comparison.</p>
         ${items}
@@ -846,7 +866,7 @@
       q("apaWriteup").textContent = apa;
         q("mgrWriteup").textContent = mgr;
         renderTable({g1,g2}, p1, n1, c1, p2, n2, c2, cd, levelPct);
-        updateDiagnostics(p1, n1, p2, n2, cd, delta0);
+      updateDiagnostics(p1, n1, p2, n2, cd, delta0, alpha, levelPct);
 
       // -------------------- Interpretation text for Proportions chart --------------------
       try{
@@ -909,6 +929,7 @@
   </script>
 
   <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="ab-created-date">2025-11-01</span> &middot; Last updated: <span id="ab-last-updated">2025-11-15</span></p>
     <p class="citation">Cite as: Baker, Andrew. (2025). A/B Proportion Tool. Marketing Bivariate Tools. https://github.com/andre/mktg_bivariate_tools/apps/ab_proportion/main_ab_proportion.html</p>
   </footer>
 </body>

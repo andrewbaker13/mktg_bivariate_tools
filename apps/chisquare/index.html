@@ -9,58 +9,71 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="../../shared/css/main.css">
     <link rel="stylesheet" href="styles.css">
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   </head>
   <body>
     <main class="container">
-      <header class="intro">
-        <h1>Chi-Square Test of Independence</h1>
-        <p class="plain-language">Explore whether two categorical variables are associated using a contingency table. Enter the observed counts below; we compute expected counts, &chi;&sup2;, df, p-value, and an interpretation.</p>
-        <div class="equation">Test statistic: &chi;&sup2; = &Sigma;<sub>i,j</sub>
-          <span class="frac">
-            <span class="num">(O<sub>ij</sub> &minus; E<sub>ij</sub>)&sup2;</span>
-            <span class="den">E<sub>ij</sub></span>
-          </span>
+      <header class="hero-header">
+        <div class="hero-header__top">
+          <h1>Chi-Square Test of Independence</h1>
         </div>
-        <div class="equation">Expected count: E<sub>ij</sub> =
-          <span class="frac">
-            <span class="num">(Row<sub>i</sub> total) &times; (Col<sub>j</sub> total)</span>
-            <span class="den">Grand total</span>
-          </span>
-        </div>
-        <p class="plain-language">Use the chi-square test of independence to check if the distribution of one categorical variable differs across the levels of another. In marketing, you might test whether purchase intent differs by ad version, or whether click-through rates vary across audience segments.</p>
+        <p class="hero-header__lede">Explore whether two categorical variables are associated using a contingency table. Enter the observed counts below; we compute expected counts, &chi;&sup2;, df, p-value, and an interpretation.</p>
       </header>
 
-      <section class="scenario-section card">
-        <div class="scenario-header">
-          <h2>Marketing presets</h2>
-          <span>Three preloaded case studies</span>
-        </div>
-        <div class="scenario-controls">
-          <label for="scenario-select">Choose a preset scenario</label>
-          <select id="scenario-select">
-            <option value="">Manual inputs (no preset)</option>
-          </select>
-          <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
-        </div>
-        <div id="scenario-description">
-          <p>Pick a scenario to auto-fill the contingency table and narrative with real marketing counts from curated analyses. Switch back to manual inputs if you want to customize the numbers further.</p>
+      <section class="test-overview">
+        <h2 class="section-label">TEST OVERVIEW &amp; EQUATIONS</h2>
+        <div class="card">
+          <p>Use this tool to determine whether the distribution of one categorical variable differs across the levels of another. In marketing, this helps validate whether response rates shift across creative, channel, or audience slices.</p>
+          <p class="equation">
+            <strong>Chi-square statistic:</strong>
+            $$\chi^2 = \sum_{i=1}^{r} \sum_{j=1}^{c} \frac{(O_{ij} - E_{ij})^2}{E_{ij}}$$
+          </p>
+          <p class="equation">
+            <strong>Expected cell count:</strong>
+            $$E_{ij} = \frac{(\text{Row}_i \text{ total})(\text{Col}_j \text{ total})}{\text{Grand total}}$$
+          </p>
+          <details class="intro-notes" style="margin-top:12px;">
+            <summary>Additional notes</summary>
+            <p>Chi-square approximations are most reliable when each expected count exceeds 5. When sparse cells remain, consider combining categories or switching to an exact or simulation-based procedure.</p>
+          </details>
         </div>
       </section>
 
-      <section class="card">
-        <h2>Upload a contingency table</h2>
-        <p class="plain-language">Drop a CSV/TSV where the first row lists column names, the first column contains row labels, and every other cell is the observed count.</p>
-        <div id="crosstab-dropzone" class="dropzone" role="button" tabindex="0">
-          <p class="dropzone-title">Drag & drop your table</p>
-          <p class="dropzone-note">Supported extensions: .csv, .tsv, .txt. The upload will replace the current counts and labels.</p>
+      <section class="scenario-section">
+        <h2>MARKETING SCENARIOS</h2>
+        <div class="card">
+          <div class="scenario-header">
+            <span>Three preloaded case studies</span>
+          </div>
+          <div class="scenario-controls">
+            <label for="scenario-select">Choose a preset scenario</label>
+            <select id="scenario-select">
+              <option value="">Manual inputs (no preset)</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
+          </div>
+          <div id="scenario-description">
+            <p>Pick a scenario to auto-fill the contingency table and narrative with real marketing counts from curated analyses. Switch back to manual inputs if you want to customize the numbers further.</p>
+          </div>
         </div>
-        <input type="file" id="crosstab-file-input" accept=".csv,.tsv,.txt" class="hidden" />
-        <button id="download-inputs" class="secondary" type="button" style="margin-top:0.75rem;">Download current inputs</button>
       </section>
 
-      <section class="controls-container">
+      <section class="inputs-card">
+        <h2>INPUTS &amp; SETTINGS</h2>
+        <div class="card">
+          <h3>Upload a contingency table</h3>
+          <p class="plain-language">Drop a CSV/TSV where the first row lists column names, the first column contains row labels, and every other cell is the observed count.</p>
+          <div id="crosstab-dropzone" class="dropzone" role="button" tabindex="0">
+            <p class="dropzone-title">Drag & drop your table</p>
+            <p class="dropzone-note">Supported extensions: .csv, .tsv, .txt. The upload will replace the current counts and labels.</p>
+          </div>
+          <input type="file" id="crosstab-file-input" accept=".csv,.tsv,.txt" class="hidden" />
+          <button id="download-inputs" class="secondary" type="button" style="margin-top:0.75rem;">Download current inputs</button>
+        </div>
+
+        <div class="card controls-container">
         <div class="control-column">
-          <h2>Design your table</h2>
+          <h3>Design your table</h3>
           <div class="control-group">
             <label for="rows">Rows</label>
             <input id="rows" type="number" min="2" max="10" value="2" />
@@ -80,7 +93,8 @@
               <option value="0.01">0.01</option>
             </select>
           </div>
-          <details class="control-group">
+          <div class="card control-group">
+            <details>
             <summary>Advanced Settings</summary>
             <div class="plain-language" style="margin:6px 0 8px;">Options for special cases and small samples.</div>
             <label style="display:block; margin-top:6px;">
@@ -89,6 +103,7 @@
             </label>
             <div class="plain-language">Use for small-sample 2&times;2 tables to reduce bias.</div>
           </details>
+          </div>
           <div class="control-group">
             <button id="buildTable">Build Table</button>
             <button id="clearTable" class="secondary">Clear</button>
@@ -97,7 +112,7 @@
         </div>
 
         <div class="control-column">
-          <h2>Observed Counts</h2>
+          <h3>Observed Counts</h3>
           
           <div id="tableContainer"></div>
           <p id="assumptionNote" class="plain-language"></p>
@@ -117,63 +132,82 @@
             <button id="toggleEditLabels" class="secondary">Edit Row/Column Names</button>
           </div>
         </div>
+        </div>
       </section>
 
       <hr class="separator" />
 
-      <section class="metrics-panel">
-        <h2>Results</h2>
-        <div class="metric-output">Chi-square (&chi;&sup2;): <span id="chi2" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output">Degrees of freedom: <span id="df" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output">p-value (upper tail): <span id="pValue" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output">Effect size (Cram&eacute;r's V): <span id="cramerV" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output">Decision (&alpha;): <span id="decision" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output">Interpretation: <span id="interpretation">&ndash;</span></div>
+      <section class="test-results">
+        <h2>TEST RESULTS</h2>
+        <div class="card metrics-panel">
+          <div class="metric-output">Chi-square (&chi;&sup2;): <span id="chi2" class="dynamic-value">&ndash;</span></div>
+          <div class="metric-output">Degrees of freedom: <span id="df" class="dynamic-value">&ndash;</span></div>
+          <div class="metric-output">p-value (upper tail): <span id="pValue" class="dynamic-value">&ndash;</span></div>
+          <div class="metric-output">Effect size (Cram&eacute;r's V): <span id="cramerV" class="dynamic-value">&ndash;</span></div>
+          <div class="metric-output">Decision (&alpha;): <span id="decision" class="dynamic-value">&ndash;</span></div>
+          <div class="metric-output">Interpretation: <span id="interpretation">&ndash;</span></div>
+        </div>
+
+        <div class="dual-panels">
+          <article class="card dual-panel">
+            <h3>APA-Style Statistical Reporting</h3>
+            <p id="apaReport"></p>
+          </article>
+          <article class="card dual-panel">
+            <h3>Managerial Interpretation</h3>
+            <p id="managerInterpretation"></p>
+          </article>
+        </div>
       </section>
 
-      <section class="dual-panels">
-        <article class="card dual-panel">
-          <h2>APA Style Report</h2>
-          <p id="apaReport" class="plain-language"></p>
-        </article>
-        <article class="card dual-panel">
-          <h2>Managerial Interpretation</h2>
-          <p id="managerInterpretation" class="plain-language"></p>
-        </article>
-      </section>
-
-      <section>
-        <h2>Stacked 100% Bar Chart</h2>
-        <div id="chartCaption" class="plain-language"></div>
-        <div id="stackedChart" class="chart-container"></div>
-        <div id="chartLegend" class="chart-legend"></div>
-        <div id="chartTooltip" class="chart-tooltip" style="display:none;"></div>
-        <details class="visualization-options" open>
-          <summary>Visualization Options</summary>
-          <div class="visualization-options__body">
-            <div class="control-group">
-              <label for="chartXAxis">Chart X-axis variable</label>
-              <select id="chartXAxis">
-                <option value="rows">Rows on X (stack by columns)</option>
-                <option value="columns">Columns on X (stack by rows)</option>
-              </select>
-              <div class="plain-language">Bars show 100% stacked proportions by the chosen X variable.</div>
-            </div>
-            <div class="control-group">
-              <button id="flipStackOrder" class="secondary" type="button">Flip stack order</button>
-              <p class="plain-language" style="margin:4px 0 0;">Reverse the Y-axis stacking so the bottom segment moves to the top.</p>
-            </div>
+      <section class="visual-output">
+        <h2>VISUAL OUTPUT</h2>
+        <div class="card">
+          <h3>Stacked 100% Bar Chart</h3>
+          <div id="chartCaption" class="plain-language"></div>
+          <div id="stackedChart" class="chart-container"></div>
+          <div id="chartLegend" class="chart-legend"></div>
+          <div id="chartTooltip" class="chart-tooltip" style="display:none;"></div>
+          <div class="card visualization-options">
+            <details>
+              <summary>Visualization Options</summary>
+              <div class="visualization-options__body">
+                <div class="control-group">
+                  <label for="chartXAxis">Chart X-axis variable</label>
+                  <select id="chartXAxis">
+                    <option value="rows">Rows on X (stack by columns)</option>
+                    <option value="columns">Columns on X (stack by rows)</option>
+                  </select>
+                  <div class="plain-language">Bars show 100% stacked proportions by the chosen X variable.</div>
+                </div>
+                <div class="control-group">
+                  <button id="flipStackOrder" class="secondary" type="button">Flip stack order</button>
+                  <p class="plain-language" style="margin:4px 0 0;">Reverse the Y-axis stacking so the bottom segment moves to the top.</p>
+                </div>
+              </div>
+            </details>
           </div>
-        </details>
+        </div>
       </section>
 
-      <section>
-        <h2>Expected Counts</h2>
-        <div id="expectedContainer" class="mini-table"></div>
-        <details style="margin-top:8px">
-          <summary>What are expected counts?</summary>
-          <p class="plain-language">Under the null hypothesis (independence), the expected count for each cell is what we would anticipate from the row and column totals alone. These expected values are used in the chi-square statistic by comparing observed and expected counts and summing the squared differences scaled by the expected value: &chi;&sup2; = &Sigma;<sub>i,j</sub> <span class="frac"><span class="num">(O<sub>ij</sub> &minus; E<sub>ij</sub>)&sup2;</span><span class="den">E<sub>ij</sub></span></span>. When many expected counts are small (e.g., &lt; 5), results should be interpreted with caution.</p>
-        </details>
+      <section class="diagnostics-section">
+        <h2>DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+        <div class="card">
+          <details class="diagnostics-details">
+            <summary>Diagnostics &amp; Assumption Tests</summary>
+            <div id="diagnostics-content">
+              <p class="muted">Enter observed counts to check sample size, expected counts, and leverage diagnostics.</p>
+            </div>
+          </details>
+        </div>
+        <div class="card expected-table">
+          <h3>Expected Counts</h3>
+          <div id="expectedContainer" class="mini-table"></div>
+          <details style="margin-top:8px">
+            <summary>What are expected counts?</summary>
+            <p class="plain-language">Under the null hypothesis (independence), the expected count for each cell is what we would anticipate from the row and column totals alone. These expected values are used in the chi-square statistic by comparing observed and expected counts and summing the squared differences scaled by the expected value: &chi;&sup2; = &Sigma;<sub>i,j</sub> <span class="frac"><span class="num">(O<sub>ij</sub> &minus; E<sub>ij</sub>)&sup2;</span><span class="den">E<sub>ij</sub></span></span>. When many expected counts are small (e.g., &lt; 5), results should be interpreted with caution.</p>
+          </details>
+        </div>
       </section>
 
       <!-- Edit Panel -->
@@ -204,8 +238,20 @@
       </div>
 
     </main>
+    <footer class="app-footer">
+      <p class="page-timestamps">Created: <span id="created-date">2025-11-06</span> &middot; Last updated: <span id="modified-date">2025-11-15</span></p>
+      <p class="citation">Cite as: Baker, Andrew. (2025). Chi-Square Test of Independence Tool. Marketing Bivariate Tools. https://github.com/andre/mktg_bivariate_tools/apps/chisquare/index.html</p>
+    </footer>
     <script src="../../shared/js/csv_utils.js"></script>
     <script src="../../shared/js/ui_utils.js"></script>
     <script src="app.js"></script>
+    <script>
+      (function () {
+        var created = document.getElementById('created-date');
+        var modified = document.getElementById('modified-date');
+        if (created) created.textContent = new Date('2025-11-06').toLocaleDateString();
+        if (modified) modified.textContent = new Date().toLocaleDateString();
+      })();
+    </script>
   </body>
   </html>

@@ -19,63 +19,71 @@
     </header>
 
     <main class="app-main">
-        <section class="equation-section card">
-            <h2>Key Equations</h2>
-            <p>One-way ANOVA partitions variability into signal (between groups) and noise (within groups):</p>
-            <div class="equation-display">
-                \[
-                \begin{aligned}
-                \mathrm{SS}_{\text{between}} &= \sum_{i=1}^{k} n_i \left(\bar{x}_i - \bar{x}_{\text{grand}}\right)^2 \\
-                \mathrm{SS}_{\text{within}} &= \sum_{i=1}^{k} (n_i - 1)s_i^2 \\
-                F &= \frac{\mathrm{MS}_{\text{between}}}{\mathrm{MS}_{\text{within}}} = \frac{\mathrm{SS}_{\text{between}}/(k-1)}{\mathrm{SS}_{\text{within}}/(N-k)}
-                \end{aligned}
-                \]
-            </div>
-            <div class="equation-definitions">
-                <p><strong>Where:</strong></p>
-                <ul>
-                    <li>\( k \) is the number of groups and \( N = \sum_{i=1}^{k} n_i \) is the total sample size.</li>
-                    <li>\( n_i \) is the sample size, \( \bar{x}_i \) the sample mean, and \( s_i \) the sample standard deviation for group \( i \).</li>
-                    <li>\( \bar{x}_{\text{grand}} \) is the grand mean across all observations.</li>
-                    <li>\( \mathrm{MS}_{\text{between}} = \mathrm{SS}_{\text{between}}/(k-1) \) and \( \mathrm{MS}_{\text{within}} = \mathrm{SS}_{\text{within}}/(N-k) \).</li>
-                </ul>
-            </div>
-            <p>The omnibus F statistic compares the average between-group variance to the average within-group variance.</p>
-            <div class="technical-note">
-                <h3>From omnibus to follow-ups</h3>
-                <p>
-                    A significant F indicates at least one group differs from the overall mean. Planned comparisons—such as
-                    Tukey's HSD—then isolate which pairs create that signal while controlling family-wise error.
-                </p>
-                <p>
-                    For an accessible refresher on ANOVA structure, review the
-                    <a href="https://en.wikipedia.org/wiki/One-way_analysis_of_variance" target="_blank" rel="noopener noreferrer">
-                        one-way ANOVA article on Wikipedia
-                    </a>.
-                </p>
+        <section class="test-overview">
+            <h2>TEST OVERVIEW &amp; EQUATIONS</h2>
+            <div class="card equation-section">
+                <p>One-way ANOVA partitions variability into signal (between groups) and noise (within groups):</p>
+                <div class="equation-display">
+                    \[
+                    \begin{aligned}
+                    \mathrm{SS}_{\text{between}} &= \sum_{i=1}^{k} n_i \left(\bar{x}_i - \bar{x}_{\text{grand}}\right)^2 \\
+                    \mathrm{SS}_{\text{within}} &= \sum_{i=1}^{k} (n_i - 1)s_i^2 \\
+                    F &= \frac{\mathrm{MS}_{\text{between}}}{\mathrm{MS}_{\text{within}}} = \frac{\mathrm{SS}_{\text{between}}/(k-1)}{\mathrm{SS}_{\text{within}}/(N-k)}
+                    \end{aligned}
+                    \]
+                </div>
+                <div class="equation-definitions">
+                    <p><strong>Where:</strong></p>
+                    <ul>
+                        <li>\( k \) is the number of groups and \( N = \sum_{i=1}^{k} n_i \) is the total sample size.</li>
+                        <li>\( n_i \) is the sample size, \( \bar{x}_i \) the sample mean, and \( s_i \) the sample standard deviation for group \( i \).</li>
+                        <li>\( \bar{x}_{\text{grand}} \) is the grand mean across all observations.</li>
+                        <li>\( \mathrm{MS}_{\text{between}} = \mathrm{SS}_{\text{between}}/(k-1) \) and \( \mathrm{MS}_{\text{within}} = \mathrm{SS}_{\text{within}}/(N-k) \).</li>
+                    </ul>
+                </div>
+                <details class="additional-notes" style="margin-top:12px;">
+                    <summary>Additional Notes</summary>
+                    <p>The omnibus F statistic compares the average between-group variance to the average within-group variance.</p>
+                    <div class="technical-note">
+                        <h3>From omnibus to follow-ups</h3>
+                        <p>
+                            A significant F indicates at least one group differs from the overall mean. Planned comparisons—such as
+                            Tukey's HSD—then isolate which pairs create that signal while controlling family-wise error.
+                        </p>
+                        <p>
+                            For an accessible refresher on ANOVA structure, review the
+                            <a href="https://en.wikipedia.org/wiki/One-way_analysis_of_variance" target="_blank" rel="noopener noreferrer">
+                                one-way ANOVA article on Wikipedia
+                            </a>.
+                        </p>
+                    </div>
+                </details>
             </div>
         </section>
 
-        <section class="scenario-section card">
-            <h2>Practical Scenario</h2>
-            <div class="scenario-controls">
-                <label for="scenario-select">Select a marketing scenario:</label>
-                <select id="scenario-select">
-                    <option value="">Manual inputs (no preset)</option>
-                </select>
-            </div>
-            <div id="scenario-description">
-                <p>
-                    Choose a preset to auto-fill the group statistics and narrative for a common marketing analysis, or stay on
-                    "Manual inputs" to describe your own experiment. Presets can be extended by dropping additional
-                    <code>.txt</code> scenario files into the <code>scenarios</code> folder.
-                </p>
+        <section class="scenario-section">
+            <h2>MARKETING SCENARIOS</h2>
+            <div class="card">
+                <div class="scenario-controls">
+                    <label for="scenario-select">Select a marketing scenario:</label>
+                    <select id="scenario-select">
+                        <option value="">Manual inputs (no preset)</option>
+                    </select>
+                </div>
+                <div id="scenario-description">
+                    <p>
+                        Choose a preset to auto-fill the group statistics and narrative for a common marketing analysis, or stay on
+                        "Manual inputs" to describe your own experiment. Presets can be extended by dropping additional
+                        <code>.txt</code> scenario files into the <code>scenarios</code> folder.
+                    </p>
+                </div>
             </div>
         </section>
 
         <section class="input-stack">
+            <h2>INPUTS &amp; SETTINGS</h2>
             <article class="card group-controls">
-                <h2>Group Summary Inputs</h2>
+                <h3>Group Summary Inputs</h3>
                 <p>Select how many groups you want to compare (2–10), then provide each group's mean, standard deviation, and sample size.</p>
                 <div class="input-group inline">
                     <label for="group-count">Select number of groups:</label>
@@ -95,13 +103,13 @@
             </article>
 
             <article class="card group-input-block" aria-label="Group statistics entry">
-                <h2>Enter Group Statistics</h2>
+                <h3>Enter Group Statistics</h3>
                 <p class="hint">Each row shows the fields for one group. Provide all four values to include the group in the ANOVA.</p>
                 <div id="group-inputs" class="group-inputs" aria-live="polite"></div>
             </article>
 
             <article class="card analysis-settings test-options">
-                <h2>Analysis Settings</h2>
+                <h3>Analysis Settings</h3>
                 <div class="confidence-buttons" role="group" aria-label="Select confidence level for mean intervals">
                     <button type="button" class="confidence-button" data-level="0.90">90% CI</button>
                     <button type="button" class="confidence-button active" data-level="0.95">95% CI</button>
@@ -147,14 +155,15 @@
         </section>
 
         <section class="visualization-section">
+            <h2>VISUAL OUTPUT</h2>
             <div class="visualization-wrapper">
                 <article class="card chart-card" aria-labelledby="means-chart-title">
-                    <h2 id="means-chart-title">Group Means Fan Chart</h2>
+                    <h3 id="means-chart-title">Group Means Fan Chart</h3>
                     <div id="means-chart" class="plot-container" role="img" aria-live="polite" aria-label="Fan chart showing group means and confidence intervals"></div>
                     <div id="means-narrative" class="chart-narrative" aria-live="polite"></div>
                 </article>
                 <article class="card chart-card hidden" id="planned-chart-card" aria-labelledby="planned-chart-title">
-                    <h2 id="planned-chart-title">Tukey Planned Comparisons</h2>
+                    <h3 id="planned-chart-title">Tukey Planned Comparisons</h3>
                     <div id="planned-chart" class="plot-container" role="img" aria-live="polite" aria-label="Bar chart showing Tukey planned comparisons"></div>
                     <div id="planned-narrative" class="chart-narrative" aria-live="polite"></div>
                 </article>
@@ -162,57 +171,54 @@
         </section>
 
         <section class="chart-settings" aria-label="Chart settings">
-            <article class="axis-card">
-                <h3>Means Fan Chart Axis</h3>
-                <label class="switch-label">
-                    <input type="checkbox" id="means-axis-lock">
-                    <span>Lock axis to custom range</span>
-                </label>
-                <div class="range-inputs">
-                    <div class="input-group inline">
-                        <label for="means-axis-min">Min:</label>
-                        <input type="number" id="means-axis-min" step="any">
-                    </div>
-                    <div class="input-group inline">
-                        <label for="means-axis-max">Max:</label>
-                        <input type="number" id="means-axis-max" step="any">
-                    </div>
-                </div>
-                <button id="reset-axis" type="button" class="secondary">Reset Axis Controls</button>
-            </article>
-            <article class="axis-card">
-                <h3>Mean Reference Options</h3>
-                <p>Overlay a dotted line on the fan chart for either the sample-size-weighted grand mean or an equal-weight mean.</p>
-                <label class="switch-label">
-                    <input type="checkbox" id="show-overall-mean">
-                    <span>Show overall mean line</span>
-                </label>
-                <div class="mean-type-options">
-                    <label class="radio-label">
-                        <input type="radio" name="mean-reference-type" value="grand" checked>
-                        <span>Grand mean (weights by each group’s sample size)</span>
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="mean-reference-type" value="weighted">
-                        <span>Equal-weight mean (treat every group equally)</span>
-                    </label>
-                </div>
-            </article>
+            <div class="card">
+                <details>
+                    <summary>Visual Output Settings</summary>
+                    <article class="axis-card">
+                        <h3>Means Fan Chart Axis</h3>
+                        <label class="switch-label">
+                            <input type="checkbox" id="means-axis-lock">
+                            <span>Lock axis to custom range</span>
+                        </label>
+                        <div class="range-inputs">
+                            <div class="input-group inline">
+                                <label for="means-axis-min">Min:</label>
+                                <input type="number" id="means-axis-min" step="any">
+                            </div>
+                            <div class="input-group inline">
+                                <label for="means-axis-max">Max:</label>
+                                <input type="number" id="means-axis-max" step="any">
+                            </div>
+                        </div>
+                        <button id="reset-axis" type="button" class="secondary">Reset Axis Controls</button>
+                    </article>
+                    <article class="axis-card">
+                        <h3>Mean Reference Options</h3>
+                        <p>Overlay a dotted line on the fan chart for either the sample-size-weighted grand mean or an equal-weight mean.</p>
+                        <label class="switch-label">
+                            <input type="checkbox" id="show-overall-mean">
+                            <span>Show overall mean line</span>
+                        </label>
+                        <div class="mean-type-options">
+                            <label class="radio-label">
+                                <input type="radio" name="mean-reference-type" value="grand" checked>
+                                <span>Grand mean (weights by each group's sample size)</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="mean-reference-type" value="weighted">
+                                <span>Equal-weight mean (treat every group equally)</span>
+                            </label>
+                        </div>
+                    </article>
+                </details>
+            </div>
         </section>
 
+        <h2>TEST RESULTS</h2>
         <div id="interpretation" class="card interpretation" aria-live="polite"></div>
 
-        <section class="card diagnostics-section">
-            <details class="diagnostics-details">
-                <summary>Diagnostics &amp; Assumption Tests</summary>
-                <div id="diagnostics-content">
-                    <p>Run an analysis to populate the diagnostics summary.</p>
-                </div>
-            </details>
-        </section>
-
         <section class="summary-section card" aria-live="polite">
-            <h2>Summary of Estimates</h2>
+            <h3>Summary of Estimates</h3>
             <table class="data-table">
                 <thead>
                     <tr>
@@ -227,19 +233,22 @@
             </table>
         </section>
 
-        <section class="critical-thinking card">
-            <h2>Critical Thinking Questions</h2>
-            <ul>
-                <li>Do the groups with the largest gaps also carry the largest sample sizes, or are extreme means driven by small cells?</li>
-                <li>How would you translate a significant omnibus result into creative or budget decisions?</li>
-                <li>Which operational factors (seasonality, targeting, offer depth) might inflate within-group variance and mask true mean gaps?</li>
-                <li>What follow-up experiment or data source would help confirm the planned comparison findings before scaling?</li>
-            </ul>
+        <section class="diagnostics-section">
+            <h2>DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+            <div class="card">
+                <details class="diagnostics-details">
+                    <summary>Diagnostics &amp; Assumption Tests</summary>
+                    <div id="diagnostics-content">
+                        <p>Run an analysis to populate the diagnostics summary.</p>
+                    </div>
+                </details>
+            </div>
         </section>
+
     </main>
 
     <footer class="app-footer">
-        <p class="page-timestamps">Created: <span id="created-date"></span> &middot; Last updated: <span id="modified-date"></span></p>
+        <p class="page-timestamps">Created: <span id="created-date">2025-11-06</span> &middot; Last updated: <span id="modified-date">2025-11-15</span></p>
         <p class="citation">Cite as: Baker, Andrew. (2025). One-Way ANOVA Tool. Marketing Bivariate Tools. https://github.com/andre/mktg_bivariate_tools/apps/onewayanova/main_onewayanova.html</p>
     </footer>
 

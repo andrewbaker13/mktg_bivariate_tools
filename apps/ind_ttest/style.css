@@ -2,27 +2,28 @@
 :root {
     --primary-color: #2c3e50;
     --secondary-color: #34495e;
-    --accent-color: #c0392b;
-    --accent-soft: rgba(192, 57, 43, 0.12);
+    --accent-color: #2a7de1;
+    --accent-soft: rgba(42, 125, 225, 0.12);
     --border-radius: 6px;
     --card-shadow: 0 8px 18px rgba(44, 62, 80, 0.08);
 }
 
-.conf-level-btn {
-    border: 1px solid var(--accent-color);
-    background: white;
-    color: var(--accent-color);
+button.conf-level-btn {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #1f2a37;
     padding: 0.45rem 0.9rem;
-    border-radius: 999px;
+    border-radius: 10px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease;
     font-weight: 600;
 }
 
-.conf-level-btn.selected,
-.conf-level-btn:hover {
+button.conf-level-btn.selected,
+button.conf-level-btn:hover {
     background: var(--accent-color);
-    color: white;
+    color: #fff;
+    border-color: var(--accent-color);
 }
 
 .axis-settings {

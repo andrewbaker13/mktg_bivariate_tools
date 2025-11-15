@@ -32,6 +32,12 @@ let uploadedMatrixData = null;
 let scatterPairs = [];
 let activeScatterPair = null;
 let selectedCorrelationMethod = CorrelationMethods.PEARSON;
+const scatterVisualSettings = {
+    showTrendline: true,
+    showConfidenceBand: true
+};
+let heatmapScaleChoice = 'diverging';
+let latestMatrixStats = null;
 
 // Utility helpers
 function clamp(value, min, max) {
@@ -953,7 +959,10 @@ function renderScatterPlot(pair) {
     const traces = [pointTrace];
     let ciBandTrace = null;
     let ciLabelText = '';
-    if (slopeIntercept && selectedCorrelationMethod === CorrelationMethods.PEARSON) {
+    const allowBand = selectedCorrelationMethod === CorrelationMethods.PEARSON;
+    const showBand = scatterVisualSettings.showConfidenceBand && allowBand;
+    const showTrendline = scatterVisualSettings.showTrendline;
+    if (slopeIntercept && allowBand) {
         const n = Math.min(xValues.length, yValues.length);
         const meanX = mean(xValues);
         const sxx = xValues.reduce((sum, value) => sum + Math.pow(value - meanX, 2), 0);
@@ -1002,10 +1011,10 @@ function renderScatterPlot(pair) {
             }
         }
     }
-    if (ciBandTrace) {
+    if (ciBandTrace && showBand) {
         traces.unshift(ciBandTrace);
     }
-    if (slopeIntercept) {
+    if (slopeIntercept && showTrendline) {
         const sortedX = [...xValues].sort((a, b) => a - b);
         const minX = sortedX[0];
         const maxX = sortedX[sortedX.length - 1];
@@ -1045,12 +1054,30 @@ function renderScatterPlot(pair) {
         : slopeIntercept && isFinite(slopeIntercept.r)
             ? slopeIntercept.r
             : calculateCorrelationCoefficient(xValues, yValues);
-    const lineNote = slopeIntercept ? '; line depicts the least-squares fit' : '';
+    const lineNote = slopeIntercept && showTrendline ? '; line depicts the least-squares fit' : '';
     const methodNote = isFinite(correlationValue)
         ? `; ${methodLabelShort} estimate (${coefficientSymbol} = ${formatNumber(correlationValue, 3)})`
         : '';
-    const bandNote = ciLabelText ? `; ${ciLabelText} shown only for Pearson mode` : '';
+    let bandNote = '';
+    if (ciLabelText) {
+        bandNote = showBand ? `; ${ciLabelText} shown only for Pearson mode` : '; confidence band hidden via settings';
+    }
     note.textContent = `Points show paired observations for ${pair.y.name} vs ${pair.x.name}${lineNote}${methodNote}${bandNote}.`;
+}
+
+function getHeatmapColorscale() {
+    switch (heatmapScaleChoice) {
+        case 'rdBu':
+            return 'RdBu';
+        case 'viridis':
+            return 'Viridis';
+        default:
+            return [
+                [0, '#2d6f93'],
+                [0.5, '#f8f8f8'],
+                [1, '#c0392b']
+            ];
+    }
 }
 
 function renderCorrelationHeatmap(stats) {
@@ -1062,8 +1089,10 @@ function renderCorrelationHeatmap(stats) {
         if (note) {
             note.textContent = 'Upload multi-column data to view the correlation heatmap.';
         }
+        latestMatrixStats = null;
         return;
     }
+    latestMatrixStats = stats;
     const method = stats.method || selectedCorrelationMethod;
     const coefficientSymbol = getCoefficientSymbol(method);
     const variables = stats.variables;
@@ -1097,11 +1126,7 @@ function renderCorrelationHeatmap(stats) {
         z,
         x: variables,
         y: variables,
-        colorscale: [
-            [0, '#2d6f93'],
-            [0.5, '#f8f8f8'],
-            [1, '#c0392b']
-        ],
+        colorscale: getHeatmapColorscale(),
         zmin: -1,
         zmax: 1,
         colorbar: {
@@ -1421,6 +1446,7 @@ function clearVisuals() {
         Plotly.purge('difference-chart');
         Plotly.purge('matrix-heatmap');
     }
+    latestMatrixStats = null;
     const meanNote = document.getElementById('mean-diff-chart-note');
     if (meanNote) {
         meanNote.textContent = 'Provide data to summarize the correlation estimate and confidence interval.';
@@ -1471,8 +1497,12 @@ function updateResults() {
         updateDiagnostics(null, { mode: InputModes.MATRIX });
         modifiedDate = new Date().toLocaleDateString();
         const modifiedLabel = document.getElementById('modified-date');
+        const heroModifiedLabel = document.getElementById('hero-modified-date');
         if (modifiedLabel) {
             modifiedLabel.textContent = modifiedDate;
+        }
+        if (heroModifiedLabel) {
+            heroModifiedLabel.textContent = modifiedDate;
         }
         return;
     }
@@ -1505,8 +1535,12 @@ function updateResults() {
     updateDiagnostics(stats, data);
     modifiedDate = new Date().toLocaleDateString();
     const modifiedLabel = document.getElementById('modified-date');
+    const heroModifiedLabel = document.getElementById('hero-modified-date');
     if (modifiedLabel) {
         modifiedLabel.textContent = modifiedDate;
+    }
+    if (heroModifiedLabel) {
+        heroModifiedLabel.textContent = modifiedDate;
     }
 }
 function switchMode(mode, { suppressUpdate = false } = {}) {
@@ -1556,9 +1590,11 @@ function setupMethodControls() {
             selectedCorrelationMethod = radio.value === CorrelationMethods.SPEARMAN
                 ? CorrelationMethods.SPEARMAN
                 : CorrelationMethods.PEARSON;
+            refreshVisualSettingsAvailability();
             updateResults();
         });
     });
+    refreshVisualSettingsAvailability();
 }
 
 function activateConfidenceButton(level) {
@@ -1595,6 +1631,45 @@ function setupConfidenceButtons() {
             updateResults();
         });
     });
+}
+
+function setupVisualSettingsControls() {
+    const trendToggle = document.getElementById('toggle-trendline');
+    if (trendToggle) {
+        trendToggle.checked = scatterVisualSettings.showTrendline;
+        trendToggle.addEventListener('change', () => {
+            scatterVisualSettings.showTrendline = trendToggle.checked;
+            renderScatterPlot(activeScatterPair);
+        });
+    }
+    const bandToggle = document.getElementById('toggle-confidence-band');
+    if (bandToggle) {
+        bandToggle.checked = scatterVisualSettings.showConfidenceBand;
+        bandToggle.addEventListener('change', () => {
+            scatterVisualSettings.showConfidenceBand = bandToggle.checked;
+            renderScatterPlot(activeScatterPair);
+        });
+    }
+    const heatmapSelect = document.getElementById('heatmap-scale');
+    if (heatmapSelect) {
+        heatmapSelect.value = heatmapScaleChoice;
+        heatmapSelect.addEventListener('change', () => {
+            heatmapScaleChoice = heatmapSelect.value || 'diverging';
+            renderCorrelationHeatmap(latestMatrixStats);
+        });
+    }
+    refreshVisualSettingsAvailability();
+}
+
+function refreshVisualSettingsAvailability() {
+    const bandToggle = document.getElementById('toggle-confidence-band');
+    if (!bandToggle) return;
+    const isPearson = selectedCorrelationMethod === CorrelationMethods.PEARSON;
+    bandToggle.disabled = !isPearson;
+    const wrapper = bandToggle.closest('.switch-option');
+    if (wrapper) {
+        wrapper.classList.toggle('disabled', !isPearson);
+    }
 }
 
 function setupAlphaControl() {
@@ -1981,8 +2056,12 @@ async function setupScenarioSelector() {
 document.addEventListener('DOMContentLoaded', () => {
     const createdLabel = document.getElementById('created-date');
     const modifiedLabel = document.getElementById('modified-date');
+    const heroCreatedLabel = document.getElementById('hero-created-date');
+    const heroModifiedLabel = document.getElementById('hero-modified-date');
     if (createdLabel) createdLabel.textContent = CREATED_DATE;
     if (modifiedLabel) modifiedLabel.textContent = modifiedDate;
+    if (heroCreatedLabel) heroCreatedLabel.textContent = CREATED_DATE;
+    if (heroModifiedLabel) heroModifiedLabel.textContent = modifiedDate;
 
     setupManualControls();
     setupModeButtons();
@@ -1993,6 +2072,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupTemplateDownloads();
     setupScenarioSelector();
     setupScenarioDownloadButton();
+    setupVisualSettingsControls();
     const scatterSelect = document.getElementById('scatterpair-select');
     if (scatterSelect) {
         scatterSelect.addEventListener('change', handleScatterSelectChange);

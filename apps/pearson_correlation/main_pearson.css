@@ -88,6 +88,29 @@
     display: none;
 }
 
+.visual-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.switch-option {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-weight: 600;
+}
+
+.switch-option.disabled {
+    opacity: 0.6;
+}
+
+.heatmap-select select {
+    width: 100%;
+    margin-top: 0.4rem;
+}
+
 @media (max-width: 600px) {
     .dropzone {
         padding: 0.75rem;

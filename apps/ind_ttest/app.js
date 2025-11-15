@@ -1,4 +1,4 @@
-// Constants and utility functions
+﻿// Constants and utility functions
 const CREATED_DATE = new Date('2025-11-06').toLocaleDateString();
 let modifiedDate = new Date().toLocaleDateString();
 
@@ -373,7 +373,7 @@ function renderDifferenceFanChart(diffStats, intervals, axisRange, confidenceLev
         y: y - 0.45,
         xref: 'x',
         yref: 'y',
-        text: `Observed Δ: ${diffStats.meanDifference.toFixed(2)}`,
+        text: `Observed Î”: ${diffStats.meanDifference.toFixed(2)}`,
         showarrow: false,
         font: { size: 12, color: '#2c3e50' }
     });
@@ -397,7 +397,7 @@ function renderDifferenceFanChart(diffStats, intervals, axisRange, confidenceLev
     const safeGroup2 = escapeHtml(diffStats.group2Name);
 
     const layout = {
-        title: `Difference fan chart (${safeGroup1} − ${safeGroup2}) with ${confidenceLevels.map(l => Math.round(l * 100)).join('% / ')}% intervals`,
+        title: `Difference fan chart (${safeGroup1} âˆ’ ${safeGroup2}) with ${confidenceLevels.map(l => Math.round(l * 100)).join('% / ')}% intervals`,
         margin: { l: 60, r: 40, t: 60, b: 60 },
         shapes,
         annotations,
@@ -426,7 +426,7 @@ function renderDifferenceFanChart(diffStats, intervals, axisRange, confidenceLev
         x: [delta0, delta0],
         y: [0.4, 1.6],
         mode: 'lines',
-        name: 'Δ₀ reference',
+        name: 'Î”â‚€ reference',
         line: {
             color: '#455a64',
             dash: 'dot',
@@ -463,20 +463,21 @@ function updateDifferenceNarrative(diffStats, intervals, selectedLevel, delta0, 
     const ci = intervals[selectedLevel];
     const coversNull = ci.lower <= delta0 && ci.upper >= delta0;
     const decision = pValue < alpha
-        ? `The ${Math.round(selectedLevel * 100)}% confidence interval excludes Δ₀ = ${delta0.toFixed(2)}, aligning with the rejection of the null.`
-        : `The ${Math.round(selectedLevel * 100)}% confidence interval includes Δ₀ = ${delta0.toFixed(2)}, consistent with failing to reject the null.`;
+        ? `The ${Math.round(selectedLevel * 100)}% confidence interval excludes Î”â‚€ = ${delta0.toFixed(2)}, aligning with the rejection of the null.`
+        : `The ${Math.round(selectedLevel * 100)}% confidence interval includes Î”â‚€ = ${delta0.toFixed(2)}, consistent with failing to reject the null.`;
 
     const safeGroup1 = escapeHtml(diffStats.group1Name);
     const safeGroup2 = escapeHtml(diffStats.group2Name);
 
     narrative.innerHTML = `
         <p>The observed difference in means between <strong>${safeGroup1}</strong> and <strong>${safeGroup2}</strong> is ${diffStats.meanDifference.toFixed(2)} with a ${Math.round(selectedLevel * 100)}% confidence interval from ${ci.lower.toFixed(2)} to ${ci.upper.toFixed(2)}.</p>
-        <p>This interval ${coversNull ? 'includes' : 'excludes'} Δ₀ = ${delta0.toFixed(2)}. ${decision} It corresponds to a standard error of ${diffStats.standardError.toFixed(3)} and a t-statistic of ${diffStats.tStatistic.toFixed(3)}.</p>
+        <p>This interval ${coversNull ? 'includes' : 'excludes'} Î”â‚€ = ${delta0.toFixed(2)}. ${decision} It corresponds to a standard error of ${diffStats.standardError.toFixed(3)} and a t-statistic of ${diffStats.tStatistic.toFixed(3)}.</p>
     `;
 }
 
 function updateInterpretation(t, df, pValue, ciLower, ciUpper, delta0, alpha, cohensD, power, mean1, sd1, n1, mean2, sd2, n2, diffMean, group1Name, group2Name) {
     const interpretation = document.getElementById('interpretation');
+    if (!interpretation) return;
 
     const roundedT = t.toFixed(3);
     const roundedDf = df.toFixed(1);
@@ -510,6 +511,11 @@ function updateInterpretation(t, df, pValue, ciLower, ciUpper, delta0, alpha, co
     const absDiff = Math.abs(diffMean).toFixed(2);
     const managerialReport = `${diffDirection} by ${absDiff} units on average. The ${levelLabel}% confidence interval from ${roundedCiLower} to ${roundedCiUpper} ${ciLower <= delta0 && ciUpper >= delta0 ? 'still contains' : 'excludes'} the benchmark Δ₀ = ${deltaText}, so the statistical test ${pValue < alpha ? 'rejects' : 'does not reject'} the null hypothesis. This ${effectDescriptor} effect (Cohen's d = ${roundedD}) with ${roundedPower}% power suggests ${pValue < alpha ? 'actionable evidence of a difference' : 'caution before claiming a clear difference'}, especially when weighed against practical considerations.`;
 
+    const apaNode = document.getElementById('apa-report');
+    if (apaNode) apaNode.textContent = apaReport;
+    const mgrNode = document.getElementById('managerial-report');
+    if (mgrNode) mgrNode.textContent = managerialReport;
+
     let text = `
         <h3>Statistical Results (${levelLabel}% confidence)</h3>
         <div class="results-grid">
@@ -535,22 +541,13 @@ function updateInterpretation(t, df, pValue, ciLower, ciUpper, delta0, alpha, co
             <p>The data ${pValue < alpha ? 'provides' : 'does not provide'} sufficient evidence of a difference from the hypothesized value at the ${alphaPercent}% significance level.</p>
 
             <h4>Practical Significance</h4>
-            <p>The effect size (Cohen's d = ${roundedD}) indicates ${getEffectSizeInterpretation(cohensD).toLowerCase()}. This means the difference between the groups is ${
-                cohensD < 0.2 ? 'very small and might not be practically meaningful' :
-                cohensD < 0.5 ? 'small but might be meaningful in some contexts' :
-                cohensD < 0.8 ? 'moderate and likely practically meaningful' :
-                'large and practically significant'
-            }.</p>
+            <p>The effect size (Cohen's d = ${roundedD}) indicates ${getEffectSizeInterpretation(cohensD).toLowerCase()}. This means the difference between the groups is ${cohensD < 0.2 ? 'very small and might not be practically meaningful' : cohensD < 0.5 ? 'small but might be meaningful in some contexts' : cohensD < 0.8 ? 'moderate and likely practically meaningful' : 'large and practically significant'}.</p>
 
             <h4>Statistical Power</h4>
-            <p>The test has ${roundedPower}% power to detect the observed effect size. ${
-                power < 0.8
-                    ? 'This is below the conventional 80% threshold, suggesting the test might be underpowered. Consider increasing sample sizes.'
-                    : 'This exceeds the conventional 80% threshold, indicating adequate power to detect the observed effect.'
-            }</p>
+            <p>The test has ${roundedPower}% power to detect the observed effect size. ${power < 0.8 ? 'This is below the conventional 80% threshold, suggesting the test might be underpowered. Consider increasing sample sizes.' : 'This exceeds the conventional 80% threshold, indicating adequate power to detect the observed effect.'}</p>
 
             <div class="educational-note">
-                <h4>📚 Learning Note</h4>
+                <h4>dy's Learning Note</h4>
                 <p>Remember that statistical significance (p-value) and practical significance (effect size) tell different stories:</p>
                 <ul>
                     <li>P-value describes how compatible the observed data are with the null hypothesis.</li>
@@ -558,18 +555,6 @@ function updateInterpretation(t, df, pValue, ciLower, ciUpper, delta0, alpha, co
                     <li>Power quantifies the chance of detecting true differences with the current design.</li>
                 </ul>
             </div>
-        </div>
-
-        <h3>Reporting the Difference</h3>
-        <div class="reporting-layout">
-            <article class="report-card" aria-label="APA style summary of the test results">
-                <h4>APA Style</h4>
-                <p>${apaReport}</p>
-            </article>
-            <article class="report-card" aria-label="Managerial interpretation of the test results">
-                <h4>Managerial Interpretation</h4>
-                <p>${managerialReport}</p>
-            </article>
         </div>
     `;
 
@@ -589,6 +574,68 @@ function clearSummaryTable() {
     if (upperHeader) {
         upperHeader.textContent = 'Upper Bound';
     }
+}
+
+function updateDiagnosticsPanel(stats) {
+    const container = document.getElementById('diagnostics-content');
+    if (!container) return;
+    if (!stats) {
+        container.innerHTML = '<p class="muted">Provide group summaries to review sample size balance, variance ratios, power, and interval diagnostics.</p>';
+        return;
+    }
+
+    const { n1, n2, sd1, sd2, cohensD, power, df, ciLower, ciUpper, delta0 } = stats;
+    const minN = Math.min(n1, n2);
+    const sizeStatus = minN >= 40 ? 'good' : minN >= 20 ? 'caution' : 'alert';
+    const sizeMessage = `Smallest arm: ${minN.toLocaleString()} observations. ${sizeStatus === 'good' ? 'Plenty of data for Welch approximations.' : sizeStatus === 'caution' ? 'More data would tighten the interval.' : 'Consider collecting more data before final recommendations.'}`;
+
+    const balanceRatio = Math.min(n1, n2) / Math.max(n1, n2);
+    const balanceStatus = balanceRatio >= 0.7 ? 'good' : balanceRatio >= 0.5 ? 'caution' : 'alert';
+    const balanceMessage = balanceStatus === 'good'
+        ? `Sample sizes are balanced (${n1} vs ${n2}).`
+        : `Sample sizes differ (${n1} vs ${n2}); keep precision differences in mind.`;
+
+    const varianceRatio = (sd1 > sd2 ? sd1 / sd2 : sd2 / sd1) || 0;
+    const varianceStatus = varianceRatio <= 1.5 ? 'good' : varianceRatio <= 2.5 ? 'caution' : 'alert';
+    const varianceMessage = `Variance ratio ≈ ${varianceRatio.toFixed(2)}. ${varianceStatus === 'good' ? 'Spread is similar across groups.' : varianceStatus === 'caution' ? 'Unequal variances make Welch adjustments important.' : 'Large variance gap—ensure the higher-variance group has enough participants.'}`;
+
+    const powerPct = (power * 100).toFixed(1);
+    const powerStatus = power >= 0.8 ? 'good' : power >= 0.6 ? 'caution' : 'alert';
+    const powerMessage = `Estimated power ≈ ${powerPct}%. ${powerStatus === 'good' ? 'Adequate sensitivity.' : 'Consider increasing sample size to reduce Type II risk.'}`;
+
+    const effectStatus = Math.abs(cohensD) >= 0.8 ? 'good' : Math.abs(cohensD) >= 0.3 ? 'caution' : 'alert';
+    const effectMessage = `Cohen's d = ${cohensD.toFixed(3)} (${getEffectSizeInterpretation(cohensD).toLowerCase()}).`;
+
+    const ciIncludesNull = ciLower <= delta0 && ciUpper >= delta0;
+    const ciStatus = ciIncludesNull ? 'caution' : 'good';
+    const ciMessage = ciIncludesNull
+        ? `The ${Math.round(selectedConfidenceLevel * 100)}% CI still includes Δ₀ = ${delta0.toFixed(2)}.`
+        : `The ${Math.round(selectedConfidenceLevel * 100)}% CI excludes Δ₀ = ${delta0.toFixed(2)}.`;
+
+    const dfStatus = df >= 60 ? 'good' : df >= 20 ? 'caution' : 'alert';
+    const dfMessage = `Welch degrees of freedom ≈ ${df.toFixed(1)}.`;
+
+    const diagnostics = [
+        { title: 'Per-group sample size', status: sizeStatus, message: sizeMessage },
+        { title: 'Sample balance', status: balanceStatus, message: balanceMessage },
+        { title: 'Variance ratio', status: varianceStatus, message: varianceMessage },
+        { title: 'Statistical power', status: powerStatus, message: powerMessage },
+        { title: 'Effect magnitude', status: effectStatus, message: effectMessage },
+        { title: 'Confidence interval vs Δ₀', status: ciStatus, message: ciMessage },
+        { title: 'Welch df', status: dfStatus, message: dfMessage }
+    ];
+
+    const items = diagnostics.map(item => `
+        <div class="diagnostic-item ${item.status}">
+            <strong>${item.title}</strong>
+            <p>${item.message}</p>
+        </div>
+    `).join('');
+
+    container.innerHTML = `
+        <p>Diagnostics summarize whether Welch assumptions (enough data, manageable variances, and useful power) are satisfied.</p>
+        ${items}
+    `;
 }
 
 function updateSummaryTable(groups, groupIntervals, diffStats, diffIntervals, selectedLevel) {
@@ -622,7 +669,7 @@ function updateSummaryTable(groups, groupIntervals, diffStats, diffIntervals, se
     });
 
     const diffCi = diffIntervals[selectedLevel];
-    const diffLabel = `${diffStats.group1Name} − ${diffStats.group2Name}`;
+    const diffLabel = `${diffStats.group1Name} âˆ’ ${diffStats.group2Name}`;
     const safeDiffLabel = escapeHtml(diffLabel);
     rows.push(`
         <tr>
@@ -718,6 +765,7 @@ function updateResults() {
             Plotly.purge('difference-chart');
         }
         clearSummaryTable();
+        updateDiagnosticsPanel(null);
         return;
     }
 
@@ -830,9 +878,23 @@ function updateResults() {
     );
 
     updateSummaryTable(groups, groupIntervals, diffStats, diffIntervals, sortedLevels[sortedLevels.length - 1]);
+    updateDiagnosticsPanel({
+        mean1,
+        mean2,
+        sd1,
+        sd2,
+        n1,
+        n2,
+        df,
+        cohensD,
+        power,
+        ciLower,
+        ciUpper,
+        delta0
+    });
 
     document.getElementById('means-chart-title').textContent = `${group1Name} vs ${group2Name} Means Fan Chart (${sortedLevels.map(l => Math.round(l * 100)).join('% / ')}% intervals)`;
-    document.getElementById('diff-chart-title').textContent = `Difference Fan Chart (${group1Name} − ${group2Name}; ${sortedLevels.map(l => Math.round(l * 100)).join('% / ')}% intervals)`;
+    document.getElementById('diff-chart-title').textContent = `Difference Fan Chart (${group1Name} âˆ’ ${group2Name}; ${sortedLevels.map(l => Math.round(l * 100)).join('% / ')}% intervals)`;
 
     modifiedDate = new Date().toLocaleDateString();
     document.getElementById('modified-date').textContent = modifiedDate;
@@ -1193,3 +1255,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeScenarios();
     updateResults();
 });
+
+

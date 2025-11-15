@@ -197,6 +197,8 @@
     updateNarratives(grand, res, useYates);
     // Cell labels
     updateCellLabels(obs, E, rowTotals, colTotals, grand);
+    // Diagnostics panel
+    updateDiagnosticsPanel(obs, E, rowTotals, colTotals, grand, res);
   }
 
   function computeTotals(obs) {
@@ -283,6 +285,92 @@
     }
     var rowHeads = table.querySelectorAll('tbody tr th[data-i]');
     for (var i = 0; i < rowHeads.length; i++) rowHeads[i].textContent = (rowLabels[i] || ('Row ' + (i + 1)));
+  }
+
+  function updateDiagnosticsPanel(obs, exp, rowTotals, colTotals, grand, res) {
+    var container = document.getElementById('diagnostics-content');
+    if (!container) return;
+    var hasData = Array.isArray(obs) && obs.length && Array.isArray(exp) && exp.length && grand > 0;
+    if (!hasData) {
+      container.innerHTML = '<p class="muted">Enter observed counts to check chi-square assumptions and diagnostics.</p>';
+      return;
+    }
+    var rN = obs.length;
+    var cN = obs[0] ? obs[0].length : 0;
+    var cellCount = rN * cN;
+    var minExpected = Infinity;
+    var lowExpected = 0;
+    var tinyExpected = 0;
+    var maxResidual = 0;
+    var leverageCell = '';
+    for (var i = 0; i < rN; i++) {
+      for (var j = 0; j < cN; j++) {
+        var E = exp[i][j];
+        if (E < minExpected) minExpected = E;
+        if (E < 5) lowExpected++;
+        if (E < 1) tinyExpected++;
+        if (E > 0) {
+          var resid = Math.abs(obs[i][j] - E) / Math.sqrt(E);
+          if (resid > maxResidual) {
+            maxResidual = resid;
+            var rLabel = rowLabels[i] || ('Row ' + (i + 1));
+            var cLabel = colLabels[j] || ('Col ' + (j + 1));
+            leverageCell = rLabel + ' × ' + cLabel;
+          }
+        }
+      }
+    }
+
+    var sampleStatus = grand >= 500 ? 'good' : grand >= 200 ? 'caution' : 'alert';
+    var sampleMessage = 'Grand total: ' + grand.toLocaleString() + ' observations. ' + (
+      sampleStatus === 'good'
+        ? 'Plenty of data to support the asymptotic chi-square approximation.'
+        : sampleStatus === 'caution'
+          ? 'Add more observations if possible to stabilize the statistic.'
+          : 'Results are fragile with this few observations; consider aggregating levels or collecting more data.'
+    );
+
+    var expectedStatus = tinyExpected ? 'alert' : lowExpected ? 'caution' : 'good';
+    var expectedMessage = expectedStatus === 'good'
+      ? 'Every expected count exceeds 5.'
+      : expectedStatus === 'caution'
+        ? lowExpected + ' of ' + cellCount + ' expected counts fall below 5; chi-square p-values are approximate.'
+        : tinyExpected + ' expected counts fall below 1; consider combining sparse categories.';
+
+    var filteredRowTotals = rowTotals.filter(function(x){ return x > 0; });
+    var filteredColTotals = colTotals.filter(function(x){ return x > 0; });
+    var rowRatio = filteredRowTotals.length > 1 ? Math.min.apply(null, filteredRowTotals) / Math.max.apply(null, filteredRowTotals) : 1;
+    var colRatio = filteredColTotals.length > 1 ? Math.min.apply(null, filteredColTotals) / Math.max.apply(null, filteredColTotals) : 1;
+    var balanceRatio = Math.min(rowRatio || 1, colRatio || 1);
+    var balanceStatus = balanceRatio >= 0.4 ? 'good' : balanceRatio >= 0.2 ? 'caution' : 'alert';
+    var balanceMessage = balanceStatus === 'good'
+      ? 'Row and column totals are reasonably balanced.'
+      : 'One or more rows/columns dominate the totals; sparse categories may weaken the signal.';
+
+    var residualStatus = maxResidual < 2 ? 'good' : maxResidual < 3 ? 'caution' : 'alert';
+    var residualMessage = maxResidual
+      ? ('Largest standardized residual ≈ ' + maxResidual.toFixed(2) + (leverageCell ? ' at ' + leverageCell : '') + '.')
+      : 'No leverage points detected.';
+
+    var effect = res && res.V;
+    var effectStatus = !isFinite(effect) ? 'caution' : effect >= 0.3 ? 'alert' : effect >= 0.15 ? 'caution' : 'good';
+    var effectMessage = isFinite(effect)
+      ? ('Cramér’s V = ' + effect.toFixed(3) + (effectStatus === 'good' ? ' (small association).' : effectStatus === 'caution' ? ' (moderate association).' : ' (large association).'))
+      : 'Effect size unavailable (insufficient df).';
+
+    var diagnostics = [
+      { title: 'Total sample size', status: sampleStatus, message: sampleMessage },
+      { title: 'Expected counts', status: expectedStatus, message: expectedMessage },
+      { title: 'Balance across rows/cols', status: balanceStatus, message: balanceMessage },
+      { title: 'Leverage cells', status: residualStatus, message: residualMessage },
+      { title: 'Effect size (Cramér’s V)', status: effectStatus, message: effectMessage }
+    ];
+
+    var items = diagnostics.map(function(item){
+      return '<div class="diagnostic-item ' + item.status + '"><strong>' + item.title + '</strong><p>' + item.message + '</p></div>';
+    }).join('');
+
+    container.innerHTML = '<p>Diagnostics summarize whether chi-square assumptions (sufficient volume, expected counts, and leverage) are satisfied.</p>' + items;
   }
 
   function chiSquare(obs, exp, n, yates) {
