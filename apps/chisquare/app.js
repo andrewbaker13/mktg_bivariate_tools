@@ -17,11 +17,21 @@
   var chartXAxisSelect = document.getElementById('chartXAxis');
   var cellLabelModeSelect = document.getElementById('cellLabelMode');
   var flipStacksBtn = document.getElementById('flipStackOrder');
+  var confidenceButtonsContainer = document.getElementById('chi-confidence-buttons');
   var scenarioState = { manifest: [], defaultDescription: '' };
+  var activeScenarioDownload = null;
   var scenarioDownloadBtn = document.getElementById('scenario-download');
   var crosstabDropzone = document.getElementById('crosstab-dropzone');
   var crosstabFileInput = document.getElementById('crosstab-file-input');
   var inputsDownloadBtn = document.getElementById('download-inputs');
+  var summaryBrowseBtn = document.getElementById('summary-browse');
+  var summaryStatusEl = document.getElementById('summary-upload-status');
+  var summaryTemplateBtn = document.getElementById('summary-template-download');
+  var rawDropzone = document.getElementById('raw-dropzone');
+  var rawFileInput = document.getElementById('raw-file-input');
+  var rawBrowseBtn = document.getElementById('raw-browse');
+  var rawStatusEl = document.getElementById('raw-upload-status');
+  var rawTemplateBtn = document.getElementById('raw-template-download');
   // Optional labels for rows/cols
   var rowLabelsInput = document.getElementById('rowLabelsInput');
   var colLabelsInput = document.getElementById('colLabelsInput');
@@ -54,6 +64,38 @@
   var stackFlipOrder = false;
   var stackFlipOrder = false;
 
+  var DataEntryModes = {
+    MANUAL: 'manual',
+    SUMMARY: 'summary-upload',
+    RAW: 'raw-upload'
+  };
+  var activeDataEntryMode = DataEntryModes.MANUAL;
+
+  function getSummaryTemplateContent() {
+    var rowLabel = 'Channel';
+    var colLabel = 'Segment';
+    return [
+      '# row_var=' + rowLabel,
+      '# col_var=' + colLabel,
+      '# alpha=0.05',
+      '# yates=false',
+      ',' + colLabel + ' A,' + colLabel + ' B,' + colLabel + ' C,' + colLabel + ' D',
+      rowLabel + ' 1,25,18,12,10',
+      rowLabel + ' 2,30,22,15,14',
+      rowLabel + ' 3,20,17,11,9'
+    ].join('\r\n');
+  }
+
+  var RAW_TEMPLATE_CSV = [
+    'Audience Segment,Channel',
+    'Existing Customers,Email',
+    'Existing Customers,Email',
+    'Existing Customers,Social',
+    'Prospects,Email',
+    'Prospects,Display',
+    'Prospects,Social'
+  ].join('\r\n');
+
   setValue(rowsInput, String(R));
   setValue(colsInput, String(C));
 
@@ -61,6 +103,69 @@
   function getValue(el) { return el ? el.value : ''; }
   function setValue(el, v) { if (el) el.value = v; }
   function on(el, ev, fn) { if (el) el.addEventListener(ev, fn); }
+
+  function formatAlphaValue(alphaValue) {
+    if (!isFinite(alphaValue)) return '';
+    if (alphaValue >= 0.1) return alphaValue.toFixed(2);
+    if (alphaValue >= 0.01) return alphaValue.toFixed(3);
+    return alphaValue.toFixed(4);
+  }
+
+  function applyAlphaValue(alphaValue) {
+    if (!alphaSelect || !isFinite(alphaValue)) return;
+    var clamped = Math.min(0.25, Math.max(0.0005, alphaValue));
+    alphaSelect.value = formatAlphaValue(clamped);
+    refreshConfidenceButtons();
+  }
+
+  function refreshConfidenceButtons() {
+    if (!confidenceButtonsContainer) return;
+    var alphaValue = alphaSelect ? parseFloat(alphaSelect.value) : NaN;
+    var targetLevel = isFinite(alphaValue) ? (1 - alphaValue) : NaN;
+    var buttons = confidenceButtonsContainer.querySelectorAll('.confidence-button');
+    buttons.forEach(function (btn) {
+      var level = parseFloat(btn.dataset.level);
+      var isActive = isFinite(level) && isFinite(targetLevel) && Math.abs(level - targetLevel) < 1e-6;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+  }
+
+  function setConfidenceLevel(level) {
+    if (!alphaSelect || !isFinite(level)) return;
+    var alphaValue = 1 - level;
+    applyAlphaValue(alphaValue);
+    recompute();
+  }
+
+  function setupConfidenceButtons() {
+    if (!confidenceButtonsContainer) return;
+    confidenceButtonsContainer.addEventListener('click', function (event) {
+      var button = event.target.closest('.confidence-button');
+      if (!button) return;
+      event.preventDefault();
+      var level = parseFloat(button.dataset.level);
+      if (!isFinite(level)) return;
+      setConfidenceLevel(level);
+    });
+    refreshConfidenceButtons();
+  }
+
+  function setUploadStatus(el, message, state) {
+    if (!el) return;
+    el.textContent = message;
+    el.classList.remove('success', 'error');
+    if (state === 'success') el.classList.add('success');
+    else if (state === 'error') el.classList.add('error');
+  }
+
+  function reportSummaryStatus(message, state) {
+    setUploadStatus(summaryStatusEl, message, state);
+  }
+
+  function reportRawStatus(message, state) {
+    setUploadStatus(rawStatusEl, message, state);
+  }
 
   function el(tag, attrs, children) {
     var node = document.createElement(tag);
@@ -78,6 +183,38 @@
     attrs = attrs || {};
     for (var k in attrs) { node.setAttribute(k, attrs[k]); }
     return node;
+  }
+
+  function setDataEntryMode(mode) {
+    if (!mode) return;
+    activeDataEntryMode = mode;
+    var buttons = document.querySelectorAll('.mode-button');
+    buttons.forEach(function (button) {
+      var isActive = button.getAttribute('data-mode') === mode;
+      button.classList.toggle('active', isActive);
+      if (button.hasAttribute('aria-pressed')) {
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      }
+    });
+    var panels = document.querySelectorAll('.mode-panel');
+    panels.forEach(function (panel) {
+      panel.classList.toggle('active', panel.getAttribute('data-mode') === mode);
+    });
+  }
+
+  function setupDataEntryMode() {
+    var toggle = document.querySelector('.mode-toggle');
+    if (!toggle) return;
+    toggle.addEventListener('click', function (event) {
+      var button = event.target.closest('.mode-button');
+      if (!button) return;
+      event.preventDefault();
+      var mode = button.getAttribute('data-mode');
+      if (mode && mode !== activeDataEntryMode) {
+        setDataEntryMode(mode);
+      }
+    });
+    setDataEntryMode(activeDataEntryMode);
   }
 
   function syncNamesFromWindow() {
@@ -601,16 +738,50 @@
     container.innerHTML = heading + body;
   }
 
-  function updateScenarioDownload(entry) {
+  function getScenarioDownloadInfo(entry) {
+    if (!entry) return null;
+    var relativePath = entry.dataset;
+    if (!relativePath) return null;
+    var absolutePath;
+    try {
+      absolutePath = /^https?:/i.test(relativePath)
+        ? relativePath
+        : new URL(relativePath, window.location.href).href;
+    } catch (err) {
+      absolutePath = relativePath;
+    }
+    var filename = relativePath.split('/').pop() || 'scenario';
+    var mime = /\.csv$/i.test(filename) ? 'text/csv' : 'text/plain';
+    return { path: absolutePath, filename: filename, mime: mime };
+  }
+
+  function updateScenarioDownload(entry, datasetText) {
     if (!scenarioDownloadBtn) return;
-    if (entry && entry.file) {
+    var info = getScenarioDownloadInfo(entry);
+    if (info) {
       scenarioDownloadBtn.classList.remove('hidden');
       scenarioDownloadBtn.disabled = false;
-      scenarioDownloadBtn.dataset.file = entry.file;
+      scenarioDownloadBtn.dataset.file = info.path;
+      scenarioDownloadBtn.dataset.filename = info.filename;
+      scenarioDownloadBtn.dataset.mime = info.mime;
+      activeScenarioDownload = datasetText ? {
+        type: 'inline',
+        filename: info.filename,
+        mime: info.mime,
+        content: datasetText
+      } : {
+        type: 'remote',
+        path: info.path,
+        filename: info.filename,
+        mime: info.mime
+      };
     } else {
       scenarioDownloadBtn.classList.add('hidden');
       scenarioDownloadBtn.disabled = true;
       scenarioDownloadBtn.dataset.file = '';
+      delete scenarioDownloadBtn.dataset.filename;
+      delete scenarioDownloadBtn.dataset.mime;
+      activeScenarioDownload = null;
     }
   }
 
@@ -689,15 +860,19 @@
   function setupScenarioDownload() {
     if (!scenarioDownloadBtn) return;
     scenarioDownloadBtn.addEventListener('click', function () {
-      var filePath = scenarioDownloadBtn.dataset.file;
-      if (!filePath) return;
-      fetch(filePath, { cache: 'no-cache' })
+      var info = activeScenarioDownload;
+      if (!info) return;
+      if (info.type === 'inline') {
+        downloadTextFile(info.filename, info.content, { mimeType: info.mime });
+        return;
+      }
+      fetch(info.path, { cache: 'no-cache' })
         .then(function (response) {
           if (!response.ok) throw new Error('Unable to fetch scenario data (' + response.status + ')');
           return response.text();
         })
         .then(function (text) {
-          downloadTextFile(filePath.split('/').pop() || 'scenario.txt', text, { mimeType: 'text/plain' });
+          downloadTextFile(info.filename, text, { mimeType: info.mime });
         })
         .catch(function (error) {
           console.error('Scenario download error:', error);
@@ -739,15 +914,44 @@
     if (!trimmed) {
       throw new Error('File is empty.');
     }
-    var lines = trimmed.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(function (line) { return line.length; });
-    if (lines.length < 2) {
+    var rawLines = trimmed.split(/\r?\n/);
+    var meta = { rowVarName: '', colVarName: '', alpha: null, yates: null };
+    var tableLines = [];
+    rawLines.forEach(function (rawLine) {
+      var line = rawLine.replace(/\ufeff/g, '').trim();
+      if (!line) return;
+      if (line.charAt(0) === '#') {
+        var metaLine = line.replace(/^#+\s*/, '');
+        var eqIndex = metaLine.indexOf('=');
+        if (eqIndex >= 0) {
+          var key = metaLine.slice(0, eqIndex).trim().toLowerCase();
+          var value = metaLine.slice(eqIndex + 1).trim();
+          if (key === 'row_var' || key === 'rowvar' || key === 'rowname') {
+            meta.rowVarName = value;
+          } else if (key === 'col_var' || key === 'colvar' || key === 'colname') {
+            meta.colVarName = value;
+          } else if (key === 'alpha') {
+            var alphaValue = parseFloat(value);
+            if (isFinite(alphaValue)) meta.alpha = alphaValue;
+          } else if (key === 'yates' || key === 'correction') {
+            if (/^(true|false)$/i.test(value)) {
+              meta.yates = /^true$/i.test(value);
+            }
+          }
+        }
+        return;
+      }
+      tableLines.push(line);
+    });
+    if (tableLines.length < 2) {
       throw new Error('Provide a header row and at least one data row.');
     }
-    var delimiter = detectDelimiter(lines[0]);
-    var headers = lines[0].split(delimiter).map(function (cell) { return cell.trim(); });
+    var delimiter = detectDelimiter(tableLines[0]);
+    var headers = tableLines[0].split(delimiter).map(function (cell) { return cell.trim(); });
     if (headers.length < 2) {
       throw new Error('Expect at least one column header and one label column.');
     }
+    var rowHeaderTitle = headers[0] || '';
     var colHeaders = headers.slice(1).map(function (label, idx) { return label || ('Column ' + (idx + 1)); });
     if (colHeaders.length > 10) {
       throw new Error('Only up to 10 columns are supported.');
@@ -755,7 +959,7 @@
     var rowNames = [];
     var matrix = [];
     var maxRows = 10;
-    lines.slice(1).forEach(function (line, index) {
+    tableLines.slice(1).forEach(function (line, index) {
       var parts = line.split(delimiter).map(function (cell) { return cell.trim(); });
       if (parts.length !== headers.length) {
         throw new Error('Row ' + (index + 2) + ' has ' + parts.length + ' columns but expected ' + headers.length + '.');
@@ -777,11 +981,93 @@
     if (!matrix.length) {
       throw new Error('No numeric rows found.');
     }
-    return { rows: rowNames, columns: colHeaders, matrix: matrix };
+    return {
+      rows: rowNames,
+      columns: colHeaders,
+      matrix: matrix,
+      rowVarName: meta.rowVarName || rowHeaderTitle,
+      colVarName: meta.colVarName || '',
+      alpha: meta.alpha,
+      yates: meta.yates
+    };
   }
 
-  function applyCrosstabMatrix(parsed) {
+  function parseRawDataset(text) {
+    var trimmed = (text || '').trim();
+    if (!trimmed) {
+      throw new Error('File is empty.');
+    }
+    var lines = trimmed.split(/\r?\n/).filter(function (line) { return line.trim().length; });
+    if (lines.length < 2) {
+      throw new Error('File must include a header row and at least one observation.');
+    }
+    var delimiter = typeof detectDelimiter === 'function'
+      ? detectDelimiter(lines[0])
+      : (lines[0].includes('\t') ? '\t' : ',');
+    var headers = lines[0].split(delimiter).map(function (h) { return h.trim(); });
+    if (headers.length !== 2) {
+      throw new Error('Provide exactly two columns (e.g., Segment,Channel).');
+    }
+    var maxRowsAllowed = typeof MAX_UPLOAD_ROWS === 'number' ? MAX_UPLOAD_ROWS : 2000;
+    var records = [];
+    for (var i = 1; i < lines.length; i++) {
+      var parts = lines[i].split(delimiter).map(function (cell) { return cell.trim(); });
+      if (parts.every(function (cell) { return cell === ''; })) continue;
+      if (parts.length < 2) {
+        throw new Error('Row ' + (i + 1) + ' must include two columns.');
+      }
+      var rowLabel = parts[0];
+      var colLabel = parts[1];
+      if (!rowLabel || !colLabel) {
+        throw new Error('Row ' + (i + 1) + ' is missing a category label.');
+      }
+      records.push({ row: rowLabel, col: colLabel });
+      if (records.length > maxRowsAllowed) {
+        throw new Error('Upload limit exceeded: only ' + maxRowsAllowed + ' rows are supported.');
+      }
+    }
+    if (!records.length) {
+      throw new Error('No data rows found.');
+    }
+    var rowValues = [];
+    var colValues = [];
+    var addUnique = function (value, list) {
+      if (list.indexOf(value) === -1) list.push(value);
+    };
+    records.forEach(function (entry) {
+      addUnique(entry.row, rowValues);
+      addUnique(entry.col, colValues);
+    });
+    if (rowValues.length > 10 || colValues.length > 10) {
+      throw new Error('Raw data produced a ' + rowValues.length + 'x' + colValues.length + ' table. Limit to 10 categories per variable.');
+    }
+    var matrix = rowValues.map(function () {
+      return colValues.map(function () { return 0; });
+    });
+    records.forEach(function (entry) {
+      var rIndex = rowValues.indexOf(entry.row);
+      var cIndex = colValues.indexOf(entry.col);
+      matrix[rIndex][cIndex] += 1;
+    });
+    var rawRowName = headers[0] || rowVarName;
+    var rawColName = headers[1] || colVarName;
+    return {
+      rows: rowValues,
+      columns: colValues,
+      matrix: matrix,
+      rowVarName: rawRowName,
+      colVarName: rawColName
+    };
+  }
+
+  function applyCrosstabMatrix(parsed, metadata) {
     if (!parsed) return;
+    metadata = metadata || {};
+    var retainScenario = Boolean(metadata.retainScenario);
+    var providedRowVar = metadata.rowVarName || parsed.rowVarName;
+    var providedColVar = metadata.colVarName || parsed.colVarName;
+    if (providedRowVar && providedRowVar.trim()) rowVarName = providedRowVar.trim();
+    if (providedColVar && providedColVar.trim()) colVarName = providedColVar.trim();
     rowLabels = parsed.rows.slice();
     colLabels = parsed.columns.slice();
     var targetRows = Math.max(2, rowLabels.length, parsed.matrix.length || 0);
@@ -799,10 +1085,21 @@
     ensureLabelArrays();
     buildObservedTable(R, C);
     fillTableFromMatrix(parsed.matrix);
-    renderScenarioDescription('', '');
-    var select = document.getElementById('scenario-select');
-    if (select) select.value = '';
-    updateScenarioDownload(null);
+    if (metadata.alpha != null) {
+      applyAlphaValue(metadata.alpha);
+    }
+    if (typeof metadata.yates === 'boolean' && yatesInput) {
+      yatesInput.checked = metadata.yates;
+    }
+    if (!retainScenario) {
+      renderScenarioDescription('', '');
+      var select = document.getElementById('scenario-select');
+      if (select) select.value = '';
+      updateScenarioDownload(null);
+    }
+    if (typeof setDataEntryMode === 'function') {
+      setDataEntryMode(DataEntryModes.MANUAL);
+    }
     recompute();
   }
 
@@ -817,13 +1114,41 @@
 
   function handleCrosstabFile(file) {
     if (!file) return;
+    reportSummaryStatus('Processing ' + file.name + '...', null);
     readFileAsText(file)
       .then(function (text) {
         var parsed = parseCrosstabText(text);
-        applyCrosstabMatrix(parsed);
+        applyCrosstabMatrix(parsed, {
+          rowVarName: parsed.rowVarName,
+          colVarName: parsed.colVarName,
+          alpha: parsed.alpha,
+          yates: parsed.yates
+        });
+        reportSummaryStatus('Loaded ' + parsed.rows.length + 'x' + parsed.columns.length + ' table from ' + file.name + '.', 'success');
       })
       .catch(function (error) {
-        alert('Upload error: ' + (error && error.message ? error.message : 'unknown error.'));
+        var message = (error && error.message) ? error.message : 'Unknown error.';
+        reportSummaryStatus(message, 'error');
+        alert('Upload error: ' + message);
+      });
+  }
+
+  function handleRawFile(file) {
+    if (!file) return;
+    reportRawStatus('Processing ' + file.name + '...', null);
+    readFileAsText(file)
+      .then(function (text) {
+        var parsed = parseRawDataset(text);
+        applyCrosstabMatrix(parsed, {
+          rowVarName: parsed.rowVarName,
+          colVarName: parsed.colVarName
+        });
+        reportRawStatus('Converted ' + file.name + ' into a ' + parsed.rows.length + 'x' + parsed.columns.length + ' table.', 'success');
+      })
+      .catch(function (error) {
+        var message = (error && error.message) ? error.message : 'Unknown error.';
+        reportRawStatus(message, 'error');
+        alert('Raw upload error: ' + message);
       });
   }
 
@@ -852,6 +1177,11 @@
     crosstabDropzone.addEventListener('click', function () {
       if (crosstabFileInput) crosstabFileInput.click();
     });
+    if (summaryBrowseBtn) {
+      summaryBrowseBtn.addEventListener('click', function () {
+        if (crosstabFileInput) crosstabFileInput.click();
+      });
+    }
     crosstabDropzone.addEventListener('keydown', function (event) {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
@@ -866,6 +1196,66 @@
         }
         event.target.value = '';
       });
+    }
+  }
+
+  function bindRawDropzone() {
+    if (!rawDropzone) return;
+    var prevent = function (event) { event.preventDefault(); event.stopPropagation(); };
+    ['dragenter', 'dragover'].forEach(function (name) {
+      rawDropzone.addEventListener(name, function (event) {
+        prevent(event);
+        rawDropzone.classList.add('drag-active');
+      });
+    });
+    ['dragleave', 'drop', 'dragend'].forEach(function (name) {
+      rawDropzone.addEventListener(name, function (event) {
+        prevent(event);
+        rawDropzone.classList.remove('drag-active');
+      });
+    });
+    rawDropzone.addEventListener('drop', function (event) {
+      prevent(event);
+      var files = event.dataTransfer ? event.dataTransfer.files : [];
+      if (files && files.length) {
+        handleRawFile(files[0]);
+      }
+    });
+    rawDropzone.addEventListener('click', function () {
+      if (rawFileInput) rawFileInput.click();
+    });
+    if (rawBrowseBtn) {
+      rawBrowseBtn.addEventListener('click', function () {
+        if (rawFileInput) rawFileInput.click();
+      });
+    }
+    rawDropzone.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        if (rawFileInput) rawFileInput.click();
+      }
+    });
+    if (rawFileInput) {
+      rawFileInput.addEventListener('change', function (event) {
+        var files = event.target.files;
+        if (files && files.length) {
+          handleRawFile(files[0]);
+        }
+        event.target.value = '';
+      });
+    }
+  }
+
+  function downloadRawTemplate() {
+    if (typeof downloadTextFile === 'function') {
+      downloadTextFile('chi_raw_template.csv', RAW_TEMPLATE_CSV, { mimeType: 'text/csv' });
+    }
+  }
+
+  function downloadSummaryTemplate() {
+    if (typeof downloadTextFile === 'function') {
+      var content = getSummaryTemplateContent();
+      downloadTextFile('chi_contingency_template.csv', content, { mimeType: 'text/csv' });
     }
   }
 
@@ -894,10 +1284,19 @@
   }
 
   function initializeUploads() {
-    bindCrosstabDropzone();
-    if (inputsDownloadBtn) {
-      inputsDownloadBtn.addEventListener('click', downloadCurrentInputs);
-    }
+  bindCrosstabDropzone();
+  bindRawDropzone();
+  if (inputsDownloadBtn) {
+    inputsDownloadBtn.addEventListener('click', downloadCurrentInputs);
+  }
+  if (rawTemplateBtn) {
+    rawTemplateBtn.addEventListener('click', downloadRawTemplate);
+  }
+  if (summaryTemplateBtn) {
+    summaryTemplateBtn.addEventListener('click', downloadSummaryTemplate);
+  }
+  setupDataEntryMode();
+  setupConfidenceButtons();
   }
 
   function fillTableFromMatrix(matrix) {
@@ -916,31 +1315,37 @@
     }
   }
 
-  function applyScenarioPreset(parsed, entry) {
-    if (!parsed) return;
-    rowLabels = Array.isArray(parsed.rows) ? parsed.rows.slice() : [];
-    colLabels = Array.isArray(parsed.columns) ? parsed.columns.slice() : [];
-    var targetRows = Math.max(2, rowLabels.length, parsed.matrix.length || 0);
-    var targetCols = Math.max(2, colLabels.length, (parsed.matrix[0] ? parsed.matrix[0].length : 0) || 0);
-    R = targetRows;
-    C = targetCols;
-    setValue(rowsInput, String(R));
-    setValue(colsInput, String(C));
-    if (rowLabelsInput) rowLabelsInput.value = rowLabels.slice(0, R).join(', ');
-    if (colLabelsInput) colLabelsInput.value = colLabels.slice(0, C).join(', ');
-    ensureLabelArrays();
-    buildObservedTable(R, C);
-    fillTableFromMatrix(parsed.matrix);
-    if (alphaSelect && isFinite(parsed.alpha)) {
-      var alphaString = parsed.alpha.toFixed(2);
-      for (var i = 0; i < alphaSelect.options.length; i++) {
-        if (alphaSelect.options[i].value === alphaString) {
-          alphaSelect.value = alphaString;
-          break;
-        }
+  function applyScenarioPreset(parsed, entry, dataset, datasetText) {
+    if (!parsed && !dataset) return;
+    var tableSource = dataset || (parsed ? { rows: parsed.rows || [], columns: parsed.columns || [], matrix: parsed.matrix || [] } : null);
+    if (!tableSource || !tableSource.matrix || !tableSource.matrix.length) return;
+    var metadata = {};
+    if (dataset) {
+      metadata.rowVarName = dataset.rowVarName || (parsed && parsed.settings && parsed.settings.rowvarname) || null;
+      metadata.colVarName = dataset.colVarName || (parsed && parsed.settings && parsed.settings.colvarname) || null;
+      metadata.alpha = dataset.alpha != null ? dataset.alpha : (parsed && isFinite(parsed.alpha) ? parsed.alpha : null);
+      if (typeof dataset.yates === 'boolean') {
+        metadata.yates = dataset.yates;
+      } else if (parsed && parsed.settings && typeof parsed.settings.yates !== 'undefined') {
+        metadata.yates = parsed.settings.yates.toLowerCase() === 'true';
       }
+    } else if (parsed) {
+      if (parsed.settings) {
+        if (parsed.settings.rowvarname) metadata.rowVarName = parsed.settings.rowvarname;
+        if (parsed.settings.colvarname) metadata.colVarName = parsed.settings.colvarname;
+        if (typeof parsed.settings.yates !== 'undefined') metadata.yates = parsed.settings.yates.toLowerCase() === 'true';
+      }
+      if (isFinite(parsed.alpha)) metadata.alpha = parsed.alpha;
     }
-    if (parsed.settings) {
+    metadata.retainScenario = true;
+    applyCrosstabMatrix({
+      rows: Array.isArray(tableSource.rows) ? tableSource.rows.slice() : [],
+      columns: Array.isArray(tableSource.columns) ? tableSource.columns.slice() : [],
+      matrix: Array.isArray(tableSource.matrix)
+        ? tableSource.matrix.map(function (row) { return Array.isArray(row) ? row.slice() : []; })
+        : []
+    }, metadata);
+    if (parsed && parsed.settings) {
       var settings = parsed.settings;
       if (settings.chartxaxis && chartXAxisSelect) {
         var axisVal = settings.chartxaxis.toLowerCase();
@@ -957,12 +1362,12 @@
           }
         }
       }
-      if (settings.yates && yatesInput) {
+      if (settings.yates && yatesInput && metadata.yates == null) {
         yatesInput.checked = settings.yates.toLowerCase() === 'true';
       }
     }
-    renderScenarioDescription(parsed.title || (entry && entry.label), parsed.description);
-    updateScenarioDownload(entry);
+    renderScenarioDescription((parsed && parsed.title) || (entry && entry.label), parsed && parsed.description ? parsed.description : '');
+    updateScenarioDownload(entry, datasetText || null);
     recompute();
   }
 
@@ -973,14 +1378,42 @@
       updateScenarioDownload(null);
       return;
     }
-    fetch(scenario.file, { cache: 'no-cache' })
+    var scenarioTextPromise = fetch(scenario.file, { cache: 'no-cache' })
       .then(function (response) {
         if (!response.ok) throw new Error('Unable to load scenario file (' + response.status + ')');
         return response.text();
       })
-      .then(function (text) {
-        var parsed = parseScenarioText(text);
-        applyScenarioPreset(parsed, scenario);
+      .catch(function (error) {
+        console.error('Scenario copy error:', error);
+        return null;
+      });
+    var datasetPromise = scenario.dataset
+      ? fetch(scenario.dataset, { cache: 'no-cache' })
+          .then(function (response) {
+            if (!response.ok) throw new Error('Unable to load scenario dataset (' + response.status + ')');
+            return response.text();
+          })
+          .catch(function (error) {
+            console.error('Scenario dataset error:', error);
+            return null;
+          })
+      : Promise.resolve(null);
+    Promise.all([scenarioTextPromise, datasetPromise])
+      .then(function (results) {
+        var parsedScenario = results[0] ? parseScenarioText(results[0]) : null;
+        var parsedDataset = null;
+        if (results[1]) {
+          if (scenario.dataType && scenario.dataType.toLowerCase() === 'raw') {
+            parsedDataset = parseRawDataset(results[1]);
+          } else {
+            parsedDataset = parseCrosstabText(results[1]);
+          }
+        }
+        if (!parsedScenario && !parsedDataset) {
+          throw new Error('Scenario data unavailable.');
+        }
+        var datasetText = results[1] || null;
+        applyScenarioPreset(parsedScenario, scenario, parsedDataset, datasetText);
       })
       .catch(function (error) {
         console.error('Scenario load error:', error);
@@ -989,27 +1422,6 @@
       });
   }
 
-  function setupScenarioSelector() {
-    var select = document.getElementById('scenario-select');
-    if (!select) return;
-    select.addEventListener('change', function () {
-      var value = select.value;
-      if (!value) {
-        renderScenarioDescription('', '');
-        return;
-      }
-      loadScenarioById(value);
-    });
-  }
-
-  function initializeScenarios() {
-    var description = document.getElementById('scenario-description');
-    if (description) {
-      scenarioState.defaultDescription = description.innerHTML;
-    }
-    setupScenarioSelector();
-    fetchScenarioIndex();
-  }
 
   function clearTable() {
     var inputs = tableContainer ? tableContainer.querySelectorAll('tbody input') : [];
@@ -1043,7 +1455,10 @@
   on(rowsInput, 'change', rebuild);
   on(colsInput, 'change', rebuild);
   on(yatesInput, 'change', recompute);
-  on(alphaSelect, 'change', recompute);
+  on(alphaSelect, 'change', function () {
+    refreshConfidenceButtons();
+    recompute();
+  });
   on(chartXAxisSelect, 'change', recompute);
   on(cellLabelModeSelect, 'change', recompute);
   window.addEventListener('resize', function(){ var obs = getObserved(); if (obs) { renderChart(obs, rowLabels.slice(), colLabels.slice()); } });

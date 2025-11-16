@@ -8,6 +8,429 @@ const scenarioState = {
     defaultDescription: ''
 };
 
+const DataEntryModes = Object.freeze({
+    MANUAL: 'manual',
+    SUMMARY: 'summary-upload',
+    RAW: 'raw-upload'
+});
+
+const SUMMARY_TEMPLATE_CSV = [
+    'group,mean,sd,n,delta0,alpha',
+    'Group 1,45,8.2,120,5,0.05',
+    'Group 2,39,7.6,118,5,0.05'
+].join('\n');
+
+const RAW_TEMPLATE_CSV = [
+    'group,value',
+    'Group 1,42.1',
+    'Group 1,39.8',
+    'Group 1,45.0',
+    'Group 2,37.5',
+    'Group 2,40.2',
+    'Group 2,38.9'
+].join('\n');
+
+let activeDataEntryMode = DataEntryModes.MANUAL;
+let activeScenarioDataset = null;
+
+function setUploadStatus(id, message, state) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = message;
+    el.classList.remove('success', 'error');
+    if (state) {
+        el.classList.add(state);
+    }
+}
+
+function formatAlpha(value) {
+    if (!isFinite(value)) return '0.050';
+    const clamped = Math.min(0.25, Math.max(0.0005, value));
+    if (clamped >= 0.1) return clamped.toFixed(2);
+    if (clamped >= 0.01) return clamped.toFixed(3);
+    return clamped.toFixed(4);
+}
+
+function calculateMean(values = []) {
+    if (!values.length) return NaN;
+    return values.reduce((sum, val) => sum + val, 0) / values.length;
+}
+
+function calculateSd(values = []) {
+    if (values.length < 2) return NaN;
+    const mean = calculateMean(values);
+    const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (values.length - 1);
+    return Math.sqrt(variance);
+}
+
+function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Unable to read file.'));
+        reader.readAsText(file);
+    });
+}
+
+function findHeaderIndex(headers = [], candidates = []) {
+    const normalized = headers.map(header => header.toLowerCase());
+    for (const candidate of candidates) {
+        const index = normalized.indexOf(candidate.toLowerCase());
+        if (index !== -1) {
+            return index;
+        }
+    }
+    return -1;
+}
+
+function setAlphaValue(alphaValue, { updateResults: shouldUpdate = false } = {}) {
+    if (!isFinite(alphaValue)) return;
+    const alphaInput = document.getElementById('alpha');
+    if (alphaInput) {
+        alphaInput.value = formatAlpha(alphaValue);
+    }
+    const level = 1 - parseFloat(alphaInput ? alphaInput.value : alphaValue);
+    if (isFinite(level)) {
+        setConfidenceLevel(level, { skipAlphaUpdate: true });
+    }
+    if (shouldUpdate) {
+        updateResults();
+    }
+}
+
+function setDataEntryMode(mode) {
+    if (!Object.values(DataEntryModes).includes(mode)) {
+        mode = DataEntryModes.MANUAL;
+    }
+    activeDataEntryMode = mode;
+    document.querySelectorAll('.mode-button').forEach(button => {
+        const isActive = button.dataset.mode === mode;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+    document.querySelectorAll('.mode-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.dataset.mode === mode);
+    });
+}
+
+function setupDataEntryModeToggle() {
+    const toggle = document.querySelector('.mode-toggle');
+    if (!toggle) return;
+    toggle.addEventListener('click', event => {
+        const button = event.target.closest('.mode-button');
+        if (!button) return;
+        event.preventDefault();
+        const mode = button.dataset.mode;
+        setDataEntryMode(mode);
+    });
+    setDataEntryMode(activeDataEntryMode);
+}
+
+function wireUploadZone({ dropzoneId, inputId, browseId, statusId, templateId, templateContent, templateName, onLoad }) {
+    const dropzone = document.getElementById(dropzoneId);
+    const input = document.getElementById(inputId);
+    const browse = document.getElementById(browseId);
+    const templateButton = document.getElementById(templateId);
+    if (!dropzone || !input) return;
+
+    const prevent = event => {
+        event.preventDefault();
+        event.stopPropagation();
+    };
+
+    ['dragenter', 'dragover'].forEach(evt => {
+        dropzone.addEventListener(evt, event => {
+            prevent(event);
+            dropzone.classList.add('drag-active');
+        });
+    });
+    ['dragleave', 'dragend', 'drop'].forEach(evt => {
+        dropzone.addEventListener(evt, event => {
+            prevent(event);
+            dropzone.classList.remove('drag-active');
+        });
+    });
+
+    dropzone.addEventListener('drop', event => {
+        prevent(event);
+        const files = event.dataTransfer?.files;
+        if (files && files.length) {
+            handleFile(files[0]);
+        }
+    });
+
+    dropzone.addEventListener('click', () => {
+        input.click();
+    });
+    dropzone.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            input.click();
+        }
+    });
+    if (browse) {
+        browse.addEventListener('click', event => {
+            event.preventDefault();
+            input.click();
+        });
+    }
+
+    input.addEventListener('change', () => {
+        const files = input.files;
+        if (files && files.length) {
+            handleFile(files[0]);
+        }
+        input.value = '';
+    });
+
+    if (templateButton && templateContent) {
+        templateButton.addEventListener('click', event => {
+            event.preventDefault();
+            downloadTextFile(templateName, templateContent);
+        });
+    }
+
+    function handleFile(file) {
+        setUploadStatus(statusId, `Loading ${file.name}...`);
+        readFileAsText(file)
+            .then(text => onLoad(text))
+            .catch(error => {
+                console.error(error);
+                setUploadStatus(statusId, error.message || 'Unable to parse file.', 'error');
+            });
+    }
+}
+
+function parseSummaryUpload(text = '') {
+    const trimmed = text.trim();
+    if (!trimmed) {
+        throw new Error('File is empty.');
+    }
+    const lines = trimmed.split(/\r?\n/).filter(line => line.trim().length);
+    if (lines.length < 3) {
+        throw new Error('Provide a header row and at least two group rows.');
+    }
+    const delimiter = detectDelimiter ? detectDelimiter(lines[0]) : ',';
+    const headers = lines[0].split(delimiter).map(header => header.trim().toLowerCase());
+    const nameIdx = findHeaderIndex(headers, ['group', 'name', 'label']);
+    const meanIdx = findHeaderIndex(headers, ['mean', 'avg', 'mu']);
+    const sdIdx = findHeaderIndex(headers, ['sd', 'std', 'std_dev', 'stdev', 'sigma']);
+    const nIdx = findHeaderIndex(headers, ['n', 'sample', 'size', 'count']);
+    const deltaIdx = findHeaderIndex(headers, ['delta0', 'delta', 'hypothesized_difference']);
+    const alphaIdx = findHeaderIndex(headers, ['alpha', 'significance', 'sig_level']);
+    if ([nameIdx, meanIdx, sdIdx, nIdx].some(idx => idx === -1)) {
+        throw new Error('Headers must include group, mean, sd, and n columns.');
+    }
+    const entries = [];
+    let deltaValue = null;
+    let alphaValue = null;
+    lines.slice(1).forEach(line => {
+        const parts = line.split(delimiter).map(part => part.trim());
+        if (parts.length < headers.length) return;
+        const mean = parseFloat(parts[meanIdx]);
+        const sd = parseFloat(parts[sdIdx]);
+        const n = parseFloat(parts[nIdx]);
+        if (!isFinite(mean) || !isFinite(sd) || !isFinite(n)) return;
+        entries.push({
+            name: parts[nameIdx] || '',
+            mean,
+            sd,
+            n: Math.max(2, Math.round(n))
+        });
+        if (deltaIdx !== -1 && deltaValue === null) {
+            const deltaCandidate = parseFloat(parts[deltaIdx]);
+            if (isFinite(deltaCandidate)) {
+                deltaValue = deltaCandidate;
+            }
+        }
+        if (alphaIdx !== -1 && alphaValue === null) {
+            const alphaCandidate = parseFloat(parts[alphaIdx]);
+            if (isFinite(alphaCandidate)) {
+                alphaValue = alphaCandidate;
+            }
+        }
+    });
+    if (entries.length < 2) {
+        throw new Error('Need at least two valid group rows.');
+    }
+    return {
+        groups: entries.slice(0, 2),
+        delta: deltaValue,
+        alpha: alphaValue
+    };
+}
+
+function parseRawUpload(text = '') {
+    const trimmed = text.trim();
+    if (!trimmed) throw new Error('File is empty.');
+    const lines = trimmed.split(/\r?\n/).filter(line => line.trim().length);
+    if (lines.length < 3) throw new Error('Provide a header row and at least two observations.');
+    const delimiter = detectDelimiter ? detectDelimiter(lines[0]) : ',';
+    const headers = lines[0].split(delimiter).map(header => header.trim().toLowerCase());
+    const groupIdx = findHeaderIndex(headers, ['group', 'label', 'segment']);
+    const valueIdx = findHeaderIndex(headers, ['value', 'metric', 'measurement', 'score']);
+    if (groupIdx === -1 || valueIdx === -1) {
+        throw new Error('Headers must include group and value columns.');
+    }
+    const groups = new Map();
+    lines.slice(1).forEach(line => {
+        const parts = line.split(delimiter).map(part => part.trim());
+        if (parts.length < headers.length) return;
+        const group = parts[groupIdx];
+        const value = parseFloat(parts[valueIdx]);
+        if (!group || !isFinite(value)) return;
+        if (!groups.has(group)) {
+            groups.set(group, []);
+        }
+        groups.get(group).push(value);
+    });
+    if (groups.size < 2) {
+        throw new Error('Need at least two unique group labels.');
+    }
+    const summaries = Array.from(groups.entries()).map(([name, values]) => ({
+        name,
+        mean: calculateMean(values),
+        sd: calculateSd(values),
+        n: values.length
+    })).filter(entry => entry.n >= 2 && isFinite(entry.mean) && isFinite(entry.sd));
+    if (summaries.length < 2) {
+        throw new Error('Unable to compute statistics for two groups.');
+    }
+    return summaries.slice(0, 2);
+}
+
+function applyGroupStats(payload, options = {}) {
+    const entries = Array.isArray(payload?.groups) ? payload.groups : payload;
+    if (!Array.isArray(entries) || entries.length < 2) return;
+    const [first, second] = entries;
+    document.getElementById('group1-name').value = first.name || 'Group 1';
+    document.getElementById('mean1').value = first.mean;
+    document.getElementById('sd1').value = Math.max(0, first.sd);
+    document.getElementById('n1').value = Math.max(2, Math.round(first.n));
+
+    document.getElementById('group2-name').value = second.name || 'Group 2';
+    document.getElementById('mean2').value = second.mean;
+    document.getElementById('sd2').value = Math.max(0, second.sd);
+    document.getElementById('n2').value = Math.max(2, Math.round(second.n));
+
+    if (payload && isFinite(payload.delta)) {
+        document.getElementById('delta0').value = payload.delta;
+    }
+    if (payload && isFinite(payload.alpha)) {
+        setAlphaValue(payload.alpha);
+    }
+
+    const targetMode = options.mode || DataEntryModes.MANUAL;
+    setDataEntryMode(targetMode);
+    if (options.update !== false) {
+        updateResults();
+    }
+}
+
+function setupSummaryUpload() {
+    wireUploadZone({
+        dropzoneId: 'summary-dropzone',
+        inputId: 'summary-input',
+        browseId: 'summary-browse',
+        statusId: 'summary-upload-status',
+        templateId: 'summary-template-download',
+        templateContent: SUMMARY_TEMPLATE_CSV,
+        templateName: 'ttest_summary_template.csv',
+        onLoad: text => {
+            try {
+                const payload = parseSummaryUpload(text);
+                applyGroupStats(payload, { mode: DataEntryModes.SUMMARY });
+                const groups = payload.groups || [];
+                const label = groups.length >= 2
+                    ? `${groups[0].name || 'Group 1'} and ${groups[1].name || 'Group 2'}`
+                    : 'both groups';
+                setUploadStatus('summary-upload-status', `Loaded summary stats for ${label}.`, 'success');
+            } catch (error) {
+                console.error(error);
+                setUploadStatus('summary-upload-status', error.message, 'error');
+            }
+        }
+    });
+}
+
+function setupRawUpload() {
+    wireUploadZone({
+        dropzoneId: 'raw-dropzone',
+        inputId: 'raw-input',
+        browseId: 'raw-browse',
+        statusId: 'raw-upload-status',
+        templateId: 'raw-template-download',
+        templateContent: RAW_TEMPLATE_CSV,
+        templateName: 'ttest_raw_template.csv',
+        onLoad: text => {
+            try {
+                const entries = parseRawUpload(text);
+                applyGroupStats({ groups: entries }, { mode: DataEntryModes.RAW });
+                setUploadStatus('raw-upload-status', `Computed stats for ${entries[0].name || 'Group 1'} and ${entries[1].name || 'Group 2'}.`, 'success');
+            } catch (error) {
+                console.error(error);
+                setUploadStatus('raw-upload-status', error.message, 'error');
+            }
+        }
+    });
+}
+
+function buildScenarioDatasetFromGroups(groups = [], scenarioId = '', options = {}) {
+    if (!Array.isArray(groups) || groups.length < 2) return null;
+    const safeId = (scenarioId || 'scenario').replace(/\s+/g, '_').toLowerCase();
+    const lines = ['group,mean,sd,n,delta0,alpha'];
+    const deltaValue = options.delta0;
+    const alphaValue = options.alpha;
+    groups.slice(0, 2).forEach(group => {
+        lines.push([
+            escapeCsv(group.name || ''),
+            isFinite(group.mean) ? group.mean : '',
+            isFinite(group.sd) ? group.sd : '',
+            Number.isFinite(group.n) ? group.n : '',
+            typeof deltaValue !== 'undefined' && deltaValue !== null ? deltaValue : '',
+            typeof alphaValue !== 'undefined' && alphaValue !== null ? alphaValue : ''
+        ].join(','));
+    });
+    return {
+        filename: `${safeId}_summary_inputs.csv`,
+        content: lines.join('\n'),
+        mimeType: 'text/csv'
+    };
+}
+
+function buildScenarioDatasetFromRaw(rawText = '', scenarioId = '') {
+    const trimmed = rawText.trim();
+    if (!trimmed) return null;
+    const safeId = (scenarioId || 'scenario').replace(/\s+/g, '_').toLowerCase();
+    return {
+        filename: `${safeId}_raw_data.csv`,
+        content: trimmed,
+        mimeType: 'text/csv'
+    };
+}
+
+function escapeCsv(value) {
+    if (value == null) return '';
+    const str = String(value);
+    if (/[",\n]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+}
+
+function enableScenarioDownload(dataset) {
+    const button = document.getElementById('scenario-download');
+    if (!button) return;
+    activeScenarioDataset = dataset || null;
+    if (dataset) {
+        button.classList.remove('hidden');
+        button.disabled = false;
+    } else {
+        button.classList.add('hidden');
+        button.disabled = true;
+    }
+}
+
 function getGroupNames() {
     const defaultNames = ['Group 1', 'Group 2'];
     return ['group1-name', 'group2-name'].map((id, index) => {
@@ -906,8 +1329,13 @@ function updateResults() {
     document.getElementById('modified-date').textContent = modifiedDate;
 }
 
-function setConfidenceLevel(level) {
+function setConfidenceLevel(level, { skipAlphaUpdate = false } = {}) {
+    if (!isFinite(level) || level <= 0 || level >= 1) return;
     selectedConfidenceLevel = level;
+    const alphaInput = document.getElementById('alpha');
+    if (alphaInput && !skipAlphaUpdate) {
+        alphaInput.value = formatAlpha(1 - level);
+    }
     document.querySelectorAll('.confidence-button').forEach(button => {
         const buttonLevel = parseFloat(button.dataset.level);
         const isActive = Math.abs(buttonLevel - level) < 1e-6;
@@ -927,6 +1355,17 @@ function setupConfidenceButtons() {
         });
     });
     setConfidenceLevel(selectedConfidenceLevel);
+}
+
+function setupAlphaInput() {
+    const alphaInput = document.getElementById('alpha');
+    if (!alphaInput) return;
+    alphaInput.value = formatAlpha(1 - selectedConfidenceLevel);
+    alphaInput.addEventListener('change', () => {
+        const value = parseFloat(alphaInput.value);
+        if (!isFinite(value)) return;
+        setAlphaValue(value, { updateResults: true });
+    });
 }
 
 function setupAxisControls() {
@@ -1007,7 +1446,8 @@ function parseScenarioText(text) {
         description: [],
         alpha: null,
         groups: [],
-        settings: {}
+        settings: {},
+        rawData: []
     };
     let section = '';
     const descriptionLines = [];
@@ -1059,6 +1499,9 @@ function parseScenarioText(text) {
                     result.settings[key.trim().toLowerCase()] = value;
                 }
                 break;
+            case 'raw data':
+                result.rawData.push(trimmed);
+                break;
         }
     });
 
@@ -1096,70 +1539,75 @@ function applyScenarioPreset(preset, entry) {
     if (!preset) {
         return;
     }
-    const [group1, group2] = preset.groups || [];
-    if (group1) {
-        setInputValue('group1-name', group1.name);
-        setInputValue('mean1', Number.isFinite(group1.mean) ? group1.mean : '');
-        setInputValue('sd1', Number.isFinite(group1.sd) ? group1.sd : '');
-        setInputValue('n1', Number.isFinite(group1.n) ? group1.n : '');
-    }
-    if (group2) {
-        setInputValue('group2-name', group2.name);
-        setInputValue('mean2', Number.isFinite(group2.mean) ? group2.mean : '');
-        setInputValue('sd2', Number.isFinite(group2.sd) ? group2.sd : '');
-        setInputValue('n2', Number.isFinite(group2.n) ? group2.n : '');
-    }
-    if (group1 && group2) {
-        applyGroupNames(group1.name, group2.name);
-    }
+    setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
+    setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
 
     const checkboxLock = document.getElementById('means-axis-lock');
+    let scenarioDelta = null;
+    let scenarioAlpha = null;
     const settings = preset.settings || {};
     Object.entries(settings).forEach(([key, value]) => {
-        if (!value) {
-            return;
-        }
+        if (!value) return;
         if (key === 'axis-lock' || key === 'means-axis-lock') {
-            if (checkboxLock) {
-                checkboxLock.checked = value.toLowerCase() === 'true';
-            }
+            if (checkboxLock) checkboxLock.checked = value.toLowerCase() === 'true';
             return;
         }
         if (key === 'diff-axis-mode') {
             const radio = document.querySelector(`input[name="diff-axis-mode"][value="${value}"]`);
-            if (radio) {
-                radio.checked = true;
-            }
+            if (radio) radio.checked = true;
             return;
         }
         const element = document.getElementById(key);
-        if (element) {
-            element.value = value;
-        }
+        if (element) element.value = value;
     });
 
     if (typeof settings.delta0 !== 'undefined' && settings.delta0 !== '') {
         setInputValue('delta0', settings.delta0);
+        const parsedDelta = parseFloat(settings.delta0);
+        if (isFinite(parsedDelta)) scenarioDelta = parsedDelta;
     }
 
     if (Number.isFinite(preset.alpha)) {
-        const target = 1 - preset.alpha;
-        const button = Array.from(document.querySelectorAll('.confidence-button')).find(btn => {
-            const btnLevel = parseFloat(btn.dataset.level);
-            return Math.abs(btnLevel - target) < 1e-3;
-        });
-        if (button) {
-            setConfidenceLevel(parseFloat(button.dataset.level));
+        setAlphaValue(preset.alpha, { updateResults: false });
+        scenarioAlpha = preset.alpha;
+    } else if (typeof settings.alpha !== 'undefined' && settings.alpha !== '') {
+        const parsedAlpha = parseFloat(settings.alpha);
+        if (isFinite(parsedAlpha)) {
+            setAlphaValue(parsedAlpha, { updateResults: false });
+            scenarioAlpha = parsedAlpha;
         }
     }
 
-    const downloadButton = document.getElementById('scenario-download');
-    if (downloadButton && entry?.file) {
-        downloadButton.dataset.file = entry.file;
-        downloadButton.classList.remove('hidden');
-        downloadButton.disabled = false;
+    let datasetInfo = null;
+    const rawDataText = Array.isArray(preset.rawData) && preset.rawData.length
+        ? preset.rawData.join('\n').trim()
+        : '';
+
+    if (rawDataText) {
+        try {
+            const rawGroups = parseRawUpload(rawDataText);
+            applyGroupStats({ groups: rawGroups, delta: scenarioDelta ?? undefined, alpha: scenarioAlpha ?? undefined }, { mode: DataEntryModes.RAW, update: false });
+            setUploadStatus('raw-upload-status', `Loaded scenario data for ${rawGroups[0].name || 'Group 1'} and ${rawGroups[1].name || 'Group 2'}.`, 'success');
+            datasetInfo = buildScenarioDatasetFromRaw(rawDataText, entry?.id || '');
+        } catch (error) {
+            console.error('Scenario raw data error:', error);
+            setUploadStatus('raw-upload-status', error.message || 'Unable to parse scenario raw data.', 'error');
+        }
+    } else if (Array.isArray(preset.groups) && preset.groups.length >= 2) {
+        applyGroupStats({ groups: preset.groups, delta: scenarioDelta ?? undefined, alpha: scenarioAlpha ?? undefined }, { mode: DataEntryModes.SUMMARY, update: false });
+        const label = `${preset.groups[0].name || 'Group 1'} and ${preset.groups[1].name || 'Group 2'}`;
+        setUploadStatus('summary-upload-status', `Loaded scenario stats for ${label}.`, 'success');
+        const deltaFallback = scenarioDelta !== null ? scenarioDelta : parseFloat(document.getElementById('delta0')?.value);
+        const alphaFallback = scenarioAlpha !== null ? scenarioAlpha : parseFloat(document.getElementById('alpha')?.value);
+        datasetInfo = buildScenarioDatasetFromGroups(preset.groups, entry?.id || '', {
+            delta0: isFinite(deltaFallback) ? deltaFallback : undefined,
+            alpha: isFinite(alphaFallback) ? alphaFallback : undefined
+        });
+    } else {
+        setDataEntryMode(DataEntryModes.MANUAL);
     }
 
+    enableScenarioDownload(datasetInfo);
     updateResults();
 }
 
@@ -1167,6 +1615,7 @@ async function loadScenarioById(id) {
     const scenario = scenarioState.manifest.find(entry => entry.id === id);
     if (!scenario) {
         renderScenarioDescription('', []);
+        enableScenarioDownload(null);
         return;
     }
     try {
@@ -1180,6 +1629,7 @@ async function loadScenarioById(id) {
         applyScenarioPreset(parsed, scenario);
     } catch (error) {
         console.error('Scenario load error:', error);
+        enableScenarioDownload(null);
     }
 }
 
@@ -1190,43 +1640,24 @@ function setupScenarioSelector() {
     }
     select.addEventListener('change', () => {
         const value = select.value;
-        const downloadButton = document.getElementById('scenario-download');
         if (!value) {
             renderScenarioDescription('', []);
-            if (downloadButton) {
-                downloadButton.classList.add('hidden');
-                downloadButton.disabled = true;
-                downloadButton.dataset.file = '';
-            }
+            setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
+            setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
+            enableScenarioDownload(null);
             return;
         }
         loadScenarioById(value);
     });
     const downloadButton = document.getElementById('scenario-download');
     if (downloadButton) {
-        downloadButton.addEventListener('click', async () => {
-            const file = downloadButton.dataset.file;
-            if (!file) {
-                return;
-            }
-            try {
-                const response = await fetch(file, { cache: 'no-cache' });
-                if (!response.ok) {
-                    throw new Error(response.statusText);
-                }
-                const text = await response.text();
-                const blob = new Blob([text], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = file.split('/').pop() || 'scenario.txt';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            } catch (error) {
-                console.error('Scenario download error:', error);
-            }
+        downloadButton.addEventListener('click', () => {
+            if (!activeScenarioDataset) return;
+            downloadTextFile(
+                activeScenarioDataset.filename,
+                activeScenarioDataset.content,
+                { mimeType: activeScenarioDataset.mimeType || 'text/csv' }
+            );
         });
         downloadButton.classList.add('hidden');
         downloadButton.disabled = true;
@@ -1257,10 +1688,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(id).addEventListener('input', updateResults);
     });
 
+    setupDataEntryModeToggle();
+    setupSummaryUpload();
+    setupRawUpload();
+    setupAlphaInput();
     setupConfidenceButtons();
     setupAxisControls();
     initializeScenarios();
     updateResults();
 });
-
-

@@ -1,0 +1,36 @@
+.two-column-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.manual-card .hint {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.manual-controls {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.predictor-type-group {
+  margin-top: 0.75rem;
+}
+
+.example-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tool-directory,
+.chart-card,
+.metrics-panel,
+.summary-section {
+  /* Rely on shared styles; this file only tweaks layout where needed. */
+}

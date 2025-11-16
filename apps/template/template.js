@@ -2,26 +2,98 @@
 const CREATED_DATE = '2025-11-15';
 let modifiedDate = new Date().toLocaleDateString();
 
+const PLACEHOLDER_SUMMARY_TEMPLATE = [
+  'group,conversions,sample_size,delta0,alpha,notes',
+  'Control,182,1250,5,0.05,"Evergreen CTA from last quarter"',
+  'Variant,211,1240,5,0.05,"New hero message emphasizing savings"'
+].join('\n');
+
+const PLACEHOLDER_RAW_TEMPLATE = [
+  'group,value,channel,note',
+  'Control,0,instagram,"Swipe dismissed"',
+  'Control,1,instagram,"Swipe converted"',
+  'Control,0,facebook,"Visitor bounced"',
+  'Control,1,facebook,"Converted after reminder"',
+  'Variant,1,instagram,"Converted within session"',
+  'Variant,1,facebook,"Converted after retargeting"',
+  'Variant,0,facebook,"Saw reminder, no conversion"',
+  'Variant,1,email,"Converted immediately"',
+  'Variant,0,email,"Clicked but no purchase"'
+].join('\n');
+
 const PLACEHOLDER_SCENARIOS = [
   {
     id: 'scenario-1',
     label: 'Awareness vs consideration lift',
-    description: 'Demonstrates how the template can auto-fill paired metrics (e.g., aided awareness vs brand consideration) for a correlation or mean-difference test.'
+    description: 'Demonstrates how the template can auto-fill paired metrics (e.g., aided awareness vs brand consideration) for a correlation or mean-difference test.',
+    dataset: {
+      filename: 'scenario-1_summary_inputs.csv',
+      content: PLACEHOLDER_SUMMARY_TEMPLATE
+    }
   },
   {
     id: 'scenario-2',
     label: 'Campaign response by audience',
-    description: 'Shows how categorical inputs (e.g., Chi-square) could pre-populate counts to test whether audiences behave differently across creatives.'
+    description: 'Shows how categorical inputs (e.g., Chi-square) could pre-populate counts to test whether audiences behave differently across creatives.',
+    dataset: {
+      filename: 'scenario-2_raw_data.csv',
+      content: PLACEHOLDER_RAW_TEMPLATE
+    }
   }
 ];
+
+const DataEntryModes = {
+  MANUAL: 'manual',
+  SUMMARY: 'summary-upload',
+  RAW: 'raw-upload'
+};
+
+let activeDataEntryMode = DataEntryModes.MANUAL;
+let activeScenarioDataset = null;
+const confidenceButtons = () => document.querySelectorAll('.confidence-button');
+
+function formatAlphaValue(alpha) {
+  if (!isFinite(alpha)) return '';
+  const clamped = Math.min(0.25, Math.max(0.0005, alpha));
+  if (clamped >= 0.1) return clamped.toFixed(2);
+  if (clamped >= 0.01) return clamped.toFixed(3);
+  return clamped.toFixed(4);
+}
+
+function applyAlphaValue(alpha) {
+  const alphaInput = document.getElementById('alpha');
+  if (!alphaInput) return;
+  alphaInput.value = formatAlphaValue(alpha);
+  reflectConfidenceButtons();
+}
+
+function reflectConfidenceButtons() {
+  const alphaInput = document.getElementById('alpha');
+  if (!alphaInput) return;
+  const value = parseFloat(alphaInput.value);
+  const targetLevel = isFinite(value) ? 1 - value : NaN;
+  confidenceButtons().forEach(button => {
+    const level = parseFloat(button.dataset.level);
+    const isActive = isFinite(level) && Math.abs(level - targetLevel) < 1e-6;
+    button.classList.toggle('active', isActive);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+}
+
+function stampModified() {
+  modifiedDate = new Date().toLocaleDateString();
+  hydrateTimestamps();
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   hydrateTimestamps();
   setupScenarioSelect();
-  setupConfidenceButtons();
+  setupScenarioDownloadButton();
   setupAlphaInput();
+  setupConfidenceButtons();
+  setupDataEntryModeToggle();
+  setupDataEntryUploads();
   setupVisualSettings();
-  setupFileUpload();
   renderPlaceholderFanChart();
   renderPlaceholderStackedChart();
 });
@@ -36,7 +108,6 @@ function hydrateTimestamps() {
 function setupScenarioSelect() {
   const select = document.getElementById('scenario-select');
   const description = document.getElementById('scenario-description');
-  const downloadBtn = document.getElementById('scenario-download');
   if (!select || !description) return;
 
   PLACEHOLDER_SCENARIOS.forEach(entry => {
@@ -50,36 +121,32 @@ function setupScenarioSelect() {
     const selected = PLACEHOLDER_SCENARIOS.find(item => item.id === select.value);
     if (!selected) {
       description.innerHTML = '<p>Introduce how presets work (auto-loading text, inputs, and visual descriptions).</p>';
-      if (downloadBtn) {
-        downloadBtn.classList.add('hidden');
-        downloadBtn.disabled = true;
-      }
+      updateScenarioDownload(null);
       return;
     }
     description.innerHTML = `<p>${selected.description}</p>`;
-    if (downloadBtn) {
-      downloadBtn.classList.remove('hidden');
-      downloadBtn.disabled = false;
-      downloadBtn.textContent = 'Download scenario text';
-    }
+    updateScenarioDownload(selected.dataset || null);
   });
 }
 
 function setupConfidenceButtons() {
-  document.querySelectorAll('.confidence-button').forEach(button => {
+  const buttons = confidenceButtons();
+  if (!buttons.length) return;
+  buttons.forEach(button => {
     button.addEventListener('click', () => {
       const level = parseFloat(button.dataset.level);
       if (!isFinite(level)) return;
-      document.querySelectorAll('.confidence-button').forEach(btn => btn.classList.remove('active'));
-      button.classList.add('active');
-      const alphaInput = document.getElementById('alpha');
-      if (alphaInput) {
-        alphaInput.value = (1 - level).toFixed(3);
-      }
-      modifiedDate = new Date().toLocaleDateString();
-      hydrateTimestamps();
+      applyAlphaValue(1 - level);
+      buttons.forEach(btn => {
+        const lvl = parseFloat(btn.dataset.level);
+        const isActive = Math.abs(lvl - level) < 1e-6;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+      stampModified();
     });
   });
+  reflectConfidenceButtons();
 }
 
 function setupAlphaInput() {
@@ -88,12 +155,15 @@ function setupAlphaInput() {
   alphaInput.addEventListener('change', () => {
     const value = parseFloat(alphaInput.value);
     if (!isFinite(value)) return;
-    const targetLevel = 1 - value;
-    document.querySelectorAll('.confidence-button').forEach(btn => {
-      const level = parseFloat(btn.dataset.level);
-      btn.classList.toggle('active', Math.abs(level - targetLevel) < 1e-6);
-    });
+    alphaInput.value = formatAlphaValue(value);
+    reflectConfidenceButtons();
+    stampModified();
   });
+  const initialValue = parseFloat(alphaInput.value);
+  if (isFinite(initialValue)) {
+    alphaInput.value = formatAlphaValue(initialValue);
+    reflectConfidenceButtons();
+  }
 }
 
 function setupVisualSettings() {
@@ -119,66 +189,177 @@ function setupVisualSettings() {
   }
 }
 
-function setupFileUpload() {
-  const dropzone = document.getElementById('template-dropzone');
-  const browseButton = document.getElementById('template-browse');
-  const fileInput = document.getElementById('template-file-input');
-  const feedback = document.getElementById('template-file-feedback');
-  if (!dropzone || !fileInput) return;
+function updateScenarioDownload(dataset) {
+  const button = document.getElementById('scenario-download');
+  activeScenarioDataset = dataset
+    ? {
+        filename: dataset.filename || 'scenario.csv',
+        content: dataset.content || '',
+        mimeType: dataset.mimeType || 'text/csv'
+      }
+    : null;
+  if (!button) return;
+  if (dataset) {
+    button.classList.remove('hidden');
+    button.disabled = false;
+  } else {
+    button.classList.add('hidden');
+    button.disabled = true;
+  }
+}
 
-  const showFeedback = (message, status = 'success') => {
+function setupScenarioDownloadButton() {
+  const button = document.getElementById('scenario-download');
+  if (!button) return;
+  button.addEventListener('click', () => {
+    if (!activeScenarioDataset) return;
+    downloadTextFile(
+      activeScenarioDataset.filename,
+      activeScenarioDataset.content,
+      { mimeType: activeScenarioDataset.mimeType || 'text/csv' }
+    );
+  });
+}
+
+function setDataEntryMode(mode) {
+  if (!Object.values(DataEntryModes).includes(mode)) {
+    mode = DataEntryModes.MANUAL;
+  }
+  activeDataEntryMode = mode;
+  document.querySelectorAll('.data-entry-card .mode-button').forEach(button => {
+    const isActive = button.dataset.mode === mode;
+    button.classList.toggle('active', isActive);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+  document.querySelectorAll('.data-entry-card .mode-panel').forEach(panel => {
+    const isActive = panel.dataset.mode === mode;
+    panel.classList.toggle('active', isActive);
+    panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+  });
+}
+
+function setupDataEntryModeToggle() {
+  const buttons = document.querySelectorAll('.data-entry-card .mode-button');
+  if (!buttons.length) return;
+  buttons.forEach(button => {
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      setDataEntryMode(button.dataset.mode);
+    });
+  });
+  setDataEntryMode(activeDataEntryMode);
+}
+
+function wireDropzone({
+  dropzoneId,
+  inputId,
+  browseId,
+  feedbackId,
+  templateId,
+  templateContent,
+  downloadName
+}) {
+  const dropzone = document.getElementById(dropzoneId);
+  const input = document.getElementById(inputId);
+  const browse = document.getElementById(browseId);
+  const feedback = document.getElementById(feedbackId);
+  const templateButton = document.getElementById(templateId);
+  if (!dropzone || !input) return;
+
+  const setFeedback = (message, status = '') => {
     if (!feedback) return;
-    feedback.textContent = message;
-    feedback.classList.remove('error');
-    if (status === 'error') {
-      feedback.classList.add('error');
+    feedback.textContent = message || '';
+    feedback.classList.remove('success', 'error');
+    if (status === 'success' || status === 'error') {
+      feedback.classList.add(status);
     }
   };
 
-  const clearFeedback = () => {
-    if (feedback) feedback.textContent = '';
-  };
-
-  const handleFiles = files => {
-    const [file] = files;
+  const processFile = file => {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const text = reader.result;
         const { headers, rows } = parseDelimitedText(text, null, { maxRows: MAX_UPLOAD_ROWS });
-        showFeedback(`Loaded ${rows.length} row(s) with ${headers.length} column(s). Replace this logic with tool-specific parsing.`);
+        setFeedback(`Loaded ${rows.length} row(s) with ${headers.length} column(s). Replace with tool-specific ingestion.`, 'success');
       } catch (error) {
-        showFeedback(error.message || 'Unable to parse file.', 'error');
+        setFeedback(error.message || 'Unable to parse file.', 'error');
       }
     };
-    reader.onerror = () => showFeedback('Unable to read file.', 'error');
+    reader.onerror = () => setFeedback('Unable to read the file.', 'error');
     reader.readAsText(file);
   };
 
-  dropzone.addEventListener('dragover', event => {
-    event.preventDefault();
-    dropzone.classList.add('drag-active');
-  });
-  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-active'));
-  dropzone.addEventListener('drop', event => {
-    event.preventDefault();
-    dropzone.classList.remove('drag-active');
-    handleFiles(event.dataTransfer.files);
-  });
-  dropzone.addEventListener('click', () => fileInput.click());
-  if (browseButton) {
-    browseButton.addEventListener('click', event => {
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, event => {
       event.preventDefault();
-      fileInput.click();
+      dropzone.classList.add('drag-active');
+    });
+  });
+  ['dragleave', 'dragend', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, event => {
+      if (eventName === 'drop') event.preventDefault();
+      if (eventName !== 'drop' && !dropzone.contains(event.target)) return;
+      dropzone.classList.remove('drag-active');
+    });
+  });
+  dropzone.addEventListener('drop', event => {
+    const files = event.dataTransfer?.files;
+    if (files && files.length) {
+      processFile(files[0]);
+    }
+  });
+  dropzone.addEventListener('click', () => input.click());
+  dropzone.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      input.click();
+    }
+  });
+  if (browse) {
+    browse.addEventListener('click', event => {
+      event.preventDefault();
+      input.click();
     });
   }
-  fileInput.addEventListener('change', () => {
-    clearFeedback();
-    handleFiles(fileInput.files);
-    fileInput.value = '';
+  input.addEventListener('change', () => {
+    const files = input.files;
+    if (files && files.length) {
+      setFeedback('Parsing file…');
+      processFile(files[0]);
+    }
+    input.value = '';
+  });
+  if (templateButton && templateContent) {
+    templateButton.addEventListener('click', event => {
+      event.preventDefault();
+      downloadTextFile(downloadName, templateContent);
+    });
+  }
+}
+
+function setupDataEntryUploads() {
+  wireDropzone({
+    dropzoneId: 'template-summary-dropzone',
+    inputId: 'template-summary-input',
+    browseId: 'template-summary-browse',
+    feedbackId: 'template-summary-feedback',
+    templateId: 'template-summary-download',
+    templateContent: PLACEHOLDER_SUMMARY_TEMPLATE,
+    downloadName: 'summary_template.csv'
+  });
+  wireDropzone({
+    dropzoneId: 'template-raw-dropzone',
+    inputId: 'template-raw-input',
+    browseId: 'template-raw-browse',
+    feedbackId: 'template-raw-feedback',
+    templateId: 'template-raw-download',
+    templateContent: PLACEHOLDER_RAW_TEMPLATE,
+    downloadName: 'raw_template.csv'
   });
 }
+
 
 function renderPlaceholderFanChart() {
   if (!window.FanChartUtils) {

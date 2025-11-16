@@ -1,0 +1,2 @@
+condition_a_label,condition_b_label,positive_label,negative_label,a_positive_b_positive,a_positive_b_negative,a_negative_b_positive,a_negative_b_negative,alpha,analysis_method
+Legacy signage,Adaptive signage,Bundle purchase,No bundle,188,58,92,401,0.05,chi2_nocc

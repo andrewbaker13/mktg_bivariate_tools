@@ -1,0 +1,46 @@
+# Title
+Global Streaming Launch Creative Test
+
+# Description
+The brand studio is polishing the pitch deck for a multi-continent streaming bundle launch and needs to prove each creative direction changes the same marketing KPI in a meaningful way. Instead of running a simple before/after holdout, the team gathered two simultaneous views on every designated market area (DMA):
+- **Studio Recall** — unaided recall of the hero storyline measured via a quick panel pulse in each DMA.
+- **Growth Conversion** — incremental household conversions attributed to the promo bundle offer in that same DMA.
+
+Because both metrics sit on a comparable 0–60 scale, each DMA yields a paired observation (recall score vs. conversion score). Stakeholders now want to know whether the cinematic storytelling that boosts recall also translates into comparable conversion momentum, or whether the promo-heavy creative is the only lever that moves deals.
+
+How to use:
+- Check whether the paired difference (conversion − recall) is consistently positive or if certain DMAs drag the mean toward zero.
+- Toggle confidence levels to illustrate how sensitive the conclusion is for CMOs focused on awareness vs. CROs focused on revenue.
+- Use the histogram and diagnostics to call out DMAs where the two measures diverge sharply so that field teams can investigate local context.
+
+# Alpha
+0.05
+
+# Input Mode
+paired
+
+# Paired Columns
+recall_score,conversion_score
+48.5,52.1
+45.9,49.2
+47.4,52.4
+46.1,50.1
+49.3,53.5
+44.8,48.6
+45.2,50.4
+46.7,51.5
+47.9,54.2
+48.1,52.7
+46.4,49.8
+45.6,50.0
+47.0,52.2
+48.7,53.1
+46.9,51.7
+45.5,49.3
+47.8,52.9
+46.2,50.8
+48.0,53.4
+45.7,49.8
+
+# Raw Data File
+file=scenarios/data/streaming_launch.csv

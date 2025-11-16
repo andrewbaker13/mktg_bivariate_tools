@@ -16,6 +16,12 @@
   margin-top: 22px;
 }
 
+.summary-warning {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--app-danger);
+}
+
 .reporting-grid {
   margin-top: 16px;
   display: grid;
@@ -29,4 +35,16 @@
   padding: 16px;
   background: #f9fbff;
   min-height: 120px;
+}
+
+.data-entry-card .manual-card {
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  padding: 1rem;
+  background: var(--app-card-bg);
+  margin-top: 1rem;
+}
+
+.data-entry-card .manual-card:first-child {
+  margin-top: 0;
 }

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bivariate Linear Regression Tool</title>
+  <link rel="stylesheet" href="../../shared/css/main.css">
+  <link rel="stylesheet" href="main_bivariate_regression.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+  <header class="intro hero-header">
+    <div class="hero-header__top">
+      <h1>Bivariate Linear Regression Tool</h1>
+      <div class="hero-context">
+        <span class="badge">New</span>
+      </div>
+    </div>
+    <p class="hero-header__lede">
+      Fit and interpret simple linear regression models for marketing data, using either a single continuous predictor or a single binary (two-level) categorical predictor.
+    </p>
+  </header>
+
+  <main class="app-main">
+    <section class="test-overview">
+      <h2>TEST OVERVIEW &amp; EQUATIONS</h2>
+      <div class="card">
+        <p>
+          Bivariate linear regression estimates how an outcome \(Y\) changes, on average, with one predictor \(X\).
+          In marketing contexts, \(Y\) might be revenue per user, time on site, or order value, while \(X\) could be a continuous metric (spend, impressions, visits)
+          or a binary condition (control vs. treatment).
+        </p>
+        <p class="equation">
+          <strong>Model:</strong>
+          $$ Y_i = \beta_0 + \beta_1 X_i + \varepsilon_i $$
+        </p>
+        <p class="equation">
+          <strong>Test statistic for slope:</strong>
+          $$ t = \frac{\hat{\beta}_1}{\mathrm{SE}(\hat{\beta}_1)} \quad\text{with}\quad \nu = n - 2 $$
+        </p>
+        <p class="equation">
+          <strong>Confidence interval for slope:</strong>
+          $$ \hat{\beta}_1 \pm t_{\alpha/2,\nu}\,\mathrm{SE}(\hat{\beta}_1) $$
+        </p>
+        <details class="additional-notes">
+          <summary>Continuous vs. Categorical Predictors</summary>
+          <p>
+            When \(X\) is continuous, \(\hat{\beta}_1\) represents the expected change in \(Y\) for a one-unit change in \(X\).
+            When \(X\) is a binary group indicator (e.g., 0 = control, 1 = treatment), \(\hat{\beta}_1\) is the mean difference between groups,
+            and \(\hat{\beta}_0\) is the mean for the baseline group.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <section class="scenario-section">
+      <h2>MARKETING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Load a marketing scenario:</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Manual inputs (no preset)</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>
+            Use presets to explore realistic use cases, such as <em>ad spend vs. revenue</em> or <em>control vs. treatment on order value</em>.
+            Each scenario can expose either a summary CSV of aggregated statistics or a raw data file that you can download, edit in Excel, and re-upload.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="inputs-panel">
+      <h2>INPUTS &amp; SETTINGS</h2>
+      <div class="card data-entry-card">
+        <div class="input-header">
+          <h3>Select Data Entry / Upload Mode</h3>
+        </div>
+        <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
+          <button type="button" class="mode-button" data-mode="raw-upload">Upload raw data</button>
+          <button type="button" class="mode-button active" data-mode="manual">Manual entry</button>
+        </div>
+        <div class="mode-panels">
+          <div class="mode-panel active" data-mode="manual" id="manual-panel">
+            <article class="manual-card">
+              <h3>Manual raw data entry</h3>
+              <p>
+                Add up to 50 paired observations. The predictor can be numeric (continuous) or categorical labels.
+              </p>
+              <div class="example-controls">
+                <button type="button" id="example-continuous" class="secondary">Load continuous example</button>
+                <button type="button" id="example-categorical" class="secondary">Load 3-group categorical example</button>
+              </div>
+              <div class="manual-table" data-structure="paired">
+                <div class="data-table" role="region" aria-label="Manual paired input table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Row</th>
+                        <th scope="col">Predictor (X)</th>
+                        <th scope="col">Outcome (Y)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="regression-table-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="manual-controls">
+                <label for="manual-row-count">Rows to show (max 50):</label>
+                <input type="number" id="manual-row-count" min="4" max="50" value="4">
+              </div>
+              <div class="input-group">
+                <label for="x-label">Predictor name (X)</label>
+                <input type="text" id="x-label" placeholder="Spend, Treatment group, etc.">
+              </div>
+              <div class="input-group">
+                <label for="y-label">Outcome name (Y)</label>
+                <input type="text" id="y-label" placeholder="Revenue, orders, etc.">
+              </div>
+              <fieldset class="input-group predictor-type-group">
+                <legend>Predictor type</legend>
+                <label class="radio-label">
+                  <input type="radio" name="predictor-type" value="auto" checked>
+                  <span>Auto-detect</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="predictor-type" value="continuous">
+                  <span>Continuous (numeric)</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="predictor-type" value="categorical">
+                  <span>Categorical (group labels)</span>
+                </label>
+              </fieldset>
+            </article>
+          </div>
+
+          <div class="mode-panel" data-mode="raw-upload" id="raw-panel">
+            <p class="panel-intro">
+              Upload raw case-level data. The file should have exactly two columns: a predictor and an outcome.
+              Text/string predictors are treated as categorical; numeric predictors can be interpreted as continuous or categorical based on the option you choose below.
+            </p>
+            <div class="dropzone" id="raw-dropzone" role="button" tabindex="0">
+              <p class="dropzone-title">Drag &amp; drop raw data file</p>
+              <p class="dropzone-note">Two columns with headers, such as <code>Spend,Revenue</code> or <code>Group,Revenue</code>.</p>
+              <button type="button" id="raw-browse" class="secondary">Browse files</button>
+            </div>
+            <input type="file" id="raw-input" accept=".csv,.tsv,.txt" hidden>
+            <div class="template-buttons">
+              <button type="button" id="raw-template-download">Download raw template</button>
+            </div>
+            <p class="upload-status" id="raw-upload-status">No raw file uploaded.</p>
+
+            <fieldset class="input-group predictor-type-group">
+              <legend>Predictor type for numeric uploads</legend>
+              <label class="radio-label">
+                <input type="radio" name="upload-predictor-type" value="auto" checked>
+                <span>Auto-detect</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="upload-predictor-type" value="continuous">
+                <span>Continuous (numeric)</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="upload-predictor-type" value="categorical">
+                <span>Categorical (group labels)</span>
+              </label>
+            </fieldset>
+          </div>
+        </div>
+      </div>
+
+      <div class="card confidence-card">
+        <h3>Confidence Level &amp; Reporting</h3>
+        <p>Set the significance level for hypothesis tests on the slope and the corresponding confidence intervals.</p>
+        <div class="alpha-controls">
+          <label for="alpha">Significance level (&alpha;)</label>
+          <input type="number" id="alpha" min="0.001" max="0.5" step="0.001" value="0.05">
+          <div class="confidence-buttons" role="group" aria-label="Select confidence level">
+            <button type="button" class="confidence-button conf-level-btn" data-level="0.90">90% Conf.</button>
+            <button type="button" class="confidence-button conf-level-btn selected" data-level="0.95">95% Conf.</button>
+            <button type="button" class="confidence-button conf-level-btn" data-level="0.99">99% Conf.</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      <div class="card">
+        <article class="chart-card">
+          <h3>Scatterplot &amp; Regression Line</h3>
+          <div id="regression-chart" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Scatterplot of Y versus X with fitted regression line."></div>
+          <p id="regression-caption" class="chart-note"></p>
+        </article>
+      </div>
+    </section>
+
+    <section class="test-results" aria-labelledby="test-results-heading">
+      <h2 id="test-results-heading">TEST RESULTS</h2>
+
+      <div class="card metrics-panel">
+        <div class="metric-output">Predictor type: <span id="metric-predictor-type" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output">Slope (\(\hat{\beta}_1\)): <span id="metric-slope" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output">Intercept (\(\hat{\beta}_0\)): <span id="metric-intercept" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output">R-squared: <span id="metric-r2" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output">Slope t-statistic: <span id="metric-t" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output">p-value: <span id="metric-pvalue" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output">Decision (&alpha;): <span id="metric-decision" class="dynamic-value">&ndash;</span></div>
+      </div>
+
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>APA-Style Statistical Reporting</h3>
+          <p id="apa-report"></p>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="managerial-report"></p>
+        </article>
+      </div>
+
+      <div class="card summary-section">
+        <h3>Summary of Estimates</h3>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th>Estimate</th>
+              <th>Standard Error</th>
+              <th>t</th>
+              <th>p-value</th>
+              <th id="summary-ci-lower-header">Lower Bound</th>
+              <th id="summary-ci-upper-header">Upper Bound</th>
+            </tr>
+          </thead>
+          <tbody id="summary-table-body">
+            <tr>
+              <td colspan="7">Provide summary statistics or upload data to see parameter estimates.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="diagnostics-section">
+      <h2>DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+      <div class="card">
+        <details class="diagnostics-details">
+          <summary>Diagnostics &amp; Assumption Checks</summary>
+          <div id="diagnostics-content">
+            <p class="muted">
+              Run the analysis to see checks on linearity, influential points, variance patterns, and normality of residuals.
+              Use these as prompts for plots and follow-up modeling, not as strict pass/fail gates.
+            </p>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="created-date"></span> &middot; Last updated: <span id="modified-date"></span></p>
+    <p class="citation">
+      Cite as: Baker, Andrew. (2025). Bivariate Linear Regression Tool. Marketing Bivariate Tools.
+      https://github.com/andre/mktg_bivariate_tools/apps/bivariate_regression/main_bivariate_regression.html
+    </p>
+  </footer>
+
+  <script src="../../shared/js/csv_utils.js"></script>
+  <script src="../../shared/js/fan_chart_utils.js"></script>
+  <script src="../../shared/js/stacked_bar_utils.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

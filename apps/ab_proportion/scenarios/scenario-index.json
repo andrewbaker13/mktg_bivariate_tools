@@ -13,5 +13,11 @@
     "id": "loyalty_partner",
     "label": "Channel Partner Loyalty Push",
     "file": "scenarios/loyalty_partner.txt"
+  },
+  {
+    "id": "social_cta_raw",
+    "label": "Social CTA Raw Dataset",
+    "file": "scenarios/social_cta_raw.txt",
+    "dataset": "social_cta_raw_data.csv"
   }
 ]

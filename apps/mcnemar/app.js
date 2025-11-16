@@ -13,6 +13,28 @@ const defaultLabels = {
     negative: 'Negative'
 };
 
+const DataEntryModes = Object.freeze({
+    MANUAL: 'manual',
+    SUMMARY: 'summary-upload',
+    RAW: 'raw-upload'
+});
+
+const SUMMARY_TEMPLATE_CSV = [
+    'condition_a_label,condition_b_label,positive_label,negative_label,a_positive_b_positive,a_positive_b_negative,a_negative_b_positive,a_negative_b_negative,alpha,analysis_method',
+    'Condition A,Condition B,Converted,Did not convert,120,35,42,298,0.05,chi2_cc'
+].join('\r\n');
+
+const RAW_TEMPLATE_CSV = [
+    'Condition A,Condition B',
+    'Converted,Converted',
+    'Converted,Not converted',
+    'Not converted,Converted',
+    'Not converted,Not converted'
+].join('\r\n');
+
+let activeDataEntryMode = DataEntryModes.MANUAL;
+let activeScenarioDataset = null;
+
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
@@ -24,6 +46,210 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+function getEditableText(id) {
+    const el = document.getElementById(id);
+    if (!el) return '';
+    return el.textContent.replace(/\s+/g, ' ').trim();
+}
+
+function setEditableText(id, value) {
+    const el = document.getElementById(id);
+    if (el && typeof value !== 'undefined') {
+        el.textContent = value;
+    }
+}
+
+function setUploadStatus(id, message, state) {
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.textContent = message;
+    target.classList.remove('success', 'error');
+    if (state) {
+        target.classList.add(state);
+    }
+}
+
+function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Unable to read file.'));
+        reader.readAsText(file);
+    });
+}
+
+function setDataEntryMode(mode) {
+    if (!Object.values(DataEntryModes).includes(mode)) {
+        mode = DataEntryModes.MANUAL;
+    }
+    activeDataEntryMode = mode;
+    document.querySelectorAll('.mode-button').forEach(button => {
+        const isActive = button.dataset.mode === mode;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+    document.querySelectorAll('.mode-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.dataset.mode === mode);
+    });
+}
+
+function setupDataEntryModeToggle() {
+    const toggle = document.querySelector('.mode-toggle');
+    if (!toggle) return;
+    toggle.addEventListener('click', event => {
+        const button = event.target.closest('.mode-button');
+        if (!button) return;
+        event.preventDefault();
+        setDataEntryMode(button.dataset.mode);
+    });
+    setDataEntryMode(activeDataEntryMode);
+}
+
+function wireUploadZone({
+    dropzoneId,
+    inputId,
+    browseId,
+    templateId,
+    templateContent,
+    templateName,
+    statusId,
+    onLoad
+}) {
+    const dropzone = document.getElementById(dropzoneId);
+    const input = document.getElementById(inputId);
+    if (!dropzone || !input) return;
+
+    const browseButton = browseId ? document.getElementById(browseId) : null;
+    const templateButton = templateId ? document.getElementById(templateId) : null;
+
+    const prevent = event => {
+        event.preventDefault();
+        event.stopPropagation();
+    };
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, event => {
+            prevent(event);
+            dropzone.classList.add('drag-active');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, event => {
+            prevent(event);
+            if (event.type === 'dragleave' && event.target !== dropzone) {
+                return;
+            }
+            dropzone.classList.remove('drag-active');
+        });
+    });
+
+    dropzone.addEventListener('drop', event => {
+        const file = event.dataTransfer?.files?.[0];
+        if (file) {
+            handleFile(file);
+        }
+    });
+
+    dropzone.addEventListener('click', () => {
+        input.click();
+    });
+
+    dropzone.addEventListener('keypress', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            input.click();
+        }
+    });
+
+    const handleFile = file => {
+        readFileAsText(file)
+            .then(text => onLoad(text, file))
+            .catch(error => {
+                console.error('Upload error:', error);
+                if (statusId) {
+                    setUploadStatus(statusId, error.message || 'Unable to read file.', 'error');
+                }
+            });
+    };
+
+    input.addEventListener('change', () => {
+        if (input.files && input.files.length) {
+            handleFile(input.files[0]);
+            input.value = '';
+        }
+    });
+
+    if (browseButton) {
+        browseButton.addEventListener('click', event => {
+            event.preventDefault();
+            input.click();
+        });
+    }
+
+    if (templateButton && templateContent) {
+        templateButton.addEventListener('click', event => {
+            event.preventDefault();
+            downloadTextFile(templateName, templateContent, { mimeType: 'text/csv' });
+        });
+    }
+}
+
+function setLabelInputs(labels = {}) {
+    const conditionA = labels.conditionA ?? defaultLabels.conditionA;
+    const conditionB = labels.conditionB ?? defaultLabels.conditionB;
+    const positive = labels.positive ?? defaultLabels.positive;
+    const negative = labels.negative ?? defaultLabels.negative;
+
+    setEditableText('condition-a-label', conditionA);
+    setEditableText('condition-b-label', conditionB);
+    setEditableText('positive-label', positive);
+    setEditableText('negative-label', negative);
+    const rowPositive = document.getElementById('row-positive-label');
+    if (rowPositive) {
+        rowPositive.textContent = positive;
+    }
+    const rowNegative = document.getElementById('row-negative-label');
+    if (rowNegative) {
+        rowNegative.textContent = negative;
+    }
+}
+
+function setCountInputs(counts = {}) {
+    const mapping = {
+        aPosBPos: 'cell-a-pos-b-pos',
+        aPosBNeg: 'cell-a-pos-b-neg',
+        aNegBPos: 'cell-a-neg-b-pos',
+        aNegBNeg: 'cell-a-neg-b-neg'
+    };
+    Object.entries(mapping).forEach(([key, id]) => {
+        const input = document.getElementById(id);
+        if (input && Object.prototype.hasOwnProperty.call(counts, key)) {
+            input.value = counts[key];
+        }
+    });
+}
+
+function applyAlphaSetting(alphaValue, { skipUpdate = true } = {}) {
+    if (!isFinite(alphaValue)) {
+        return false;
+    }
+    const alphaInput = document.getElementById('alpha');
+    if (alphaInput) {
+        alphaInput.value = alphaValue.toFixed(3);
+    }
+    syncConfidenceButtonsToAlpha(alphaValue, { skipUpdate });
+    return true;
+}
+
+function applyMethodSetting(methodValue) {
+    if (!methodValue) return false;
+    const methodInput = document.getElementById('analysis-method');
+    if (!methodInput) return false;
+    methodInput.value = methodValue;
+    return true;
 }
 
 function erf(x) {
@@ -162,38 +388,22 @@ function updateContingencyLabels(labels) {
     if (!labels) {
         return;
     }
-    const colPositive = document.getElementById('col-positive-header');
-    const colNegative = document.getElementById('col-negative-header');
-    const rowPositive = document.getElementById('row-positive-header');
-    const rowNegative = document.getElementById('row-negative-header');
+    const rowPositive = document.getElementById('row-positive-label');
+    const rowNegative = document.getElementById('row-negative-label');
     const totalPosLabel = document.getElementById('total-a-positive-label');
     const totalNegLabel = document.getElementById('total-a-negative-label');
-    const conditionAAxis = document.getElementById('condition-a-axis');
-    const conditionBAxis = document.getElementById('condition-b-axis');
 
-    if (colPositive) {
-        colPositive.textContent = `${labels.conditionB} – ${labels.positive}`;
-    }
-    if (colNegative) {
-        colNegative.textContent = `${labels.conditionB} – ${labels.negative}`;
-    }
     if (rowPositive) {
-        rowPositive.textContent = `${labels.conditionA} – ${labels.positive}`;
+        rowPositive.textContent = labels.positive;
     }
     if (rowNegative) {
-        rowNegative.textContent = `${labels.conditionA} – ${labels.negative}`;
+        rowNegative.textContent = labels.negative;
     }
     if (totalPosLabel) {
         totalPosLabel.textContent = `Total ${labels.conditionA} ${labels.positive}:`;
     }
     if (totalNegLabel) {
         totalNegLabel.textContent = `Total ${labels.conditionA} ${labels.negative}:`;
-    }
-    if (conditionAAxis) {
-        conditionAAxis.textContent = `${labels.conditionA} outcomes`;
-    }
-    if (conditionBAxis) {
-        conditionBAxis.textContent = `${labels.conditionB} outcomes`;
     }
 }
 
@@ -208,10 +418,10 @@ function updateTotalsDisplay(totals) {
 
 function collectTableData() {
     const labels = {
-        conditionA: document.getElementById('condition-a-label')?.value.trim() || defaultLabels.conditionA,
-        conditionB: document.getElementById('condition-b-label')?.value.trim() || defaultLabels.conditionB,
-        positive: document.getElementById('positive-label')?.value.trim() || defaultLabels.positive,
-        negative: document.getElementById('negative-label')?.value.trim() || defaultLabels.negative
+        conditionA: getEditableText('condition-a-label') || defaultLabels.conditionA,
+        conditionB: getEditableText('condition-b-label') || defaultLabels.conditionB,
+        positive: getEditableText('positive-label') || defaultLabels.positive,
+        negative: getEditableText('negative-label') || defaultLabels.negative
     };
     updateContingencyLabels(labels);
 
@@ -805,6 +1015,278 @@ function syncConfidenceButtonsToAlpha(alphaValue, { skipUpdate = false } = {}) {
     }
 }
 
+function parseSummaryUpload(text) {
+    const trimmed = text.trim();
+    if (!trimmed) {
+        throw new Error('Summary file is empty.');
+    }
+    const lines = trimmed.split(/\r?\n/).filter(Boolean);
+    if (lines.length < 2) {
+        throw new Error('Summary file requires a header row and at least one data row.');
+    }
+    const delimiter = detectDelimiter(lines[0]);
+    const headers = lines[0].split(delimiter).map(header => header.trim().toLowerCase());
+    const values = lines[1].split(delimiter).map(value => value.trim());
+    if (values.length !== headers.length) {
+        throw new Error('Summary file row count does not match the header column count.');
+    }
+    const record = {};
+    headers.forEach((header, index) => {
+        record[header] = values[index];
+    });
+    const requiredColumns = [
+        'condition_a_label',
+        'condition_b_label',
+        'positive_label',
+        'negative_label',
+        'a_positive_b_positive',
+        'a_positive_b_negative',
+        'a_negative_b_positive',
+        'a_negative_b_negative'
+    ];
+    requiredColumns.forEach(column => {
+        if (!Object.prototype.hasOwnProperty.call(record, column)) {
+            throw new Error(`Summary file is missing the "${column}" column.`);
+        }
+    });
+    const counts = {
+        aPosBPos: parseInt(record.a_positive_b_positive, 10),
+        aPosBNeg: parseInt(record.a_positive_b_negative, 10),
+        aNegBPos: parseInt(record.a_negative_b_positive, 10),
+        aNegBNeg: parseInt(record.a_negative_b_negative, 10)
+    };
+    Object.entries(counts).forEach(([key, value]) => {
+        if (!Number.isInteger(value) || value < 0) {
+            throw new Error(`Summary file column "${key}" must be a non-negative integer.`);
+        }
+    });
+    const labels = {
+        conditionA: record.condition_a_label || defaultLabels.conditionA,
+        conditionB: record.condition_b_label || defaultLabels.conditionB,
+        positive: record.positive_label || defaultLabels.positive,
+        negative: record.negative_label || defaultLabels.negative
+    };
+    const alphaValue = parseFloat(record.alpha);
+    const methodValue = record.analysis_method || '';
+    return {
+        labels,
+        counts,
+        alpha: isFinite(alphaValue) ? alphaValue : null,
+        method: methodValue
+    };
+}
+
+function parseRawUpload(text) {
+    const trimmed = text.trim();
+    if (!trimmed) {
+        throw new Error('Raw file is empty.');
+    }
+    const lines = trimmed.split(/\r?\n/).filter(Boolean);
+    if (lines.length < 2) {
+        throw new Error('Raw file requires a header row plus at least one data row.');
+    }
+    const delimiter = detectDelimiter(lines[0]);
+    const headers = lines[0].split(delimiter).map(header => header.trim());
+    if (headers.length !== 2) {
+        throw new Error('Raw file must contain exactly two columns (Condition A, Condition B).');
+    }
+    const labelA = headers[0] || defaultLabels.conditionA;
+    const labelB = headers[1] || defaultLabels.conditionB;
+
+    const rows = lines.slice(1);
+    const valuesA = [];
+    const valuesB = [];
+    const uniqueA = new Set();
+    const uniqueB = new Set();
+
+    rows.forEach((line, index) => {
+        const parts = line.split(delimiter).map(part => part.trim());
+        if (parts.length !== 2) {
+            throw new Error(`Row ${index + 2} must include exactly two columns.`);
+        }
+        const [valueA, valueB] = parts;
+        if (!valueA || !valueB) {
+            throw new Error(`Row ${index + 2} is missing a value for Condition A or Condition B.`);
+        }
+        valuesA.push(valueA);
+        valuesB.push(valueB);
+        uniqueA.add(valueA);
+        uniqueB.add(valueB);
+    });
+
+    if (!valuesA.length) {
+        throw new Error('Raw file must include at least one data row.');
+    }
+    if (uniqueA.size !== 2 || uniqueB.size !== 2) {
+        throw new Error('Raw file must contain exactly two distinct outcomes per column.');
+    }
+    const categoriesA = Array.from(uniqueA);
+    const categoriesB = Array.from(uniqueB);
+    const categorySetA = new Set(categoriesA);
+    const categorySetB = new Set(categoriesB);
+    const sameCategories = categoriesB.every(value => categorySetA.has(value)) && categoriesA.every(value => categorySetB.has(value));
+    if (!sameCategories) {
+        throw new Error('Condition A and Condition B must share the same outcome labels.');
+    }
+    const [positiveValue, negativeValue] = categoriesA;
+    const mapOutcome = value => {
+        if (value === positiveValue) return 'positive';
+        if (value === negativeValue) return 'negative';
+        throw new Error(`Unexpected outcome value "${value}".`);
+    };
+    const counts = {
+        aPosBPos: 0,
+        aPosBNeg: 0,
+        aNegBPos: 0,
+        aNegBNeg: 0
+    };
+    for (let i = 0; i < valuesA.length; i++) {
+        const aClass = mapOutcome(valuesA[i]);
+        const bClass = mapOutcome(valuesB[i]);
+        if (aClass === 'positive' && bClass === 'positive') counts.aPosBPos += 1;
+        else if (aClass === 'positive' && bClass === 'negative') counts.aPosBNeg += 1;
+        else if (aClass === 'negative' && bClass === 'positive') counts.aNegBPos += 1;
+        else counts.aNegBNeg += 1;
+    }
+    return {
+        labels: {
+            conditionA: labelA,
+            conditionB: labelB,
+            positive: positiveValue,
+            negative: negativeValue
+        },
+        counts,
+        rowCount: valuesA.length
+    };
+}
+
+function applySummaryDataset(dataset, { mode = DataEntryModes.SUMMARY, update = true } = {}) {
+    setDataEntryMode(mode);
+    setLabelInputs(dataset.labels || {});
+    setCountInputs(dataset.counts || {});
+    const alphaApplied = applyAlphaSetting(dataset.alpha, { skipUpdate: true });
+    const methodApplied = applyMethodSetting(dataset.method);
+    if (update) {
+        updateResults();
+    }
+    return { alphaApplied, methodApplied };
+}
+
+function applyRawDataset(payload, options = {}) {
+    return applySummaryDataset({
+        labels: payload.labels,
+        counts: payload.counts
+    }, { mode: DataEntryModes.RAW, ...options });
+}
+
+function setupSummaryUpload() {
+    wireUploadZone({
+        dropzoneId: 'summary-dropzone',
+        inputId: 'summary-input',
+        browseId: 'summary-browse',
+        templateId: 'summary-template-download',
+        templateContent: SUMMARY_TEMPLATE_CSV,
+        templateName: 'mcnemar_summary_template.csv',
+        statusId: 'summary-upload-status',
+        onLoad: text => {
+            try {
+                const payload = parseSummaryUpload(text);
+                applySummaryDataset(payload);
+                setUploadStatus('summary-upload-status', `Loaded summary counts for ${payload.labels.conditionA} vs ${payload.labels.conditionB}.`, 'success');
+                setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
+                enableScenarioDownload(null);
+            } catch (error) {
+                console.error('Summary upload error:', error);
+                setUploadStatus('summary-upload-status', error.message || 'Unable to parse summary file.', 'error');
+            }
+        }
+    });
+}
+
+function setupRawUpload() {
+    wireUploadZone({
+        dropzoneId: 'raw-dropzone',
+        inputId: 'raw-input',
+        browseId: 'raw-browse',
+        templateId: 'raw-template-download',
+        templateContent: RAW_TEMPLATE_CSV,
+        templateName: 'mcnemar_raw_template.csv',
+        statusId: 'raw-upload-status',
+        onLoad: text => {
+            try {
+                const payload = parseRawUpload(text);
+                applyRawDataset(payload);
+                setUploadStatus('raw-upload-status', `Loaded ${payload.rowCount} paired observations.`, 'success');
+                setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
+                enableScenarioDownload(null);
+            } catch (error) {
+                console.error('Raw upload error:', error);
+                setUploadStatus('raw-upload-status', error.message || 'Unable to parse raw file.', 'error');
+            }
+        }
+    });
+}
+
+function enableScenarioDownload(datasetInfo) {
+    const button = document.getElementById('scenario-download');
+    if (!button) return;
+    if (datasetInfo) {
+        activeScenarioDataset = datasetInfo;
+        button.classList.remove('hidden');
+        button.disabled = false;
+    } else {
+        activeScenarioDataset = null;
+        button.classList.add('hidden');
+        button.disabled = true;
+    }
+}
+
+async function loadScenarioDatasetResource(entry) {
+    if (!entry.dataset) {
+        return { dataset: null, alphaApplied: false, methodApplied: false };
+    }
+    const response = await fetch(entry.dataset, { cache: 'no-cache' });
+    if (!response.ok) {
+        throw new Error(`Unable to load scenario dataset (${response.status})`);
+    }
+    const text = await response.text();
+    const filename = entry.dataset.split('/').pop() || 'scenario_dataset.csv';
+    try {
+        const payload = parseSummaryUpload(text);
+        const result = applySummaryDataset(payload, { mode: DataEntryModes.SUMMARY, update: false });
+        setUploadStatus('summary-upload-status', `Loaded summary counts for ${payload.labels.conditionA} vs ${payload.labels.conditionB}.`, 'success');
+        setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
+        return {
+            dataset: {
+                filename,
+                content: text,
+                mimeType: 'text/csv'
+            },
+            alphaApplied: result.alphaApplied,
+            methodApplied: result.methodApplied
+        };
+    } catch (summaryError) {
+        try {
+            const payload = parseRawUpload(text);
+            const result = applyRawDataset(payload, { update: false });
+            setUploadStatus('raw-upload-status', `Loaded ${payload.rowCount} paired observations.`, 'success');
+            setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
+            return {
+                dataset: {
+                    filename,
+                    content: text,
+                    mimeType: 'text/csv'
+                },
+                alphaApplied: result.alphaApplied,
+                methodApplied: result.methodApplied
+            };
+        } catch (rawError) {
+            console.error('Scenario dataset parse error:', summaryError, rawError);
+            throw new Error('Scenario dataset is not in a supported format.');
+        }
+    }
+}
+
 async function fetchScenarioIndex() {
     try {
         const response = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
@@ -896,51 +1378,35 @@ function renderScenarioDescription(title, description) {
 }
 
 function applyScenarioData(parsed) {
-    const labelMapping = {
-        'condition_a': 'condition-a-label',
-        'condition_b': 'condition-b-label',
-        'positive_label': 'positive-label',
-        'negative_label': 'negative-label'
+    const labels = {
+        conditionA: parsed.labels.condition_a || defaultLabels.conditionA,
+        conditionB: parsed.labels.condition_b || defaultLabels.conditionB,
+        positive: parsed.labels.positive_label || defaultLabels.positive,
+        negative: parsed.labels.negative_label || defaultLabels.negative
     };
-    Object.entries(labelMapping).forEach(([key, inputId]) => {
-        if (parsed.labels[key]) {
-            const input = document.getElementById(inputId);
-            if (input) {
-                input.value = parsed.labels[key];
-            }
-        }
-    });
-    const countMapping = {
-        a_yes_b_yes: 'cell-a-pos-b-pos',
-        a_yes_b_no: 'cell-a-pos-b-neg',
-        a_no_b_yes: 'cell-a-neg-b-pos',
-        a_no_b_no: 'cell-a-neg-b-neg'
+    const counts = {
+        aPosBPos: parsed.counts.a_yes_b_yes ?? 0,
+        aPosBNeg: parsed.counts.a_yes_b_no ?? 0,
+        aNegBPos: parsed.counts.a_no_b_yes ?? 0,
+        aNegBNeg: parsed.counts.a_no_b_no ?? 0
     };
-    Object.entries(countMapping).forEach(([key, inputId]) => {
-        if (Object.prototype.hasOwnProperty.call(parsed.counts, key)) {
-            const input = document.getElementById(inputId);
-            if (input) {
-                input.value = parsed.counts[key];
-            }
-        }
-    });
-    const alphaInput = document.getElementById('alpha');
-    if (alphaInput && isFinite(parsed.alpha)) {
-        alphaInput.value = parsed.alpha.toFixed(3);
-        syncConfidenceButtonsToAlpha(parsed.alpha, { skipUpdate: true });
-    }
-    const methodInput = document.getElementById('analysis-method');
-    if (methodInput && parsed.additionalInputs.analysis_method) {
-        methodInput.value = parsed.additionalInputs.analysis_method;
-    }
+    applySummaryDataset({
+        labels,
+        counts,
+        alpha: parsed.alpha,
+        method: parsed.additionalInputs.analysis_method || ''
+    }, { mode: DataEntryModes.MANUAL, update: false });
 }
 
 async function loadScenarioById(id) {
     const scenario = scenarioManifest.find(entry => entry.id === id);
     if (!scenario) {
         renderScenarioDescription('', '');
+        enableScenarioDownload(null);
         return;
     }
+    setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
+    setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
     try {
         const response = await fetch(scenario.file, { cache: 'no-cache' });
         if (!response.ok) {
@@ -949,10 +1415,32 @@ async function loadScenarioById(id) {
         const text = await response.text();
         const parsed = parseScenarioText(text);
         renderScenarioDescription(parsed.title || scenario.label, parsed.description);
-        applyScenarioData(parsed);
+        let datasetInfo = null;
+        let meta = { alphaApplied: false, methodApplied: false };
+        if (scenario.dataset) {
+            try {
+                meta = await loadScenarioDatasetResource(scenario);
+                if (meta.dataset) {
+                    datasetInfo = meta.dataset;
+                }
+            } catch (datasetError) {
+                console.error('Scenario dataset load error:', datasetError);
+                applyScenarioData(parsed);
+            }
+        } else {
+            applyScenarioData(parsed);
+        }
+        if (!meta.alphaApplied && isFinite(parsed.alpha)) {
+            applyAlphaSetting(parsed.alpha, { skipUpdate: true });
+        }
+        if (!meta.methodApplied && parsed.additionalInputs.analysis_method) {
+            applyMethodSetting(parsed.additionalInputs.analysis_method);
+        }
+        enableScenarioDownload(datasetInfo);
         updateResults();
     } catch (error) {
         console.error('Scenario load error:', error);
+        enableScenarioDownload(null);
     }
 }
 
@@ -968,22 +1456,45 @@ async function setupScenarioSelector() {
         option.textContent = entry.label;
         select.appendChild(option);
     });
+    enableScenarioDownload(null);
     select.addEventListener('change', () => {
         const { value } = select;
         if (!value) {
             renderScenarioDescription('', '');
+            setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
+            setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
+            setDataEntryMode(DataEntryModes.MANUAL);
+            enableScenarioDownload(null);
+            updateResults();
             return;
         }
         loadScenarioById(value);
     });
+    const downloadButton = document.getElementById('scenario-download');
+    if (downloadButton) {
+        downloadButton.addEventListener('click', () => {
+            if (!activeScenarioDataset) return;
+            downloadTextFile(
+                activeScenarioDataset.filename,
+                activeScenarioDataset.content,
+                { mimeType: activeScenarioDataset.mimeType || 'text/csv' }
+            );
+        });
+    }
 }
 
 function attachInputListeners() {
-    const inputs = document.querySelectorAll('.contingency-table input, .label-grid input');
+    const inputs = document.querySelectorAll('.contingency-table input');
     inputs.forEach(input => {
         input.addEventListener('input', () => {
             updateResults();
         });
+    });
+
+    const editableLabels = document.querySelectorAll('.editable-label');
+    editableLabels.forEach(label => {
+        label.addEventListener('input', () => updateResults());
+        label.addEventListener('blur', () => updateResults());
     });
 
     const alphaInput = document.getElementById('alpha');
@@ -1032,6 +1543,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setupConfidenceButtons();
+    setupDataEntryModeToggle();
+    setupSummaryUpload();
+    setupRawUpload();
+    setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
+    setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
     attachInputListeners();
     setupScenarioSelector();
     applyConfidenceSelection(selectedConfidenceLevel, { syncAlpha: true, skipUpdate: true });

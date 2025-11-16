@@ -1,0 +1,7 @@
+# row_var=Landing page layout
+# col_var=User action
+# alpha=0.10
+# yates=false
+,Form submit,Phone call,No action
+Desktop layout (A),45,22,133
+Mobile layout (B),60,15,125

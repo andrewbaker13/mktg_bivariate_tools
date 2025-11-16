@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paired t-Test Studio</title>
+  <link rel="stylesheet" href="../../shared/css/main.css">
+  <link rel="stylesheet" href="main_paired_ttest.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="intro hero-header">
+    <div class="hero-header__top">
+      <h1>Paired t-Test Studio</h1>
+    </div>
+    <p class="hero-header__lede">Compare two related measurements with rich narratives, diagnostics, and visuals ready for stakeholder decks.</p>
+  </header>
+
+  <main class="app-main">
+    <section class="test-overview">
+      <h2>TEST OVERVIEW &amp; EQUATIONS</h2>
+      <div class="card equation-section">
+        <p>The paired-samples t-test evaluates whether the average difference between two matched observations is credibly non-zero.</p>
+        <div class="equation-display">
+          \[
+          \begin{aligned}
+          d_i &= x_{i, \text{after}} - x_{i, \text{before}} \\
+          \bar{d} &= \frac{1}{n} \sum_{i=1}^{n} d_i \\
+          t &= \frac{\bar{d}}{s_d / \sqrt{n}} \quad \text{with} \quad df = n - 1
+          \end{aligned}
+          \]
+        </div>
+        <div class="equation-definitions">
+          <p><strong>Where:</strong></p>
+          <ul>
+            <li>\(s_d\) is the sample standard deviation of the pairwise differences.</li>
+            <li>The two-tailed p-value comes from the Student's t distribution with \(n-1\) degrees of freedom.</li>
+            <li>Confidence intervals use the same critical multiplier: \(\bar{d} \pm t_{\alpha/2} s_d/\sqrt{n}\).</li>
+          </ul>
+        </div>
+        <details class="additional-notes">
+          <summary>Additional Notes</summary>
+          <p>Focus on the differences: if the pre/post (or control/test) measurements are paired properly, this test cancels out subject-level noise. For skewed or heavy-tailed differences, consider a Wilcoxon signed-rank test.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="scenario-section">
+      <h2>MARKETING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Load a marketing use case:</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Manual inputs (no preset)</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>Select a preset to auto-fill inputs for common measurement tasks (matched market uplift, pre/post surveys, creative benchmarks). Each preset references the raw CSV so you can inspect the required formatting.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="inputs-panel">
+      <h2>INPUTS &amp; SETTINGS</h2>
+      <div class="card">
+        <div class="input-header">
+          <h3>Data Entry</h3>
+          <div class="alpha-controls">
+            <label for="alpha">Significance level (&alpha;)</label>
+            <input type="number" id="alpha" min="0.001" max="0.20" step="0.001" value="0.050">
+            <div class="confidence-buttons" role="group" aria-label="Select confidence level">
+              <button type="button" class="confidence-button conf-level-btn" data-level="0.90">90% CI</button>
+              <button type="button" class="confidence-button conf-level-btn active" data-level="0.95">95% CI</button>
+              <button type="button" class="confidence-button conf-level-btn" data-level="0.99">99% CI</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
+          <button type="button" class="mode-button active" data-mode="paired">Paired upload</button>
+          <button type="button" class="mode-button" data-mode="difference">Difference upload</button>
+          <button type="button" class="mode-button" data-mode="manual">Manual entry</button>
+          <button type="button" class="mode-button" data-mode="summary">Summary stats</button>
+        </div>
+
+        <div id="import-tools">
+          <div id="file-dropzone" class="dropzone" aria-live="polite">
+            <div class="dropzone-content">
+              <p class="dropzone-title">Drop a .csv, .tsv, or .txt with headers</p>
+              <p id="dropzone-instructions">Paired mode expects two named columns (before &amp; after). Difference mode expects a single column named <code>diff</code>. Blank rows are ignored.</p>
+              <button type="button" id="browse-files" class="secondary">Browse files</button>
+              <p class="dropzone-note">We only scan files locally&mdash;no uploads leave your browser. Up to 2,000 rows per file.</p>
+            </div>
+            <input type="file" id="file-input" accept=".csv,.tsv,.txt" hidden>
+          </div>
+          <div class="template-buttons">
+            <button type="button" id="download-paired-template" class="secondary">Download paired template</button>
+            <button type="button" id="download-diff-template" class="secondary">Download difference template</button>
+          </div>
+          <p id="file-feedback" class="upload-status" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="mode-panels">
+          <div class="mode-panel active" data-mode="paired" id="paired-panel">
+            <p>Upload a file with two columns (before, after). We will parse it immediately and let you know how many rows were accepted.</p>
+            <p id="paired-upload-status" class="upload-status">No file uploaded yet.</p>
+          </div>
+          <div class="mode-panel" data-mode="difference" id="difference-panel">
+            <p>Upload a single-column file of difference scores (positive values mean after &gt; before). We will summarize the usable row count.</p>
+            <p id="difference-upload-status" class="upload-status">No file uploaded yet.</p>
+          </div>
+          <div class="mode-panel" data-mode="manual" id="manual-panel">
+            <p>Type smaller paired datasets directly. Choose the structure, set how many rows you need (max 50), and enter values inline.</p>
+            <div class="manual-controls">
+              <label>Data structure
+                <select id="manual-entry-structure">
+                  <option value="paired">Before &amp; after pairs</option>
+                  <option value="difference">Difference scores</option>
+                </select>
+              </label>
+              <label>Row count (max 50)
+                <input type="number" id="manual-row-count" min="2" max="50" value="8">
+              </label>
+            </div>
+            <p class="manual-hint">Need more than 50 rows? Head to one of the upload modes.</p>
+            <div class="manual-table" data-structure="paired">
+              <div class="data-table" role="region" aria-label="Manual paired input table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">Row</th>
+                      <th scope="col">Before</th>
+                      <th scope="col">After</th>
+                    </tr>
+                  </thead>
+                  <tbody id="paired-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="manual-table hidden" data-structure="difference">
+              <div class="data-table" role="region" aria-label="Manual difference input table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">Row</th>
+                      <th scope="col">Difference</th>
+                    </tr>
+                  </thead>
+                  <tbody id="difference-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="mode-panel" data-mode="summary" id="summary-panel">
+            <p>When you only have summary tables, supply the mean and standard deviation of the difference scores plus the sample size.</p>
+            <div class="summary-grid">
+              <label>Mean difference
+                <input type="number" id="summary-mean" step="any" placeholder="e.g., 2.4">
+              </label>
+              <label>SD of differences
+                <input type="number" id="summary-sd" step="any" placeholder="e.g., 5.1">
+              </label>
+              <label>Sample size (pairs)
+                <input type="number" id="summary-n" step="1" min="2" placeholder="e.g., 36">
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      <div class="card">
+        <div class="chart-grid">
+          <article class="chart-card">
+            <h3>Mean difference with confidence interval</h3>
+            <div id="mean-diff-chart" class="chart-placeholder" aria-label="Mean difference chart"></div>
+            <p id="mean-diff-chart-note" class="chart-note">Provide data to summarize the mean difference and confidence interval.</p>
+          </article>
+          <article class="chart-card">
+            <h3>Distribution of differences</h3>
+            <div id="difference-chart" class="chart-placeholder" aria-label="Histogram of pairwise differences"></div>
+            <p id="difference-chart-note" class="chart-note"></p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="test-results" aria-labelledby="test-results-heading">
+      <h2 id="test-results-heading">TEST RESULTS</h2>
+      <section id="analysis-status" class="card" aria-labelledby="test-results-heading">
+        <h3>Analysis Status</h3>
+        <p id="status-message">Enter data to see the paired t-test.</p>
+      </section>
+      <section class="results-grid">
+        <article class="result-card" id="test-result-card">
+          <h3>Paired t-Test</h3>
+          <p id="test-statistic">t(--)=--</p>
+          <p id="p-value">p = --</p>
+          <p id="ci-summary">95% CI: [--, --]</p>
+        </article>
+        <article class="result-card">
+          <h3>Effect sizes</h3>
+          <p id="effect-size">Cohen's dz = --</p>
+          <p id="hedges-g">Hedges' g = --</p>
+          <p id="mean-diff">Mean difference = --</p>
+        </article>
+        <article class="result-card">
+          <h3>Overview</h3>
+          <p id="sample-summary">n = -- pairs</p>
+          <p id="mode-summary">Mode: Paired columns</p>
+        </article>
+      </section>
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>APA-Style Statistical Reporting</h3>
+          <p id="apa-report">Summary will appear after analysis.</p>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="managerial-report">Business-facing copy will appear after analysis.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="diagnostics-section" aria-labelledby="diagnostics-heading">
+      <h2 id="diagnostics-heading">DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+      <div class="card">
+        <details class="diagnostics-details">
+          <summary>Assumption checks</summary>
+          <div id="diagnostics-content">
+            <p>The paired t-test assumes the differences follow an approximately normal distribution, pairs are matched correctly, and each pair is independent of the others. We will summarize diagnostics here after you provide data.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="created-date">2025-11-06</span> &middot; Last updated: <span id="modified-date">2025-11-15</span></p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). Paired t-Test Studio. Marketing Bivariate Tools. https://github.com/andre/mktg_bivariate_tools/apps/paired_ttest/main_paired_ttest.html</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

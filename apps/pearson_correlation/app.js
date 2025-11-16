@@ -26,7 +26,7 @@ let selectedConfidenceLevel = 0.95;
 let manualRowCount = DEFAULT_MANUAL_ROWS;
 let scenarioManifest = [];
 let defaultScenarioDescription = '';
-let scenarioRawFile = '';
+let activeScenarioDataset = null;
 let uploadedPairedData = null;
 let uploadedMatrixData = null;
 let scatterPairs = [];
@@ -1856,33 +1856,35 @@ function setupTemplateDownloads() {
 function refreshScenarioDownloadVisibility() {
     const button = document.getElementById('scenario-download');
     if (!button) return;
-    const shouldShow = Boolean(scenarioRawFile) && activeMode !== InputModes.MANUAL;
+    const shouldShow = Boolean(activeScenarioDataset) && activeMode !== InputModes.MANUAL;
     button.classList.toggle('hidden', !shouldShow);
     button.disabled = !shouldShow;
 }
 
 function resetScenarioDownload() {
+    activeScenarioDataset = null;
     const button = document.getElementById('scenario-download');
-    scenarioRawFile = '';
     if (button) {
         button.disabled = true;
-        button.removeAttribute('data-file');
         button.textContent = 'Download scenario dataset';
     }
     refreshScenarioDownloadVisibility();
 }
 
-function enableScenarioDownload(filePath) {
-    const button = document.getElementById('scenario-download');
-    if (!button) return;
-    scenarioRawFile = filePath;
-    if (filePath) {
-        button.disabled = false;
-        button.textContent = 'Download scenario dataset';
-        button.setAttribute('data-file', filePath);
-    } else {
+function enableScenarioDownload(datasetInfo) {
+    if (!datasetInfo || !datasetInfo.content) {
         resetScenarioDownload();
         return;
+    }
+    activeScenarioDataset = {
+        filename: datasetInfo.filename || 'scenario_dataset.csv',
+        content: datasetInfo.content,
+        mimeType: datasetInfo.mimeType || 'text/csv'
+    };
+    const button = document.getElementById('scenario-download');
+    if (button) {
+        button.disabled = false;
+        button.textContent = 'Download scenario dataset';
     }
     refreshScenarioDownloadVisibility();
 }
@@ -1891,13 +1893,12 @@ function setupScenarioDownloadButton() {
     const button = document.getElementById('scenario-download');
     if (!button) return;
     button.addEventListener('click', () => {
-        if (!scenarioRawFile) return;
-        const link = document.createElement('a');
-        link.href = scenarioRawFile;
-        link.download = scenarioRawFile.split('/').pop();
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        if (!activeScenarioDataset) return;
+        downloadTextFile(
+            activeScenarioDataset.filename,
+            activeScenarioDataset.content,
+            { mimeType: activeScenarioDataset.mimeType || 'text/csv' }
+        );
     });
 }
 function renderScenarioDescription(title, description) {
@@ -1982,6 +1983,19 @@ function applyScenarioData(parsed) {
     }
 }
 
+function buildScenarioDatasetFromParsed(parsed, scenarioId) {
+    if (!parsed || !parsed.pairedData) return null;
+    const content = parsed.pairedData.trim();
+    if (!content) return null;
+    const safeId = (scenarioId || 'scenario').replace(/\s+/g, '_').toLowerCase();
+    const suffix = parsed.mode === 'matrix' ? 'matrix' : 'paired';
+    return {
+        filename: `${safeId}_${suffix}_data.csv`,
+        content,
+        mimeType: 'text/csv'
+    };
+}
+
 async function loadScenarioById(id) {
     const scenario = scenarioManifest.find(entry => entry.id === id);
     if (!scenario) {
@@ -2005,7 +2019,8 @@ async function loadScenarioById(id) {
             }
         }
         applyScenarioData(parsed);
-        enableScenarioDownload(parsed.rawFile);
+        const datasetInfo = buildScenarioDatasetFromParsed(parsed, scenario.id);
+        enableScenarioDownload(datasetInfo);
     } catch (error) {
         renderScenarioDescription('', `Unable to load scenario: ${error.message}`);
         resetScenarioDownload();

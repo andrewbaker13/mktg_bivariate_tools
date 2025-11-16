@@ -11,6 +11,13 @@ let groupCounter = 0;
 let comparisonCounter = 0;
 let scenarioManifest = [];
 let defaultScenarioDescription = '';
+let currentScenarioDataset = null;
+const DataEntryModes = {
+    MANUAL: 'manual',
+    SUMMARY: 'summary-upload',
+    RAW: 'raw-upload'
+};
+let activeDataEntryMode = DataEntryModes.MANUAL;
 
 // Utility helpers
 function escapeHtml(value) {
@@ -383,6 +390,375 @@ function validateGroups(groups) {
         }
     }
     return { valid: true };
+}
+
+function setUploadStatus(targetId, message, status = '') {
+    const target = document.getElementById(targetId);
+    if (!target) {
+        return;
+    }
+    target.textContent = message;
+    target.classList.remove('success', 'error');
+    if (status) {
+        target.classList.add(status);
+    }
+}
+
+function applyGroupsToInputs(groups) {
+    if (!Array.isArray(groups) || groups.length < MIN_GROUPS) {
+        throw new Error(`At least ${MIN_GROUPS} groups are required after import.`);
+    }
+    if (groups.length > MAX_GROUPS) {
+        throw new Error(`Reduce the dataset to ${MAX_GROUPS} groups or fewer before importing.`);
+    }
+    setGroupCount(groups.length, false);
+    const groupSelect = document.getElementById('group-count');
+    if (groupSelect) {
+        groupSelect.value = String(groups.length);
+    }
+    const rows = document.querySelectorAll('.group-row');
+    groups.forEach((group, index) => {
+        const row = rows[index];
+        if (!row) {
+            return;
+        }
+        const nameInput = row.querySelector('.group-name');
+        const meanInput = row.querySelector('.group-mean');
+        const sdInput = row.querySelector('.group-sd');
+        const nInput = row.querySelector('.group-n');
+        if (nameInput) {
+            nameInput.value = group.name;
+        }
+        if (meanInput && isFinite(group.mean)) {
+            meanInput.value = group.mean;
+        }
+        if (sdInput && isFinite(group.sd)) {
+            sdInput.value = group.sd;
+        }
+        if (nInput && Number.isFinite(group.n)) {
+            nInput.value = group.n;
+        }
+    });
+    refreshComparisonOptions();
+    updateResults();
+}
+
+function parseRawLongFormatData(text) {
+    const trimmed = text.trim();
+    if (!trimmed) {
+        throw new Error('Raw upload file is empty.');
+    }
+    const lines = trimmed.split(/\r?\n/).filter(line => line.trim().length);
+    if (lines.length < 2) {
+        throw new Error('Include a header row plus at least one data row.');
+    }
+    const delimiter = detectDelimiter(lines[0]);
+    const headers = lines[0].split(delimiter).map(h => h.trim());
+    if (headers.length !== 2) {
+        throw new Error('Raw uploads must contain exactly two columns: group label and numeric value.');
+    }
+    const groups = new Map();
+    const errors = [];
+    let processedRows = 0;
+    lines.slice(1).forEach((line, index) => {
+        if (processedRows >= MAX_UPLOAD_ROWS) {
+            throw new Error(`Upload limit exceeded. Only ${MAX_UPLOAD_ROWS} rows are supported per file.`);
+        }
+        const rowNumber = index + 2;
+        const parts = line.split(delimiter).map(part => part.trim());
+        if (parts.every(part => part === '')) {
+            return;
+        }
+        if (parts.length !== 2) {
+            errors.push(`Row ${rowNumber}: expected exactly two columns.`);
+            return;
+        }
+        const label = parts[0];
+        if (!label) {
+            errors.push(`Row ${rowNumber}: missing group label.`);
+            return;
+        }
+        const value = parseFloat(parts[1]);
+        if (!isFinite(value)) {
+            errors.push(`Row ${rowNumber}: value must be numeric.`);
+            return;
+        }
+        processedRows += 1;
+        let entry = groups.get(label);
+        if (!entry) {
+            entry = { label, count: 0, mean: 0, m2: 0 };
+            groups.set(label, entry);
+        }
+        entry.count += 1;
+        const delta = value - entry.mean;
+        entry.mean += delta / entry.count;
+        const delta2 = value - entry.mean;
+        entry.m2 += delta * delta2;
+    });
+    if (!groups.size) {
+        throw new Error(errors[0] || 'No valid numeric rows were found.');
+    }
+    if (groups.size > MAX_GROUPS) {
+        throw new Error(`Detected ${groups.size} groups. Limit imports to ${MAX_GROUPS} groups or fewer.`);
+    }
+    const parsedGroups = [];
+    for (const entry of groups.values()) {
+        if (entry.count < 2) {
+            throw new Error(`Group "${entry.label}" has fewer than 2 observations. Add more rows before importing.`);
+        }
+        const variance = entry.count > 1 ? entry.m2 / (entry.count - 1) : 0;
+        parsedGroups.push({
+            name: entry.label,
+            mean: entry.mean,
+            sd: Math.sqrt(Math.max(variance, 0)),
+            n: entry.count
+        });
+    }
+    if (parsedGroups.length < MIN_GROUPS) {
+        throw new Error(`At least ${MIN_GROUPS} groups are required after cleaning the raw file.`);
+    }
+    const totalRows = parsedGroups.reduce((sum, group) => sum + group.n, 0);
+    return {
+        groups: parsedGroups,
+        processedRows: totalRows,
+        skippedRows: errors.length
+    };
+}
+
+function normalizeHeader(header) {
+    return header.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function parseSummaryStatsFile(text) {
+    const trimmed = text.trim();
+    if (!trimmed) {
+        throw new Error('Summary file is empty.');
+    }
+    const lines = trimmed.split(/\r?\n/).filter(line => line.trim().length);
+    if (lines.length < 2) {
+        throw new Error('Include a header row plus at least one summary row.');
+    }
+    const delimiter = detectDelimiter(lines[0]);
+    const headers = lines[0].split(delimiter).map(h => h.trim());
+    const normalized = headers.map(normalizeHeader);
+    const findColumn = candidates => normalized.findIndex(header => candidates.some(candidate => header.includes(candidate)));
+    const nameIndex = findColumn(['group', 'segment', 'label', 'name', 'category']);
+    const meanIndex = findColumn(['mean', 'average']);
+    const sdIndex = findColumn(['sd', 'stdev', 'std', 'std dev', 'standard deviation']);
+    const nIndex = findColumn(['n', 'size', 'count', 'sample']);
+    if ([nameIndex, meanIndex, sdIndex, nIndex].some(index => index === -1)) {
+        throw new Error('Summary uploads require columns for group, mean, sd, and n.');
+    }
+    const groups = [];
+    const errors = [];
+    lines.slice(1).forEach((line, index) => {
+        const rowNumber = index + 2;
+        const parts = line.split(delimiter).map(part => part.trim());
+        if (parts.every(part => part === '')) {
+            return;
+        }
+        const name = parts[nameIndex] || `Group ${groups.length + 1}`;
+        const mean = parseFloat(parts[meanIndex]);
+        const sd = parseFloat(parts[sdIndex]);
+        const n = parseInt(parts[nIndex], 10);
+        const invalid = !name || !isFinite(mean) || !isFinite(sd) || sd <= 0 || !Number.isFinite(n) || n < 2;
+        if (invalid) {
+            errors.push(`Row ${rowNumber}: unable to parse mean/SD/n for ${name || 'this group'}.`);
+            return;
+        }
+        groups.push({ name, mean, sd, n });
+    });
+    if (!groups.length) {
+        throw new Error(errors[0] || 'No valid summary rows were found.');
+    }
+    if (groups.length > MAX_GROUPS) {
+        throw new Error(`Summary file includes ${groups.length} groups. Limit imports to ${MAX_GROUPS}.`);
+    }
+    if (groups.length < MIN_GROUPS) {
+        throw new Error(`At least ${MIN_GROUPS} valid groups are required after importing the summary file.`);
+    }
+    return {
+        groups,
+        skippedRows: errors.length
+    };
+}
+
+function handleRawDataText(text) {
+    const { groups, processedRows, skippedRows } = parseRawLongFormatData(text);
+    applyGroupsToInputs(groups);
+    const groupNote = groups.map(group => `${group.name} (n=${group.n})`).join('; ');
+    const skippedNote = skippedRows ? ` Skipped ${skippedRows} row(s) due to formatting issues.` : '';
+    setUploadStatus(
+        'raw-upload-status',
+        `Loaded ${processedRows} row(s) across ${groups.length} group(s): ${groupNote}.${skippedNote}`,
+        'success'
+    );
+}
+
+function handleSummaryText(text) {
+    const { groups, skippedRows } = parseSummaryStatsFile(text);
+    applyGroupsToInputs(groups);
+    const skippedNote = skippedRows ? ` Skipped ${skippedRows} row(s) due to formatting issues.` : '';
+    setUploadStatus(
+        'summary-upload-status',
+        `Applied ${groups.length} group summary row(s).${skippedNote}`,
+        'success'
+    );
+}
+
+function downloadRawTemplate() {
+    const content = [
+        'group,value',
+        'Control,34.2',
+        'Control,36.5',
+        'Variant A,32.1',
+        'Variant A,33.9',
+        'Variant B,28.4',
+        'Variant B,29.0'
+    ].join('\n');
+    downloadTextFile('anova_raw_template.csv', content);
+}
+
+function downloadSummaryTemplate() {
+    const content = [
+        'group,mean,sd,n',
+        'Control,35.3,4.1,60',
+        'Variant A,32.9,3.5,58',
+        'Variant B,30.1,4.9,62'
+    ].join('\n');
+    downloadTextFile('anova_summary_template.csv', content);
+}
+
+function setupDataImportControls() {
+    const rawDropzone = document.getElementById('anova-raw-dropzone');
+    const rawInput = document.getElementById('anova-raw-input');
+    const rawBrowse = document.getElementById('raw-upload-browse');
+    const summaryDropzone = document.getElementById('summary-dropzone');
+    const summaryInput = document.getElementById('summary-upload-input');
+    const summaryBrowse = document.getElementById('summary-upload-browse');
+    const rawTemplateButton = document.getElementById('download-raw-template');
+    const summaryTemplateButton = document.getElementById('download-summary-template');
+
+    const triggerFileRead = (input, handler, statusId) => {
+        if (!input) return;
+        input.addEventListener('change', event => {
+            const files = event.target.files;
+            if (files && files.length) {
+                const reader = new FileReader();
+                reader.onload = loadEvent => {
+                    try {
+                        handler(loadEvent.target.result);
+                    } catch (error) {
+                        setUploadStatus(statusId, error.message, 'error');
+                    }
+                };
+                reader.onerror = () => {
+                    setUploadStatus(statusId, 'Unable to read the selected file.', 'error');
+                };
+                reader.readAsText(files[0]);
+            }
+            input.value = '';
+        });
+    };
+
+    const wireDropzone = (dropzone, input, browseButton, handler, statusId) => {
+        if (!dropzone || !input) {
+            return;
+        }
+        const openFileDialog = event => {
+            event.preventDefault();
+            input.click();
+        };
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, event => {
+                event.preventDefault();
+                dropzone.classList.add('drag-active');
+            });
+        });
+        ['dragleave', 'dragend', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, event => {
+                if (eventName === 'drop') {
+                    event.preventDefault();
+                }
+                if (eventName !== 'drop' && !dropzone.contains(event.target)) {
+                    return;
+                }
+                dropzone.classList.remove('drag-active');
+            });
+        });
+        dropzone.addEventListener('drop', event => {
+            const files = event.dataTransfer?.files;
+            if (files && files.length) {
+                const reader = new FileReader();
+                reader.onload = loadEvent => {
+                    try {
+                        handler(loadEvent.target.result);
+                    } catch (error) {
+                        setUploadStatus(statusId, error.message, 'error');
+                    }
+                };
+                reader.onerror = () => setUploadStatus(statusId, 'Unable to read the dropped file.', 'error');
+                reader.readAsText(files[0]);
+            }
+        });
+        dropzone.addEventListener('click', openFileDialog);
+        dropzone.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                openFileDialog(event);
+            }
+        });
+        if (browseButton) {
+            browseButton.addEventListener('click', openFileDialog);
+        }
+        triggerFileRead(input, handler, statusId);
+    };
+
+    wireDropzone(rawDropzone, rawInput, rawBrowse, handleRawDataText, 'raw-upload-status');
+    wireDropzone(summaryDropzone, summaryInput, summaryBrowse, handleSummaryText, 'summary-upload-status');
+
+    if (rawTemplateButton) {
+        rawTemplateButton.addEventListener('click', event => {
+            event.preventDefault();
+            downloadRawTemplate();
+        });
+    }
+    if (summaryTemplateButton) {
+        summaryTemplateButton.addEventListener('click', event => {
+            event.preventDefault();
+            downloadSummaryTemplate();
+        });
+    }
+}
+
+function setDataEntryMode(mode) {
+    const normalized = Object.values(DataEntryModes).includes(mode) ? mode : DataEntryModes.MANUAL;
+    activeDataEntryMode = normalized;
+    const buttons = document.querySelectorAll('.data-entry-card .mode-button');
+    buttons.forEach(button => {
+        const isActive = button.dataset.mode === normalized;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+    const panels = document.querySelectorAll('.data-entry-card .mode-panel');
+    panels.forEach(panel => {
+        const isActive = panel.dataset.mode === normalized;
+        panel.classList.toggle('active', isActive);
+        panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+    });
+}
+
+function setupDataEntryModeControls() {
+    const buttons = document.querySelectorAll('.data-entry-card .mode-button');
+    if (!buttons.length) {
+        return;
+    }
+    buttons.forEach(button => {
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            setDataEntryMode(button.dataset.mode);
+        });
+    });
+    setDataEntryMode(activeDataEntryMode);
 }
 // Planned comparison helpers
 function togglePlannedPanel(enabled) {
@@ -1085,7 +1461,15 @@ async function fetchScenarioIndex() {
 
 function parseScenarioText(text) {
     const lines = text.replace(/\r/g, '').split('\n');
-    const result = { title: '', description: [], groups: [], alpha: null, plannedComparisons: [], additionalInputs: {} };
+    const result = {
+        title: '',
+        description: [],
+        groups: [],
+        alpha: null,
+        plannedComparisons: [],
+        additionalInputs: {},
+        rawData: []
+    };
     let section = '';
     lines.forEach(line => {
         const trimmed = line.trim();
@@ -1132,6 +1516,16 @@ function parseScenarioText(text) {
                 sd,
                 n
             });
+        } else if (section === 'raw data') {
+            if (!trimmed) return;
+            const parts = trimmed.split('|').map(part => part.trim());
+            if (parts.length < 2) return;
+            const [groupName, valueStr] = parts;
+            const value = parseFloat(valueStr);
+            if (!groupName || !isFinite(value)) {
+                return;
+            }
+            result.rawData.push({ group: groupName, value });
         } else {
             if (!trimmed || !trimmed.includes('=')) {
                 return;
@@ -1205,10 +1599,125 @@ function applyScenarioGroups(groups, suppressUpdate = false) {
     return nameMap;
 }
 
+function deriveGroupsFromRaw(rawData) {
+    if (!Array.isArray(rawData) || !rawData.length) {
+        return [];
+    }
+    const statsMap = new Map();
+    rawData.forEach(entry => {
+        const label = entry.group?.trim();
+        const value = entry.value;
+        if (!label || !isFinite(value)) {
+            return;
+        }
+        if (!statsMap.has(label)) {
+            statsMap.set(label, { label, count: 0, mean: 0, m2: 0 });
+        }
+        const stats = statsMap.get(label);
+        stats.count += 1;
+        const delta = value - stats.mean;
+        stats.mean += delta / stats.count;
+        const delta2 = value - stats.mean;
+        stats.m2 += delta * delta2;
+    });
+    const groups = [];
+    statsMap.forEach(stats => {
+        if (stats.count < 2) {
+            return;
+        }
+        const variance = stats.count > 1 ? stats.m2 / (stats.count - 1) : 0;
+        groups.push({
+            name: stats.label,
+            mean: stats.mean,
+            sd: Math.sqrt(Math.max(variance, 0)),
+            n: stats.count
+        });
+    });
+    return groups;
+}
+
+function escapeCsvValue(value) {
+    const str = String(value ?? '');
+    if (/[",\n]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+}
+
+function buildScenarioDataset(parsed, scenarioId) {
+    const safeId = (scenarioId || 'scenario').replace(/\s+/g, '_').toLowerCase();
+    if (parsed.rawData && parsed.rawData.length) {
+        const lines = ['group,value'];
+        parsed.rawData.forEach(entry => {
+            if (!entry.group || !isFinite(entry.value)) {
+                return;
+            }
+            lines.push(`${escapeCsvValue(entry.group)},${entry.value}`);
+        });
+        if (lines.length > 1) {
+            return {
+                filename: `${safeId}_raw_data.csv`,
+                content: lines.join('\n')
+            };
+        }
+    }
+    if (parsed.groups && parsed.groups.length) {
+        const lines = ['group,mean,sd,n'];
+        parsed.groups.forEach(group => {
+            lines.push([
+                escapeCsvValue(group.name),
+                isFinite(group.mean) ? group.mean : '',
+                isFinite(group.sd) ? group.sd : '',
+                Number.isFinite(group.n) ? group.n : ''
+            ].join(','));
+        });
+        if (lines.length > 1) {
+            return {
+                filename: `${safeId}_summary_inputs.csv`,
+                content: lines.join('\n')
+            };
+        }
+    }
+    return null;
+}
+
+function updateScenarioDownloadButton(datasetInfo = null) {
+    currentScenarioDataset = datasetInfo;
+    const button = document.getElementById('scenario-download');
+    if (!button) {
+        return;
+    }
+    if (datasetInfo) {
+        button.classList.remove('hidden');
+        button.disabled = false;
+    } else {
+        button.classList.add('hidden');
+        button.disabled = true;
+    }
+}
+
+function setupScenarioDownloadButton() {
+    const button = document.getElementById('scenario-download');
+    if (!button) {
+        return;
+    }
+    button.addEventListener('click', () => {
+        if (!currentScenarioDataset) {
+            return;
+        }
+        downloadTextFile(
+            currentScenarioDataset.filename || 'scenario.csv',
+            currentScenarioDataset.content,
+            { mimeType: 'text/csv' }
+        );
+    });
+}
+
 async function loadScenarioById(id) {
     const scenario = scenarioManifest.find(entry => entry.id === id);
     if (!scenario) {
         renderScenarioDescription('', '');
+        updateScenarioDownloadButton(null);
         return;
     }
     try {
@@ -1218,6 +1727,12 @@ async function loadScenarioById(id) {
         }
         const text = await response.text();
         const parsed = parseScenarioText(text);
+        if ((!parsed.groups || !parsed.groups.length) && parsed.rawData.length) {
+            const derived = deriveGroupsFromRaw(parsed.rawData);
+            if (derived.length) {
+                parsed.groups = derived;
+            }
+        }
         renderScenarioDescription(parsed.title || scenario.label, parsed.description);
         const nameMap = parsed.groups.length ? applyScenarioGroups(parsed.groups, true) : {};
         const alphaInput = document.getElementById('alpha');
@@ -1244,9 +1759,12 @@ async function loadScenarioById(id) {
                 clearComparisonRows(true);
             }
         }
+        const datasetInfo = buildScenarioDataset(parsed, scenario.id);
+        updateScenarioDownloadButton(datasetInfo);
         updateResults();
     } catch (error) {
         console.error('Scenario load error:', error);
+        updateScenarioDownloadButton(null);
     }
 }
 
@@ -1266,6 +1784,7 @@ async function setupScenarioSelector() {
         const { value } = select;
         if (!value) {
             renderScenarioDescription('', '');
+            updateScenarioDownloadButton(null);
             return;
         }
         loadScenarioById(value);
@@ -1589,9 +2108,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setupConfidenceButtons();
     setupAxisControls();
     setupGroupControls();
+    setupDataEntryModeControls();
     setupPlannedComparisonControls();
     setupMeanReferenceControls();
     setupScenarioSelector();
+    setupScenarioDownloadButton();
+    setupDataImportControls();
 
     const alphaInput = document.getElementById('alpha');
     if (alphaInput) {

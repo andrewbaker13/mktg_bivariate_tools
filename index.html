@@ -1,20 +1,147 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
-  <title>Marketing Bivariate Tools</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketing Bivariate Tools – Student Guide</title>
   <link rel="stylesheet" href="shared/css/main.css">
 </head>
+
 <body>
-  <h1>Marketing Bivariate Statistics Tools</h1>
-  <ul>
-    <li><a href="apps/pearson_correlation/main_pearson.html">Pearson Correlation</a></li>
-    <li><a href="apps/paired_ttest/">Paired Sample t-Test</a></li>
-    <li><a href="apps/one_way_anova/">One-Way ANOVA</a></li>
-    <li><a href="apps/mcnemar/main_mcnemar.html">McNemar Test</a></li>
-    <li><a href="apps/chisquare/main_chisquare.html">Chi-square Test</a></li>
-    <li><a href="apps/ab_proportion/main_ab_proportion.html">A/B Proportion Tool</a></li>
-    <li><a href="apps/ind_ttest/main_ind_ttest.html">Welch's t-test Tool</a></li>
-  </ul>
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Marketing Bivariate Statistics Tools</h1>
+        <div class="hero-context">
+          <span class="badge">Student Guide</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Use this page to choose the right web app for your question, then click through to run the analysis with
+        guided inputs, visuals, and narrative reporting.
+      </p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="how-to-choose-heading">
+      <h2 id="how-to-choose-heading">How to Choose a Tool</h2>
+      <div class="card">
+        <p>Start with the kind of outcome you are measuring and how your data were collected:</p>
+        <ul>
+          <li><strong>Two numeric metrics</strong> on the same people &rarr; <em>association</em> question &rarr;
+            Pearson Correlation.</li>
+          <li><strong>One numeric metric</strong> for <em>two independent groups</em> &rarr; mean comparison &rarr;
+            Welch's t-test.</li>
+          <li><strong>One numeric metric</strong> measured <em>twice on the same people</em> (before/after, A vs. B)
+            &rarr; Paired t-test.</li>
+          <li><strong>One numeric metric</strong> for <em>three or more groups</em> &rarr; One-Way ANOVA.</li>
+          <li><strong>Binary outcome</strong> (convert vs. not, click vs. no click) for <em>two independent groups</em>
+            &rarr; A/B Proportion tool.</li>
+          <li><strong>Binary outcome measured twice on the same people</strong> (pre/post, control vs. treatment on the
+            same accounts) &rarr; McNemar test.</li>
+          <li><strong>Two categorical variables</strong> (e.g., device type by response, segment by offer) &rarr;
+            Chi-square test of association.</li>
+        </ul>
+        <p class="muted">
+          Unsure where to start? Read the "TEST OVERVIEW &amp; EQUATIONS" section inside each app for assumptions,
+          notations, and links to references.
+        </p>
+      </div>
+    </section>
+
+    <section class="scenario-section" aria-labelledby="directory-heading">
+      <h2 id="directory-heading">Tool Directory</h2>
+      <div class="card">
+        <div class="tool-directory">
+          <article class="tool-card">
+            <h3><a href="apps/pearson_correlation/main_pearson.html">Pearson Correlation</a></h3>
+            <p>
+              Explores whether two continuous marketing metrics move together
+              (for example, <em>ad spend vs. revenue</em> or <em>time on site vs. conversion rate</em>).
+            </p>
+            <p class="muted">Data: pairs of numeric values for each case.</p>
+          </article>
+
+          <article class="tool-card">
+            <h3><a href="apps/ind_ttest/main_ind_ttest.html">Welch's t-test (Independent Means)</a></h3>
+            <p>
+              Compares average performance between two independent groups when variances and sample sizes may differ
+              (for example, <em>Control vs. New Subject Line</em>).
+            </p>
+            <p class="muted">Data: group means/SDs and sample sizes, or raw outcomes for each group.</p>
+          </article>
+
+          <article class="tool-card">
+            <h3><a href="apps/paired_ttest/main_paired_ttest.html">Paired Sample t-test</a></h3>
+            <p>
+              Evaluates before/after or A/B measurements on the same people or accounts
+              (for example, <em>pre-course vs. post-course scores</em>).
+            </p>
+            <p class="muted">Data: paired numeric observations or paired summary statistics.</p>
+          </article>
+
+          <article class="tool-card">
+            <h3><a href="apps/onewayanova/main_onewayanova.html">One-Way ANOVA</a></h3>
+            <p>
+              Tests whether <em>three or more</em> groups differ on a numeric outcome
+              (for example, <em>four landing page designs vs. revenue per visitor</em>).
+            </p>
+            <p class="muted">Data: group means/SDs and sample sizes, or long-format raw data.</p>
+          </article>
+
+          <article class="tool-card">
+            <h3><a href="apps/ab_proportion/main_ab_proportion.html">A/B Proportion Tool</a></h3>
+            <p>
+              Compares conversion rates or other binary outcomes between two independent variants
+              (for example, <em>Newsletter CTA A vs. CTA B</em>).
+            </p>
+            <p class="muted">Data: conversions and sample sizes, or raw 0/1 outcomes by group.</p>
+          </article>
+
+          <article class="tool-card">
+            <h3><a href="apps/chisquare/main_chisquare.html">Chi-square Test of Association</a></h3>
+            <p>
+              Checks whether two categorical variables are related
+              (for example, <em>device type by signup status</em> or <em>segment by offer selection</em>).
+            </p>
+            <p class="muted">Data: contingency table counts or raw categorical outcomes.</p>
+          </article>
+
+          <article class="tool-card">
+            <h3><a href="apps/mcnemar/main_mcnemar.html">McNemar Test</a></h3>
+            <p>
+              Focuses on "switchers" in paired yes/no data, such as matched pre/post responses
+              (for example, <em>same customers under two creative treatments</em>).
+            </p>
+            <p class="muted">Data: 2 &times; 2 matched table or raw paired outcomes.</p>
+          </article>
+
+          <article class="tool-card">
+            <h3><a href="apps/bivariate_regression/main_bivariate_regression.html">Bivariate Linear Regression</a></h3>
+            <p>
+              Fits a straight-line relationship between one predictor and one outcome, either for a continuous predictor
+              (for example, <em>weekly ad spend vs. revenue</em>) or a binary group indicator.
+            </p>
+            <p class="muted">Data: summary stats (n, means, SDs, r) or raw paired observations.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="diagnostics-section" aria-labelledby="study-tips-heading">
+      <h2 id="study-tips-heading">Tips for Students</h2>
+      <div class="card">
+        <ul>
+          <li>Always sketch your research question in plain language <em>before</em> choosing a test.</li>
+          <li>Match the tool to the <strong>data structure</strong> (numeric vs. categorical, independent vs. paired).</li>
+          <li>Use the built-in narratives as a starting point, then rewrite them in your own words for assignments.</li>
+          <li>Experiment with the sample scenarios and then upload your own data once you are comfortable.</li>
+        </ul>
+        <p class="muted">These apps are designed as teaching tools: they show equations, diagnostics, and APA-style
+          reporting so you can see how the math connects to marketing decisions.</p>
+      </div>
+    </section>
+  </main>
 </body>
+
 </html>

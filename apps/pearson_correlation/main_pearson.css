@@ -31,19 +31,6 @@
     min-width: 2rem;
 }
 
-.upload-status {
-    font-weight: 600;
-    color: var(--muted);
-}
-
-.upload-status.success {
-    color: var(--success);
-}
-
-.upload-status.error {
-    color: var(--danger);
-}
-
 .scatter-controls {
     display: flex;
     align-items: center;

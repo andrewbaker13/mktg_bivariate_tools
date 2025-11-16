@@ -1,0 +1,2 @@
+condition_a_label,condition_b_label,positive_label,negative_label,a_positive_b_positive,a_positive_b_negative,a_negative_b_positive,a_negative_b_negative,alpha,analysis_method
+Tutorial Deep Dive,Executive ROI Story,Qualified pipeline,No pipeline,142,36,74,263,0.01,chi2_cc

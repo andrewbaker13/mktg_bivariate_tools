@@ -1,0 +1,9 @@
+# Title
+Ad Spend vs. Weekly Revenue
+
+# Description
+A performance marketing team wants to summarize the relationship between weekly paid media spend (X) and weekly revenue (Y) at the account level.
+
+Each observation is one week for one brand, with both spend and revenue recorded. The linked CSV contains 200 weeks of data where revenue increases as spend increases but still exhibits noise week to week.
+
+Use this preset with the raw-data upload or manual-entry mode to practice interpreting the regression slope, R², and statistical test for the slope. The dataset is stored in a separate CSV so you can download, edit, and re-upload it.

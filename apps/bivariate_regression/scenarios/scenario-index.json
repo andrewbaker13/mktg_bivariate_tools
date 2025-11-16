@@ -1,0 +1,14 @@
+[
+  {
+    "id": "spend_vs_revenue",
+    "label": "Ad Spend vs. Weekly Revenue (200 weeks)",
+    "file": "scenarios/spend_vs_revenue.txt",
+    "dataset": "scenarios/continuous_marketing_mix_data.csv"
+  },
+  {
+    "id": "four_segment_email",
+    "label": "Four-Segment Email Campaign",
+    "file": "scenarios/control_vs_treatment_revenue.txt",
+    "dataset": "scenarios/four_segment_email_data.csv"
+  }
+]

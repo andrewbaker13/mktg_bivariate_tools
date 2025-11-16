@@ -1,26 +1,3 @@
-/* Theme variables */
-:root {
-    --primary-color: #2c3e50;
-    --secondary-color: #34495e;
-    --accent-color: #c0392b;
-    --accent-soft: rgba(192, 57, 43, 0.12);
-    --accent-medium: rgba(192, 57, 43, 0.2);
-    --accent-strong: rgba(192, 57, 43, 0.32);
-    --light-gray: #ecf0f1;
-    --border-radius: 6px;
-    --card-shadow: 0 8px 18px rgba(44, 62, 80, 0.08);
-    --app-bg: #f5f7fa;
-    --app-card-bg: #ffffff;
-    --app-text: #2c3e50;
-    --app-muted: #5f6b7a;
-    --app-border: #d0d8e4;
-    --app-accent: #c0392b;
-    --app-accent-dark: #8c2f23;
-    --app-success: #2f9d58;
-    --app-danger: #c0392b;
-    --app-warning: #f3b440;
-}
-
 .equation-section p,
 .scenario-section p {
     margin: 0.75rem 0;

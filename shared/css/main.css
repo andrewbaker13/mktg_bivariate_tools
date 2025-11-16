@@ -447,6 +447,42 @@ button.secondary:focus-visible {
   margin-top: 0.5rem;
 }
 
+.data-import-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.data-import-block h4 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.data-import-block p {
+  margin: 0 0 0.65rem;
+}
+
+.data-import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.data-entry-card .mode-panels {
+  margin-top: 1rem;
+}
+
+.data-entry-card .group-controls,
+.data-entry-card .group-input-block {
+  margin: 0 0 1rem;
+}
+
+.data-entry-card .group-input-block:last-child {
+  margin-bottom: 0;
+}
+
 .mode-panels {
   margin-top: 1.5rem;
 }

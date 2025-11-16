@@ -1,0 +1,12 @@
+# Title
+Loyalty SMS nudge by subsequent action (raw dataset)
+
+# Description
+Customer marketing sent a follow-up SMS nudge to three loyalty segments (Enrolled Members, In-Store Fans, and Digital App Users). Raw row-level data captures each recipient's segment and what they did next: redeemed a coupon, visited the web/app, or ignored the nudge. Use this preset to demonstrate the raw-upload workflow and how categorical combinations map to a 3×3 contingency table.
+
+# Alpha
+0.05
+
+# Additional Inputs
+chartXAxis=rows
+cellLabelMode=table_pct

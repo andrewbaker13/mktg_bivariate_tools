@@ -1,0 +1,25 @@
+# Title
+Lifecycle Push Raw Upload Pilot
+
+# Description
+Customer lifecycle marketing tested a mid-journey push notification. Every loyalty member in the pilot received the legacy control message on Monday and a journey-personalized notification on Wednesday. Marketers flagged whether each touch triggered an engaged response (tap-through plus site visit) or no response.
+
+To mirror real workflow, this scenario feeds the app with the raw paired dataset of 90 members. Each row lists a member’s response to the control message and the personalized follow-up so the tool must aggregate the discordant wins before running McNemar’s test.
+
+# Alpha
+0.05
+
+# Counts
+a_yes_b_yes=32
+a_yes_b_no=18
+a_no_b_yes=25
+a_no_b_no=15
+
+# Labels
+condition_a=Control notification
+condition_b=Journey-personalized notification
+positive_label=Engaged response
+negative_label=No response
+
+# Additional Inputs
+analysis_method=chi2_cc

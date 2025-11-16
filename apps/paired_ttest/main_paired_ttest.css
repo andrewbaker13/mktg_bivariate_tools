@@ -1,0 +1,11 @@
+.multi-column-ftable {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.multi-column-ftable th,
+.multi-column-ftable td {
+  border: 1px solid #e5e7eb;
+  padding: 0.6rem;
+  text-align: center;
+}

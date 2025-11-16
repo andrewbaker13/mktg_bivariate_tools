@@ -1,0 +1,2 @@
+condition_a_label,condition_b_label,positive_label,negative_label,a_positive_b_positive,a_positive_b_negative,a_negative_b_positive,a_negative_b_negative,alpha,analysis_method
+Action-first trailer,Mystery-first trailer,Watchlist add,No add,512,138,214,936,0.025,exact

@@ -10,6 +10,7 @@
   <!-- App-specific overrides -->
   <link rel="stylesheet" href="template.css">
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="../../shared/js/csv_utils.js"></script>
   <script src="../../shared/js/fan_chart_utils.js"></script>
   <script src="../../shared/js/stacked_bar_utils.js"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -50,56 +51,95 @@
             <select id="scenario-select">
               <option value="">Manual inputs (no preset)</option>
             </select>
-            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download preset</button>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
           </div>
         </div>
         <div id="scenario-description">
-          <p>Introduce how presets work (e.g., auto-loading text, inputs, and data). Replace this copy with actual marketing examples.</p>
+          <p>Use presets to auto-load realistic marketing inputs, text, and any CSV/TSV data required for uploads. The download button exposes the exact dataset used so editors can tweak it in Excel or Numbers before re-uploading.</p>
         </div>
       </div>
     </section>
 
     <section class="input-card" aria-labelledby="inputs-heading">
       <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
-      <div class="card">
+      <article class="card data-entry-card">
         <div class="input-header">
-          <h3>Primary inputs</h3>
-          <div class="alpha-controls">
-            <label for="alpha">Significance level (&alpha;)</label>
-            <input type="number" id="alpha" min="0.001" max="0.2" step="0.001" value="0.050">
-            <div class="confidence-buttons" role="group">
-              <button class="confidence-button" data-level="0.90">90% CI</button>
-              <button class="confidence-button active" data-level="0.95">95% CI</button>
-              <button class="confidence-button" data-level="0.99">99% CI</button>
+          <h3>Select Data Entry / Upload Mode</h3>
+        </div>
+        <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
+          <button type="button" class="mode-button active" data-mode="manual">Manual entry</button>
+          <button type="button" class="mode-button" data-mode="summary-upload">Upload summary inputs</button>
+          <button type="button" class="mode-button" data-mode="raw-upload">Upload raw data</button>
+        </div>
+        <div class="mode-panels">
+          <div class="mode-panel active" data-mode="manual" id="template-manual-panel">
+            <article class="group-controls placeholder-group-card">
+              <h4>Manual summaries</h4>
+              <p>Use this structure whenever the test accepts aggregated inputs (means, standard deviations, proportions, etc.). Labels persist so scenarios and uploads overwrite them cleanly.</p>
+              <div class="input-grid">
+                <div>
+                  <label for="group-a">Group A summary</label>
+                  <input id="group-a" type="number" placeholder="e.g., mean or proportion">
+                </div>
+                <div>
+                  <label for="group-b">Group B summary</label>
+                  <input id="group-b" type="number" placeholder="e.g., mean or proportion">
+                </div>
+              </div>
+              <p class="hint">For multi-group tools swap this grid for a table so column labels render once.</p>
+            </article>
+          </div>
+          <div class="mode-panel" data-mode="summary-upload" id="template-summary-panel">
+            <div class="data-import-block">
+              <h4>Upload summary inputs</h4>
+              <p>Default template fields are <code>group,conversions,sample_size,delta0,alpha,notes</code> so stakeholders can capture both aggregated stats and the hypothesized difference/confidence level in one file. Adjust the headers to whatever summaries your test needs (means, SDs, totals, etc.), and remind users if your app only accepts two groups.</p>
+              <div id="template-summary-dropzone" class="dropzone" role="button" tabindex="0">
+                <p class="dropzone-title">Drag &amp; drop summary file</p>
+                <p class="dropzone-note">Up to 2,000 rows. Each row represents one group or condition.</p>
+                <button type="button" id="template-summary-browse" class="secondary">Browse files</button>
+              </div>
+              <input type="file" id="template-summary-input" accept=".csv,.tsv,.txt" hidden>
+              <div class="template-buttons">
+                <button type="button" id="template-summary-download">Download summary template</button>
+              </div>
+              <p id="template-summary-feedback" class="upload-status" aria-live="polite">No summary file uploaded.</p>
+            </div>
+          </div>
+          <div class="mode-panel" data-mode="raw-upload" id="template-raw-panel">
+            <div class="data-import-block">
+              <h4>Upload raw long-format data</h4>
+              <p>The template shows <code>group,value,channel,note</code> columns so end users can include the outcome plus optional metadata (channel, creative, timestamp). Customize those columns to the raw format your tool expects, and call out when only two group labels are allowed.</p>
+              <div id="template-raw-dropzone" class="dropzone" role="button" tabindex="0">
+                <p class="dropzone-title">Drag &amp; drop raw case file</p>
+                <p class="dropzone-note">Two columns minimum: group label and numeric metric.</p>
+                <button type="button" id="template-raw-browse" class="secondary">Browse files</button>
+              </div>
+              <input type="file" id="template-raw-input" accept=".csv,.tsv,.txt" hidden>
+              <div class="template-buttons">
+                <button type="button" id="template-raw-download">Download raw template</button>
+              </div>
+              <p id="template-raw-feedback" class="upload-status" aria-live="polite">No raw file uploaded.</p>
             </div>
           </div>
         </div>
-        <div class="input-grid">
-          <div>
-            <label for="group-a">Group A summary</label>
-            <input id="group-a" type="number" placeholder="Placeholder input">
-          </div>
-          <div>
-            <label for="group-b">Group B summary</label>
-            <input id="group-b" type="number" placeholder="Placeholder input">
-          </div>
+      </article>
+
+      <article class="card analysis-settings test-options">
+        <h3>Analysis Settings</h3>
+        <div class="confidence-buttons" role="group" aria-label="Select confidence level">
+          <button class="confidence-button" data-level="0.90">90% Conf.</button>
+          <button class="confidence-button active" data-level="0.95">95% Conf.</button>
+          <button class="confidence-button" data-level="0.99">99% Conf.</button>
+        </div>
+        <div class="input-group">
+          <label for="alpha">Significance level (&alpha;)</label>
+          <input type="number" id="alpha" min="0.001" max="0.2" step="0.001" value="0.050">
         </div>
         <details class="advanced-details">
           <summary>Advanced analysis settings</summary>
           <p>Use this accordion for optional toggles (axis locks, alternative hypotheses, label editing, upload limits, etc.).</p>
         </details>
-        <div class="upload-block">
-          <h3>Upload raw data</h3>
-          <p class="plain-language">Drop a CSV/TSV/txt file with headers to populate inputs. Use this as a starting point for your own upload workflow.</p>
-          <div id="template-dropzone" class="dropzone" role="button" tabindex="0">
-            <p class="dropzone-title">Drag &amp; drop file here</p>
-            <p class="dropzone-note">Up to 2,000 rows. First row should be column names.</p>
-            <button type="button" id="template-browse" class="secondary">Browse files</button>
-          </div>
-          <input type="file" id="template-file-input" accept=".csv,.tsv,.txt" hidden>
-          <p id="template-file-feedback" class="upload-status" aria-live="polite"></p>
-        </div>
-      </div>
+      </article>
     </section>
 
     <section class="visual-output" aria-labelledby="visual-output-heading">

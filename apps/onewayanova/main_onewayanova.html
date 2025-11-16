@@ -78,47 +78,93 @@
                         <code>.txt</code> scenario files into the <code>scenarios</code> folder.
                     </p>
                 </div>
+                <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
             </div>
         </section>
 
         <section class="input-stack">
             <h2>INPUTS &amp; SETTINGS</h2>
-            <article class="card group-controls">
-                <h3>Group Summary Inputs</h3>
-                <p>Select how many groups you want to compare (2–10), then provide each group's mean, standard deviation, and sample size.</p>
-                <div class="input-group inline">
-                    <label for="group-count">Select number of groups:</label>
-                    <select id="group-count">
-                        <option value="2">2 groups</option>
-                        <option value="3" selected>3 groups</option>
-                        <option value="4">4 groups</option>
-                        <option value="5">5 groups</option>
-                        <option value="6">6 groups</option>
-                        <option value="7">7 groups</option>
-                        <option value="8">8 groups</option>
-                        <option value="9">9 groups</option>
-                        <option value="10">10 groups</option>
-                    </select>
+            <article class="card data-entry-card">
+                <div class="input-header">
+                    <h3>Select Data Entry / Upload Mode</h3>
                 </div>
-                <p class="hint">The omnibus test always benchmarks each group against the grand mean before any Tukey HSD follow-ups.</p>
-            </article>
-
-            <article class="card group-input-block" aria-label="Group statistics entry">
-                <h3>Enter Group Statistics</h3>
-                <p class="hint">Each row shows the fields for one group. Provide all four values to include the group in the ANOVA.</p>
-                <div class="group-table-wrapper">
-                    <table class="group-table" aria-live="polite">
-                        <thead>
-                            <tr>
-                                <th scope="col">Group</th>
-                                <th scope="col">Name / Label</th>
-                                <th scope="col">Mean</th>
-                                <th scope="col">Standard Deviation</th>
-                                <th scope="col">Sample Size (n)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="group-inputs"></tbody>
-                    </table>
+                <div class="mode-toggle" role="tablist" aria-label="Select data entry mode">
+                    <button type="button" class="mode-button active" data-mode="manual">Manual entry</button>
+                    <button type="button" class="mode-button" data-mode="summary-upload">Upload summary inputs</button>
+                    <button type="button" class="mode-button" data-mode="raw-upload">Upload raw data</button>
+                </div>
+                <div class="mode-panels">
+                    <div class="mode-panel active" data-mode="manual" id="manual-panel">
+                        <article class="group-controls">
+                            <h4>Group Summary Inputs</h4>
+                            <p>Select how many groups you want to compare (2–10), then provide each group's mean, standard deviation, and sample size.</p>
+                            <div class="input-group inline">
+                                <label for="group-count">Select number of groups:</label>
+                                <select id="group-count">
+                                    <option value="2">2 groups</option>
+                                    <option value="3" selected>3 groups</option>
+                                    <option value="4">4 groups</option>
+                                    <option value="5">5 groups</option>
+                                    <option value="6">6 groups</option>
+                                    <option value="7">7 groups</option>
+                                    <option value="8">8 groups</option>
+                                    <option value="9">9 groups</option>
+                                    <option value="10">10 groups</option>
+                                </select>
+                            </div>
+                            <p class="hint">The omnibus test always benchmarks each group against the grand mean before any Tukey HSD follow-ups.</p>
+                        </article>
+                        <article class="group-input-block" aria-label="Group statistics entry">
+                            <h4>Enter Group Statistics</h4>
+                            <p class="hint">Each row shows the fields for one group. Provide all four values to include the group in the ANOVA.</p>
+                            <div class="group-table-wrapper">
+                                <table class="group-table" aria-live="polite">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Group</th>
+                                            <th scope="col">Name / Label</th>
+                                            <th scope="col">Mean</th>
+                                            <th scope="col">Standard Deviation</th>
+                                            <th scope="col">Sample Size (n)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="group-inputs"></tbody>
+                                </table>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="mode-panel" data-mode="summary-upload" id="summary-panel">
+                        <div class="data-import-block">
+                            <h4>Upload summary inputs</h4>
+                            <p>Upload group-level means you already calculated. Required columns: <strong>group</strong>, <strong>mean</strong>, <strong>sd</strong>, <strong>n</strong>.</p>
+                            <div id="summary-dropzone" class="dropzone" role="button" tabindex="0">
+                                <p class="dropzone-title">Drag &amp; drop a .csv, .tsv, or .txt file</p>
+                                <p class="dropzone-note">Each row should contain the group label plus mean, SD, and sample size.</p>
+                                <button type="button" id="summary-upload-browse" class="secondary">Browse files</button>
+                            </div>
+                            <input type="file" id="summary-upload-input" accept=".csv,.tsv,.txt" hidden>
+                            <div class="template-buttons">
+                                <button type="button" id="download-summary-template">Download summary template</button>
+                            </div>
+                            <p id="summary-upload-status" class="upload-status">No summary file imported yet.</p>
+                        </div>
+                    </div>
+                    <div class="mode-panel" data-mode="raw-upload" id="raw-panel">
+                        <div class="data-import-block">
+                            <h4>Upload raw long-format data</h4>
+                            <p>Provide exactly two columns: <strong>group label</strong> and <strong>numeric value</strong>. Order does not matter; we compute each group&rsquo;s mean, SD, and n.</p>
+                            <div id="anova-raw-dropzone" class="dropzone" role="button" tabindex="0">
+                                <p class="dropzone-title">Drag &amp; drop a .csv, .tsv, or .txt file</p>
+                                <p class="dropzone-note">Up to 2,000 rows. Each row needs a group label and numeric value.</p>
+                                <button type="button" id="raw-upload-browse" class="secondary">Browse files</button>
+                            </div>
+                            <input type="file" id="anova-raw-input" accept=".csv,.tsv,.txt" hidden>
+                            <div class="template-buttons">
+                                <button type="button" id="download-raw-template">Download raw template</button>
+                            </div>
+                            <p id="raw-upload-status" class="upload-status">No raw file uploaded yet.</p>
+                        </div>
+                    </div>
                 </div>
             </article>
 

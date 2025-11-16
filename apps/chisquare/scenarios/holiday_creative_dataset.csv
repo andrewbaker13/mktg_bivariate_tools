@@ -1,0 +1,7 @@
+# row_var=Subject line style
+# col_var=Click outcome
+# alpha=0.05
+# yates=false
+,Clicked,Did not click
+Utility-first subject line,132,88
+Story-driven subject line,158,72

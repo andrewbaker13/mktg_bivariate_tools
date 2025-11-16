@@ -1,0 +1,8 @@
+# row_var=Acquisition channel
+# col_var=Purchase outcome
+# alpha=0.01
+# yates=false
+,Purchase,Browse only
+Email nurture,74,46
+Paid search,82,38
+Organic social,54,52

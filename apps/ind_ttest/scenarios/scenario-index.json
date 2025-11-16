@@ -13,5 +13,10 @@
         "id": "refer_a_friend",
         "label": "Refer-a-Friend Revenue Pilot",
         "file": "scenarios/refer_a_friend.txt"
+    },
+    {
+        "id": "hours_streaming_raw",
+        "label": "Streaming Hours Cohort Experiment",
+        "file": "scenarios/hours_streaming_raw.txt"
     }
 ]

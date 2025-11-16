@@ -42,9 +42,6 @@
       <section class="scenario-section">
         <h2>MARKETING SCENARIOS</h2>
         <div class="card">
-          <div class="scenario-header">
-            <span>Three preloaded case studies</span>
-          </div>
           <div class="scenario-controls">
             <label for="scenario-select">Choose a preset scenario</label>
             <select id="scenario-select">
@@ -56,82 +53,115 @@
             <p>Pick a scenario to auto-fill the contingency table and narrative with real marketing counts from curated analyses. Switch back to manual inputs if you want to customize the numbers further.</p>
           </div>
         </div>
-      </section>
-
-      <section class="inputs-card">
+      <section class="inputs-panel">
         <h2>INPUTS &amp; SETTINGS</h2>
-        <div class="card">
-          <h3>Upload a contingency table</h3>
-          <p class="plain-language">Drop a CSV/TSV where the first row lists column names, the first column contains row labels, and every other cell is the observed count.</p>
-          <div id="crosstab-dropzone" class="dropzone" role="button" tabindex="0">
-            <p class="dropzone-title">Drag & drop your table</p>
-            <p class="dropzone-note">Supported extensions: .csv, .tsv, .txt. The upload will replace the current counts and labels.</p>
+        <div class="card data-entry-card">
+          <div class="input-header">
+            <h3>Select Data Entry / Upload Mode</h3>
           </div>
-          <input type="file" id="crosstab-file-input" accept=".csv,.tsv,.txt" class="hidden" />
-          <button id="download-inputs" class="secondary" type="button" style="margin-top:0.75rem;">Download current inputs</button>
-        </div>
-
-        <div class="card controls-container">
-        <div class="control-column">
-          <h3>Design your table</h3>
-          <div class="control-group">
-            <label for="rows">Rows</label>
-            <input id="rows" type="number" min="2" max="10" value="2" />
+          <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
+            <button type="button" class="mode-button active" data-mode="manual">Manual entry</button>
+            <button type="button" class="mode-button" data-mode="summary-upload">Upload contingency table</button>
+            <button type="button" class="mode-button" data-mode="raw-upload">Upload raw data</button>
           </div>
-          <div class="control-group">
-            <label for="cols">Columns</label>
-            <input id="cols" type="number" min="2" max="10" value="2" />
+          <div class="mode-panels">
+            <div class="mode-panel active" data-mode="manual" id="manual-panel">
+              <div class="controls-container">
+                <article class="manual-card">
+                  <h3>Design your table</h3>
+                  <div class="control-group" style="display:flex; gap:16px; flex-wrap:wrap;">
+                    <div style="flex:1 1 160px;">
+                      <label for="rows">Rows</label>
+                      <input id="rows" type="number" min="2" max="10" value="2" />
+                    </div>
+                    <div style="flex:1 1 160px;">
+                      <label for="cols">Columns</label>
+                      <input id="cols" type="number" min="2" max="10" value="2" />
+                    </div>
+                  </div>
+                  <div class="control-group" style="margin-top:12px;">
+                    <button id="clearTable" class="secondary">Clear inputs</button>
+                  </div>
+                </article>
+                <article class="manual-card">
+                  <h3>Observed Counts</h3>
+                  <div id="tableContainer"></div>
+                  <p id="assumptionNote" class="plain-language"></p>
+                  <div class="control-group">
+                    <label for="cellLabelMode">Cell Labels Reporting Options</label>
+                    <select id="cellLabelMode">
+                      <option value="none">None</option>
+                      <option value="observed">Observed</option>
+                      <option value="expected">Expected</option>
+                      <option value="row_pct">Row %</option>
+                      <option value="col_pct">Column %</option>
+                      <option value="table_pct">Table %</option>
+                    </select>
+                    <div class="plain-language">Shows a small label under each input.</div>
+                  </div>
+                  <div style="margin: 10px 0; display:flex; gap:8px; align-items:center;">
+                    <button id="toggleEditLabels" class="secondary">Edit Row/Column Names</button>
+                  </div>
+                </article>
+              </div>
+              <div class="template-buttons" style="margin-top:12px;">
+                <button id="download-inputs" class="secondary" type="button">Download current inputs</button>
+              </div>
+            </div>
+            <div class="mode-panel" data-mode="summary-upload" id="summary-panel">
+              <div class="data-import-block">
+                <h3>Upload a contingency table</h3>
+                <p class="plain-language">Provide a CSV/TSV where the first row lists column headers, the first column lists row labels, and every other cell contains observed counts.</p>
+                <div id="crosstab-dropzone" class="dropzone" role="button" tabindex="0">
+                  <p class="dropzone-title">Drag &amp; drop your table</p>
+                  <p class="dropzone-note">Supported extensions: .csv, .tsv, .txt. Upload replaces the current counts and labels.</p>
+                  <button type="button" id="summary-browse" class="secondary">Browse files</button>
+                </div>
+                <input type="file" id="crosstab-file-input" accept=".csv,.tsv,.txt" hidden />
+                <div class="template-buttons">
+                  <button type="button" id="summary-template-download">Download 3&times;4 template</button>
+                </div>
+                <p id="summary-upload-status" class="upload-status">No contingency table uploaded yet.</p>
+              </div>
+            </div>
+            <div class="mode-panel" data-mode="raw-upload" id="raw-panel">
+              <div class="data-import-block">
+                <h3>Upload raw data</h3>
+                <p class="plain-language">Upload row-level observations with exactly two columns (category for variable A, category for variable B). We will aggregate them into a contingency table.</p>
+                <div id="raw-dropzone" class="dropzone" role="button" tabindex="0">
+                  <p class="dropzone-title">Drag &amp; drop a raw dataset</p>
+                  <p class="dropzone-note">File must include two column headers and up to 2,000 rows.</p>
+                  <button type="button" id="raw-browse" class="secondary">Browse files</button>
+                </div>
+                <input type="file" id="raw-file-input" accept=".csv,.tsv,.txt" hidden />
+                <div class="template-buttons">
+                  <button type="button" id="raw-template-download">Download raw template</button>
+                </div>
+                <p id="raw-upload-status" class="upload-status">No raw file uploaded yet.</p>
+              </div>
+            </div>
           </div>
-          <div class="control-group">
-            
-          </div>
-          <div class="control-group">
-            <label for="alpha">Significance level (&alpha;)</label>
-            <select id="alpha">
-              <option value="0.10">0.10</option>
-              <option value="0.05" selected>0.05</option>
-              <option value="0.01">0.01</option>
-            </select>
-          </div>
-          <div class="card control-group">
-            <details>
-            <summary>Advanced Settings</summary>
-            <div class="plain-language" style="margin:6px 0 8px;">Options for special cases and small samples.</div>
-            <label style="display:block; margin-top:6px;">
-              <input id="yates" type="checkbox" />
-              Yates continuity correction (2&times;2 only)
-            </label>
-            <div class="plain-language">Use for small-sample 2&times;2 tables to reduce bias.</div>
-          </details>
-          </div>
-          <div class="control-group">
-            <button id="buildTable">Build Table</button>
-            <button id="clearTable" class="secondary">Clear</button>
-            <button id="sampleData" class="secondary">Sample</button>
-          </div>
-        </div>
-
-        <div class="control-column">
-          <h3>Observed Counts</h3>
-          
-          <div id="tableContainer"></div>
-          <p id="assumptionNote" class="plain-language"></p>
-          <div class="control-group">
-            <label for="cellLabelMode">Cell Labels Reporting Options</label>
-            <select id="cellLabelMode">
-              <option value="none">None</option>
-              <option value="observed">Observed</option>
-              <option value="expected">Expected</option>
-              <option value="row_pct">Row %</option>
-              <option value="col_pct">Column %</option>
-              <option value="table_pct">Table %</option>
-            </select>
-            <div class="plain-language">Shows a small label under each input.</div>
-          </div>
-          <div style="margin: 10px 0; display:flex; gap:8px; align-items:center;">
-            <button id="toggleEditLabels" class="secondary">Edit Row/Column Names</button>
-          </div>
-        </div>
+          <article class="manual-card reporting-card" style="margin-top:16px;">
+            <h3>Confidence Level &amp; Advanced Settings</h3>
+            <div class="confidence-buttons" id="chi-confidence-buttons" role="group" aria-label="Select confidence level">
+              <button type="button" class="confidence-button" data-level="0.90">90% Conf.</button>
+              <button type="button" class="confidence-button active" data-level="0.95">95% Conf.</button>
+              <button type="button" class="confidence-button" data-level="0.99">99% Conf.</button>
+            </div>
+            <div class="input-group" style="margin-top:12px;">
+              <label for="alpha">Significance level (&alpha;)</label>
+              <input type="number" id="alpha" min="0.001" max="0.25" step="0.005" value="0.05">
+            </div>
+            <details class="advanced-settings persistent-advanced" style="margin-top:10px;">
+              <summary>Advanced settings</summary>
+              <div class="plain-language" style="margin:6px 0 8px;">Options for special cases and small samples.</div>
+              <label style="display:block; margin-top:6px;">
+                <input id="yates" type="checkbox" />
+                Yates continuity correction (2&times;2 only)
+              </label>
+              <div class="plain-language">Use for small-sample 2&times;2 tables to reduce bias.</div>
+            </details>
+          </article>
         </div>
       </section>
 

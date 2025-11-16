@@ -1,0 +1,9 @@
+# Title
+Four-Segment Email Campaign
+
+# Description
+A lifecycle team is evaluating four email segments (A, B, C, D) on revenue per user. Each row in the dataset is one user with their segment label and observed revenue.
+
+Segment A represents a broad prospect list, Segment B is a retargeting pool, Segment C is a low-intent interest group, and Segment D is a high-intent loyalty group. The file contains 200+ users so you can practice reading group means, confidence intervals, and reference coding in a regression framework.
+
+Use this preset with the raw-data upload or manual-entry mode to practice interpreting categorical predictors with more than two levels.

@@ -1,0 +1,62 @@
+# Title
+Social CTA Refresh (Raw Dataset)
+
+# Description
+Social media managers are debating whether a static story CTA or a looping "reaction" CTA drives more swipe-up traffic to a limited campaign microsite. Team A keeps the evergreen static reminder. Team B introduces animated reaction badges plus a countdown timer over the swipe CTA. Paid traffic was split evenly across lookalike audiences for one day and the raw conversions are listed below.
+
+# Settings
+alpha=0.05
+delta0=0
+
+# Raw Data
+Team A|1
+Team A|1
+Team A|1
+Team A|1
+Team A|0
+Team A|0
+Team A|1
+Team A|0
+Team A|1
+Team A|0
+Team A|1
+Team A|0
+Team A|1
+Team A|1
+Team A|0
+Team A|1
+Team A|0
+Team A|0
+Team A|1
+Team A|0
+Team A|1
+Team A|0
+Team A|1
+Team A|0
+Team A|1
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|0
