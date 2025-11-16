@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>McNemar Test Explorer</title>
+  <link rel="stylesheet" href="../../shared/css/main.css">
+  <link rel="stylesheet" href="main_mcnemar.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="intro hero-header">
+    <div class="hero-header__top">
+      <h1>McNemar Test Explorer</h1>
+    </div>
+    <p class="hero-header__lede">Investigate matched, binary outcomes with contingency visuals, effect-size diagnostics, and ready-to-share reporting.</p>
+  </header>
+
+  <main class="app-main">
+    <section class="test-overview">
+      <h2>TEST OVERVIEW &amp; EQUATIONS</h2>
+      <div class="card equation-section">
+        <p>McNemars test spotlights the switcherspairs where the two conditions disagree. Only those one-sided wins inform the hypothesis test.</p>
+        <div class="equation-display">
+          \[
+          \begin{aligned}
+          \chi^2_{\text{McNemar}} &= \frac{(b - c)^2}{b + c} \\
+          \chi^2_{\text{Corrected}} &= \frac{(|b - c| - 1)^2}{b + c} \\
+          p_{\text{exact}} &= 2 \times \min \Bigg( \sum_{i=0}^{b} \binom{b + c}{i} 0.5^{b + c},\; \sum_{i=0}^{c} \binom{b + c}{i} 0.5^{b + c} \Bigg)
+          \end{aligned}
+          \]
+        </div>
+        <div class="equation-definitions">
+          <p><strong>Where:</strong></p>
+          <ul>
+            <li>\(b\) counts people who only converted under Condition A, \(c\) only under Condition B.</li>
+            <li>Continuity-corrected \(\chi^2\) keeps Type I error in check when switchers are scarce; the exact approach doubles the smaller binomial tail.</li>
+            <li>If one-sided wins favor a condition more than chance allows, we reject equal success probabilities.</li>
+          </ul>
+        </div>
+        <details class="additional-notes">
+          <summary>Additional Notes</summary>
+          <p>See the <a href="https://en.wikipedia.org/wiki/McNemar%27s_test" target="_blank" rel="noopener noreferrer">McNemar test article</a> for deeper derivations and extensions (matched pairs of nominal data).</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="scenario-section">
+      <h2>MARKETING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Load a marketing scenario:</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Manual inputs (no preset)</option>
+            </select>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>Select a preset to auto-fill matched outcomes for common diagnostics (e.g., creative tests with before/after responses). Drop additional <code>.txt</code> files in the <code>scenarios</code> folder and index them to extend the menu.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="inputs-panel">
+      <h2>INPUTS &amp; SETTINGS</h2>
+      <div class="card">
+        <div class="input-header">
+          <h3>Matched Outcome Table</h3>
+          <div class="alpha-controls">
+            <label for="alpha">Significance level (&alpha;)</label>
+            <input type="number" id="alpha" min="0.001" max="0.5" step="0.001" value="0.05">
+            <div class="confidence-buttons" role="group" aria-label="Select confidence level">
+              <button type="button" class="confidence-button conf-level-btn" data-level="0.90">90% CI</button>
+              <button type="button" class="confidence-button conf-level-btn selected" data-level="0.95">95% CI</button>
+              <button type="button" class="confidence-button conf-level-btn" data-level="0.99">99% CI</button>
+            </div>
+          </div>
+        </div>
+        <p>Enter how many people fall into each combination of outcome and condition. Rename the labels to match your test story.</p>
+        <div class="label-grid">
+          <div class="input-group">
+            <label for="condition-a-label">Condition A label</label>
+            <input type="text" id="condition-a-label" maxlength="60" placeholder="Condition A">
+          </div>
+          <div class="input-group">
+            <label for="condition-b-label">Condition B label</label>
+            <input type="text" id="condition-b-label" maxlength="60" placeholder="Condition B">
+          </div>
+          <div class="input-group">
+            <label for="positive-label">Outcome label (desired behavior)</label>
+            <input type="text" id="positive-label" maxlength="60" placeholder="Took desired action">
+          </div>
+          <div class="input-group">
+            <label for="negative-label">Outcome label (other behavior)</label>
+            <input type="text" id="negative-label" maxlength="60" placeholder="Did not take action">
+          </div>
+        </div>
+        <div class="contingency-wrapper" role="group" aria-labelledby="contingency-caption">
+          <p id="contingency-caption" class="visually-hidden">2 by 2 contingency table inputs</p>
+          <table class="contingency-table">
+            <thead>
+              <tr>
+                <th aria-hidden="true"></th>
+                <th aria-hidden="true" class="axis-label-col"></th>
+                <th id="condition-b-axis" colspan="2">Condition B outcome</th>
+              </tr>
+              <tr>
+                <th aria-hidden="true"></th>
+                <th aria-hidden="true" class="axis-label-col"></th>
+                <th id="col-positive-header">Condition B positive</th>
+                <th id="col-negative-header">Condition B negative</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th id="condition-a-axis" class="row-axis-label" scope="rowgroup" rowspan="2">Condition A outcome</th>
+                <th id="row-positive-header" scope="row">Condition A positive</th>
+                <td>
+                  <label class="visually-hidden" for="cell-a-pos-b-pos">A positive &amp; B positive</label>
+                  <input type="number" id="cell-a-pos-b-pos" min="0" step="1" value="0">
+                </td>
+                <td>
+                  <label class="visually-hidden" for="cell-a-pos-b-neg">A positive &amp; B negative</label>
+                  <input type="number" id="cell-a-pos-b-neg" min="0" step="1" value="0">
+                </td>
+              </tr>
+              <tr>
+                <th id="row-negative-header" scope="row">Condition A negative</th>
+                <td>
+                  <label class="visually-hidden" for="cell-a-neg-b-pos">A negative &amp; B positive</label>
+                  <input type="number" id="cell-a-neg-b-pos" min="0" step="1" value="0">
+                </td>
+                <td>
+                  <label class="visually-hidden" for="cell-a-neg-b-neg">A negative &amp; B negative</label>
+                  <input type="number" id="cell-a-neg-b-neg" min="0" step="1" value="0">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="totals-row">
+            <div><strong id="total-a-positive-label">Total condition A positive:</strong> <span id="total-a-positive">0</span></div>
+            <div><strong id="total-a-negative-label">Total condition A negative:</strong> <span id="total-a-negative">0</span></div>
+            <div><strong>Total pairs:</strong> <span id="total-pairs">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card analysis-card">
+        <h3>Analysis Settings</h3>
+        <p class="helper-text">Stay with the default unless your testing doc specifies otherwise.</p>
+        <div class="analysis-guidance">
+          <p><strong>Statistic guidance</strong></p>
+          <ul>
+            <li><strong>Chi-square (corrected)</strong>: default, controls false positives when switchers are scarce.</li>
+            <li><strong>Chi-square (no correction)</strong>: use when you have 25+ switchers and want slightly more power.</li>
+            <li><strong>Exact binomial</strong>: safest when you have only a handful of switchers.</li>
+          </ul>
+        </div>
+        <details class="advanced-details">
+          <summary>Advanced: Override the statistic</summary>
+          <div class="input-group">
+            <label for="analysis-method">Primary method</label>
+            <select id="analysis-method">
+              <option value="chi2_cc">Chi-square (continuity-corrected)</option>
+              <option value="chi2_nocc">Chi-square (no correction)</option>
+              <option value="exact">Exact binomial</option>
+            </select>
+          </div>
+          <div class="input-group checkbox">
+            <input type="checkbox" id="show-odds-ratio" checked>
+            <label for="show-odds-ratio">Show odds-ratio effect size and confidence interval</label>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      <div class="card">
+        <article class="chart-card">
+          <h3 id="matrix-chart-title">Contingency Heatmap</h3>
+          <div id="matrix-chart" class="chart-placeholder" role="img" aria-live="polite" aria-label="Heatmap of the 2 by 2 contingency table."></div>
+          <p id="matrix-caption" class="chart-note"></p>
+        </article>
+      </div>
+    </section>
+
+    <section class="test-results" aria-labelledby="test-results-heading">
+      <h2 id="test-results-heading">TEST RESULTS</h2>
+      <div class="card metrics-panel">
+        <div class="metric-output">Method: <span id="metric-method" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output">Test statistic: <span id="metric-statistic" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output" id="metric-df-row">Degrees of freedom: <span id="metric-df" class="dynamic-value">1</span></div>
+        <div class="metric-output">p-value: <span id="metric-pvalue" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output">Odds ratio (CI): <span id="metric-odds" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output">Decision (&alpha;): <span id="metric-decision" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output">Interpretation: <span id="metric-interpretation">&ndash;</span></div>
+      </div>
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>APA-Style Statistical Reporting</h3>
+          <p id="apa-report"></p>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="managerial-report"></p>
+        </article>
+      </div>
+      <div class="card">
+        <h3>Switcher Narrative</h3>
+        <div id="switcher-narrative"></div>
+      </div>
+      <div class="card stats-card">
+        <h3>McNemar Test Output</h3>
+        <div id="stats-grid" class="stats-grid" aria-live="polite">
+          <p>Enter paired counts to run the test.</p>
+        </div>
+        <div id="stats-explainer" class="stat-explainer"></div>
+      </div>
+      <div class="card summary-table-card">
+        <h3>Summary Table</h3>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Cell</th>
+              <th>Count</th>
+              <th>Share of total</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="summary-table-body">
+            <tr>
+              <td colspan="4">Enter counts to see the full table.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="diagnostics-section" aria-labelledby="diagnostics-heading">
+      <h2 id="diagnostics-heading">DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+      <div class="card">
+        <details class="diagnostics-details">
+          <summary>Diagnostics &amp; Assumption Tests</summary>
+          <div id="diagnostics-content">
+            <p>Run an analysis to populate diagnostics on switcher counts, balance, and assumption risk.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="created-date"></span> &middot; Last updated: <span id="modified-date"></span></p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). McNemar Test Explorer. Marketing Bivariate Tools. https://github.com/andre/mktg_bivariate_tools/apps/mcnemar/main_mcnemar.html</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# Title
+Retail Promotions Pricing Test
+
+# Description
+A national retailer is piloting a smart-pricing endcap. Associates can either stick with the legacy signage bundle or swap to an AI-powered sign that personalizes the promo headline. Every pilot store rotated through both approaches across two consecutive weekends, so each household ID appears twice in the data.
+
+The metric of interest is whether a shopper purchased the featured bundle at least once during their weekend visit. Use this preset to review how many shoppers flipped from “no bundle” to “bundle” after seeing the personalized messaging.
+
+# Alpha
+0.05
+
+# Counts
+a_yes_b_yes=188
+a_yes_b_no=58
+a_no_b_yes=92
+a_no_b_no=401
+
+# Labels
+condition_a=Legacy signage
+condition_b=Adaptive signage
+positive_label=Bundle purchase
+negative_label=No bundle
+
+# Additional Inputs
+analysis_method=chi2_nocc
