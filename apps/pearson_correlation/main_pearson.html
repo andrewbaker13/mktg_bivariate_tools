@@ -20,10 +20,6 @@
             <h1>Pearson Correlation Studio</h1>
         </div>
         <p class="hero-header__lede">Explore how two metrics move together with narratives, diagnostics, and ready-to-share visuals.</p>
-        <div class="hero-header__meta">
-            <p class="page-timestamps">Created: <span id="hero-created-date">2025-11-06</span> &middot; Last updated: <span id="hero-modified-date">2025-11-15</span></p>
-            <p class="citation">Cite as: Baker, Andrew. (2025). Pearson Correlation Tool. Marketing Bivariate Tools. https://github.com/andre/mktg_bivariate_tools/apps/pearson_correlation/main_pearson.html</p>
-        </div>
     </header>
 
     <main class="app-main">
@@ -167,32 +163,6 @@
             </details>
         </section>
 
-        <h2 id="test-results-heading">TEST RESULTS</h2>
-        <section id="analysis-status" class="card" aria-labelledby="test-results-heading">
-            <h3>Analysis Status</h3>
-            <p id="status-message">Enter data to compute the selected correlation.</p>
-        </section>
-
-        <section class="results-grid single-only" aria-labelledby="test-results-heading">
-            <article class="result-card" id="test-result-card">
-                <h3 id="correlation-heading">Pearson correlation</h3>
-                <p id="test-statistic">r = --</p>
-                <p id="p-value">p = --</p>
-                <p id="ci-summary">95% CI: [--, --]</p>
-            </article>
-            <article class="result-card">
-                <h3>Signal details</h3>
-                <p id="effect-size">t(--)=--</p>
-                <p id="hedges-g">R<sup>2</sup> = --</p>
-                <p id="mean-diff">Means: --</p>
-            </article>
-            <article class="result-card">
-                <h3>Overview</h3>
-                <p id="sample-summary">n = -- pairs</p>
-                <p id="mode-summary">Mode: Paired upload</p>
-            </article>
-        </section>
-
         <section class="visual-output" aria-labelledby="visual-output-heading">
             <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
             <div class="card">
@@ -247,10 +217,49 @@
             </div>
         </section>
 
+        <section class="test-results" aria-labelledby="test-results-heading">
+            <h2 id="test-results-heading">TEST RESULTS</h2>
+            <section id="analysis-status" class="card" aria-labelledby="test-results-heading">
+                <h3>Analysis Status</h3>
+                <p id="status-message">Enter data to compute the selected correlation.</p>
+            </section>
+
+            <section class="results-grid single-only" aria-labelledby="test-results-heading">
+                <article class="result-card" id="test-result-card">
+                    <h3 id="correlation-heading">Pearson correlation</h3>
+                    <p id="test-statistic">r = --</p>
+                    <p id="p-value">p = --</p>
+                    <p id="ci-summary">95% CI: [--, --]</p>
+                </article>
+                <article class="result-card">
+                    <h3>Signal details</h3>
+                    <p id="effect-size">t(--)=--</p>
+                    <p id="hedges-g">R<sup>2</sup> = --</p>
+                    <p id="mean-diff">Means: --</p>
+                </article>
+                <article class="result-card">
+                    <h3>Overview</h3>
+                    <p id="sample-summary">n = -- pairs</p>
+                    <p id="mode-summary">Mode: Paired upload</p>
+                </article>
+            </section>
+
+            <div class="dual-panels">
+                <article class="card dual-panel">
+                    <h3>APA-Style Statistical Reporting</h3>
+                    <p id="apa-report">Summary will appear after analysis.</p>
+                </article>
+                <article class="card dual-panel">
+                    <h3>Managerial Interpretation</h3>
+                    <p id="managerial-report">Business-facing copy will appear after analysis.</p>
+                </article>
+            </div>
+        </section>
+
         <section class="card narrative-section" aria-labelledby="test-results-heading">
             <div class="narrative-grid">
                 <article>
-                    <h3>APA style</h3>
+                    <h3>APA-Style Statistical Reporting</h3>
                     <p id="apa-report">Summary will appear after analysis.</p>
                 </article>
                 <article>
@@ -284,7 +293,5 @@
 </body>
 
 </html>
-
-
 
 

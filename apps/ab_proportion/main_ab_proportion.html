@@ -19,37 +19,6 @@
   <script id="MathJax-script" async
     src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-  <!-- Minimal inline styles to support the added UI; your styles.css still applies -->
-  <style>
-    body { font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
-    .card { border:1px solid #e3e3e3; border-radius:12px; padding:16px; margin-top:16px; }
-    .controls { display:grid; grid-template-columns: repeat(auto-fit, minmax(380px,1fr)); gap:16px; }
-    label { display:block; font-weight:600; margin-top:10px; }
-    input[type="range"], input[type="number"], input[type="text"] { width:100%; margin-top:6px; }
-    .row { display:grid; grid-template-columns: 1fr 120px; column-gap:10px; align-items:center; }
-    .row.single { grid-template-columns: 1fr; }
-    .divider { border-top:1px dashed #d6dae6; margin:14px 0; }
-    .hint { color:#555; font-size:0.95rem; margin-top:8px; }
-    .segmented { display:inline-flex; border:1px solid #ccc; border-radius:8px; overflow:hidden; }
-    .segmented input { display:none; }
-    .segmented label { padding:6px 12px; cursor:pointer; user-select:none; font-weight:600; font-size:0.9rem; background:#f8f8f8; border-right:1px solid #ddd; }
-    .segmented label:last-child { border-right:none; }
-    .segmented input:checked + label { background:#e9eefc; color:#0b48bf; }
-    .toolbar { display:flex; gap:12px; align-items:center; margin-top:10px; flex-wrap:wrap; }
-    #writeups { margin-top:12px; padding:12px; border:1px dashed #cfd4e1; border-radius:8px; background:#fafcff; }
-    #propChart, #diffChart { height:420px; margin-top:18px; }
-    .summary-wrap { margin-top:22px; }
-    table.summary { border-collapse:collapse; width:100%; }
-    .summary th, .summary td { border:1px solid #e3e3e3; padding:8px 10px; text-align:left; }
-    .summary thead th { background:#f7f9ff; font-weight:700; }
-    .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .muted { color:#6b7280; font-size:0.9rem; }
-    .row.axis { display:grid; grid-template-columns: 200px 1fr 100px 100px; column-gap:10px; align-items:center; }
-    .btn { padding:6px 10px; border:1px solid #cbd5e1; border-radius:8px; background:#f8fafc; cursor:pointer; font-weight:600; }
-    .btn:hover { background:#eef2f7; }
-    .diagnostics-details ul { margin:8px 0 0 0; padding-left:20px; }
-    .diagnostics-details li { margin-bottom:6px; }
-  </style>
 </head>
 <body>
   <header class="intro hero-header">
@@ -84,8 +53,6 @@
     </div>
   </section>
 
-  <hr class="separator" />
-
   <section class="scenario-section">
     <h2>MARKETING SCENARIOS</h2>
     <div class="card">
@@ -103,8 +70,6 @@
       </div>
     </div>
   </section>
-
-  <hr class="separator" />
 
   <section class="inputs-panel">
     <h2>INPUTS &amp; SETTINGS</h2>
@@ -157,13 +122,10 @@
 
       <div class="toolbar">
         <div><strong>Confidence level (higher = wider intervals, harder to declare a win):</strong></div>
-        <div class="segmented" id="ciLevelGroup">
-          <input type="radio" id="ci90" name="ci" value="0.90">
-          <label for="ci90">90%</label>
-          <input type="radio" id="ci95" name="ci" value="0.95" checked>
-          <label for="ci95">95%</label>
-          <input type="radio" id="ci99" name="ci" value="0.99">
-          <label for="ci99">99%</label>
+        <div class="confidence-buttons" id="ciLevelButtons" role="group" aria-label="Select confidence level">
+          <button type="button" class="confidence-button" data-level="0.90">90% CI</button>
+          <button type="button" class="confidence-button active" data-level="0.95">95% CI</button>
+          <button type="button" class="confidence-button" data-level="0.99">99% CI</button>
         </div>
       </div>
       
@@ -186,49 +148,46 @@
     </div>
   </section>
 
-  <hr class="separator" />
-
   <!-- Removed old exploratory questions per request -->
 
   <!-- ======== NEW: Charts & Titles ======== -->
   <section class="visual-output" aria-labelledby="visual-output-heading">
     <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
     <div class="card">
-  <h3 id="propTitle">Proportions for Control and Variant (Fan Chart)</h3>
-  <div id="propChart" role="img" aria-label="Proportions fan chart showing estimated proportions for Control and Variant"></div>
-  <div id="propInterpret" class="hint" aria-live="polite" style="margin-top:8px;"></div>
-
-  <h3 id="diffTitle">Difference (Variant &minus; Control) with Fan Chart</h3>
-  <div id="diffChart" role="img" aria-label="Difference fan chart showing the distribution of the proportion difference (Variant minus Control) in percentage points"></div>
-  <div id="diffInterpret" class="hint" aria-live="polite" style="margin-top:8px;"></div>
-
-  <!-- NEW: Chart Axis Settings (below charts) -->
-    <div class="card visual-output-settings">
-    <details>
-      <summary>Visual Output Settings</summary>
-      <div class="settings-content">
-        <div class="row axis">
-          <label><input type="checkbox" id="lockPropAxis"> Lock proportions x-axis</label>
-          <span class="muted">Range (%):</span>
-          <input id="propMin" type="number" step="1" value="0">
-          <input id="propMax" type="number" step="1" value="60">
-        </div>
-        <p class="hint muted">When locked, the Proportions chart uses the given percent range (for example, 0 to 60 shows 0%–60%).</p>
-
-        <div class="row axis" style="margin-top:12px;">
-          <label><input type="checkbox" id="lockDiffAxis"> Lock difference x-axis</label>
-          <span class="muted">Range:</span>
-          <input id="diffMin" type="number" step="1" value="-20">
-          <input id="diffMax" type="number" step="1" value="20">
-        </div>
-        <p class="hint muted">When locked, the Difference chart uses the given bounds in percentage points (for example, −20 to 20).</p>
-
-        <div style="margin-top:12px;">
-          <button id="resetAxes" class="btn" type="button">Reset axes to auto</button>
-        </div>
+      <div class="chart-grid">
+        <article class="chart-card">
+          <h3 id="propTitle">Proportions for Control and Variant (Fan Chart)</h3>
+          <div id="propChart" class="chart-placeholder" role="img" aria-label="Proportions fan chart showing estimated proportions for Control and Variant"></div>
+          <p id="propInterpret" class="chart-note" aria-live="polite"></p>
+        </article>
+        <article class="chart-card">
+          <h3 id="diffTitle">Difference (Variant &minus; Control) with Fan Chart</h3>
+          <div id="diffChart" class="chart-placeholder" role="img" aria-label="Difference fan chart showing the distribution of the proportion difference (Variant minus Control) in percentage points"></div>
+          <p id="diffInterpret" class="chart-note" aria-live="polite"></p>
+        </article>
       </div>
-    </details>
-    </div>
+      <details class="visual-output-settings">
+        <summary>Visual Output Settings</summary>
+        <div class="settings-content">
+          <div class="row axis">
+            <label><input type="checkbox" id="lockPropAxis"> Lock proportions x-axis</label>
+            <span class="muted">Range (%):</span>
+            <input id="propMin" type="number" step="1" value="0">
+            <input id="propMax" type="number" step="1" value="60">
+          </div>
+          <p class="muted" style="margin-top:6px;">When locked, the Proportions chart uses the given percent range (for example, 0 to 60 shows 0%–60%).</p>
+          <div class="row axis" style="margin-top:16px;">
+            <label><input type="checkbox" id="lockDiffAxis"> Lock difference x-axis</label>
+            <span class="muted">Range:</span>
+            <input id="diffMin" type="number" step="1" value="-20">
+            <input id="diffMax" type="number" step="1" value="20">
+          </div>
+          <p class="muted" style="margin-top:6px;">When locked, the Difference chart uses the given bounds in percentage points (for example, −20 to 20).</p>
+          <div style="margin-top:12px;">
+            <button id="resetAxes" class="btn" type="button">Reset axes to auto</button>
+          </div>
+        </div>
+      </details>
     </div>
   </section>
 
@@ -248,15 +207,15 @@
     <div class="card" id="statisticalResults">
       <h3>Summary Table of Results</h3>
       <div class="summary-wrap">
-        <table class="summary">
+        <table class="summary-table">
           <thead>
             <tr>
               <th>Measure</th>
               <th>Label</th>
-              <th class="mono">Proportion / I" (pct pts)</th>
-              <th class="mono" id="ciLowerHeader">CI Lower</th>
-              <th class="mono" id="ciUpperHeader">CI Upper</th>
-              <th class="mono">n</th>
+              <th >Proportion / I" (pct pts)</th>
+              <th id="ciLowerHeader">CI Lower</th>
+              <th id="ciUpperHeader">CI Upper</th>
+              <th >n</th>
             </tr>
           </thead>
           <tbody id="summaryBody"></tbody>
@@ -277,6 +236,7 @@
   </section>
 
   <!-- ======== SCRIPT: everything needed for the added features lives here; your app.js still loads if present ======== -->
+  <script src="../../shared/js/fan_chart_utils.js"></script>
   <script>
     // timestamps
     (function(){
@@ -292,8 +252,6 @@
 
     // helpers
     const q = (id)=>document.getElementById(id);
-    const RED = "#c8102e";
-    const CI_COLOR = "#222";
 
     function pct(x,d=1){ return (x*100).toFixed(d)+"%"; }
     function ppLabel(x,d=1){ return (x>=0?"+":"")+(x*100).toFixed(d)+" pct.pts"; }
@@ -482,12 +440,8 @@
         if(preset.settings.alpha){
           const alphaVal = parseFloat(preset.settings.alpha);
           if(isFinite(alphaVal)){
-            const ciTarget = (1 - alphaVal).toFixed(2);
-            const radio = document.querySelector(`#ciLevelGroup input[value="${ciTarget}"]`);
-            if(radio){
-              radio.checked = true;
-              radio.dispatchEvent(new Event('change', { bubbles: true }));
-            }
+            const ciTarget = parseFloat((1 - alphaVal).toFixed(2));
+            setConfidenceLevel(ciTarget);
           }
         }
       }
@@ -582,22 +536,42 @@
       setupScenarioSelector();
     }
 
-    // annotations
-    function pointAnnotation(x, yNum, text){
-      return { x, y: yNum, text, xref: "x", yref: "y", showarrow: false,
-               font: { size: 12, color: "#000", family: "inherit" },
-               align: "center", yanchor: "middle" };
-    }
-    function boundAnnotation(x, yNum, text, side){
-      const xshift = side === "lo" ? -24 : 24;
-      return { x, y: yNum, text, xref: "x", yref: "y", showarrow: false,
-               font: { size: 12, color: "#222", family: "inherit" }, xshift, yanchor: "middle" };
-    }
-
     // CI level
     function currentAlpha(){
-      const val = document.querySelector('input[name="ci"]:checked').value;
-      return 1 - parseFloat(val);
+      const active = document.querySelector('#ciLevelButtons .confidence-button.active');
+      const level = active ? parseFloat(active.dataset.level) : 0.95;
+      return 1 - (isFinite(level) ? level : 0.95);
+    }
+
+    function setConfidenceLevel(level){
+      const buttons = document.querySelectorAll('#ciLevelButtons .confidence-button');
+      if(!buttons.length || !isFinite(level)) return;
+      buttons.forEach(button => {
+        const buttonLevel = parseFloat(button.dataset.level);
+        const isActive = Math.abs(buttonLevel - level) < 1e-6;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+    }
+
+    function setupConfidenceButtons(){
+      const container = document.getElementById('ciLevelButtons');
+      if(!container) return;
+      container.addEventListener('click', event => {
+        const button = event.target.closest('.confidence-button');
+        if(!button) return;
+        event.preventDefault();
+        const level = parseFloat(button.dataset.level);
+        if(!isFinite(level)) return;
+        setConfidenceLevel(level);
+        render();
+      });
+      container.querySelectorAll('.confidence-button').forEach(button => {
+        button.setAttribute('aria-pressed', button.classList.contains('active') ? 'true' : 'false');
+      });
+      if(!container.querySelector('.confidence-button.active')){
+        setConfidenceLevel(0.95);
+      }
     }
 
     // write-ups
@@ -691,7 +665,7 @@
       const rows = [
         { measure: "Proportion", label: g1, val: pct(p1,1), lo: pct(c1.lo,1), hi: pct(c1.hi,1), n: n1.toLocaleString() },
         { measure: "Proportion", label: g2, val: pct(p2,1), lo: pct(c2.lo,1), hi: pct(c2.hi,1), n: n2.toLocaleString() },
-        { measure: "Difference (pct.pts)", label: `${g2} G ${g1}`, val: ppLabel(cd.d,1), lo: ppLabel(cd.lo,1), hi: ppLabel(cd.hi,1), n: `${n2.toLocaleString()} vs ${n1.toLocaleString()}` }
+        { measure: "Difference (pct.pts)", label: `${g2} − ${g1}`, val: ppLabel(cd.d,1), lo: ppLabel(cd.lo,1), hi: ppLabel(cd.hi,1), n: `${n2.toLocaleString()} vs ${n1.toLocaleString()}` }
       ];
       q("ciLowerHeader").textContent = `CI Lower (${levelPct}%)`;
       q("ciUpperHeader").textContent = `CI Upper (${levelPct}%)`;
@@ -699,10 +673,10 @@
         <tr>
           <td>${r.measure}</td>
           <td>${r.label}</td>
-          <td class="mono">${r.val}</td>
-          <td class="mono">${r.lo}</td>
-          <td class="mono">${r.hi}</td>
-          <td class="mono">${r.n}</td>
+          <td >${r.val}</td>
+          <td >${r.lo}</td>
+          <td >${r.hi}</td>
+          <td >${r.n}</td>
         </tr>
       `).join("");
     }
@@ -728,12 +702,6 @@
     }
 
     // fan shapes
-    function makeBandRect(x0, x1, yCenterNum, halfHeight, fill, opacity){
-      return { type: "rect", xref: "x", yref: "y",
-               x0, x1, y0: yCenterNum - halfHeight, y1: yCenterNum + halfHeight,
-               line: { width: 0 }, fillcolor: fill, opacity };
-    }
-
     function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
 
     function render(){
@@ -741,10 +709,19 @@
       const names = getNames();
       const { g1, g2 } = names;
 
-  const p1 = parseFloat(q('p1').value),   p2 = parseFloat(q('p2').value);
-  const n1 = parseInt(q('n1').value,10),  n2 = parseInt(q('n2').value,10);
-  const alpha = currentAlpha();
-  const delta0 = Number.isFinite(parseFloat(q("delta")?.value)) ? parseFloat(q("delta").value) : 0;
+      const p1Field = q('p1num') || q('p1');
+      const p2Field = q('p2num') || q('p2');
+      const n1Field = q('n1num') || q('n1');
+      const n2Field = q('n2num') || q('n2');
+      const deltaField = q('deltanum') || q('delta');
+
+      const p1 = parseFloat(p1Field?.value);
+      const p2 = parseFloat(p2Field?.value);
+      const n1 = parseInt(n1Field?.value, 10);
+      const n2 = parseInt(n2Field?.value, 10);
+      const alpha = currentAlpha();
+      const selectedConfidenceLevel = 1 - alpha;
+      const delta0 = Number.isFinite(parseFloat(deltaField?.value)) ? parseFloat(deltaField.value) : 0;
       if ([p1,p2,n1,n2,alpha].some(v=>isNaN(v))) return;
 
       // z for 50/80/selected
@@ -754,16 +731,14 @@
       const levelPct = Math.round((1 - alpha) * 100);
 
       // CIs
-      const c1_50 = ciProp(p1, n1, z50), c1_80 = ciProp(1, n1, z80), c1 = ciProp(p1, n1, zSel);
+      const c1_50 = ciProp(p1, n1, z50), c1_80 = ciProp(p1, n1, z80), c1 = ciProp(p1, n1, zSel);
       const c2_50 = ciProp(p2, n2, z50), c2_80 = ciProp(p2, n2, z80), c2 = ciProp(p2, n2, zSel);
       const cd_50 = ciDiff(p1, n1, p2, n2, z50), cd_80 = ciDiff(p1, n1, p2, n2, z80), cd = ciDiff(p1, n1, p2, n2, zSel);
 
       // ---------- Proportions chart ----------
-      const y1 = 0, y2 = 1;
-      const bandHalf = 0.22;  // band thickness
-      const labelOffset = 0.10;
+      const confidenceLevels = [0.5, 0.8, selectedConfidenceLevel];
+      const uniqueLevels = [...new Set(confidenceLevels)].sort((a, b) => a - b);
 
-      // robust auto-range from selected band bounds across both groups
       let minLo = Math.min(c1.lo, c2.lo);
       let maxHi = Math.max(c1.hi, c2.hi);
       let span  = Math.max(0.02, maxHi - minLo);
@@ -773,51 +748,37 @@
       if (xmax - xmin < 0.12) { const mid=(xmin+xmax)/2; xmin=Math.max(0, mid-0.06); xmax=Math.min(1, mid+0.06); }
       const propRange = getLockedPropRange() || [xmin, xmax];
 
-      const propShapes = [
-        // group 1
-        makeBandRect(Math.max(0,c1_50.lo), Math.min(1,c1_50.hi), y1, bandHalf*0.7, "#6f8cff", 0.45),
-        makeBandRect(Math.max(0,c1_80.lo), Math.min(1,c1_80.hi), y1, bandHalf*0.9, "#9bb1ff", 0.35),
-        makeBandRect(clamp(c1.lo,0,1),      clamp(c1.hi,0,1),    y1, bandHalf,     "#d8e2ff", 0.25),
-        // group 2
-        makeBandRect(Math.max(0,c2_50.lo), Math.min(1,c2_50.hi), y2, bandHalf*0.7, "#6f8cff", 0.45),
-        makeBandRect(Math.max(0,c2_80.lo), Math.min(1,c2_80.hi), y2, bandHalf*0.9, "#9bb1ff", 0.35),
-        makeBandRect(clamp(c2.lo,0,1),      clamp(c2.hi,0,1),    y2, bandHalf,     "#d8e2ff", 0.25),
-      ];
-
-      const propTrace = {
-        type: "scatter",
-        mode: "markers",
-        x: [p1, p2],
-        y: [y1, y2],
-        marker: { color: "#c8102e", size: 22, line: { color: "#c8102e", width: 2 }, symbol: "circle" },
-        hoverinfo: "x+y",
-        name: "Estimate"
+      const propIntervals = {
+        group1: {
+          0.5: { lower: clamp(c1_50.lo, 0, 1), upper: clamp(c1_50.hi, 0, 1) },
+          0.8: { lower: clamp(c1_80.lo, 0, 1), upper: clamp(c1_80.hi, 0, 1) },
+          [selectedConfidenceLevel]: { lower: clamp(c1.lo, 0, 1), upper: clamp(c1.hi, 0, 1) }
+        },
+        group2: {
+          0.5: { lower: clamp(c2_50.lo, 0, 1), upper: clamp(c2_50.hi, 0, 1) },
+          0.8: { lower: clamp(c2_80.lo, 0, 1), upper: clamp(c2_80.hi, 0, 1) },
+          [selectedConfidenceLevel]: { lower: clamp(c2.lo, 0, 1), upper: clamp(c2.hi, 0, 1) }
+        }
       };
 
-      // labels: below bands; bound labels near ends
-      const propAnn = [
-        pointAnnotation(p1, y1 - (bandHalf + labelOffset), pct(p1,1)),
-        pointAnnotation(p2, y2 - (bandHalf + labelOffset), pct(p2,1)),
-        boundAnnotation(clamp(c1.lo, propRange[0], propRange[1]), y1, pct(c1.lo,1), "lo"),
-        boundAnnotation(clamp(c1.hi, propRange[0], propRange[1]), y1, pct(c1.hi,1), "hi"),
-        boundAnnotation(clamp(c2.lo, propRange[0], propRange[1]), y2, pct(c2.lo,1), "lo"),
-        boundAnnotation(clamp(c2.hi, propRange[0], propRange[1]), y2, pct(c2.hi,1), "hi")
-      ];
-
-      const propLayout = {
+      FanChartUtils.renderHorizontalFanChart({
+        containerId: 'propChart',
+        groups: [
+          { id: 'group1', value: p1, label: g1, tickLabel: `${g1} (n=${n1.toLocaleString()})` },
+          { id: 'group2', value: p2, label: g2, tickLabel: `${g2} (n=${n2.toLocaleString()})` }
+        ],
+        intervals: propIntervals,
+        confidenceLevels: uniqueLevels,
+        axisRange: propRange,
         title: `Estimated Proportions for ${g1} and ${g2} with Fan Bands (50%, 80%, ${levelPct}%)`,
-        xaxis: { title: "Proportion", range: propRange, tickformat: ",.0%", showgrid: true, gridcolor: "#f3f4f6", gridwidth: 1, zeroline: false },
-        yaxis: { title: "", tickvals: [y1, y2], ticktext: [g1, g2], range: [-1.2, 1.8], fixedrange: true, showgrid: false, zeroline: false },
-        margin: { t: 60, l: 180, r: 20, b: 60 },
-        showlegend: false,
-        shapes: propShapes,
-        annotations: propAnn
-      };
-      Plotly.react("propChart", [propTrace], propLayout, {displayModeBar:false});
-      q("propTitle").textContent = `Proportions for ${g1} and ${g2} G Fan Chart (50/80/${levelPct}%)`;
+        xTitle: 'Proportion',
+        valueFormatter: value => pct(value, 1),
+        pointLabelOffset: 0.6,
+        ariaLabel: `Fan chart comparing ${g1} and ${g2} proportions with ${uniqueLevels.map(l => Math.round(l * 100)).join('% / ')} percent intervals.`
+      });
+      q("propTitle").textContent = `Proportions for ${g1} and ${g2} • Fan Chart (50/80/${levelPct}%)`;
 
       // ---------- Difference chart ----------
-      const yD = 0, diffHalf = 0.22, diffLabelOffset = 0.10;
       let dMin = cd.lo, dMax = cd.hi;
       let dSpan = Math.max(0.02, dMax - dMin);
       let dPad  = Math.max(0.01, dSpan * 0.22);
@@ -825,40 +786,35 @@
       if (dxmax - dxmin < 0.12) { const mid=(dxmin+dxmax)/2; dxmin=mid-0.06; dxmax=mid+0.06; }
       const diffRange = getLockedDiffRange() || [dxmin, dxmax];
 
-      const diffShapes = [
-        makeBandRect(cd_50.lo, cd_50.hi, yD, diffHalf*0.7, "#6f8cff", 0.45),
-        makeBandRect(cd_80.lo, cd_80.hi, yD, diffHalf*0.9, "#9bb1ff", 0.35),
-        makeBandRect(cd.lo,    cd.hi,    yD, diffHalf,     "#d8e2ff", 0.25),
-        // vertical reference line at hypothesized difference +0 (x = +0)
-        { type: "line", xref: "x", yref: "paper", x0: delta0, x1: delta0, y0: 0, y1: 1, line: { width: 1, dash: "dot", color: "#777" } }
-      ];
+      const diffIntervals = { difference: {
+        0.5: { lower: cd_50.lo, upper: cd_50.hi },
+        0.8: { lower: cd_80.lo, upper: cd_80.hi },
+        [selectedConfidenceLevel]: { lower: cd.lo, upper: cd.hi }
+      }};
 
-      const diffTrace = {
-        type: "scatter",
-        mode: "markers",
-        x: [cd.d],
-        y: [yD],
-        marker: { color: "#c8102e", size: 22, line: { color: "#c8102e", width: 2 }, symbol: "circle" },
-        hoverinfo: "x+y", name: "Difference"
-      };
-
-      const diffAnn = [
-        pointAnnotation(cd.d, yD - (diffHalf + diffLabelOffset), (cd.d*100).toFixed(1)+"%"),
-        boundAnnotation(clamp(cd.lo, diffRange[0], diffRange[1]), yD, (cd.lo*100).toFixed(1)+"%", "lo"),
-        boundAnnotation(clamp(cd.hi, diffRange[0], diffRange[1]), yD, (cd.hi*100).toFixed(1)+"%", "hi")
-      ];
-
-      const diffLayout = {
-        title: `Difference in Proportions (${g2} G ${g1}) with Fan Bands (50%, 80%, ${levelPct}%)`,
-        xaxis: { title: "Difference", range: diffRange, tickformat: "+,.1%", showgrid: true, gridcolor: "#f3f4f6", gridwidth: 1, zeroline: false },
-        yaxis: { title: "", tickvals: [yD], ticktext: [`+ = ${g2} G ${g1}`], range: [-1.0, 0.8], fixedrange: true, showgrid: false, zeroline: false },
-        margin: { t: 60, l: 220, r: 20, b: 60 },
-        showlegend: false,
-        shapes: diffShapes,
-        annotations: diffAnn
-      };
-      Plotly.react("diffChart", [diffTrace], diffLayout, {displayModeBar:false});
-      q("diffTitle").textContent = `Difference in Proportions (${g2} G ${g1}) G Fan Chart (50/80/${levelPct}%)`;
+      FanChartUtils.renderHorizontalFanChart({
+        containerId: 'diffChart',
+        groups: [{
+          id: 'difference',
+          value: cd.d,
+          label: `${g2} − ${g1}`,
+          tickLabel: `Δ = ${g2} (n=${n2.toLocaleString()}) − ${g1} (n=${n1.toLocaleString()})`
+        }],
+        intervals: diffIntervals,
+        confidenceLevels: uniqueLevels,
+        axisRange: diffRange,
+        title: `Difference in Proportions (${g2} − ${g1}) with Fan Bands (50%, 80%, ${levelPct}%)`,
+        xTitle: 'Difference in proportion',
+        referenceLine: isFinite(delta0) ? {
+          value: delta0,
+          label: 'Δ₀ reference',
+          style: { color: '#777', dash: 'dot', width: 1 }
+        } : null,
+        valueFormatter: value => pct(value, 1),
+        pointLabelOffset: 0.5,
+        ariaLabel: `Fan chart summarizing the proportion difference between ${g2} and ${g1} with ${uniqueLevels.map(l => Math.round(l * 100)).join('% / ')} percent intervals.`
+      });
+      q("diffTitle").textContent = `Difference in Proportions (${g2} − ${g1}) • Fan Chart (50/80/${levelPct}%)`;
 
       // write-ups + table
       const { z, p } = zTestTwoProp(p1, n1, p2, n2, delta0);
@@ -876,7 +832,7 @@
         const se1 = (c1.se).toFixed(4), se2 = (c2.se).toFixed(4);
         const propMsg = `<strong>${g1}:</strong> estimate = ${p1s} (n=${n1.toLocaleString()}), ${levelPct}% CI [${c1lo}, ${c1hi}], SE=${se1}. `+
                         `<strong>${g2}:</strong> estimate = ${p2s} (n=${n2.toLocaleString()}), ${levelPct}% CI [${c2lo}, ${c2hi}], SE=${se2}. `+
-                        `Fan bands show the 50% (inner), 80% (middle), and ${levelPct}% (outer) intervals G wider bands indicate more uncertainty. `+
+                        `Fan bands show the 50% (inner), 80% (middle), and ${levelPct}% (outer) intervals—wider bands indicate more uncertainty. `+
                         `If the bands/intervals for the two groups overlap substantially, the evidence for a true difference is weak.`;
         q('propInterpret').innerHTML = propMsg;
       }catch(e){ q('propInterpret').textContent = ''; }
@@ -885,15 +841,15 @@
       try{
         const dObs = ppLabel(cd.d,1);
         const dlo = ppLabel(cd.lo,1), dhi = ppLabel(cd.hi,1);
-        const pvalText = Number.isFinite(p) ? (p < 0.001 ? '< .001' : fmt(p,3)) : 'G';
-        const zText = Number.isFinite(z) ? fmt(z,3) : 'G';
+        const pvalText = Number.isFinite(p) ? (p < 0.001 ? '< .001' : fmt(p,3)) : '—';
+        const zText = Number.isFinite(z) ? fmt(z,3) : '—';
         const includesDelta0 = (cd.lo <= delta0 && cd.hi >= delta0);
         const includeText = includesDelta0 ? 'includes' : 'does not include';
         const sig = Number.isFinite(p) && p < alpha;
         const decision = sig ? 'statistically significant at the selected +' : 'not statistically significant at the selected +';
         const diffMsg = `Observed difference + = ${dObs} with ${levelPct}% CI [${dlo}, ${dhi}]. `+
-                        `Test vs HG: + = ${ppLabel(delta0,1)} G z = ${zText}, p = ${pvalText} (${decision}). `+
-                        `The ${levelPct}% CI ${includeText} the hypothesized +G, so the visual estimate ${includeText} that value.`;
+                        `Test vs H₀: Δ₀ = ${ppLabel(delta0,1)} — z = ${zText}, p = ${pvalText} (${decision}). `+
+                        `The ${levelPct}% CI ${includeText} the hypothesized Δ₀, so the visual estimate ${includeText} that value.`; 
         q('diffInterpret').innerHTML = diffMsg;
       }catch(e){ q('diffInterpret').textContent = ''; }
 
@@ -914,7 +870,7 @@
     // link hypothesized difference control
     if (q("delta") && q("deltanum")) link(q("delta"), q("deltanum"));
     [q("g1name"), q("g2name")].forEach(el => el.addEventListener("input", render));
-    document.getElementById("ciLevelGroup").addEventListener("change", render);
+    setupConfidenceButtons();
     [q("lockPropAxis"), q("propMin"), q("propMax"),
      q("lockDiffAxis"), q("diffMin"), q("diffMax")].forEach(el => el.addEventListener("input", render));
     q("resetAxes").addEventListener("click", () => {

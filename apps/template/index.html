@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statistical Test Template</title>
+  <!-- Shared design system -->
+  <link rel="stylesheet" href="../../shared/css/main.css">
+  <!-- App-specific overrides -->
+  <link rel="stylesheet" href="template.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="../../shared/js/fan_chart_utils.js"></script>
+  <script src="../../shared/js/stacked_bar_utils.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+  <!-- This template mirrors the shared layout so new tools can copy/paste sections quickly. -->
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Template Tool Name</h1>
+        <div class="hero-context">
+          <span class="badge">Placeholder</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">Short explanatory tagline describing what this statistical test helps marketers accomplish.</p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="test-overview-heading">
+      <h2 id="test-overview-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
+      <div class="card">
+        <p>Use this section to explain when the test applies, what inputs are required, and any assumptions decision-makers should remember.</p>
+        <p class="equation">$$\text{Placeholder equation for primary test statistic}$$</p>
+        <p class="equation">$$\text{Confidence interval or effect size equation placeholder}$$</p>
+        <details class="intro-notes" open>
+          <summary>Additional Notes / Formulas</summary>
+          <p>List edge-case callouts, recommended references, or simplified formulas here. Collapse by default once real content exists.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="scenario-section" aria-labelledby="scenario-heading">
+      <h2 id="scenario-heading">MARKETING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Practical scenario</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Manual inputs (no preset)</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download preset</button>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>Introduce how presets work (e.g., auto-loading text, inputs, and data). Replace this copy with actual marketing examples.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="inputs-heading">
+      <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
+      <div class="card">
+        <div class="input-header">
+          <h3>Primary inputs</h3>
+          <div class="alpha-controls">
+            <label for="alpha">Significance level (&alpha;)</label>
+            <input type="number" id="alpha" min="0.001" max="0.2" step="0.001" value="0.050">
+            <div class="confidence-buttons" role="group">
+              <button class="confidence-button" data-level="0.90">90% CI</button>
+              <button class="confidence-button active" data-level="0.95">95% CI</button>
+              <button class="confidence-button" data-level="0.99">99% CI</button>
+            </div>
+          </div>
+        </div>
+        <div class="input-grid">
+          <div>
+            <label for="group-a">Group A summary</label>
+            <input id="group-a" type="number" placeholder="Placeholder input">
+          </div>
+          <div>
+            <label for="group-b">Group B summary</label>
+            <input id="group-b" type="number" placeholder="Placeholder input">
+          </div>
+        </div>
+        <details class="advanced-details">
+          <summary>Advanced analysis settings</summary>
+          <p>Use this accordion for optional toggles (axis locks, alternative hypotheses, label editing, upload limits, etc.).</p>
+        </details>
+        <div class="upload-block">
+          <h3>Upload raw data</h3>
+          <p class="plain-language">Drop a CSV/TSV/txt file with headers to populate inputs. Use this as a starting point for your own upload workflow.</p>
+          <div id="template-dropzone" class="dropzone" role="button" tabindex="0">
+            <p class="dropzone-title">Drag &amp; drop file here</p>
+            <p class="dropzone-note">Up to 2,000 rows. First row should be column names.</p>
+            <button type="button" id="template-browse" class="secondary">Browse files</button>
+          </div>
+          <input type="file" id="template-file-input" accept=".csv,.tsv,.txt" hidden>
+          <p id="template-file-feedback" class="upload-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      <div class="card">
+        <div class="chart-grid">
+          <article class="chart-card">
+            <h3>Chart A placeholder (fan chart example)</h3>
+            <div class="chart-placeholder" id="chart-a"></div>
+            <p class="chart-note">Use the shared fan chart helper for means/proportions visuals so CI bands, sample-size tick labels, and labels match the suite.</p>
+          </article>
+          <article class="chart-card">
+            <h3>Chart B placeholder (stacked crosstab example)</h3>
+            <div class="chart-placeholder" id="chart-b"></div>
+            <p class="chart-note">Choose the visualization that best fits the question—stacked crosstabs, heatmaps, slope charts, etc.—instead of defaulting to the same chart every time.</p>
+          </article>
+        </div>
+      </div>
+      <div class="card visual-output-settings">
+        <details>
+          <summary>Visual Output Settings</summary>
+          <div class="visual-settings-grid">
+            <label class="switch-option">
+              <input type="checkbox" id="toggle-chart-mode" checked>
+              <span>Example toggle</span>
+            </label>
+            <label>
+              Visualization mode
+              <select id="visual-mode">
+                <option value="rows">Rows vs columns</option>
+                <option value="columns">Columns vs rows</option>
+              </select>
+            </label>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="test-results" aria-labelledby="test-results-heading">
+      <h2 id="test-results-heading">TEST RESULTS</h2>
+      <div class="card metrics-panel">
+        <div class="metric-output">Statistic: <span id="statistic-value">&ndash;</span></div>
+        <div class="metric-output">Degrees of freedom: <span id="df-value">&ndash;</span></div>
+        <div class="metric-output">p-value: <span id="p-value">&ndash;</span></div>
+        <div class="metric-output">Effect size: <span id="effect-size">&ndash;</span></div>
+      </div>
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>APA-Style Report</h3>
+          <p id="apa-report">Placeholder APA narrative will appear here.</p>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="managerial-report">Business-focused copy referencing scenario inputs appears here.</p>
+        </article>
+      </div>
+      <div class="card summary-table-card">
+        <h3>Summary Table</h3>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Group / Condition</th>
+              <th>Estimate</th>
+              <th>CI</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Placeholder row</td>
+              <td>--</td>
+              <td>[--, --]</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="diagnostics-section" aria-labelledby="diagnostics-heading">
+      <h2 id="diagnostics-heading">DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+      <div class="card">
+        <details class="diagnostics-details">
+          <summary>Diagnostics &amp; Assumption Tests</summary>
+          <div id="diagnostics-content">
+            <p>Explain assumption checks (sample size, variance, normality, expected counts, leverage points). Populate via JS.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="created-date">YYYY-MM-DD</span> &middot; Last updated: <span id="modified-date">YYYY-MM-DD</span></p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). Template Statistical Test Tool. Marketing Bivariate Tools.</p>
+  </footer>
+
+  <script src="../../shared/js/csv_utils.js"></script>
+  <script src="template.js"></script>
+</body>
+
+</html>

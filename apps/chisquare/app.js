@@ -254,7 +254,7 @@
     if (!expectedContainer) return;
     var rN = E.length;
     var cN = E[0] ? E[0].length : 0;
-    var table = el('table');
+    var table = el('table', { class: 'summary-table' });
     // header
     var head = el('tr');
     head.appendChild(el('td', { text: '' }));
@@ -551,115 +551,41 @@
   // 100% stacked bar chart
   function renderChart(obs, rowLbls, colLbls) {
     if (!chartContainer || !chartLegend) return;
-    chartContainer.innerHTML = '';
-    chartLegend.innerHTML = '';
     var rN = obs.length; var cN = obs[0] ? obs[0].length : 0;
     if (rN === 0 || cN === 0) return;
     var xAxis = chartXAxisSelect ? chartXAxisSelect.value : 'rows';
 
     var bars = [];
-    var barLabels = [];
     var stackLabels = [];
     if (xAxis === 'rows') {
-      for (var i = 0; i < rN; i++) bars.push(obs[i].slice());
-      barLabels = rowLbls.slice();
+      for (var i = 0; i < rN; i++) {
+        bars.push({ label: rowLbls[i] || ('Row ' + (i + 1)), segments: obs[i].slice() });
+      }
       stackLabels = colLbls.slice();
     } else {
       for (var j = 0; j < cN; j++) {
         var col = [];
         for (var i2 = 0; i2 < rN; i2++) col.push(obs[i2][j]);
-        bars.push(col);
+        bars.push({ label: colLbls[j] || ('Col ' + (j + 1)), segments: col });
       }
-      barLabels = colLbls.slice();
       stackLabels = rowLbls.slice();
     }
 
-    var palette = ['#dbeafe','#bfdbfe','#93c5fd','#60a5fa','#3b82f6','#2563eb','#1d4ed8','#1e40af','#1e3a8a','#172554'];
-    var displayStackLabels = stackFlipOrder ? stackLabels.slice().reverse() : stackLabels.slice();
-    var barsData = bars.map(function (row) { return stackFlipOrder ? row.slice().reverse() : row.slice(); });
-    var colors = displayStackLabels.map(function(_, idx){ return palette[idx % palette.length]; });
-
-    var W = chartContainer.clientWidth || 800;
-    var H = chartContainer.clientHeight || 360;
-    var margin = { top: 20, right: 20, bottom: 40, left: 40 };
-    var innerW = Math.max(100, W - margin.left - margin.right);
-    var innerH = Math.max(100, H - margin.top - margin.bottom);
-    var svg = elNS('svg', { width: W, height: H });
-    var g = elNS('g', { transform: 'translate(' + margin.left + ',' + margin.top + ')' });
-    svg.appendChild(g);
-
-    // y grid + ticks
-    var ticks = [0, 0.25, 0.5, 0.75, 1];
-    for (var t = 0; t < ticks.length; t++) {
-      var y = innerH * (1 - ticks[t]);
-      g.appendChild(elNS('line', { x1: 0, y1: y, x2: innerW, y2: y, stroke: '#e5e7eb' }));
-      var lbl = elNS('text', { x: -10, y: y + 4, 'text-anchor': 'end', fill: '#6b7280', 'font-size': '12' });
-      lbl.textContent = Math.round(ticks[t] * 100) + '%';
-      g.appendChild(lbl);
-    }
-
-    var barWidth = Math.max(10, innerW / (bars.length * 1.25));
-    var gap = barWidth * 0.25;
-    for (var b = 0; b < barsData.length; b++) {
-      var segs = barsData[b];
-      var total = segs.reduce(function(a,b){return a+b;}, 0);
-      var yOffset = innerH;
-      for (var s = 0; s < segs.length; s++) {
-        var prop = total > 0 ? segs[s] / total : 0;
-        var h = prop * innerH;
-        var x = b * (barWidth + gap);
-        var y = yOffset - h;
-        var rect = elNS('rect', { x: x, y: y, width: barWidth, height: h, fill: colors[s] });
-        (function(barName, segName, count, propStr){
-          rect.addEventListener('mousemove', function(ev){ showTooltip(ev, barName, segName, count, propStr); });
-          rect.addEventListener('mouseleave', hideTooltip);
-        })(barLabels[b], stackLabels[s], segs[s], (total>0? ( (segs[s]/total*100).toFixed(1)+'%' ): '-'));
-        g.appendChild(rect);
-        // Percentage label inside the segment (if tall enough)
-        if (h >= 16) {
-          var percentLabel = elNS('text', { x: x + barWidth/2, y: y + h/2 + 4, 'text-anchor': 'middle', fill: '#111827', 'font-size': '12' });
-          percentLabel.textContent = total > 0 ? (prop * 100).toFixed(1) + '%' : '-';
-          g.appendChild(percentLabel);
-        }
-        yOffset -= h;
+    StackedChartUtils.renderStacked100Chart({
+      container: chartContainer,
+      legend: chartLegend,
+      tooltip: chartTooltip,
+      caption: chartCaption,
+      bars: bars,
+      stackLabels: stackLabels,
+      flipStacks: stackFlipOrder,
+      palette: ['#dbeafe','#bfdbfe','#93c5fd','#60a5fa','#3b82f6','#2563eb','#1d4ed8','#1e40af','#1e3a8a','#172554'],
+      axisLabels: {
+        bars: (xAxis === 'rows') ? 'Rows' : 'Columns',
+        stacks: (xAxis === 'rows') ? 'Columns' : 'Rows'
       }
-      var lx = b * (barWidth + gap) + barWidth/2;
-      var ly = innerH + 16;
-      var tx = elNS('text', { x: lx, y: ly, 'text-anchor': 'middle', fill: '#334155', 'font-size': '12' });
-      tx.textContent = barLabels[b];
-      g.appendChild(tx);
-    }
-
-    chartContainer.appendChild(svg);
-
-    // Legend
-    for (var i3 = 0; i3 < displayStackLabels.length; i3++) {
-      var item = el('div', { class: 'legend-item' });
-      var sw = el('span', { class: 'legend-swatch' });
-      sw.style.background = colors[i3];
-      var label = el('span', { text: displayStackLabels[i3] });
-      item.appendChild(sw); item.appendChild(label);
-      chartLegend.appendChild(item);
-    }
-
-    if (chartCaption) {
-      var barsName = (xAxis === 'rows') ? 'Rows' : 'Columns';
-      var stacksName = (xAxis === 'rows') ? 'Columns' : 'Rows';
-      chartCaption.textContent = 'Bars: ' + barsName + ' - Stacks: ' + stacksName + ' (100% per bar)';
-    }
+    });
   }
-
-  function showTooltip(ev, bar, seg, count, prop) {
-    if (!chartTooltip || !chartContainer) return;
-    chartTooltip.style.display = 'block';
-    chartTooltip.innerHTML = '<strong>' + escapeHtml(bar) + '</strong><br>' + escapeHtml(seg) + '<br>Count: ' + fmt(count,0) + '<br>Proportion: ' + prop;
-    var rect = chartContainer.getBoundingClientRect();
-    var x = ev.clientX - rect.left + 10;
-    var y = ev.clientY - rect.top + 10;
-    chartTooltip.style.left = x + 'px';
-    chartTooltip.style.top = y + 'px';
-  }
-  function hideTooltip(){ if(chartTooltip) chartTooltip.style.display='none'; }
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]);}); }
 
   function renderScenarioDescription(title, description) {

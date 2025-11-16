@@ -282,47 +282,45 @@ function createGroupCard() {
     }
     groupCounter += 1;
     const placeholderName = `Group ${groupCounter}`;
-    const card = document.createElement('section');
-    card.className = 'group-card';
-    card.dataset.groupId = `group-${groupCounter}`;
-    card.innerHTML = `
-        <h3 class="group-card-title">${placeholderName}</h3>
-        <div class="group-fields">
-            <div class="input-group">
-                <label>Name:</label>
-                <input type="text" class="group-name" maxlength="40" placeholder="${placeholderName}">
-            </div>
-            <div class="input-group">
-                <label>Mean (x̄):</label>
-                <input type="number" class="group-mean" step="any" placeholder="e.g., 42.7">
-            </div>
-            <div class="input-group">
-                <label>Standard Deviation (s):</label>
-                <input type="number" class="group-sd" min="0" step="any" placeholder="e.g., 5.1">
-            </div>
-            <div class="input-group">
-                <label>Sample Size (n):</label>
-                <input type="number" class="group-n" min="2" step="1" placeholder="e.g., 60">
-            </div>
-        </div>
+    const row = document.createElement('tr');
+    row.className = 'group-row';
+    row.dataset.groupId = `group-${groupCounter}`;
+    row.innerHTML = `
+        <th scope="row" class="group-label">${placeholderName}</th>
+        <td>
+            <input type="text" class="group-name" maxlength="40" placeholder="${placeholderName}">
+        </td>
+        <td>
+            <input type="number" class="group-mean" step="any" placeholder="e.g., 42.7">
+        </td>
+        <td>
+            <input type="number" class="group-sd" min="0" step="any" placeholder="e.g., 5.1">
+        </td>
+        <td>
+            <input type="number" class="group-n" min="2" step="1" placeholder="e.g., 60">
+        </td>
     `;
-    card.querySelectorAll('input').forEach(input => {
+    row.querySelectorAll('input').forEach(input => {
         input.addEventListener('input', () => {
             refreshComparisonOptions();
             updateResults();
         });
     });
-    container.appendChild(card);
+    container.appendChild(row);
     updateGroupLabels();
     refreshComparisonOptions();
 }
 
 function updateGroupLabels() {
-    const cards = document.querySelectorAll('.group-card');
-    cards.forEach((card, index) => {
-        const title = card.querySelector('.group-card-title');
-        if (title) {
-            title.textContent = `Group ${index + 1}`;
+    const rows = document.querySelectorAll('.group-row');
+    rows.forEach((row, index) => {
+        const labelCell = row.querySelector('.group-label');
+        if (labelCell) {
+            labelCell.textContent = `Group ${index + 1}`;
+        }
+        const nameInput = row.querySelector('.group-name');
+        if (nameInput && !nameInput.value.trim()) {
+            nameInput.placeholder = `Group ${index + 1}`;
         }
     });
 }
@@ -347,7 +345,7 @@ function setGroupCount(count, triggerUpdate = true) {
 }
 
 function collectGroupData() {
-    const cards = Array.from(document.querySelectorAll('.group-card'));
+    const cards = Array.from(document.querySelectorAll('.group-row'));
     return cards.map((card, index) => {
         const nameInput = card.querySelector('.group-name');
         const meanInput = card.querySelector('.group-mean');
@@ -651,155 +649,40 @@ function calculateAnova(groups) {
 
 // Visualization helpers
 function renderMeansFanChart(groups, intervals, axisRange, confidenceLevels, referenceLine) {
-    if (!window.Plotly) {
+    if (!window.FanChartUtils || !window.Plotly) {
+        if (window.Plotly && Plotly.purge) {
+            Plotly.purge('means-chart');
+        }
         return;
     }
-    const yPositions = new Map();
-    groups.forEach((group, index) => {
-        yPositions.set(group.id, groups.length - index);
+
+    const formattedGroups = groups.map(group => ({
+        id: group.id,
+        value: group.mean,
+        label: group.name,
+        tickLabel: `${group.name} (n=${Number(group.n).toLocaleString()})`
+    }));
+
+    const referenceConfig = referenceLine && isFinite(referenceLine.value)
+        ? {
+            value: referenceLine.value,
+            label: referenceLine.label,
+            style: referenceLine.style || { color: '#c0392b', dash: 'dot', width: 2 }
+        }
+        : null;
+
+    FanChartUtils.renderHorizontalFanChart({
+        containerId: 'means-chart',
+        groups: formattedGroups,
+        intervals,
+        confidenceLevels,
+        axisRange,
+        xTitle: 'Observed mean',
+        tickLabels: formattedGroups.map(group => group.tickLabel),
+        referenceLine: referenceConfig,
+        valueFormatter: value => value.toFixed(2),
+        pointLabelOffset: 0.5
     });
-
-    const topLevel = confidenceLevels[confidenceLevels.length - 1];
-    const baseHeights = { 0.5: 0.18, 0.8: 0.25 };
-    baseHeights[topLevel] = Math.max(baseHeights[topLevel] || 0, 0.35);
-
-    const colors = {
-        0.5: 'rgba(66, 165, 245, 0.32)',
-        0.8: 'rgba(33, 150, 243, 0.2)'
-    };
-    colors[topLevel] = 'rgba(25, 118, 210, 0.14)';
-
-    const shapes = [];
-    const annotations = [];
-
-    groups.forEach(group => {
-        const y = yPositions.get(group.id);
-        annotations.push({
-            x: group.mean,
-            y: y - 0.5,
-            xref: 'x',
-            yref: 'y',
-            text: `${escapeHtml(group.name)} mean: ${group.mean.toFixed(2)}`,
-            showarrow: false,
-            font: { size: 12, color: '#2c3e50' }
-        });
-
-        confidenceLevels.slice().reverse().forEach(level => {
-            const band = intervals[group.id][level];
-            const height = baseHeights[level] || 0.25;
-            shapes.push({
-                type: 'rect',
-                xref: 'x',
-                yref: 'y',
-                x0: band.lower,
-                x1: band.upper,
-                y0: y - height,
-                y1: y + height,
-                fillcolor: colors[level] || 'rgba(33,150,243,0.16)',
-                line: { width: 0 },
-                layer: 'below'
-            });
-        });
-
-        const primaryLevel = confidenceLevels[confidenceLevels.length - 1];
-        const primaryBand = intervals[group.id][primaryLevel];
-        const labelYOffset = 0;
-        annotations.push({
-            x: primaryBand.lower,
-            y: y + labelYOffset,
-            xref: 'x',
-            yref: 'y',
-            text: `${Math.round(primaryLevel * 100)}%: ${primaryBand.lower.toFixed(2)}`,
-            showarrow: false,
-            font: { size: 11, color: '#37474f' },
-            align: 'right',
-            xanchor: 'right'
-        });
-        annotations.push({
-            x: primaryBand.upper,
-            y: y + labelYOffset,
-            xref: 'x',
-            yref: 'y',
-            text: `${primaryBand.upper.toFixed(2)}`,
-            showarrow: false,
-            font: { size: 11, color: '#37474f' },
-            align: 'left',
-            xanchor: 'left'
-        });
-    });
-
-    const trace = {
-        x: groups.map(group => group.mean),
-        y: groups.map(group => yPositions.get(group.id)),
-        mode: 'markers',
-        type: 'scatter',
-        marker: {
-            color: 'rgba(30, 136, 229, 0.85)',
-            size: 14,
-            symbol: 'circle',
-            line: { color: '#fff', width: 2 }
-        },
-        text: groups.map(group => `${group.name}: ${group.mean.toFixed(3)}`),
-        hoverinfo: 'text'
-    };
-
-    const tickVals = groups.map((_, index) => groups.length - index);
-    const tickTexts = groups.map(group => `${group.name} (n=${group.n})`);
-    if (referenceLine && isFinite(referenceLine.value)) {
-        shapes.push({
-            type: 'line',
-            xref: 'x',
-            yref: 'paper',
-            x0: referenceLine.value,
-            x1: referenceLine.value,
-            y0: 0,
-            y1: 1,
-            line: {
-                color: '#c0392b',
-                width: 2,
-                dash: 'dot'
-            }
-        });
-        annotations.push({
-            x: referenceLine.value,
-            y: groups.length + 0.4,
-            xref: 'x',
-            yref: 'y',
-            text: `${referenceLine.label}: ${referenceLine.value.toFixed(2)}`,
-            showarrow: false,
-            font: { size: 12, color: '#c0392b' },
-            bgcolor: 'rgba(255,255,255,0.9)',
-            bordercolor: '#c0392b',
-            borderwidth: 1,
-            borderpad: 4
-        });
-    }
-
-    const layout = {
-        margin: { l: 130, r: 40, t: 40, b: 60 },
-        shapes,
-        annotations,
-        xaxis: {
-            title: 'Observed mean',
-            range: axisRange,
-            zeroline: true,
-            zerolinecolor: '#b0bec5',
-            gridcolor: '#eceff1'
-        },
-        yaxis: {
-            automargin: true,
-            range: [0.4, groups.length + 0.6],
-            tickvals: tickVals,
-            ticktext: tickTexts,
-            showgrid: false
-        },
-        height: Math.max(360, groups.length * 120),
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        showlegend: false
-    };
-
-    Plotly.react('means-chart', [trace], layout, { responsive: true });
 }
 
 function renderPlannedComparisonsChart(comparisons, anovaStats) {
@@ -986,6 +869,15 @@ function updateInterpretation(anovaStats, groups, comparisons, alpha) {
         </div>
     ` : '';
 
+    const apaElement = document.getElementById('anova-apa-report');
+    if (apaElement) {
+        apaElement.textContent = apaReport;
+    }
+    const managerialElement = document.getElementById('anova-managerial-report');
+    if (managerialElement) {
+        managerialElement.textContent = managerialReport;
+    }
+
     interpretation.innerHTML = `
         <div class="results-grid">
             <article class="result-item">
@@ -1006,16 +898,6 @@ function updateInterpretation(anovaStats, groups, comparisons, alpha) {
             </article>
         </div>
         ${comparisonsBlock}
-        <div class="reporting-layout">
-            <article class="report-card" aria-label="APA style summary of the ANOVA results">
-                <h4>APA Style</h4>
-                <p>${apaReport}</p>
-            </article>
-            <article class="report-card" aria-label="Managerial interpretation of the ANOVA results">
-                <h4>Managerial Interpretation</h4>
-                <p>${managerialReport}</p>
-            </article>
-        </div>
     `;
 }
 
@@ -1298,7 +1180,7 @@ function applyScenarioGroups(groups, suppressUpdate = false) {
         groupSelect.value = String(count);
     }
     setGroupCount(count, false);
-    const cards = Array.from(document.querySelectorAll('.group-card'));
+    const cards = Array.from(document.querySelectorAll('.group-row'));
     const nameMap = {};
     limited.forEach((group, index) => {
         const card = cards[index];

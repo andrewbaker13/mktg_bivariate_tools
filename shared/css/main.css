@@ -390,10 +390,11 @@ button.secondary:focus-visible {
 }
 
 .advanced-details summary::after {
-  content: '+';
-  font-size: 0.9rem;
+  content: '▸';
+  font-size: 1rem;
   color: var(--app-muted);
   margin-left: 0.5rem;
+  transition: transform 0.2s ease;
 }
 
 .advanced-details summary::-webkit-details-marker {
@@ -405,7 +406,7 @@ button.secondary:focus-visible {
 }
 
 .advanced-details[open] summary::after {
-  content: '-';
+  content: '▾';
 }
 
 .advanced-lede {
@@ -600,7 +601,7 @@ button.secondary:focus-visible {
   background: #f8f9fb;
   padding: 1rem;
   border-radius: 12px;
-  border-left: 4px solid var(--app-accent);
+  border-left: 4px solid #3b82f6;
   font-size: 0.95rem;
 }
 
@@ -661,25 +662,6 @@ button.secondary:focus-visible {
 }
 
 .result-item h4 {
-  margin-top: 0;
-}
-
-.reporting-layout {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
-  margin-top: 1.25rem;
-}
-
-.report-card {
-  background: #f8f9fb;
-  padding: 1.2rem;
-  border-radius: 12px;
-  border-left: 4px solid rgba(192, 57, 43, 0.4);
-  box-shadow: inset 0 0 0 1px #e4e9f0;
-}
-
-.report-card h4 {
   margin-top: 0;
 }
 
@@ -756,24 +738,33 @@ button.secondary:focus-visible {
 
 /* Metrics and Output */
 .metrics-panel {
-    background-color: #d1fae5; /* Light green for important metrics */
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: var(--app-card-bg);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e5e7eb;
 }
 
 .metric-output {
-  font-size: 1.2em;
-  margin: 10px 0;
-  font-weight: 500;
+  font-size: 1rem;
+  color: var(--app-text);
+  margin-bottom: 0.5rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem;
+}
+
+.metric-output span {
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 /* Increase only the dynamic values by 50% for emphasis */
 .dynamic-value {
-  font-size: 150%;
-  font-weight: bold;
-  color: #059669; /* Darker green for emphasis */
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--app-text);
 }
 
 
@@ -833,6 +824,24 @@ button.secondary:focus-visible {
 .divider {
   border-top: 1px dashed #d6dae6;
   margin: 14px 0;
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.input-grid .input-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.input-grid input,
+.input-grid select {
+  width: 100%;
 }
 
 .hint {
@@ -916,19 +925,30 @@ button.secondary:focus-visible {
 
 .summary-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.95rem;
 }
 
 .summary-table th,
 .summary-table td {
-  border: 1px solid #e3e3e3;
-  padding: 8px 10px;
+  padding: 0.65rem 0.85rem;
   text-align: left;
 }
 
 .summary-table thead th {
-  background: #f7f9ff;
-  font-weight: 700;
+  background: #eef3ff;
+  font-weight: 600;
+  color: #1f2a37;
+  border-bottom: 1px solid #d8def0;
+}
+
+.summary-table tbody tr + tr td {
+  border-top: 1px solid #eaedf5;
+}
+
+.summary-table tbody tr:hover td {
+  background: #f9fbff;
 }
 
 .mono {
@@ -1004,4 +1024,52 @@ legend {
 .plot-container {
   width: 100%;
   min-height: 320px;
+}
+
+.chart-placeholder {
+  min-height: 320px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.chart-note {
+  font-size: 0.95rem;
+  color: var(--app-text);
+  margin-top: 0.75rem;
+  background: #f8f9fb;
+  padding: 1rem;
+  border-radius: 12px;
+  border-left: 4px solid #3b82f6;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.visual-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.switch-option {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-weight: 600;
+}
+
+.switch-option.disabled {
+  opacity: 0.6;
+}
+.upload-status {
+  font-weight: 600;
+  color: var(--app-muted);
+  min-height: 1.2rem;
+}
+
+.upload-status.error {
+  color: var(--app-danger);
+}
+
+.upload-status.success {
+  color: var(--app-success);
 }

@@ -8,24 +8,6 @@
     --card-shadow: 0 8px 18px rgba(44, 62, 80, 0.08);
 }
 
-button.conf-level-btn {
-    border: 1px solid #cbd5e1;
-    background: #fff;
-    color: #1f2a37;
-    padding: 0.45rem 0.9rem;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease;
-    font-weight: 600;
-}
-
-button.conf-level-btn.selected,
-button.conf-level-btn:hover {
-    background: var(--accent-color);
-    color: #fff;
-    border-color: var(--accent-color);
-}
-
 .axis-settings {
     background: #fff;
     padding: 1.5rem;

@@ -12,19 +12,6 @@
     padding-left: 1.4rem;
 }
 
-#file-feedback {
-    min-height: 1.2rem;
-    color: var(--muted);
-}
-
-#file-feedback.success {
-    color: var(--success);
-}
-
-#file-feedback.error {
-    color: var(--danger);
-}
-
 #analysis-status p.error {
     color: var(--danger);
 }
@@ -55,18 +42,6 @@
 
 .upload-status.error {
     color: var(--danger);
-}
-
-.chart-placeholder {
-    min-height: 320px;
-    width: 100%;
-    overflow: hidden;
-}
-
-.chart-note {
-    font-size: 0.9rem;
-    color: var(--muted);
-    margin-top: 0.5rem;
 }
 
 .scatter-controls {

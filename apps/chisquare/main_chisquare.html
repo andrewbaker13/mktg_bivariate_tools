@@ -8,12 +8,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="../../shared/css/main.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="main_chisquare.css">
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   </head>
   <body>
-    <main class="container">
-      <header class="hero-header">
+    <main class="app-main">
+      <header class="intro hero-header">
         <div class="hero-header__top">
           <h1>Chi-Square Test of Independence</h1>
         </div>
@@ -135,10 +135,40 @@
         </div>
       </section>
 
-      <hr class="separator" />
+      <section class="visual-output">
+        <h2>VISUAL OUTPUT</h2>
+        <div class="card">
+          <article class="chart-card">
+            <h3>Stacked 100% Bar Chart</h3>
+            <div id="chartCaption" class="plain-language"></div>
+            <div class="chart-stage">
+              <div id="stackedChart" class="chart-placeholder"></div>
+              <div id="chartTooltip" class="chart-tooltip" style="display:none;"></div>
+            </div>
+            <div id="chartLegend" class="chart-legend"></div>
+          </article>
+          <details class="visual-output-settings">
+            <summary>Visualization Settings</summary>
+            <div class="visualization-options__body">
+              <div class="control-group">
+                <label for="chartXAxis">Chart X-axis variable</label>
+                <select id="chartXAxis">
+                  <option value="rows">Rows on X (stack by columns)</option>
+                  <option value="columns">Columns on X (stack by rows)</option>
+                </select>
+                <div class="plain-language">Bars show 100% stacked proportions by the chosen X variable.</div>
+              </div>
+              <div class="control-group">
+                <button id="flipStackOrder" class="secondary" type="button">Flip stack order</button>
+                <p class="plain-language" style="margin:4px 0 0;">Reverse the stacking so the bottom segment moves to the top.</p>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
 
-      <section class="test-results">
-        <h2>TEST RESULTS</h2>
+      <section class="test-results" aria-labelledby="test-results-heading">
+        <h2 id="test-results-heading">TEST RESULTS</h2>
         <div class="card metrics-panel">
           <div class="metric-output">Chi-square (&chi;&sup2;): <span id="chi2" class="dynamic-value">&ndash;</span></div>
           <div class="metric-output">Degrees of freedom: <span id="df" class="dynamic-value">&ndash;</span></div>
@@ -157,36 +187,6 @@
             <h3>Managerial Interpretation</h3>
             <p id="managerInterpretation"></p>
           </article>
-        </div>
-      </section>
-
-      <section class="visual-output">
-        <h2>VISUAL OUTPUT</h2>
-        <div class="card">
-          <h3>Stacked 100% Bar Chart</h3>
-          <div id="chartCaption" class="plain-language"></div>
-          <div id="stackedChart" class="chart-container"></div>
-          <div id="chartLegend" class="chart-legend"></div>
-          <div id="chartTooltip" class="chart-tooltip" style="display:none;"></div>
-          <div class="card visualization-options">
-            <details>
-              <summary>Visualization Options</summary>
-              <div class="visualization-options__body">
-                <div class="control-group">
-                  <label for="chartXAxis">Chart X-axis variable</label>
-                  <select id="chartXAxis">
-                    <option value="rows">Rows on X (stack by columns)</option>
-                    <option value="columns">Columns on X (stack by rows)</option>
-                  </select>
-                  <div class="plain-language">Bars show 100% stacked proportions by the chosen X variable.</div>
-                </div>
-                <div class="control-group">
-                  <button id="flipStackOrder" class="secondary" type="button">Flip stack order</button>
-                  <p class="plain-language" style="margin:4px 0 0;">Reverse the Y-axis stacking so the bottom segment moves to the top.</p>
-                </div>
-              </div>
-            </details>
-          </div>
         </div>
       </section>
 
@@ -240,10 +240,11 @@
     </main>
     <footer class="app-footer">
       <p class="page-timestamps">Created: <span id="created-date">2025-11-06</span> &middot; Last updated: <span id="modified-date">2025-11-15</span></p>
-      <p class="citation">Cite as: Baker, Andrew. (2025). Chi-Square Test of Independence Tool. Marketing Bivariate Tools. https://github.com/andre/mktg_bivariate_tools/apps/chisquare/index.html</p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). Chi-Square Test of Independence Tool. Marketing Bivariate Tools. https://github.com/andre/mktg_bivariate_tools/apps/chisquare/main_chisquare.html</p>
     </footer>
     <script src="../../shared/js/csv_utils.js"></script>
     <script src="../../shared/js/ui_utils.js"></script>
+    <script src="../../shared/js/stacked_bar_utils.js"></script>
     <script src="app.js"></script>
     <script>
       (function () {

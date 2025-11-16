@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../../shared/css/main.css">
     <link rel="stylesheet" href="main_onewayanova.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="../../shared/js/fan_chart_utils.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
@@ -105,7 +106,20 @@
             <article class="card group-input-block" aria-label="Group statistics entry">
                 <h3>Enter Group Statistics</h3>
                 <p class="hint">Each row shows the fields for one group. Provide all four values to include the group in the ANOVA.</p>
-                <div id="group-inputs" class="group-inputs" aria-live="polite"></div>
+                <div class="group-table-wrapper">
+                    <table class="group-table" aria-live="polite">
+                        <thead>
+                            <tr>
+                                <th scope="col">Group</th>
+                                <th scope="col">Name / Label</th>
+                                <th scope="col">Mean</th>
+                                <th scope="col">Standard Deviation</th>
+                                <th scope="col">Sample Size (n)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="group-inputs"></tbody>
+                    </table>
+                </div>
             </article>
 
             <article class="card analysis-settings test-options">
@@ -214,8 +228,20 @@
             </div>
         </section>
 
-        <h2>TEST RESULTS</h2>
-        <div id="interpretation" class="card interpretation" aria-live="polite"></div>
+        <section class="test-results" aria-labelledby="test-results-heading">
+            <h2 id="test-results-heading">TEST RESULTS</h2>
+            <div class="dual-panels">
+                <article class="card dual-panel">
+                    <h3>APA-Style Statistical Reporting</h3>
+                    <p id="anova-apa-report"></p>
+                </article>
+                <article class="card dual-panel">
+                    <h3>Managerial Interpretation</h3>
+                    <p id="anova-managerial-report"></p>
+                </article>
+            </div>
+            <div id="interpretation" class="card interpretation" aria-live="polite"></div>
+        </section>
 
         <section class="summary-section card" aria-live="polite">
             <h3>Summary of Estimates</h3>

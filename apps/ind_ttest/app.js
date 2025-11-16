@@ -203,27 +203,25 @@ function renderMeansFanChart(groups, intervals, axisRange, confidenceLevels) {
         yPositions.set(group.id, groups.length - index);
     });
     const topLevel = confidenceLevels[confidenceLevels.length - 1];
-    const fanHeights = { 0.5: 0.2, 0.8: 0.27 };
-    fanHeights[topLevel] = Math.max(fanHeights[topLevel] || 0, 0.35);
+    const fanHeights = { 0.5: 0.16, 0.8: 0.22 };
+    fanHeights[topLevel] = Math.max(fanHeights[topLevel] || 0, 0.28);
 
     const colors = {
-        0.5: 'rgba(66, 165, 245, 0.32)',
-        0.8: 'rgba(33, 150, 243, 0.2)'
+        0.5: 'rgba(111, 140, 255, 0.45)',
+        0.8: 'rgba(147, 177, 255, 0.35)'
     };
-    colors[topLevel] = 'rgba(25, 118, 210, 0.14)';
+    colors[topLevel] = 'rgba(216, 226, 255, 0.25)';
 
     const shapes = [];
     const annotations = [];
-
     groups.forEach(group => {
         const y = yPositions.get(group.id);
-        const meanText = `${group.name} mean: ${group.mean.toFixed(2)}`;
         annotations.push({
             x: group.mean,
             y: y - 0.55,
             xref: 'x',
             yref: 'y',
-            text: meanText,
+            text: group.mean.toFixed(2),
             showarrow: false,
             font: { size: 12, color: '#2c3e50' }
         });
@@ -239,31 +237,35 @@ function renderMeansFanChart(groups, intervals, axisRange, confidenceLevels) {
                 x1: band.upper,
                 y0: y - height,
                 y1: y + height,
-                fillcolor: colors[level] || 'rgba(33,150,243,0.16)',
+                fillcolor: colors[level] || 'rgba(216, 226, 255, 0.25)',
                 line: { width: 0 },
                 layer: 'below'
             });
 
-            const labelY = y + height + 0.05;
-            annotations.push({
-                x: band.lower,
-                y: labelY,
-                xref: 'x',
-                yref: 'y',
-                text: `${Math.round(level * 100)}% L: ${band.lower.toFixed(2)}`,
-                showarrow: false,
-                font: { size: 11 },
-                align: 'right'
-            }, {
-                x: band.upper,
-                y: labelY,
-                xref: 'x',
-                yref: 'y',
-                text: `${Math.round(level * 100)}% U: ${band.upper.toFixed(2)}`,
-                showarrow: false,
-                font: { size: 11 },
-                align: 'left'
-            });
+            if (Math.abs(level - topLevel) < 1e-6) {
+                const labelY = y;
+                annotations.push({
+                    x: band.lower,
+                    y: labelY,
+                    xref: 'x',
+                    yref: 'y',
+                    text: band.lower.toFixed(2),
+                    showarrow: false,
+                    font: { size: 11 },
+                    align: 'right',
+                    xanchor: 'right'
+                }, {
+                    x: band.upper,
+                    y: labelY,
+                    xref: 'x',
+                    yref: 'y',
+                    text: band.upper.toFixed(2),
+                    showarrow: false,
+                    font: { size: 11 },
+                    align: 'left',
+                    xanchor: 'left'
+                });
+            }
         });
     });
 
@@ -273,10 +275,10 @@ function renderMeansFanChart(groups, intervals, axisRange, confidenceLevels) {
         mode: 'markers',
         type: 'scatter',
         marker: {
-            color: 'rgba(30, 136, 229, 0.85)',
-            size: 16,
+            color: '#c8102e',
+            size: 20,
             symbol: 'circle',
-            line: { color: '#fff', width: 2 }
+            line: { color: '#c8102e', width: 2 }
         },
         text: groups.map(g => `${g.name}: ${g.mean.toFixed(3)}`),
         hoverinfo: 'text'
@@ -319,10 +321,10 @@ function renderDifferenceFanChart(diffStats, intervals, axisRange, confidenceLev
     fanHeights[topLevel] = Math.max(fanHeights[topLevel] || 0, 0.3);
 
     const colors = {
-        0.5: 'rgba(79, 195, 247, 0.32)',
-        0.8: 'rgba(41, 182, 246, 0.22)'
+        0.5: 'rgba(111, 140, 255, 0.45)',
+        0.8: 'rgba(147, 177, 255, 0.35)'
     };
-    colors[topLevel] = 'rgba(3, 155, 229, 0.14)';
+    colors[topLevel] = 'rgba(216, 226, 255, 0.25)';
 
     const shapes = [];
     const annotations = [];
@@ -338,34 +340,35 @@ function renderDifferenceFanChart(diffStats, intervals, axisRange, confidenceLev
             x1: band.upper,
             y0: y - height,
             y1: y + height,
-            fillcolor: colors[level] || 'rgba(3,155,229,0.18)',
-            line: { width: 0 },
+                fillcolor: colors[level] || 'rgba(216, 226, 255, 0.25)',
+                line: { width: 0 },
             layer: 'below'
         });
 
-        const labelY = y + height + 0.05;
-        const lowerClamped = clamp(band.lower, axisRange[0], axisRange[1]);
-        const upperClamped = clamp(band.upper, axisRange[0], axisRange[1]);
-
+        if (Math.abs(level - topLevel) < 1e-6) {
+        const labelY = y;
         annotations.push({
-            x: lowerClamped,
-            y: labelY,
-            xref: 'x',
-            yref: 'y',
-            text: `${Math.round(level * 100)}% L: ${band.lower.toFixed(2)}`,
-            showarrow: false,
-            font: { size: 11 },
-            align: 'right'
-        }, {
-            x: upperClamped,
-            y: labelY,
-            xref: 'x',
-            yref: 'y',
-            text: `${Math.round(level * 100)}% U: ${band.upper.toFixed(2)}`,
-            showarrow: false,
-            font: { size: 11 },
-            align: 'left'
-        });
+            x: band.lower,
+                y: labelY,
+                xref: 'x',
+                yref: 'y',
+                text: band.lower.toFixed(2),
+                showarrow: false,
+                font: { size: 11 },
+                align: 'right',
+                xanchor: 'right'
+            }, {
+                x: band.upper,
+                y: labelY,
+                xref: 'x',
+                yref: 'y',
+                text: band.upper.toFixed(2),
+                showarrow: false,
+                font: { size: 11 },
+                align: 'left',
+                xanchor: 'left'
+            });
+        }
     });
 
     annotations.push({
@@ -373,7 +376,7 @@ function renderDifferenceFanChart(diffStats, intervals, axisRange, confidenceLev
         y: y - 0.45,
         xref: 'x',
         yref: 'y',
-        text: `Observed Î”: ${diffStats.meanDifference.toFixed(2)}`,
+        text: diffStats.meanDifference.toFixed(2),
         showarrow: false,
         font: { size: 12, color: '#2c3e50' }
     });
@@ -384,10 +387,10 @@ function renderDifferenceFanChart(diffStats, intervals, axisRange, confidenceLev
         mode: 'markers',
         type: 'scatter',
         marker: {
-            color: 'rgba(2, 119, 189, 0.88)',
-            size: 18,
+            color: '#c8102e',
+            size: 20,
             symbol: 'circle',
-            line: { color: '#fff', width: 2 }
+            line: { color: '#c8102e', width: 2 }
         },
         hoverinfo: 'text',
         text: [`Difference: ${diffStats.meanDifference.toFixed(3)}`]
@@ -395,6 +398,7 @@ function renderDifferenceFanChart(diffStats, intervals, axisRange, confidenceLev
 
     const safeGroup1 = escapeHtml(diffStats.group1Name);
     const safeGroup2 = escapeHtml(diffStats.group2Name);
+    const tickLabel = `Difference (${safeGroup1} n=${diffStats.group1N}, ${safeGroup2} n=${diffStats.group2N})`;
 
     const layout = {
         title: `Difference fan chart (${safeGroup1} âˆ’ ${safeGroup2}) with ${confidenceLevels.map(l => Math.round(l * 100)).join('% / ')}% intervals`,
@@ -412,7 +416,7 @@ function renderDifferenceFanChart(diffStats, intervals, axisRange, confidenceLev
         yaxis: {
             range: [0.4, 1.6],
             tickvals: [1],
-            ticktext: ['Difference'],
+            ticktext: [tickLabel],
             showgrid: false,
             fixedrange: true
         },
@@ -839,7 +843,9 @@ function updateResults() {
         standardError: se,
         tStatistic: t,
         group1Name,
-        group2Name
+        group2Name,
+        group1N: n1,
+        group2N: n2
     };
 
     renderDifferenceFanChart(diffStats, diffIntervals, diffRange, sortedLevels, delta0);
@@ -902,15 +908,16 @@ function updateResults() {
 
 function setConfidenceLevel(level) {
     selectedConfidenceLevel = level;
-    document.querySelectorAll('.conf-level-btn').forEach(button => {
+    document.querySelectorAll('.confidence-button').forEach(button => {
         const buttonLevel = parseFloat(button.dataset.level);
         const isActive = Math.abs(buttonLevel - level) < 1e-6;
-        button.classList.toggle('selected', isActive);
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
 }
 
 function setupConfidenceButtons() {
-    const buttons = document.querySelectorAll('.conf-level-btn');
+    const buttons = document.querySelectorAll('.confidence-button');
     buttons.forEach(button => {
         button.addEventListener('click', event => {
             event.preventDefault();
@@ -1137,7 +1144,7 @@ function applyScenarioPreset(preset, entry) {
 
     if (Number.isFinite(preset.alpha)) {
         const target = 1 - preset.alpha;
-        const button = Array.from(document.querySelectorAll('.conf-level-btn')).find(btn => {
+        const button = Array.from(document.querySelectorAll('.confidence-button')).find(btn => {
             const btnLevel = parseFloat(btn.dataset.level);
             return Math.abs(btnLevel - target) < 1e-3;
         });

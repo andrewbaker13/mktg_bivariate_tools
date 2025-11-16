@@ -1497,12 +1497,8 @@ function updateResults() {
         updateDiagnostics(null, { mode: InputModes.MATRIX });
         modifiedDate = new Date().toLocaleDateString();
         const modifiedLabel = document.getElementById('modified-date');
-        const heroModifiedLabel = document.getElementById('hero-modified-date');
         if (modifiedLabel) {
             modifiedLabel.textContent = modifiedDate;
-        }
-        if (heroModifiedLabel) {
-            heroModifiedLabel.textContent = modifiedDate;
         }
         return;
     }
@@ -1535,12 +1531,8 @@ function updateResults() {
     updateDiagnostics(stats, data);
     modifiedDate = new Date().toLocaleDateString();
     const modifiedLabel = document.getElementById('modified-date');
-    const heroModifiedLabel = document.getElementById('hero-modified-date');
     if (modifiedLabel) {
         modifiedLabel.textContent = modifiedDate;
-    }
-    if (heroModifiedLabel) {
-        heroModifiedLabel.textContent = modifiedDate;
     }
 }
 function switchMode(mode, { suppressUpdate = false } = {}) {
@@ -2056,12 +2048,8 @@ async function setupScenarioSelector() {
 document.addEventListener('DOMContentLoaded', () => {
     const createdLabel = document.getElementById('created-date');
     const modifiedLabel = document.getElementById('modified-date');
-    const heroCreatedLabel = document.getElementById('hero-created-date');
-    const heroModifiedLabel = document.getElementById('hero-modified-date');
     if (createdLabel) createdLabel.textContent = CREATED_DATE;
     if (modifiedLabel) modifiedLabel.textContent = modifiedDate;
-    if (heroCreatedLabel) heroCreatedLabel.textContent = CREATED_DATE;
-    if (heroModifiedLabel) heroModifiedLabel.textContent = modifiedDate;
 
     setupManualControls();
     setupModeButtons();

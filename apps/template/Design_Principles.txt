@@ -1,0 +1,83 @@
+Design System Principles for Marketing Statistical Tools
+=========================================================
+
+Use this document whenever a new AI-assisted build needs to extend the template or invent new UI/UX patterns. It captures the qualitative rules we have learned from the existing apps.
+
+Tone & Narrative
+----------------
+1. Every page speaks to analytically minded marketers. Copy should be professional but approachable, avoiding jargon when plain language exists.
+2. Structure narratives with two voices:
+   - APA-style paragraph focused on statistical rigor.
+   - Managerial paragraph tying results to marketing actions or KPIs.
+3. When inventing scenarios, prefer realistic marketing contexts (e.g., campaign tests, funnel diagnostics, audience segment comparisons).
+
+Layout & Visual Hierarchy
+-------------------------
+1. Hero header: H1 + single-sentence tagline inside a blue-highlight box (`.hero-header intro`). Show Created / Last Updated timestamps at the footer and reference APA citation for consistency.
+2. Headings sit outside cards. Cards contain actual controls/content.
+3. All sections follow the canonical order:
+   - Test overview & equations
+   - Marketing scenarios
+   - Inputs & settings (primary + advanced accordions)
+   - Visual output (two charts + settings `<details>`)
+   - Test results (status card, metric cards, APA/managerial panels, summary table)
+   - Diagnostics & assumptions (final section, collapsible)
+4. Drop-down accordions default closed; only open by default in the template to illustrate.
+5. Confidence buttons use the shared `.confidence-button` style: minimal, outlined, primary color when active.
+6. Primary input grids (e.g., ANOVA group summaries) should avoid nested cards—use tables so labels appear once per column.
+
+Controls & Input Behavior
+-------------------------
+1. Pair any slider (`input[type=range]`) with a numeric field. All calculations must read from the numeric field so users can type values beyond the slider bounds.
+2. Label toggles, switches, and dropdowns with the marketing action they change (e.g., “Lock proportions x-axis” instead of “Lock axis”).
+3. Use dual entry for names vs. values when needed (e.g., group labels plus stats) so scenarios and uploads can overwrite them cleanly.
+
+Data Handling & Uploads
+-----------------------
+1. Upload flows must use the shared `.dropzone` pattern with drag/drop, browse button, and live feedback. Emphasize “no server upload” when applicable.
+2. Provide template download links near uploaders.
+3. Show specific validation feedback: row counts, column requirements, supported formats.
+4. When inventing new upload types (e.g., multi-group input files), follow the CSV template structure from existing tools: first row headers, subsequent rows numeric data.
+5. Provide “Download current inputs” and “Reset” affordances wherever a user can overwrite values via uploads or presets.
+
+Charts & Visuals
+----------------
+1. Always provide two visualizations:
+   - Chart A: core statistic (means, proportions, correlations, etc.).
+   - Chart B: comparison or diagnostic view (difference chart, stacked bars, heatmap, Tukey bars, etc.).
+2. Each chart needs a `.chart-note` explaining what the viewer should notice and how the chart supports the decision.
+3. Include a “Visual Output Settings” `<details>` block for toggles (axis locks, orientation, confidence bands). Keep it closed by default and place under the charts.
+4. Whenever a fan chart is appropriate, call `FanChartUtils.renderHorizontalFanChart`:
+   - Always pass tick labels that include sample sizes (`Group (n=123)`).
+   - Only display numeric labels for the outermost confidence band.
+   - Render the red point estimate above the bands and keep value labels numeric (no redundant group names).
+   - If a hypothesis/reference line exists, use the helper’s `referenceLine` configuration so styling stays consistent.
+5. Chart types are purpose-driven. Choose the visualization that best exposes the marketing question (e.g., slope charts for trend clarity, stacked bars for segment mix, scatter + regression for correlation). Do not default to a fan chart or bar chart if another form communicates the story more clearly.
+
+Diagnostics & Assumptions
+-------------------------
+1. Diagnostics section always sits last, inside a card containing a `<details>` summary.
+2. Diagnostics copy should call out:
+   - Sample size adequacy
+   - Variance / spread checks
+   - Distribution assumptions (normality, skew)
+   - Outliers / leverage points
+   - Test-specific requirements (expected counts for Chi-square, equal variances for ANOVA, etc.)
+3. Provide actionable guidance (e.g., “Add more observations,” “Switch to Spearman,” “Combine sparse categories”).
+
+Accessibility & Copy Standards
+------------------------------
+1. Use descriptive `aria-label` or `role` attributes for interactive charts and data tables.
+2. Avoid color-only states; pair color changes with text or icons when referencing status.
+3. Reserve all caps for section headings shown in the template. Other text should be sentence case or title case as appropriate.
+4. Keep content bilingual-ready: no hard-coded symbols without text (e.g., mention “degrees of freedom (df)” before using “df” alone).
+
+Extending the Template
+----------------------
+When building new features that the template does not explicitly cover:
+1. Start from `apps/template/index.html` and `template.js`.
+2. Keep new components modular—wrapped in cards and referencing shared classes from `shared/css/main.css` when possible.
+3. Document any new patterns (e.g., tabs, sliders, additional charts) directly in the template folder to keep future tools consistent.
+4. When adding new visualization helpers, provide a placeholder implementation in the template so future tools can copy/paste the wiring.
+
+Use this reference as the “prompt” for AI collaborators: it encodes both visual structure and narrative expectations so new ideas remain faithful to the suite’s design language.
