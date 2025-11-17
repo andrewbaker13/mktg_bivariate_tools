@@ -12,6 +12,12 @@ const CorrelationMethods = Object.freeze({
     SPEARMAN: 'spearman'
 });
 
+const SYMBOLS = Object.freeze({
+    alpha: 'α',
+    spearman: 'ρ',
+    nullHypothesis: 'H₀'
+});
+
 const MODE_LABELS = {
     [InputModes.MANUAL]: 'Manual entry',
     [InputModes.PAIRED]: 'Paired upload',
@@ -56,6 +62,14 @@ function escapeHtml(value) {
 function formatNumber(value, decimals = 3) {
     if (!isFinite(value)) return '--';
     return Number(value).toFixed(decimals);
+}
+
+function formatAlphaValue(value) {
+    if (!isFinite(value)) return '0.050';
+    const safe = clamp(value, 0.0005, 0.5);
+    if (safe >= 0.1) return safe.toFixed(2);
+    if (safe >= 0.01) return safe.toFixed(3);
+    return safe.toFixed(4);
 }
 
 function mean(values) {
@@ -108,7 +122,7 @@ function describeCorrelationMethod(method = selectedCorrelationMethod, { short =
 }
 
 function getCoefficientSymbol(method = selectedCorrelationMethod) {
-    return method === CorrelationMethods.SPEARMAN ? 'rho' : 'r';
+    return method === CorrelationMethods.SPEARMAN ? SYMBOLS.spearman : 'r';
 }
 
 function erf(x) {
@@ -793,7 +807,7 @@ function renderMeanDifferenceChart(stats) {
     }
     const method = stats.method || selectedCorrelationMethod;
     const coefficientSymbol = getCoefficientSymbol(method);
-    const axisLabel = method === CorrelationMethods.SPEARMAN ? 'Rank correlation (rho)' : 'Correlation (r)';
+    const axisLabel = method === CorrelationMethods.SPEARMAN ? 'Rank correlation (ρ)' : 'Correlation (r)';
     if (Array.isArray(stats.pairStats)) {
         const pairs = stats.pairStats;
         if (!pairs.length) {
@@ -1214,6 +1228,7 @@ function updateNarratives(stats, data) {
             managerial.textContent = 'Upload multi-column data to receive managerial guidance.';
             return;
         }
+        const alphaLabel = `${SYMBOLS.alpha} = ${formatAlphaValue(stats.alpha)}`;
         const significantPairs = stats.pairStats
             .filter(pair => isFinite(pair.r) && isFinite(pair.pValue) && pair.pValue < stats.alpha)
             .sort((a, b) => Math.abs(b.r) - Math.abs(a.r));
@@ -1225,11 +1240,11 @@ function updateNarratives(stats, data) {
         };
         if (significantPairs.length) {
             const strongest = significantPairs.slice(0, Math.min(3, significantPairs.length));
-            apa.textContent = `${methodLabel} matrix across ${stats.variables.length} variables (n = ${stats.n}) yielded ${significantPairs.length} significant pairwise relationships at alpha = ${stats.alpha}. Strongest effects: ${strongest.map(describePair).join('; ')}.`;
+            apa.textContent = `${methodLabel} matrix across ${stats.variables.length} variables (n = ${stats.n}) yielded ${significantPairs.length} significant pairwise relationships at ${alphaLabel}. Strongest effects: ${strongest.map(describePair).join('; ')}.`;
             const strengths = strongest.map(pair => `${pair.yName} vs ${pair.xName}`);
             managerial.textContent = `Significant links suggest shared drivers across the funnel. Prioritize the strongest pairs (${strengths.join(', ')}) when coordinating planning, and monitor the heatmap for emerging dependencies.`;
         } else {
-            apa.textContent = `${methodLabel} matrix across ${stats.variables.length} variables (n = ${stats.n}) did not produce significant pairwise relationships at alpha = ${stats.alpha}.`;
+            apa.textContent = `${methodLabel} matrix across ${stats.variables.length} variables (n = ${stats.n}) did not produce significant pairwise relationships at ${alphaLabel}.`;
             managerial.textContent = 'Treat observed relationships as directional; expand the dataset or use targeted experiments before reallocating resources.';
         }
         return;
@@ -1371,13 +1386,13 @@ function updateDiagnostics(stats, data) {
     if (isFinite(pearsonR) && isFinite(spearmanR)) {
         const diff = Math.abs(pearsonR - spearmanR);
         let alignStatus = 'good';
-        let alignMessage = `Pearson r = ${formatNumber(pearsonR, 3)} and Spearman rho = ${formatNumber(spearmanR, 3)} (difference ${formatNumber(diff, 3)}). Either estimator tells a similar story.`;
+        let alignMessage = `Pearson r = ${formatNumber(pearsonR, 3)} and Spearman ρ = ${formatNumber(spearmanR, 3)} (difference ${formatNumber(diff, 3)}). Either estimator tells a similar story.`;
         if (diff >= 0.1 && diff < 0.2) {
             alignStatus = 'caution';
-            alignMessage = `Pearson r = ${formatNumber(pearsonR, 3)} vs. Spearman rho = ${formatNumber(spearmanR, 3)} (difference ${formatNumber(diff, 3)}). Document why you favor ${methodLabel.toLowerCase()}.`;
+            alignMessage = `Pearson r = ${formatNumber(pearsonR, 3)} vs. Spearman ρ = ${formatNumber(spearmanR, 3)} (difference ${formatNumber(diff, 3)}). Document why you favor ${methodLabel.toLowerCase()}.`;
         } else if (diff >= 0.2) {
             alignStatus = 'alert';
-            alignMessage = `Pearson r = ${formatNumber(pearsonR, 3)} vs. Spearman rho = ${formatNumber(spearmanR, 3)} diverge sharply (difference ${formatNumber(diff, 3)}). Inspect the scatterplot; method choice materially changes the conclusion.`;
+            alignMessage = `Pearson r = ${formatNumber(pearsonR, 3)} vs. Spearman ρ = ${formatNumber(spearmanR, 3)} diverge sharply (difference ${formatNumber(diff, 3)}). Inspect the scatterplot; method choice materially changes the conclusion.`;
             recommendation = CorrelationMethods.SPEARMAN;
         } else if (diff < 0.05 && recommendation !== CorrelationMethods.SPEARMAN) {
             recommendation = CorrelationMethods.PEARSON;
