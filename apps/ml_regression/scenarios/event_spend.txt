@@ -1,0 +1,5 @@
+# Title
+Predict EDM event spend
+
+# Description
+Ticketing team needs to forecast event spend per patron using days preordered (lead time) and ticket type (VIP vs GA). The dataset includes raw rows for a recent event cohort.

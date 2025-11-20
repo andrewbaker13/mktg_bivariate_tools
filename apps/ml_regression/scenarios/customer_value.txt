@@ -1,0 +1,5 @@
+# Title
+Customer valuation (RFM)
+
+# Description
+Estimate customer value using recency, frequency, monetary value (RFM), and segment label. The dataset is raw rows across customers.

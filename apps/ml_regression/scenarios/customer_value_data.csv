@@ -1,0 +1,16 @@
+CustomerValue,Recency,Frequency,MonetaryValue,Segment
+1000,0.8,8,5000,High Value
+800,0.6,8,4000,High Value
+600,0.4,8,3000,Low Value
+1200,0.9,12,6000,High Value
+700,0.5,8,3500,Medium Value
+500,0.3,3,2000,Low Value
+1100,0.85,11,5500,High Value
+900,0.7,9,4500,Medium Value
+400,0.2,2,1500,Low Value
+1300,0.95,13,6500,High Value
+750,0.55,7,3750,Medium Value
+300,0.1,1,1000,Low Value
+
+
+
