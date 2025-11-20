@@ -17,6 +17,8 @@ let activeDataEntryMode = DataEntryModes.MANUAL;
 let scenarioManifest = [];
 let defaultScenarioDescription = '';
 let activeScenarioDataset = null;
+let uploadedRawData = null;
+const RAW_UPLOAD_LIMIT = typeof MAX_UPLOAD_ROWS === 'number' ? MAX_UPLOAD_ROWS : 2000;
 
 function escapeHtml(value) {
   return String(value)
@@ -361,6 +363,201 @@ function collectManualRaw() {
     return { rows, labels: { x: xName, y: yName }, message: 'All outcome (Y) values must be numeric.' };
   }
   return { rows, labels: { x: xName, y: yName }, message: null };
+}
+
+function setRawUploadStatus(message, status = '') {
+    const statusEl = document.getElementById('raw-upload-status');
+    if (!statusEl) return;
+    statusEl.textContent = message;
+    statusEl.classList.remove('success', 'error');
+  if (status) {
+    statusEl.classList.add(status);
+  }
+}
+
+function parseRawUploadText(text) {
+  if (typeof text !== 'string') {
+    throw new Error('Unable to read the file contents.');
+  }
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error('File is empty.');
+  }
+  const lines = text.replace(/\r/g, '').split('\n');
+  if (lines.length < 2) {
+    throw new Error('File must include a header row and at least one data row.');
+  }
+  const headerLine = lines[0];
+  const delimiter = typeof detectDelimiter === 'function'
+    ? detectDelimiter(headerLine)
+    : (headerLine.includes('\t') ? '\t' : ',');
+  const headers = headerLine.split(delimiter).map(part => part.trim());
+  if (headers.length < 2) {
+    throw new Error('Provide at least two columns (predictor and outcome).');
+  }
+  const labels = {
+    x: headers[0] || 'Predictor',
+    y: headers[1] || 'Outcome'
+  };
+  const rows = [];
+  const errors = [];
+  for (let i = 1; i < lines.length; i++) {
+    const rawLine = lines[i];
+    if (!rawLine || !rawLine.trim()) continue;
+    const parts = rawLine.split(delimiter).map(part => part.trim());
+    if (parts.length < 2) {
+      errors.push(`Row ${i + 1}: expected at least two columns.`);
+      continue;
+    }
+    const predictor = parts[0];
+    const outcomeStr = parts[1];
+    if (outcomeStr === '') {
+      errors.push(`Row ${i + 1}: outcome is blank.`);
+      continue;
+    }
+    const outcome = parseFloat(outcomeStr);
+    if (!isFinite(outcome)) {
+      errors.push(`Row ${i + 1}: outcome must be numeric.`);
+      continue;
+    }
+    rows.push({ x: predictor, y: outcome });
+    if (rows.length > RAW_UPLOAD_LIMIT) {
+      throw new Error(`Upload limit exceeded: Only ${RAW_UPLOAD_LIMIT} row(s) are supported per file.`);
+    }
+  }
+  if (!rows.length) {
+    throw new Error(errors.length ? errors[0] : 'No valid rows found in the file.');
+  }
+    return { rows, labels, warnings: errors };
+}
+
+function inferPredictorType(rows = []) {
+    if (!Array.isArray(rows) || !rows.length) {
+        return 'continuous';
+    }
+    const numericCandidate = rows.map(row => {
+        const raw = row?.x;
+        if (raw === null || raw === undefined || raw === '') {
+            return NaN;
+        }
+        const parsed = parseFloat(raw);
+        return isFinite(parsed) ? parsed : NaN;
+    });
+    return numericCandidate.every(value => isFinite(value)) ? 'continuous' : 'categorical';
+}
+
+function importRawData(text) {
+    try {
+        const parsed = parseRawUploadText(text);
+        const predictorType = inferPredictorType(parsed.rows);
+        uploadedRawData = { ...parsed, predictorType };
+        const skippedNote = parsed.warnings.length ? ` Skipped ${parsed.warnings.length} row(s).` : '';
+        const typeLabel = predictorType === 'continuous' ? 'continuous predictor' : 'categorical predictor';
+        const detail = `Predictor ${parsed.labels.x} (${typeLabel}); outcome ${parsed.labels.y}.`;
+        setRawUploadStatus(`Loaded ${parsed.rows.length} row(s). ${detail}${skippedNote}`, 'success');
+        if (activeDataEntryMode !== DataEntryModes.RAW) {
+            setDataEntryMode(DataEntryModes.RAW);
+        } else {
+            updateResults();
+        }
+  } catch (error) {
+    uploadedRawData = null;
+    setRawUploadStatus(error.message || 'Unable to load the file.', 'error');
+    throw error;
+  }
+}
+
+function handleRawFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = event => {
+    try {
+      importRawData(event.target.result);
+    } catch {
+      // Errors are surfaced via status text.
+    }
+  };
+  reader.onerror = () => setRawUploadStatus('Unable to read the file.', 'error');
+  reader.readAsText(file);
+}
+
+function setupRawUpload() {
+  const dropzone = document.getElementById('raw-dropzone');
+  const fileInput = document.getElementById('raw-input');
+  const browseButton = document.getElementById('raw-browse');
+  const templateButton = document.getElementById('raw-template-download');
+  if (!dropzone || !fileInput) return;
+
+  const openFileDialog = () => fileInput.click();
+
+  dropzone.addEventListener('click', openFileDialog);
+  dropzone.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      openFileDialog();
+    }
+  });
+
+  if (browseButton) {
+    browseButton.addEventListener('click', event => {
+      event.preventDefault();
+      openFileDialog();
+    });
+  }
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, event => {
+      event.preventDefault();
+      dropzone.classList.add('drag-active');
+    });
+  });
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, event => {
+      event.preventDefault();
+      if (eventName === 'drop' && event.dataTransfer?.files?.length) {
+        handleRawFile(event.dataTransfer.files[0]);
+      }
+      dropzone.classList.remove('drag-active');
+    });
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files && fileInput.files.length) {
+      handleRawFile(fileInput.files[0]);
+    }
+    fileInput.value = '';
+  });
+
+  if (templateButton) {
+    templateButton.addEventListener('click', () => {
+      const content = 'Predictor,Outcome\nSegment A,12.5\nSegment B,14.2\nSegment C,11.8\nSegment D,15.1\n';
+      downloadTextFile('regression_raw_template.csv', content);
+    });
+  }
+
+  setRawUploadStatus('No raw file uploaded.');
+}
+
+function collectRawUpload() {
+  if (!uploadedRawData || !Array.isArray(uploadedRawData.rows)) {
+    return {
+      rows: [],
+      labels: { x: 'Predictor', y: 'Outcome' },
+      message: 'Upload a raw data file with at least three paired rows.'
+    };
+  }
+  if (uploadedRawData.rows.length < 3) {
+    return {
+      rows: uploadedRawData.rows,
+      labels: uploadedRawData.labels,
+      message: 'Upload at least three paired observations.'
+    };
+  }
+  return {
+    rows: uploadedRawData.rows,
+    labels: uploadedRawData.labels,
+    message: null
+  };
 }
 
 function clearOutputs(message) {
@@ -1215,6 +1412,7 @@ function updateResults() {
     alphaInput.value = formatAlpha(alpha);
   }
 
+<<<<<<< HEAD
   if (activeDataEntryMode === DataEntryModes.RAW) {
     clearOutputs('Upload raw data to run the model. Manual mode is currently active for entered rows.');
     return;
@@ -1225,6 +1423,12 @@ function updateResults() {
   }
 
   const { rows, labels, message } = collectManualRaw();
+=======
+  const source = activeDataEntryMode === DataEntryModes.RAW
+    ? collectRawUpload()
+    : collectManualRaw();
+  const { rows, labels, message } = source;
+>>>>>>> e0d072f0272d590ebbf8a9280b47b047f17d7942
   if (message) {
     clearOutputs(message);
     return;
@@ -1496,11 +1700,12 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDataEntryModeToggle();
   setupConfidenceButtons();
   setupScenarioSelector();
+  setupRawUpload();
   attachInputListeners();
   setupManualControls();
   const manualCommit = document.getElementById('manual-commit');
   if (manualCommit) {
     manualCommit.addEventListener('click', finalizeManualEntry);
   }
-  clearOutputs('Enter paired predictor/outcome values to fit a regression line. Raw uploads will be added later.');
+  clearOutputs('Enter paired predictor/outcome values or upload a raw file to fit a regression line.');
 });
