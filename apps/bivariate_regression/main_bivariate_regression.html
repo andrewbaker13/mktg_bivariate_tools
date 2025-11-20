@@ -65,7 +65,9 @@
             <select id="scenario-select">
               <option value="">Manual inputs (no preset)</option>
             </select>
-            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>
+              Download scenario dataset
+            </button>
           </div>
         </div>
         <div id="scenario-description">
@@ -94,10 +96,6 @@
               <p>
                 Add up to 50 paired observations. The predictor can be numeric (continuous) or categorical labels.
               </p>
-              <div class="example-controls">
-                <button type="button" id="example-continuous" class="secondary">Load continuous example</button>
-                <button type="button" id="example-categorical" class="secondary">Load 3-group categorical example</button>
-              </div>
               <div class="manual-table" data-structure="paired">
                 <div class="data-table" role="region" aria-label="Manual paired input table">
                   <table>
@@ -115,6 +113,9 @@
               <div class="manual-controls">
                 <label for="manual-row-count">Rows to show (max 50):</label>
                 <input type="number" id="manual-row-count" min="4" max="50" value="4">
+              </div>
+              <div class="manual-actions">
+                <button type="button" id="manual-commit" class="primary">Manual data entry complete</button>
               </div>
               <div class="input-group">
                 <label for="x-label">Predictor name (X)</label>
@@ -134,13 +135,14 @@
                   <input type="radio" name="predictor-type" value="continuous">
                   <span>Continuous (numeric)</span>
                 </label>
-                <label class="radio-label">
-                  <input type="radio" name="predictor-type" value="categorical">
-                  <span>Categorical (group labels)</span>
-                </label>
-              </fieldset>
-            </article>
-          </div>
+              <label class="radio-label">
+                <input type="radio" name="predictor-type" value="categorical">
+                <span>Categorical (group labels)</span>
+              </label>
+            </fieldset>
+            <p class="predictor-type-warning" id="predictor-type-warning"></p>
+          </article>
+        </div>
 
           <div class="mode-panel" data-mode="raw-upload" id="raw-panel">
             <p class="panel-intro">
@@ -173,6 +175,7 @@
                 <span>Categorical (group labels)</span>
               </label>
             </fieldset>
+            <p class="predictor-type-warning" id="upload-predictor-type-warning"></p>
           </div>
         </div>
       </div>
@@ -208,13 +211,34 @@
       <h2 id="test-results-heading">TEST RESULTS</h2>
 
       <div class="card metrics-panel">
-        <div class="metric-output">Predictor type: <span id="metric-predictor-type" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output">Slope (\(\hat{\beta}_1\)): <span id="metric-slope" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output">Intercept (\(\hat{\beta}_0\)): <span id="metric-intercept" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output">R-squared: <span id="metric-r2" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output">Slope t-statistic: <span id="metric-t" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output">p-value: <span id="metric-pvalue" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output">Decision (&alpha;): <span id="metric-decision" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output">
+          <span>Predictor type:</span>
+          <span id="metric-predictor-type" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Slope:</span>
+          <span id="metric-slope" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Intercept:</span>
+          <span id="metric-intercept" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>R-squared:</span>
+          <span id="metric-r2" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Slope t-statistic:</span>
+          <span id="metric-t" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>p-value:</span>
+          <span id="metric-pvalue" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Decision (alpha):</span>
+          <span id="metric-decision" class="dynamic-value">&ndash;</span>
+        </div>
       </div>
 
       <div class="dual-panels">

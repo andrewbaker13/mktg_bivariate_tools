@@ -49,6 +49,42 @@ function standardDeviation(values) {
   return Number.isFinite(v) ? Math.sqrt(v) : NaN;
 }
 
+function setPredictorWarning(elementId, message = '') {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  if (message) {
+    el.textContent = message;
+    el.style.display = 'block';
+  } else {
+    el.textContent = '';
+    el.style.display = 'none';
+  }
+}
+
+function setManualCategoricalLock(disabled, reason = '') {
+  const catRadio = document.querySelector('input[name="predictor-type"][value="categorical"]');
+  if (!catRadio) return;
+  const fallback = document.querySelector('input[name="predictor-type"][value="continuous"]')
+    || document.querySelector('input[name="predictor-type"][value="auto"]');
+  catRadio.disabled = !!disabled;
+  catRadio.title = disabled ? reason : '';
+  if (disabled && catRadio.checked && fallback) {
+    fallback.checked = true;
+  }
+}
+
+function setUploadCategoricalLock(disabled, reason = '') {
+  const catRadio = document.querySelector('input[name="upload-predictor-type"][value="categorical"]');
+  if (!catRadio) return;
+  const fallback = document.querySelector('input[name="upload-predictor-type"][value="continuous"]')
+    || document.querySelector('input[name="upload-predictor-type"][value="auto"]');
+  catRadio.disabled = !!disabled;
+  catRadio.title = disabled ? reason : '';
+  if (disabled && catRadio.checked && fallback) {
+    fallback.checked = true;
+  }
+}
+
 function formatNumber(v, digits = 3) {
   if (!Number.isFinite(v)) return '–';
   return v.toFixed(digits);
@@ -258,6 +294,9 @@ function renderManualRows(existingValues = []) {
     row.querySelectorAll('input').forEach(input => {
       input.addEventListener('input', () => {
         if (activeDataEntryMode === DataEntryModes.MANUAL) {
+          if (activeScenarioDataset) {
+            abandonScenarioDataset();
+          }
           updateResults();
         }
       });
@@ -284,6 +323,9 @@ function setupManualControls() {
     rowCountInput.addEventListener('change', () => {
       const value = parseInt(rowCountInput.value, 10);
       setManualRowCount(value);
+      if (activeScenarioDataset) {
+        abandonScenarioDataset();
+      }
       updateResults();
     });
   }
@@ -350,6 +392,8 @@ function clearOutputs(message) {
   if (diagnostics) {
     diagnostics.innerHTML = '<p class="muted">Run an analysis to populate diagnostics.</p>';
   }
+  setPredictorWarning('predictor-type-warning', '');
+  setPredictorWarning('upload-predictor-type-warning', '');
 }
 
 function enableScenarioDownload(datasetInfo) {
@@ -441,6 +485,22 @@ function renderScenarioDescription(title, description) {
   const paragraphs = description.map(text => `<p>${escapeHtml(text)}</p>`).join('');
   const heading = title ? `<h3>${escapeHtml(title)}</h3>` : '';
   container.innerHTML = `${heading}${paragraphs}`;
+}
+
+function abandonScenarioDataset() {
+  if (!activeScenarioDataset) return;
+  const select = document.getElementById('scenario-select');
+  if (select) {
+    select.value = '';
+  }
+  renderScenarioDescription('', []);
+  enableScenarioDownload(null);
+}
+
+function finalizeManualEntry() {
+  abandonScenarioDataset();
+  setDataEntryMode(DataEntryModes.MANUAL);
+  updateResults();
 }
 
 async function loadScenarioById(id) {
@@ -540,7 +600,7 @@ function runScenarioFromCsv(csvText) {
     alphaInput.value = formatAlpha(alpha);
   }
 
-  const predictorChoice = 'auto';
+  const predictorChoice = document.querySelector('input[name="upload-predictor-type"]:checked')?.value || 'auto';
   const xRaw = rows.map(r => r.x);
   const yValues = rows.map(r => parseFloat(r.y));
   const xNumericCandidate = xRaw.map(v => {
@@ -548,12 +608,49 @@ function runScenarioFromCsv(csvText) {
     return isFinite(parsed) && v !== '' ? parsed : NaN;
   });
   const allNumeric = xNumericCandidate.every(v => isFinite(v));
+  const numericDistinctCount = allNumeric
+    ? new Set(xNumericCandidate.filter(v => isFinite(v))).size
+    : 0;
 
-  let predictorType = allNumeric ? 'continuous' : 'categorical';
+  let predictorType = 'continuous';
+  let numericAsCategoricalWarning = null;
+  let categoricalTooManyLevelsWarning = null;
+  const scenarioLockReason = allNumeric && numericDistinctCount > 10
+    ? `Categorical mode unavailable: predictor has ${numericDistinctCount} distinct numeric values (limit 10).`
+    : '';
+  setUploadCategoricalLock(allNumeric && numericDistinctCount > 10, scenarioLockReason);
+  setManualCategoricalLock(allNumeric && numericDistinctCount > 10, scenarioLockReason);
+  const predictorWarningMessage = numericAsCategoricalWarning || categoricalTooManyLevelsWarning || scenarioLockReason || '';
+  setPredictorWarning('upload-predictor-type-warning', predictorWarningMessage);
+  setPredictorWarning('predictor-type-warning', predictorWarningMessage);
 
-  if (predictorType === 'continuous' && !allNumeric) {
-    clearOutputs('Scenario predictor includes non-numeric values; treating as categorical is more appropriate.');
-    predictorType = 'categorical';
+  if (predictorChoice === 'categorical') {
+    if (allNumeric) {
+      if (numericDistinctCount <= 10) {
+        predictorType = 'categorical';
+        numericAsCategoricalWarning =
+          `Numeric predictor values in the file are being treated as categories (${numericDistinctCount} distinct values). Check carefully that this is your intent.`;
+      } else {
+        predictorType = 'continuous';
+        categoricalTooManyLevelsWarning =
+          `You selected Categorical for a numeric predictor with ${numericDistinctCount} distinct values. The tool is treating it as continuous instead.`;
+      }
+    } else {
+      predictorType = 'categorical';
+    }
+  } else if (predictorChoice === 'continuous') {
+    if (!allNumeric) {
+      predictorType = 'categorical';
+      categoricalTooManyLevelsWarning = 'Predictor includes non-numeric values, so categorical mode is used instead.';
+      const uploadCat = document.querySelector('input[name="upload-predictor-type"][value="categorical"]');
+      if (uploadCat) uploadCat.checked = true;
+      const manualCat = document.querySelector('input[name="predictor-type"][value="categorical"]');
+      if (manualCat) manualCat.checked = true;
+    } else {
+      predictorType = 'continuous';
+    }
+  } else {
+    predictorType = allNumeric ? 'continuous' : 'categorical';
   }
 
   let xNumeric = null;
@@ -671,7 +768,7 @@ function runScenarioFromCsv(csvText) {
 
   updateMetricsPanel(stats, predictorType, { reference });
   updateSummaryTable(stats, predictorType, { xGroups, reference });
-  writeRegressionNarratives(stats, labels, predictorType, { xGroups, reference });
+  renderRegressionNarratives(stats, labels, predictorType, { xGroups, reference });
   updateDiagnostics(stats);
   if (predictorType === 'continuous') {
     renderContinuousChart(stats, labels, xNumericCandidate, yValues);
@@ -741,7 +838,16 @@ function updateMetricsPanel(stats, predictorType, refInfo) {
 
 function updateSummaryTable(stats, predictorType, extra = {}) {
   const body = document.getElementById('summary-table-body');
+  const lowerHeader = document.getElementById('summary-ci-lower-header');
+  const upperHeader = document.getElementById('summary-ci-upper-header');
   if (!body) return;
+
+  // Update CI column headers to reflect the current confidence level.
+  if (lowerHeader && upperHeader && isFinite(stats.alpha)) {
+    const level = Math.round((1 - stats.alpha) * 100);
+    lowerHeader.textContent = `Lower Bound (${level}% CI)`;
+    upperHeader.textContent = `Upper Bound (${level}% CI)`;
+  }
   if (predictorType !== 'categorical' || !extra.xGroups) {
     // Continuous case: intercept + single slope
     const z = normInv(1 - stats.alpha / 2);
@@ -826,22 +932,30 @@ function writeRegressionNarratives(stats, labels, predictorType, extra = {}) {
   const managerial = document.getElementById('managerial-report');
   if (!apa || !managerial) return;
 
-  const slope = formatNumber(stats.slope, 3);
-  const t = formatNumber(stats.t, 2);
-  const p = formatP(stats.p);
-  const r2 = formatNumber(stats.rSquared, 3);
+  const slopeText = formatNumber(stats.slope, 3);
+  const tText = formatNumber(stats.t, 2);
+  const r2Text = formatNumber(stats.rSquared, 3);
   const df = stats.df;
   const alphaLabel = formatAlpha(stats.alpha);
   const levelLabel = Math.round((1 - stats.alpha) * 100);
-  const isSig = stats.p <= stats.alpha;
+  const isSig = isFinite(stats.p) && stats.p <= stats.alpha;
+
+  let pText;
+  if (!isFinite(stats.p)) {
+    pText = 'p = n/a';
+  } else if (stats.p < 0.0001) {
+    pText = 'p < .0001';
+  } else {
+    pText = `p = ${stats.p.toFixed(3)}`;
+  }
 
   if (predictorType === 'continuous') {
     const apaText = [
       `A simple linear regression was fit with ${escapeHtml(labels.y)} as the outcome and ${escapeHtml(labels.x)} as the predictor.`,
-      `The slope estimate was \\hat{\\beta}_1 = ${slope}, t(${df}) = ${t}, p = ${p}, with R² = ${r2}.`,
+      `The slope estimate was b1 = ${slopeText}, t(${df}) = ${tText}, ${pText}, with R-squared = ${r2Text}.`,
       isSig
-        ? `At α = ${alphaLabel}, the slope differs significantly from zero, indicating a reliable linear association.`
-        : `At α = ${alphaLabel}, the slope does not differ significantly from zero, so the linear association is not statistically supported.`
+        ? `At alpha = ${alphaLabel}, the slope differs significantly from zero, indicating a reliable linear association.`
+        : `At alpha = ${alphaLabel}, the slope does not differ significantly from zero, so the linear association is not statistically supported.`
     ].join(' ');
 
     const direction = stats.slope > 0 ? 'increases' : stats.slope < 0 ? 'decreases' : 'does not systematically change';
@@ -880,16 +994,16 @@ function writeRegressionNarratives(stats, labels, predictorType, extra = {}) {
       const diff = strongest.mean - refStats.mean;
       const diffLabel = formatNumber(diff, 2);
       const directionWord = diff > 0 ? 'higher' : diff < 0 ? 'lower' : 'similar';
-      strongestSentence = `On average, ${escapeHtml(strongest.name)} shows ${directionWord} ${escapeHtml(labels.y)} than ${escapeHtml(refStats.name)} (difference ≈ ${diffLabel} units).`;
+      strongestSentence = `On average, ${escapeHtml(strongest.name)} shows ${directionWord} ${escapeHtml(labels.y)} than ${escapeHtml(refStats.name)} (difference of about ${diffLabel} units).`;
     }
   }
 
   const apaTextCat = [
     `A regression with a categorical predictor was used to compare mean ${escapeHtml(labels.y)} across levels of ${escapeHtml(labels.x)} (reference group: ${escapeHtml(refStats.name)}).`,
-    `The model captured R² = ${r2}. One key contrast (see the coefficients table) was estimated as \\hat{\\beta}_1 = ${slope}, t(${df}) = ${t}, p = ${p}.`,
+    `The model captured R-squared = ${r2Text}. One key contrast (see the coefficients table) was estimated as b1 = ${slopeText}, t(${df}) = ${tText}, ${pText}.`,
     isSig
-      ? `At α = ${alphaLabel}, at least one group differs reliably from the reference on the outcome.`
-      : `At α = ${alphaLabel}, group differences relative to the reference are not statistically reliable.`
+      ? `At alpha = ${alphaLabel}, at least one group differs reliably from the reference on the outcome.`
+      : `At alpha = ${alphaLabel}, group differences relative to the reference are not statistically reliable.`
   ].join(' ');
 
   const managerTextCat = [
@@ -901,6 +1015,13 @@ function writeRegressionNarratives(stats, labels, predictorType, extra = {}) {
 
   apa.textContent = apaTextCat;
   managerial.textContent = managerTextCat;
+}
+
+
+// Temporary adapter so newer code paths can call a cleanly named helper
+// without breaking existing behavior.
+function renderRegressionNarratives(stats, labels, predictorType, extra = {}) {
+  writeRegressionNarratives(stats, labels, predictorType, extra);
 }
 function updateNarratives(stats, labels) {
   const apa = document.getElementById('apa-report');
@@ -1099,6 +1220,10 @@ function updateResults() {
     return;
   }
 
+  if (activeScenarioDataset) {
+    abandonScenarioDataset();
+  }
+
   const { rows, labels, message } = collectManualRaw();
   if (message) {
     clearOutputs(message);
@@ -1115,19 +1240,50 @@ function updateResults() {
     return isFinite(parsed) && v !== '' ? parsed : NaN;
   });
   const allNumeric = xNumericCandidate.every(v => isFinite(v));
+  const numericDistinctCount = allNumeric
+    ? new Set(xNumericCandidate.filter(v => isFinite(v))).size
+    : 0;
 
   let predictorType = 'continuous';
-  if (predictorChoice === 'categorical') {
-    predictorType = 'categorical';
-  } else if (predictorChoice === 'continuous') {
-    predictorType = 'continuous';
-  } else {
-    predictorType = allNumeric ? 'continuous' : 'categorical';
+  let numericAsCategoricalWarning = null;
+  let categoricalTooManyLevelsWarning = null;
+  const manualLockReason = allNumeric && numericDistinctCount > 10
+    ? `Categorical mode unavailable: predictor has ${numericDistinctCount} distinct numeric values (limit 10).`
+    : '';
+  setManualCategoricalLock(allNumeric && numericDistinctCount > 10, manualLockReason);
+  if (!activeScenarioDataset) {
+    setUploadCategoricalLock(allNumeric && numericDistinctCount > 10, manualLockReason);
   }
 
-  if (predictorType === 'continuous' && !allNumeric) {
-    clearOutputs('Predictor includes non-numeric values. Switch predictor type to Categorical or clean the data.');
-    return;
+  if (predictorChoice === 'categorical') {
+    if (allNumeric) {
+      if (numericDistinctCount <= 10) {
+        predictorType = 'categorical';
+        numericAsCategoricalWarning =
+          `Numeric predictor values are being treated as categories (${numericDistinctCount} distinct values). Check carefully that this is your intent.`;
+      } else {
+        predictorType = 'continuous';
+        categoricalTooManyLevelsWarning =
+          `You selected Categorical for a numeric predictor with ${numericDistinctCount} distinct values. The tool is treating it as continuous instead.`;
+      }
+    } else {
+      predictorType = 'categorical';
+    }
+  } else if (predictorChoice === 'continuous') {
+    if (!allNumeric) {
+      predictorType = 'categorical';
+      categoricalTooManyLevelsWarning = 'Predictor includes non-numeric values, so categorical mode is used instead.';
+      const manualCat = document.querySelector('input[name="predictor-type"][value="categorical"]');
+      if (manualCat) manualCat.checked = true;
+      if (!activeScenarioDataset) {
+        const uploadCat = document.querySelector('input[name="upload-predictor-type"][value="categorical"]');
+        if (uploadCat) uploadCat.checked = true;
+      }
+    } else {
+      predictorType = 'continuous';
+    }
+  } else {
+    predictorType = allNumeric ? 'continuous' : 'categorical';
   }
 
   let xNumeric = null;
@@ -1249,8 +1405,11 @@ function updateResults() {
 
   updateMetricsPanel(stats, predictorType, { reference });
   updateSummaryTable(stats, predictorType, { xGroups, reference });
-  writeRegressionNarratives(stats, labels, predictorType, { xGroups, reference });
-  updateDiagnostics(stats);
+  renderRegressionNarratives(stats, labels, predictorType, { xGroups, reference });
+  updateRegressionDiagnostics(stats, predictorType, {
+    numericAsCategoricalWarning,
+    categoricalTooManyLevelsWarning
+  });
   if (predictorType === 'continuous') {
     renderContinuousChart(stats, labels, xNumeric, yValues);
   } else {
@@ -1269,6 +1428,35 @@ function attachInputListeners() {
       input.addEventListener('input', updateResults);
     }
   });
+
+  document.querySelectorAll('input[name="predictor-type"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (activeScenarioDataset) {
+        const mirror = document.querySelector(`input[name="upload-predictor-type"][value="${radio.value}"]`);
+        if (mirror) {
+          mirror.checked = true;
+        }
+        runScenarioFromCsv(activeScenarioDataset.content);
+      } else {
+        updateResults();
+      }
+    });
+  });
+
+  document.querySelectorAll('input[name="upload-predictor-type"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const mirror = document.querySelector(`input[name="predictor-type"][value="${radio.value}"]`);
+      if (mirror) {
+        mirror.checked = true;
+      }
+      if (activeScenarioDataset) {
+        runScenarioFromCsv(activeScenarioDataset.content);
+      } else {
+        updateResults();
+      }
+    });
+  });
+
   const alphaInput = document.getElementById('alpha');
   if (alphaInput) {
     alphaInput.addEventListener('input', () => {
@@ -1294,94 +1482,6 @@ function setupConfidenceButtons() {
   });
 }
 
-function loadContinuousExample() {
-  const xLabel = document.getElementById('x-label');
-  const yLabel = document.getElementById('y-label');
-  if (xLabel) xLabel.value = 'Weekly ad spend (k$)';
-  if (yLabel) yLabel.value = 'Weekly revenue (k$)';
-
-  const continuousRadio = document.querySelector('input[name="predictor-type"][value="continuous"]');
-  if (continuousRadio) continuousRadio.checked = true;
-
-  const exampleRows = [
-    { x: '10', y: '40' },
-    { x: '12', y: '48' },
-    { x: '14', y: '55' },
-    { x: '16', y: '63' },
-    { x: '18', y: '70' },
-    { x: '20', y: '78' },
-    { x: '22', y: '85' },
-    { x: '24', y: '92' },
-    { x: '26', y: '100' },
-    { x: '28', y: '108' },
-    { x: '30', y: '115' },
-    { x: '32', y: '122' },
-    { x: '34', y: '130' },
-    { x: '36', y: '139' },
-    { x: '38', y: '146' }
-  ];
-
-  setManualRowCount(exampleRows.length, { preserveValues: false });
-  const tbody = document.getElementById('regression-table-body');
-  if (!tbody) return;
-  Array.from(tbody.querySelectorAll('tr')).forEach((row, index) => {
-    const example = exampleRows[index];
-    const xInput = row.querySelector('.manual-x');
-    const yInput = row.querySelector('.manual-y');
-    if (!example) {
-      if (xInput) xInput.value = '';
-      if (yInput) yInput.value = '';
-    } else {
-      if (xInput) xInput.value = example.x;
-      if (yInput) yInput.value = example.y;
-    }
-  });
-  updateResults();
-}
-
-function loadCategoricalExample() {
-  const xLabel = document.getElementById('x-label');
-  const yLabel = document.getElementById('y-label');
-  if (xLabel) xLabel.value = 'Channel';
-  if (yLabel) yLabel.value = 'Revenue per user';
-
-  const categoricalRadio = document.querySelector('input[name="predictor-type"][value="categorical"]');
-  if (categoricalRadio) categoricalRadio.checked = true;
-
-  const exampleRows = [
-    { x: 'Search', y: '42' },
-    { x: 'Search', y: '40' },
-    { x: 'Search', y: '38' },
-    { x: 'Search', y: '45' },
-    { x: 'Search', y: '44' },
-    { x: 'Social', y: '36' },
-    { x: 'Social', y: '39' },
-    { x: 'Social', y: '37' },
-    { x: 'Social', y: '35' },
-    { x: 'Email', y: '48' },
-    { x: 'Email', y: '50' },
-    { x: 'Email', y: '47' },
-    { x: 'Email', y: '49' }
-  ];
-
-  setManualRowCount(exampleRows.length, { preserveValues: false });
-  const tbody = document.getElementById('regression-table-body');
-  if (!tbody) return;
-  Array.from(tbody.querySelectorAll('tr')).forEach((row, index) => {
-    const example = exampleRows[index];
-    const xInput = row.querySelector('.manual-x');
-    const yInput = row.querySelector('.manual-y');
-    if (!example) {
-      if (xInput) xInput.value = '';
-      if (yInput) yInput.value = '';
-    } else {
-      if (xInput) xInput.value = example.x;
-      if (yInput) yInput.value = example.y;
-    }
-  });
-  updateResults();
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   const createdLabel = document.getElementById('created-date');
   const modifiedLabel = document.getElementById('modified-date');
@@ -1398,13 +1498,9 @@ document.addEventListener('DOMContentLoaded', () => {
   setupScenarioSelector();
   attachInputListeners();
   setupManualControls();
-  const exampleCont = document.getElementById('example-continuous');
-  if (exampleCont) {
-    exampleCont.addEventListener('click', loadContinuousExample);
-  }
-  const exampleCat = document.getElementById('example-categorical');
-  if (exampleCat) {
-    exampleCat.addEventListener('click', loadCategoricalExample);
+  const manualCommit = document.getElementById('manual-commit');
+  if (manualCommit) {
+    manualCommit.addEventListener('click', finalizeManualEntry);
   }
   clearOutputs('Enter paired predictor/outcome values to fit a regression line. Raw uploads will be added later.');
 });

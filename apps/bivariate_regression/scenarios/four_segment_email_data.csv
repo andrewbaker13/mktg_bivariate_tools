@@ -17,7 +17,7 @@ Segment A,40.6
 Segment A,43.1
 Segment A,42.7
 Segment A,41.8
-Segment A,40.4
+Segment A,30.4
 Segment A,42.3
 Segment A,41.1
 Segment A,40.2
@@ -28,7 +28,7 @@ Segment A,42.9
 Segment A,41.3
 Segment A,40.5
 Segment A,42.2
-Segment A,41.4
+Segment A,61.4
 Segment A,40.1
 Segment A,42.4
 Segment A,41.0
@@ -39,7 +39,7 @@ Segment A,40.9
 Segment A,42.1
 Segment A,41.7
 Segment A,40.3
-Segment A,42.0
+Segment A,52.0
 Segment A,41.5
 Segment A,40.6
 Segment A,42.8
@@ -50,7 +50,7 @@ Segment A,41.1
 Segment A,40.4
 Segment B,45.6
 Segment B,46.2
-Segment B,44.9
+Segment B,54.9
 Segment B,47.0
 Segment B,45.1
 Segment B,46.7
@@ -92,7 +92,7 @@ Segment B,45.6
 Segment B,47.3
 Segment B,45.8
 Segment B,46.5
-Segment B,45.7
+Segment B,35.7
 Segment B,46.9
 Segment B,45.3
 Segment B,46.4
@@ -102,7 +102,7 @@ Segment C,38.2
 Segment C,37.9
 Segment C,38.5
 Segment C,39.0
-Segment C,37.6
+Segment C,17.6
 Segment C,38.8
 Segment C,38.1
 Segment C,37.4
@@ -160,7 +160,7 @@ Segment D,49.7
 Segment D,49.0
 Segment D,48.5
 Segment D,49.9
-Segment D,49.3
+Segment D,57.3
 Segment D,48.8
 Segment D,49.6
 Segment D,49.1
