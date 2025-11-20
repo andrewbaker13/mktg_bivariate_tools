@@ -1,0 +1,9 @@
+# Title
+Likert Scale Feedback vs. Brand Rating
+
+# Description
+A brand team has collected survey data where 50 customers rated a new product concept on a 1-to-5 Likert scale ("Strongly Dislike" to "Strongly Like") and also provided an overall brand rating on a 0-100 scale.
+
+This dataset is ideal for testing the tool's ability to handle a numeric predictor with few unique values.
+
+Use this preset to toggle the "Predictor type" between "Continuous" and "Categorical". Observe how the model interpretation, visuals, and statistical outputs change when treating the Likert scale as a linear trend versus a set of distinct groups. This is a common analytical choice with significant implications for how results are reported.

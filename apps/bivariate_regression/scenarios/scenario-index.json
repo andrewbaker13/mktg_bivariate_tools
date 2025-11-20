@@ -1,14 +1,20 @@
 [
   {
-    "id": "spend_vs_revenue",
-    "label": "Ad Spend vs. Weekly Revenue (200 weeks)",
+    "id": "spend-vs-revenue",
+    "label": "Ad Spend vs. Weekly Revenue",
     "file": "scenarios/spend_vs_revenue.txt",
     "dataset": "scenarios/continuous_marketing_mix_data.csv"
   },
   {
-    "id": "four_segment_email",
-    "label": "Four-Segment Email Campaign",
-    "file": "scenarios/control_vs_treatment_revenue.txt",
+    "id": "email-segment-performance",
+    "label": "Email Segments vs. Order Value",
+    "file": "scenarios/email_segment_performance.txt",
     "dataset": "scenarios/four_segment_email_data.csv"
+  },
+  {
+    "id": "likert-vs-brand-rating",
+    "label": "Likert Feedback vs. Brand Rating",
+    "file": "scenarios/likert_brand_rating.txt",
+    "dataset": "scenarios/likert_vs_brand_rating.csv"
   }
 ]

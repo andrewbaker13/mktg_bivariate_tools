@@ -1109,3 +1109,24 @@ legend {
 .upload-status.success {
   color: var(--app-success);
 }
+
+/* Predictor Type Fieldset (reusable component) */
+.predictor-type-group {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--app-border);
+}
+
+.predictor-type-group legend {
+  font-size: 1rem;
+}
+
+.predictor-type-warning {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  color: var(--app-danger);
+  background-color: rgba(214, 71, 71, 0.05);
+  border-radius: 8px;
+  display: none; /* Hidden by default */
+}

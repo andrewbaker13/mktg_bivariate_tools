@@ -1,9 +1,12 @@
 # Title
-Ad Spend vs. Weekly Revenue
+Weekly Ad Spend vs. Revenue
 
 # Description
-A performance marketing team wants to summarize the relationship between weekly paid media spend (X) and weekly revenue (Y) at the account level.
+A direct-to-consumer (D2C) brand's performance marketing team wants to understand the return on their paid media investment. They have compiled 200 weeks of data, recording the total ad spend and the total revenue generated for each week.
 
-Each observation is one week for one brand, with both spend and revenue recorded. The linked CSV contains 200 weeks of data where revenue increases as spend increases but still exhibits noise week to week.
+The goal is to build a simple model to answer a fundamental question: "For every additional dollar we spend on ads, how much additional revenue can we expect to generate?"
 
-Use this preset with the raw-data upload or manual-entry mode to practice interpreting the regression slope, R², and statistical test for the slope. The dataset is stored in a separate CSV so you can download, edit, and re-upload it.
+# How to use
+<strong>Interpret the Slope:</strong> The slope of the regression line represents the estimated return on ad spend (ROAS). A slope of 2.5, for example, suggests that each additional dollar of ad spend is associated with $2.50 in additional revenue.
+<strong>Check the R-squared:</strong> This value tells you what percentage of the variation in weekly revenue is explained by ad spend alone. A low R-squared suggests that other factors (seasonality, promotions, etc.) are also major drivers of revenue.
+<strong>Examine Outliers:</strong> Look for weeks where the data point is far from the fitted line. These represent unusually high or low performing weeks that may warrant further investigation.

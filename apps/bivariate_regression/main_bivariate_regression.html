@@ -117,13 +117,18 @@
               <div class="manual-actions">
                 <button type="button" id="manual-commit" class="primary">Manual data entry complete</button>
               </div>
-              <div class="input-group">
-                <label for="x-label">Predictor name (X)</label>
-                <input type="text" id="x-label" placeholder="Spend, Treatment group, etc.">
+              <div class="data-actions">
+                <button type="button" id="swap-xy-manual" class="secondary hidden">Swap Predictor (X) & Outcome (Y)</button>
               </div>
-              <div class="input-group">
-                <label for="y-label">Outcome name (Y)</label>
-                <input type="text" id="y-label" placeholder="Revenue, orders, etc.">
+              <div class="column-selectors">
+                <div class="input-group">
+                  <label for="x-column-select">Predictor (X)</label>
+                  <select id="x-column-select"></select>
+                </div>
+                <div class="input-group">
+                  <label for="y-column-select">Outcome (Y)</label>
+                  <select id="y-column-select"></select>
+                </div>
               </div>
               <fieldset class="input-group predictor-type-group">
                 <legend>Predictor type</legend>
@@ -159,7 +164,9 @@
               <button type="button" id="raw-template-download">Download raw template</button>
             </div>
             <p class="upload-status" id="raw-upload-status">No raw file uploaded.</p>
-
+            <div class="data-actions">
+              <button type="button" id="swap-xy-upload" class="secondary hidden">Swap Predictor (X) & Outcome (Y)</button>
+            </div>
             <fieldset class="input-group predictor-type-group">
               <legend>Predictor type for numeric uploads</legend>
               <label class="radio-label">
@@ -209,6 +216,13 @@
 
     <section class="test-results" aria-labelledby="test-results-heading">
       <h2 id="test-results-heading">TEST RESULTS</h2>
+
+      <div class="card regression-equation-card">
+        <h3>Regression Equation</h3>
+        <p id="regression-equation-output" class="regression-equation-text">
+          Provide data to see the fitted regression equation.
+        </p>
+      </div>
 
       <div class="card metrics-panel">
         <div class="metric-output">
@@ -300,6 +314,7 @@
   </footer>
 
   <script src="../../shared/js/csv_utils.js"></script>
+  <script src="../../shared/js/stats_utils.js"></script>
   <script src="../../shared/js/fan_chart_utils.js"></script>
   <script src="../../shared/js/stacked_bar_utils.js"></script>
   <script src="app.js"></script>

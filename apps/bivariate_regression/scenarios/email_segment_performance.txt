@@ -1,0 +1,13 @@
+# Title
+Email Nurture Segments vs. Average Order Value
+
+# Description
+An e-commerce fashion retailer is testing four different email nurture streams to see which one drives the highest <strong>average order value (AOV)</strong>. New subscribers were randomly assigned to one of four groups:
+<ul><li><strong>Control Group:</strong> Received standard brand updates.</li><li><strong>Discount Focus:</strong> Received weekly promotional offers and coupon codes.</li><li><strong>New Arrivals:</strong> Received alerts about the latest product drops.</li><li><strong>Brand Story:</strong> Received content focused on brand mission and designer stories.</li></ul>
+
+This dataset contains the resulting AOV for customers who made a purchase from each segment. The goal is to determine if any of the test segments produce a statistically significant higher AOV compared to the control group.
+
+# How to use
+<strong>Identify the Reference Group:</strong> The model will automatically select the largest group (Control Group) as the baseline for comparison.
+<strong>Examine Coefficients:</strong> The regression coefficients for the other segments represent the estimated increase or decrease in AOV compared to the Control Group. A positive coefficient for "Discount Focus" means that segment, on average, had a higher AOV.
+<strong>Check p-values:</strong> Use the p-values for each coefficient to determine if the difference in AOV for a given segment is statistically significant.

@@ -14,6 +14,7 @@ const MAX_MANUAL_ROWS = 50;
 let manualRowCount = 4;
 let activeDataEntryMode = DataEntryModes.MANUAL;
 
+let isSwapped = false;
 let scenarioManifest = [];
 let defaultScenarioDescription = '';
 let activeScenarioDataset = null;
@@ -31,24 +32,6 @@ function escapeHtml(value) {
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
-}
-
-function mean(values) {
-  if (!values.length) return NaN;
-  const sum = values.reduce((acc, v) => acc + v, 0);
-  return sum / values.length;
-}
-
-function variance(values) {
-  if (values.length < 2) return NaN;
-  const m = mean(values);
-  const ss = values.reduce((acc, v) => acc + Math.pow(v - m, 2), 0);
-  return ss / (values.length - 1);
-}
-
-function standardDeviation(values) {
-  const v = variance(values);
-  return Number.isFinite(v) ? Math.sqrt(v) : NaN;
 }
 
 function setPredictorWarning(elementId, message = '') {
@@ -107,87 +90,6 @@ function formatAlpha(alpha) {
 }
 
 // Override any earlier numeric/APA helpers with clean, ASCII-safe versions.
-function cleanFormatNumber(v, digits = 3) {
-  if (!Number.isFinite(v)) return '–';
-  return v.toFixed(digits);
-}
-
-function cleanFormatP(p) {
-  if (!Number.isFinite(p)) return '–';
-  if (p < 0.0001) return '< .0001';
-  return p.toFixed(4);
-}
-
-// Rebind callers to use the clean helpers
-const originalFormatNumber = formatNumber;
-const originalFormatP = formatP;
-/* eslint-disable no-global-assign */
-formatNumber = cleanFormatNumber;
-formatP = cleanFormatP;
-/* eslint-enable no-global-assign */
-
-function erf(x) {
-  // Abramowitz & Stegun approximation
-  const sign = Math.sign(x);
-  x = Math.abs(x);
-  const a1 = 0.254829592;
-  const a2 = -0.284496736;
-  const a3 = 1.421413741;
-  const a4 = -1.453152027;
-  const a5 = 1.061405429;
-  const p = 0.3275911;
-  const t = 1 / (1 + p * x);
-  const y = 1 - (((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-x * x));
-  return sign * y;
-}
-
-function normCdf(z) {
-  return 0.5 * (1 + erf(z / Math.SQRT2));
-}
-
-function normInv(p) {
-  // Approximate inverse normal CDF (same as in McNemar app)
-  if (p <= 0 || p >= 1) throw new Error('p must be between 0 and 1');
-  const a1 = -39.6968302866538;
-  const a2 = 220.946098424521;
-  const a3 = -275.928510446969;
-  const a4 = 138.357751867269;
-  const a5 = -30.6647980661472;
-  const a6 = 2.50662827745924;
-  const b1 = -54.4760987982241;
-  const b2 = 161.585836858041;
-  const b3 = -155.698979859887;
-  const b4 = 66.8013118877197;
-  const b5 = -13.2806815528857;
-  const c1 = -0.00778489400243029;
-  const c2 = -0.322396458041136;
-  const c3 = -2.40075827716184;
-  const c4 = -2.54973253934373;
-  const c5 = 4.37466414146497;
-  const c6 = 2.93816398269878;
-  const d1 = 0.00778469570904146;
-  const d2 = 0.32246712907004;
-  const d3 = 2.445134137143;
-  const d4 = 3.75440866190742;
-  const pLow = 0.02425;
-  const pHigh = 1 - pLow;
-  let q, r;
-  if (p < pLow) {
-    q = Math.sqrt(-2 * Math.log(p));
-    return (((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) /
-      ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
-  }
-  if (p <= pHigh) {
-    q = p - 0.5;
-    r = q * q;
-    return (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) * q /
-      (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1);
-  }
-  q = Math.sqrt(-2 * Math.log(1 - p));
-  return -(((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) /
-    ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
-}
-
 function applyConfidenceSelection(level, { syncAlpha = true, skipUpdate = false } = {}) {
   selectedConfidenceLevel = clamp(level, 0.5, 0.999);
   document.querySelectorAll('.conf-level-btn').forEach(button => {
@@ -202,11 +104,7 @@ function applyConfidenceSelection(level, { syncAlpha = true, skipUpdate = false 
     }
   }
   if (!skipUpdate) {
-    if (activeScenarioDataset) {
-      runScenarioFromCsv(activeScenarioDataset.content);
-    } else {
-      updateResults();
-    }
+    updateResults();
   }
 }
 
@@ -232,11 +130,7 @@ function syncConfidenceButtonsToAlpha(alphaValue, { skipUpdate = false } = {}) {
     buttons.forEach(button => button.classList.remove('selected'));
   }
   if (!skipUpdate) {
-    if (activeScenarioDataset) {
-      runScenarioFromCsv(activeScenarioDataset.content);
-    } else {
-      updateResults();
-    }
+    updateResults();
   }
 }
 
@@ -249,6 +143,7 @@ function setDataEntryMode(mode) {
     const isActive = button.dataset.mode === mode;
     button.classList.toggle('active', isActive);
     button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    isSwapped = false; // Reset swap state on mode change
   });
   document.querySelectorAll('.mode-panel').forEach(panel => {
     panel.classList.toggle('active', panel.dataset.mode === mode);
@@ -334,13 +229,15 @@ function setupManualControls() {
   setManualRowCount(manualRowCount, { preserveValues: false });
 }
 
-function collectManualRaw() {
+function collectManualRaw() { // eslint-disable-line no-unused-vars
   const tbody = document.getElementById('regression-table-body');
   const rows = [];
   if (!tbody) return { rows, labels: {}, message: 'No manual table found.' };
 
-  const xName = document.getElementById('x-label')?.value.trim() || 'Predictor';
-  const yName = document.getElementById('y-label')?.value.trim() || 'Outcome';
+  const xName = document.getElementById('x-column-select')?.value || 'Predictor';
+  const yName = document.getElementById('y-column-select')?.value || 'Outcome';
+
+  const finalLabels = { x: xName, y: yName };
 
   Array.from(tbody.querySelectorAll('tr')).forEach(row => {
     const xInput = row.querySelector('.manual-x');
@@ -348,8 +245,17 @@ function collectManualRaw() {
     const rawX = xInput ? xInput.value.trim() : '';
     const yStr = yInput ? yInput.value.trim() : '';
     if (!rawX && !yStr) return;
-    const y = yStr !== '' ? parseFloat(yStr) : NaN;
-    rows.push({ x: rawX, y });
+
+    const xVal = rawX;
+    const yVal = yStr !== '' ? parseFloat(yStr) : NaN;
+
+    if (isSwapped) {
+      // When swapped, the original Y becomes X, and X becomes Y.
+      // Y must be numeric, so we parse original X as a number.
+      rows.push({ x: yVal, y: parseFloat(xVal) });
+    } else {
+      rows.push({ x: xVal, y: yVal });
+    }
   });
 
   if (!rows.length) {
@@ -360,15 +266,15 @@ function collectManualRaw() {
   }
   const invalid = rows.find((r, idx) => !isFinite(r.y));
   if (invalid) {
-    return { rows, labels: { x: xName, y: yName }, message: 'All outcome (Y) values must be numeric.' };
+    return { rows, labels: finalLabels, message: 'All outcome (Y) values must be numeric.' };
   }
-  return { rows, labels: { x: xName, y: yName }, message: null };
+  return { rows, labels: finalLabels, message: null };
 }
 
-function setRawUploadStatus(message, status = '') {
+function setRawUploadStatus(message, status = '', { isHtml = true } = {}) {
     const statusEl = document.getElementById('raw-upload-status');
     if (!statusEl) return;
-    statusEl.textContent = message;
+    if (isHtml) { statusEl.innerHTML = message; } else { statusEl.textContent = message; }
     statusEl.classList.remove('success', 'error');
   if (status) {
     statusEl.classList.add(status);
@@ -391,11 +297,12 @@ function parseRawUploadText(text) {
   const delimiter = typeof detectDelimiter === 'function'
     ? detectDelimiter(headerLine)
     : (headerLine.includes('\t') ? '\t' : ',');
-  const headers = headerLine.split(delimiter).map(part => part.trim());
+  const headers = headerLine.split(delimiter).map(h => h.trim().replace(/"/g, ''));
+
   if (headers.length < 2) {
-    throw new Error('Provide at least two columns (predictor and outcome).');
+    throw new Error('File must have at least two columns with headers.');
   }
-  const labels = {
+  let labels = {
     x: headers[0] || 'Predictor',
     y: headers[1] || 'Outcome'
   };
@@ -404,31 +311,26 @@ function parseRawUploadText(text) {
   for (let i = 1; i < lines.length; i++) {
     const rawLine = lines[i];
     if (!rawLine || !rawLine.trim()) continue;
-    const parts = rawLine.split(delimiter).map(part => part.trim());
-    if (parts.length < 2) {
-      errors.push(`Row ${i + 1}: expected at least two columns.`);
+    const parts = rawLine.split(delimiter).map(p => p.trim().replace(/"/g, ''));
+    if (parts.length !== headers.length) {
+      errors.push(`Row ${i + 1}: expected ${headers.length} columns, found ${parts.length}.`);
       continue;
     }
-    const predictor = parts[0];
-    const outcomeStr = parts[1];
-    if (outcomeStr === '') {
-      errors.push(`Row ${i + 1}: outcome is blank.`);
-      continue;
-    }
-    const outcome = parseFloat(outcomeStr);
-    if (!isFinite(outcome)) {
-      errors.push(`Row ${i + 1}: outcome must be numeric.`);
-      continue;
-    }
-    rows.push({ x: predictor, y: outcome });
+    const rowData = {};
+    headers.forEach((header, index) => {
+      rowData[header] = parts[index];
+    });
+    rows.push(rowData);
+
     if (rows.length > RAW_UPLOAD_LIMIT) {
       throw new Error(`Upload limit exceeded: Only ${RAW_UPLOAD_LIMIT} row(s) are supported per file.`);
     }
   }
+
   if (!rows.length) {
     throw new Error(errors.length ? errors[0] : 'No valid rows found in the file.');
   }
-    return { rows, labels, warnings: errors };
+  return { headers, rows, warnings: errors };
 }
 
 function inferPredictorType(rows = []) {
@@ -446,23 +348,45 @@ function inferPredictorType(rows = []) {
     return numericCandidate.every(value => isFinite(value)) ? 'continuous' : 'categorical';
 }
 
-function importRawData(text) {
+function importRawData(text, { isFromScenario = false } = {}) {
     try {
         const parsed = parseRawUploadText(text);
-        const predictorType = inferPredictorType(parsed.rows);
-        uploadedRawData = { ...parsed, predictorType };
+        uploadedRawData = {
+          headers: parsed.headers,
+          rows: parsed.rows
+        };
+
+        // Build the detailed feedback message
+        const { headers, rows } = parsed;
+        const rowCount = rows.length;
+        const defaultPredictor = headers[0];
+        const defaultOutcome = headers[1];
+
+        // Infer default predictor type
+        const predictorValues = rows.map(r => r[defaultPredictor]);
+        const isPredictorNumeric = predictorValues.every(v => v === '' || v === null || v === undefined || isFinite(parseFloat(v)));
+        const predictorType = isPredictorNumeric ? 'continuous' : 'categorical';
+
+        const messageParts = [
+          `Loaded ${rowCount} rows with headers: <strong>${headers.join(', ')}</strong>.`,
+          `Defaulting to <strong>${defaultPredictor}</strong> as the Predictor (X) and <strong>${defaultOutcome}</strong> as the Outcome (Y).`,
+          `The predictor is being treated as <strong>${predictorType}</strong> by default.`
+        ];
+
         const skippedNote = parsed.warnings.length ? ` Skipped ${parsed.warnings.length} row(s).` : '';
-        const typeLabel = predictorType === 'continuous' ? 'continuous predictor' : 'categorical predictor';
-        const detail = `Predictor ${parsed.labels.x} (${typeLabel}); outcome ${parsed.labels.y}.`;
-        setRawUploadStatus(`Loaded ${parsed.rows.length} row(s). ${detail}${skippedNote}`, 'success');
-        if (activeDataEntryMode !== DataEntryModes.RAW) {
+        const finalMessage = `${messageParts.join('<br>')}${skippedNote}`;
+
+        setRawUploadStatus(finalMessage, 'success');
+
+        // If called from a scenario, force the mode to RAW and update.
+        if (isFromScenario || activeDataEntryMode !== DataEntryModes.RAW) {
             setDataEntryMode(DataEntryModes.RAW);
         } else {
             updateResults();
         }
   } catch (error) {
     uploadedRawData = null;
-    setRawUploadStatus(error.message || 'Unable to load the file.', 'error');
+    setRawUploadStatus(error.message || 'Unable to load the file.', 'error', { isHtml: false });
     throw error;
   }
 }
@@ -539,20 +463,14 @@ function setupRawUpload() {
 }
 
 function collectRawUpload() {
-  if (!uploadedRawData || !Array.isArray(uploadedRawData.rows)) {
+  if (!uploadedRawData || !Array.isArray(uploadedRawData.rows) || !uploadedRawData.rows.length) {
     return {
       rows: [],
-      labels: { x: 'Predictor', y: 'Outcome' },
+      labels: {},
       message: 'Upload a raw data file with at least three paired rows.'
     };
   }
-  if (uploadedRawData.rows.length < 3) {
-    return {
-      rows: uploadedRawData.rows,
-      labels: uploadedRawData.labels,
-      message: 'Upload at least three paired observations.'
-    };
-  }
+
   return {
     rows: uploadedRawData.rows,
     labels: uploadedRawData.labels,
@@ -575,6 +493,7 @@ function clearOutputs(message) {
   const summaryBody = document.getElementById('summary-table-body');
   const diagnostics = document.getElementById('diagnostics-content');
   const caption = document.getElementById('regression-caption');
+  const equation = document.getElementById('regression-equation-output');
 
   if (caption) caption.textContent = '';
   if (apa) apa.textContent = '';
@@ -588,6 +507,9 @@ function clearOutputs(message) {
   }
   if (diagnostics) {
     diagnostics.innerHTML = '<p class="muted">Run an analysis to populate diagnostics.</p>';
+  }
+  if (equation) {
+    equation.textContent = 'Provide data to see the fitted regression equation.';
   }
   setPredictorWarning('predictor-type-warning', '');
   setPredictorWarning('upload-predictor-type-warning', '');
@@ -605,6 +527,57 @@ function enableScenarioDownload(datasetInfo) {
     button.classList.add('hidden');
     button.disabled = true;
   }
+}
+
+function updateColumnSelectors(headers, columnData) {
+  const xSelect = document.getElementById('x-column-select');
+  const ySelect = document.getElementById('y-column-select');
+  if (!xSelect || !ySelect) return;
+
+  const currentX = xSelect.value;
+  const currentY = ySelect.value;
+
+  xSelect.innerHTML = '';
+  ySelect.innerHTML = '';
+
+  headers.forEach(header => {
+    const isNumeric = columnData[header].isNumeric;
+    const xOption = document.createElement('option');
+    xOption.value = header;
+    xOption.textContent = header;
+    xSelect.appendChild(xOption);
+
+    const yOption = document.createElement('option');
+    yOption.value = header;
+    yOption.textContent = header;
+    if (!isNumeric) {
+      yOption.disabled = true;
+      yOption.textContent += ' (non-numeric)';
+    }
+    ySelect.appendChild(yOption);
+  });
+
+  // Restore selection or set defaults
+  xSelect.value = headers.includes(currentX) ? currentX : headers[0];
+  let yDefault = headers[1] || headers[0];
+  if (xSelect.value === yDefault && headers.length > 1) {
+    yDefault = headers[0];
+  }
+  ySelect.value = headers.includes(currentY) && !ySelect.options[ySelect.selectedIndex].disabled ? currentY : yDefault;
+
+  // Ensure X and Y are different if possible
+  if (xSelect.value === ySelect.value && headers.length > 1) {
+    const ySelectedIndex = Array.from(ySelect.options).findIndex(opt => opt.value === ySelect.value);
+    const nextIndex = (ySelectedIndex + 1) % headers.length;
+    if (!ySelect.options[nextIndex].disabled) {
+      ySelect.selectedIndex = nextIndex;
+    } else if (ySelectedIndex > 0 && !ySelect.options[ySelectedIndex - 1].disabled) {
+      ySelect.selectedIndex = ySelectedIndex - 1;
+    }
+  }
+
+  xSelect.dispatchEvent(new Event('change', { bubbles: true }));
+  ySelect.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 async function fetchScenarioIndex() {
@@ -679,7 +652,7 @@ function renderScenarioDescription(title, description) {
     container.innerHTML = defaultScenarioDescription || '';
     return;
   }
-  const paragraphs = description.map(text => `<p>${escapeHtml(text)}</p>`).join('');
+  const paragraphs = description.map(text => `<p>${text}</p>`).join('');
   const heading = title ? `<h3>${escapeHtml(title)}</h3>` : '';
   container.innerHTML = `${heading}${paragraphs}`;
 }
@@ -734,243 +707,18 @@ async function loadScenarioById(id) {
         });
 
         // Try to run the analysis directly from the dataset
-        runScenarioFromCsv(csvText);
+        importRawData(csvText, { isFromScenario: true, filename });
       } catch (datasetError) {
         console.error('Scenario dataset load error:', datasetError);
         enableScenarioDownload(null);
         clearOutputs('Scenario description loaded, but the dataset could not be interpreted.');
       }
     } else {
-      enableScenarioDownload(null);
-    }
-  } catch (error) {
-    console.error('Scenario load error:', error);
-    enableScenarioDownload(null);
-  }
-}
-
-function runScenarioFromCsv(csvText) {
-  const trimmed = csvText.trim();
-  if (!trimmed) {
-    clearOutputs('Scenario dataset is empty.');
-    return;
-  }
-  const lines = trimmed.split(/\r?\n/).filter(Boolean);
-  if (lines.length < 2) {
-    clearOutputs('Scenario dataset requires a header row and at least one data row.');
-    return;
-  }
-  const headerLine = lines[0];
-  const delimiter = headerLine.includes('\t') ? '\t' : ',';
-  const headers = headerLine.split(delimiter).map(h => h.trim());
-  const labels = {
-    x: headers[0] || 'Predictor',
-    y: headers[1] || 'Outcome'
-  };
-
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const parts = lines[i].split(delimiter).map(p => p.trim());
-    if (parts.length < 2) continue;
-    const rawX = parts[0];
-    const yStr = parts[1];
-    if (!rawX && !yStr) continue;
-    const y = yStr !== '' ? parseFloat(yStr) : NaN;
-    rows.push({ x: rawX, y });
-  }
-
-  if (!rows.length) {
-    clearOutputs('Scenario dataset did not contain any valid rows.');
-    return;
-  }
-
-  const invalidY = rows.find(r => !isFinite(r.y));
-  if (invalidY) {
-    clearOutputs('All outcome (Y) values in the scenario dataset must be numeric.');
-    return;
-  }
-
-  const alphaInput = document.getElementById('alpha');
-  const alphaValue = alphaInput ? parseFloat(alphaInput.value) : NaN;
-  const alpha = isFinite(alphaValue) && alphaValue > 0 && alphaValue < 1 ? alphaValue : 1 - selectedConfidenceLevel;
-  if (alphaInput && (!isFinite(alphaValue) || alphaValue <= 0 || alphaValue >= 1)) {
-    alphaInput.value = formatAlpha(alpha);
-  }
-
-  const predictorChoice = document.querySelector('input[name="upload-predictor-type"]:checked')?.value || 'auto';
-  const xRaw = rows.map(r => r.x);
-  const yValues = rows.map(r => parseFloat(r.y));
-  const xNumericCandidate = xRaw.map(v => {
-    const parsed = parseFloat(v);
-    return isFinite(parsed) && v !== '' ? parsed : NaN;
-  });
-  const allNumeric = xNumericCandidate.every(v => isFinite(v));
-  const numericDistinctCount = allNumeric
-    ? new Set(xNumericCandidate.filter(v => isFinite(v))).size
-    : 0;
-
-  let predictorType = 'continuous';
-  let numericAsCategoricalWarning = null;
-  let categoricalTooManyLevelsWarning = null;
-  const scenarioLockReason = allNumeric && numericDistinctCount > 10
-    ? `Categorical mode unavailable: predictor has ${numericDistinctCount} distinct numeric values (limit 10).`
-    : '';
-  setUploadCategoricalLock(allNumeric && numericDistinctCount > 10, scenarioLockReason);
-  setManualCategoricalLock(allNumeric && numericDistinctCount > 10, scenarioLockReason);
-  const predictorWarningMessage = numericAsCategoricalWarning || categoricalTooManyLevelsWarning || scenarioLockReason || '';
-  setPredictorWarning('upload-predictor-type-warning', predictorWarningMessage);
-  setPredictorWarning('predictor-type-warning', predictorWarningMessage);
-
-  if (predictorChoice === 'categorical') {
-    if (allNumeric) {
-      if (numericDistinctCount <= 10) {
-        predictorType = 'categorical';
-        numericAsCategoricalWarning =
-          `Numeric predictor values in the file are being treated as categories (${numericDistinctCount} distinct values). Check carefully that this is your intent.`;
-      } else {
-        predictorType = 'continuous';
-        categoricalTooManyLevelsWarning =
-          `You selected Categorical for a numeric predictor with ${numericDistinctCount} distinct values. The tool is treating it as continuous instead.`;
-      }
-    } else {
-      predictorType = 'categorical';
-    }
-  } else if (predictorChoice === 'continuous') {
-    if (!allNumeric) {
-      predictorType = 'categorical';
-      categoricalTooManyLevelsWarning = 'Predictor includes non-numeric values, so categorical mode is used instead.';
-      const uploadCat = document.querySelector('input[name="upload-predictor-type"][value="categorical"]');
-      if (uploadCat) uploadCat.checked = true;
-      const manualCat = document.querySelector('input[name="predictor-type"][value="categorical"]');
-      if (manualCat) manualCat.checked = true;
-    } else {
-      predictorType = 'continuous';
-    }
-  } else {
-    predictorType = allNumeric ? 'continuous' : 'categorical';
-  }
-
-  let xNumeric = null;
-  let xGroups = null;
-  let reference = null;
-  let parameters = [];
-  let rSquared = NaN;
-
-  if (predictorType === 'continuous') {
-    xNumeric = xNumericCandidate;
-    const meanX = mean(xNumeric);
-    const meanY = mean(yValues);
-    const sdX = standardDeviation(xNumeric);
-    const sdY = standardDeviation(yValues);
-    const covXY = xNumeric.reduce((acc, xv, i) => acc + (xv - meanX) * (yValues[i] - meanY), 0) / (xNumeric.length - 1);
-    const r = covXY / (sdX * sdY);
-    rSquared = r * r;
-  } else {
-    const levelMap = new Map();
-    xRaw.forEach((v, idx) => {
-      const key = v || '(missing)';
-      if (!levelMap.has(key)) {
-        levelMap.set(key, []);
-      }
-      levelMap.get(key).push(yValues[idx]);
-    });
-    const levels = Array.from(levelMap.keys());
-    if (levels.length < 2) {
-      clearOutputs('Categorical predictor in the scenario dataset must have at least two distinct levels.');
-      return;
-    }
-    levels.sort((a, b) => levelMap.get(b).length - levelMap.get(a).length);
-    reference = levels[0];
-    const groupStats = levels.map(name => {
-      const ys = levelMap.get(name);
-      return {
-        name,
-        n: ys.length,
-        mean: mean(ys),
-        sd: standardDeviation(ys)
-      };
-    });
-    const overallMean = mean(yValues);
-    const sst = yValues.reduce((acc, yv) => acc + Math.pow(yv - overallMean, 2), 0);
-    const sse = groupStats.reduce((acc, g) => acc + g.sd * g.sd * (g.n - 1), 0);
-    rSquared = sst > 0 ? 1 - sse / sst : NaN;
-
-    parameters = groupStats
-      .filter(g => g.name !== reference)
-      .map(g => ({
-        name: g.name,
-        estimate: g.mean - groupStats.find(ref => ref.name === reference).mean,
-        group: g
-      }));
-
-    xGroups = {
-      levels,
-      groupStats,
-      pooledVar: sse / (yValues.length - levels.length)
-    };
-  }
-
-  const df = predictorType === 'continuous'
-    ? yValues.length - 2
-    : yValues.length - (xGroups.levels.length);
-
-  let slope = NaN;
-  let intercept = NaN;
-  let seSlope = NaN;
-  let t = NaN;
-  let p = NaN;
-
-  if (predictorType === 'continuous') {
-    const meanX = mean(xNumericCandidate);
-    const meanY = mean(yValues);
-    const covXY = xNumericCandidate.reduce((acc, xv, i) => acc + (xv - meanX) * (yValues[i] - meanY), 0) / (xNumericCandidate.length - 1);
-    slope = covXY / variance(xNumericCandidate);
-    intercept = meanY - slope * meanX;
-    const residuals = yValues.map((yv, i) => yv - (intercept + slope * xNumericCandidate[i]));
-    const s2 = variance(residuals) * (yValues.length - 1) / (yValues.length - 2);
-    seSlope = Math.sqrt(s2 / variance(xNumericCandidate) / (yValues.length - 1) * (yValues.length - 1));
-    t = slope / seSlope;
-    p = 2 * (1 - normCdf(Math.abs(t)));
-  } else {
-    const refIndex = xGroups.levels.indexOf(reference);
-    const refStats = xGroups.groupStats[refIndex];
-    intercept = refStats.mean;
-    const pooledVar = xGroups.pooledVar;
-    parameters.forEach(param => {
-      if (slope === null || slope === undefined || !isFinite(slope)) {
-        slope = param.estimate;
-        const otherStats = param.group;
-        seSlope = Math.sqrt(pooledVar * (1 / refStats.n + 1 / otherStats.n));
-        t = slope / seSlope;
-        p = 2 * (1 - normCdf(Math.abs(t)));
-      }
-    });
-  }
-
-  const critical = normInv(1 - alpha / 2);
-  const ciLower = slope - critical * seSlope;
-  const ciUpper = slope + critical * seSlope;
-
-  const stats = {
-    n: yValues.length,
-    df,
-    slope,
-    intercept,
-    seSlope,
-    t,
-    p,
-    rSquared,
-    alpha
-  };
-
-  updateMetricsPanel(stats, predictorType, { reference });
-  updateSummaryTable(stats, predictorType, { xGroups, reference });
-  renderRegressionNarratives(stats, labels, predictorType, { xGroups, reference });
-  updateDiagnostics(stats);
-  if (predictorType === 'continuous') {
-    renderContinuousChart(stats, labels, xNumericCandidate, yValues);
-  } else {
-    renderCategoricalChart(stats, labels, xGroups, alpha);
+       enableScenarioDownload(null);
+     }
+   } catch (error) {
+     console.error('Scenario load error:', error);
+     enableScenarioDownload(null);
   }
 }
 
@@ -1039,15 +787,13 @@ function updateSummaryTable(stats, predictorType, extra = {}) {
   const upperHeader = document.getElementById('summary-ci-upper-header');
   if (!body) return;
 
-  // Update CI column headers to reflect the current confidence level.
   if (lowerHeader && upperHeader && isFinite(stats.alpha)) {
     const level = Math.round((1 - stats.alpha) * 100);
     lowerHeader.textContent = `Lower Bound (${level}% CI)`;
     upperHeader.textContent = `Upper Bound (${level}% CI)`;
   }
   if (predictorType !== 'categorical' || !extra.xGroups) {
-    // Continuous case: intercept + single slope
-    const z = normInv(1 - stats.alpha / 2);
+    const z = StatsUtils.normInv(1 - stats.alpha / 2);
     body.innerHTML = `
       <tr>
         <td>Intercept</td>
@@ -1073,7 +819,7 @@ function updateSummaryTable(stats, predictorType, extra = {}) {
 
   // Categorical predictor: one row for reference mean, then one row per non-reference contrast
   const { xGroups, reference } = extra;
-  const z = normInv(1 - stats.alpha / 2);
+  const z = StatsUtils.normInv(1 - stats.alpha / 2);
   const levels = xGroups.levels;
   const groupStats = xGroups.groupStats;
   const refStats = groupStats.find(g => g.name === reference) || groupStats[0];
@@ -1099,7 +845,7 @@ function updateSummaryTable(stats, predictorType, extra = {}) {
       const diff = g.mean - refStats.mean;
       const se = pooledVar > 0 ? Math.sqrt(pooledVar * (1 / refStats.n + 1 / g.n)) : NaN;
       const t = isFinite(se) && se > 0 ? diff / se : NaN;
-      const p = isFinite(t) ? 2 * (1 - normCdf(Math.abs(t))) : NaN;
+      const p = isFinite(t) ? 2 * (1 - StatsUtils.normCdf(Math.abs(t))) : NaN;
       rows.push({
         label: `${g.name} − ${refStats.name}`,
         estimate: diff,
@@ -1214,38 +960,7 @@ function writeRegressionNarratives(stats, labels, predictorType, extra = {}) {
   managerial.textContent = managerTextCat;
 }
 
-
-// Temporary adapter so newer code paths can call a cleanly named helper
-// without breaking existing behavior.
-function renderRegressionNarratives(stats, labels, predictorType, extra = {}) {
-  writeRegressionNarratives(stats, labels, predictorType, extra);
-}
-function updateNarratives(stats, labels) {
-  const apa = document.getElementById('apa-report');
-  const managerial = document.getElementById('managerial-report');
-  if (!apa || !managerial) return;
-  const slope = formatNumber(stats.slope, 3);
-  const t = formatNumber(stats.t, 2);
-  const p = formatP(stats.p);
-  const r2 = formatNumber(stats.rSquared, 3);
-  const df = stats.df;
-  const apaText = [
-    `A simple linear regression was fit with ${escapeHtml(labels.y)} as the outcome and ${escapeHtml(labels.x)} as the predictor.`,
-    `The slope estimate was \\hat{\\beta}_1 = ${slope}, t(${df}) = ${t}, p = ${p}, with R² = ${r2}.`,
-    stats.p <= stats.alpha
-      ? 'The slope differed significantly from zero at the chosen significance level.'
-      : 'The slope did not differ significantly from zero at the chosen significance level.'
-  ].join(' ');
-  const direction = stats.slope > 0 ? 'increases' : stats.slope < 0 ? 'decreases' : 'does not systematically change';
-  const managerText = [
-    `In this dataset, ${escapeHtml(labels.y)} ${direction} as ${escapeHtml(labels.x)} changes.`,
-    'Treat this model as a simple, teaching-focused regression: it captures the main trend but does not adjust for additional predictors or complex effects.'
-  ].join(' ');
-  apa.textContent = apaText;
-  managerial.textContent = managerText;
-}
-
-function updateDiagnostics(stats) {
+function updateRegressionDiagnostics(stats, predictorType, warnings = {}) {
   const diagnostics = document.getElementById('diagnostics-content');
   if (!diagnostics) return;
   const items = [];
@@ -1264,9 +979,13 @@ function updateDiagnostics(stats) {
   diagnostics.innerHTML = `
     <ul>
       <li>Regression assumes a linear relationship, roughly constant residual variance, and approximately normal residuals.</li>
-      ${items.map(t => `<li>${escapeHtml(t)}</li>`).join('')}
+      ${items.map(t => `<li>${t}</li>`).join('')}
     </ul>
   `;
+}
+
+function renderRegressionNarratives(stats, labels, predictorType, extra = {}) {
+  writeRegressionNarratives(stats, labels, predictorType, extra);
 }
 
 function renderContinuousChart(stats, labels, xValues, yValues) {
@@ -1283,12 +1002,12 @@ function renderContinuousChart(stats, labels, xValues, yValues) {
   const n = Math.min(xValues.length, yValues.length);
   const x = xValues.slice(0, n);
   const y = yValues.slice(0, n);
-  const meanX = mean(x);
+  const meanX = StatsUtils.mean(x);
   const residuals = y.map((yv, i) => yv - (stats.intercept + stats.slope * x[i]));
-  const s2 = variance(residuals) * (n - 1) / (n - 2); // adjust to n-2
+  const s2 = StatsUtils.variance(residuals) * (n - 1) / (n - 2); // adjust to n-2
   const s = Math.sqrt(Math.max(s2, 0));
-  const Sxx = variance(x) * (n - 1);
-  const tCrit = normInv(1 - stats.alpha / 2);
+  const Sxx = StatsUtils.variance(x) * (n - 1);
+  const tCrit = StatsUtils.normInv(1 - stats.alpha / 2);
 
   const minX = Math.min(...x);
   const maxX = Math.max(...x);
@@ -1368,7 +1087,7 @@ function renderCategoricalChart(stats, labels, xGroups, alpha) {
 
   const levels = xGroups.levels;
   const groupStats = xGroups.groupStats;
-  const z = normInv(1 - alpha / 2);
+  const z = StatsUtils.normInv(1 - alpha / 2);
 
   const means = groupStats.map(g => g.mean);
   const errors = groupStats.map(g => {
@@ -1412,59 +1131,77 @@ function updateResults() {
     alphaInput.value = formatAlpha(alpha);
   }
 
-<<<<<<< HEAD
-  if (activeDataEntryMode === DataEntryModes.RAW) {
-    clearOutputs('Upload raw data to run the model. Manual mode is currently active for entered rows.');
-    return;
-  }
-
-  if (activeScenarioDataset) {
-    abandonScenarioDataset();
-  }
-
-  const { rows, labels, message } = collectManualRaw();
-=======
   const source = activeDataEntryMode === DataEntryModes.RAW
     ? collectRawUpload()
     : collectManualRaw();
   const { rows, labels, message } = source;
->>>>>>> e0d072f0272d590ebbf8a9280b47b047f17d7942
+
   if (message) {
     clearOutputs(message);
     return;
   }
 
+  const columnData = {};
+  const headers = (activeDataEntryMode === DataEntryModes.RAW && uploadedRawData?.headers)
+    ? uploadedRawData.headers
+    : Object.keys(rows[0] || {});
+  headers.forEach(header => {
+    const values = rows.map(r => r[header]);
+    const isNumeric = values.every(v => v === '' || v === null || v === undefined || isFinite(parseFloat(v)));
+    columnData[header] = { isNumeric, values };
+  });
+  
+  updateColumnSelectors(headers, columnData);
+
+  const xCol = document.getElementById('x-column-select').value;
+  const yCol = document.getElementById('y-column-select').value;
+
+  const finalLabels = { x: xCol, y: yCol };
+  const xRaw = rows.map(r => r[xCol]);
+  const yValues = rows.map(r => parseFloat(r[yCol]));
+
+
   const predictorChoice = document.querySelector('input[name="predictor-type"]:checked')?.value || 'auto';
 
-  // For now, treat all numeric predictors as continuous and all text predictors as categorical.
-  const xRaw = rows.map(r => r.x);
-  const yValues = rows.map(r => parseFloat(r.y));
-  const xNumericCandidate = xRaw.map(v => {
-    const parsed = parseFloat(v);
-    return isFinite(parsed) && v !== '' ? parsed : NaN;
-  });
-  const allNumeric = xNumericCandidate.every(v => isFinite(v));
-  const numericDistinctCount = allNumeric
-    ? new Set(xNumericCandidate.filter(v => isFinite(v))).size
-    : 0;
+  // Logic for enabling/disabling the Swap X/Y button
+  const allNumeric = columnData[xCol]?.isNumeric;
+  const yIsNumeric = columnData[yCol]?.isNumeric;
+  const canSwap = allNumeric && yIsNumeric;
+  const swapButtonManual = document.getElementById('swap-xy-manual');
+  const swapButtonUpload = document.getElementById('swap-xy-upload');
+  if (swapButtonManual) {
+    swapButtonManual.classList.toggle('hidden', !canSwap || activeDataEntryMode !== DataEntryModes.MANUAL);
+    swapButtonManual.disabled = !canSwap;
+  }
+  if (swapButtonUpload) {
+    swapButtonUpload.classList.toggle('hidden', !canSwap || activeDataEntryMode !== DataEntryModes.RAW);
+    swapButtonUpload.disabled = !canSwap;
+  }
 
   let predictorType = 'continuous';
   let numericAsCategoricalWarning = null;
+  const xIsNumeric = columnData[xCol]?.isNumeric;
+  const numericDistinctCount = xIsNumeric
+    ? new Set(columnData[xCol].values.filter(v => isFinite(parseFloat(v)))).size
+    : 0;
+
   let categoricalTooManyLevelsWarning = null;
   const manualLockReason = allNumeric && numericDistinctCount > 10
-    ? `Categorical mode unavailable: predictor has ${numericDistinctCount} distinct numeric values (limit 10).`
+    ? `Categorical mode unavailable: predictor has ${numericDistinctCount} unique numeric values (limit 10).`
     : '';
-  setManualCategoricalLock(allNumeric && numericDistinctCount > 10, manualLockReason);
-  if (!activeScenarioDataset) {
-    setUploadCategoricalLock(allNumeric && numericDistinctCount > 10, manualLockReason);
-  }
+  setManualCategoricalLock(xIsNumeric && numericDistinctCount > 10, manualLockReason);
+  setUploadCategoricalLock(allNumeric && numericDistinctCount > 10, manualLockReason);
 
-  if (predictorChoice === 'categorical') {
-    if (allNumeric) {
+  // If swapped, the predictor must be continuous.
+  if (isSwapped) {
+    predictorType = 'continuous';
+    document.querySelector('input[name="predictor-type"][value="continuous"]').checked = true;
+  } else if (predictorChoice === 'categorical') {
+    if (xIsNumeric) {
       if (numericDistinctCount <= 10) {
         predictorType = 'categorical';
         numericAsCategoricalWarning =
-          `Numeric predictor values are being treated as categories (${numericDistinctCount} distinct values). Check carefully that this is your intent.`;
+          `Numeric predictor values are being treated as categories (${numericDistinctCount} distinct values).`;
       } else {
         predictorType = 'continuous';
         categoricalTooManyLevelsWarning =
@@ -1474,20 +1211,16 @@ function updateResults() {
       predictorType = 'categorical';
     }
   } else if (predictorChoice === 'continuous') {
-    if (!allNumeric) {
-      predictorType = 'categorical';
+    if (!xIsNumeric) {
+      predictorType = 'categorical'; // Force categorical if non-numeric
       categoricalTooManyLevelsWarning = 'Predictor includes non-numeric values, so categorical mode is used instead.';
-      const manualCat = document.querySelector('input[name="predictor-type"][value="categorical"]');
-      if (manualCat) manualCat.checked = true;
-      if (!activeScenarioDataset) {
-        const uploadCat = document.querySelector('input[name="upload-predictor-type"][value="categorical"]');
-        if (uploadCat) uploadCat.checked = true;
-      }
+      document.querySelector('input[name="predictor-type"][value="categorical"]').checked = true;
+      document.querySelector('input[name="upload-predictor-type"][value="categorical"]').checked = true;
     } else {
       predictorType = 'continuous';
     }
   } else {
-    predictorType = allNumeric ? 'continuous' : 'categorical';
+    predictorType = xIsNumeric ? 'continuous' : 'categorical';
   }
 
   let xNumeric = null;
@@ -1497,11 +1230,11 @@ function updateResults() {
   let rSquared = NaN;
 
   if (predictorType === 'continuous') {
-    xNumeric = xNumericCandidate;
-    const meanX = mean(xNumeric);
-    const meanY = mean(yValues);
-    const sdX = standardDeviation(xNumeric);
-    const sdY = standardDeviation(yValues);
+    xNumeric = xRaw.map(v => parseFloat(v));
+    const meanX = StatsUtils.mean(xNumeric);
+    const meanY = StatsUtils.mean(yValues);
+    const sdX = StatsUtils.standardDeviation(xNumeric);
+    const sdY = StatsUtils.standardDeviation(yValues);
     const covXY = xNumeric.reduce((acc, xv, i) => acc + (xv - meanX) * (yValues[i] - meanY), 0) / (xNumeric.length - 1);
     const r = covXY / (sdX * sdY);
     rSquared = r * r;
@@ -1526,13 +1259,13 @@ function updateResults() {
       return {
         name,
         n: ys.length,
-        mean: mean(ys),
-        sd: standardDeviation(ys)
+        mean: StatsUtils.mean(ys),
+        sd: StatsUtils.standardDeviation(ys)
       };
     });
-    const overallMean = mean(yValues);
+    const overallMean = StatsUtils.mean(yValues);
     const sst = yValues.reduce((acc, yv) => acc + Math.pow(yv - overallMean, 2), 0);
-    const sse = groupStats.reduce((acc, g) => acc + g.sd * g.sd * (g.n - 1), 0);
+    const sse = groupStats.reduce((acc, g) => acc + (g.sd * g.sd) * (g.n - 1), 0);
     rSquared = sst > 0 ? 1 - sse / sst : NaN;
 
     parameters = groupStats
@@ -1563,18 +1296,18 @@ function updateResults() {
   let seRef = NaN;
 
   if (predictorType === 'continuous') {
-    const meanX = mean(xNumeric);
-    const meanY = mean(yValues);
-    const sdX = standardDeviation(xNumeric);
-    const sdY = standardDeviation(yValues);
+    const meanX = StatsUtils.mean(xNumeric);
+    const meanY = StatsUtils.mean(yValues);
+    const sdX = StatsUtils.standardDeviation(xNumeric);
+    const sdY = StatsUtils.standardDeviation(yValues);
     const covXY = xNumeric.reduce((acc, xv, i) => acc + (xv - meanX) * (yValues[i] - meanY), 0) / (xNumeric.length - 1);
-    slope = covXY / variance(xNumeric);
+    slope = covXY / StatsUtils.variance(xNumeric);
     intercept = meanY - slope * meanX;
     const residuals = yValues.map((yv, i) => yv - (intercept + slope * xNumeric[i]));
-    const s2 = variance(residuals);
-    seSlope = Math.sqrt(s2 / ((xNumeric.length - 1) * variance(xNumeric) / (xNumeric.length - 1)));
+    const s2 = StatsUtils.variance(residuals);
+    seSlope = Math.sqrt(s2 / ((xNumeric.length - 1) * StatsUtils.variance(xNumeric) / (xNumeric.length - 1)));
     t = slope / seSlope;
-    p = 2 * (1 - normCdf(Math.abs(t)));
+    p = 2 * (1 - StatsUtils.normCdf(Math.abs(t)));
   } else {
     const refIndex = xGroups.levels.indexOf(reference);
     const refStats = xGroups.groupStats[refIndex];
@@ -1586,12 +1319,12 @@ function updateResults() {
         const otherStats = param.group;
         seSlope = Math.sqrt(pooledVar * (1 / refStats.n + 1 / otherStats.n));
         t = slope / seSlope;
-        p = 2 * (1 - normCdf(Math.abs(t)));
+        p = 2 * (1 - StatsUtils.normCdf(Math.abs(t)));
       }
     });
   }
 
-  const critical = normInv(1 - alpha / 2);
+  const critical = StatsUtils.normInv(1 - alpha / 2);
   const ciLower = slope - critical * seSlope;
   const ciUpper = slope + critical * seSlope;
 
@@ -1607,17 +1340,47 @@ function updateResults() {
     alpha
   };
 
+  const equationEl = document.getElementById('regression-equation-output');
+  if (equationEl) {
+    if (predictorType === 'continuous') {
+      const outcomeName = escapeHtml(finalLabels.y);
+      const predictorName = escapeHtml(finalLabels.x);
+      const interceptVal = formatNumber(stats.intercept, 3);
+      const sign = stats.slope >= 0 ? '+' : '-';
+      const absSlope = formatNumber(Math.abs(stats.slope), 3);
+      equationEl.innerHTML = `<strong>${outcomeName}</strong> = ${interceptVal} ${sign} ${absSlope} &times; <strong>${predictorName}</strong>`;
+    } else {
+      if (xGroups && parameters) {
+        const outcomeName = escapeHtml(finalLabels.y);
+        let equationHtml = `<strong>${outcomeName}</strong> = ${formatNumber(stats.intercept, 3)}`;
+
+        parameters.forEach(param => {
+          const coeff = param.estimate;
+          const sign = coeff >= 0 ? '+' : '-';
+          const absCoeff = formatNumber(Math.abs(coeff), 3);
+          const categoryName = escapeHtml(param.name);
+          equationHtml += ` ${sign} ${absCoeff} &times; <em>(${categoryName})</em>`;
+        });
+
+        equationEl.innerHTML = equationHtml;
+      } else {
+        equationEl.textContent = 'Equation could not be determined for the categorical model.';
+      }
+    }
+  }
+
+
   updateMetricsPanel(stats, predictorType, { reference });
-  updateSummaryTable(stats, predictorType, { xGroups, reference });
-  renderRegressionNarratives(stats, labels, predictorType, { xGroups, reference });
+  updateSummaryTable(stats, predictorType, { xGroups, reference, labels: finalLabels });
+  renderRegressionNarratives(stats, finalLabels, predictorType, { xGroups, reference });
   updateRegressionDiagnostics(stats, predictorType, {
     numericAsCategoricalWarning,
     categoricalTooManyLevelsWarning
   });
   if (predictorType === 'continuous') {
-    renderContinuousChart(stats, labels, xNumeric, yValues);
+    renderContinuousChart(stats, finalLabels, xNumeric, yValues);
   } else {
-    renderCategoricalChart(stats, labels, xGroups, alpha);
+    renderCategoricalChart(stats, finalLabels, xGroups, alpha);
   }
   modifiedDate = new Date().toLocaleDateString();
   const modifiedLabel = document.getElementById('modified-date');
@@ -1625,39 +1388,43 @@ function updateResults() {
 }
 
 function attachInputListeners() {
-  const ids = ['x-label', 'y-label', 'n', 'mean-x', 'sd-x', 'mean-y', 'sd-y', 'r'];
-  ids.forEach(id => {
-    const input = document.getElementById(id);
-    if (input) {
-      input.addEventListener('input', updateResults);
-    }
-  });
+  const xSelect = document.getElementById('x-column-select');
+  const ySelect = document.getElementById('y-column-select');
 
+  const handleSelectChange = (event) => {
+    // Break the infinite loop: only call updateResults if the event was triggered by a user.
+    // Programmatic `new Event(...)` calls will not have `isTrusted = true`.
+    if (!event.isTrusted) {
+      return;
+    }
+
+    const changed = event.target;
+    const other = changed === xSelect ? ySelect : xSelect;
+    if (changed.value === other.value) {
+      const headers = Array.from(changed.options).map(opt => opt.value);
+      const currentIndex = headers.indexOf(changed.value);
+      const nextIndex = (currentIndex + 1) % headers.length;
+      // Find the next valid option for the 'other' dropdown
+      for (let i = 0; i < headers.length; i++) {
+        const potentialIndex = (nextIndex + i) % headers.length;
+        if (other.options[potentialIndex] && !other.options[potentialIndex].disabled) {
+          other.selectedIndex = potentialIndex;
+          break;
+        }
+      }
+    }
+    updateResults();
+  };
+
+  xSelect.addEventListener('change', handleSelectChange);
+  ySelect.addEventListener('change', handleSelectChange);
+  
   document.querySelectorAll('input[name="predictor-type"]').forEach(radio => {
     radio.addEventListener('change', () => {
       if (activeScenarioDataset) {
-        const mirror = document.querySelector(`input[name="upload-predictor-type"][value="${radio.value}"]`);
-        if (mirror) {
-          mirror.checked = true;
-        }
-        runScenarioFromCsv(activeScenarioDataset.content);
-      } else {
-        updateResults();
+        abandonScenarioDataset();
       }
-    });
-  });
-
-  document.querySelectorAll('input[name="upload-predictor-type"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      const mirror = document.querySelector(`input[name="predictor-type"][value="${radio.value}"]`);
-      if (mirror) {
-        mirror.checked = true;
-      }
-      if (activeScenarioDataset) {
-        runScenarioFromCsv(activeScenarioDataset.content);
-      } else {
-        updateResults();
-      }
+      updateResults();
     });
   });
 
@@ -1686,6 +1453,29 @@ function setupConfidenceButtons() {
   });
 }
 
+function setupSwapButtons() {
+  const swapManual = document.getElementById('swap-xy-manual');
+  const swapUpload = document.getElementById('swap-xy-upload');
+
+  const swapHandler = (event) => {
+    event.preventDefault();
+    const xSelect = document.getElementById('x-column-select');
+    const ySelect = document.getElementById('y-column-select');
+    if (!xSelect || !ySelect) return;
+
+    const oldX = xSelect.value;
+    const oldY = ySelect.value;
+
+    xSelect.value = oldY;
+    ySelect.value = oldX;
+
+    updateResults();
+  };
+
+  if (swapManual) swapManual.addEventListener('click', swapHandler);
+  if (swapUpload) swapUpload.addEventListener('click', swapHandler);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const createdLabel = document.getElementById('created-date');
   const modifiedLabel = document.getElementById('modified-date');
@@ -1701,6 +1491,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupConfidenceButtons();
   setupScenarioSelector();
   setupRawUpload();
+  setupSwapButtons();
   attachInputListeners();
   setupManualControls();
   const manualCommit = document.getElementById('manual-commit');

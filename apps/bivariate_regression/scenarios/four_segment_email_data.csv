@@ -1,200 +1,200 @@
-Predictor,Outcome
-Segment A,42.1
-Segment A,40.3
-Segment A,41.7
-Segment A,43.0
-Segment A,39.8
-Segment A,42.5
-Segment A,41.2
-Segment A,40.9
-Segment A,42.8
-Segment A,41.9
-Segment A,40.7
-Segment A,43.4
-Segment A,42.0
-Segment A,41.5
-Segment A,40.6
-Segment A,43.1
-Segment A,42.7
-Segment A,41.8
-Segment A,30.4
-Segment A,42.3
-Segment A,41.1
-Segment A,40.2
-Segment A,42.6
-Segment A,41.6
-Segment A,40.8
-Segment A,42.9
-Segment A,41.3
-Segment A,40.5
-Segment A,42.2
-Segment A,61.4
-Segment A,40.1
-Segment A,42.4
-Segment A,41.0
-Segment A,40.0
-Segment A,42.7
-Segment A,41.2
-Segment A,40.9
-Segment A,42.1
-Segment A,41.7
-Segment A,40.3
-Segment A,52.0
-Segment A,41.5
-Segment A,40.6
-Segment A,42.8
-Segment A,41.9
-Segment A,40.7
-Segment A,42.3
-Segment A,41.1
-Segment A,40.4
-Segment B,45.6
-Segment B,46.2
-Segment B,54.9
-Segment B,47.0
-Segment B,45.1
-Segment B,46.7
-Segment B,45.9
-Segment B,46.4
-Segment B,45.2
-Segment B,46.9
-Segment B,45.8
-Segment B,46.1
-Segment B,45.4
-Segment B,47.2
-Segment B,45.7
-Segment B,46.3
-Segment B,45.5
-Segment B,46.8
-Segment B,45.0
-Segment B,46.5
-Segment B,45.3
-Segment B,47.1
-Segment B,45.6
-Segment B,46.0
-Segment B,45.8
-Segment B,46.6
-Segment B,45.9
-Segment B,46.2
-Segment B,45.7
-Segment B,46.4
-Segment B,45.5
-Segment B,47.0
-Segment B,45.1
-Segment B,46.3
-Segment B,45.4
-Segment B,46.7
-Segment B,45.2
-Segment B,46.8
-Segment B,45.9
-Segment B,46.1
-Segment B,45.6
-Segment B,47.3
-Segment B,45.8
-Segment B,46.5
-Segment B,35.7
-Segment B,46.9
-Segment B,45.3
-Segment B,46.4
-Segment B,45.5
-Segment B,46.6
-Segment C,38.2
-Segment C,37.9
-Segment C,38.5
-Segment C,39.0
-Segment C,17.6
-Segment C,38.8
-Segment C,38.1
-Segment C,37.4
-Segment C,38.9
-Segment C,38.3
-Segment C,37.7
-Segment C,38.6
-Segment C,38.0
-Segment C,37.5
-Segment C,38.7
-Segment C,38.4
-Segment C,37.8
-Segment C,38.2
-Segment C,37.9
-Segment C,38.5
-Segment C,38.1
-Segment C,37.6
-Segment C,38.9
-Segment C,38.3
-Segment C,37.7
-Segment C,38.4
-Segment C,38.0
-Segment C,37.5
-Segment C,38.6
-Segment C,38.2
-Segment C,37.8
-Segment C,38.7
-Segment C,38.1
-Segment C,37.9
-Segment C,38.3
-Segment C,37.6
-Segment C,38.8
-Segment C,38.0
-Segment C,37.7
-Segment C,38.5
-Segment C,38.2
-Segment C,37.9
-Segment C,38.4
-Segment C,37.8
-Segment C,38.6
-Segment C,38.1
-Segment C,37.7
-Segment C,38.3
-Segment C,38.0
-Segment C,37.5
-Segment D,49.1
-Segment D,48.7
-Segment D,49.5
-Segment D,50.0
-Segment D,48.3
-Segment D,49.8
-Segment D,49.2
-Segment D,48.9
-Segment D,49.7
-Segment D,49.0
-Segment D,48.5
-Segment D,49.9
-Segment D,57.3
-Segment D,48.8
-Segment D,49.6
-Segment D,49.1
-Segment D,48.7
-Segment D,49.4
-Segment D,49.0
-Segment D,48.6
-Segment D,49.8
-Segment D,49.2
-Segment D,48.9
-Segment D,49.5
-Segment D,49.1
-Segment D,48.7
-Segment D,49.6
-Segment D,49.0
-Segment D,48.5
-Segment D,49.9
-Segment D,49.3
-Segment D,48.8
-Segment D,49.7
-Segment D,49.2
-Segment D,48.6
-Segment D,49.4
-Segment D,49.0
-Segment D,48.5
-Segment D,49.8
-Segment D,49.1
-Segment D,48.7
-Segment D,49.5
-Segment D,49.2
-Segment D,48.9
-Segment D,49.6
-Segment D,49.0
-Segment D,48.6
-Segment D,49.4
-Segment D,49.1
-Segment D,48.8
+Email_Segment,Average_Order_Value
+Control_Group,42.1
+Control_Group,40.3
+Control_Group,41.7
+Control_Group,43.0
+Control_Group,39.8
+Control_Group,42.5
+Control_Group,41.2
+Control_Group,40.9
+Control_Group,42.8
+Control_Group,41.9
+Control_Group,40.7
+Control_Group,43.4
+Control_Group,42.0
+Control_Group,41.5
+Control_Group,40.6
+Control_Group,43.1
+Control_Group,42.7
+Control_Group,41.8
+Control_Group,30.4
+Control_Group,42.3
+Control_Group,41.1
+Control_Group,40.2
+Control_Group,42.6
+Control_Group,41.6
+Control_Group,40.8
+Control_Group,42.9
+Control_Group,41.3
+Control_Group,40.5
+Control_Group,42.2
+Control_Group,61.4
+Control_Group,40.1
+Control_Group,42.4
+Control_Group,41.0
+Control_Group,40.0
+Control_Group,42.7
+Control_Group,41.2
+Control_Group,40.9
+Control_Group,42.1
+Control_Group,41.7
+Control_Group,40.3
+Control_Group,52.0
+Control_Group,41.5
+Control_Group,40.6
+Control_Group,42.8
+Control_Group,41.9
+Control_Group,40.7
+Control_Group,42.3
+Control_Group,41.1
+Control_Group,40.4
+Discount_Focus,45.6
+Discount_Focus,46.2
+Discount_Focus,54.9
+Discount_Focus,47.0
+Discount_Focus,45.1
+Discount_Focus,46.7
+Discount_Focus,45.9
+Discount_Focus,46.4
+Discount_Focus,45.2
+Discount_Focus,46.9
+Discount_Focus,45.8
+Discount_Focus,46.1
+Discount_Focus,45.4
+Discount_Focus,47.2
+Discount_Focus,45.7
+Discount_Focus,46.3
+Discount_Focus,45.5
+Discount_Focus,46.8
+Discount_Focus,45.0
+Discount_Focus,46.5
+Discount_Focus,45.3
+Discount_Focus,47.1
+Discount_Focus,45.6
+Discount_Focus,46.0
+Discount_Focus,45.8
+Discount_Focus,46.6
+Discount_Focus,45.9
+Discount_Focus,46.2
+Discount_Focus,45.7
+Discount_Focus,46.4
+Discount_Focus,45.5
+Discount_Focus,47.0
+Discount_Focus,45.1
+Discount_Focus,46.3
+Discount_Focus,45.4
+Discount_Focus,46.7
+Discount_Focus,45.2
+Discount_Focus,46.8
+Discount_Focus,45.9
+Discount_Focus,46.1
+Discount_Focus,45.6
+Discount_Focus,47.3
+Discount_Focus,45.8
+Discount_Focus,46.5
+Discount_Focus,35.7
+Discount_Focus,46.9
+Discount_Focus,45.3
+Discount_Focus,46.4
+Discount_Focus,45.5
+Discount_Focus,46.6
+New_Arrivals,38.2
+New_Arrivals,37.9
+New_Arrivals,38.5
+New_Arrivals,39.0
+New_Arrivals,17.6
+New_Arrivals,38.8
+New_Arrivals,38.1
+New_Arrivals,37.4
+New_Arrivals,38.9
+New_Arrivals,38.3
+New_Arrivals,37.7
+New_Arrivals,38.6
+New_Arrivals,38.0
+New_Arrivals,37.5
+New_Arrivals,38.7
+New_Arrivals,38.4
+New_Arrivals,37.8
+New_Arrivals,38.2
+New_Arrivals,37.9
+New_Arrivals,38.5
+New_Arrivals,38.1
+New_Arrivals,37.6
+New_Arrivals,38.9
+New_Arrivals,38.3
+New_Arrivals,37.7
+New_Arrivals,38.4
+New_Arrivals,38.0
+New_Arrivals,37.5
+New_Arrivals,38.6
+New_Arrivals,38.2
+New_Arrivals,37.8
+New_Arrivals,38.7
+New_Arrivals,38.1
+New_Arrivals,37.9
+New_Arrivals,38.3
+New_Arrivals,37.6
+New_Arrivals,38.8
+New_Arrivals,38.0
+New_Arrivals,37.7
+New_Arrivals,38.5
+New_Arrivals,38.2
+New_Arrivals,37.9
+New_Arrivals,38.4
+New_Arrivals,37.8
+New_Arrivals,38.6
+New_Arrivals,38.1
+New_Arrivals,37.7
+New_Arrivals,38.3
+New_Arrivals,38.0
+New_Arrivals,37.5
+Brand_Story,49.1
+Brand_Story,48.7
+Brand_Story,49.5
+Brand_Story,50.0
+Brand_Story,48.3
+Brand_Story,49.8
+Brand_Story,49.2
+Brand_Story,48.9
+Brand_Story,49.7
+Brand_Story,49.0
+Brand_Story,48.5
+Brand_Story,49.9
+Brand_Story,57.3
+Brand_Story,48.8
+Brand_Story,49.6
+Brand_Story,49.1
+Brand_Story,48.7
+Brand_Story,49.4
+Brand_Story,49.0
+Brand_Story,48.6
+Brand_Story,49.8
+Brand_Story,49.2
+Brand_Story,48.9
+Brand_Story,49.5
+Brand_Story,49.1
+Brand_Story,48.7
+Brand_Story,49.6
+Brand_Story,49.0
+Brand_Story,48.5
+Brand_Story,49.9
+Brand_Story,49.3
+Brand_Story,48.8
+Brand_Story,49.7
+Brand_Story,49.2
+Brand_Story,48.6
+Brand_Story,49.4
+Brand_Story,49.0
+Brand_Story,48.5
+Brand_Story,49.8
+Brand_Story,49.1
+Brand_Story,48.7
+Brand_Story,49.5
+Brand_Story,49.2
+Brand_Story,48.9
+Brand_Story,49.6
+Brand_Story,49.0
+Brand_Story,48.6
+Brand_Story,49.4
+Brand_Story,49.1
+Brand_Story,48.8
