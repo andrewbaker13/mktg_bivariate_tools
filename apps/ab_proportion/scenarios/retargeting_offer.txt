@@ -1,11 +1,23 @@
-﻿# Title
+# Title
 Retargeting Offer Test
 
 # Description
-The **Paid Media** desk is running a retargeting split test between a price-forward banner and a limited-time bonus bundle across the same landing page. Control creatives lean into the **Price Anchor Banner** messaging, while the variant highlights the **Bonus Bundle** with countdown urgency. After ten days of matched audience exposure, the team is comparing conversions to tell whether higher perceived savings outweigh the increased complexity of the bundle.
-
-Primary metric: click-to-conversion rate from retargeting impressions to completed sign-ups.
-Decision focus: does the bonus bundle messaging create a lift large enough to justify the added offer complexity?
+<p>
+The <strong>Paid Media</strong> team is optimizing a retargeting program for visitors who viewed a product page but did not convert. Creative leads want to know whether a simple, price-forward message is enough, or if a more complex limited-time bundle offer will drive a higher conversion rate without confusing people.
+</p>
+<p>
+You design an experiment that rotates two display creatives into the same remarketing pool:
+</p>
+<ul>
+  <li><strong>Price Anchor Banner (Control):</strong> highlights the core subscription price with a clear "From $29/month" anchor and a single "Get started" CTA.</li>
+  <li><strong>Bonus Bundle Banner (Variant):</strong> advertises a limited-time bundle that includes an add-on feature and a short-term discount, plus a small countdown treatment to emphasize urgency.</li>
+</ul>
+<p>
+Both creatives click through to the same landing page and onboarding flow. Over ten days, matched audiences see several impressions each; you record the proportion of unique exposed users who complete sign-up after seeing each creative. The observed conversion rates differ modestly: the bundle offer has a somewhat higher conversion proportion, but not by an eye-popping amount, and sample sizes are in the hundreds rather than tens of thousands.
+</p>
+<p>
+Your analytical goal is to use a two-proportion test to evaluate whether the bonus bundle's higher conversion rate is likely to reflect a real underlying lift or a random fluctuation. You will translate the estimated percentage point difference into additional sign-ups and revenue, and weigh that against the operational and creative costs of maintaining a more complex, time-sensitive offer.
+</p>
 
 # Control
 Price Anchor Banner|0.152|980

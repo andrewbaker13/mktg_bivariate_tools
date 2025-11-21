@@ -1,10 +1,29 @@
 # Title
-B2B Nurture Content Tracks
+B2B Nurture Tracks: Product Tutorials vs. Executive ROI Stories
 
 # Description
-A SaaS demand team is resurrecting a massive pool of dormant enterprise leads. Two nurture “worlds” are live: the Tutorial Deep Dive series that drip-feeds hands-on product walkthroughs, and an Executive ROI story track that delivers board-level business cases to economic buyers. Each track reports qualified pipeline dollars created per contacted lead, segmented across six verticals with different buying committees.
+<p>
+You are supporting the demand generation team for a B2B SaaS company that has accumulated a large pool of dormant enterprise leads. To re-activate these accounts, marketing has launched two very different nurture tracks:
+</p>
+<ul>
+  <li><strong>Tutorial Deep Dive Series:</strong> hands-on product walkthroughs, technical webinars, and how-to guides aimed at day-to-day users and evaluators.</li>
+  <li><strong>Executive ROI Story Track:</strong> high-level business cases, customer stories, and ROI frameworks aimed at senior economic buyers and budget owners.</li>
+  <li><strong>Outcome metric:</strong> qualified pipeline dollars created per contacted lead, aggregated across several verticals with different buying committees.</li>
+</ul>
+<p>
+The two tracks produce similar but not identical average pipeline per lead, with realistic variability: some verticals appear to respond better to detailed tutorials, while others generate more pipeline when senior leaders receive executive-level ROI narratives. Sales leadership wants to know whether one track clearly outperforms the other overall, or whether observed differences might just reflect sampling noise.
+</p>
+<p>
+Your goal is to use one-way ANOVA (with two groups) to test whether mean pipeline per lead differs reliably between the Tutorial Deep Dive and Executive ROI tracks, and then interpret the results in the context of nurture strategy and resource allocation.
+</p>
 
-Sales leadership wants evidence on whether helpful, how-to content actually carries prospects further than inspirational ROI stories, or if senior decision makers need an executive tone to re-engage. Load this preset to see which track is reshaping the overall mean before the next two quarters of nurture creative are funded.
+# How to use
+<ul>
+  <li><strong>Set up the factor:</strong> Treat nurture track (Tutorial vs. Executive ROI) as the factor and pipeline per lead as the outcome.</li>
+  <li><strong>Run the ANOVA / t-test:</strong> For two groups, the one-way ANOVA is equivalent to a two-sample t-test. Use the F or t statistic and p-value to assess whether the difference in means is statistically significant.</li>
+  <li><strong>Assess effect size:</strong> Look at the difference in means and confidence intervals to gauge whether any observed advantage is practically meaningful, not just statistically detectable.</li>
+  <li><strong>Recommend next steps:</strong> Use the results to argue for scaling one track, splitting by vertical, or designing follow-on experiments (e.g., adding a hybrid track that combines tutorial and ROI elements).</li>
+</ul>
 
 # Alpha
 0.01

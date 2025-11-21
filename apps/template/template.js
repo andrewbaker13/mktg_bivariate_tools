@@ -120,11 +120,29 @@ function setupScenarioSelect() {
   select.addEventListener('change', () => {
     const selected = PLACEHOLDER_SCENARIOS.find(item => item.id === select.value);
     if (!selected) {
-      description.innerHTML = '<p>Introduce how presets work (auto-loading text, inputs, and visual descriptions).</p>';
+      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+        window.UIUtils.renderScenarioDescription({
+          containerId: 'scenario-description',
+          title: '',
+          description: '',
+          defaultHtml: '<p>Introduce how presets work (auto-loading text, inputs, and visual descriptions).</p>'
+        });
+      } else {
+        description.innerHTML = '<p>Introduce how presets work (auto-loading text, inputs, and visual descriptions).</p>';
+      }
       updateScenarioDownload(null);
       return;
     }
-    description.innerHTML = `<p>${selected.description}</p>`;
+    if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+      window.UIUtils.renderScenarioDescription({
+        containerId: 'scenario-description',
+        title: selected.label,
+        description: selected.description,
+        defaultHtml: '<p>Introduce how presets work (auto-loading text, inputs, and visual descriptions).</p>'
+      });
+    } else {
+      description.innerHTML = `<p>${selected.description}</p>`;
+    }
     updateScenarioDownload(selected.dataset || null);
   });
 }
@@ -250,97 +268,66 @@ function setupDataEntryModeToggle() {
   setDataEntryMode(activeDataEntryMode);
 }
 
-function wireDropzone({
-  dropzoneId,
-  inputId,
-  browseId,
-  feedbackId,
-  templateId,
-  templateContent,
-  downloadName
-}) {
-  const dropzone = document.getElementById(dropzoneId);
-  const input = document.getElementById(inputId);
-  const browse = document.getElementById(browseId);
-  const feedback = document.getElementById(feedbackId);
-  const templateButton = document.getElementById(templateId);
-  if (!dropzone || !input) return;
+function setupDataEntryUploads() {
+  const initUpload = ({
+    dropzoneId,
+    inputId,
+    browseId,
+    feedbackId,
+    templateId,
+    templateContent,
+    downloadName
+  }) => {
+    const feedback = document.getElementById(feedbackId);
+    const templateButton = document.getElementById(templateId);
 
-  const setFeedback = (message, status = '') => {
-    if (!feedback) return;
-    feedback.textContent = message || '';
-    feedback.classList.remove('success', 'error');
-    if (status === 'success' || status === 'error') {
-      feedback.classList.add(status);
-    }
-  };
-
-  const processFile = file => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const text = reader.result;
-        const { headers, rows } = parseDelimitedText(text, null, { maxRows: MAX_UPLOAD_ROWS });
-        setFeedback(`Loaded ${rows.length} row(s) with ${headers.length} column(s). Replace with tool-specific ingestion.`, 'success');
-      } catch (error) {
-        setFeedback(error.message || 'Unable to parse file.', 'error');
+    const setFeedback = (message, status = '') => {
+      if (!feedback) return;
+      feedback.textContent = message || '';
+      feedback.classList.remove('success', 'error');
+      if (status === 'success' || status === 'error') {
+        feedback.classList.add(status);
       }
     };
-    reader.onerror = () => setFeedback('Unable to read the file.', 'error');
-    reader.readAsText(file);
+
+    const handleFile = file => {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const text = reader.result;
+          const { headers, rows } = parseDelimitedText(text, null, { maxRows: MAX_UPLOAD_ROWS });
+          setFeedback(
+            `Loaded ${rows.length} row(s) with ${headers.length} column(s). Replace with tool-specific ingestion.`,
+            'success'
+          );
+        } catch (error) {
+          setFeedback(error.message || 'Unable to parse file.', 'error');
+        }
+      };
+      reader.onerror = () => setFeedback('Unable to read the file.', 'error');
+      reader.readAsText(file);
+    };
+
+    if (templateButton && templateContent) {
+      templateButton.addEventListener('click', event => {
+        event.preventDefault();
+        downloadTextFile(downloadName, templateContent, { mimeType: 'text/csv' });
+      });
+    }
+
+    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
+      window.UIUtils.initDropzone({
+        dropzoneId,
+        inputId,
+        browseId,
+        onFile: handleFile,
+        onError: message => setFeedback(message, 'error')
+      });
+    }
   };
 
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropzone.addEventListener(eventName, event => {
-      event.preventDefault();
-      dropzone.classList.add('drag-active');
-    });
-  });
-  ['dragleave', 'dragend', 'drop'].forEach(eventName => {
-    dropzone.addEventListener(eventName, event => {
-      if (eventName === 'drop') event.preventDefault();
-      if (eventName !== 'drop' && !dropzone.contains(event.target)) return;
-      dropzone.classList.remove('drag-active');
-    });
-  });
-  dropzone.addEventListener('drop', event => {
-    const files = event.dataTransfer?.files;
-    if (files && files.length) {
-      processFile(files[0]);
-    }
-  });
-  dropzone.addEventListener('click', () => input.click());
-  dropzone.addEventListener('keydown', event => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      input.click();
-    }
-  });
-  if (browse) {
-    browse.addEventListener('click', event => {
-      event.preventDefault();
-      input.click();
-    });
-  }
-  input.addEventListener('change', () => {
-    const files = input.files;
-    if (files && files.length) {
-      setFeedback('Parsing file…');
-      processFile(files[0]);
-    }
-    input.value = '';
-  });
-  if (templateButton && templateContent) {
-    templateButton.addEventListener('click', event => {
-      event.preventDefault();
-      downloadTextFile(downloadName, templateContent);
-    });
-  }
-}
-
-function setupDataEntryUploads() {
-  wireDropzone({
+  initUpload({
     dropzoneId: 'template-summary-dropzone',
     inputId: 'template-summary-input',
     browseId: 'template-summary-browse',
@@ -349,7 +336,7 @@ function setupDataEntryUploads() {
     templateContent: PLACEHOLDER_SUMMARY_TEMPLATE,
     downloadName: 'summary_template.csv'
   });
-  wireDropzone({
+  initUpload({
     dropzoneId: 'template-raw-dropzone',
     inputId: 'template-raw-input',
     browseId: 'template-raw-browse',

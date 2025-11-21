@@ -1,10 +1,30 @@
 # Title
-Flagship Retail Promotions Matrix
+Flagship Retail Promotions: Pricing Stories and Gross Margin
 
 # Description
-The flagship apparel chain is rewriting its in-store promotions calendar ahead of peak back-to-school traffic. Four regional clusters are piloting wildly different discount philosophies: a dependable 15% off message to build trust, a tiered ladder that deepens discounts on high-margin assortments, sporadic flash-sale weekends built for urgency, and a loyalty bundle that pairs lighter discounts with app-exclusive perks. Each cluster reports weekly gross-margin dollars per store, adjusted for traffic and staffing.
+<p>
+You are working with the merchandising team for a national apparel chain that is rewriting its in-store promotions calendar ahead of back-to-school season. Four regional clusters are piloting distinct <strong>pricing stories</strong> to understand how discount strategy influences weekly gross-margin dollars per store (adjusted for traffic and staffing).
+</p>
+<ul>
+  <li><strong>Steady 15 Percent:</strong> a reliable, "always on" 15% off message designed to build price trust.</li>
+  <li><strong>Tiered Promo Calendar:</strong> deeper discounts on selected high-margin assortments, rotating by week.</li>
+  <li><strong>Flash Sale Bursts:</strong> occasional, high-intensity weekend offers that rely on urgency and scarcity.</li>
+  <li><strong>Loyalty Bundle Weekends:</strong> lighter discounts paired with app-exclusive perks aimed at loyalty members.</li>
+</ul>
+<p>
+The observed means and standard deviations across clusters show realistic overlap: no single strategy dominates in every region, and each comes with a tradeoff between margin stability and upside. Merchandising leaders worry that aggressive discounts may erode perceived quality, while the loyalty team argues that perks-based offers can sustain engagement without race-to-the-bottom pricing.
+</p>
+<p>
+Your goal is to use one-way ANOVA to determine whether the different pricing stories produce statistically different average gross-margin dollars per store, and to interpret those differences in a way that supports a national rollout decision for over 1,000 stores.
+</p>
 
-Merchandising leaders are debating whether “steady Eddie” pricing protects perception, while the loyalty team argues that bundling perks keeps high-value shoppers engaged. This preset loads the observed results so you can measure how each storyline pulls on the grand mean before committing to one playbook for 1,200 stores.
+# How to use
+<ul>
+  <li><strong>Fit the ANOVA:</strong> Treat promotion strategy as the factor and weekly gross-margin per store as the outcome.</li>
+  <li><strong>Interpret the overall F-test:</strong> Decide whether average margin differs across strategies at the selected alpha level.</li>
+  <li><strong>Compare strategies:</strong> Use group means and confidence intervals to describe which stories are marginally stronger or weaker, and how large those differences are in practical terms.</li>
+  <li><strong>Translate to recommendations:</strong> Turn the ANOVA results into guidance about which promotion strategy to prioritize, and whether multiple strategies are close enough that local tailoring is warranted.</li>
+</ul>
 
 # Alpha
 0.10

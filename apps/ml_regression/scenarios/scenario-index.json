@@ -14,7 +14,7 @@
     "file": "scenarios/customer_value.txt",
     "dataset": "scenarios/customer_value_data.csv",
     "outcome": "CustomerValue",
-    "predictors": ["Eecency", "Frequency", "MonetaryValue", "Segment"],
+    "predictors": ["Recency", "Frequency", "MonetaryValue", "Segment"],
     "types": { "Segment": "categorical" }
   }
 ]

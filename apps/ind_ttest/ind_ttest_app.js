@@ -1408,18 +1408,22 @@ function populateScenarioOptions() {
 }
 
 function renderScenarioDescription(title, description) {
-    const container = document.getElementById('scenario-description');
-    if (!container) {
-        return;
-    }
-    if (!Array.isArray(description) || !description.length) {
-        container.innerHTML = scenarioState.defaultDescription || '';
-        return;
-    }
-    const paragraphs = description.map(paragraph => `<p>${escapeHtml(paragraph)}</p>`).join('');
-    const titleMarkup = title ? `<h3>${escapeHtml(title)}</h3>` : '';
-    container.innerHTML = `${titleMarkup}${paragraphs}`;
-}
+      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+          const body = Array.isArray(description) ? description.join('\n\n') : description;
+          window.UIUtils.renderScenarioDescription({
+              containerId: 'scenario-description',
+              title,
+              description: body,
+              defaultHtml: scenarioState.defaultDescription
+          });
+          return;
+      }
+      const container = document.getElementById('scenario-description');
+      if (!container) {
+          return;
+      }
+      container.innerHTML = scenarioState.defaultDescription || '';
+  }
 
 function parseScenarioText(text) {
     const lines = text.replace(/\r/g, '').split('\n');

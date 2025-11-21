@@ -2,8 +2,18 @@
 Holiday Subject Line Lift
 
 # Description
-The brand is rolling out its annual holiday email stretch and wants to know if a curated, benefits-focused subject line can push average revenue per recipient higher than the plain-English control.
-This preset gives you average dollars per recipient, variability, and sample size for each version so you can translate a mean difference into estimated incremental holiday revenue before the hero subject line is locked in.
+<p>
+Your ecommerce brand is planning its peak holiday campaign. The CRM team is debating whether it is worth investing extra creative time in a more polished, benefit-led subject line versus reusing the simple control line that has performed �??okay�?? in the past.
+</p>
+<p>
+To answer this, you run an A/B test at scale. Half of the active email list receives a plain-English subject line similar to last year��s control. The other half receives an <strong>optimized holiday subject line</strong> that calls out savings, free shipping, and curated gift ideas in a tighter way. Nothing else in the email changes; copy and layout below the fold are held constant.
+</p>
+<p>
+For each group, you compute <strong>revenue per delivered email</strong> over the full holiday window. The means differ by a few dollars per recipient, and the standard deviations are fairly large. That pattern is typical in real email programs: lots of noisy behavior at the individual level, but potentially meaningful average lift once you aggregate across the entire list.
+</p>
+<p>
+Your analytical goal is to use an independent-samples t-test to quantify whether the optimized subject line produces a <em>statistically credible</em> and <em>managerially relevant</em> increase in revenue per recipient. You��ll translate the estimated mean difference into projected incremental holiday revenue and decide whether it justifies the extra creative and QA effort.
+</p>
 
 # Alpha
 0.05

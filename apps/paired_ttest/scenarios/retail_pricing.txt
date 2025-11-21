@@ -2,12 +2,18 @@
 Retail Promotions Pricing Test
 
 # Description
-A nationwide retailer alternated its loyalty pricing banners between a shouty “Compare & Save” frame and a friendlier “Bundle Rewards” promise. Twenty matched stores rotated the messaging over four weeks while holding merchandising, regional offers, and staffing constant. The merchandising analytics pod captured per-basket lift (Bundle Rewards minus legacy) for every store and asked whether the softer framing nudged shoppers toward bigger baskets without increasing discount depth.
-
-The difference scores below represent incremental dollars per basket when Bundle Rewards banners ran. Use the preset to:
-- Experiment with stricter or looser α levels before socializing results with merchandising and CX partners.
-- Inspect the histogram for regional skew—several Sun Belt locations initially under-performed until signage was localized.
-- Borrow the managerial summary as a recap for the Monday pricing huddle, alongside a note about stores whose lift fell inside the confidence interval.
+<p>
+A nationwide retailer alternated its loyalty pricing banners between a shouty “Compare &amp; Save” frame and a friendlier “Bundle Rewards” promise. The merchandising team wants to know whether the softer framing genuinely nudges shoppers toward bigger baskets, without relying on deeper discounts or constant promotions.
+</p>
+<p>
+To get a clean read, 20 matched stores rotate messaging over several weeks while holding regional offers, category mix, and staffing constant. For each store, analysts track <strong>average basket value</strong> under each banner and compute a <em>difference score</em> (Bundle Rewards minus Compare &amp; Save). Those paired differences show how much the same stores’ baskets change once the framing shifts.
+</p>
+<p>
+The difference scores below (one per store) are realistic: most stores see modest positive lift, a few see almost no change, and a couple under-perform. This gives you a noisy but interpretable signal—exactly the kind of pattern retail pricing teams deal with when trying to separate real framing effects from week-to-week variability and local quirks.
+</p>
+<p>
+Your analytical goal is to run a <strong>paired t-test</strong> on the difference column. You’ll evaluate whether the mean lift is statistically distinguishable from zero at the chosen alpha level, and interpret the effect size in terms of dollars per basket and total program revenue. Those insights feed directly into decisions about rolling out “Bundle Rewards” signage more broadly, iterating on store execution, or treating the result as too small or uncertain to operationalize.
+</p>
 
 # Alpha
 0.04
@@ -40,3 +46,4 @@ diff
 
 # Raw Data File
 file=scenarios/data/retail_pricing_diff.csv
+

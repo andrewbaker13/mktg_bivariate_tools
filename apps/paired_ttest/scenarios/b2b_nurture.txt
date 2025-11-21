@@ -2,12 +2,22 @@
 B2B Nurture Content Tracks
 
 # Description
-A conversion marketing squad wants to know whether its new insight-led nurture series outperforms the long-standing product-spec drip. Both tracks were served to the same 34 in-market accounts (two-week washout between flights), and the analyst had time to summarize only the change in marketing-qualified opportunities per account before the CMO review.
-
-The summary stats below capture the mean and standard deviation of the paired differences (insights track − legacy track) plus the number of sampled accounts. Use the preset to:
-- Confirm whether the uplift still clears the bar when α is tightened to 0.025 for the finance gate.
-- Stress-test the effect size by editing the SD upward—sales ops warned that a few accounts experienced wild week-to-week swings.
-- Copy the APA and managerial blurbs into the nurture optimization deck so stakeholders see both the statistical verdict and the business framing.
+<p>
+A conversion marketing squad wants to know whether its new <strong>insight-led nurture series</strong> outperforms the long-standing product-spec drip. Instead of splitting different accounts into different tracks, they run a crossover test on the <em>same</em> set of in-market accounts, with a washout period in between.
+</p>
+<p>
+Each of the 34 target accounts experiences two flights:
+</p>
+<ul>
+  <li><strong>Legacy product drip:</strong> feature-heavy messages, links to spec sheets, and integration documentation.</li>
+  <li><strong>Insight-led series:</strong> benchmark data, case studies, and executive-level stories about value and risk reduction.</li>
+</ul>
+<p>
+For every account, sales ops summarizes the <strong>number of marketing-qualified opportunities (MQOs)</strong> generated during each flight, then computes a <em>difference score</em> (Insight-led minus Legacy). Those paired differences capture how much the account’s opportunity volume changes when the nurture storyline changes, while holding the underlying buying group constant.
+</p>
+<p>
+The summary statistics below (mean difference, standard deviation of differences, and sample size) reflect a realistic result: on average, the insight-led series creates more MQOs, but there is meaningful variation across accounts. Your analytical goal is to use the <strong>paired t-test</strong> to decide whether that uplift is statistically reliable and practically important—strong enough to justify retooling creative, sales enablement, and marketing automation flows for the broader account base.
+</p>
 
 # Alpha
 0.05
@@ -18,3 +28,4 @@ summary
 # Summary Stats
 mean_diff|sd_diff|n
 1.6|2.4|34
+

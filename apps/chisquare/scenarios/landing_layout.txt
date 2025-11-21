@@ -1,8 +1,20 @@
-﻿# Title
-Landing page layout by action
+# Title
+Landing Page Layout vs. User Action
 
 # Description
-Before committing to a responsive overhaul, product marketing is reviewing whether the desktop hero layout or a slimmer mobile-first layout leads to more form submits or phone calls. These counts help you explore whether the same layout is driving the pattern of actions across devices.
+<p>
+You are collaborating with the product marketing and UX teams on a landing page test for a lead-generation campaign. The team is debating whether a traditional desktop-heavy hero layout or a slimmer, mobile-first layout leads to different patterns of user behavior. Rather than only tracking form submit conversion rates, you want to see how the distribution of <strong>Form submits</strong>, <strong>Phone calls</strong>, and <strong>No action</strong> differs between layouts.
+</p>
+<ul>
+  <li><strong>Desktop layout (A):</strong> a full-width hero banner, dense copy, and a primary CTA geared toward desktop visitors.</li>
+  <li><strong>Mobile layout (B):</strong> a simplified, vertically stacked layout optimized for quick scanning on phones, with a persistent tap-to-call option.</li>
+</ul>
+<p>
+The counts in the contingency table represent unique visitors bucketed by layout and their primary action on the page. The patterns are realistic: both layouts generate a mix of form fills, calls, and non-responders, with neither layout completely dominating. However, the mobile-first layout appears to generate more form submits at the cost of slightly fewer phone calls, raising strategic questions about how the sales team prefers to engage leads.
+</p>
+<p>
+Your analytical goal is to use a chi-square test of independence to evaluate whether user action distribution is associated with layout choice. This goes beyond a single conversion metric and helps you compare how different layouts shape the overall contact mix for the sales funnel.
+</p>
 
 # Alpha
 0.10
@@ -23,3 +35,4 @@ No action
 # Additional Inputs
 chartXAxis=rows
 cellLabelMode=observed
+

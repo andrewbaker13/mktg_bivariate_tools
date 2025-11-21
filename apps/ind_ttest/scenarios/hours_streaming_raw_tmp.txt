@@ -1,26 +1,10 @@
-# Title
+﻿# Title
 Streaming Hours Cohort Experiment
 
 # Description
-<p>
-You work on the insights team for a subscription streaming platform. Product marketing suspects that "always-on" subscribers behave differently from "seasonal bingers" who reactivate their accounts around marquee releases. Before investing in a retention campaign for bingers, the team wants to quantify how much <strong>weekly viewing time</strong> actually differs between the two cohorts.
-</p>
-<p>
-You pull a sample of active subscribers and classify them into:
-</p>
-<ul>
-  <li><strong>Monthly Pass Holders:</strong> subscribers who stay active most months of the year and rarely churn.</li>
-  <li><strong>Seasonal Bingers:</strong> subscribers who cycle in and out around big tentpole series or sports seasons.</li>
-</ul>
-<p>
-For each sampled account, you compute total <strong>hours streamed in the most recent week</strong> and tag the observation with the cohort label. The data below are realistic: Monthly Pass Holders tend to watch more, on average, but there is meaningful overlap between the groups and plenty of week-to-week variability.
-</p>
-<p>
-Your analytical goal is to treat this as an independent-samples comparison of means and use a t-test (Welch's version is appropriate if the variances differ) to assess whether average weekly hours are credibly higher for Monthly Pass Holders. From there, you can translate the mean difference into an estimate of incremental engagement and evaluate whether a focused retention campaign for Seasonal Bingers is likely to pay off.
-</p>
-<p>
-This scenario also demonstrates the <strong>raw-data upload mode</strong> in the tool. Each row below is one account's weekly <code>Hours_Streaming</code> value. The app summarizes the data by group, checks assumptions, and then runs the independent t-test on the aggregated summaries.
-</p>
+Two streaming cohorts were tracked for a retention sprint. “Monthly Pass Holders” are always-on subscribers, while “Seasonal Bingers” only reactivate around marquee releases. Product marketing wants to know whether the heavier users truly stream more hours per week before green-lighting a loyalty push.
+
+This scenario demonstrates the raw-data upload mode. Each row below is one user’s weekly Hours_Streaming observation, so the tool must summarize the observations before running Welch’s t-test.
 
 # Alpha
 0.05
@@ -105,4 +89,3 @@ Seasonal Bingers,14.2
 
 # Additional Inputs
 delta0=0
-

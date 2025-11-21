@@ -726,17 +726,19 @@
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]);}); }
 
   function renderScenarioDescription(title, description) {
-    var container = document.getElementById('scenario-description');
-    if (!container) return;
-    if (!description) {
-      container.innerHTML = scenarioState.defaultDescription;
-      return;
+      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+        window.UIUtils.renderScenarioDescription({
+          containerId: 'scenario-description',
+          title: title,
+          description: description,
+          defaultHtml: scenarioState.defaultDescription
+        });
+        return;
+      }
+      var container = document.getElementById('scenario-description');
+      if (!container) return;
+      container.innerHTML = description || scenarioState.defaultDescription || '';
     }
-    var paragraphs = description.split(/\n{2,}/).map(function (text) { return text.trim(); }).filter(Boolean);
-    var heading = title ? '<p><strong>' + escapeHtml(title) + '</strong></p>' : '';
-    var body = paragraphs.length ? paragraphs.map(function (text) { return '<p>' + escapeHtml(text) + '</p>'; }).join('') : '<p>' + escapeHtml(description) + '</p>';
-    container.innerHTML = heading + body;
-  }
 
   function getScenarioDownloadInfo(entry) {
     if (!entry) return null;

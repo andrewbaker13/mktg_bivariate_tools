@@ -2,8 +2,22 @@
 Refer-a-Friend Revenue Pilot
 
 # Description
-The product team is testing a refer-a-friend incentive versus the historic control to see how much incremental downstream revenue each recipient generates.
-This preset gives you average revenue per recipient, variability, and sample sizes so you can translate a mean difference into projected incremental revenue before deciding whether to scale the incentive.
+<p>
+Your growth team is considering a <strong>refer-a-friend incentive</strong> that offers existing customers a small credit when a friend makes their first purchase. Finance wants evidence that this incentive generates enough downstream revenue to cover the cost of credits and any cannibalization of organic demand.
+</p>
+<p>
+You set up a pilot where eligible customers are randomly assigned to one of two conditions:
+</p>
+<ul>
+  <li><strong>Refer-a-Friend Incentive:</strong> receives a personalized email and in-app card explaining the reward mechanics and showing a unique referral link.</li>
+  <li><strong>Baseline Control:</strong> sees the usual merchandising and evergreen content, but no referral messaging or credits.</li>
+</ul>
+<p>
+Over the next 60 days, you track <strong>total revenue per existing customer</strong>, including their own purchases and any orders placed by referred friends that can be tied back to them. The resulting averages are higher for the incentive group, but the standard deviations are also large: a few ��super-referrers�� generate a lot of revenue, while many customers refer zero friends.
+</p>
+<p>
+Your analytical goal is to use an independent t-test to quantify the mean revenue difference between groups and construct a confidence interval around that difference. You��ll interpret both the <em>p-value</em> (evidence that the incentive matters) and the <em>effect size</em> (how big the lift actually is), then translate that into projected incremental revenue vs. cost to decide whether to roll the program out more broadly.
+</p>
 
 # Alpha
 0.05

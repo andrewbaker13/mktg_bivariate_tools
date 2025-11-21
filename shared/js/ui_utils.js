@@ -84,5 +84,57 @@ function initDropzone({
   });
 }
 
+function escapeHtmlValue(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Render a scenario description into a container, supporting sanitized HTML.
+ *
+ * If the description string contains HTML tags, it is assumed to be sanitized markup
+ * and is injected directly (optionally preceded by a bold title). Otherwise, it is
+ * treated as plain text and split into paragraphs.
+ *
+ * @param {object} params
+ * @param {string} params.containerId - Element id where the description should be rendered.
+ * @param {string} [params.title] - Optional scenario title.
+ * @param {string} [params.description] - Scenario body text or HTML.
+ * @param {string} [params.defaultHtml] - Default HTML to use when description is empty.
+ */
+function renderScenarioDescription({ containerId, title, description, defaultHtml }) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  if (!description) {
+    if (defaultHtml != null) container.innerHTML = defaultHtml;
+    return;
+  }
+
+  const hasHtml = /<\/?[a-z][\s\S]*>/i.test(description);
+  const heading = title ? `<p><strong>${escapeHtmlValue(title)}</strong></p>` : '';
+
+  if (hasHtml) {
+    container.innerHTML = heading + description.trim();
+    return;
+  }
+
+  const paragraphs = description
+    .split(/\n{2,}/)
+    .map(paragraph => paragraph.trim())
+    .filter(Boolean);
+
+  const content = paragraphs.length
+    ? paragraphs.map(text => `<p>${escapeHtmlValue(text)}</p>`).join('')
+    : `<p>${escapeHtmlValue(description)}</p>`;
+
+  container.innerHTML = heading + content;
+}
+
 window.UIUtils = window.UIUtils || {};
 window.UIUtils.initDropzone = initDropzone;
+window.UIUtils.renderScenarioDescription = renderScenarioDescription;

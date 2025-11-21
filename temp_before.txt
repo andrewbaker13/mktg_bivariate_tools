@@ -1,6 +1,0 @@
-
-
-
-<section class="card inputs-panel">
-  <h2>Inputs &amp; Settings</h2>
-  <div class="controls">

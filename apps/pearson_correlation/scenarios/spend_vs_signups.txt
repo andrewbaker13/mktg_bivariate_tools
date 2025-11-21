@@ -2,9 +2,18 @@
 Paid Social Spend vs Trial Signups
 
 # Description
-A commerce team piloted an always-on paid social program in 10 metro areas. Spend reflects weekly media investment (in $K) while signups captures the number of free-trial registrations during the same week.
-
-Leads asked whether diminishing returns have already kicked in or if they can safely double the program next month.
+<p>
+A growth squad piloted an always-on paid social program in 10 metro areas. For each week in the pilot, analysts logged <strong>paid social spend</strong> (in thousands of dollars) and the number of <strong>free-trial signups</strong> attributed to that traffic. The goal is to understand whether higher weekly spend is associated with more trial signups, and how strong that association really is.
+</p>
+<p>
+Some stakeholders assume a nearly linear relationship—double the spend, double the signups—while others suspect diminishing returns are already kicking in. The data below show a realistic pattern: as spend increases, signups tend to increase as well, but with visible noise from auction dynamics, creative fatigue, and day-of-week effects.
+</p>
+<p>
+Instead of fitting a full response curve right away, the team starts by examining the <strong>Pearson correlation</strong> between weekly spend and signups. A moderate, positive correlation would support the idea that higher investment reliably moves trial volume, even if not perfectly. A very weak or ambiguous correlation might signal that targeting, creative, or attribution rules need a closer look before budgets scale up.
+</p>
+<p>
+Your analytical task is to compute and interpret that correlation: How strong is the linear association? Is it statistically distinct from zero at the chosen alpha level? And, from a marketing perspective, does the observed relationship justify increasing spend next month or focusing first on efficiency improvements?
+</p>
 
 # Alpha
 0.05
@@ -28,3 +37,4 @@ spend_k,signups
 
 # Raw Data File
 file=scenarios/data/spend_vs_signups.csv
+

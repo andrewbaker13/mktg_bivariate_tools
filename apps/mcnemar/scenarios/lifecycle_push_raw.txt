@@ -2,9 +2,22 @@
 Lifecycle Push Raw Upload Pilot
 
 # Description
-Customer lifecycle marketing tested a mid-journey push notification. Every loyalty member in the pilot received the legacy control message on Monday and a journey-personalized notification on Wednesday. Marketers flagged whether each touch triggered an engaged response (tap-through plus site visit) or no response.
-
-To mirror real workflow, this scenario feeds the app with the raw paired dataset of 90 members. Each row lists a member’s response to the control message and the personalized follow-up so the tool must aggregate the discordant wins before running McNemar’s test.
+<p>
+Customer lifecycle marketing is testing a mid-journey push notification aimed at nudging loyalty members back into the app. Historically, the team has relied on a generic control message (“Check out what’s new”) that goes to everyone. Product marketers want to know whether a <strong>journey-personalized notification</strong>—tailored to each member’s recent behavior—actually changes engagement for the same people.
+</p>
+<p>
+In this pilot, every member in the sample receives two pushes in the same week:
+</p>
+<ul>
+  <li><strong>Control notification (Condition A):</strong> standard, one-size-fits-all copy.</li>
+  <li><strong>Journey-personalized notification (Condition B):</strong> copy that references recent activity (e.g., “Pick up where you left off in your saved workouts”) or relevant offers.</li>
+</ul>
+<p>
+For each notification, the team records whether the member produced an <strong>engaged response</strong> (tap-through plus a meaningful site/app visit) or <strong>no response</strong>. Each member therefore contributes a paired outcome: engage vs. no-engage under control, and engage vs. no-engage under the personalized message. This paired, binary structure calls for <strong>McNemar’s test</strong>, which focuses specifically on members whose behavior flips between conditions.
+</p>
+<p>
+This preset is built around the <em>raw</em> paired dataset of 90 members (provided in a CSV in your project). The counts below summarize that raw file: some members engage under both pushes or neither; others engage only under one of the two. Your analytical goal is to examine the imbalance between “Control only” and “Personalized only” engagements to decide whether journey-personalized pushes measurably increase engagement, and to use that evidence when recommending a broader rollout.
+</p>
 
 # Alpha
 0.05
@@ -23,3 +36,4 @@ negative_label=No response
 
 # Additional Inputs
 analysis_method=chi2_cc
+

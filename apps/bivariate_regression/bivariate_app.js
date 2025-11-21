@@ -704,16 +704,20 @@ function parseScenarioText(text) {
 }
 
 function renderScenarioDescription(title, description) {
-  const container = document.getElementById('scenario-description');
-  if (!container) return;
-  if (!Array.isArray(description) || !description.length) {
+    if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+      const body = Array.isArray(description) ? description.join('\n\n') : description;
+      window.UIUtils.renderScenarioDescription({
+        containerId: 'scenario-description',
+        title,
+        description: body,
+        defaultHtml: defaultScenarioDescription
+      });
+      return;
+    }
+    const container = document.getElementById('scenario-description');
+    if (!container) return;
     container.innerHTML = defaultScenarioDescription || '';
-    return;
   }
-  const paragraphs = description.map(text => `<p>${text}</p>`).join('');
-  const heading = title ? `<h3>${escapeHtml(title)}</h3>` : '';
-  container.innerHTML = `${heading}${paragraphs}`;
-}
 
 function abandonScenarioDataset() {
   if (!activeScenarioDataset) return;
@@ -1487,8 +1491,8 @@ function renderEffectPlot(predictorType, labels, {
   if (interpretation) {
     interpretation.innerHTML = `
       <p>The line shows how predicted ${escapeHtml(labels.y)} changes as ${escapeHtml(labels.x)} varies.</p>
-      <p>Use the range buttons to view the mean +/- 2 SD, the observed min/max, or enter a custom range.</p>
-      <p>A steeper line means a stronger effect of ${escapeHtml(labels.x)} on ${escapeHtml(labels.y)}.</p>
+      <p>The shaded band is a confidence interval for the <em>expected mean</em> ${escapeHtml(labels.y)} at each value of ${escapeHtml(labels.x)}&mdash;it reflects uncertainty in the average relationship, not the spread of individual observations.</p>
+      <p>Use the range buttons to view the mean &plusmn; 2 SD, the observed min/max, or a custom range. A steeper line means a stronger effect of ${escapeHtml(labels.x)} on ${escapeHtml(labels.y)}; if the numerical slope is not statistically significant, treat the pattern in this plot as directional rather than conclusive.</p>
     `;
   }
 }

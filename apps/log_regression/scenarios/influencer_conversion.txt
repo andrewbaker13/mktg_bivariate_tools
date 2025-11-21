@@ -1,0 +1,33 @@
+# Title
+Influencer Campaign: Story Engagement and Purchase Conversion
+
+# Description
+<p>
+You are the performance marketing analyst for a DTC beauty brand that relies heavily on Instagram and TikTok influencers. The team wants to understand which influencer partnerships are most likely to drive <strong>purchases</strong>, not just impressions and clicks. They are especially interested in whether <em>tier</em> (mega vs. mid-tier vs. micro creators) and <em>story engagement</em> metrics can help predict who actually converts.
+</p>
+<p>
+You have pulled data at the <strong>influencer-post</strong> level for a recent campaign flight. For each sponsored story or short-form video, you track whether it generated at least one verified purchase within a seven-day attribution window. The dataset includes:
+</p>
+<ul>
+  <li><strong>Converted:</strong> binary indicator (1 = at least one purchase attributed to this post, 0 = no attributed purchase).</li>
+  <li><strong>Story_Views:</strong> number of unique story impressions.</li>
+  <li><strong>Swipe_Ups:</strong> number of swipe-up or link-tap events to the brand landing page.</li>
+  <li><strong>Influencer_Tier:</strong> creator tier (<em>Mega</em>, <em>Mid</em>, <em>Micro</em>), based on follower count.</li>
+  <li><strong>Audience_Region:</strong> dominant audience region for the creator (<em>US</em>, <em>EU</em>, <em>LATAM</em>, <em>APAC</em>).</li>
+</ul>
+<p>
+The relationships are realistic rather than perfect. Posts with more swipe-ups generally convert more often, but there are influential micro creators whose small but highly engaged audiences convert at surprisingly high rates. Some mega creators deliver huge reach with modest conversion. Regional differences exist but overlap: a few EU and LATAM creators outperform some US creators, even after accounting for impressions and swipe-ups.
+</p>
+<p>
+Your analytical goal is to use <strong>logistic regression</strong> to model the probability that a post converts (<code>Converted = 1</code>) as a function of story engagement and creator characteristics. You are not trying to perfectly predict every post but to quantify patterns such as, �?oholding engagement constant, how does conversion likelihood change between mid-tier and micro influencers?�?? and �?odo certain regions or tiers justify a premium based on higher conversion odds?�??
+</p>
+
+# How to use
+<ul>
+  <li><strong>Outcome:</strong> set <em>Converted</em> as the binary outcome (1 = converted, 0 = not).</li>
+  <li><strong>Predictors:</strong> include <em>Story_Views</em> and <em>Swipe_Ups</em> as numeric predictors, and treat <em>Influencer_Tier</em> and <em>Audience_Region</em> as categorical.</li>
+  <li><strong>Interpret coefficients:</strong> translate log-odds and odds ratios into statements such as �?oa post with 20 more swipe-ups multiplies the odds of at least one purchase by about X, holding tier and region constant.�??</li>
+  <li><strong>Compare tiers:</strong> use the odds ratios for <em>Influencer_Tier</em> to discuss whether mid-tier or micro creators deliver reliably higher conversion odds than mega creators once you control for engagement volume.</li>
+  <li><strong>Connect to strategy:</strong> turn the model into guidance for future budget allocation across tiers and regions, focusing on segments with strong, but not unrealistically perfect, conversion performance.</li>
+</ul>
+

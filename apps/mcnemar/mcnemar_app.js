@@ -1332,19 +1332,19 @@ function parseScenarioText(text) {
 }
 
 function renderScenarioDescription(title, description) {
-    const container = document.getElementById('scenario-description');
-    if (!container) return;
-    if (!description) {
-        container.innerHTML = defaultScenarioDescription;
-        return;
-    }
-    const paragraphs = description.split(/\n{2,}/).map(paragraph => paragraph.trim()).filter(Boolean);
-    const content = paragraphs.length
-        ? paragraphs.map(text => `<p>${escapeHtml(text)}</p>`).join('')
-        : `<p>${escapeHtml(description)}</p>`;
-    const heading = title ? `<p><strong>${escapeHtml(title)}</strong></p>` : '';
-    container.innerHTML = `${heading}${content}`;
-}
+      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+          window.UIUtils.renderScenarioDescription({
+              containerId: 'scenario-description',
+              title,
+              description,
+              defaultHtml: defaultScenarioDescription
+          });
+          return;
+      }
+      const container = document.getElementById('scenario-description');
+      if (!container) return;
+      container.innerHTML = description || defaultScenarioDescription || '';
+  }
 
 function applyScenarioData(parsed) {
     const labels = {

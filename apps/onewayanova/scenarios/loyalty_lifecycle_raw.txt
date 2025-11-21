@@ -2,7 +2,21 @@
 Lifecycle Messaging Experiment (Raw Observations)
 
 # Description
-Lifecycle marketing wants to understand which message style keeps high-value customers re-engaged after their first subscription renewal. Four variants are in market: an always-on thank-you note, a tiered loyalty story, a carousel of rotating benefits, and a hype-driven VIP drop invite. Each observation below is an incremental revenue-per-customer figure captured after the push notification and follow-up email hit. Use the raw dataset to stress-test your ingestion flows, flip into the raw upload mode, or stick with the summary statistics computed from the same rows.
+<p>
+Lifecycle marketing wants to understand which post-renewal message style best keeps high-value subscribers engaged. Four message variants are currently in market:
+</p>
+<ul>
+  <li><strong>Always-on Thank-You:</strong> a simple, consistent note expressing appreciation for continued membership.</li>
+  <li><strong>Tiered Loyalty Story:</strong> copy that highlights tiered benefits, status milestones, and long-term rewards.</li>
+  <li><strong>Benefit Carousel:</strong> a rotating carousel of concrete perks (content access, shipping, discounts) tailored to subscriber behavior.</li>
+  <li><strong>VIP Drop Invite:</strong> hype-driven invites to limited-time, VIP-only drops designed to create excitement and urgency.</li>
+</ul>
+<p>
+Each row below is an observed <strong>incremental revenue-per-customer</strong> figure captured after the push notification and follow-up email sequence. Differences between groups are intentional but modest; you will see overlapping ranges that reflect the messy reality of lifecycle tests rather than dramatic, unrealistic gaps.
+</p>
+<p>
+This scenario lets you practice one-way ANOVA using a raw dataset: you can either upload the data in raw mode or use the app's summary mode after computing means and standard deviations. The analytical goal is to determine whether any message variant delivers a reliably higher average revenue per customer and to quantify the magnitude of those differences.
+</p>
 
 # Alpha
 0.05

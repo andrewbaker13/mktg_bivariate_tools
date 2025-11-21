@@ -382,21 +382,19 @@
     }
 
     function renderScenarioDescription(title, description){
-      const container = q('scenario-description');
-      if(!container) return;
-      if(!description){
-        container.innerHTML = scenarioState.defaultDescription;
-        return;
+        if(window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function'){
+          window.UIUtils.renderScenarioDescription({
+            containerId: 'scenario-description',
+            title,
+            description,
+            defaultHtml: scenarioState.defaultDescription
+          });
+          return;
+        }
+        const container = q('scenario-description');
+        if(!container) return;
+        container.innerHTML = description || scenarioState.defaultDescription || '';
       }
-      const heading = title ? `<p><strong>${title}</strong></p>` : '';
-      const paragraphs = description
-        .split(/\n{2,}/)
-        .map(p => p.trim())
-        .filter(Boolean)
-        .map(text => `<p>${formatScenarioMarkup(text)}</p>`)
-        .join('');
-      container.innerHTML = heading + (paragraphs || `<p>${formatScenarioMarkup(description)}</p>`);
-    }
 
     function parseScenarioText(text){
       const lines = text.replace(/\r/g,'').split('\n');

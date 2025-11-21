@@ -2,8 +2,22 @@
 Loyalty Upsell Experiment
 
 # Description
-Marketing wants to know if loyalty members spend more when the email copy highlights a personalized reward vs. a generic loyalty update.
-This preset gives you per-recipient spend, variability, and sample size so you can decide whether the observed lift is large and stable enough to support a full loyalty-program rollout.
+<p>
+You manage CRM for a mid-sized retailer with a growing loyalty program. The team suspects that generic ��points balance�� updates are underperforming, and that a more tailored upsell email highlighting <strong>specific rewards unlocked for each member</strong> could increase short-term spending.
+</p>
+<p>
+To test this, you randomly split active loyalty members into two groups:
+</p>
+<ul>
+  <li><strong>Personalized Loyalty Email:</strong> shows the member��s current tier, points balance, and 1�C2 concrete rewards they can claim or are close to unlocking.</li>
+  <li><strong>Generic Loyalty Email:</strong> a control template with high-level program benefits and a link to the account page, but no personalized offers.</li>
+</ul>
+<p>
+Over the next 30 days, you track <strong>incremental spend per member</strong> attributed to that campaign. The averages between groups differ by a few dollars, and the standard deviations are moderate��the kind of noisy but interpretable pattern you expect when some members spend a lot and many spend little or nothing.
+</p>
+<p>
+Your analytical goal is to use an independent-samples t-test to judge whether the personalized upsell genuinely increases average spend versus the generic control, or whether the observed difference could plausibly be due to sampling noise. From there, you��ll translate the estimated lift into projected annual revenue and decide whether to scale personalized loyalty emails across additional segments and markets.
+</p>
 
 # Alpha
 0.05

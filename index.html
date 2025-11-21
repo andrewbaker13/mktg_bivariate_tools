@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Marketing Bivariate Tools – Student Guide</title>
+  <title>Marketing Analytics Tools – Student Guide</title>
   <link rel="stylesheet" href="shared/css/main.css">
 </head>
 
@@ -12,7 +12,7 @@
   <main class="app-main">
     <header class="intro hero-header">
       <div class="hero-header__top">
-        <h1>Marketing Bivariate Statistics Tools</h1>
+        <h1>Marketing Analytics Statistics Tools</h1>
         <div class="hero-context">
           <span class="badge">Student Guide</span>
         </div>
@@ -41,11 +41,71 @@
             same accounts) &rarr; McNemar test.</li>
           <li><strong>Two categorical variables</strong> (e.g., device type by response, segment by offer) &rarr;
             Chi-square test of association.</li>
+          <li><strong>One numeric outcome with multiple predictors</strong> &rarr; Multiple Linear Regression.</li>
+          <li><strong>Binary outcome with multiple predictors</strong> &rarr; Logistic Regression.</li>
         </ul>
         <p class="muted">
-          Unsure where to start? Read the "TEST OVERVIEW &amp; EQUATIONS" section inside each app for assumptions,
+          Unsure where to start? Use the Test Picker helper below or read the "TEST OVERVIEW &amp; EQUATIONS" section inside each app for assumptions,
           notations, and links to references.
         </p>
+      </div>
+    </section>
+
+    <section class="scenario-section" aria-labelledby="helper-heading">
+      <h2 id="helper-heading">Interactive Test Picker (Helper)</h2>
+      <div class="card">
+        <p>
+          Not sure which statistical test fits your marketing question? Answer a few quick questions and this helper will suggest
+          a test (or tests) to consider. It may recommend tools that are not yet implemented here, so you see the broader landscape.
+        </p>
+        <div id="test-helper" class="tool-directory">
+          <article class="tool-card">
+            <h3>Which test should I use?</h3>
+            <p class="muted">
+              Describe your outcome, predictors, and study design to get a recommendation.
+              The <strong>Common test used</strong> is the default classroom choice; <strong>Alternative statistical tests</strong> are
+              equivalent or closely related approaches that could also answer the same question.
+            </p>
+            <div class="helper-controls">
+              <label for="helper-outcome-type" style="display:block;"><strong>1. Outcome type</strong></label>
+              <select id="helper-outcome-type">
+                <option value="">-- Select outcome type --</option>
+                <option value="numeric">Numeric (continuous)</option>
+                <option value="binary">Binary (yes/no, convert/not)</option>
+                <option value="categorical">Categorical (3+ unordered categories)</option>
+              </select>
+
+              <label for="helper-predictors" style="margin-top:0.5rem; display:block;"><strong>2. Number of predictors</strong></label>
+              <select id="helper-predictors">
+                <option value="">-- Select predictor setup --</option>
+                <option value="one">One main predictor</option>
+                <option value="multiple">Multiple predictors (build a model)</option>
+              </select>
+
+              <div id="helper-predictor-type-wrapper" style="margin-top:0.5rem; display:none;">
+                <label for="helper-predictor-type" style="display:block;"><strong>3. If you have one main predictor, what type is it?</strong></label>
+                <select id="helper-predictor-type">
+                  <option value="">-- Select predictor type --</option>
+                  <option value="numeric">Numeric (e.g., spend, time, ratings)</option>
+                  <option value="binary_group">Binary group indicator (e.g., Control vs. Treatment)</option>
+                  <option value="categorical3">Categorical with 3+ levels (e.g., 4 creative versions)</option>
+                </select>
+              </div>
+
+              <label for="helper-groups" style="margin-top:0.5rem; display:block;"><strong>4. Group structure (how your data are organized)</strong></label>
+              <select id="helper-groups">
+                <option value="">-- Select group structure --</option>
+                <option value="none">No group variable (each row is one case with its own predictor and outcome)</option>
+                <option value="two_ind">Two independent groups (different people/accounts in each group)</option>
+                <option value="two_paired">Two paired measurements on the same people/accounts (before/after or A/B)</option>
+                <option value="three_plus">Three or more groups (one grouping variable with 3+ categories)</option>
+              </select>
+
+              <button type="button" id="helper-suggest" class="primary" style="margin-top:0.75rem;">Suggest a test</button>
+              <div id="helper-result" class="muted" style="margin-top:0.75rem; padding:0.75rem 1rem; border-left:4px solid #f59e0b; background-color:#fef3c7; border-radius:4px; display:none;"></div>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -53,76 +113,94 @@
       <h2 id="directory-heading">Tool Directory</h2>
       <div class="card">
         <div class="tool-directory">
+          <h3>Correlation &amp; Regression</h3>
           <article class="tool-card">
-            <h3><a href="apps/pearson_correlation/main_pearson.html">Pearson Correlation</a></h3>
+            <h4><a href="apps/pearson_correlation/main_pearson.html">Pearson Correlation</a></h4>
             <p>
               Explores whether two continuous marketing metrics move together
               (for example, <em>ad spend vs. revenue</em> or <em>time on site vs. conversion rate</em>).
             </p>
             <p class="muted">Data: pairs of numeric values for each case.</p>
           </article>
-
           <article class="tool-card">
-            <h3><a href="apps/ind_ttest/main_ind_ttest.html">Welch's t-test (Independent Means)</a></h3>
+            <h4><a href="apps/bivariate_regression/main_bivariate_regression.html">Bivariate Linear Regression</a></h4>
+            <p>
+              Fits a straight-line relationship between one predictor and one outcome, either for a continuous predictor
+              (for example, <em>weekly ad spend vs. revenue</em>) or a binary group indicator.
+            </p>
+            <p class="muted">Data: summary stats (n, means, SDs, r) or raw paired observations.</p>
+          </article>
+          <article class="tool-card">
+            <h4><a href="apps/ml_regression/ml_regression.html">Multiple Linear Regression</a></h4>
+            <p>
+              Models a numeric outcome using multiple predictors (continuous and categorical) with diagnostics and effect plots
+              (for example, <em>customer value vs. recency, frequency, and segment</em>).
+            </p>
+            <p class="muted">Data: raw rows with one numeric outcome and several predictors.</p>
+          </article>
+          <article class="tool-card">
+            <h4><a href="apps/log_regression/log_regression.html">Logistic Regression</a></h4>
+            <p>
+              Models a binary outcome using multiple predictors to estimate odds ratios and predicted probabilities
+              (for example, <em>conversion vs. not convert based on traffic source, offer, and device</em>).
+            </p>
+            <p class="muted">Data: raw rows with one binary outcome and several predictors.</p>
+          </article>
+        </div>
+
+        <div class="tool-directory" style="margin-top:1.5rem;">
+          <h3>Means &amp; Proportions</h3>
+          <article class="tool-card">
+            <h4><a href="apps/ind_ttest/main_ind_ttest.html">Welch's t-test (Independent Means)</a></h4>
             <p>
               Compares average performance between two independent groups when variances and sample sizes may differ
               (for example, <em>Control vs. New Subject Line</em>).
             </p>
             <p class="muted">Data: group means/SDs and sample sizes, or raw outcomes for each group.</p>
           </article>
-
           <article class="tool-card">
-            <h3><a href="apps/paired_ttest/main_paired_ttest.html">Paired Sample t-test</a></h3>
+            <h4><a href="apps/paired_ttest/main_paired_ttest.html">Paired Sample t-test</a></h4>
             <p>
               Evaluates before/after or A/B measurements on the same people or accounts
               (for example, <em>pre-course vs. post-course scores</em>).
             </p>
             <p class="muted">Data: paired numeric observations or paired summary statistics.</p>
           </article>
-
           <article class="tool-card">
-            <h3><a href="apps/onewayanova/main_onewayanova.html">One-Way ANOVA</a></h3>
+            <h4><a href="apps/onewayanova/main_onewayanova.html">One-Way ANOVA</a></h4>
             <p>
               Tests whether <em>three or more</em> groups differ on a numeric outcome
               (for example, <em>four landing page designs vs. revenue per visitor</em>).
             </p>
             <p class="muted">Data: group means/SDs and sample sizes, or long-format raw data.</p>
           </article>
-
           <article class="tool-card">
-            <h3><a href="apps/ab_proportion/main_ab_proportion.html">A/B Proportion Tool</a></h3>
+            <h4><a href="apps/ab_proportion/main_ab_proportion.html">A/B Proportion Tool</a></h4>
             <p>
               Compares conversion rates or other binary outcomes between two independent variants
               (for example, <em>Newsletter CTA A vs. CTA B</em>).
             </p>
             <p class="muted">Data: conversions and sample sizes, or raw 0/1 outcomes by group.</p>
           </article>
+        </div>
 
+        <div class="tool-directory" style="margin-top:1.5rem;">
+          <h3>Categorical &amp; Matched-Pair Tests</h3>
           <article class="tool-card">
-            <h3><a href="apps/chisquare/main_chisquare.html">Chi-square Test of Association</a></h3>
+            <h4><a href="apps/chisquare/main_chisquare.html">Chi-square Test of Association</a></h4>
             <p>
               Checks whether two categorical variables are related
               (for example, <em>device type by signup status</em> or <em>segment by offer selection</em>).
             </p>
             <p class="muted">Data: contingency table counts or raw categorical outcomes.</p>
           </article>
-
           <article class="tool-card">
-            <h3><a href="apps/mcnemar/main_mcnemar.html">McNemar Test</a></h3>
+            <h4><a href="apps/mcnemar/main_mcnemar.html">McNemar Test</a></h4>
             <p>
               Focuses on "switchers" in paired yes/no data, such as matched pre/post responses
               (for example, <em>same customers under two creative treatments</em>).
             </p>
             <p class="muted">Data: 2 &times; 2 matched table or raw paired outcomes.</p>
-          </article>
-
-          <article class="tool-card">
-            <h3><a href="apps/bivariate_regression/main_bivariate_regression.html">Bivariate Linear Regression</a></h3>
-            <p>
-              Fits a straight-line relationship between one predictor and one outcome, either for a continuous predictor
-              (for example, <em>weekly ad spend vs. revenue</em>) or a binary group indicator.
-            </p>
-            <p class="muted">Data: summary stats (n, means, SDs, r) or raw paired observations.</p>
           </article>
         </div>
       </div>
@@ -142,6 +220,109 @@
       </div>
     </section>
   </main>
+  <script>
+    (function () {
+      const outcomeSel = document.getElementById('helper-outcome-type');
+      const groupsSel = document.getElementById('helper-groups');
+      const predsSel = document.getElementById('helper-predictors');
+      const predTypeWrapper = document.getElementById('helper-predictor-type-wrapper');
+      const predTypeSel = document.getElementById('helper-predictor-type');
+      const btn = document.getElementById('helper-suggest');
+      const resultEl = document.getElementById('helper-result');
+      if (!outcomeSel || !groupsSel || !predsSel || !btn || !resultEl) return;
+
+      if (predsSel && predTypeWrapper && predTypeSel) {
+        predsSel.addEventListener('change', function () {
+          if (predsSel.value === 'one') {
+            predTypeWrapper.style.display = 'block';
+          } else {
+            predTypeWrapper.style.display = 'none';
+            predTypeSel.value = '';
+          }
+        });
+      }
+
+      function suggest() {
+        const outcome = outcomeSel.value;
+        const groups = groupsSel.value;
+        const preds = predsSel.value;
+        const predType = predTypeSel ? predTypeSel.value : '';
+        if (!outcome || !preds || !groups) {
+          resultEl.textContent = 'Please choose an outcome type, number of predictors, and group structure.';
+          return;
+        }
+        if (preds === 'one' && predTypeWrapper && predTypeSel && !predType) {
+          resultEl.textContent = 'Please specify the type of your single main predictor (numeric, binary group indicator, or categorical with 3+ levels).';
+          return;
+        }
+
+        let suggestion = '';
+        let common = '';
+        let alternatives = '';
+        if (outcome === 'numeric' && preds === 'one') {
+          if (predType === 'numeric') {
+            common = 'Pearson Correlation (<a href="apps/pearson_correlation/main_pearson.html">open tool</a>)';
+            alternatives = 'Bivariate Linear Regression (<a href="apps/bivariate_regression/main_bivariate_regression.html">open tool</a>) for a fitted line through the cloud of points.';
+          } else if (predType === 'binary_group') {
+            if (groups === 'two_paired') {
+              common = 'Paired Sample t-test (<a href="apps/paired_ttest/main_paired_ttest.html">open tool</a>)';
+              alternatives = 'Simple bivariate regression with a binary indicator (not typically needed for introductory work).';
+            } else {
+              common = 'Welch\u2019s t-test for independent means (<a href="apps/ind_ttest/main_ind_ttest.html">open tool</a>)';
+              alternatives = 'Bivariate Linear Regression with a binary predictor coded as 0/1, which produces an equivalent mean-difference test.';
+            }
+          } else if (predType === 'categorical3') {
+            common = 'One-Way ANOVA (<a href="apps/onewayanova/main_onewayanova.html">open tool</a>)';
+            alternatives = 'Bivariate Linear Regression with dummy variables for each group, which is algebraically equivalent.';
+          }
+        } else if (outcome === 'numeric' && preds === 'multiple') {
+          common = 'Multiple Linear Regression (general linear model for one numeric outcome and multiple predictors) (<a href="apps/ml_regression/ml_regression.html">open tool</a>)';
+          alternatives = 'Generalized linear models (e.g., with different link functions) for more advanced use cases (not implemented here).';
+        } else if (outcome === 'binary' && preds === 'one') {
+          if (groups === 'two_ind') {
+            common = 'A/B Proportion test for two independent groups (<a href="apps/ab_proportion/main_ab_proportion.html">open tool</a>)';
+            alternatives = 'Simple logistic regression with a single group indicator as the predictor.';
+          } else if (groups === 'two_paired') {
+            common = 'McNemar test for paired yes/no data (<a href="apps/mcnemar/main_mcnemar.html">open tool</a>)';
+            alternatives = 'More advanced matched-pair logistic models (e.g., conditional logistic regression; not implemented here).';
+          } else {
+            common = 'Simple logistic regression (one binary outcome and one predictor). Use the Logistic Regression app (<a href="apps/log_regression/log_regression.html">open tool</a>) and include just one predictor.';
+            alternatives = 'For some marketing experiments, a proportion test or odds-ratio comparison could also be reported alongside the logistic model.';
+          }
+        } else if (outcome === 'binary' && preds === 'multiple') {
+          common = 'Logistic Regression for a binary outcome with multiple predictors (<a href="apps/log_regression/log_regression.html">open tool</a>)';
+          alternatives = 'Probit or complementary log-log models as alternative links (advanced; not implemented here).';
+        } else if (outcome === 'categorical') {
+          if (groups === 'none') {
+            common = 'Chi-square test of association for two categorical variables (<a href="apps/chisquare/main_chisquare.html">open tool</a>)';
+            alternatives = 'Log-linear models or multinomial logistic regression when you want a more detailed modeling approach (advanced; not implemented here).';
+          } else {
+            common = 'Consider a multinomial or ordinal logistic model (not yet implemented here).';
+            alternatives = 'Chi-square tests on collapsed categories can sometimes be used as a rough alternative, but with information loss.';
+          }
+        } else {
+          common = 'This combination is more advanced; consider a generalized linear model or mixed-effects model.';
+          alternatives = 'Consult a statistics reference or instructor for guidance on appropriate advanced methods.';
+        }
+
+        if (common || alternatives) {
+          suggestion = `<div style="font-size:0.95rem;">
+  <div><strong>Common test used (primary choice):</strong><br>${common || 'Not clearly defined at this level.'}</div>
+  <hr style="margin:0.5rem 0; border:none; border-top:1px solid #fbbf24;">
+  <div><strong>Alternative statistical tests (equivalent or related):</strong><br>${alternatives || 'None commonly used beyond the main test at this level (advanced options exist).'}
+  </div>
+</div>`;
+        } else {
+          suggestion = '<div style="font-size:0.95rem;">No recommendation could be generated for this combination of answers.</div>';
+        }
+
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = suggestion;
+      }
+
+      btn.addEventListener('click', suggest);
+    }());
+  </script>
 </body>
 
 </html>

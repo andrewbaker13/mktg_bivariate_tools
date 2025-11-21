@@ -1,0 +1,134 @@
+.two-column-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.manual-card .hint {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.manual-controls {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.example-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.data-actions {
+  margin-top: 1rem;
+  border-top: 1px solid var(--app-border);
+  padding-top: 1rem;
+}
+
+.template-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+.column-selectors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.regression-equation-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+.regression-equation-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.1rem;
+  background: #f1f4f8;
+  padding: 1rem;
+  border-radius: 8px;
+  color: #1e40af;
+  margin: 0;
+  text-align: center;
+}
+.regression-equation-text em {
+  font-style: normal;
+  color: #1d4ed8; /* A slightly different blue to stand out */
+}
+.tool-directory,
+.chart-card,
+.metrics-panel,
+.summary-section {
+  /* Rely on shared styles; this file only tweaks layout where needed. */
+}
+.predictor-list.stacked .predictor-row.stacked-row {
+  display: block;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.predictor-row.stacked-row label {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.predictor-row.stacked-row .predictor-type,
+.predictor-row.stacked-row .predictor-ref-wrapper {
+  display: inline-block;
+  margin-right: 8px;
+  margin-top: 6px;
+}
+
+.predictor-row.stacked-row .predictor-ref-wrapper {
+  margin-left: 4px;
+}
+
+.effect-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.effect-controls .range-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.effect-controls .custom-range {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.effect-nonfocal-levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.effect-nonfocal-levels label {
+  font-size: 0.875rem;
+}
+
+.effect-constants-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  margin-top: 8px;
+}
+
+.effect-constants-card h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.95rem;
+}

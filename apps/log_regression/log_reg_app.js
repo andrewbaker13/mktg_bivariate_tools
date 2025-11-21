@@ -1,4 +1,4 @@
-// Multiple Linear Regression Tool - rebuilt controller
+// Logistic Regression Tool - rebuilt controller
 
 // ---------- State ----------
 let selectedOutcome = null;
@@ -23,6 +23,7 @@ const effectState = {
 let lastFilteredRows = [];
 let lastPredictorsInfo = [];
 let lastModel = null;
+let outcomeCoding = { outcomeName: null, mode: 'numeric01', focalLabel: '1', nonFocalLabel: '0' };
 
 const RAW_UPLOAD_LIMIT = typeof MAX_UPLOAD_ROWS === 'number' ? MAX_UPLOAD_ROWS : 5000;
 const FALLBACK_SCENARIOS = [
@@ -73,6 +74,10 @@ function formatAlpha(alpha) {
   if (c >= 0.1) return c.toFixed(2);
   if (c >= 0.01) return c.toFixed(3);
   return c.toFixed(4);
+}
+function logistic(x) {
+  const val = 1 / (1 + Math.exp(-x));
+  return Math.min(Math.max(val, 1e-8), 1 - 1e-8);
 }
 
 // Matrix helpers
@@ -170,6 +175,46 @@ function fCdf(f, df1, df2) {
   const x = (df1 * f) / (df1 * f + df2);
   return betai(df1 / 2, df2 / 2, x);
 }
+// Regularized lower incomplete gamma via series / continued fraction
+function gammaIncLower(a, x) {
+  if (x <= 0 || a <= 0) return 0;
+  if (x < a + 1) {
+    // series expansion
+    let ap = a;
+    let sum = 1 / a;
+    let del = sum;
+    for (let n = 1; n <= 100; n++) {
+      ap += 1;
+      del *= x / ap;
+      sum += del;
+      if (Math.abs(del) < Math.abs(sum) * 1e-8) break;
+    }
+    return sum * Math.exp(-x + a * Math.log(x) - logGamma(a));
+  }
+  // continued fraction for upper, then convert
+  let b = x + 1 - a;
+  let c = 1 / 1e-30;
+  let d = 1 / b;
+  let h = d;
+  for (let n = 1; n <= 100; n++) {
+    const an = -n * (n - a);
+    b += 2;
+    d = an * d + b;
+    if (Math.abs(d) < 1e-30) d = 1e-30;
+    c = b + an / c;
+    if (Math.abs(c) < 1e-30) c = 1e-30;
+    d = 1 / d;
+    const del = d * c;
+    h *= del;
+    if (Math.abs(del - 1) < 1e-8) break;
+  }
+  const gammaUpper = h * Math.exp(-x + a * Math.log(x) - logGamma(a));
+  return Math.max(0, 1 - gammaUpper);
+}
+function chiSquareCdf(x, df) {
+  if (!(x >= 0) || df <= 0) return NaN;
+  return gammaIncLower(df / 2, x / 2);
+}
 
 // ---------- UI state helpers ----------
 function applyConfidenceSelection(level, { syncAlpha = true, skipUpdate = false } = {}) {
@@ -213,7 +258,7 @@ function setRawUploadStatus(message, status = '', { isHtml = true } = {}) {
   if (status) statusEl.classList.add(status);
 }
 function clearOutputs(message = 'Provide data to see results.') {
-  const metrics = ['metric-r2', 'metric-adj-r2', 'metric-f', 'metric-pmodel', 'metric-rmse', 'metric-mae', 'metric-resse', 'metric-df', 'metric-n', 'metric-alpha'];
+  const metrics = ['metric-loglik', 'metric-null-dev', 'metric-resid-dev', 'metric-chi2', 'metric-pmodel', 'metric-r2', 'metric-n', 'metric-alpha'];
   metrics.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '--'; });
   const apa = document.getElementById('apa-report');
   const mgr = document.getElementById('managerial-report');
@@ -222,7 +267,7 @@ function clearOutputs(message = 'Provide data to see results.') {
   const numBody = document.getElementById('numeric-summary-body');
   const catBody = document.getElementById('categorical-summary-body');
   if (apa) apa.textContent = '';
-  if (mgr) mgr.textCFfunbontent = '';
+  if (mgr) mgr.textContent = '';
   if (equation) equation.textContent = message;
   if (coefBody) coefBody.innerHTML = `<tr><td colspan="9">${escapeHtml(message)}</td></tr>`;
   if (numBody) numBody.innerHTML = `<tr><td colspan="6">${escapeHtml(message)}</td></tr>`;
@@ -290,6 +335,93 @@ function buildColumnMeta(rows, headers) {
     };
   });
   return meta;
+}
+
+function updateOutcomeCodingFromData() {
+  if (!selectedOutcome || !dataset || !Array.isArray(dataset.rows) || !dataset.rows.length) {
+    outcomeCoding = { outcomeName: null, mode: 'invalid', focalLabel: null, nonFocalLabel: null };
+    return;
+  }
+  const meta = columnMeta[selectedOutcome] || {};
+  const values = dataset.rows
+    .map(r => r[selectedOutcome])
+    .filter(v => v !== null && v !== undefined && v !== '');
+  const distinct = Array.from(new Set(values.map(v => String(v))));
+  // Numeric 0/1 coding
+  const allNumeric = distinct.every(v => Number.isFinite(parseFloat(v)));
+  const numericDistinct = distinct.map(v => parseFloat(v));
+  const isBinaryNumeric = allNumeric && numericDistinct.every(v => v === 0 || v === 1);
+  if (isBinaryNumeric) {
+    outcomeCoding = {
+      outcomeName: selectedOutcome,
+      mode: 'numeric01',
+      focalLabel: '1',
+      nonFocalLabel: '0'
+    };
+    return;
+  }
+  // Text-coded binary (two levels)
+  if (!meta.isNumeric && distinct.length === 2) {
+    let focal = outcomeCoding.outcomeName === selectedOutcome &&
+      outcomeCoding.mode === 'textBinary' &&
+      outcomeCoding.focalLabel &&
+      distinct.includes(outcomeCoding.focalLabel)
+      ? outcomeCoding.focalLabel
+      : distinct[0];
+    const nonFocal = distinct.find(v => v !== focal) || null;
+    outcomeCoding = {
+      outcomeName: selectedOutcome,
+      mode: 'textBinary',
+      focalLabel: focal,
+      nonFocalLabel: nonFocal
+    };
+    return;
+  }
+  outcomeCoding = { outcomeName: selectedOutcome, mode: 'invalid', focalLabel: null, nonFocalLabel: null };
+}
+
+function renderOutcomeFocalControl() {
+  const container = document.getElementById('outcome-focal-wrapper');
+  const select = document.getElementById('outcome-focal-select');
+  const note = document.getElementById('outcome-coding-note');
+  if (!container || !select || !note) return;
+  if (!selectedOutcome || !dataset.rows.length) {
+    container.classList.add('hidden');
+    note.textContent = '';
+    return;
+  }
+  updateOutcomeCodingFromData();
+  if (outcomeCoding.mode === 'textBinary' &&
+    outcomeCoding.focalLabel !== null &&
+    outcomeCoding.nonFocalLabel !== null) {
+    container.classList.remove('hidden');
+    select.innerHTML = '';
+    const levels = [outcomeCoding.focalLabel, outcomeCoding.nonFocalLabel];
+    levels.forEach(level => {
+      const opt = document.createElement('option');
+      opt.value = level;
+      opt.textContent = level;
+      select.appendChild(opt);
+    });
+    select.value = outcomeCoding.focalLabel;
+    note.textContent = `Treating "${outcomeCoding.focalLabel}" as the focal outcome (coded as 1) and "${outcomeCoding.nonFocalLabel}" as the comparison outcome (coded as 0).`;
+    select.onchange = () => {
+      const chosen = select.value;
+      if (chosen === outcomeCoding.focalLabel) return;
+      const other = chosen === outcomeCoding.nonFocalLabel ? outcomeCoding.focalLabel : outcomeCoding.nonFocalLabel;
+      outcomeCoding.focalLabel = chosen;
+      outcomeCoding.nonFocalLabel = other;
+      note.textContent = `Treating "${outcomeCoding.focalLabel}" as the focal outcome (coded as 1) and "${outcomeCoding.nonFocalLabel}" as the comparison outcome (coded as 0).`;
+      updateResults();
+    };
+  } else {
+    container.classList.add('hidden');
+    if (outcomeCoding.mode === 'numeric01') {
+      note.textContent = 'Outcome is interpreted as numeric 0/1 with 1 treated as the focal outcome.';
+    } else {
+      note.textContent = 'Outcome must be coded as 0/1 or as a binary text variable with exactly two levels.';
+    }
+  }
 }
 function inferDefaults(meta, headers) {
   const numericCols = headers.filter(h => meta[h]?.isNumeric);
@@ -388,6 +520,7 @@ function importRawData(text, { isFromScenario = false, scenarioHints = null } = 
     statusMessage += ` Using ${dataset.rows.length} of ${totalRowCountForStatus} observations (rows with missing or invalid values were excluded).`;
   }
   setRawUploadStatus(statusMessage, 'success');
+  updateOutcomeCodingFromData();
   renderVariableSelectors();
   updateResults();
 }
@@ -553,32 +686,40 @@ function renderVariableSelectors() {
   const outcomeSelect = document.getElementById('outcome-select');
   if (outcomeSelect) {
     outcomeSelect.innerHTML = '';
-    const numericHeaders = dataset.headers.filter(h => columnMeta[h]?.isNumeric);
-    if (!numericHeaders.length) {
+    const candidates = dataset.headers.filter(h => {
+      const meta = columnMeta[h] || {};
+      if (meta.isNumeric) return true;
+      const distinct = (meta.distinctValues || []).filter(v => v !== null && v !== undefined && v !== '');
+      return distinct.length === 2;
+    });
+    if (!candidates.length) {
       const opt = document.createElement('option');
       opt.value = '';
-      opt.textContent = 'No numeric columns detected';
+      opt.textContent = 'No binary outcome columns detected';
       opt.disabled = true;
       outcomeSelect.appendChild(opt);
     } else {
-      numericHeaders.forEach(h => {
+      candidates.forEach(h => {
         const opt = document.createElement('option');
         opt.value = h;
         opt.textContent = h;
         outcomeSelect.appendChild(opt);
       });
-      if (selectedOutcome && numericHeaders.includes(selectedOutcome)) {
+      if (selectedOutcome && candidates.includes(selectedOutcome)) {
         outcomeSelect.value = selectedOutcome;
       } else {
-        selectedOutcome = numericHeaders[0] || '';
+        selectedOutcome = candidates[0] || '';
         outcomeSelect.value = selectedOutcome;
       }
     }
+    renderOutcomeFocalControl();
     outcomeSelect.onchange = () => {
       selectedOutcome = outcomeSelect.value;
       if (selectedPredictors.includes(selectedOutcome)) {
         selectedPredictors = selectedPredictors.filter(p => p !== selectedOutcome);
       }
+      updateOutcomeCodingFromData();
+      renderOutcomeFocalControl();
       updateResults();
       renderVariableSelectors();
     };
@@ -720,7 +861,9 @@ function buildDesignMatrixAndFit(rows, predictorsInfo, outcomeName, alpha) {
     if (info.type === 'categorical') {
       const meta = columnMeta[info.name] || {};
       const ref = predictorSettings[info.name]?.reference || (meta.distinctValues && meta.distinctValues[0]) || null;
-      const levels = meta.distinctValues && meta.distinctValues.length ? meta.distinctValues : Array.from(new Set(rows.map(r => r[info.name])));
+      const levels = meta.distinctValues && meta.distinctValues.length
+        ? meta.distinctValues
+        : Array.from(new Set(rows.map(r => r[info.name])));
       levels.forEach(lvl => {
         if (lvl === ref) return;
         terms.push({ predictor: info.name, term: lvl, label: `${info.name}: ${lvl}`, type: 'categorical', reference: ref });
@@ -730,12 +873,30 @@ function buildDesignMatrixAndFit(rows, predictorsInfo, outcomeName, alpha) {
     }
   });
   for (const row of rows) {
-    const yv = parseFloat(row[outcomeName]);
-    if (!Number.isFinite(yv)) return { error: `Outcome "${outcomeName}" must be numeric.` };
+    const raw = row[outcomeName];
+    let yv;
+    if (outcomeCoding.mode === 'numeric01') {
+      yv = parseFloat(raw);
+      if (!Number.isFinite(yv) || (yv !== 0 && yv !== 1)) {
+        return { error: `Outcome "${outcomeName}" must be coded as 0/1 or as a binary text variable with exactly two levels.` };
+      }
+    } else if (outcomeCoding.mode === 'textBinary') {
+      if (raw === outcomeCoding.focalLabel) {
+        yv = 1;
+      } else if (raw === outcomeCoding.nonFocalLabel) {
+        yv = 0;
+      } else {
+        return { error: `Outcome "${outcomeName}" must have exactly two categories. Unexpected level "${raw}" found.` };
+      }
+    } else {
+      return { error: `Outcome "${outcomeName}" must be coded as 0/1 or as a binary text variable with exactly two levels.` };
+    }
     const xRow = [1];
     predictorsInfo.forEach(info => {
       if (info.type === 'categorical') {
-        terms.filter(t => t.predictor === info.name && t.type === 'categorical').forEach(t => xRow.push(row[info.name] === t.term ? 1 : 0));
+        terms
+          .filter(t => t.predictor === info.name && t.type === 'categorical')
+          .forEach(t => xRow.push(row[info.name] === t.term ? 1 : 0));
       } else {
         const v = parseFloat(row[info.name]);
         xRow.push(Number.isFinite(v) ? v : NaN);
@@ -747,72 +908,122 @@ function buildDesignMatrixAndFit(rows, predictorsInfo, outcomeName, alpha) {
   const n = y.length;
   const p = X[0]?.length || 0;
   if (p <= 1) return { error: 'No predictors available to fit the model.' };
-  const Xt = transpose(X);
-  const XtX = multiply(Xt, X);
-  const XtXInv = invert(XtX);
-  if (!XtXInv) return { error: 'Model matrix is singular; remove redundant predictors.' };
-  const XtY = multiply(Xt, y.map(v => [v]));
-  const beta = multiply(XtXInv, XtY).map(r => r[0]);
-  const fitted = X.map(row => row.reduce((acc, v, i) => acc + v * beta[i], 0));
-  const residuals = y.map((yv, i) => yv - fitted[i]);
-  const meanY = StatsUtils.mean(y);
-  const sse = residuals.reduce((acc, r) => acc + r * r, 0);
-  const sst = y.reduce((acc, val) => acc + Math.pow(val - meanY, 2), 0);
-  const ssr = sst - sse;
+
+  // Fit intercept-only (null) model
+  const yMean = StatsUtils.mean(y);
+  const eps = 1e-8;
+  const pNull = Math.min(Math.max(yMean, eps), 1 - eps);
+  const logLikNull = y.reduce(
+    (acc, yi) => acc + (yi ? Math.log(pNull) : Math.log(1 - pNull)),
+    0
+  );
+
+  // Logistic IRLS
+  let beta = Array(p).fill(0);
+  const maxIter = 25;
+  const tol = 1e-6;
+
+  for (let iter = 0; iter < maxIter; iter++) {
+    const eta = X.map(row => row.reduce((acc, v, j) => acc + v * beta[j], 0));
+    const pHat = eta.map(e => {
+      const val = 1 / (1 + Math.exp(-e));
+      return Math.min(Math.max(val, eps), 1 - eps);
+    });
+    const w = pHat.map(pi => pi * (1 - pi));
+    const z = y.map((yi, i) => eta[i] + (yi - pHat[i]) / w[i]);
+
+    const Xt = transpose(X);
+    const XtW = Xt.map(row => row.map((val, k) => val * w[k]));
+    const XtWX = multiply(XtW, X);
+    const XtWz = XtW.map(row => row.reduce((acc, v, idx) => acc + v * z[idx], 0));
+    const XtWXInv = invert(XtWX);
+    if (!XtWXInv) return { error: 'Model matrix is singular under logistic fit; remove redundant predictors.' };
+
+    const betaNew = XtWXInv.map(row => row.reduce((acc, v, j) => acc + v * XtWz[j], 0));
+    const maxChange = Math.max(...betaNew.map((b, j) => Math.abs(b - beta[j])));
+    beta = betaNew;
+    if (maxChange < tol) {
+      break;
+    }
+  }
+
+  const etaFinal = X.map(row => row.reduce((acc, v, j) => acc + v * beta[j], 0));
+  const pFinal = etaFinal.map(e => {
+    const val = 1 / (1 + Math.exp(-e));
+    return Math.min(Math.max(val, eps), 1 - eps);
+  });
+
+  // Log-likelihood and deviance
+  const logLik = y.reduce(
+    (acc, yi, i) => acc + (yi ? Math.log(pFinal[i]) : Math.log(1 - pFinal[i])),
+    0
+  );
+  const nullDev = -2 * y.reduce(
+    (acc, yi) => acc + (yi ? Math.log(pNull) : Math.log(1 - pNull)),
+    0
+  );
+  const residDev = -2 * logLik;
   const dfModel = p - 1;
-  const dfError = n - p;
-  const r2 = sst > 0 ? ssr / sst : NaN;
-  const adjR2 = (1 - (sse / (n - p)) / (sst / (n - 1)));
-  const msr = dfModel > 0 ? ssr / dfModel : NaN;
-  const mse = dfError > 0 ? sse / dfError : NaN;
-  const fStat = (msr && mse) ? msr / mse : NaN;
-  const rmse = Math.sqrt(Math.max(sse / n, 0));
-  const mae = residuals.reduce((acc, r) => acc + Math.abs(r), 0) / n;
-  const covB = XtXInv.map(row => row.map(val => val * mse));
+  const modelChi2 = nullDev - residDev;
+  const pseudoR2 = (logLikNull !== 0) ? 1 - (logLik / logLikNull) : NaN;
+
+  // Covariance matrix and standard errors (from final Fisher information)
+  const Xt = transpose(X);
+  const XtWFinal = Xt.map(row => row.map((val, k) => {
+    const pi = pFinal[k];
+    return val * pi * (1 - pi);
+  }));
+  const XtWXFinal = multiply(XtWFinal, X);
+  const covB = invert(XtWXFinal);
+  if (!covB) return { error: 'Unable to invert information matrix for standard errors.' };
   const se = covB.map((row, i) => Math.sqrt(Math.max(row[i], 0)));
-  const tStats = beta.map((b, i) => (se[i] ? b / se[i] : NaN));
-  const pVals = tStats.map(t => Number.isFinite(t) ? 2 * (1 - StatsUtils.normCdf(Math.abs(t))) : NaN);
+  const zStats = beta.map((b, i) => (se[i] ? b / se[i] : NaN));
+  const pVals = zStats.map(zv => Number.isFinite(zv) ? 2 * (1 - StatsUtils.normCdf(Math.abs(zv))) : NaN);
   const zCrit = StatsUtils.normInv(1 - alpha / 2);
   const ciLower = beta.map((b, i) => b - zCrit * se[i]);
   const ciUpper = beta.map((b, i) => b + zCrit * se[i]);
+
   const coefRows = terms.map((term, idx) => ({
     predictor: term.predictor,
     term: term.term,
     label: term.label,
     estimate: beta[idx],
     se: se[idx],
-    t: tStats[idx],
+    z: zStats[idx],
     p: pVals[idx],
     lower: ciLower[idx],
     upper: ciUpper[idx],
     type: term.type || (idx === 0 ? 'intercept' : 'continuous'),
-    partialEta2: (Number.isFinite(tStats[idx]) && dfError > 0) ? (tStats[idx] * tStats[idx]) / (tStats[idx] * tStats[idx] + dfError) : NaN,
     reference: term.reference || null
   }));
-  const modelP = (Number.isFinite(fStat) && dfModel > 0 && dfError > 0) ? (1 - fCdf(fStat, dfModel, dfError)) : NaN;
+
+  // Deviance residuals for diagnostics
+  const residuals = y.map((yi, i) => {
+    const pi = pFinal[i];
+    const contrib = yi ? -2 * Math.log(pi) : -2 * Math.log(1 - pi);
+    const sign = yi - pi >= 0 ? 1 : -1;
+    return sign * Math.sqrt(Math.max(contrib, 0));
+  });
+
   return {
     n,
     dfModel,
-    dfError,
-    r2,
-    adjR2,
-    fStat,
-    sse,
-    ssr,
-    sst,
-    mse,
-    msr,
     alpha,
-    rmse,
-    mae,
-    modelP,
+    logLik,
+    logLikNull,
+    nullDev,
+    residDev,
+    modelChi2,
+    pseudoR2,
     terms: coefRows,
     residuals,
-    fitted,
+    fitted: pFinal,
     y,
     predictorsInfo,
     designMatrix: X,
-    covB
+    covB,
+    outcomeFocalLabel: outcomeCoding.focalLabel,
+    outcomeNonFocalLabel: outcomeCoding.nonFocalLabel
   };
 }
 
@@ -854,53 +1065,50 @@ function assignPredictorPartialEta(model) {
 }
 
 // ---------- Rendering ----------
-function populateMetrics(model) {
-  const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
-  set('metric-r2', formatNumber(model.r2, 3));
-  set('metric-adj-r2', formatNumber(model.adjR2, 3));
-  set('metric-f', formatNumber(model.fStat, 3));
-  set('metric-df', `${model.dfModel} / ${model.dfError}`);
-  set('metric-n', model.n.toString());
-  set('metric-alpha', formatAlpha(model.alpha));
-  set('metric-rmse', formatNumber(model.rmse, 4));
-  set('metric-mae', formatNumber(model.mae, 4));
-  set('metric-resse', formatNumber(Math.sqrt(model.mse), 4));
-  set('metric-pmodel', formatP(model.modelP));
-}
+  function populateMetrics(model) {
+    const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+    set('metric-loglik', formatNumber(model.logLik, 3));
+    set('metric-null-dev', formatNumber(model.nullDev, 3));
+    set('metric-resid-dev', formatNumber(model.residDev, 3));
+    set('metric-chi2', formatNumber(model.modelChi2, 3));
+    // df for chi-square is dfModel
+    const pModel = Number.isFinite(model.modelChi2) && model.dfModel > 0
+      ? formatP(1 - chiSquareCdf(model.modelChi2, model.dfModel))
+      : '--';
+    set('metric-pmodel', pModel);
+    set('metric-r2', formatNumber(model.pseudoR2, 3));
+    set('metric-n', model.n.toString());
+    set('metric-alpha', formatAlpha(model.alpha));
+  }
 
-function populateCoefficients(model) {
-  const body = document.getElementById('coef-table-body');
-  if (!body) return;
-  const lowerHeader = document.getElementById('coef-ci-lower-header');
-  const upperHeader = document.getElementById('coef-ci-upper-header');
-  const ciLabel = `${Math.round((1 - model.alpha) * 100)}% CI`;
-  if (lowerHeader) lowerHeader.textContent = `${ciLabel} (Lower)`;
-  if (upperHeader) upperHeader.textContent = `${ciLabel} (Upper)`;
-  if (!model.terms || !model.terms.length) { body.innerHTML = '<tr><td colspan="9">No coefficients available.</td></tr>'; return; }
-  const seen = new Set();
-  body.innerHTML = model.terms.map(term => {
-    let etaDisplay = '';
-    if (term.predictor && term.predictor !== 'Intercept') {
-      if (term.type === 'categorical') {
-        if (!seen.has(term.predictor)) etaDisplay = formatNumber(term.partialEta2, 4);
-      } else etaDisplay = formatNumber(term.partialEta2, 4);
-      seen.add(term.predictor);
-    }
-    return `
-    <tr>
-      <td>${escapeHtml(term.predictor)}${term.type === 'categorical' && term.reference ? ` (ref="${escapeHtml(term.reference)}")` : ''}</td>
-      <td>${term.type === 'categorical' ? escapeHtml(term.term) : ''}</td>
-      <td>${formatNumber(term.estimate, 4)}</td>
-      <td>${formatNumber(term.se, 4)}</td>
-      <td>${formatNumber(term.t, 3)}</td>
-      <td>${formatP(term.p)}</td>
-      <td>${etaDisplay}</td>
-      <td>${formatNumber(term.lower, 4)}</td>
-      <td>${formatNumber(term.upper, 4)}</td>
-    </tr>
-  `;
-  }).join('');
-}
+  function populateCoefficients(model) {
+    const body = document.getElementById('coef-table-body');
+    if (!body) return;
+    const lowerHeader = document.getElementById('coef-ci-lower-header');
+    const upperHeader = document.getElementById('coef-ci-upper-header');
+    const ciLabel = `${Math.round((1 - model.alpha) * 100)}% CI`;
+    if (lowerHeader) lowerHeader.textContent = `${ciLabel} (Lower)`;
+    if (upperHeader) upperHeader.textContent = `${ciLabel} (Upper)`;
+    if (!model.terms || !model.terms.length) { body.innerHTML = '<tr><td colspan="9">No coefficients available.</td></tr>'; return; }
+    body.innerHTML = model.terms.map(term => {
+      const isCat = term.type === 'categorical';
+      const isIntercept = term.predictor === 'Intercept';
+      const oddsRatio = Number.isFinite(term.estimate) ? Math.exp(term.estimate) : NaN;
+      return `
+      <tr>
+        <td>${escapeHtml(term.predictor)}${isCat && term.reference ? ` (ref="${escapeHtml(term.reference)}")` : ''}</td>
+        <td>${isCat ? escapeHtml(term.term) : ''}</td>
+        <td>${formatNumber(term.estimate, 4)}</td>
+        <td>${formatNumber(term.se, 4)}</td>
+        <td>${formatNumber(term.z, 3)}</td>
+        <td>${formatP(term.p)}</td>
+        <td>${isIntercept ? '--' : formatNumber(oddsRatio, 3)}</td>
+        <td>${formatNumber(term.lower, 4)}</td>
+        <td>${formatNumber(term.upper, 4)}</td>
+      </tr>
+    `;
+    }).join('');
+  }
 
 function renderEquation(model) {
   const equationEl = document.getElementById('regression-equation-output');
@@ -913,8 +1121,8 @@ function renderEquation(model) {
       ? `${sign} ${absVal}×(${escapeHtml(term.term)}=1)`
       : `${sign} ${absVal}×${escapeHtml(term.predictor)}`;
   });
-  equationEl.innerHTML = `<strong>${escapeHtml(selectedOutcome)}</strong> = ${parts.join(' ')}`;
-}
+    equationEl.innerHTML = `<strong>logit(Pr(${escapeHtml(selectedOutcome)}=1))</strong> = ${parts.join(' ')}`;
+  }
 
 function renderNarratives(model) {
   const apa = document.getElementById('apa-report');
@@ -933,10 +1141,10 @@ function renderDiagnostics(model) {
   const diagRes = document.getElementById('diag-residuals');
   if (diagCol) diagCol.textContent = model.dfModel >= model.n - 1
     ? 'Model is saturated; drop predictors or add rows.'
-    : 'No explicit collinearity check beyond matrix invertibility; if the model failed, remove redundant predictors.';
+      : 'No explicit collinearity check beyond matrix invertibility; if the model failed, remove redundant predictors or collapse sparse levels.';
   if (diagRes) {
     const resSpread = StatsUtils.standardDeviation(model.residuals);
-    diagRes.textContent = `Residual spread ≈ ${formatNumber(resSpread, 3)}. Check residual vs. fitted and normality plots for variance and outliers.`;
+    diagRes.textContent = `Deviance residual spread ≈ ${formatNumber(resSpread, 3)}. Look for extreme residuals or patterns versus fitted probabilities that might indicate separation, influential observations, or model misspecification.`;
   }
   const resPlot = document.getElementById('plot-residuals');
   const resCaption = document.getElementById('plot-residuals-caption');
@@ -953,11 +1161,11 @@ function renderDiagnostics(model) {
         marker: { color: '#9333ea', size: 6, opacity: 0.8 }
       }], {
         margin: { t: 20, r: 20, b: 60, l: 60 },
-        xaxis: { title: 'Fitted' },
-        yaxis: { title: 'Residuals' },
+          xaxis: { title: 'Fitted probability' },
+          yaxis: { title: 'Deviance residuals' },
         showlegend: false
       }, { responsive: true });
-      if (resCaption) resCaption.textContent = 'Residuals versus fitted values.';
+      if (resCaption) resCaption.textContent = 'Deviance residuals versus fitted probabilities.';
     }
   }
 }
@@ -1353,6 +1561,315 @@ function renderCoefInterpretation(model) {
   `;
 }
 
+// ---------- Logistic-specific rendering overrides ----------
+// These override earlier linear-regression renderers so that
+// the UI text, plots, and interpretations match a logistic model.
+function renderNarratives(model) {
+  const apa = document.getElementById('apa-report');
+  const mgr = document.getElementById('managerial-report');
+  if (!apa || !mgr || !model) return;
+  const top = (model.terms || [])
+    .slice(1)
+    .filter(t => Number.isFinite(t.z))
+    .sort((a, b) => Math.abs(b.z) - Math.abs(a.z))[0];
+  const effectText = top
+    ? `${escapeHtml(top.predictor)} (${top.type === 'categorical' ? 'categorical' : 'continuous'}) was associated with a ${formatNumber(top.estimate, 3)} change in log-odds, z = ${formatNumber(top.z, 3)}, p = ${formatP(top.p)}.`
+    : 'Effects could not be estimated.';
+  const modelPVal = Number.isFinite(model.modelChi2) && model.dfModel > 0
+    ? 1 - chiSquareCdf(model.modelChi2, model.dfModel)
+    : NaN;
+  apa.textContent = `Logistic regression predicting ${escapeHtml(selectedOutcome)}: model chi-square (${model.dfModel} df) = ${formatNumber(model.modelChi2, 3)}, p = ${formatP(modelPVal)}, pseudo R\u00b2 = ${formatNumber(model.pseudoR2, 3)}. ${effectText}`;
+  if (top) {
+    const orTop = Number.isFinite(top.estimate) ? Math.exp(top.estimate) : NaN;
+    mgr.textContent = `The model improves classification of ${escapeHtml(selectedOutcome)} compared with a null (intercept-only) model, with pseudo R\u00b2 \u2248 ${formatNumber(model.pseudoR2 * 100, 1)}% of log-likelihood improvement. The strongest signal is ${top.predictor}: each step in this predictor multiplies the odds that ${escapeHtml(selectedOutcome)} = 1 by about ${formatNumber(orTop, 3)} (holding other predictors constant).`;
+  } else {
+    mgr.textContent = `The model shows limited evidence that the predictors improve classification of ${escapeHtml(selectedOutcome)} beyond the null model. Interpret any apparent effects with caution.`;
+  }
+}
+
+function renderActualFitted(model) {
+  const plot = document.getElementById('plot-actual-fitted');
+  const caption = document.getElementById('plot-actual-fitted-caption');
+  if (!plot || !model) return;
+  if (!window.Plotly || !model.fitted?.length) {
+    plot.innerHTML = '<p class="muted">Run an analysis to see actual vs. fitted.</p>';
+    if (caption) caption.textContent = '';
+    return;
+  }
+  const jitter = 0.08;
+  const jitteredY = model.y.map(y => {
+    const base = Number(y) === 1 ? 1 : 0;
+    return base + (Math.random() - 0.5) * 2 * jitter;
+  });
+  Plotly.newPlot(plot, [{
+    x: model.fitted,
+    y: jitteredY,
+    mode: 'markers',
+    type: 'scatter',
+    name: 'Observed',
+    marker: { color: '#2563eb', size: 6, opacity: 0.8 }
+  }], {
+    margin: { t: 20, r: 20, b: 60, l: 60 },
+    xaxis: { title: `Fitted probability Pr(${selectedOutcome}=1)`, range: [0, 1] },
+    yaxis: { title: 'Observed outcome (0/1, jittered)' },
+    showlegend: false
+  }, { responsive: true });
+  if (caption) caption.textContent = 'Observed outcomes (0/1) versus fitted probabilities with vertical jitter added for visibility.';
+}
+
+function renderEffectPlot(model, rows, predictorsInfo) {
+  const plot = document.getElementById('plot-effect');
+  const caption = document.getElementById('plot-effect-caption');
+  const constantsNote = document.getElementById('effect-constants-note');
+  const interp = document.getElementById('effect-interpretation');
+  const nonFocalContinuous = document.getElementById('effect-nonfocal-continuous');
+  if (!plot || !model || !rows || !rows.length) return;
+  if (!effectState.focal || !predictorsInfo.find(p => p.name === effectState.focal)) {
+    plot.innerHTML = '<p class="muted">Select a focal predictor to view its effect.</p>';
+    if (caption) caption.textContent = '';
+    if (interp) interp.textContent = '';
+    if (nonFocalContinuous) nonFocalContinuous.innerHTML = '';
+    return;
+  }
+  const focalInfo = predictorsInfo.find(p => p.name === effectState.focal);
+  const valuesByPredictor = {};
+  predictorsInfo.forEach(info => {
+    if (info.type === 'categorical') {
+      const meta = columnMeta[info.name] || {};
+      const levels = meta.distinctValues || [];
+      let chosen = effectState.catLevels[info.name];
+      if (!chosen) {
+        const counts = new Map();
+        rows.forEach(r => {
+          const lvl = r[info.name] || '(missing)';
+          counts.set(lvl, (counts.get(lvl) || 0) + 1);
+        });
+        chosen = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || levels[0] || null;
+        effectState.catLevels[info.name] = chosen;
+      }
+      if (info.name === focalInfo.name) chosen = null;
+      valuesByPredictor[info.name] = chosen;
+    } else {
+      const nums = rows.map(r => parseFloat(r[info.name])).filter(v => Number.isFinite(v));
+      const mean = StatsUtils.mean(nums);
+      const sorted = [...nums].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      const median = sorted.length ? (sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2) : NaN;
+      valuesByPredictor[info.name] = mean;
+      valuesByPredictor[`${info.name}__stats`] = {
+        mean,
+        sd: StatsUtils.standardDeviation(nums),
+        min: Math.min(...nums),
+        max: Math.max(...nums),
+        median
+      };
+      if (effectState.continuousOverrides[info.name] !== undefined) {
+        valuesByPredictor[info.name] = effectState.continuousOverrides[info.name];
+      }
+    }
+  });
+
+  if (nonFocalContinuous) {
+    nonFocalContinuous.innerHTML = '';
+    predictorsInfo.forEach(info => {
+      if (info.type === 'categorical' || info.name === focalInfo.name) return;
+      const stats = valuesByPredictor[`${info.name}__stats`] || {};
+      const select = document.createElement('select');
+      select.dataset.col = info.name;
+      [
+        { key: 'mean', label: `Mean (${formatNumber(stats.mean, 3)})`, value: stats.mean },
+        { key: 'median', label: `Median (${formatNumber(stats.median || stats.mean, 3)})`, value: stats.median || stats.mean },
+        { key: 'plus1', label: `+1 SD (${formatNumber((stats.mean || 0) + (stats.sd || 0), 3)})`, value: (stats.mean || 0) + (stats.sd || 0) },
+        { key: 'minus1', label: `-1 SD (${formatNumber((stats.mean || 0) - (stats.sd || 0), 3)})`, value: (stats.mean || 0) - (stats.sd || 0) }
+      ].forEach(optDef => {
+        const opt = document.createElement('option');
+        opt.value = optDef.value;
+        opt.textContent = `${info.name}: ${optDef.label}`;
+        select.appendChild(opt);
+      });
+      const currentOverride = effectState.continuousOverrides[info.name];
+      if (currentOverride !== undefined) select.value = currentOverride;
+      select.onchange = () => {
+        const val = parseFloat(select.value);
+        if (Number.isFinite(val)) effectState.continuousOverrides[info.name] = val;
+        renderEffectPlot(model, rows, predictorsInfo);
+      };
+      const wrapper = document.createElement('label');
+      wrapper.textContent = '';
+      wrapper.appendChild(select);
+      nonFocalContinuous.appendChild(wrapper);
+    });
+  }
+
+  const terms = model.terms || [];
+  const beta = terms.map(t => t.estimate);
+  const covB = model.covB;
+  const zCrit = StatsUtils.normInv(1 - model.alpha / 2);
+  const buildX = vals => {
+    const x = [1];
+    terms.slice(1).forEach(term => {
+      if (term.type === 'categorical') x.push(vals[term.predictor] === term.term ? 1 : 0);
+      else x.push(parseFloat(vals[term.predictor]) || 0);
+    });
+    return x;
+  };
+
+  if (focalInfo.type === 'categorical') {
+    const meta = columnMeta[focalInfo.name] || {};
+    const levels = meta.distinctValues || [];
+    const trace = {
+      x: [],
+      y: [],
+      type: 'bar',
+      marker: { color: '#2563eb' },
+      error_y: { type: 'data', array: [], visible: true }
+    };
+    levels.forEach(level => {
+      const vals = { ...valuesByPredictor, [focalInfo.name]: level };
+      const xVec = buildX(vals);
+      const etaHat = predictFromTerms(terms, beta, vals);
+      let sePred = NaN;
+      if (covB) {
+        let varPred = 0;
+        for (let i = 0; i < xVec.length; i++) for (let j = 0; j < xVec.length; j++) varPred += xVec[i] * covB[i][j] * xVec[j];
+        sePred = Math.sqrt(Math.max(varPred, 0));
+      }
+      const ciEta = Number.isFinite(sePred) ? zCrit * sePred : 0;
+      const pHat = logistic(etaHat);
+      const upperProb = logistic(etaHat + ciEta);
+      trace.x.push(level);
+      trace.y.push(pHat);
+      trace.error_y.array.push(Math.max(upperProb - pHat, 0));
+    });
+    Plotly.newPlot(plot, [trace], {
+      margin: { t: 20, r: 20, b: 60, l: 60 },
+      xaxis: { title: focalInfo.name },
+      yaxis: { title: `Predicted probability Pr(${selectedOutcome}=1)` }
+    }, { responsive: true });
+    if (caption) caption.textContent = `Predicted probability that ${selectedOutcome} = 1 by ${focalInfo.name}, holding other predictors constant.`;
+    if (interp) {
+      interp.textContent = `Bars show predicted probabilities that ${selectedOutcome} = 1 for each ${focalInfo.name} level. Error bars are ${Math.round((1 - model.alpha) * 100)}% confidence intervals on that probability, with other predictors held at their defaults (means for continuous, selected levels for categorical). Compare each bar to the reference group in the coefficient table.`;
+    }
+    return;
+  }
+
+  const stats = valuesByPredictor[`${focalInfo.name}__stats`] || {};
+  let minX; let maxX;
+  if (effectState.rangeMode === 'observed') {
+    minX = stats.min; maxX = stats.max;
+  } else if (effectState.rangeMode === 'custom' &&
+    Number.isFinite(effectState.customMin) &&
+    Number.isFinite(effectState.customMax) &&
+    effectState.customMax > effectState.customMin) {
+    minX = effectState.customMin; maxX = effectState.customMax;
+  } else {
+    minX = stats.mean - 2 * stats.sd; maxX = stats.mean + 2 * stats.sd;
+  }
+
+  const steps = 40;
+  const xs = []; const ys = []; const upper = []; const lower = [];
+  for (let i = 0; i <= steps; i++) {
+    const xVal = minX + (maxX - minX) * (i / steps);
+    const vals = { ...valuesByPredictor, [focalInfo.name]: xVal };
+    const xVec = buildX(vals);
+    const etaHat = predictFromTerms(terms, beta, vals);
+    let sePred = NaN;
+    if (covB) {
+      let varPred = 0;
+      for (let i1 = 0; i1 < xVec.length; i1++) for (let j1 = 0; j1 < xVec.length; j1++) varPred += xVec[i1] * covB[i1][j1] * xVec[j1];
+      sePred = Math.sqrt(Math.max(varPred, 0));
+    }
+    const ciEta = Number.isFinite(sePred) ? zCrit * sePred : 0;
+    const pHat = logistic(etaHat);
+    const lowerProb = logistic(etaHat - ciEta);
+    const upperProb = logistic(etaHat + ciEta);
+    xs.push(xVal);
+    ys.push(pHat);
+    upper.push(upperProb);
+    lower.push(lowerProb);
+  }
+
+  const band = {
+    x: [...xs, ...xs.slice().reverse()],
+    y: [...upper, ...lower.slice().reverse()],
+    mode: 'lines',
+    type: 'scatter',
+    name: `${Math.round((1 - model.alpha) * 100)}% CI`,
+    fill: 'toself',
+    line: { color: 'rgba(37,99,235,0.2)' },
+    fillcolor: 'rgba(37,99,235,0.15)',
+    hoverinfo: 'skip',
+    showlegend: true
+  };
+  const line = { x: xs, y: ys, mode: 'lines', line: { color: '#2563eb', width: 3 }, name: 'Predicted probability' };
+  Plotly.newPlot(plot, [band, line], {
+    margin: { t: 20, r: 20, b: 60, l: 60 },
+    xaxis: { title: focalInfo.name },
+    yaxis: { title: `Predicted probability Pr(${selectedOutcome}=1)` },
+    showlegend: true
+  }, { responsive: true });
+  if (caption) {
+    const holds = [];
+    predictorsInfo.forEach(info => {
+      if (info.name === focalInfo.name) return;
+      holds.push(info.type === 'categorical'
+        ? `${info.name} = ${valuesByPredictor[info.name]}`
+        : `${info.name} = ${formatNumber(valuesByPredictor[info.name], 3)}`);
+    });
+    const ciLabel = `${Math.round((1 - model.alpha) * 100)}% CI`;
+    caption.textContent = `Predicted probability that ${selectedOutcome} = 1 vs. ${focalInfo.name}, holding others constant (${holds.join(', ')}). ${ciLabel} shown as shaded band/bars.`;
+    if (constantsNote) {
+      const eqParts = (model.terms || []).map((term, idx) => {
+        if (idx === 0) return formatNumber(term.estimate, 3);
+        const sign = term.estimate >= 0 ? '+' : '-';
+        const absVal = formatNumber(Math.abs(term.estimate), 3);
+        if (term.type === 'categorical') return `${sign} ${absVal} * I(${escapeHtml(term.term)})`;
+        return `${sign} ${absVal} * ${escapeHtml(term.predictor)}`;
+      }).join(' ');
+      constantsNote.innerHTML = `Model equation: <code>logit(Pr(${escapeHtml(selectedOutcome)}=1)) = ${eqParts}</code><br>Held constants: ${holds.join(', ') || 'none'}.`;
+    }
+    if (interp) {
+      interp.textContent = `Line shows predicted probability that ${selectedOutcome} = 1 over the focal range. The shaded band is the ${ciLabel} confidence band for that probability. A rising line means the probability of ${selectedOutcome} = 1 increases as ${focalInfo.name} increases (holding others at their chosen values); a falling line means it decreases.`;
+    }
+  }
+}
+
+function renderCoefInterpretation(model) {
+  const container = document.getElementById('coef-interpretation');
+  if (!container) return;
+  if (!model || !Array.isArray(model.terms) || model.terms.length < 2) {
+    container.textContent = 'Run the model to see column descriptions and examples.';
+    return;
+  }
+  const explainColumns = [
+    'Estimate (log-odds): change in log-odds that the outcome equals 1 when the predictor increases by one unit or moves to a given category, holding other predictors constant.',
+    'Standard Error: uncertainty of the log-odds estimate.',
+    'z and p-value: test of whether the coefficient differs from zero (no change in log-odds).',
+    'Odds Ratio: multiplicative change in the odds that the outcome equals 1 for a one-unit increase or category change (vs. reference).',
+    `${Math.round((1 - model.alpha) * 100)}% CI: confidence interval for the log-odds estimate (and the corresponding odds ratio).`
+  ];
+  const continuous = model.terms.find(t => t.type === 'continuous');
+  const categorical = model.terms.find(t => t.type === 'categorical') || model.terms.find(t => t.reference);
+  const examples = [];
+  if (continuous) {
+    const orCont = Number.isFinite(continuous.estimate) ? Math.exp(continuous.estimate) : NaN;
+    examples.push(
+      `Continuous: A one-unit increase in ${escapeHtml(continuous.predictor)} multiplies the odds that ${escapeHtml(selectedOutcome)} = 1 by about ${formatNumber(orCont, 3)} (log-odds ${formatNumber(continuous.estimate, 3)}, z = ${formatNumber(continuous.z, 3)}, p = ${formatP(continuous.p)}, ${Math.round((1 - model.alpha) * 100)}% CI [${formatNumber(continuous.lower, 3)}, ${formatNumber(continuous.upper, 3)}] on the log-odds scale), holding other predictors constant.`
+    );
+  }
+  if (categorical) {
+    const ref = categorical.reference || 'reference';
+    const orCat = Number.isFinite(categorical.estimate) ? Math.exp(categorical.estimate) : NaN;
+    examples.push(
+      `Categorical: Compared to ${escapeHtml(ref)}, being in category ${escapeHtml(categorical.term)} multiplies the odds that ${escapeHtml(selectedOutcome)} = 1 by about ${formatNumber(orCat, 3)} (log-odds ${formatNumber(categorical.estimate, 3)}, z = ${formatNumber(categorical.z, 3)}, p = ${formatP(categorical.p)}, ${Math.round((1 - model.alpha) * 100)}% CI [${formatNumber(categorical.lower, 3)}, ${formatNumber(categorical.upper, 3)}] on the log-odds scale), holding other predictors constant.`
+    );
+  }
+  container.innerHTML = `
+    <p><strong>Columns:</strong> ${explainColumns.join(' ')}</p>
+    <p><strong>Examples:</strong><br>${examples.join('<br>')}</p>
+  `;
+}
+
 // ---------- Main update ----------
 function updateResults() {
   const alphaInput = document.getElementById('alpha');
@@ -1370,6 +1887,7 @@ function updateResults() {
   if (!selectedPredictors.length) { clearOutputs('Select at least one predictor.'); return; }
   if (issues.length) { clearOutputs(issues[0]); return; }
   if (kept < 5) { clearOutputs('Need at least 5 complete rows to proceed.'); return; }
+  updateOutcomeCodingFromData();
   const model = buildDesignMatrixAndFit(filtered, predictorsInfo, selectedOutcome, alpha);
   if (model.error) { clearOutputs(model.error); return; }
   lastModel = model;

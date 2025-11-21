@@ -2,9 +2,22 @@
 Retail Promotions Pricing Test
 
 # Description
-A national retailer is piloting a smart-pricing endcap. Associates can either stick with the legacy signage bundle or swap to an AI-powered sign that personalizes the promo headline. Every pilot store rotated through both approaches across two consecutive weekends, so each household ID appears twice in the data.
-
-The metric of interest is whether a shopper purchased the featured bundle at least once during their weekend visit. Use this preset to review how many shoppers flipped from “no bundle” to “bundle” after seeing the personalized messaging.
+<p>
+A national retailer is piloting a smart-pricing endcap that can dynamically personalize promotional messaging. Store operations wants to know whether this new <strong>adaptive signage</strong> actually changes shopper behavior compared with the long-standing legacy bundle signage.
+</p>
+<p>
+In the pilot, every participating store runs both approaches on consecutive weekends, rotating which weekend gets which treatment:
+</p>
+<ul>
+  <li><strong>Legacy signage (Condition A):</strong> static bundle sign with a simple discount message and SKU list.</li>
+  <li><strong>Adaptive signage (Condition B):</strong> AI-powered sign that personalizes the headline (e.g., “Save more on your usual basket”) based on local purchase patterns and time of day.</li>
+</ul>
+<p>
+Each household loyalty ID that visits during the test is effectively observed twice: once under the legacy signage weekend and once under the adaptive signage weekend. For each visit, analysts record whether the shopper <strong>purchased the featured bundle</strong> at least once (yes/no). This paired, binary outcome structure is ideal for <strong>McNemar’s test</strong>, which focuses on shoppers who “change their mind” between conditions.
+</p>
+<p>
+The counts below reflect a realistic lift: many households ignore the bundle both weekends, some buy it under both, and a noticeable number flip from no→yes or yes→no when signage changes. Your analytical task is to compare the discordant cells (Legacy yes / Adaptive no vs. Legacy no / Adaptive yes) to decide whether adaptive signage is credibly increasing bundle purchases, and whether that lift is meaningful enough to justify rollout costs (hardware, creative operations, training).
+</p>
 
 # Alpha
 0.05
@@ -23,3 +36,4 @@ negative_label=No bundle
 
 # Additional Inputs
 analysis_method=chi2_nocc
+
