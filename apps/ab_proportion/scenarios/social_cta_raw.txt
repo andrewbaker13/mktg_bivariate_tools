@@ -13,7 +13,7 @@ Because organic reach and auction dynamics can be noisy, the team runs a focused
   <li><strong>Team B (Reaction CTA):</strong> the same core frame, but with animated reaction badges and a countdown-style progress bar above the swipe area.</li>
 </ul>
 <p>
-Every impression is logged as either a <em>conversion</em> (1 = swipe to the microsite and a meaningful page view) or <em>non-conversion</em> (0 = no swipe or immediate bounce). The data below show one row per impression with the assigned team and a 0/1 outcome. Conversion rates differ by several percentage points, but with far from perfect separation��exactly the kind of messy, real-world pattern you expect on social.
+Every impression is logged as either a <em>conversion</em> (1 = swipe to the microsite and a meaningful page view) or <em>non-conversion</em> (0 = no swipe or immediate bounce). The data below show one row per impression with the assigned team and a 0/1 outcome. Conversion rates differ by several percentage points, but with far from perfect separation—exactly the kind of messy, real-world pattern you expect on social.
 </p>
 <p>
 Your analytical goal is to use the raw data to estimate the conversion proportion in each arm and then run a two-proportion test to see whether the reaction CTA is reliably better than the static CTA. You can then translate the estimated lift into incremental visits (and downstream sign-ups) if the concept is rolled out across more inventory.

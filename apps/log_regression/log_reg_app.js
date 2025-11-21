@@ -1564,6 +1564,22 @@ function renderCoefInterpretation(model) {
 // ---------- Logistic-specific rendering overrides ----------
 // These override earlier linear-regression renderers so that
 // the UI text, plots, and interpretations match a logistic model.
+
+function renderEquation(model) {
+  const equationEl = document.getElementById('regression-equation-output');
+  if (!equationEl || !model || !model.terms || !model.terms.length) return;
+  const focalLabel = model.outcomeFocalLabel != null ? String(model.outcomeFocalLabel) : '1';
+  const parts = model.terms.map((term, idx) => {
+    if (idx === 0) return formatNumber(term.estimate, 3);
+    const sign = term.estimate >= 0 ? '+' : '-';
+    const absVal = formatNumber(Math.abs(term.estimate), 3);
+    if (term.type === 'categorical') return `${sign} ${absVal} * I(${escapeHtml(term.term)})`;
+    if (term.type === 'intercept') return '';
+    return `${sign} ${absVal} * ${escapeHtml(term.predictor)}`;
+  }).filter(Boolean);
+  equationEl.innerHTML = `<strong>logit(Pr(${escapeHtml(selectedOutcome)}=${escapeHtml(focalLabel)}))</strong> = ${parts.join(' ')}`;
+}
+
 function renderNarratives(model) {
   const apa = document.getElementById('apa-report');
   const mgr = document.getElementById('managerial-report');
@@ -1614,7 +1630,7 @@ function renderActualFitted(model) {
     yaxis: { title: 'Observed outcome (0/1, jittered)' },
     showlegend: false
   }, { responsive: true });
-  if (caption) caption.textContent = 'Observed outcomes (0/1) versus fitted probabilities with vertical jitter added for visibility.';
+  if (caption) caption.textContent = 'Observed outcomes (0/1) versus fitted probabilities with vertical jitter added for visibility. Here, 1 represents the focal outcome that has been coded as success.';
 }
 
 function renderEffectPlot(model, rows, predictorsInfo) {
@@ -1746,9 +1762,9 @@ function renderEffectPlot(model, rows, predictorsInfo) {
       xaxis: { title: focalInfo.name },
       yaxis: { title: `Predicted probability Pr(${selectedOutcome}=1)` }
     }, { responsive: true });
-    if (caption) caption.textContent = `Predicted probability that ${selectedOutcome} = 1 by ${focalInfo.name}, holding other predictors constant.`;
+    if (caption) caption.textContent = `Predicted probability that ${selectedOutcome} = 1 (the focal outcome, coded as success) by ${focalInfo.name}, holding other predictors constant.`;
     if (interp) {
-      interp.textContent = `Bars show predicted probabilities that ${selectedOutcome} = 1 for each ${focalInfo.name} level. Error bars are ${Math.round((1 - model.alpha) * 100)}% confidence intervals on that probability, with other predictors held at their defaults (means for continuous, selected levels for categorical). Compare each bar to the reference group in the coefficient table.`;
+      interp.textContent = `Bars show predicted probabilities that ${selectedOutcome} = 1 (the focal outcome, coded as success) for each ${focalInfo.name} level. Error bars are ${Math.round((1 - model.alpha) * 100)}% confidence intervals on that probability, with other predictors held at their defaults (means for continuous, selected levels for categorical). Compare each bar to the reference group in the coefficient table.`;
     }
     return;
   }
@@ -1817,7 +1833,7 @@ function renderEffectPlot(model, rows, predictorsInfo) {
         : `${info.name} = ${formatNumber(valuesByPredictor[info.name], 3)}`);
     });
     const ciLabel = `${Math.round((1 - model.alpha) * 100)}% CI`;
-    caption.textContent = `Predicted probability that ${selectedOutcome} = 1 vs. ${focalInfo.name}, holding others constant (${holds.join(', ')}). ${ciLabel} shown as shaded band/bars.`;
+    caption.textContent = `Predicted probability that ${selectedOutcome} = 1 (the focal outcome, coded as success) vs. ${focalInfo.name}, holding others constant (${holds.join(', ')}). ${ciLabel} shown as shaded band/bars.`;
     if (constantsNote) {
       const eqParts = (model.terms || []).map((term, idx) => {
         if (idx === 0) return formatNumber(term.estimate, 3);
@@ -1826,10 +1842,10 @@ function renderEffectPlot(model, rows, predictorsInfo) {
         if (term.type === 'categorical') return `${sign} ${absVal} * I(${escapeHtml(term.term)})`;
         return `${sign} ${absVal} * ${escapeHtml(term.predictor)}`;
       }).join(' ');
-      constantsNote.innerHTML = `Model equation: <code>logit(Pr(${escapeHtml(selectedOutcome)}=1)) = ${eqParts}</code><br>Held constants: ${holds.join(', ') || 'none'}.`;
+      constantsNote.innerHTML = `Model equation: <code>logit(Pr(${escapeHtml(selectedOutcome)}=1)) = ${eqParts}</code><br>Here, 1 denotes the focal outcome category (coded as success).<br>Held constants: ${holds.join(', ') || 'none'}.`;
     }
     if (interp) {
-      interp.textContent = `Line shows predicted probability that ${selectedOutcome} = 1 over the focal range. The shaded band is the ${ciLabel} confidence band for that probability. A rising line means the probability of ${selectedOutcome} = 1 increases as ${focalInfo.name} increases (holding others at their chosen values); a falling line means it decreases.`;
+      interp.textContent = `Line shows predicted probability that ${selectedOutcome} = 1 (the focal outcome, coded as success) over the focal range. The shaded band is the ${ciLabel} confidence band for that probability. A rising line means the probability of ${selectedOutcome} = 1 increases as ${focalInfo.name} increases (holding others at their chosen values); a falling line means it decreases.`;
     }
   }
 }
@@ -1842,11 +1858,11 @@ function renderCoefInterpretation(model) {
     return;
   }
   const explainColumns = [
-    'Estimate (log-odds): change in log-odds that the outcome equals 1 when the predictor increases by one unit or moves to a given category, holding other predictors constant.',
+    'Estimate (log-odds): change in log-odds that the focal outcome (coded as 1) occurs when the predictor increases by one unit or moves to a given category, holding other predictors constant.',
     'Standard Error: uncertainty of the log-odds estimate.',
-    'z and p-value: test of whether the coefficient differs from zero (no change in log-odds).',
-    'Odds Ratio: multiplicative change in the odds that the outcome equals 1 for a one-unit increase or category change (vs. reference).',
-    `${Math.round((1 - model.alpha) * 100)}% CI: confidence interval for the log-odds estimate (and the corresponding odds ratio).`
+    'z and p-value: test of whether the coefficient differs from zero (no change in log-odds of the focal outcome).',
+    'Odds Ratio: multiplicative change in the odds that the focal outcome (coded as 1) occurs for a one-unit increase or category change (vs. reference).',
+    `${Math.round((1 - model.alpha) * 100)}% CI: confidence interval for the log-odds estimate (and the corresponding odds ratio) for the focal outcome.`
   ];
   const continuous = model.terms.find(t => t.type === 'continuous');
   const categorical = model.terms.find(t => t.type === 'categorical') || model.terms.find(t => t.reference);
@@ -1891,7 +1907,6 @@ function updateResults() {
   const model = buildDesignMatrixAndFit(filtered, predictorsInfo, selectedOutcome, alpha);
   if (model.error) { clearOutputs(model.error); return; }
   lastModel = model;
-  assignPredictorPartialEta(model);
   updateEffectControls(predictorsInfo);
   populateMetrics(model);
   populateCoefficients(model);
