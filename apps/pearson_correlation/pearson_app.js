@@ -1755,7 +1755,14 @@ function updateUploadStatus(mode, message, status = '') {
           if (totalRows > rows.length) {
               statusNote = ` Using ${rows.length} of ${totalRows} paired observations.`;
           }
-          setFileFeedback(`Loaded ${rows.length} pairs from ${headerNote}.${skippedNote}${statusNote}`, 'success');
+            const xLabel = headers[0] || 'Variable X';
+            const yLabel = headers[1] || 'Variable Y';
+            uploadedPairedData.xLabel = xLabel;
+            uploadedPairedData.yLabel = yLabel;
+            setFileFeedback(
+                `Loaded ${rows.length} paired observations with variables: ${xLabel} (X), ${yLabel} (Y) from ${headerNote}.${skippedNote}${statusNote}`,
+                'success'
+            );
           updateUploadStatus(InputModes.PAIRED, `${rows.length} paired observation(s) ready.${skippedNote}${statusNote}`, 'success');
         updateResults();
     } catch (error) {

@@ -1043,23 +1043,24 @@
     if (rowValues.length > 10 || colValues.length > 10) {
       throw new Error('Raw data produced a ' + rowValues.length + 'x' + colValues.length + ' table. Limit to 10 categories per variable.');
     }
-    var matrix = rowValues.map(function () {
-      return colValues.map(function () { return 0; });
-    });
-    records.forEach(function (entry) {
-      var rIndex = rowValues.indexOf(entry.row);
-      var cIndex = colValues.indexOf(entry.col);
-      matrix[rIndex][cIndex] += 1;
-    });
-    var rawRowName = headers[0] || rowVarName;
-    var rawColName = headers[1] || colVarName;
-    return {
-      rows: rowValues,
-      columns: colValues,
-      matrix: matrix,
-      rowVarName: rawRowName,
-      colVarName: rawColName
-    };
+      var matrix = rowValues.map(function () {
+        return colValues.map(function () { return 0; });
+      });
+      records.forEach(function (entry) {
+        var rIndex = rowValues.indexOf(entry.row);
+        var cIndex = colValues.indexOf(entry.col);
+        matrix[rIndex][cIndex] += 1;
+      });
+      var rawRowName = headers[0] || rowVarName;
+      var rawColName = headers[1] || colVarName;
+      return {
+        rows: rowValues,
+        columns: colValues,
+        matrix: matrix,
+        rowVarName: rawRowName,
+        colVarName: rawColName,
+        totalRecords: records.length
+      };
   }
 
   function applyCrosstabMatrix(parsed, metadata) {
@@ -1136,17 +1137,22 @@
   }
 
   function handleRawFile(file) {
-    if (!file) return;
-    reportRawStatus('Processing ' + file.name + '...', null);
-    readFileAsText(file)
-      .then(function (text) {
-        var parsed = parseRawDataset(text);
-        applyCrosstabMatrix(parsed, {
-          rowVarName: parsed.rowVarName,
-          colVarName: parsed.colVarName
-        });
-        reportRawStatus('Converted ' + file.name + ' into a ' + parsed.rows.length + 'x' + parsed.columns.length + ' table.', 'success');
-      })
+      if (!file) return;
+      reportRawStatus('Processing ' + file.name + '...', null);
+      readFileAsText(file)
+        .then(function (text) {
+          var parsed = parseRawDataset(text);
+          applyCrosstabMatrix(parsed, {
+            rowVarName: parsed.rowVarName,
+            colVarName: parsed.colVarName
+          });
+          var total = typeof parsed.totalRecords === 'number' ? parsed.totalRecords : null;
+          var sizeLabel = parsed.rows.length + 'x' + parsed.columns.length + ' table';
+          var msg = 'Loaded ' + (total !== null ? total + ' observations, ' : '') +
+            'with variables: ' + parsed.rowVarName + ' (row category), ' +
+            parsed.colVarName + ' (column category). Converted to a ' + sizeLabel + '.';
+          reportRawStatus(msg, 'success');
+        })
       .catch(function (error) {
         var message = (error && error.message) ? error.message : 'Unknown error.';
         reportRawStatus(message, 'error');

@@ -977,7 +977,7 @@ function parseSummaryUpload(text) {
     };
 }
 
-function parseRawUpload(text) {
+  function parseRawUpload(text) {
     const trimmed = text.trim();
     if (!trimmed) {
         throw new Error('Raw file is empty.');
@@ -986,80 +986,80 @@ function parseRawUpload(text) {
     if (lines.length < 2) {
         throw new Error('Raw file requires a header row plus at least one data row.');
     }
-    const delimiter = detectDelimiter(lines[0]);
+      const delimiter = detectDelimiter(lines[0]);
     const headers = lines[0].split(delimiter).map(header => header.trim());
-    if (headers.length !== 2) {
-        throw new Error('Raw file must contain exactly two columns (Condition A, Condition B).');
-    }
-    const labelA = headers[0] || defaultLabels.conditionA;
-    const labelB = headers[1] || defaultLabels.conditionB;
-
-    const rows = lines.slice(1);
-    const valuesA = [];
-    const valuesB = [];
-    const uniqueA = new Set();
-    const uniqueB = new Set();
-
-    rows.forEach((line, index) => {
-        const parts = line.split(delimiter).map(part => part.trim());
-        if (parts.length !== 2) {
-            throw new Error(`Row ${index + 2} must include exactly two columns.`);
-        }
-        const [valueA, valueB] = parts;
-        if (!valueA || !valueB) {
-            throw new Error(`Row ${index + 2} is missing a value for Condition A or Condition B.`);
-        }
-        valuesA.push(valueA);
-        valuesB.push(valueB);
-        uniqueA.add(valueA);
-        uniqueB.add(valueB);
-    });
-
-    if (!valuesA.length) {
-        throw new Error('Raw file must include at least one data row.');
-    }
-    if (uniqueA.size !== 2 || uniqueB.size !== 2) {
-        throw new Error('Raw file must contain exactly two distinct outcomes per column.');
-    }
-    const categoriesA = Array.from(uniqueA);
-    const categoriesB = Array.from(uniqueB);
-    const categorySetA = new Set(categoriesA);
-    const categorySetB = new Set(categoriesB);
-    const sameCategories = categoriesB.every(value => categorySetA.has(value)) && categoriesA.every(value => categorySetB.has(value));
-    if (!sameCategories) {
-        throw new Error('Condition A and Condition B must share the same outcome labels.');
-    }
-    const [positiveValue, negativeValue] = categoriesA;
-    const mapOutcome = value => {
-        if (value === positiveValue) return 'positive';
-        if (value === negativeValue) return 'negative';
-        throw new Error(`Unexpected outcome value "${value}".`);
-    };
-    const counts = {
-        aPosBPos: 0,
-        aPosBNeg: 0,
-        aNegBPos: 0,
-        aNegBNeg: 0
-    };
-    for (let i = 0; i < valuesA.length; i++) {
-        const aClass = mapOutcome(valuesA[i]);
-        const bClass = mapOutcome(valuesB[i]);
-        if (aClass === 'positive' && bClass === 'positive') counts.aPosBPos += 1;
-        else if (aClass === 'positive' && bClass === 'negative') counts.aPosBNeg += 1;
-        else if (aClass === 'negative' && bClass === 'positive') counts.aNegBPos += 1;
-        else counts.aNegBNeg += 1;
-    }
-    return {
-        labels: {
-            conditionA: labelA,
-            conditionB: labelB,
-            positive: positiveValue,
-            negative: negativeValue
-        },
-        counts,
-        rowCount: valuesA.length
-    };
-}
+      if (headers.length !== 2) {
+          throw new Error('Raw file must contain exactly two columns (Condition A, Condition B).');
+      }
+      const labelA = headers[0] || defaultLabels.conditionA;
+      const labelB = headers[1] || defaultLabels.conditionB;
+  
+      const rows = lines.slice(1);
+      const valuesA = [];
+      const valuesB = [];
+      const uniqueA = new Set();
+      const uniqueB = new Set();
+  
+      rows.forEach((line, index) => {
+          const parts = line.split(delimiter).map(part => part.trim());
+          if (parts.length !== 2) {
+              throw new Error(`Row ${index + 2} must include exactly two columns.`);
+          }
+          const [valueA, valueB] = parts;
+          if (!valueA || !valueB) {
+              throw new Error(`Row ${index + 2} is missing a value for Condition A or Condition B.`);
+          }
+          valuesA.push(valueA);
+          valuesB.push(valueB);
+          uniqueA.add(valueA);
+          uniqueB.add(valueB);
+      });
+  
+      if (!valuesA.length) {
+          throw new Error('Raw file must include at least one data row.');
+      }
+      if (uniqueA.size !== 2 || uniqueB.size !== 2) {
+          throw new Error('Raw file must contain exactly two distinct outcomes per column.');
+      }
+      const categoriesA = Array.from(uniqueA);
+      const categoriesB = Array.from(uniqueB);
+      const categorySetA = new Set(categoriesA);
+      const categorySetB = new Set(categoriesB);
+      const sameCategories = categoriesB.every(value => categorySetA.has(value)) && categoriesA.every(value => categorySetB.has(value));
+      if (!sameCategories) {
+          throw new Error('Condition A and Condition B must share the same outcome labels.');
+      }
+      const [positiveValue, negativeValue] = categoriesA;
+      const mapOutcome = value => {
+          if (value === positiveValue) return 'positive';
+          if (value === negativeValue) return 'negative';
+          throw new Error(`Unexpected outcome value "${value}".`);
+      };
+      const counts = {
+          aPosBPos: 0,
+          aPosBNeg: 0,
+          aNegBPos: 0,
+          aNegBNeg: 0
+      };
+      for (let i = 0; i < valuesA.length; i++) {
+          const aClass = mapOutcome(valuesA[i]);
+          const bClass = mapOutcome(valuesB[i]);
+          if (aClass === 'positive' && bClass === 'positive') counts.aPosBPos += 1;
+          else if (aClass === 'positive' && bClass === 'negative') counts.aPosBNeg += 1;
+          else if (aClass === 'negative' && bClass === 'positive') counts.aNegBPos += 1;
+          else counts.aNegBNeg += 1;
+      }
+      return {
+          labels: {
+              conditionA: labelA,
+              conditionB: labelB,
+              positive: positiveValue,
+              negative: negativeValue
+          },
+          counts,
+          rowCount: valuesA.length
+      };
+  }
 
 function applySummaryDataset(dataset, { mode = DataEntryModes.SUMMARY, update = true } = {}) {
     setDataEntryMode(mode);
@@ -1157,21 +1157,30 @@ function setupRawUpload() {
         return;
     }
 
-    const handleFile = file => {
-        if (!file) return;
-        setUploadStatus(statusId, `Loading ${file.name}...`, '');
-        const reader = new FileReader();
-        reader.onload = event => {
-            try {
-                const text = event.target.result;
-                const payload = parseRawUpload(text);
-                applyRawDataset(payload);
-                setUploadStatus(statusId, `Loaded ${payload.rowCount} paired observations.`, 'success');
-                setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
-                enableScenarioDownload(null);
-            } catch (error) {
-                console.error('Raw upload error:', error);
-                setUploadStatus(statusId, error.message || 'Unable to parse raw file.', 'error');
+      const handleFile = file => {
+          if (!file) return;
+          setUploadStatus(statusId, `Loading ${file.name}...`, '');
+          const reader = new FileReader();
+          reader.onload = event => {
+              try {
+                  const text = event.target.result;
+                  const payload = parseRawUpload(text);
+                  applyRawDataset(payload);
+                  const labels = payload.labels || {};
+                  const conditionALabel = labels.conditionA || defaultLabels.conditionA;
+                  const conditionBLabel = labels.conditionB || defaultLabels.conditionB;
+                  const positiveLabel = labels.positive || defaultLabels.positive;
+                  const negativeLabel = labels.negative || defaultLabels.negative;
+                  const message =
+                      `Loaded ${payload.rowCount} paired observations with variables: ` +
+                      `${conditionALabel} (Condition A), ${conditionBLabel} (Condition B). ` +
+                      `Outcome labels: ${positiveLabel} vs ${negativeLabel}.`;
+                  setUploadStatus(statusId, message, 'success');
+                  setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
+                  enableScenarioDownload(null);
+              } catch (error) {
+                  console.error('Raw upload error:', error);
+                  setUploadStatus(statusId, error.message || 'Unable to parse raw file.', 'error');
             }
         };
         reader.onerror = () => {
@@ -1218,32 +1227,41 @@ async function loadScenarioDatasetResource(entry) {
     if (!response.ok) {
         throw new Error(`Unable to load scenario dataset (${response.status})`);
     }
-    const text = await response.text();
-    const filename = entry.dataset.split('/').pop() || 'scenario_dataset.csv';
-    try {
-        const payload = parseSummaryUpload(text);
-        const result = applySummaryDataset(payload, { mode: DataEntryModes.SUMMARY, update: false });
-        setUploadStatus('summary-upload-status', `Loaded summary counts for ${payload.labels.conditionA} vs ${payload.labels.conditionB}.`, 'success');
-        setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
-        return {
-            dataset: {
-                filename,
-                content: text,
+      const text = await response.text();
+      const filename = entry.dataset.split('/').pop() || 'scenario_dataset.csv';
+      try {
+          const payload = parseSummaryUpload(text);
+          const result = applySummaryDataset(payload, { mode: DataEntryModes.SUMMARY, update: false });
+          setUploadStatus('summary-upload-status', `Loaded summary counts for ${payload.labels.conditionA} vs ${payload.labels.conditionB}.`, 'success');
+          setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
+          return {
+              dataset: {
+                  filename,
+                  content: text,
                 mimeType: 'text/csv'
             },
             alphaApplied: result.alphaApplied,
             methodApplied: result.methodApplied
         };
-    } catch (summaryError) {
-        try {
-            const payload = parseRawUpload(text);
-            const result = applyRawDataset(payload, { update: false });
-            setUploadStatus('raw-upload-status', `Loaded ${payload.rowCount} paired observations.`, 'success');
-            setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
-            return {
-                dataset: {
-                    filename,
-                    content: text,
+      } catch (summaryError) {
+          try {
+              const payload = parseRawUpload(text);
+              const result = applyRawDataset(payload, { update: false });
+              const labels = payload.labels || {};
+              const conditionALabel = labels.conditionA || defaultLabels.conditionA;
+              const conditionBLabel = labels.conditionB || defaultLabels.conditionB;
+              const positiveLabel = labels.positive || defaultLabels.positive;
+              const negativeLabel = labels.negative || defaultLabels.negative;
+              const message =
+                  `Loaded ${payload.rowCount} paired observations with variables: ` +
+                  `${conditionALabel} (Condition A), ${conditionBLabel} (Condition B). ` +
+                  `Outcome labels: ${positiveLabel} vs ${negativeLabel}.`;
+              setUploadStatus('raw-upload-status', message, 'success');
+              setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
+              return {
+                  dataset: {
+                      filename,
+                      content: text,
                     mimeType: 'text/csv'
                 },
                 alphaApplied: result.alphaApplied,

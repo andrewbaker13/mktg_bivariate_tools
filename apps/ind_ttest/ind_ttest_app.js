@@ -176,7 +176,7 @@ function parseSummaryUpload(text = '') {
     };
 }
 
-function parseRawUpload(text = '') {
+  function parseRawUpload(text = '') {
     const trimmed = text.trim();
     if (!trimmed) throw new Error('File is empty.');
     const lines = trimmed.split(/\r?\n/).filter(line => line.trim().length);
@@ -203,17 +203,17 @@ function parseRawUpload(text = '') {
     if (groups.size < 2) {
         throw new Error('Need at least two unique group labels.');
     }
-    const summaries = Array.from(groups.entries()).map(([name, values]) => ({
-        name,
-        mean: calculateMean(values),
-        sd: calculateSd(values),
-        n: values.length
+      const summaries = Array.from(groups.entries()).map(([name, values]) => ({
+          name,
+          mean: calculateMean(values),
+          sd: calculateSd(values),
+          n: values.length
     })).filter(entry => entry.n >= 2 && isFinite(entry.mean) && isFinite(entry.sd));
     if (summaries.length < 2) {
         throw new Error('Unable to compute statistics for two groups.');
     }
-    return summaries.slice(0, 2);
-}
+      return summaries.slice(0, 2);
+  }
 
 function applyGroupStats(payload, options = {}) {
     const entries = Array.isArray(payload?.groups) ? payload.groups : payload;
@@ -262,25 +262,33 @@ function setupSummaryUpload() {
         return;
     }
 
-    const handleFile = file => {
-        if (!file) return;
-        setUploadStatus(statusId, `Loading ${file.name}...`);
-        const reader = new FileReader();
-        reader.onload = event => {
-            try {
-                const text = event.target.result;
-                const payload = parseSummaryUpload(text);
-                applyGroupStats(payload, { mode: DataEntryModes.SUMMARY });
-                const groups = payload.groups || [];
-                const label = groups.length >= 2
-                    ? `${groups[0].name || 'Group 1'} and ${groups[1].name || 'Group 2'}`
-                    : 'both groups';
-                setUploadStatus(statusId, `Loaded summary stats for ${label}.`, 'success');
-            } catch (error) {
-                console.error(error);
-                setUploadStatus(statusId, error.message || 'Unable to parse file.', 'error');
-            }
-        };
+      const handleFile = file => {
+          if (!file) return;
+          setUploadStatus(statusId, `Loading ${file.name}...`);
+          const reader = new FileReader();
+          reader.onload = event => {
+              try {
+                  const text = event.target.result;
+                  const payload = parseSummaryUpload(text);
+                  applyGroupStats(payload, { mode: DataEntryModes.SUMMARY });
+                  const groups = payload.groups || [];
+                  const label = groups.length >= 2
+                      ? `${groups[0].name || 'Group 1'} and ${groups[1].name || 'Group 2'}`
+                      : 'both groups';
+                  const totalN = groups.reduce((sum, g) => sum + (g.n || 0), 0);
+                  const groupNote = groups
+                      .slice(0, 2)
+                      .map(g => `${g.name || 'Group'} (n=${g.n ?? 0})`)
+                      .join('; ');
+                  const message =
+                      `Loaded ${totalN} observations across ${groups.length} group(s): ${groupNote}. ` +
+                      `Variables: group (group label), mean/sd/n (summary statistics used for the t-test).`;
+                  setUploadStatus(statusId, message, 'success');
+              } catch (error) {
+                  console.error(error);
+                  setUploadStatus(statusId, error.message || 'Unable to parse file.', 'error');
+              }
+          };
         reader.onerror = () => {
             setUploadStatus(statusId, 'Unable to read file.', 'error');
         };
@@ -324,18 +332,26 @@ function setupRawUpload() {
     const handleFile = file => {
         if (!file) return;
         setUploadStatus(statusId, `Loading ${file.name}...`);
-        const reader = new FileReader();
-        reader.onload = event => {
-            try {
-                const text = event.target.result;
-                const entries = parseRawUpload(text);
-                applyGroupStats({ groups: entries }, { mode: DataEntryModes.RAW });
-                setUploadStatus(statusId, `Computed stats for ${entries[0].name || 'Group 1'} and ${entries[1].name || 'Group 2'}.`, 'success');
-            } catch (error) {
-                console.error(error);
-                setUploadStatus(statusId, error.message || 'Unable to parse file.', 'error');
-            }
-        };
+          const reader = new FileReader();
+          reader.onload = event => {
+              try {
+                  const text = event.target.result;
+                  const entries = parseRawUpload(text);
+                  applyGroupStats({ groups: entries }, { mode: DataEntryModes.RAW });
+                  const totalN = entries.reduce((sum, g) => sum + (g.n || 0), 0);
+                  const groupNote = entries
+                      .slice(0, 2)
+                      .map(g => `${g.name || 'Group'} (n=${g.n ?? 0})`)
+                      .join('; ');
+                  const message =
+                      `Loaded ${totalN} observations across ${entries.length} group(s): ${groupNote}. ` +
+                      `Variables: group (group label), value (numeric outcome used for the t-test).`;
+                  setUploadStatus(statusId, message, 'success');
+              } catch (error) {
+                  console.error(error);
+                  setUploadStatus(statusId, error.message || 'Unable to parse file.', 'error');
+              }
+          };
         reader.onerror = () => {
             setUploadStatus(statusId, 'Unable to read file.', 'error');
         };

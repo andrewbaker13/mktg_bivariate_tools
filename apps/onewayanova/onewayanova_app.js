@@ -605,6 +605,7 @@ function handleRawDataText(text) {
     if (totalRows > processedRows) {
         statusMessage += ` Using ${processedRows} of ${totalRows} observations.`;
     }
+    statusMessage += ' Variables: group (factor), value (numeric outcome).';
     setUploadStatus('raw-upload-status', statusMessage, 'success');
 }
 

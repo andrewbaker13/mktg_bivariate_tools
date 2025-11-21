@@ -167,9 +167,9 @@
           sample: Math.max(1, Math.round(sample))
         });
       });
-      if(rows.length < 2) throw new Error('Provide at least two rows with numeric conversions and sample size.');
-      return rows.slice(0, 2);
-    }
+        if(rows.length < 2) throw new Error('Provide at least two rows with numeric conversions and sample size.');
+        return rows.slice(0, 2);
+      }
 
     function parseRawUpload(text){
       const trimmed = (text || '').trim();
@@ -234,19 +234,31 @@
       render();
     }
 
-    function handleSummaryText(text){
-      const groups = parseSummaryUpload(text);
-      applyParsedGroups(groups);
-      const msg = `Loaded ${groups.length} group summary row(s).`;
-      setUploadStatus('summary-upload-status', msg, 'success');
-    }
-
-    function handleRawText(text){
-      const groups = parseRawUpload(text);
-      applyParsedGroups(groups);
-      const msg = `Loaded raw outcomes for ${groups.length} group(s).`;
-      setUploadStatus('raw-upload-status', msg, 'success');
-    }
+      function handleSummaryText(text){
+        const groups = parseSummaryUpload(text);
+        applyParsedGroups(groups);
+        const totalN = groups.reduce((sum, g) => sum + (g.sample || 0), 0);
+        const groupNote = groups
+          .map(g => `${g.name} (n=${g.sample}, conversions=${g.conversions})`)
+          .join('; ');
+        const msg =
+          `Loaded ${totalN} observations across ${groups.length} group(s): ${groupNote}. ` +
+          `Variables: group (condition label), conversions (successes), sample size (traffic).`;
+        setUploadStatus('summary-upload-status', msg, 'success');
+      }
+  
+      function handleRawText(text){
+        const groups = parseRawUpload(text);
+        applyParsedGroups(groups);
+        const totalN = groups.reduce((sum, g) => sum + (g.sample || 0), 0);
+        const groupNote = groups
+          .map(g => `${g.name} (n=${g.sample}, conversions=${g.conversions})`)
+          .join('; ');
+        const msg =
+          `Loaded ${totalN} visitor-level observations for ${groups.length} group(s): ${groupNote}. ` +
+          `Variables: group (condition label), outcome (binary conversion indicator).`;
+        setUploadStatus('raw-upload-status', msg, 'success');
+      }
 
     function setupUploadPanels(){
       installDropzone({

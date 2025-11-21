@@ -1,8 +1,8 @@
 // Shared CSV utilities for all tools
 
-// How many rows any single upload is allowed to contain.
+// How many data rows (observations) any single upload is allowed to contain.
 // Other apps can reuse this constant.
-const MAX_UPLOAD_ROWS = 2000;
+const MAX_UPLOAD_ROWS = 5000;
 
 function detectDelimiter(line) {
     if (line.includes('\t')) return '\t';
