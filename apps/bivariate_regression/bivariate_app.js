@@ -89,7 +89,6 @@ function formatAlpha(alpha) {
   return c.toFixed(4);
 }
 
-// Override any earlier numeric/APA helpers with clean, ASCII-safe versions.
 function applyConfidenceSelection(level, { syncAlpha = true, skipUpdate = false } = {}) {
   selectedConfidenceLevel = clamp(level, 0.5, 0.999);
   document.querySelectorAll('.conf-level-btn').forEach(button => {

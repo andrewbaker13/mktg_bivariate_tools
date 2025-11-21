@@ -135,18 +135,18 @@
       <div class="card">
         <article class="chart-card">
           <h3>Actual vs. Fitted</h3>
-          <details class="interpretation-aid">
-            <summary>Interpretation Aid</summary>
-            <p class="muted">
-              Each point compares an observed outcome to its predicted value. Closer to the 45-degree line means better fit; curved or funnel shapes hint at non-linearity or heteroskedasticity. Outliers far from the line may warrant follow-up.
-            </p>
-          </details>
           <div id="plot-actual-fitted" class="chart-placeholder" role="img" aria-live="polite"
             aria-label="Plot of actual versus fitted outcome values."></div>
           <p id="plot-actual-fitted-caption" class="chart-note"></p>
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p class="muted">
+              Each point compares an observed outcome to its predicted value. Points near the 45-degree line indicate better fit. Curves or funnel shapes can signal non-linearity or changing variance; far-off points may be influential cases to review.
+            </p>
+          </details>
         </article>
         <article class="chart-card">
-          <h3>Effect of a Predictor</h3>
+          <h3>Relationship with Predictor on Outcome</h3>
           <div class="effect-controls">
             <label for="effect-focal-select">Choose focal predictor:</label>
             <select id="effect-focal-select"></select>
@@ -160,12 +160,21 @@
                 <label>Max <input type="number" id="effect-range-max" step="any"></label>
               </div>
             </div>
-            <div id="effect-nonfocal-levels" class="effect-nonfocal-levels"></div>
+            <div class="effect-constants-card">
+              <h4>Set control values for non-focal variables</h4>
+              <p class="muted">Continuous controls default to mean; categorical controls default to modal (most frequent) level.</p>
+              <div id="effect-nonfocal-continuous" class="effect-nonfocal-levels"></div>
+              <div id="effect-nonfocal-levels" class="effect-nonfocal-levels"></div>
+            </div>
             <p id="effect-constants-note" class="muted"></p>
           </div>
           <div id="plot-effect" class="chart-placeholder" role="img" aria-live="polite"
             aria-label="Predicted effect of focal predictor on outcome."></div>
           <p id="plot-effect-caption" class="chart-note"></p>
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p id="effect-interpretation" class="muted"></p>
+          </details>
         </article>
       </div>
     </section>
@@ -233,6 +242,24 @@
         <div class="metric-output"><span>DF (model / error):</span><span id="metric-df" class="dynamic-value">&ndash;</span></div>
         <div class="metric-output"><span>Sample size (n):</span><span id="metric-n" class="dynamic-value">&ndash;</span></div>
         <div class="metric-output"><span>Alpha:</span><span id="metric-alpha" class="dynamic-value">&ndash;</span></div>
+        <details class="interpretation-aid">
+          <summary>Interpretation Aid</summary>
+          <p class="muted">
+            <strong>R-squared / Adj. R-squared:</strong> Percent of outcome variation explained by the predictors (adjusted version penalizes extra predictors). Marketing takeaway: higher means the model captures more of what drives the outcome.
+          </p>
+          <p class="muted">
+            <strong>Model F &amp; p-value:</strong> Tests whether, as a set, the predictors improve prediction vs. no predictors. A small p-value (&lt; alpha) means the model adds meaningful signal.
+          </p>
+          <p class="muted">
+            <strong>RMSE / MAE / Residual SE:</strong> Typical prediction error size. Smaller is better. RMSE/Residual SE put more weight on large misses; MAE is the average absolute miss.
+          </p>
+          <p class="muted">
+            <strong>DF (model/error) &amp; n:</strong> Sample size and available information for estimating effects. Very low error DF can make estimates unstable.
+          </p>
+          <p class="muted">
+            <strong>Alpha:</strong> Your chosen significance level. P-values below alpha are treated as statistically reliable; above alpha are treated as not statistically reliable.
+          </p>
+        </details>
       </div>
 
       <div class="dual-panels">
@@ -248,10 +275,6 @@
 
       <div class="card summary-section">
         <h3>Coefficient Estimates</h3>
-        <details class="interpretation-aid">
-          <summary>Interpretation Aid</summary>
-          <div id="coef-interpretation" class="muted"></div>
-        </details>
         <table class="summary-table">
           <thead>
             <tr>
@@ -270,6 +293,10 @@
             <tr><td colspan="9">Provide data to see coefficient estimates.</td></tr>
           </tbody>
         </table>
+        <details class="interpretation-aid">
+          <summary>Interpretation Aid</summary>
+          <div id="coef-interpretation" class="muted"></div>
+        </details>
       </div>
     </section>
 
@@ -310,5 +337,4 @@
 </body>
 
 </html>
-
 

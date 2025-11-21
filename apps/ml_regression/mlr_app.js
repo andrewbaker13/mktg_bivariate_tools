@@ -16,7 +16,8 @@ const effectState = {
   rangeMode: 'sd',
   customMin: null,
   customMax: null,
-  catLevels: {}
+  catLevels: {},
+  continuousOverrides: {}
 };
 
 let lastFilteredRows = [];
@@ -454,6 +455,14 @@ function renderVariableSelectors() {
   if (!panel) return;
   if (!dataset.rows.length) { panel.classList.add('hidden'); return; }
   panel.classList.remove('hidden');
+
+  // Ensure all available predictors (except outcome) are selected by default
+  const desiredPredictors = dataset.headers.filter(h => h !== selectedOutcome);
+  if (desiredPredictors.length && selectedPredictors.length < desiredPredictors.length) {
+    desiredPredictors.forEach(h => {
+      if (!selectedPredictors.includes(h)) selectedPredictors.push(h);
+    });
+  }
   const outcomeSelect = document.getElementById('outcome-select');
   if (outcomeSelect) {
     outcomeSelect.innerHTML = '';
@@ -1029,10 +1038,14 @@ function renderEffectPlot(model, rows, predictorsInfo) {
   const plot = document.getElementById('plot-effect');
   const caption = document.getElementById('plot-effect-caption');
   const constantsNote = document.getElementById('effect-constants-note');
+  const interp = document.getElementById('effect-interpretation');
+  const nonFocalContinuous = document.getElementById('effect-nonfocal-continuous');
   if (!plot || !model || !rows || !rows.length) return;
   if (!effectState.focal || !predictorsInfo.find(p => p.name === effectState.focal)) {
     plot.innerHTML = '<p class="muted">Select a focal predictor to view its effect.</p>';
     if (caption) caption.textContent = '';
+    if (interp) interp.textContent = '';
+    if (nonFocalContinuous) nonFocalContinuous.innerHTML = '';
     return;
   }
   const focalInfo = predictorsInfo.find(p => p.name === effectState.focal);
@@ -1041,20 +1054,72 @@ function renderEffectPlot(model, rows, predictorsInfo) {
     if (info.type === 'categorical') {
       const meta = columnMeta[info.name] || {};
       const levels = meta.distinctValues || [];
-      const chosen = (info.name === focalInfo.name) ? null : effectState.catLevels[info.name] || levels[0] || null;
+      // default to override or modal level (most frequent)
+      let chosen = effectState.catLevels[info.name];
+      if (!chosen) {
+        const counts = new Map();
+        rows.forEach(r => {
+          const lvl = r[info.name] || '(missing)';
+          counts.set(lvl, (counts.get(lvl) || 0) + 1);
+        });
+        chosen = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || levels[0] || null;
+        effectState.catLevels[info.name] = chosen;
+      }
+      if (info.name === focalInfo.name) chosen = null; // focal handled separately
       valuesByPredictor[info.name] = chosen;
     } else {
       const nums = rows.map(r => parseFloat(r[info.name])).filter(v => Number.isFinite(v));
       const mean = StatsUtils.mean(nums);
+      const sorted = [...nums].sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      const median = sorted.length ? (sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2) : NaN;
       valuesByPredictor[info.name] = mean;
       valuesByPredictor[`${info.name}__stats`] = {
         mean,
         sd: StatsUtils.standardDeviation(nums),
         min: Math.min(...nums),
-        max: Math.max(...nums)
+        max: Math.max(...nums),
+        median
       };
+      if (effectState.continuousOverrides[info.name] !== undefined) {
+        valuesByPredictor[info.name] = effectState.continuousOverrides[info.name];
+      }
     }
   });
+
+  if (nonFocalContinuous) {
+    nonFocalContinuous.innerHTML = '';
+    predictorsInfo.forEach(info => {
+      if (info.type === 'categorical' || info.name === focalInfo.name) return;
+      const stats = valuesByPredictor[`${info.name}__stats`] || {};
+      const select = document.createElement('select');
+      select.dataset.col = info.name;
+      [
+        { key: 'mean', label: `Mean (${formatNumber(stats.mean, 3)})`, value: stats.mean },
+        { key: 'median', label: `Median (${formatNumber(stats.median || stats.mean, 3)})`, value: stats.median || stats.mean },
+        { key: 'plus1', label: `+1 SD (${formatNumber((stats.mean || 0) + (stats.sd || 0), 3)})`, value: (stats.mean || 0) + (stats.sd || 0) },
+        { key: 'minus1', label: `-1 SD (${formatNumber((stats.mean || 0) - (stats.sd || 0), 3)})`, value: (stats.mean || 0) - (stats.sd || 0) }
+      ].forEach(optDef => {
+        const opt = document.createElement('option');
+        opt.value = optDef.value;
+        opt.textContent = `${info.name}: ${optDef.label}`;
+        select.appendChild(opt);
+      });
+      const currentOverride = effectState.continuousOverrides[info.name];
+      if (currentOverride !== undefined) select.value = currentOverride;
+      select.onchange = () => {
+        const val = parseFloat(select.value);
+        if (Number.isFinite(val)) {
+          effectState.continuousOverrides[info.name] = val;
+        }
+        renderEffectPlot(model, rows, predictorsInfo);
+      };
+      const wrapper = document.createElement('label');
+      wrapper.textContent = '';
+      wrapper.appendChild(select);
+      nonFocalContinuous.appendChild(wrapper);
+    });
+  }
   const terms = model.terms;
   const beta = terms.map(t => t.estimate);
   const covB = model.covB;
@@ -1092,6 +1157,9 @@ function renderEffectPlot(model, rows, predictorsInfo) {
       yaxis: { title: selectedOutcome }
     }, { responsive: true });
     if (caption) caption.textContent = `Predicted ${selectedOutcome} by ${focalInfo.name}, holding other predictors constant.`;
+    if (interp) {
+      interp.textContent = `Bars show predicted ${selectedOutcome} for each ${focalInfo.name} level. Error bars are ${Math.round((1 - model.alpha) * 100)}% CIs. Other predictors are held at their defaults (means for continuous, selected levels for categorical). Compare each bar to the reference group in the table.`;
+    }
     return;
   }
   const stats = valuesByPredictor[`${focalInfo.name}__stats`] || {};
@@ -1157,6 +1225,9 @@ function renderEffectPlot(model, rows, predictorsInfo) {
         return `${sign} ${absVal}×${escapeHtml(term.predictor)}`;
       }).join(' ');
       constantsNote.innerHTML = `Regression equation: <code>${escapeHtml(selectedOutcome)} = ${eqParts}</code><br>Held constants: ${holds.join(', ') || 'none'}.`;
+    }
+    if (interp) {
+      interp.textContent = `Line shows predicted ${selectedOutcome} over the focal range. Band is the ${ciLabel}. Positive slope means ${selectedOutcome} rises as ${focalInfo.name} increases (holding others at mean/selected values); negative slope means it falls.`;
     }
   }
 }
@@ -1249,3 +1320,4 @@ document.addEventListener('DOMContentLoaded', () => {
   }));
   clearOutputs('Upload a CSV to begin.');
 });
+

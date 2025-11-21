@@ -112,3 +112,16 @@
 .effect-nonfocal-levels label {
   font-size: 0.875rem;
 }
+
+.effect-constants-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  margin-top: 8px;
+}
+
+.effect-constants-card h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.95rem;
+}

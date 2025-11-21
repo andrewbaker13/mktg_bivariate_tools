@@ -253,6 +253,21 @@
           <span>Decision (alpha):</span>
           <span id="metric-decision" class="dynamic-value">&ndash;</span>
         </div>
+        <details class="interpretation-aid">
+          <summary>Interpretation Aid</summary>
+          <p class="muted">
+            <strong>R-squared:</strong> Share of outcome variation explained by this single predictor. Higher means the line fits the data better.
+          </p>
+          <p class="muted">
+            <strong>Slope &amp; t / p-value:</strong> Slope shows change in outcome for one-unit change in predictor (or difference vs. reference for a binary predictor). A small p-value (below alpha) means that slope is statistically reliable.
+          </p>
+          <p class="muted">
+            <strong>Intercept:</strong> Expected outcome when the predictor is zero (or at the reference group).
+          </p>
+          <p class="muted">
+            <strong>Decision (alpha):</strong> An easy yes/no cue based on the chosen significance level.
+          </p>
+        </details>
       </div>
 
       <div class="dual-panels">
@@ -317,7 +332,7 @@
   <script src="../../shared/js/stats_utils.js"></script>
   <script src="../../shared/js/fan_chart_utils.js"></script>
   <script src="../../shared/js/stacked_bar_utils.js"></script>
-  <script src="app.js"></script>
+  <script src="bivariate_app.js"></script>
 </body>
 
 </html>
