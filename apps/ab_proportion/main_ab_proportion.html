@@ -123,8 +123,8 @@
             <h4>Upload summary inputs</h4>
             <p>Provide a CSV/TSV with exactly two rows (Control and Variant) including <strong>group</strong>, <strong>conversions</strong>, and <strong>sample size</strong>. Presets download in this format.</p>
             <div id="summary-dropzone" class="dropzone" role="button" tabindex="0">
-              <p class="dropzone-title">Drag &amp; drop summary file</p>
-              <p class="dropzone-note">Up to 2,000 rows. Each row should describe a group.</p>
+              <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+              <p class="dropzone-note">Two rows (control and variant) with headers like <code>group,conversions,n</code>. Optional alpha column to override 0.05.</p>
               <button type="button" id="summary-upload-browse" class="secondary">Browse files</button>
             </div>
             <input type="file" id="summary-upload-input" accept=".csv,.tsv,.txt" hidden>
@@ -139,8 +139,8 @@
             <h4>Upload raw data</h4>
             <p>Use this mode for row-level observations. Required columns: <strong>group</strong> (two labels max) and <strong>conversion</strong> (0 or 1).</p>
             <div id="raw-dropzone" class="dropzone" role="button" tabindex="0">
-              <p class="dropzone-title">Drag &amp; drop raw case file</p>
-              <p class="dropzone-note">Two columns minimum: group label and conversion indicator.</p>
+              <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+              <p class="dropzone-note">Two columns: <code>group</code> (two labels max) and <code>conversion</code> (0/1). Up to 2,000 rows.</p>
               <button type="button" id="raw-upload-browse" class="secondary">Browse files</button>
             </div>
             <input type="file" id="raw-upload-input" accept=".csv,.tsv,.txt" hidden>
@@ -275,6 +275,7 @@
   </section>
 
   <!-- ======== SCRIPT: everything needed for the added features lives here; your app.js still loads if present ======== -->
+  <script src="../../shared/js/ui_utils.js"></script>
   <script src="../../shared/js/csv_utils.js"></script>
   <script src="../../shared/js/fan_chart_utils.js"></script>
   <script src="main_ab_proportion.js"></script>

@@ -22,7 +22,7 @@ const ManualStructures = Object.freeze({
 
 const DEFAULT_MANUAL_ROWS = 8;
 const MAX_MANUAL_ROWS = 50;
-const MAX_UPLOAD_ROWS = 2000;
+const PAIR_TTEST_MAX_UPLOAD_ROWS = 2000;
 
 let activeMode = InputModes.PAIRED;
 let selectedConfidenceLevel = 0.95;
@@ -973,7 +973,7 @@ function detectDelimiter(line) {
     return ',';
 }
 
-function parseDelimitedText(text, expectedColumns, { maxRows = MAX_UPLOAD_ROWS } = {}) {
+function parseDelimitedText(text, expectedColumns, { maxRows = PAIR_TTEST_MAX_UPLOAD_ROWS } = {}) {
     const trimmed = text.trim();
     if (!trimmed) {
         throw new Error('File is empty.');
@@ -1043,7 +1043,7 @@ function updateUploadStatus(mode, message, status = '') {
 
 function importPairedData(text) {
     try {
-        const { headers, rows, errors } = parseDelimitedText(text, 2, { maxRows: MAX_UPLOAD_ROWS });
+        const { headers, rows, errors } = parseDelimitedText(text, 2, { maxRows: PAIR_TTEST_MAX_UPLOAD_ROWS });
         uploadedPairedData = {
             beforeValues: rows.map(values => values[0]),
             afterValues: rows.map(values => values[1]),
@@ -1065,7 +1065,7 @@ function importPairedData(text) {
 
 function importDifferenceData(text) {
     try {
-        const { headers, rows, errors } = parseDelimitedText(text, 1, { maxRows: MAX_UPLOAD_ROWS });
+        const { headers, rows, errors } = parseDelimitedText(text, 1, { maxRows: PAIR_TTEST_MAX_UPLOAD_ROWS });
         uploadedDifferenceData = {
             differences: rows.map(values => values[0]),
             rowCount: rows.length
@@ -1112,6 +1112,17 @@ function setupDropzone() {
     const fileInput = document.getElementById('file-input');
     const browseButton = document.getElementById('browse-files');
     if (!dropzone || !fileInput) return;
+
+    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
+        window.UIUtils.initDropzone({
+            dropzoneId: 'file-dropzone',
+            inputId: 'file-input',
+            browseId: 'browse-files',
+            accept: '.csv,.tsv,.txt',
+            onFile: handleFile
+        });
+        return;
+    }
 
     ['dragenter', 'dragover'].forEach(eventName => {
         dropzone.addEventListener(eventName, event => {

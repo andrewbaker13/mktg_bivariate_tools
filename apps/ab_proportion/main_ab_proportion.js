@@ -89,6 +89,21 @@
       setDataEntryMode(activeDataEntryMode);
     }
 
+    function handleUploadFile(file, handler, statusId) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          handler(reader.result);
+        } catch (error) {
+          console.error('Upload parse error:', error);
+          setUploadStatus(statusId, error.message || 'Unable to parse file.', 'error');
+        }
+      };
+      reader.onerror = () => setUploadStatus(statusId, 'Unable to read the file.', 'error');
+      reader.readAsText(file);
+    }
+
     function installDropzone({ dropzoneId, inputId, browseId, templateId, templateContent, onParse, statusId, downloadName }){
       const dropzone = q(dropzoneId);
       const input = q(inputId);
@@ -101,19 +116,21 @@
         });
       }
       if(!dropzone || !input) return;
+      if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
+        window.UIUtils.initDropzone({
+          dropzoneId,
+          inputId,
+          browseId,
+          onFile: file => {
+            handleUploadFile(file, onParse, statusId);
+          }
+        });
+        return;
+      }
       const handleFile = file => {
         if(!file) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          try{
-            onParse(reader.result);
-          }catch(err){
-            console.error(err);
-            setUploadStatus(statusId, err.message || 'Unable to parse file.', 'error');
-          }
-        };
-        reader.onerror = () => setUploadStatus(statusId, 'Unable to read the file.', 'error');
-        reader.readAsText(file);
+        setUploadStatus(statusId, 'Parsing file...');
+        handleUploadFile(file, onParse, statusId);
       };
       ['dragenter','dragover'].forEach(eventName => {
         dropzone.addEventListener(eventName, event => {

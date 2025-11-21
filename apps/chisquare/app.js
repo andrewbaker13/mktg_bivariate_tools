@@ -1153,7 +1153,17 @@
   }
 
   function bindCrosstabDropzone() {
-    if (!crosstabDropzone) return;
+    if (!crosstabDropzone || !crosstabFileInput) return;
+    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
+        window.UIUtils.initDropzone({
+          dropzoneId: 'crosstab-dropzone',
+          inputId: 'crosstab-file-input',
+          browseId: 'summary-browse',
+        accept: '.csv,.tsv,.txt',
+        onFile: handleCrosstabFile
+      });
+      return;
+    }
     var prevent = function (event) { event.preventDefault(); event.stopPropagation(); };
     ['dragenter', 'dragover'].forEach(function (name) {
       crosstabDropzone.addEventListener(name, function (event) {
@@ -1200,7 +1210,17 @@
   }
 
   function bindRawDropzone() {
-    if (!rawDropzone) return;
+    if (!rawDropzone || !rawFileInput) return;
+    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
+      window.UIUtils.initDropzone({
+        dropzoneId: 'raw-dropzone',
+        inputId: 'raw-file-input',
+        browseId: 'raw-browse',
+        accept: '.csv,.tsv,.txt',
+        onFile: handleRawFile
+      });
+      return;
+    }
     var prevent = function (event) { event.preventDefault(); event.stopPropagation(); };
     ['dragenter', 'dragover'].forEach(function (name) {
       rawDropzone.addEventListener(name, function (event) {

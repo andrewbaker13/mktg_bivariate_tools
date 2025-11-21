@@ -142,8 +142,8 @@
           <div class="mode-panel" data-mode="summary-upload" id="summary-panel">
             <p class="panel-intro">Upload a single-row CSV/TSV that includes matched counts, labels, &alpha;, and method preference.</p>
             <div class="dropzone" id="summary-dropzone" role="button" tabindex="0">
-              <p class="dropzone-title">Drag &amp; drop summary file</p>
-              <p class="dropzone-note">CSV, TSV, or TXT &middot; includes labels and counts for the 2 &times; 2 table</p>
+              <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+              <p class="dropzone-note">Single-row summary for 2x2 table: include labels, cell counts, and optional alpha/method fields.</p>
               <button type="button" id="summary-browse" class="secondary">Browse files</button>
             </div>
             <input type="file" id="summary-input" accept=".csv,.tsv,.txt" hidden>
@@ -155,8 +155,8 @@
           <div class="mode-panel" data-mode="raw-upload" id="raw-panel">
             <p class="panel-intro">Upload row-level matched outcomes. Each row should contain Condition A and Condition B outcomes.</p>
             <div class="dropzone" id="raw-dropzone" role="button" tabindex="0">
-              <p class="dropzone-title">Drag &amp; drop raw matched data</p>
-              <p class="dropzone-note">Two columns (Condition A, Condition B) with text or 0/1 outcomes</p>
+              <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+              <p class="dropzone-note">Two columns with headers (Condition A, Condition B); entries can be text labels or 0/1 outcomes.</p>
               <button type="button" id="raw-browse" class="secondary">Browse files</button>
             </div>
             <input type="file" id="raw-input" accept=".csv,.tsv,.txt" hidden>
@@ -293,6 +293,7 @@
   </footer>
 
   <script src="../../shared/js/csv_utils.js"></script>
+  <script src="../../shared/js/ui_utils.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

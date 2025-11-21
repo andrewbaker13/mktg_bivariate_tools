@@ -82,8 +82,8 @@
         </div>
 
         <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
-          <button type="button" class="mode-button active" data-mode="paired">Paired upload</button>
-          <button type="button" class="mode-button" data-mode="difference">Difference upload</button>
+          <button type="button" class="mode-button active" data-mode="paired">Upload raw data - paired</button>
+          <button type="button" class="mode-button" data-mode="difference">Upload raw data - differences</button>
           <button type="button" class="mode-button" data-mode="manual">Manual entry</button>
           <button type="button" class="mode-button" data-mode="summary">Summary stats</button>
         </div>
@@ -91,8 +91,8 @@
         <div id="import-tools">
           <div id="file-dropzone" class="dropzone" aria-live="polite">
             <div class="dropzone-content">
-              <p class="dropzone-title">Drop a .csv, .tsv, or .txt with headers</p>
-              <p id="dropzone-instructions">Paired mode expects two named columns (before &amp; after). Difference mode expects a single column named <code>diff</code>. Blank rows are ignored.</p>
+              <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+              <p id="dropzone-instructions">Paired mode: two named numeric columns (before &amp; after). Differences mode: one numeric column named <code>diff</code>. Blank rows are ignored.</p>
               <button type="button" id="browse-files" class="secondary">Browse files</button>
               <p class="dropzone-note">We only scan files locally&mdash;no uploads leave your browser. Up to 2,000 rows per file.</p>
             </div>
@@ -247,6 +247,8 @@
     <p class="citation">Cite as: Baker, Andrew. (2025). Paired t-Test Studio. Marketing Bivariate Tools. https://github.com/andre/mktg_bivariate_tools/apps/paired_ttest/main_paired_ttest.html</p>
   </footer>
 
+  <script src="../../shared/js/csv_utils.js"></script>
+  <script src="../../shared/js/ui_utils.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

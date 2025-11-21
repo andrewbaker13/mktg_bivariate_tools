@@ -1819,6 +1819,17 @@ function setupDropzone() {
     const browseButton = document.getElementById('browse-files');
     if (!dropzone || !fileInput) return;
 
+    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
+        window.UIUtils.initDropzone({
+            dropzoneId: 'file-dropzone',
+            inputId: 'file-input',
+            browseId: 'browse-files',
+            accept: '.csv,.tsv,.txt',
+            onFile: handleFile
+        });
+        return;
+    }
+
     ['dragenter', 'dragover'].forEach(eventName => {
         dropzone.addEventListener(eventName, event => {
             event.preventDefault();

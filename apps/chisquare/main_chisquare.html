@@ -113,8 +113,8 @@
                 <h3>Upload a contingency table</h3>
                 <p class="plain-language">Provide a CSV/TSV where the first row lists column headers, the first column lists row labels, and every other cell contains observed counts.</p>
                 <div id="crosstab-dropzone" class="dropzone" role="button" tabindex="0">
-                  <p class="dropzone-title">Drag &amp; drop your table</p>
-                  <p class="dropzone-note">Supported extensions: .csv, .tsv, .txt. Upload replaces the current counts and labels.</p>
+                  <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+                  <p class="dropzone-note">Contingency table format: first row = column headers, first column = row labels, remaining cells = counts.</p>
                   <button type="button" id="summary-browse" class="secondary">Browse files</button>
                 </div>
                 <input type="file" id="crosstab-file-input" accept=".csv,.tsv,.txt" hidden />
@@ -129,8 +129,8 @@
                 <h3>Upload raw data</h3>
                 <p class="plain-language">Upload row-level observations with exactly two columns (category for variable A, category for variable B). We will aggregate them into a contingency table.</p>
                 <div id="raw-dropzone" class="dropzone" role="button" tabindex="0">
-                  <p class="dropzone-title">Drag &amp; drop a raw dataset</p>
-                  <p class="dropzone-note">File must include two column headers and up to 2,000 rows.</p>
+                  <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+                  <p class="dropzone-note">Two categorical columns with headers (Variable A, Variable B); up to 2,000 rows.</p>
                   <button type="button" id="raw-browse" class="secondary">Browse files</button>
                 </div>
                 <input type="file" id="raw-file-input" accept=".csv,.tsv,.txt" hidden />

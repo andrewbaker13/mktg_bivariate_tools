@@ -85,11 +85,11 @@
           Upload a CSV file with raw case-level data. Include one outcome variable and multiple predictors (numeric or categorical). Headers are required.
         </p>
         <div class="dropzone" id="raw-dropzone" role="button" tabindex="0">
-          <p class="dropzone-title">Drag &amp; drop a CSV file</p>
-          <p class="dropzone-note">The file should have headers for all columns.</p>
+          <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+          <p class="dropzone-note">Include headers; at least one numeric outcome column and predictors (numeric or text for categorical).</p>
           <button type="button" id="raw-browse" class="secondary">Browse files</button>
         </div>
-        <input type="file" id="raw-input" accept=".csv" hidden>
+        <input type="file" id="raw-input" accept=".csv,.tsv,.txt" hidden>
         <p class="upload-status" id="raw-upload-status">No file uploaded.</p>
         <p class="template-note">
           Need a starter file? Download a 5-column template with 3 continuous and 2 categorical variables (50 rows):
@@ -333,8 +333,8 @@
   <script src="../../shared/js/stats_utils.js"></script>
   <script src="../../shared/js/fan_chart_utils.js"></script>
   <script src="../../shared/js/stacked_bar_utils.js"></script>
+  <script src="../../shared/js/ui_utils.js"></script>
   <script src="mlr_app.js"></script>
 </body>
 
 </html>
-

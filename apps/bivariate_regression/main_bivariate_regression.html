@@ -86,11 +86,11 @@
           <h3>Select Data Entry / Upload Mode</h3>
         </div>
         <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
-          <button type="button" class="mode-button" data-mode="raw-upload">Upload raw data</button>
-          <button type="button" class="mode-button active" data-mode="manual">Manual entry</button>
+          <button type="button" class="mode-button active" data-mode="raw-upload">Upload raw data</button>
+          <button type="button" class="mode-button" data-mode="manual">Manual entry</button>
         </div>
         <div class="mode-panels">
-          <div class="mode-panel active" data-mode="manual" id="manual-panel">
+          <div class="mode-panel" data-mode="manual" id="manual-panel">
             <article class="manual-card">
               <h3>Manual raw data entry</h3>
               <p>
@@ -155,8 +155,8 @@
               Text/string predictors are treated as categorical; numeric predictors can be interpreted as continuous or categorical based on the option you choose below.
             </p>
             <div class="dropzone" id="raw-dropzone" role="button" tabindex="0">
-              <p class="dropzone-title">Drag &amp; drop raw data file</p>
-              <p class="dropzone-note">Two columns with headers, such as <code>Spend,Revenue</code> or <code>Group,Revenue</code>.</p>
+          <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+          <p class="dropzone-note">Two columns with headers, such as <code>Predictor,Outcome</code>. Numeric predictors can be treated as continuous or categorical.</p>
               <button type="button" id="raw-browse" class="secondary">Browse files</button>
             </div>
             <input type="file" id="raw-input" accept=".csv,.tsv,.txt" hidden>
@@ -206,10 +206,39 @@
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       <div class="card">
         <article class="chart-card">
-          <h3>Scatterplot &amp; Regression Line</h3>
-          <div id="regression-chart" class="chart-placeholder" role="img" aria-live="polite"
-            aria-label="Scatterplot of Y versus X with fitted regression line."></div>
-          <p id="regression-caption" class="chart-note"></p>
+          <h3>Actual vs. Fitted</h3>
+          <div id="actual-fitted-chart" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Scatterplot of observed outcome versus fitted (predicted) values with 45-degree reference line."></div>
+          <p id="actual-fitted-caption" class="chart-note"></p>
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p class="muted">
+              Each point is one case: x-axis is the model’s fitted (predicted) value, y-axis is the actual outcome.
+              Points close to the 45&deg; line indicate good predictions; systematic curves or funnels suggest model misspecification or unequal variance.
+            </p>
+          </details>
+        </article>
+        <article class="chart-card">
+          <h3>Relationship with Predictor on Outcome</h3>
+          <div class="effect-controls">
+            <div class="range-controls" id="effect-range-controls">
+              <span>Range for focal (continuous):</span>
+              <label><input type="radio" name="effect-range" value="sd" checked> Mean +/- 2 SD</label>
+              <label><input type="radio" name="effect-range" value="observed"> Observed min/max</label>
+              <label><input type="radio" name="effect-range" value="custom"> Custom</label>
+              <div class="custom-range" id="effect-custom-range" style="display:none;">
+                <label>Min <input type="number" id="effect-range-min" step="any"></label>
+                <label>Max <input type="number" id="effect-range-max" step="any"></label>
+              </div>
+            </div>
+          </div>
+          <div id="effect-chart" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Predicted outcome across the predictor range."></div>
+          <p id="effect-caption" class="chart-note"></p>
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p id="effect-interpretation" class="muted"></p>
+          </details>
         </article>
       </div>
     </section>
@@ -222,6 +251,45 @@
         <p id="regression-equation-output" class="regression-equation-text">
           Provide data to see the fitted regression equation.
         </p>
+      </div>
+
+      <div class="card summary-stats-card">
+        <h3>Summary Statistics</h3>
+        <div class="summary-stats-grid">
+          <div>
+            <h4>Outcome &amp; Continuous Predictor</h4>
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Mean</th>
+                  <th>Median</th>
+                  <th>Std. Dev.</th>
+                  <th>Min</th>
+                  <th>Max</th>
+                </tr>
+              </thead>
+              <tbody id="numeric-summary-body">
+                <tr><td colspan="6">Provide data to see numeric summaries.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h4>Categorical Predictor (% by level)</h4>
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Predictor</th>
+                  <th>Level</th>
+                  <th>Percent</th>
+                </tr>
+              </thead>
+              <tbody id="categorical-summary-body">
+                <tr><td colspan="3">Provide data to see level percentages.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <div class="card metrics-panel">
@@ -246,8 +314,24 @@
           <span id="metric-t" class="dynamic-value">&ndash;</span>
         </div>
         <div class="metric-output">
-          <span>p-value:</span>
+          <span>Slope p-value:</span>
           <span id="metric-pvalue" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Model p-value:</span>
+          <span id="metric-pmodel" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>RMSE:</span>
+          <span id="metric-rmse" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>MAE:</span>
+          <span id="metric-mae" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Residual SE:</span>
+          <span id="metric-resse" class="dynamic-value">&ndash;</span>
         </div>
         <div class="metric-output">
           <span>Decision (alpha):</span>
@@ -263,6 +347,15 @@
           </p>
           <p class="muted">
             <strong>Intercept:</strong> Expected outcome when the predictor is zero (or at the reference group).
+          </p>
+          <p class="muted">
+            <strong>Model p-value:</strong> Overall test of whether the predictor explains any variance in the outcome (same as the slope test for a one-predictor model).
+          </p>
+          <p class="muted">
+            <strong>RMSE / MAE:</strong> Typical prediction error size. RMSE weights big errors more; MAE is a straight average of absolute errors.
+          </p>
+          <p class="muted">
+            <strong>Residual SE:</strong> Standard deviation of residuals (uses degrees of freedom), a classic “standard error of the regression.”
           </p>
           <p class="muted">
             <strong>Decision (alpha):</strong> An easy yes/no cue based on the chosen significance level.
@@ -287,6 +380,7 @@
           <thead>
             <tr>
               <th>Parameter</th>
+              <th>Level / Term</th>
               <th>Estimate</th>
               <th>Standard Error</th>
               <th>t</th>
@@ -297,10 +391,15 @@
           </thead>
           <tbody id="summary-table-body">
             <tr>
-              <td colspan="7">Provide summary statistics or upload data to see parameter estimates.</td>
+              <td colspan="8">Provide summary statistics or upload data to see parameter estimates.</td>
             </tr>
           </tbody>
         </table>
+        <p id="summary-ci-note" class="muted"></p>
+        <details class="interpretation-aid">
+          <summary>Interpretation Aid</summary>
+          <div id="coef-interpretation" class="muted"></div>
+        </details>
       </div>
     </section>
 
@@ -314,6 +413,12 @@
               Run the analysis to see checks on linearity, influential points, variance patterns, and normality of residuals.
               Use these as prompts for plots and follow-up modeling, not as strict pass/fail gates.
             </p>
+            <div class="chart-card">
+              <h4>Residuals vs. Fitted</h4>
+              <div id="residuals-chart" class="chart-placeholder" role="img" aria-live="polite"
+                aria-label="Residuals versus fitted values with zero reference line."></div>
+              <p id="residuals-caption" class="chart-note"></p>
+            </div>
           </div>
         </details>
       </div>
@@ -330,6 +435,7 @@
 
   <script src="../../shared/js/csv_utils.js"></script>
   <script src="../../shared/js/stats_utils.js"></script>
+  <script src="../../shared/js/ui_utils.js"></script>
   <script src="../../shared/js/fan_chart_utils.js"></script>
   <script src="../../shared/js/stacked_bar_utils.js"></script>
   <script src="bivariate_app.js"></script>

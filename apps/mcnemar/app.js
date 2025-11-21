@@ -124,10 +124,44 @@ function wireUploadZone({
     const browseButton = browseId ? document.getElementById(browseId) : null;
     const templateButton = templateId ? document.getElementById(templateId) : null;
 
+    const handleFile = file => {
+        readFileAsText(file)
+            .then(text => onLoad(text, file))
+            .catch(error => {
+                console.error('Upload error:', error);
+                if (statusId) {
+                    setUploadStatus(statusId, error.message || 'Unable to read file.', 'error');
+                }
+            });
+    };
+
     const prevent = event => {
         event.preventDefault();
         event.stopPropagation();
     };
+
+    if (templateButton && templateContent) {
+        templateButton.addEventListener('click', event => {
+            event.preventDefault();
+            downloadTextFile(templateName, templateContent, { mimeType: 'text/csv' });
+        });
+    }
+
+    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
+        window.UIUtils.initDropzone({
+            dropzoneId,
+            inputId,
+            browseId,
+            accept: '.csv,.tsv,.txt',
+            onFile: handleFile,
+            onError: message => {
+                if (statusId) {
+                    setUploadStatus(statusId, message, 'error');
+                }
+            }
+        });
+        return;
+    }
 
     ['dragenter', 'dragover'].forEach(eventName => {
         dropzone.addEventListener(eventName, event => {
@@ -164,17 +198,6 @@ function wireUploadZone({
         }
     });
 
-    const handleFile = file => {
-        readFileAsText(file)
-            .then(text => onLoad(text, file))
-            .catch(error => {
-                console.error('Upload error:', error);
-                if (statusId) {
-                    setUploadStatus(statusId, error.message || 'Unable to read file.', 'error');
-                }
-            });
-    };
-
     input.addEventListener('change', () => {
         if (input.files && input.files.length) {
             handleFile(input.files[0]);
@@ -186,13 +209,6 @@ function wireUploadZone({
         browseButton.addEventListener('click', event => {
             event.preventDefault();
             input.click();
-        });
-    }
-
-    if (templateButton && templateContent) {
-        templateButton.addEventListener('click', event => {
-            event.preventDefault();
-            downloadTextFile(templateName, templateContent, { mimeType: 'text/csv' });
         });
     }
 }

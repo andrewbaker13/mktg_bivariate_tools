@@ -12,7 +12,7 @@ const DataEntryModes = Object.freeze({
 
 const MAX_MANUAL_ROWS = 50;
 let manualRowCount = 4;
-let activeDataEntryMode = DataEntryModes.MANUAL;
+let activeDataEntryMode = DataEntryModes.RAW;
 
 let isSwapped = false;
 let scenarioManifest = [];
@@ -71,12 +71,22 @@ function setUploadCategoricalLock(disabled, reason = '') {
 }
 
 function formatNumber(v, digits = 3) {
-  if (!Number.isFinite(v)) return '–';
+  if (!Number.isFinite(v)) return '—';
   return v.toFixed(digits);
 }
 
+function median(values) {
+  if (!values.length) return NaN;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 0) {
+    return (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+  return sorted[mid];
+}
+
 function formatP(p) {
-  if (!Number.isFinite(p)) return '–';
+  if (!Number.isFinite(p)) return '—';
   if (p < 0.0001) return '< .0001';
   return p.toFixed(4);
 }
@@ -405,51 +415,16 @@ function handleRawFile(file) {
 }
 
 function setupRawUpload() {
-  const dropzone = document.getElementById('raw-dropzone');
-  const fileInput = document.getElementById('raw-input');
-  const browseButton = document.getElementById('raw-browse');
   const templateButton = document.getElementById('raw-template-download');
-  if (!dropzone || !fileInput) return;
-
-  const openFileDialog = () => fileInput.click();
-
-  dropzone.addEventListener('click', openFileDialog);
-  dropzone.addEventListener('keydown', event => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      openFileDialog();
-    }
-  });
-
-  if (browseButton) {
-    browseButton.addEventListener('click', event => {
-      event.preventDefault();
-      openFileDialog();
+  if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
+    window.UIUtils.initDropzone({
+      dropzoneId: 'raw-dropzone',
+      inputId: 'raw-input',
+      browseId: 'raw-browse',
+      accept: '.csv,.tsv,.txt',
+      onFile: handleRawFile
     });
   }
-
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropzone.addEventListener(eventName, event => {
-      event.preventDefault();
-      dropzone.classList.add('drag-active');
-    });
-  });
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropzone.addEventListener(eventName, event => {
-      event.preventDefault();
-      if (eventName === 'drop' && event.dataTransfer?.files?.length) {
-        handleRawFile(event.dataTransfer.files[0]);
-      }
-      dropzone.classList.remove('drag-active');
-    });
-  });
-
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files && fileInput.files.length) {
-      handleRawFile(fileInput.files[0]);
-    }
-    fileInput.value = '';
-  });
 
   if (templateButton) {
     templateButton.addEventListener('click', () => {
@@ -487,22 +462,50 @@ function clearOutputs(message) {
     'metric-r2',
     'metric-t',
     'metric-pvalue',
+    'metric-pmodel',
+    'metric-rmse',
+    'metric-mae',
+    'metric-resse',
     'metric-decision'
   ];
   const summaryBody = document.getElementById('summary-table-body');
+  const numericSummaryBody = document.getElementById('numeric-summary-body');
+  const categoricalSummaryBody = document.getElementById('categorical-summary-body');
   const diagnostics = document.getElementById('diagnostics-content');
-  const caption = document.getElementById('regression-caption');
+  const actualFittedCaption = document.getElementById('actual-fitted-caption');
+  const residualsCaption = document.getElementById('residuals-caption');
+  const actualFittedChart = document.getElementById('actual-fitted-chart');
+  const residualsChart = document.getElementById('residuals-chart');
+  const effectChart = document.getElementById('effect-chart');
+  const effectCaption = document.getElementById('effect-caption');
+  const effectInterpretation = document.getElementById('effect-interpretation');
   const equation = document.getElementById('regression-equation-output');
+  const summaryCard = document.querySelector('.summary-stats-card');
 
-  if (caption) caption.textContent = '';
+  if (actualFittedCaption) actualFittedCaption.textContent = '';
+  if (residualsCaption) residualsCaption.textContent = '';
+  if (effectCaption) effectCaption.textContent = '';
+  if (effectInterpretation) effectInterpretation.textContent = '';
+  if (actualFittedChart && window.Plotly) Plotly.purge(actualFittedChart);
+  if (residualsChart && window.Plotly) Plotly.purge(residualsChart);
+  if (effectChart && window.Plotly) Plotly.purge(effectChart);
   if (apa) apa.textContent = '';
   if (managerial) managerial.textContent = '';
   metrics.forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.textContent = '–';
+    if (el) el.textContent = '—';
   });
   if (summaryBody) {
-    summaryBody.innerHTML = `<tr><td colspan="7">${escapeHtml(message)}</td></tr>`;
+    summaryBody.innerHTML = `<tr><td colspan="8">${escapeHtml(message)}</td></tr>`;
+  }
+  if (numericSummaryBody) {
+    numericSummaryBody.innerHTML = `<tr><td colspan="6">${escapeHtml(message)}</td></tr>`;
+  }
+  if (categoricalSummaryBody) {
+    categoricalSummaryBody.innerHTML = `<tr><td colspan="3">${escapeHtml(message)}</td></tr>`;
+  }
+  if (summaryCard) {
+    summaryCard.style.display = 'none';
   }
   if (diagnostics) {
     diagnostics.innerHTML = '<p class="muted">Run an analysis to populate diagnostics.</p>';
@@ -774,9 +777,13 @@ function updateMetricsPanel(stats, predictorType, refInfo) {
   set('metric-r2', formatNumber(stats.rSquared, 3));
   set('metric-t', formatNumber(stats.t, 3));
   set('metric-pvalue', formatP(stats.p));
+  set('metric-pmodel', formatP(stats.modelP ?? stats.p));
+  set('metric-rmse', formatNumber(stats.rmse, 4));
+  set('metric-mae', formatNumber(stats.mae, 4));
+  set('metric-resse', formatNumber(stats.residualSE, 4));
   const decision = stats.p <= stats.alpha
-    ? `Reject H₀ at α = ${formatAlpha(stats.alpha)}`
-    : `Fail to reject H₀ at α = ${formatAlpha(stats.alpha)}`;
+    ? `Reject H0 at alpha = ${formatAlpha(stats.alpha)}`
+    : `Fail to reject H0 at alpha = ${formatAlpha(stats.alpha)}`;
   set('metric-decision', decision);
 }
 
@@ -784,27 +791,34 @@ function updateSummaryTable(stats, predictorType, extra = {}) {
   const body = document.getElementById('summary-table-body');
   const lowerHeader = document.getElementById('summary-ci-lower-header');
   const upperHeader = document.getElementById('summary-ci-upper-header');
+  const ciNote = document.getElementById('summary-ci-note');
+  const labels = extra.labels || {};
   if (!body) return;
 
   if (lowerHeader && upperHeader && isFinite(stats.alpha)) {
     const level = Math.round((1 - stats.alpha) * 100);
     lowerHeader.textContent = `Lower Bound (${level}% CI)`;
     upperHeader.textContent = `Upper Bound (${level}% CI)`;
+    if (ciNote) {
+      ciNote.textContent = `Confidence bounds shown at approximately ${level}% (alpha = ${formatAlpha(stats.alpha)}).`;
+    }
   }
   if (predictorType !== 'categorical' || !extra.xGroups) {
     const z = StatsUtils.normInv(1 - stats.alpha / 2);
     body.innerHTML = `
       <tr>
         <td>Intercept</td>
+        <td></td>
         <td>${formatNumber(stats.intercept, 3)}</td>
-        <td>–</td>
-        <td>–</td>
-        <td>–</td>
-        <td>–</td>
-        <td>–</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
       </tr>
       <tr>
-        <td>Slope</td>
+        <td>${escapeHtml(labels.x || 'Predictor')}</td>
+        <td></td>
         <td>${formatNumber(stats.slope, 3)}</td>
         <td>${formatNumber(stats.seSlope, 3)}</td>
         <td>${formatNumber(stats.t, 3)}</td>
@@ -827,7 +841,8 @@ function updateSummaryTable(stats, predictorType, extra = {}) {
   // Reference group row: mean + CI for the mean
   const seRef = refStats.n > 0 ? refStats.sd / Math.sqrt(refStats.n) : NaN;
   rows.push({
-    label: `Mean (${refStats.name}, reference)`,
+    predictor: `${escapeHtml(labels.x || 'Predictor')} (ref="${escapeHtml(refStats.name)}")`,
+    level: `${refStats.name}`,
     estimate: refStats.mean,
     se: seRef,
     t: null,
@@ -846,7 +861,8 @@ function updateSummaryTable(stats, predictorType, extra = {}) {
       const t = isFinite(se) && se > 0 ? diff / se : NaN;
       const p = isFinite(t) ? 2 * (1 - StatsUtils.normCdf(Math.abs(t))) : NaN;
       rows.push({
-        label: `${g.name} − ${refStats.name}`,
+        predictor: `${escapeHtml(labels.x || 'Predictor')} (ref="${escapeHtml(refStats.name)}")`,
+        level: g.name,
         estimate: diff,
         se,
         t,
@@ -858,15 +874,100 @@ function updateSummaryTable(stats, predictorType, extra = {}) {
 
   body.innerHTML = rows.map(row => `
     <tr>
-      <td>${escapeHtml(row.label)}</td>
+      <td>${row.predictor}</td>
+      <td>${escapeHtml(row.level || '')}</td>
       <td>${formatNumber(row.estimate, 3)}</td>
-      <td>${row.se === null ? '–' : formatNumber(row.se, 3)}</td>
-      <td>${row.t === null ? '–' : formatNumber(row.t, 3)}</td>
-      <td>${row.p === null ? '–' : formatP(row.p)}</td>
-      <td>${row.lower === null ? '–' : formatNumber(row.lower, 3)}</td>
-      <td>${row.upper === null ? '–' : formatNumber(row.upper, 3)}</td>
+      <td>${row.se === null ? '—' : formatNumber(row.se, 3)}</td>
+      <td>${row.t === null ? '—' : formatNumber(row.t, 3)}</td>
+      <td>${row.p === null ? '—' : formatP(row.p)}</td>
+      <td>${row.lower === null ? '—' : formatNumber(row.lower, 3)}</td>
+      <td>${row.upper === null ? '—' : formatNumber(row.upper, 3)}</td>
     </tr>
   `).join('');
+}
+
+function renderCoefInterpretation(stats, predictorType, labels, { reference, parameters, xGroups }) {
+  const container = document.getElementById('coef-interpretation');
+  if (!container) return;
+  if (!Number.isFinite(stats.slope)) {
+    container.textContent = 'Run the analysis to see coefficient interpretations.';
+    return;
+  }
+
+  const level = Math.round((1 - stats.alpha) * 100);
+  if (predictorType === 'continuous') {
+    const slopeText = formatNumber(stats.slope, 3);
+    const lower = formatNumber(stats.slope - StatsUtils.normInv(1 - stats.alpha / 2) * stats.seSlope, 3);
+    const upper = formatNumber(stats.slope + StatsUtils.normInv(1 - stats.alpha / 2) * stats.seSlope, 3);
+    container.innerHTML = `
+      <p><strong>${escapeHtml(labels.x)} slope:</strong> Each one-unit increase in ${escapeHtml(labels.x)} is associated with a ${slopeText} change in ${escapeHtml(labels.y)}, on average.</p>
+      <p><strong>${level}% CI:</strong> We are ${level}% confident the true slope lies between ${lower} and ${upper}. If this range excludes 0, the effect is statistically reliable at alpha = ${formatAlpha(stats.alpha)}.</p>
+      <p><strong>Example:</strong> If ${escapeHtml(labels.x)} goes up by 5 units, predicted ${escapeHtml(labels.y)} changes by about ${formatNumber(stats.slope * 5, 3)} (5 x ${slopeText}).</p>
+    `;
+  } else {
+    const refName = reference || (xGroups?.levels ? xGroups.levels[0] : 'reference');
+    const contrasts = (parameters || []).map(p => ({
+      level: p.name,
+      diff: p.estimate
+    }));
+    const strongest = contrasts.reduce((best, cur) => {
+      if (!best) return cur;
+      return Math.abs(cur.diff) > Math.abs(best.diff) ? cur : best;
+    }, null);
+    const ciZ = StatsUtils.normInv(1 - stats.alpha / 2);
+    const example = strongest
+      ? `Compared to ${escapeHtml(refName)}, ${escapeHtml(strongest.level)} differs by about ${formatNumber(strongest.diff, 3)} on ${escapeHtml(labels.y)}.`
+      : 'Each non-reference level compares its mean outcome to the reference group.';
+    const ciNote = strongest
+      ? `If its ${level}% CI around that difference excludes 0, the difference is statistically reliable.`
+      : '';
+    container.innerHTML = `
+      <p><strong>Reference group:</strong> ${escapeHtml(refName)} (intercept equals its mean ${escapeHtml(labels.y)}).</p>
+      <p><strong>Other levels:</strong> Each row shows the mean difference vs. ${escapeHtml(refName)}. A positive value means higher ${escapeHtml(labels.y)} than the reference; negative means lower.</p>
+      <p><strong>Example:</strong> ${example} ${ciNote}</p>
+    `;
+  }
+}
+
+function renderSummaryStatistics({ numericRows = [], categoricalRows = [] }) {
+  const numericBody = document.getElementById('numeric-summary-body');
+  const categoricalBody = document.getElementById('categorical-summary-body');
+  const summaryCard = document.querySelector('.summary-stats-card');
+  const hasNumeric = numericRows.length > 0;
+  const hasCategorical = categoricalRows.length > 0;
+  const shouldShow = hasNumeric || hasCategorical;
+  if (summaryCard) {
+    summaryCard.style.display = shouldShow ? '' : 'none';
+  }
+  if (numericBody) {
+    if (!hasNumeric) {
+      numericBody.innerHTML = '<tr><td colspan="6">Provide data to see numeric summaries.</td></tr>';
+    } else {
+      numericBody.innerHTML = numericRows.map(row => `
+        <tr>
+          <td>${escapeHtml(row.label)}</td>
+          <td>${formatNumber(row.mean, 3)}</td>
+          <td>${formatNumber(row.median, 3)}</td>
+          <td>${formatNumber(row.sd, 3)}</td>
+          <td>${formatNumber(row.min, 3)}</td>
+          <td>${formatNumber(row.max, 3)}</td>
+        </tr>
+      `).join('');
+    }
+  }
+  if (categoricalBody) {
+    if (!hasCategorical) {
+      categoricalBody.innerHTML = '<tr><td colspan="3">Provide data to see level percentages.</td></tr>';
+    } else {
+      categoricalBody.innerHTML = categoricalRows.map(row => `
+        <tr>
+          <td>${escapeHtml(row.predictor)}</td>
+          <td>${escapeHtml(row.level)}</td>
+          <td>${formatNumber(row.percent, 1)}%</td>
+        </tr>
+      `).join('');
+    }
+  }
 }
 
 function writeRegressionNarratives(stats, labels, predictorType, extra = {}) {
@@ -1122,6 +1223,187 @@ function renderCategoricalChart(stats, labels, xGroups, alpha) {
   }
 }
 
+function renderActualFittedChart(fitted, actual, labels) {
+  const chart = document.getElementById('actual-fitted-chart');
+  const caption = document.getElementById('actual-fitted-caption');
+  if (!chart || !Array.isArray(fitted) || !fitted.length) return;
+
+  const points = fitted.map((f, i) => ({ fitted: f, actual: actual[i] }));
+  const scatter = {
+    x: points.map(p => p.fitted),
+    y: points.map(p => p.actual),
+    mode: 'markers',
+    type: 'scatter',
+    marker: { color: '#2563eb', size: 8, opacity: 0.85 },
+    name: 'Cases'
+  };
+  const minVal = Math.min(...points.map(p => Math.min(p.fitted, p.actual)));
+  const maxVal = Math.max(...points.map(p => Math.max(p.fitted, p.actual)));
+  const line = {
+    x: [minVal, maxVal],
+    y: [minVal, maxVal],
+    mode: 'lines',
+    line: { color: '#9ca3af', width: 2, dash: 'dash' },
+    name: '45° line'
+  };
+
+  Plotly.newPlot(chart, [scatter, line], {
+    margin: { t: 20, r: 20, b: 60, l: 60 },
+    xaxis: { title: `Fitted (predicted) ${labels.y}` },
+    yaxis: { title: `Actual ${labels.y}` },
+    showlegend: false
+  }, { responsive: true });
+
+  if (caption) {
+    caption.textContent = `Actual vs. fitted ${labels.y}; points near the 45° line indicate closer predictions.`;
+  }
+}
+
+function renderResidualsChart(fitted, residuals, labels) {
+  const chart = document.getElementById('residuals-chart');
+  const caption = document.getElementById('residuals-caption');
+  if (!chart || !Array.isArray(fitted) || !fitted.length) return;
+
+  const trace = {
+    x: fitted,
+    y: residuals,
+    mode: 'markers',
+    type: 'scatter',
+    marker: { color: '#f97316', size: 8, opacity: 0.85 },
+    name: 'Residuals'
+  };
+  const zeroLine = {
+    x: [Math.min(...fitted), Math.max(...fitted)],
+    y: [0, 0],
+    mode: 'lines',
+    line: { color: '#9ca3af', width: 2, dash: 'dash' },
+    name: 'Zero'
+  };
+
+  Plotly.newPlot(chart, [trace, zeroLine], {
+    margin: { t: 20, r: 20, b: 60, l: 60 },
+    xaxis: { title: `Fitted (predicted) ${labels.y}` },
+    yaxis: { title: 'Residual (actual - fitted)' },
+    showlegend: false
+  }, { responsive: true });
+
+  if (caption) {
+    caption.textContent = 'Look for roughly even scatter around zero; curves or funnels can suggest non-linearity or unequal variance.';
+  }
+}
+
+function renderEffectPlot(predictorType, labels, {
+  intercept,
+  slope,
+  xNumeric,
+  xStats,
+  xGroups,
+  reference,
+  alpha
+}) {
+  const chart = document.getElementById('effect-chart');
+  const caption = document.getElementById('effect-caption');
+  const interpretation = document.getElementById('effect-interpretation');
+  const rangeControls = document.getElementById('effect-range-controls');
+  const customRange = document.getElementById('effect-custom-range');
+  if (!chart) return;
+
+  const rangeChoice = document.querySelector('input[name="effect-range"]:checked')?.value || 'sd';
+  if (predictorType === 'categorical') {
+    if (rangeControls) rangeControls.style.display = 'none';
+    if (customRange) customRange.style.display = 'none';
+    if (!xGroups || !xGroups.groupStats) return;
+    const z = StatsUtils.normInv(1 - alpha / 2);
+    const means = xGroups.groupStats.map(g => g.mean);
+    const errors = xGroups.groupStats.map(g => {
+      const se = g.n > 0 ? g.sd / Math.sqrt(g.n) : NaN;
+      return isFinite(se) ? z * se : 0;
+    });
+    const trace = {
+      x: xGroups.groupStats.map(g => g.name),
+      y: means,
+      type: 'bar',
+      marker: { color: '#2563eb' },
+      error_y: { type: 'data', array: errors, visible: true, color: '#1f2937' },
+      name: labels.y
+    };
+    Plotly.newPlot(chart, [trace], {
+      margin: { t: 20, r: 20, b: 60, l: 60 },
+      xaxis: { title: labels.x },
+      yaxis: { title: labels.y },
+      showlegend: false
+    }, { responsive: true });
+    if (caption) {
+      caption.textContent = `Predicted ${labels.y} by ${labels.x} (reference: ${reference || xGroups.levels[0]}); bars show group means with ${Math.round((1 - alpha) * 100)}% CI error bars.`;
+    }
+    if (interpretation) {
+      interpretation.innerHTML = `
+        <p>The bar for each level shows its predicted mean ${escapeHtml(labels.y)}; error bars show the ${Math.round((1 - alpha) * 100)}% confidence interval.</p>
+        <p>Compare each bar to the reference (${escapeHtml(reference || xGroups.levels[0])}). A higher bar means a higher predicted outcome than the reference.</p>
+      `;
+    }
+    return;
+  }
+
+  if (rangeControls) rangeControls.style.display = '';
+  if (customRange) customRange.style.display = rangeChoice === 'custom' ? '' : 'none';
+
+  if (!Array.isArray(xNumeric) || !xNumeric.length) return;
+  const minObs = Math.min(...xNumeric);
+  const maxObs = Math.max(...xNumeric);
+  const meanX = xStats?.mean ?? StatsUtils.mean(xNumeric);
+  const sdX = xStats?.sd ?? StatsUtils.standardDeviation(xNumeric);
+
+  let xMin = minObs;
+  let xMax = maxObs;
+  if (rangeChoice === 'sd') {
+    xMin = meanX - 2 * sdX;
+    xMax = meanX + 2 * sdX;
+  } else if (rangeChoice === 'custom') {
+    const customMin = parseFloat(document.getElementById('effect-range-min')?.value);
+    const customMax = parseFloat(document.getElementById('effect-range-max')?.value);
+    if (isFinite(customMin)) xMin = customMin;
+    if (isFinite(customMax)) xMax = customMax;
+  }
+  if (xMax <= xMin) {
+    xMin = minObs;
+    xMax = maxObs;
+  }
+
+  const grid = [];
+  const steps = 25;
+  const step = (xMax - xMin) / steps;
+  for (let i = 0; i <= steps; i++) {
+    grid.push(xMin + step * i);
+  }
+  const predicted = grid.map(x => intercept + slope * x);
+
+  const trace = {
+    x: grid,
+    y: predicted,
+    mode: 'lines',
+    line: { color: '#2563eb', width: 3 },
+    name: 'Predicted'
+  };
+  Plotly.newPlot(chart, [trace], {
+    margin: { t: 20, r: 20, b: 60, l: 60 },
+    xaxis: { title: labels.x },
+    yaxis: { title: labels.y },
+    showlegend: false
+  }, { responsive: true });
+
+  if (caption) {
+    caption.textContent = `Predicted ${labels.y} across ${labels.x}; range shown: ${formatNumber(xMin, 3)} to ${formatNumber(xMax, 3)}.`;
+  }
+  if (interpretation) {
+    interpretation.innerHTML = `
+      <p>The line shows how predicted ${escapeHtml(labels.y)} changes as ${escapeHtml(labels.x)} varies.</p>
+      <p>Use the range buttons to view the mean +/- 2 SD, the observed min/max, or enter a custom range.</p>
+      <p>A steeper line means a stronger effect of ${escapeHtml(labels.x)} on ${escapeHtml(labels.y)}.</p>
+    `;
+  }
+}
+
 function updateResults() {
   const alphaInput = document.getElementById('alpha');
   const alphaValue = alphaInput ? parseFloat(alphaInput.value) : NaN;
@@ -1160,7 +1442,9 @@ function updateResults() {
   const yValues = rows.map(r => parseFloat(r[yCol]));
 
 
-  const predictorChoice = document.querySelector('input[name="predictor-type"]:checked')?.value || 'auto';
+  const predictorChoice = activeDataEntryMode === DataEntryModes.RAW
+    ? (document.querySelector('input[name="upload-predictor-type"]:checked')?.value || 'auto')
+    : (document.querySelector('input[name="predictor-type"]:checked')?.value || 'auto');
 
   // Logic for enabling/disabling the Swap X/Y button
   const allNumeric = columnData[xCol]?.isNumeric;
@@ -1227,6 +1511,10 @@ function updateResults() {
   let reference = null;
   let parameters = [];
   let rSquared = NaN;
+  let residuals = [];
+  let fittedValues = [];
+  let sse = NaN;
+  let xStats = null;
 
   if (predictorType === 'continuous') {
     xNumeric = xRaw.map(v => parseFloat(v));
@@ -1234,6 +1522,7 @@ function updateResults() {
     const meanY = StatsUtils.mean(yValues);
     const sdX = StatsUtils.standardDeviation(xNumeric);
     const sdY = StatsUtils.standardDeviation(yValues);
+    xStats = { mean: meanX, sd: sdX, min: Math.min(...xNumeric), max: Math.max(...xNumeric) };
     const covXY = xNumeric.reduce((acc, xv, i) => acc + (xv - meanX) * (yValues[i] - meanY), 0) / (xNumeric.length - 1);
     const r = covXY / (sdX * sdY);
     rSquared = r * r;
@@ -1302,7 +1591,9 @@ function updateResults() {
     const covXY = xNumeric.reduce((acc, xv, i) => acc + (xv - meanX) * (yValues[i] - meanY), 0) / (xNumeric.length - 1);
     slope = covXY / StatsUtils.variance(xNumeric);
     intercept = meanY - slope * meanX;
-    const residuals = yValues.map((yv, i) => yv - (intercept + slope * xNumeric[i]));
+    fittedValues = xNumeric.map(xv => intercept + slope * xv);
+    residuals = yValues.map((yv, i) => yv - fittedValues[i]);
+    sse = residuals.reduce((acc, r) => acc + r * r, 0);
     const s2 = StatsUtils.variance(residuals);
     seSlope = Math.sqrt(s2 / ((xNumeric.length - 1) * StatsUtils.variance(xNumeric) / (xNumeric.length - 1)));
     t = slope / seSlope;
@@ -1321,14 +1612,33 @@ function updateResults() {
         p = 2 * (1 - StatsUtils.normCdf(Math.abs(t)));
       }
     });
+    const paramLookup = new Map(parameters.map(param => [param.name, param.estimate]));
+    residuals = yValues.map((yv, idx) => {
+      const level = xRaw[idx];
+      const increment = paramLookup.has(level) ? paramLookup.get(level) : 0;
+      const fitted = intercept + increment;
+      return yv - fitted;
+    });
+    fittedValues = yValues.map((_, idx) => {
+      const level = xRaw[idx];
+      const increment = paramLookup.has(level) ? paramLookup.get(level) : 0;
+      return intercept + increment;
+    });
+    sse = residuals.reduce((acc, r) => acc + r * r, 0);
   }
 
   const critical = StatsUtils.normInv(1 - alpha / 2);
   const ciLower = slope - critical * seSlope;
   const ciUpper = slope + critical * seSlope;
 
+  const n = yValues.length;
+  const rmse = Math.sqrt(Math.max(sse / n, 0));
+  const mae = residuals.length ? residuals.reduce((acc, r) => acc + Math.abs(r), 0) / n : NaN;
+  const residualSE = df > 0 ? Math.sqrt(Math.max(sse / df, 0)) : NaN;
+  const modelP = p;
+
   const stats = {
-    n: yValues.length,
+    n,
     df,
     slope,
     intercept,
@@ -1336,8 +1646,43 @@ function updateResults() {
     t,
     p,
     rSquared,
-    alpha
+    alpha,
+    rmse,
+    mae,
+    residualSE,
+    modelP
   };
+
+  // Summary statistics for quick descriptive context
+  const numericRows = [];
+  const categoricalRows = [];
+  const summarizeNumeric = (values, label) => {
+    const clean = values.filter(v => Number.isFinite(v));
+    if (!clean.length) return null;
+    return {
+      label,
+      mean: StatsUtils.mean(clean),
+      median: median(clean),
+      sd: StatsUtils.standardDeviation(clean),
+      min: Math.min(...clean),
+      max: Math.max(...clean)
+    };
+  };
+  const outcomeSummary = summarizeNumeric(yValues, finalLabels.y);
+  if (outcomeSummary) numericRows.push(outcomeSummary);
+  if (predictorType === 'continuous' && xNumeric) {
+    const predictorSummary = summarizeNumeric(xNumeric, finalLabels.x);
+    if (predictorSummary) numericRows.push(predictorSummary);
+  } else if (predictorType === 'categorical' && xGroups) {
+    const total = yValues.length || 1;
+    xGroups.groupStats.forEach(g => {
+      categoricalRows.push({
+        predictor: finalLabels.x,
+        level: g.name,
+        percent: (g.n / total) * 100
+      });
+    });
+  }
 
   const equationEl = document.getElementById('regression-equation-output');
   if (equationEl) {
@@ -1369,18 +1714,26 @@ function updateResults() {
   }
 
 
+  renderSummaryStatistics({ numericRows, categoricalRows });
   updateMetricsPanel(stats, predictorType, { reference });
   updateSummaryTable(stats, predictorType, { xGroups, reference, labels: finalLabels });
   renderRegressionNarratives(stats, finalLabels, predictorType, { xGroups, reference });
+  renderCoefInterpretation(stats, predictorType, finalLabels, { reference, parameters, xGroups });
   updateRegressionDiagnostics(stats, predictorType, {
     numericAsCategoricalWarning,
     categoricalTooManyLevelsWarning
   });
-  if (predictorType === 'continuous') {
-    renderContinuousChart(stats, finalLabels, xNumeric, yValues);
-  } else {
-    renderCategoricalChart(stats, finalLabels, xGroups, alpha);
-  }
+  renderActualFittedChart(fittedValues, yValues, finalLabels);
+  renderResidualsChart(fittedValues, residuals, finalLabels);
+  renderEffectPlot(predictorType, finalLabels, {
+    intercept: stats.intercept,
+    slope: stats.slope,
+    xNumeric,
+    xStats,
+    xGroups,
+    reference,
+    alpha: stats.alpha
+  });
   modifiedDate = new Date().toLocaleDateString();
   const modifiedLabel = document.getElementById('modified-date');
   if (modifiedLabel) modifiedLabel.textContent = modifiedDate;
@@ -1452,6 +1805,37 @@ function setupConfidenceButtons() {
   });
 }
 
+function setupEffectControls() {
+  const rangeRadios = document.querySelectorAll('input[name="effect-range"]');
+  const customWrapper = document.getElementById('effect-custom-range');
+  const minInput = document.getElementById('effect-range-min');
+  const maxInput = document.getElementById('effect-range-max');
+  rangeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (customWrapper) customWrapper.style.display = radio.value === 'custom' && radio.checked ? '' : 'none';
+      updateResults();
+    });
+  });
+  document.querySelectorAll('input[name="upload-predictor-type"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (activeScenarioDataset) {
+        abandonScenarioDataset();
+      }
+      updateResults();
+    });
+  });
+  [minInput, maxInput].forEach(input => {
+    if (input) {
+      input.addEventListener('input', () => {
+        const customRadio = document.querySelector('input[name="effect-range"][value="custom"]');
+        if (customRadio) customRadio.checked = true;
+        if (customWrapper) customWrapper.style.display = '';
+        updateResults();
+      });
+    }
+  });
+}
+
 function setupSwapButtons() {
   const swapManual = document.getElementById('swap-xy-manual');
   const swapUpload = document.getElementById('swap-xy-upload');
@@ -1493,6 +1877,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSwapButtons();
   attachInputListeners();
   setupManualControls();
+  setupEffectControls();
   const manualCommit = document.getElementById('manual-commit');
   if (manualCommit) {
     manualCommit.addEventListener('click', finalizeManualEntry);

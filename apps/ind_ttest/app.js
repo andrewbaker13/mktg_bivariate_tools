@@ -133,64 +133,8 @@ function wireUploadZone({ dropzoneId, inputId, browseId, statusId, templateId, t
     const templateButton = document.getElementById(templateId);
     if (!dropzone || !input) return;
 
-    const prevent = event => {
-        event.preventDefault();
-        event.stopPropagation();
-    };
-
-    ['dragenter', 'dragover'].forEach(evt => {
-        dropzone.addEventListener(evt, event => {
-            prevent(event);
-            dropzone.classList.add('drag-active');
-        });
-    });
-    ['dragleave', 'dragend', 'drop'].forEach(evt => {
-        dropzone.addEventListener(evt, event => {
-            prevent(event);
-            dropzone.classList.remove('drag-active');
-        });
-    });
-
-    dropzone.addEventListener('drop', event => {
-        prevent(event);
-        const files = event.dataTransfer?.files;
-        if (files && files.length) {
-            handleFile(files[0]);
-        }
-    });
-
-    dropzone.addEventListener('click', () => {
-        input.click();
-    });
-    dropzone.addEventListener('keydown', event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            input.click();
-        }
-    });
-    if (browse) {
-        browse.addEventListener('click', event => {
-            event.preventDefault();
-            input.click();
-        });
-    }
-
-    input.addEventListener('change', () => {
-        const files = input.files;
-        if (files && files.length) {
-            handleFile(files[0]);
-        }
-        input.value = '';
-    });
-
-    if (templateButton && templateContent) {
-        templateButton.addEventListener('click', event => {
-            event.preventDefault();
-            downloadTextFile(templateName, templateContent);
-        });
-    }
-
-    function handleFile(file) {
+    const handleFile = file => {
+        if (!file) return;
         setUploadStatus(statusId, `Loading ${file.name}...`);
         readFileAsText(file)
             .then(text => onLoad(text))
@@ -198,6 +142,72 @@ function wireUploadZone({ dropzoneId, inputId, browseId, statusId, templateId, t
                 console.error(error);
                 setUploadStatus(statusId, error.message || 'Unable to parse file.', 'error');
             });
+    };
+
+    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
+        window.UIUtils.initDropzone({
+            dropzoneId,
+            inputId,
+            browseId,
+            onFile: handleFile
+        });
+    } else {
+        const prevent = event => {
+            event.preventDefault();
+            event.stopPropagation();
+        };
+
+        ['dragenter', 'dragover'].forEach(evt => {
+            dropzone.addEventListener(evt, event => {
+                prevent(event);
+                dropzone.classList.add('drag-active');
+            });
+        });
+        ['dragleave', 'dragend', 'drop'].forEach(evt => {
+            dropzone.addEventListener(evt, event => {
+                prevent(event);
+                dropzone.classList.remove('drag-active');
+            });
+        });
+
+        dropzone.addEventListener('drop', event => {
+            prevent(event);
+            const files = event.dataTransfer?.files;
+            if (files && files.length) {
+                handleFile(files[0]);
+            }
+        });
+
+        dropzone.addEventListener('click', () => {
+            input.click();
+        });
+        dropzone.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                input.click();
+            }
+        });
+        if (browse) {
+            browse.addEventListener('click', event => {
+                event.preventDefault();
+                input.click();
+            });
+        }
+
+        input.addEventListener('change', () => {
+            const files = input.files;
+            if (files && files.length) {
+                handleFile(files[0]);
+            }
+            input.value = '';
+        });
+    }
+
+    if (templateButton && templateContent) {
+        templateButton.addEventListener('click', event => {
+            event.preventDefault();
+            downloadTextFile(templateName, templateContent);
+        });
     }
 }
 

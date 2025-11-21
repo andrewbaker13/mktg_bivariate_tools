@@ -73,7 +73,7 @@
                 <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
                     <button type="button" class="mode-button active" data-mode="manual">Manual entry</button>
                     <button type="button" class="mode-button" data-mode="summary-upload">Upload summary stats</button>
-                    <button type="button" class="mode-button" data-mode="raw-upload">Upload raw observations</button>
+                    <button type="button" class="mode-button" data-mode="raw-upload">Upload raw data</button>
                 </div>
                 <div class="mode-panels">
                     <div class="mode-panel active" data-mode="manual" id="manual-panel">
@@ -124,11 +124,11 @@
                     </div>
                     <div class="mode-panel" data-mode="raw-upload" id="raw-panel">
                         <div class="data-import-block">
-                            <h4>Upload raw observations</h4>
+                            <h4>Upload raw data</h4>
                             <p>Upload a long-format file with columns like <code>group,value</code>. We&rsquo;ll calculate the means, standard deviations, and sample sizes for the first two groups discovered.</p>
                             <div id="raw-dropzone" class="dropzone" role="button" tabindex="0">
-                                <p class="dropzone-title">Drag &amp; drop raw case file</p>
-                                <p class="dropzone-note">Up to 2,000 rows. Requires at least two unique group labels.</p>
+                                <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+                                <p class="dropzone-note">Long format with headers like <code>group,value</code>; at least two unique groups. Up to 2,000 rows.</p>
                                 <button type="button" id="raw-browse" class="secondary">Browse files</button>
                             </div>
                             <input type="file" id="raw-input" accept=".csv,.tsv,.txt" hidden>

@@ -350,24 +350,25 @@ function handleRawFile(file) {
 }
 
 function setupRawUpload() {
-  const dropzone = document.getElementById('raw-dropzone');
-  const fileInput = document.getElementById('raw-input');
-  const browseButton = document.getElementById('raw-browse');
-  if (!dropzone || !fileInput) return;
-  const openFileDialog = () => fileInput.click();
-  dropzone.addEventListener('click', openFileDialog);
-  dropzone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFileDialog(); } });
-  if (browseButton) browseButton.addEventListener('click', e => { e.preventDefault(); openFileDialog(); });
-  ['dragenter', 'dragover'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('drag-active'); }));
-  ['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, e => {
-    e.preventDefault();
-    if (ev === 'drop' && e.dataTransfer?.files?.length) handleRawFile(e.dataTransfer.files[0]);
-    dropzone.classList.remove('drag-active');
-  }));
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files && fileInput.files.length) handleRawFile(fileInput.files[0]);
-    fileInput.value = '';
+  const dropzoneId = 'raw-dropzone';
+  const inputId = 'raw-input';
+  const browseId = 'raw-browse';
+  const onFile = file => handleRawFile(file);
+
+  if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
+    setRawUploadStatus('Upload helper not available. Please refresh.', 'error');
+    return;
+  }
+
+  window.UIUtils.initDropzone({
+    dropzoneId,
+    inputId,
+    browseId,
+    accept: '.csv,.tsv,.txt',
+    onFile,
+    onError: msg => setRawUploadStatus(msg || 'Unable to load file.', 'error')
   });
+
   setRawUploadStatus('No raw file uploaded.');
 }
 

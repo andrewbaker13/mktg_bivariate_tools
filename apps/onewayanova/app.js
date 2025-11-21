@@ -639,30 +639,35 @@ function setupDataImportControls() {
     const rawTemplateButton = document.getElementById('download-raw-template');
     const summaryTemplateButton = document.getElementById('download-summary-template');
 
-    const triggerFileRead = (input, handler, statusId) => {
-        if (!input) return;
-        input.addEventListener('change', event => {
-            const files = event.target.files;
-            if (files && files.length) {
-                const reader = new FileReader();
-                reader.onload = loadEvent => {
-                    try {
-                        handler(loadEvent.target.result);
-                    } catch (error) {
-                        setUploadStatus(statusId, error.message, 'error');
-                    }
-                };
-                reader.onerror = () => {
-                    setUploadStatus(statusId, 'Unable to read the selected file.', 'error');
-                };
-                reader.readAsText(files[0]);
+    const readAndHandleFile = (file, handler, statusId) => {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = loadEvent => {
+            try {
+                handler(loadEvent.target.result);
+            } catch (error) {
+                setUploadStatus(statusId, error.message, 'error');
             }
-            input.value = '';
-        });
+        };
+        reader.onerror = () => {
+            setUploadStatus(statusId, 'Unable to read the selected file.', 'error');
+        };
+        reader.readAsText(file);
     };
 
     const wireDropzone = (dropzone, input, browseButton, handler, statusId) => {
         if (!dropzone || !input) {
+            return;
+        }
+        if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
+            window.UIUtils.initDropzone({
+                dropzoneId: dropzone.id,
+                inputId: input.id,
+                browseId: browseButton ? browseButton.id : undefined,
+                accept: '.csv,.tsv,.txt',
+                onFile: file => readAndHandleFile(file, handler, statusId),
+                onError: message => setUploadStatus(statusId, message, 'error')
+            });
             return;
         }
         const openFileDialog = event => {
@@ -689,16 +694,7 @@ function setupDataImportControls() {
         dropzone.addEventListener('drop', event => {
             const files = event.dataTransfer?.files;
             if (files && files.length) {
-                const reader = new FileReader();
-                reader.onload = loadEvent => {
-                    try {
-                        handler(loadEvent.target.result);
-                    } catch (error) {
-                        setUploadStatus(statusId, error.message, 'error');
-                    }
-                };
-                reader.onerror = () => setUploadStatus(statusId, 'Unable to read the dropped file.', 'error');
-                reader.readAsText(files[0]);
+                readAndHandleFile(files[0], handler, statusId);
             }
         });
         dropzone.addEventListener('click', openFileDialog);
@@ -710,7 +706,13 @@ function setupDataImportControls() {
         if (browseButton) {
             browseButton.addEventListener('click', openFileDialog);
         }
-        triggerFileRead(input, handler, statusId);
+        input.addEventListener('change', event => {
+            const files = event.target.files;
+            if (files && files.length) {
+                readAndHandleFile(files[0], handler, statusId);
+            }
+            input.value = '';
+        });
     };
 
     wireDropzone(rawDropzone, rawInput, rawBrowse, handleRawDataText, 'raw-upload-status');

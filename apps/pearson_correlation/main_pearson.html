@@ -71,15 +71,15 @@
 
                 <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
                     <button type="button" class="mode-button active" data-mode="manual">Manual entry</button>
-                    <button type="button" class="mode-button" data-mode="matrix">Upload multi-metric raw data (matrix)</button>
-                    <button type="button" class="mode-button" data-mode="paired">Upload paired raw data (single correlation)</button>
+                    <button type="button" class="mode-button" data-mode="matrix">Upload raw data - matrix</button>
+                    <button type="button" class="mode-button" data-mode="paired">Upload raw data - paired</button>
                 </div>
 
                 <div id="import-tools">
                     <div id="file-dropzone" class="dropzone" aria-live="polite">
                         <div class="dropzone-content">
-                            <p class="dropzone-title">Drop a .csv, .tsv, or .txt with headers</p>
-                            <p id="dropzone-instructions">Provide two named numeric columns such as <code>x,y</code>. Blank rows are ignored.</p>
+                            <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+                            <p id="dropzone-instructions">Provide two named numeric columns such as <code>x,y</code> (paired) or 2+ numeric columns with headers for matrix mode. Blank rows are ignored.</p>
                             <button type="button" id="browse-files" class="secondary">Browse files</button>
                             <p class="dropzone-note">We only scan files locally&mdash;no uploads leave your browser. Up to 2,000 rows per file.</p>
                         </div>
