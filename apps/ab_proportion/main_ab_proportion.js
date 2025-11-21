@@ -116,61 +116,22 @@
         });
       }
       if(!dropzone || !input) return;
-      if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
-        window.UIUtils.initDropzone({
-          dropzoneId,
-          inputId,
-          browseId,
-          onFile: file => {
-            handleUploadFile(file, onParse, statusId);
-          }
-        });
+      if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
+        if (statusId) {
+          setUploadStatus(statusId, 'Upload helper not available. Please refresh the page.', 'error');
+        }
         return;
       }
-      const handleFile = file => {
-        if(!file) return;
-        setUploadStatus(statusId, 'Parsing file...');
-        handleUploadFile(file, onParse, statusId);
-      };
-      ['dragenter','dragover'].forEach(eventName => {
-        dropzone.addEventListener(eventName, event => {
-          event.preventDefault();
-          dropzone.classList.add('drag-active');
-        });
-      });
-      ['dragleave','dragend','drop'].forEach(eventName => {
-        dropzone.addEventListener(eventName, event => {
-          if(eventName === 'drop') event.preventDefault();
-          if(eventName !== 'drop' && !dropzone.contains(event.target)) return;
-          dropzone.classList.remove('drag-active');
-        });
-      });
-      dropzone.addEventListener('drop', event => {
-        const files = event.dataTransfer?.files;
-        if(files && files.length){
-          handleFile(files[0]);
+      window.UIUtils.initDropzone({
+        dropzoneId,
+        inputId,
+        browseId,
+        onFile: file => handleUploadFile(file, onParse, statusId),
+        onError: message => {
+          if (statusId && message) {
+            setUploadStatus(statusId, message, 'error');
+          }
         }
-      });
-      dropzone.addEventListener('click', () => input.click());
-      dropzone.addEventListener('keydown', event => {
-        if(event.key === 'Enter' || event.key === ' '){
-          event.preventDefault();
-          input.click();
-        }
-      });
-      if(browse){
-        browse.addEventListener('click', event => {
-          event.preventDefault();
-          input.click();
-        });
-      }
-      input.addEventListener('change', () => {
-        const files = input.files;
-        if(files && files.length){
-          setUploadStatus(statusId, 'Parsing file…');
-          handleFile(files[0]);
-        }
-        input.value = '';
       });
     }
 

@@ -63,15 +63,6 @@ function calculateSd(values = []) {
     return Math.sqrt(variance);
 }
 
-function readFileAsText(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('Unable to read file.'));
-        reader.readAsText(file);
-    });
-}
-
 function findHeaderIndex(headers = [], candidates = []) {
     const normalized = headers.map(header => header.toLowerCase());
     for (const candidate of candidates) {
@@ -124,91 +115,6 @@ function setupDataEntryModeToggle() {
         setDataEntryMode(mode);
     });
     setDataEntryMode(activeDataEntryMode);
-}
-
-function wireUploadZone({ dropzoneId, inputId, browseId, statusId, templateId, templateContent, templateName, onLoad }) {
-    const dropzone = document.getElementById(dropzoneId);
-    const input = document.getElementById(inputId);
-    const browse = document.getElementById(browseId);
-    const templateButton = document.getElementById(templateId);
-    if (!dropzone || !input) return;
-
-    const handleFile = file => {
-        if (!file) return;
-        setUploadStatus(statusId, `Loading ${file.name}...`);
-        readFileAsText(file)
-            .then(text => onLoad(text))
-            .catch(error => {
-                console.error(error);
-                setUploadStatus(statusId, error.message || 'Unable to parse file.', 'error');
-            });
-    };
-
-    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
-        window.UIUtils.initDropzone({
-            dropzoneId,
-            inputId,
-            browseId,
-            onFile: handleFile
-        });
-    } else {
-        const prevent = event => {
-            event.preventDefault();
-            event.stopPropagation();
-        };
-
-        ['dragenter', 'dragover'].forEach(evt => {
-            dropzone.addEventListener(evt, event => {
-                prevent(event);
-                dropzone.classList.add('drag-active');
-            });
-        });
-        ['dragleave', 'dragend', 'drop'].forEach(evt => {
-            dropzone.addEventListener(evt, event => {
-                prevent(event);
-                dropzone.classList.remove('drag-active');
-            });
-        });
-
-        dropzone.addEventListener('drop', event => {
-            prevent(event);
-            const files = event.dataTransfer?.files;
-            if (files && files.length) {
-                handleFile(files[0]);
-            }
-        });
-
-        dropzone.addEventListener('click', () => {
-            input.click();
-        });
-        dropzone.addEventListener('keydown', event => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                input.click();
-            }
-        });
-        if (browse) {
-            browse.addEventListener('click', event => {
-                event.preventDefault();
-                input.click();
-            });
-        }
-
-        input.addEventListener('change', () => {
-            const files = input.files;
-            if (files && files.length) {
-                handleFile(files[0]);
-            }
-            input.value = '';
-        });
-    }
-
-    if (templateButton && templateContent) {
-        templateButton.addEventListener('click', event => {
-            event.preventDefault();
-            downloadTextFile(templateName, templateContent);
-        });
-    }
 }
 
 function parseSummaryUpload(text = '') {
@@ -338,51 +244,117 @@ function applyGroupStats(payload, options = {}) {
 }
 
 function setupSummaryUpload() {
-    wireUploadZone({
-        dropzoneId: 'summary-dropzone',
-        inputId: 'summary-input',
-        browseId: 'summary-browse',
-        statusId: 'summary-upload-status',
-        templateId: 'summary-template-download',
-        templateContent: SUMMARY_TEMPLATE_CSV,
-        templateName: 'ttest_summary_template.csv',
-        onLoad: text => {
+    const dropzoneId = 'summary-dropzone';
+    const inputId = 'summary-input';
+    const browseId = 'summary-browse';
+    const statusId = 'summary-upload-status';
+    const templateButton = document.getElementById('summary-template-download');
+
+    if (templateButton && SUMMARY_TEMPLATE_CSV) {
+        templateButton.addEventListener('click', event => {
+            event.preventDefault();
+            downloadTextFile('ttest_summary_template.csv', SUMMARY_TEMPLATE_CSV);
+        });
+    }
+
+    if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
+        setUploadStatus(statusId, 'Upload helper not available. Please refresh the page.', 'error');
+        return;
+    }
+
+    const handleFile = file => {
+        if (!file) return;
+        setUploadStatus(statusId, `Loading ${file.name}...`);
+        const reader = new FileReader();
+        reader.onload = event => {
             try {
+                const text = event.target.result;
                 const payload = parseSummaryUpload(text);
                 applyGroupStats(payload, { mode: DataEntryModes.SUMMARY });
                 const groups = payload.groups || [];
                 const label = groups.length >= 2
                     ? `${groups[0].name || 'Group 1'} and ${groups[1].name || 'Group 2'}`
                     : 'both groups';
-                setUploadStatus('summary-upload-status', `Loaded summary stats for ${label}.`, 'success');
+                setUploadStatus(statusId, `Loaded summary stats for ${label}.`, 'success');
             } catch (error) {
                 console.error(error);
-                setUploadStatus('summary-upload-status', error.message, 'error');
+                setUploadStatus(statusId, error.message || 'Unable to parse file.', 'error');
+            }
+        };
+        reader.onerror = () => {
+            setUploadStatus(statusId, 'Unable to read file.', 'error');
+        };
+        reader.readAsText(file);
+    };
+
+    window.UIUtils.initDropzone({
+        dropzoneId,
+        inputId,
+        browseId,
+        onFile: handleFile,
+        onError: message => {
+            if (message) {
+                setUploadStatus(statusId, message, 'error');
             }
         }
     });
+
+    setUploadStatus(statusId, 'No summary file uploaded.', '');
 }
 
 function setupRawUpload() {
-    wireUploadZone({
-        dropzoneId: 'raw-dropzone',
-        inputId: 'raw-input',
-        browseId: 'raw-browse',
-        statusId: 'raw-upload-status',
-        templateId: 'raw-template-download',
-        templateContent: RAW_TEMPLATE_CSV,
-        templateName: 'ttest_raw_template.csv',
-        onLoad: text => {
+    const dropzoneId = 'raw-dropzone';
+    const inputId = 'raw-input';
+    const browseId = 'raw-browse';
+    const statusId = 'raw-upload-status';
+    const templateButton = document.getElementById('raw-template-download');
+
+    if (templateButton && RAW_TEMPLATE_CSV) {
+        templateButton.addEventListener('click', event => {
+            event.preventDefault();
+            downloadTextFile('ttest_raw_template.csv', RAW_TEMPLATE_CSV);
+        });
+    }
+
+    if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
+        setUploadStatus(statusId, 'Upload helper not available. Please refresh the page.', 'error');
+        return;
+    }
+
+    const handleFile = file => {
+        if (!file) return;
+        setUploadStatus(statusId, `Loading ${file.name}...`);
+        const reader = new FileReader();
+        reader.onload = event => {
             try {
+                const text = event.target.result;
                 const entries = parseRawUpload(text);
                 applyGroupStats({ groups: entries }, { mode: DataEntryModes.RAW });
-                setUploadStatus('raw-upload-status', `Computed stats for ${entries[0].name || 'Group 1'} and ${entries[1].name || 'Group 2'}.`, 'success');
+                setUploadStatus(statusId, `Computed stats for ${entries[0].name || 'Group 1'} and ${entries[1].name || 'Group 2'}.`, 'success');
             } catch (error) {
                 console.error(error);
-                setUploadStatus('raw-upload-status', error.message, 'error');
+                setUploadStatus(statusId, error.message || 'Unable to parse file.', 'error');
+            }
+        };
+        reader.onerror = () => {
+            setUploadStatus(statusId, 'Unable to read file.', 'error');
+        };
+        reader.readAsText(file);
+    };
+
+    window.UIUtils.initDropzone({
+        dropzoneId,
+        inputId,
+        browseId,
+        onFile: handleFile,
+        onError: message => {
+            if (message) {
+                setUploadStatus(statusId, message, 'error');
             }
         }
     });
+
+    setUploadStatus(statusId, 'No raw file uploaded.', '');
 }
 
 function buildScenarioDatasetFromGroups(groups = [], scenarioId = '', options = {}) {

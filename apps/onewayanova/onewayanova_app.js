@@ -585,14 +585,27 @@ function parseSummaryStatsFile(text) {
 
 function handleRawDataText(text) {
     const { groups, processedRows, skippedRows } = parseRawLongFormatData(text);
+    const totalRows = processedRows + (skippedRows || 0);
+    if (typeof maybeConfirmDroppedRows === 'function' && (skippedRows || 0) > 0) {
+        const proceed = maybeConfirmDroppedRows({
+            totalRows,
+            keptRows: processedRows,
+            contextLabel: 'observations'
+        });
+        if (!proceed) {
+            setUploadStatus('raw-upload-status', 'Upload cancelled because some rows had missing or invalid values.', 'error');
+            return;
+        }
+    }
     applyGroupsToInputs(groups);
     const groupNote = groups.map(group => `${group.name} (n=${group.n})`).join('; ');
-    const skippedNote = skippedRows ? ` Skipped ${skippedRows} row(s) due to formatting issues.` : '';
-    setUploadStatus(
-        'raw-upload-status',
-        `Loaded ${processedRows} row(s) across ${groups.length} group(s): ${groupNote}.${skippedNote}`,
-        'success'
-    );
+    const skippedNote = skippedRows ? ` Skipped ${skippedRows} observations due to formatting issues.` : '';
+    let statusMessage = `Loaded ${processedRows} observations across ${groups.length} group(s): ${groupNote}.`;
+    statusMessage += skippedNote;
+    if (totalRows > processedRows) {
+        statusMessage += ` Using ${processedRows} of ${totalRows} observations.`;
+    }
+    setUploadStatus('raw-upload-status', statusMessage, 'success');
 }
 
 function handleSummaryText(text) {
@@ -639,84 +652,69 @@ function setupDataImportControls() {
     const rawTemplateButton = document.getElementById('download-raw-template');
     const summaryTemplateButton = document.getElementById('download-summary-template');
 
-    const readAndHandleFile = (file, handler, statusId) => {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = loadEvent => {
-            try {
-                handler(loadEvent.target.result);
-            } catch (error) {
-                setUploadStatus(statusId, error.message, 'error');
-            }
-        };
-        reader.onerror = () => {
-            setUploadStatus(statusId, 'Unable to read the selected file.', 'error');
-        };
-        reader.readAsText(file);
-    };
+    if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
+        setUploadStatus('raw-upload-status', 'Upload helper not available. Please refresh the page.', 'error');
+        setUploadStatus('summary-upload-status', 'Upload helper not available. Please refresh the page.', 'error');
+        return;
+    }
 
-    const wireDropzone = (dropzone, input, browseButton, handler, statusId) => {
-        if (!dropzone || !input) {
-            return;
-        }
-        if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
-            window.UIUtils.initDropzone({
-                dropzoneId: dropzone.id,
-                inputId: input.id,
-                browseId: browseButton ? browseButton.id : undefined,
-                accept: '.csv,.tsv,.txt',
-                onFile: file => readAndHandleFile(file, handler, statusId),
-                onError: message => setUploadStatus(statusId, message, 'error')
-            });
-            return;
-        }
-        const openFileDialog = event => {
-            event.preventDefault();
-            input.click();
+    if (rawDropzone && rawInput) {
+        const handleRawFile = file => {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = event => {
+                try {
+                    handleRawDataText(event.target.result);
+                } catch (error) {
+                    setUploadStatus('raw-upload-status', error.message, 'error');
+                }
+            };
+            reader.onerror = () => {
+                setUploadStatus('raw-upload-status', 'Unable to read the selected file.', 'error');
+            };
+            reader.readAsText(file);
         };
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropzone.addEventListener(eventName, event => {
-                event.preventDefault();
-                dropzone.classList.add('drag-active');
-            });
-        });
-        ['dragleave', 'dragend', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, event => {
-                if (eventName === 'drop') {
-                    event.preventDefault();
-                }
-                if (eventName !== 'drop' && !dropzone.contains(event.target)) {
-                    return;
-                }
-                dropzone.classList.remove('drag-active');
-            });
-        });
-        dropzone.addEventListener('drop', event => {
-            const files = event.dataTransfer?.files;
-            if (files && files.length) {
-                readAndHandleFile(files[0], handler, statusId);
-            }
-        });
-        dropzone.addEventListener('click', openFileDialog);
-        dropzone.addEventListener('keydown', event => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                openFileDialog(event);
-            }
-        });
-        if (browseButton) {
-            browseButton.addEventListener('click', openFileDialog);
-        }
-        input.addEventListener('change', event => {
-            const files = event.target.files;
-            if (files && files.length) {
-                readAndHandleFile(files[0], handler, statusId);
-            }
-            input.value = '';
-        });
-    };
 
-    wireDropzone(rawDropzone, rawInput, rawBrowse, handleRawDataText, 'raw-upload-status');
-    wireDropzone(summaryDropzone, summaryInput, summaryBrowse, handleSummaryText, 'summary-upload-status');
+        window.UIUtils.initDropzone({
+            dropzoneId: rawDropzone.id,
+            inputId: rawInput.id,
+            browseId: rawBrowse ? rawBrowse.id : undefined,
+            accept: '.csv,.tsv,.txt',
+            onFile: handleRawFile,
+            onError: message => setUploadStatus('raw-upload-status', message, 'error')
+        });
+
+        setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
+    }
+
+    if (summaryDropzone && summaryInput) {
+        const handleSummaryFile = file => {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = event => {
+                try {
+                    handleSummaryText(event.target.result);
+                } catch (error) {
+                    setUploadStatus('summary-upload-status', error.message, 'error');
+                }
+            };
+            reader.onerror = () => {
+                setUploadStatus('summary-upload-status', 'Unable to read the selected file.', 'error');
+            };
+            reader.readAsText(file);
+        };
+
+        window.UIUtils.initDropzone({
+            dropzoneId: summaryDropzone.id,
+            inputId: summaryInput.id,
+            browseId: summaryBrowse ? summaryBrowse.id : undefined,
+            accept: '.csv,.tsv,.txt',
+            onFile: handleSummaryFile,
+            onError: message => setUploadStatus('summary-upload-status', message, 'error')
+        });
+
+        setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
+    }
 
     if (rawTemplateButton) {
         rawTemplateButton.addEventListener('click', event => {

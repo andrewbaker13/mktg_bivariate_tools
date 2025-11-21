@@ -222,7 +222,7 @@ function clearOutputs(message = 'Provide data to see results.') {
   const numBody = document.getElementById('numeric-summary-body');
   const catBody = document.getElementById('categorical-summary-body');
   if (apa) apa.textContent = '';
-  if (mgr) mgr.textContent = '';
+  if (mgr) mgr.textCFfunbontent = '';
   if (equation) equation.textContent = message;
   if (coefBody) coefBody.innerHTML = `<tr><td colspan="9">${escapeHtml(message)}</td></tr>`;
   if (numBody) numBody.innerHTML = `<tr><td colspan="6">${escapeHtml(message)}</td></tr>`;
@@ -309,7 +309,56 @@ function applyScenarioHints(hints, headers) {
 }
 
 function importRawData(text, { isFromScenario = false, scenarioHints = null } = {}) {
-  const parsed = parseRawUploadText(text);
+  let parsed = parseRawUploadText(text);
+  if (typeof detectIdLikeColumns === 'function') {
+    const idCandidates = detectIdLikeColumns(parsed.headers, parsed.rows);
+    if (Array.isArray(idCandidates) && idCandidates.length) {
+      const names = idCandidates.map(c => `"${c.header}"`).join(', ');
+      const message = idCandidates.length === 1
+        ? `The column ${names} has a unique value for every row and may be an observation ID column. Ignore this column for analysis? (Cancel = keep it as a regular variable).`
+        : `The columns ${names} each have a unique value for every row and may be observation ID columns. Ignore these column(s) for analysis? (Cancel = keep them as regular variables).`;
+      if (window.confirm(message)) {
+        const toDrop = new Set(idCandidates.map(c => c.header));
+        const keptHeaders = parsed.headers.filter(h => !toDrop.has(h));
+        const newRows = parsed.rows.map(row => {
+          const next = {};
+          keptHeaders.forEach(h => {
+            next[h] = row[h];
+          });
+          return next;
+        });
+        parsed = { headers: keptHeaders, rows: newRows, warnings: parsed.warnings || [] };
+      }
+    }
+  }
+  if (typeof maybeConfirmDroppedRows === 'function' && Array.isArray(parsed.rows) && parsed.rows.length) {
+    const totalRows = parsed.rows.length;
+    const headersToCheck = parsed.headers || [];
+    const completeRows = parsed.rows.filter(row => {
+      return headersToCheck.every(h => {
+        const v = row && Object.prototype.hasOwnProperty.call(row, h) ? row[h] : undefined;
+        if (v === null || v === undefined) return false;
+        const s = String(v).trim();
+        return s.length > 0;
+      });
+    });
+    if (completeRows.length !== totalRows) {
+      const proceed = maybeConfirmDroppedRows({
+        totalRows,
+        keptRows: completeRows.length,
+        contextLabel: 'observations'
+      });
+      if (!proceed) {
+        dataset = { headers: [], rows: [] };
+        setRawUploadStatus('Upload cancelled because some rows had missing values.', 'error', { isHtml: false });
+        return;
+      }
+      parsed.rows = completeRows;
+    }
+  }
+  const finalRowCount = Array.isArray(parsed.rows) ? parsed.rows.length : 0;
+  const totalRowCountForStatus = typeof totalRows !== 'undefined' ? totalRows : finalRowCount;
+  const droppedCountForStatus = totalRowCountForStatus - finalRowCount;
   dataset = { headers: parsed.headers, rows: parsed.rows };
   columnMeta = buildColumnMeta(parsed.rows, parsed.headers);
   const hints = applyScenarioHints(scenarioHints, dataset.headers);
@@ -334,7 +383,11 @@ function importRawData(text, { isFromScenario = false, scenarioHints = null } = 
     const isPredictor = selectedPredictors.includes(h);
     return isPredictor ? `${h} <em>(Predictor X - ${typeLabel})</em>` : `${h} <em>(Unused)</em>`;
   });
-  setRawUploadStatus(`Loaded ${dataset.rows.length} rows with headers: <strong>${headerDescriptions.join(', ')}</strong>.`, 'success');
+  let statusMessage = `Loaded ${dataset.rows.length} observations with headers: <strong>${headerDescriptions.join(', ')}</strong>.`;
+  if (droppedCountForStatus > 0) {
+    statusMessage += ` Using ${dataset.rows.length} of ${totalRowCountForStatus} observations (rows with missing or invalid values were excluded).`;
+  }
+  setRawUploadStatus(statusMessage, 'success');
   renderVariableSelectors();
   updateResults();
 }
@@ -354,6 +407,7 @@ function setupRawUpload() {
   const inputId = 'raw-input';
   const browseId = 'raw-browse';
   const onFile = file => handleRawFile(file);
+  const templateButton = document.getElementById('raw-template-download');
 
   if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
     setRawUploadStatus('Upload helper not available. Please refresh.', 'error');
@@ -368,6 +422,18 @@ function setupRawUpload() {
     onFile,
     onError: msg => setRawUploadStatus(msg || 'Unable to load file.', 'error')
   });
+
+  if (templateButton) {
+    templateButton.addEventListener('click', event => {
+      event.preventDefault();
+      const link = document.createElement('a');
+      link.href = 'sample_template.csv';
+      link.download = 'mlr_raw_template.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  }
 
   setRawUploadStatus('No raw file uploaded.');
 }
@@ -523,18 +589,18 @@ function renderVariableSelectors() {
       : true;
     const typeOptions = [];
     if (isNumeric) {
-      typeOptions.push('auto', 'numeric');
+      typeOptions.push('numeric');
       if (canCategorical) typeOptions.push('categorical');
     } else {
       typeOptions.push('categorical');
     }
-    typeOptions.forEach(optVal => {
-      const opt = document.createElement('option');
-      opt.value = optVal;
-      opt.textContent = optVal === 'auto' ? 'Auto' : optVal.charAt(0).toUpperCase() + optVal.slice(1);
-      typeSelect.appendChild(opt);
-    });
-    const currentType = predictorSettings[header]?.type || meta.inferredType || 'auto';
+      typeOptions.forEach(optVal => {
+        const opt = document.createElement('option');
+        opt.value = optVal;
+        opt.textContent = optVal.charAt(0).toUpperCase() + optVal.slice(1);
+        typeSelect.appendChild(opt);
+      });
+      const currentType = predictorSettings[header]?.type || meta.inferredType || 'numeric';
     typeSelect.value = typeOptions.includes(currentType) ? currentType : typeOptions[0];
     const refWrapper = document.createElement('div');
     refWrapper.className = 'predictor-ref-wrapper';
@@ -558,21 +624,21 @@ function renderVariableSelectors() {
       });
     }
     const currentRef = predictorSettings[header]?.reference || distinct[0] || '';
-    refSelect.value = currentRef;
-    const initialType = predictorSettings[header]?.type || meta.inferredType;
+      refSelect.value = currentRef;
+      const initialType = predictorSettings[header]?.type || meta.inferredType;
     refWrapper.style.display = initialType === 'categorical' ? 'block' : 'none';
-    checkbox.addEventListener('change', () => {
-      if (checkbox.checked) {
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
         if (!selectedPredictors.includes(header)) selectedPredictors.push(header);
       } else {
         selectedPredictors = selectedPredictors.filter(p => p !== header);
       }
       updateResults();
-    });
-    typeSelect.addEventListener('change', () => {
-      const newType = typeSelect.value;
-      predictorSettings[header] = predictorSettings[header] || {};
-      predictorSettings[header].type = newType === 'auto' ? meta.inferredType : newType;
+      });
+      typeSelect.addEventListener('change', () => {
+        const newType = typeSelect.value;
+        predictorSettings[header] = predictorSettings[header] || {};
+        predictorSettings[header].type = newType;
       const isCat = predictorSettings[header].type === 'categorical';
       refSelect.disabled = !isCat;
       refWrapper.style.display = isCat ? 'block' : 'none';

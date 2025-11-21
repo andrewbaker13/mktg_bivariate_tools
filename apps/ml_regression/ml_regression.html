@@ -92,9 +92,11 @@
         <input type="file" id="raw-input" accept=".csv,.tsv,.txt" hidden>
         <p class="upload-status" id="raw-upload-status">No file uploaded.</p>
         <p class="template-note">
-          Need a starter file? Download a 5-column template with 3 continuous and 2 categorical variables (50 rows):
-          <a href="sample_template.csv" download>sample_template.csv</a>
+          Need a starter file? Use the raw template with 3 continuous and 2 categorical predictors (50 observations).
         </p>
+        <div class="template-buttons">
+          <button type="button" id="raw-template-download">Download raw template</button>
+        </div>
       </div>
 
       <div id="variable-selection-panel" class="card variable-selection-panel hidden">

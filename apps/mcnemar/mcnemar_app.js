@@ -71,15 +71,6 @@ function setUploadStatus(id, message, state) {
     }
 }
 
-function readFileAsText(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('Unable to read file.'));
-        reader.readAsText(file);
-    });
-}
-
 function setDataEntryMode(mode) {
     if (!Object.values(DataEntryModes).includes(mode)) {
         mode = DataEntryModes.MANUAL;
@@ -105,112 +96,6 @@ function setupDataEntryModeToggle() {
         setDataEntryMode(button.dataset.mode);
     });
     setDataEntryMode(activeDataEntryMode);
-}
-
-function wireUploadZone({
-    dropzoneId,
-    inputId,
-    browseId,
-    templateId,
-    templateContent,
-    templateName,
-    statusId,
-    onLoad
-}) {
-    const dropzone = document.getElementById(dropzoneId);
-    const input = document.getElementById(inputId);
-    if (!dropzone || !input) return;
-
-    const browseButton = browseId ? document.getElementById(browseId) : null;
-    const templateButton = templateId ? document.getElementById(templateId) : null;
-
-    const handleFile = file => {
-        readFileAsText(file)
-            .then(text => onLoad(text, file))
-            .catch(error => {
-                console.error('Upload error:', error);
-                if (statusId) {
-                    setUploadStatus(statusId, error.message || 'Unable to read file.', 'error');
-                }
-            });
-    };
-
-    const prevent = event => {
-        event.preventDefault();
-        event.stopPropagation();
-    };
-
-    if (templateButton && templateContent) {
-        templateButton.addEventListener('click', event => {
-            event.preventDefault();
-            downloadTextFile(templateName, templateContent, { mimeType: 'text/csv' });
-        });
-    }
-
-    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
-        window.UIUtils.initDropzone({
-            dropzoneId,
-            inputId,
-            browseId,
-            accept: '.csv,.tsv,.txt',
-            onFile: handleFile,
-            onError: message => {
-                if (statusId) {
-                    setUploadStatus(statusId, message, 'error');
-                }
-            }
-        });
-        return;
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropzone.addEventListener(eventName, event => {
-            prevent(event);
-            dropzone.classList.add('drag-active');
-        });
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropzone.addEventListener(eventName, event => {
-            prevent(event);
-            if (event.type === 'dragleave' && event.target !== dropzone) {
-                return;
-            }
-            dropzone.classList.remove('drag-active');
-        });
-    });
-
-    dropzone.addEventListener('drop', event => {
-        const file = event.dataTransfer?.files?.[0];
-        if (file) {
-            handleFile(file);
-        }
-    });
-
-    dropzone.addEventListener('click', () => {
-        input.click();
-    });
-
-    dropzone.addEventListener('keypress', event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            input.click();
-        }
-    });
-
-    input.addEventListener('change', () => {
-        if (input.files && input.files.length) {
-            handleFile(input.files[0]);
-            input.value = '';
-        }
-    });
-
-    if (browseButton) {
-        browseButton.addEventListener('click', event => {
-            event.preventDefault();
-            input.click();
-        });
-    }
 }
 
 function setLabelInputs(labels = {}) {
@@ -1196,51 +1081,119 @@ function applyRawDataset(payload, options = {}) {
 }
 
 function setupSummaryUpload() {
-    wireUploadZone({
-        dropzoneId: 'summary-dropzone',
-        inputId: 'summary-input',
-        browseId: 'summary-browse',
-        templateId: 'summary-template-download',
-        templateContent: SUMMARY_TEMPLATE_CSV,
-        templateName: 'mcnemar_summary_template.csv',
-        statusId: 'summary-upload-status',
-        onLoad: text => {
+    const dropzoneId = 'summary-dropzone';
+    const inputId = 'summary-input';
+    const browseId = 'summary-browse';
+    const statusId = 'summary-upload-status';
+    const templateButton = document.getElementById('summary-template-download');
+
+    if (templateButton && SUMMARY_TEMPLATE_CSV) {
+        templateButton.addEventListener('click', event => {
+            event.preventDefault();
+            downloadTextFile('mcnemar_summary_template.csv', SUMMARY_TEMPLATE_CSV, { mimeType: 'text/csv' });
+        });
+    }
+
+    if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
+        setUploadStatus(statusId, 'Upload helper not available. Please refresh the page.', 'error');
+        return;
+    }
+
+    const handleFile = file => {
+        if (!file) return;
+        setUploadStatus(statusId, `Loading ${file.name}...`, '');
+        const reader = new FileReader();
+        reader.onload = event => {
             try {
+                const text = event.target.result;
                 const payload = parseSummaryUpload(text);
                 applySummaryDataset(payload);
-                setUploadStatus('summary-upload-status', `Loaded summary counts for ${payload.labels.conditionA} vs ${payload.labels.conditionB}.`, 'success');
+                setUploadStatus(statusId, `Loaded summary counts for ${payload.labels.conditionA} vs ${payload.labels.conditionB}.`, 'success');
                 setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
                 enableScenarioDownload(null);
             } catch (error) {
                 console.error('Summary upload error:', error);
-                setUploadStatus('summary-upload-status', error.message || 'Unable to parse summary file.', 'error');
+                setUploadStatus(statusId, error.message || 'Unable to parse summary file.', 'error');
+            }
+        };
+        reader.onerror = () => {
+            setUploadStatus(statusId, 'Unable to read file.', 'error');
+        };
+        reader.readAsText(file);
+    };
+
+    window.UIUtils.initDropzone({
+        dropzoneId,
+        inputId,
+        browseId,
+        accept: '.csv,.tsv,.txt',
+        onFile: handleFile,
+        onError: message => {
+            if (message) {
+                setUploadStatus(statusId, message, 'error');
             }
         }
     });
+
+    setUploadStatus(statusId, 'No summary file uploaded.', '');
 }
 
 function setupRawUpload() {
-    wireUploadZone({
-        dropzoneId: 'raw-dropzone',
-        inputId: 'raw-input',
-        browseId: 'raw-browse',
-        templateId: 'raw-template-download',
-        templateContent: RAW_TEMPLATE_CSV,
-        templateName: 'mcnemar_raw_template.csv',
-        statusId: 'raw-upload-status',
-        onLoad: text => {
+    const dropzoneId = 'raw-dropzone';
+    const inputId = 'raw-input';
+    const browseId = 'raw-browse';
+    const statusId = 'raw-upload-status';
+    const templateButton = document.getElementById('raw-template-download');
+
+    if (templateButton && RAW_TEMPLATE_CSV) {
+        templateButton.addEventListener('click', event => {
+            event.preventDefault();
+            downloadTextFile('mcnemar_raw_template.csv', RAW_TEMPLATE_CSV, { mimeType: 'text/csv' });
+        });
+    }
+
+    if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
+        setUploadStatus(statusId, 'Upload helper not available. Please refresh the page.', 'error');
+        return;
+    }
+
+    const handleFile = file => {
+        if (!file) return;
+        setUploadStatus(statusId, `Loading ${file.name}...`, '');
+        const reader = new FileReader();
+        reader.onload = event => {
             try {
+                const text = event.target.result;
                 const payload = parseRawUpload(text);
                 applyRawDataset(payload);
-                setUploadStatus('raw-upload-status', `Loaded ${payload.rowCount} paired observations.`, 'success');
+                setUploadStatus(statusId, `Loaded ${payload.rowCount} paired observations.`, 'success');
                 setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
                 enableScenarioDownload(null);
             } catch (error) {
                 console.error('Raw upload error:', error);
-                setUploadStatus('raw-upload-status', error.message || 'Unable to parse raw file.', 'error');
+                setUploadStatus(statusId, error.message || 'Unable to parse raw file.', 'error');
+            }
+        };
+        reader.onerror = () => {
+            setUploadStatus(statusId, 'Unable to read file.', 'error');
+        };
+        reader.readAsText(file);
+    };
+
+    window.UIUtils.initDropzone({
+        dropzoneId,
+        inputId,
+        browseId,
+        accept: '.csv,.tsv,.txt',
+        onFile: handleFile,
+        onError: message => {
+            if (message) {
+                setUploadStatus(statusId, message, 'error');
             }
         }
     });
+
+    setUploadStatus(statusId, 'No raw file uploaded.', '');
 }
 
 function enableScenarioDownload(datasetInfo) {

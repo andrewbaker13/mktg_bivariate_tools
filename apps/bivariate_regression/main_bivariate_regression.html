@@ -133,18 +133,14 @@
               <fieldset class="input-group predictor-type-group">
                 <legend>Predictor type</legend>
                 <label class="radio-label">
-                  <input type="radio" name="predictor-type" value="auto" checked>
-                  <span>Auto-detect</span>
-                </label>
-                <label class="radio-label">
-                  <input type="radio" name="predictor-type" value="continuous">
+                  <input type="radio" name="predictor-type" value="continuous" checked>
                   <span>Continuous (numeric)</span>
                 </label>
-              <label class="radio-label">
-                <input type="radio" name="predictor-type" value="categorical">
-                <span>Categorical (group labels)</span>
-              </label>
-            </fieldset>
+                <label class="radio-label">
+                  <input type="radio" name="predictor-type" value="categorical">
+                  <span>Categorical (group labels)</span>
+                </label>
+              </fieldset>
             <p class="predictor-type-warning" id="predictor-type-warning"></p>
           </article>
         </div>
@@ -168,20 +164,16 @@
               <button type="button" id="swap-xy-upload" class="secondary hidden">Swap Predictor (X) & Outcome (Y)</button>
             </div>
             <fieldset class="input-group predictor-type-group">
-              <legend>Predictor type for numeric uploads</legend>
-              <label class="radio-label">
-                <input type="radio" name="upload-predictor-type" value="auto" checked>
-                <span>Auto-detect</span>
-              </label>
-              <label class="radio-label">
-                <input type="radio" name="upload-predictor-type" value="continuous">
-                <span>Continuous (numeric)</span>
-              </label>
-              <label class="radio-label">
-                <input type="radio" name="upload-predictor-type" value="categorical">
-                <span>Categorical (group labels)</span>
-              </label>
-            </fieldset>
+                <legend>Predictor type for numeric uploads</legend>
+                <label class="radio-label">
+                  <input type="radio" name="upload-predictor-type" value="continuous" checked>
+                  <span>Continuous (numeric)</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="upload-predictor-type" value="categorical">
+                  <span>Categorical (group labels)</span>
+                </label>
+              </fieldset>
             <p class="predictor-type-warning" id="upload-predictor-type-warning"></p>
           </div>
         </div>

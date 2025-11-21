@@ -1044,16 +1044,34 @@ function updateUploadStatus(mode, message, status = '') {
 function importPairedData(text) {
     try {
         const { headers, rows, errors } = parseDelimitedText(text, 2, { maxRows: PAIR_TTEST_MAX_UPLOAD_ROWS });
+        if (typeof maybeConfirmDroppedRows === 'function') {
+            const totalRows = rows.length + (Array.isArray(errors) ? errors.length : 0);
+            const proceed = maybeConfirmDroppedRows({
+                totalRows,
+                keptRows: rows.length,
+                contextLabel: 'paired observations'
+            });
+            if (!proceed) {
+                uploadedPairedData = null;
+                updateUploadStatus(InputModes.PAIRED, 'Upload cancelled because some rows had missing or invalid values.', 'error');
+                setFileFeedback('Upload cancelled because some rows had missing or invalid values.', 'error');
+                return;
+            }
+        }
         uploadedPairedData = {
             beforeValues: rows.map(values => values[0]),
             afterValues: rows.map(values => values[1]),
-            differences: rows.map(values => values[1] - values[0]),
-            rowCount: rows.length
-        };
-        const skippedNote = errors.length ? ` Skipped ${errors.length} row(s).` : '';
-        const headerNote = headers.join(', ');
-        setFileFeedback(`Loaded ${rows.length} pairs from ${headerNote}.${skippedNote}`, 'success');
-        updateUploadStatus(InputModes.PAIRED, `${rows.length} pair(s) ready.${skippedNote}`, 'success');
+              differences: rows.map(values => values[1] - values[0]),
+              rowCount: rows.length
+          };
+          const skippedNote = errors.length ? ` Skipped ${errors.length} observations due to missing or invalid values.` : '';
+          const headerNote = headers.join(', ');
+          let statusNote = '';
+          if (totalRows > rows.length) {
+              statusNote = ` Using ${rows.length} of ${totalRows} paired observations.`;
+          }
+          setFileFeedback(`Loaded ${rows.length} pairs from ${headerNote}.${skippedNote}${statusNote}`, 'success');
+          updateUploadStatus(InputModes.PAIRED, `${rows.length} paired observation(s) ready.${skippedNote}${statusNote}`, 'success');
         updateResults();
     } catch (error) {
         uploadedPairedData = null;
@@ -1066,14 +1084,32 @@ function importPairedData(text) {
 function importDifferenceData(text) {
     try {
         const { headers, rows, errors } = parseDelimitedText(text, 1, { maxRows: PAIR_TTEST_MAX_UPLOAD_ROWS });
+        if (typeof maybeConfirmDroppedRows === 'function') {
+            const totalRows = rows.length + (Array.isArray(errors) ? errors.length : 0);
+            const proceed = maybeConfirmDroppedRows({
+                totalRows,
+                keptRows: rows.length,
+                contextLabel: 'observations'
+            });
+            if (!proceed) {
+                uploadedDifferenceData = null;
+                updateUploadStatus(InputModes.DIFFERENCE, 'Upload cancelled because some rows had missing or invalid values.', 'error');
+                setFileFeedback('Upload cancelled because some rows had missing or invalid values.', 'error');
+                return;
+            }
+        }
         uploadedDifferenceData = {
             differences: rows.map(values => values[0]),
             rowCount: rows.length
         };
-        const skippedNote = errors.length ? ` Skipped ${errors.length} row(s).` : '';
+        const skippedNote = errors.length ? ` Skipped ${errors.length} observations due to missing or invalid values.` : '';
         const column = headers[0] || 'diff';
-        setFileFeedback(`Loaded ${rows.length} differences from column "${column}".${skippedNote}`, 'success');
-        updateUploadStatus(InputModes.DIFFERENCE, `${rows.length} difference(s) ready.${skippedNote}`, 'success');
+        let statusNote = '';
+        if (totalRows > rows.length) {
+            statusNote = ` Using ${rows.length} of ${totalRows} observations.`;
+        }
+        setFileFeedback(`Loaded ${rows.length} differences from column "${column}".${skippedNote}${statusNote}`, 'success');
+        updateUploadStatus(InputModes.DIFFERENCE, `${rows.length} difference(s) ready.${skippedNote}${statusNote}`, 'success');
         updateResults();
     } catch (error) {
         uploadedDifferenceData = null;
@@ -1083,10 +1119,10 @@ function importDifferenceData(text) {
     }
 }
 
-function handleFile(file) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = event => {
+  function handleFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = event => {
         if (activeMode === InputModes.PAIRED) {
             try {
                 importPairedData(event.target.result);
@@ -1096,64 +1132,41 @@ function handleFile(file) {
         } else if (activeMode === InputModes.DIFFERENCE) {
             try {
                 importDifferenceData(event.target.result);
-            } catch {
-                // Errors already surfaced via status text.
-            }
-        } else {
-            setFileFeedback('Switch to a paired or difference upload mode to import files.', 'error');
-        }
-    };
-    reader.onerror = () => setFileFeedback('Unable to read the file.', 'error');
-    reader.readAsText(file);
-}
+              } catch {
+                  // Errors already surfaced via status text.
+              }
+          } else {
+              setFileFeedback('Switch to a paired or difference upload mode to import files.', 'error');
+          }
+      };
+      reader.onerror = () => setFileFeedback('Unable to read the file.', 'error');
+      reader.readAsText(file);
+  }
 
-function setupDropzone() {
-    const dropzone = document.getElementById('file-dropzone');
-    const fileInput = document.getElementById('file-input');
-    const browseButton = document.getElementById('browse-files');
-    if (!dropzone || !fileInput) return;
+  function setupDropzone() {
+      const dropzone = document.getElementById('file-dropzone');
+      const fileInput = document.getElementById('file-input');
+      const browseButton = document.getElementById('browse-files');
+      if (!dropzone || !fileInput) return;
 
-    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
-        window.UIUtils.initDropzone({
-            dropzoneId: 'file-dropzone',
-            inputId: 'file-input',
-            browseId: 'browse-files',
-            accept: '.csv,.tsv,.txt',
-            onFile: handleFile
-        });
-        return;
-    }
+      if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
+          setFileFeedback('Upload helper not available. Please refresh the page.', 'error');
+          return;
+      }
 
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropzone.addEventListener(eventName, event => {
-            event.preventDefault();
-            dropzone.classList.add('drag-active');
-        });
-    });
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropzone.addEventListener(eventName, event => {
-            event.preventDefault();
-            if (event.type === 'drop') {
-                const file = event.dataTransfer.files[0];
-                handleFile(file);
-            }
-            dropzone.classList.remove('drag-active');
-        });
-    });
-    dropzone.addEventListener('click', () => fileInput.click());
-    if (browseButton) {
-        browseButton.addEventListener('click', event => {
-            event.stopPropagation();
-            fileInput.click();
-        });
-    }
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files && fileInput.files.length) {
-            handleFile(fileInput.files[0]);
-        }
-        fileInput.value = '';
-    });
-}
+      window.UIUtils.initDropzone({
+          dropzoneId: 'file-dropzone',
+          inputId: 'file-input',
+          browseId: 'browse-files',
+          accept: '.csv,.tsv,.txt',
+          onFile: handleFile,
+          onError: message => {
+              if (message) setFileFeedback(message, 'error');
+          }
+      });
+
+      setFileFeedback('No file uploaded.', '');
+  }
 
 function downloadTextFile(filename, content) {
     const blob = new Blob([content], { type: 'text/csv' });

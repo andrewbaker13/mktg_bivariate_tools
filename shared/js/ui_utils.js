@@ -38,12 +38,10 @@ function initDropzone({
   const handleDrop = event => {
     event.preventDefault();
     const file = event.dataTransfer?.files?.[0];
-    clearInput();
     handleFile(file);
   };
 
   const handleBrowse = () => {
-    clearInput();
     input.click();
   };
 
@@ -82,6 +80,7 @@ function initDropzone({
   input.addEventListener('change', () => {
     const file = input.files?.[0];
     handleFile(file);
+    clearInput();
   });
 }
 

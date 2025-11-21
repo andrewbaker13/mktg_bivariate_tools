@@ -1154,116 +1154,40 @@
 
   function bindCrosstabDropzone() {
     if (!crosstabDropzone || !crosstabFileInput) return;
-    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
-        window.UIUtils.initDropzone({
-          dropzoneId: 'crosstab-dropzone',
-          inputId: 'crosstab-file-input',
-          browseId: 'summary-browse',
-        accept: '.csv,.tsv,.txt',
-        onFile: handleCrosstabFile
-      });
+    if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
+      reportSummaryStatus('Upload helper not available. Please refresh the page.', 'error');
       return;
     }
-    var prevent = function (event) { event.preventDefault(); event.stopPropagation(); };
-    ['dragenter', 'dragover'].forEach(function (name) {
-      crosstabDropzone.addEventListener(name, function (event) {
-        prevent(event);
-        crosstabDropzone.classList.add('drag-active');
-      });
-    });
-    ['dragleave', 'drop', 'dragend'].forEach(function (name) {
-      crosstabDropzone.addEventListener(name, function (event) {
-        prevent(event);
-        crosstabDropzone.classList.remove('drag-active');
-      });
-    });
-    crosstabDropzone.addEventListener('drop', function (event) {
-      prevent(event);
-      var files = event.dataTransfer ? event.dataTransfer.files : [];
-      if (files && files.length) {
-        handleCrosstabFile(files[0]);
+    window.UIUtils.initDropzone({
+      dropzoneId: 'crosstab-dropzone',
+      inputId: 'crosstab-file-input',
+      browseId: 'summary-browse',
+      accept: '.csv,.tsv,.txt',
+      onFile: handleCrosstabFile,
+      onError: function (message) {
+        if (message) reportSummaryStatus(message, 'error');
       }
     });
-    crosstabDropzone.addEventListener('click', function () {
-      if (crosstabFileInput) crosstabFileInput.click();
-    });
-    if (summaryBrowseBtn) {
-      summaryBrowseBtn.addEventListener('click', function () {
-        if (crosstabFileInput) crosstabFileInput.click();
-      });
-    }
-    crosstabDropzone.addEventListener('keydown', function (event) {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        if (crosstabFileInput) crosstabFileInput.click();
-      }
-    });
-    if (crosstabFileInput) {
-      crosstabFileInput.addEventListener('change', function (event) {
-        var files = event.target.files;
-        if (files && files.length) {
-          handleCrosstabFile(files[0]);
-        }
-        event.target.value = '';
-      });
-    }
+    reportSummaryStatus('No summary file uploaded.', null);
   }
 
   function bindRawDropzone() {
     if (!rawDropzone || !rawFileInput) return;
-    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
-      window.UIUtils.initDropzone({
-        dropzoneId: 'raw-dropzone',
-        inputId: 'raw-file-input',
-        browseId: 'raw-browse',
-        accept: '.csv,.tsv,.txt',
-        onFile: handleRawFile
-      });
+    if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
+      reportRawStatus('Upload helper not available. Please refresh the page.', 'error');
       return;
     }
-    var prevent = function (event) { event.preventDefault(); event.stopPropagation(); };
-    ['dragenter', 'dragover'].forEach(function (name) {
-      rawDropzone.addEventListener(name, function (event) {
-        prevent(event);
-        rawDropzone.classList.add('drag-active');
-      });
-    });
-    ['dragleave', 'drop', 'dragend'].forEach(function (name) {
-      rawDropzone.addEventListener(name, function (event) {
-        prevent(event);
-        rawDropzone.classList.remove('drag-active');
-      });
-    });
-    rawDropzone.addEventListener('drop', function (event) {
-      prevent(event);
-      var files = event.dataTransfer ? event.dataTransfer.files : [];
-      if (files && files.length) {
-        handleRawFile(files[0]);
+    window.UIUtils.initDropzone({
+      dropzoneId: 'raw-dropzone',
+      inputId: 'raw-file-input',
+      browseId: 'raw-browse',
+      accept: '.csv,.tsv,.txt',
+      onFile: handleRawFile,
+      onError: function (message) {
+        if (message) reportRawStatus(message, 'error');
       }
     });
-    rawDropzone.addEventListener('click', function () {
-      if (rawFileInput) rawFileInput.click();
-    });
-    if (rawBrowseBtn) {
-      rawBrowseBtn.addEventListener('click', function () {
-        if (rawFileInput) rawFileInput.click();
-      });
-    }
-    rawDropzone.addEventListener('keydown', function (event) {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        if (rawFileInput) rawFileInput.click();
-      }
-    });
-    if (rawFileInput) {
-      rawFileInput.addEventListener('change', function (event) {
-        var files = event.target.files;
-        if (files && files.length) {
-          handleRawFile(files[0]);
-        }
-        event.target.value = '';
-      });
-    }
+    reportRawStatus('No raw file uploaded.', null);
   }
 
   function downloadRawTemplate() {

@@ -29,6 +29,13 @@
   border-top: 1px solid var(--app-border);
   padding-top: 1rem;
 }
+
+.template-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
 .column-selectors {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

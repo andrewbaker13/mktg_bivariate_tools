@@ -951,6 +951,12 @@ button.secondary:focus-visible {
   margin-bottom: 0.75rem;
 }
 
+.radio-label input[type="radio"] {
+  margin: 0;
+  position: relative;
+  top: 1px;
+}
+
 .dashed-panel {
   margin-top: 12px;
   padding: 12px;
@@ -1119,6 +1125,10 @@ legend {
 
 .predictor-type-group legend {
   font-size: 1rem;
+}
+
+.predictor-type-group .radio-label {
+  display: inline-flex;
 }
 
 .predictor-type-warning {

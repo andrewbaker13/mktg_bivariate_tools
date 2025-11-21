@@ -49,8 +49,7 @@ function setPredictorWarning(elementId, message = '') {
 function setManualCategoricalLock(disabled, reason = '') {
   const catRadio = document.querySelector('input[name="predictor-type"][value="categorical"]');
   if (!catRadio) return;
-  const fallback = document.querySelector('input[name="predictor-type"][value="continuous"]')
-    || document.querySelector('input[name="predictor-type"][value="auto"]');
+  const fallback = document.querySelector('input[name="predictor-type"][value="continuous"]');
   catRadio.disabled = !!disabled;
   catRadio.title = disabled ? reason : '';
   if (disabled && catRadio.checked && fallback) {
@@ -61,8 +60,7 @@ function setManualCategoricalLock(disabled, reason = '') {
 function setUploadCategoricalLock(disabled, reason = '') {
   const catRadio = document.querySelector('input[name="upload-predictor-type"][value="categorical"]');
   if (!catRadio) return;
-  const fallback = document.querySelector('input[name="upload-predictor-type"][value="continuous"]')
-    || document.querySelector('input[name="upload-predictor-type"][value="auto"]');
+  const fallback = document.querySelector('input[name="upload-predictor-type"][value="continuous"]');
   catRadio.disabled = !!disabled;
   catRadio.title = disabled ? reason : '';
   if (disabled && catRadio.checked && fallback) {
@@ -357,17 +355,65 @@ function inferPredictorType(rows = []) {
     return numericCandidate.every(value => isFinite(value)) ? 'continuous' : 'categorical';
 }
 
-function importRawData(text, { isFromScenario = false } = {}) {
-    try {
-        const parsed = parseRawUploadText(text);
-        uploadedRawData = {
-          headers: parsed.headers,
-          rows: parsed.rows
-        };
-
-        // Build the detailed feedback message
-        const { headers, rows } = parsed;
-        const rowCount = rows.length;
+  function importRawData(text, { isFromScenario = false } = {}) {
+      try {
+          let parsed = parseRawUploadText(text);
+          if (typeof detectIdLikeColumns === 'function') {
+              const idCandidates = detectIdLikeColumns(parsed.headers, parsed.rows);
+              if (Array.isArray(idCandidates) && idCandidates.length) {
+                  const names = idCandidates.map(c => `"${c.header}"`).join(', ');
+                  const message = idCandidates.length === 1
+                      ? `The column ${names} has a unique value for every row and may be an observation ID column. Ignore this column for analysis? (Cancel = keep it as a regular variable).`
+                      : `The columns ${names} each have a unique value for every row and may be observation ID columns. Ignore these column(s) for analysis? (Cancel = keep them as regular variables).`;
+                  if (window.confirm(message)) {
+                      const toDrop = new Set(idCandidates.map(c => c.header));
+                      const keptHeaders = parsed.headers.filter(h => !toDrop.has(h));
+                      const newRows = parsed.rows.map(row => {
+                          const next = {};
+                          keptHeaders.forEach(h => {
+                              next[h] = row[h];
+                          });
+                          return next;
+                      });
+                      parsed = { headers: keptHeaders, rows: newRows, warnings: parsed.warnings || [] };
+                  }
+              }
+          }
+          let totalRowsForStatus = Array.isArray(parsed.rows) ? parsed.rows.length : 0;
+          if (typeof maybeConfirmDroppedRows === 'function' && Array.isArray(parsed.rows) && parsed.rows.length) {
+              const totalRows = parsed.rows.length;
+              const headersToCheck = parsed.headers || [];
+              const completeRows = parsed.rows.filter(row => {
+                  return headersToCheck.every(h => {
+                      const v = row && Object.prototype.hasOwnProperty.call(row, h) ? row[h] : undefined;
+                      if (v === null || v === undefined) return false;
+                      const s = String(v).trim();
+                      return s.length > 0;
+                  });
+              });
+              if (completeRows.length !== totalRows) {
+                  const proceed = maybeConfirmDroppedRows({
+                      totalRows,
+                      keptRows: completeRows.length,
+                      contextLabel: 'observations'
+                  });
+                  if (!proceed) {
+                      uploadedRawData = null;
+                      setRawUploadStatus('Upload cancelled because some rows had missing values.', 'error', { isHtml: false });
+                      return;
+                  }
+                  parsed.rows = completeRows;
+                  totalRowsForStatus = totalRows;
+              }
+          }
+          uploadedRawData = {
+            headers: parsed.headers,
+            rows: parsed.rows
+          };
+  
+          // Build the detailed feedback message
+          const { headers, rows } = parsed;
+          const rowCount = rows.length;
         const defaultPredictor = headers[0];
         const defaultOutcome = headers[1];
 
@@ -376,14 +422,17 @@ function importRawData(text, { isFromScenario = false } = {}) {
         const isPredictorNumeric = predictorValues.every(v => v === '' || v === null || v === undefined || isFinite(parseFloat(v)));
         const predictorType = isPredictorNumeric ? 'continuous' : 'categorical';
 
-        const messageParts = [
-          `Loaded ${rowCount} rows with headers: <strong>${headers.join(', ')}</strong>.`,
-          `Defaulting to <strong>${defaultPredictor}</strong> as the Predictor (X) and <strong>${defaultOutcome}</strong> as the Outcome (Y).`,
-          `The predictor is being treated as <strong>${predictorType}</strong> by default.`
-        ];
+          const messageParts = [
+            `Loaded ${rowCount} observations with headers: <strong>${headers.join(', ')}</strong>.`,
+            `Defaulting to <strong>${defaultPredictor}</strong> as the Predictor (X) and <strong>${defaultOutcome}</strong> as the Outcome (Y).`,
+            `The predictor is being treated as <strong>${predictorType}</strong> by default.`
+          ];
 
-        const skippedNote = parsed.warnings.length ? ` Skipped ${parsed.warnings.length} row(s).` : '';
-        const finalMessage = `${messageParts.join('<br>')}${skippedNote}`;
+          const skippedNote = parsed.warnings.length ? ` Skipped ${parsed.warnings.length} row(s).` : '';
+          let finalMessage = `${messageParts.join('<br>')}${skippedNote}`;
+          if (totalRowsForStatus && totalRowsForStatus > rowCount) {
+              finalMessage += ` Using ${rowCount} of ${totalRowsForStatus} observations (rows with missing or invalid values were excluded).`;
+          }
 
         setRawUploadStatus(finalMessage, 'success');
 
@@ -416,15 +465,22 @@ function handleRawFile(file) {
 
 function setupRawUpload() {
   const templateButton = document.getElementById('raw-template-download');
-  if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
-    window.UIUtils.initDropzone({
-      dropzoneId: 'raw-dropzone',
-      inputId: 'raw-input',
-      browseId: 'raw-browse',
-      accept: '.csv,.tsv,.txt',
-      onFile: handleRawFile
-    });
+
+  if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
+    setRawUploadStatus('Upload helper not available. Please refresh the page.', 'error', { isHtml: false });
+    return;
   }
+
+  window.UIUtils.initDropzone({
+    dropzoneId: 'raw-dropzone',
+    inputId: 'raw-input',
+    browseId: 'raw-browse',
+    accept: '.csv,.tsv,.txt',
+    onFile: handleRawFile,
+    onError: message => {
+      if (message) setRawUploadStatus(message, 'error', { isHtml: false });
+    }
+  });
 
   if (templateButton) {
     templateButton.addEventListener('click', () => {
@@ -433,7 +489,7 @@ function setupRawUpload() {
     });
   }
 
-  setRawUploadStatus('No raw file uploaded.');
+  setRawUploadStatus('No raw file uploaded.', '', { isHtml: false });
 }
 
 function collectRawUpload() {
@@ -1293,14 +1349,15 @@ function renderResidualsChart(fitted, residuals, labels) {
 }
 
 function renderEffectPlot(predictorType, labels, {
-  intercept,
-  slope,
-  xNumeric,
-  xStats,
-  xGroups,
-  reference,
-  alpha
-}) {
+    intercept,
+    slope,
+    xNumeric,
+    xStats,
+    xGroups,
+    reference,
+    alpha,
+    residualSE
+  }) {
   const chart = document.getElementById('effect-chart');
   const caption = document.getElementById('effect-caption');
   const interpretation = document.getElementById('effect-interpretation');
@@ -1348,7 +1405,7 @@ function renderEffectPlot(predictorType, labels, {
   if (rangeControls) rangeControls.style.display = '';
   if (customRange) customRange.style.display = rangeChoice === 'custom' ? '' : 'none';
 
-  if (!Array.isArray(xNumeric) || !xNumeric.length) return;
+    if (!Array.isArray(xNumeric) || !xNumeric.length) return;
   const minObs = Math.min(...xNumeric);
   const maxObs = Math.max(...xNumeric);
   const meanX = xStats?.mean ?? StatsUtils.mean(xNumeric);
@@ -1370,27 +1427,59 @@ function renderEffectPlot(predictorType, labels, {
     xMax = maxObs;
   }
 
-  const grid = [];
-  const steps = 25;
-  const step = (xMax - xMin) / steps;
-  for (let i = 0; i <= steps; i++) {
-    grid.push(xMin + step * i);
-  }
-  const predicted = grid.map(x => intercept + slope * x);
+    const grid = [];
+    const steps = 25;
+    const step = (xMax - xMin) / steps;
+    for (let i = 0; i <= steps; i++) {
+      grid.push(xMin + step * i);
+    }
+    const predicted = grid.map(x => intercept + slope * x);
 
-  const trace = {
-    x: grid,
-    y: predicted,
-    mode: 'lines',
-    line: { color: '#2563eb', width: 3 },
-    name: 'Predicted'
-  };
-  Plotly.newPlot(chart, [trace], {
-    margin: { t: 20, r: 20, b: 60, l: 60 },
-    xaxis: { title: labels.x },
-    yaxis: { title: labels.y },
-    showlegend: false
-  }, { responsive: true });
+    const ciUpper = [];
+    const ciLower = [];
+    const Sxx = StatsUtils.variance(xNumeric) * (xNumeric.length - 1);
+    const z = StatsUtils.normInv(1 - alpha / 2);
+
+    grid.forEach(xv => {
+      const seMean = (Sxx > 0 && isFinite(residualSE))
+        ? residualSE * Math.sqrt(1 / xNumeric.length + Math.pow(xv - meanX, 2) / Sxx)
+        : NaN;
+      if (isFinite(seMean) && isFinite(z)) {
+        ciUpper.push(intercept + slope * xv + z * seMean);
+        ciLower.push(intercept + slope * xv - z * seMean);
+      } else {
+        ciUpper.push(intercept + slope * xv);
+        ciLower.push(intercept + slope * xv);
+      }
+    });
+  
+    const lineTrace = {
+      x: grid,
+      y: predicted,
+      mode: 'lines',
+      line: { color: '#2563eb', width: 3 },
+      name: 'Predicted'
+    };
+
+    const bandTrace = {
+      x: [...grid, ...grid.slice().reverse()],
+      y: [...ciUpper, ...ciLower.slice().reverse()],
+      mode: 'lines',
+      type: 'scatter',
+      name: `${Math.round((1 - alpha) * 100)}% CI (mean)`,
+      fill: 'toself',
+      line: { color: 'rgba(37,99,235,0.15)' },
+      fillcolor: 'rgba(37,99,235,0.10)',
+      hoverinfo: 'skip',
+      showlegend: true
+    };
+
+    Plotly.newPlot(chart, [bandTrace, lineTrace], {
+      margin: { t: 20, r: 20, b: 60, l: 60 },
+      xaxis: { title: labels.x },
+      yaxis: { title: labels.y },
+      showlegend: true
+    }, { responsive: true });
 
   if (caption) {
     caption.textContent = `Predicted ${labels.y} across ${labels.x}; range shown: ${formatNumber(xMin, 3)} to ${formatNumber(xMax, 3)}.`;
@@ -1443,8 +1532,8 @@ function updateResults() {
 
 
   const predictorChoice = activeDataEntryMode === DataEntryModes.RAW
-    ? (document.querySelector('input[name="upload-predictor-type"]:checked')?.value || 'auto')
-    : (document.querySelector('input[name="predictor-type"]:checked')?.value || 'auto');
+    ? (document.querySelector('input[name="upload-predictor-type"]:checked')?.value || 'continuous')
+      : (document.querySelector('input[name="predictor-type"]:checked')?.value || 'continuous');
 
   // Logic for enabling/disabling the Swap X/Y button
   const allNumeric = columnData[xCol]?.isNumeric;
@@ -1502,9 +1591,10 @@ function updateResults() {
     } else {
       predictorType = 'continuous';
     }
-  } else {
-    predictorType = xIsNumeric ? 'continuous' : 'categorical';
-  }
+    } else {
+      // Default behavior: infer based on data type (auto-detect), without exposing an "Auto" UI option.
+      predictorType = xIsNumeric ? 'continuous' : 'categorical';
+    }
 
   let xNumeric = null;
   let xGroups = null;
@@ -1647,10 +1737,10 @@ function updateResults() {
     p,
     rSquared,
     alpha,
-    rmse,
-    mae,
-    residualSE,
-    modelP
+      rmse,
+      mae,
+      residualSE,
+      modelP
   };
 
   // Summary statistics for quick descriptive context
@@ -1726,14 +1816,15 @@ function updateResults() {
   renderActualFittedChart(fittedValues, yValues, finalLabels);
   renderResidualsChart(fittedValues, residuals, finalLabels);
   renderEffectPlot(predictorType, finalLabels, {
-    intercept: stats.intercept,
-    slope: stats.slope,
-    xNumeric,
-    xStats,
-    xGroups,
-    reference,
-    alpha: stats.alpha
-  });
+      intercept: stats.intercept,
+      slope: stats.slope,
+      xNumeric,
+      xStats,
+      xGroups,
+      reference,
+      alpha: stats.alpha,
+      residualSE: stats.residualSE
+    });
   modifiedDate = new Date().toLocaleDateString();
   const modifiedLabel = document.getElementById('modified-date');
   if (modifiedLabel) modifiedLabel.textContent = modifiedDate;

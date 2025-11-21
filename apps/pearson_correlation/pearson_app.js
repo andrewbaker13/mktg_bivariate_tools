@@ -1725,20 +1725,38 @@ function updateUploadStatus(mode, message, status = '') {
     }
 }
 
-function importPairedData(text) {
-    try {
-        const { headers, rows, errors } = parseDelimitedText(text, 2, { maxRows: MAX_UPLOAD_ROWS });
-        uploadedPairedData = {
+  function importPairedData(text) {
+      try {
+          const { headers, rows, errors } = parseDelimitedText(text, 2, { maxRows: MAX_UPLOAD_ROWS });
+          const totalRows = rows.length + (Array.isArray(errors) ? errors.length : 0);
+          if (typeof maybeConfirmDroppedRows === 'function') {
+              const proceed = maybeConfirmDroppedRows({
+                  totalRows,
+                  keptRows: rows.length,
+                  contextLabel: 'paired observations'
+              });
+              if (!proceed) {
+                  uploadedPairedData = null;
+                  updateUploadStatus(InputModes.PAIRED, 'Upload cancelled because some rows had missing or invalid values.', 'error');
+                  setFileFeedback('Upload cancelled because some rows had missing or invalid values.', 'error');
+                  return;
+              }
+          }
+          uploadedPairedData = {
             xValues: rows.map(values => values[0]),
             yValues: rows.map(values => values[1]),
             xLabel: headers[0] || 'Variable X',
-            yLabel: headers[1] || 'Variable Y',
-            rowCount: rows.length
-        };
-        const skippedNote = errors.length ? ` Skipped ${errors.length} row(s).` : '';
-        const headerNote = headers.join(', ');
-        setFileFeedback(`Loaded ${rows.length} pairs from ${headerNote}.${skippedNote}`, 'success');
-        updateUploadStatus(InputModes.PAIRED, `${rows.length} pair(s) ready.${skippedNote}`, 'success');
+              yLabel: headers[1] || 'Variable Y',
+              rowCount: rows.length
+          };
+          const skippedNote = errors.length ? ` Skipped ${errors.length} observations due to missing or invalid values.` : '';
+          const headerNote = headers.join(', ');
+          let statusNote = '';
+          if (totalRows > rows.length) {
+              statusNote = ` Using ${rows.length} of ${totalRows} paired observations.`;
+          }
+          setFileFeedback(`Loaded ${rows.length} pairs from ${headerNote}.${skippedNote}${statusNote}`, 'success');
+          updateUploadStatus(InputModes.PAIRED, `${rows.length} paired observation(s) ready.${skippedNote}${statusNote}`, 'success');
         updateResults();
     } catch (error) {
         uploadedPairedData = null;
@@ -1748,17 +1766,48 @@ function importPairedData(text) {
     }
 }
 
-function importMatrixData(text) {
-    try {
-        const { headers, rows, errors } = parseDelimitedText(text, null, { maxRows: MAX_UPLOAD_ROWS });
-        if (headers.length < 2) {
-            throw new Error('Matrix upload requires at least two columns.');
-        }
-        const seen = new Set();
-        const variableNames = headers.map((header, index) => {
-            const base = header || `Var ${index + 1}`;
-            let candidate = base;
-            let suffix = 2;
+  function importMatrixData(text) {
+      try {
+          let { headers, rows, errors } = parseDelimitedText(text, null, { maxRows: MAX_UPLOAD_ROWS });
+          const totalRows = rows.length + (Array.isArray(errors) ? errors.length : 0);
+          if (headers.length < 2) {
+              throw new Error('Matrix upload requires at least two columns.');
+          }
+          if (typeof maybeConfirmDroppedRows === 'function') {
+              const proceed = maybeConfirmDroppedRows({
+                  totalRows,
+                  keptRows: rows.length,
+                  contextLabel: 'observations'
+              });
+              if (!proceed) {
+                  uploadedMatrixData = null;
+                  updateUploadStatus(InputModes.MATRIX, 'Upload cancelled because some rows had missing or invalid values.', 'error');
+                  setFileFeedback('Upload cancelled because some rows had missing or invalid values.', 'error');
+                  return;
+              }
+          }
+          if (typeof detectIdLikeColumns === 'function') {
+              const idCandidates = detectIdLikeColumns(headers, rows);
+              if (Array.isArray(idCandidates) && idCandidates.length) {
+                  const names = idCandidates.map(c => `"${headers[c.index]}"`).join(', ');
+                  const message = idCandidates.length === 1
+                      ? `The column ${names} has a unique value for every row and may be an observation ID column. Ignore this column for correlation analysis? (Cancel = keep it as a regular variable).`
+                      : `The columns ${names} each have a unique value for every row and may be observation ID columns. Ignore these column(s) for correlation analysis? (Cancel = keep them as regular variables).`;
+                  if (window.confirm(message)) {
+                      const toDrop = new Set(idCandidates.map(c => c.index));
+                      const keptIndices = headers.map((_, idx) => idx).filter(idx => !toDrop.has(idx));
+                      const keptHeaders = keptIndices.map(idx => headers[idx]);
+                      const newRows = rows.map(values => keptIndices.map(idx => values[idx]));
+                      headers = keptHeaders;
+                      rows = newRows;
+                  }
+              }
+          }
+          const seen = new Set();
+          const variableNames = headers.map((header, index) => {
+              const base = header || `Var ${index + 1}`;
+              let candidate = base;
+              let suffix = 2;
             while (seen.has(candidate)) {
                 candidate = `${base}_${suffix++}`;
             }
@@ -1769,15 +1818,19 @@ function importMatrixData(text) {
         variableNames.forEach((name, index) => {
             columnStore[name] = rows.map(values => values[index]);
         });
-        uploadedMatrixData = {
-            variables: variableNames,
-            columns: columnStore,
-            rowCount: rows.length,
-            errors
-        };
-        const skippedNote = errors.length ? ` Skipped ${errors.length} row(s).` : '';
-        setFileFeedback(`Loaded ${rows.length} rows across ${headers.length} variables.${skippedNote}`, 'success');
-        updateUploadStatus(InputModes.MATRIX, `${rows.length} row(s) ready with ${headers.length} columns.${skippedNote}`, 'success');
+          uploadedMatrixData = {
+              variables: variableNames,
+              columns: columnStore,
+              rowCount: rows.length,
+              errors
+          };
+          const skippedNote = errors.length ? ` Skipped ${errors.length} observations due to missing or invalid values.` : '';
+          let statusNote = '';
+          if (totalRows > rows.length) {
+              statusNote = ` Using ${rows.length} of ${totalRows} observations.`;
+          }
+          setFileFeedback(`Loaded ${rows.length} observations across ${headers.length} variables.${skippedNote}${statusNote}`, 'success');
+          updateUploadStatus(InputModes.MATRIX, `${rows.length} observation(s) ready with ${headers.length} columns.${skippedNote}${statusNote}`, 'success');
         updateResults();
     } catch (error) {
         uploadedMatrixData = null;
@@ -1819,46 +1872,23 @@ function setupDropzone() {
     const browseButton = document.getElementById('browse-files');
     if (!dropzone || !fileInput) return;
 
-    if (window.UIUtils && typeof window.UIUtils.initDropzone === 'function') {
-        window.UIUtils.initDropzone({
-            dropzoneId: 'file-dropzone',
-            inputId: 'file-input',
-            browseId: 'browse-files',
-            accept: '.csv,.tsv,.txt',
-            onFile: handleFile
-        });
+    if (!window.UIUtils || typeof window.UIUtils.initDropzone !== 'function') {
+        setFileFeedback('Upload helper not available. Please refresh the page.', 'error');
         return;
     }
 
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropzone.addEventListener(eventName, event => {
-            event.preventDefault();
-            dropzone.classList.add('drag-active');
-        });
-    });
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropzone.addEventListener(eventName, event => {
-            event.preventDefault();
-            if (event.type === 'drop') {
-                const file = event.dataTransfer.files[0];
-                handleFile(file);
-            }
-            dropzone.classList.remove('drag-active');
-        });
-    });
-    dropzone.addEventListener('click', () => fileInput.click());
-    if (browseButton) {
-        browseButton.addEventListener('click', event => {
-            event.stopPropagation();
-            fileInput.click();
-        });
-    }
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files && fileInput.files.length) {
-            handleFile(fileInput.files[0]);
+    window.UIUtils.initDropzone({
+        dropzoneId: 'file-dropzone',
+        inputId: 'file-input',
+        browseId: 'browse-files',
+        accept: '.csv,.tsv,.txt',
+        onFile: handleFile,
+        onError: message => {
+            if (message) setFileFeedback(message, 'error');
         }
-        fileInput.value = '';
     });
+
+    setFileFeedback('No file uploaded.', '');
 }
 
 
