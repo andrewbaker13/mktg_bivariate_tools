@@ -1,0 +1,52 @@
+:root {
+  --template-placeholder-border: 1px dashed #cbd5e1;
+}
+
+.hero-context .badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.chart-placeholder {
+  min-height: 280px;
+  border: var(--template-placeholder-border);
+  border-radius: 12px;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(226, 232, 240, 0.4),
+    rgba(226, 232, 240, 0.4) 12px,
+    rgba(203, 213, 225, 0.4) 12px,
+    rgba(203, 213, 225, 0.4) 24px
+  );
+}
+
+.summary-table-card {
+  margin-top: 1.5rem;
+}
+
+.summary-table td,
+.summary-table th {
+  text-align: left;
+}
+
+.upload-block {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.upload-block .upload-status {
+  margin-top: 0.5rem;
+}
+
+.visual-output-settings details[open] {
+  border: var(--template-placeholder-border);
+  border-radius: 12px;
+  padding: 1rem;
+}

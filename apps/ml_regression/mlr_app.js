@@ -23,6 +23,7 @@ const effectState = {
 let lastFilteredRows = [];
 let lastPredictorsInfo = [];
 let lastModel = null;
+let lastRawDataset = null;
 
 const RAW_UPLOAD_LIMIT = typeof MAX_UPLOAD_ROWS === 'number' ? MAX_UPLOAD_ROWS : 5000;
 const FALLBACK_SCENARIOS = [
@@ -360,6 +361,7 @@ function importRawData(text, { isFromScenario = false, scenarioHints = null } = 
   const totalRowCountForStatus = typeof totalRows !== 'undefined' ? totalRows : finalRowCount;
   const droppedCountForStatus = totalRowCountForStatus - finalRowCount;
   dataset = { headers: parsed.headers, rows: parsed.rows };
+  lastRawDataset = { headers: parsed.headers, rows: parsed.rows };
   columnMeta = buildColumnMeta(parsed.rows, parsed.headers);
   const hints = applyScenarioHints(scenarioHints, dataset.headers);
   const defaults = inferDefaults(columnMeta, dataset.headers);
@@ -810,8 +812,8 @@ function buildDesignMatrixAndFit(rows, predictorsInfo, outcomeName, alpha) {
     residuals,
     fitted,
     y,
-    predictorsInfo,
-    designMatrix: X,
+      predictorsInfo,
+      designMatrix: X,
     covB
   };
 }
@@ -1389,7 +1391,7 @@ function updateResults() {
 }
 
 // ---------- INIT ----------
-document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
   const scenarioContainer = document.getElementById('scenario-description');
   if (scenarioContainer) defaultScenarioDescription = scenarioContainer.innerHTML;
   setupRawUpload();
@@ -1401,10 +1403,80 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isFinite(initAlpha)) syncConfidenceButtonsToAlpha(initAlpha, { skipUpdate: true });
     else applyConfidenceSelection(selectedConfidenceLevel, { syncAlpha: true, skipUpdate: true });
   }
-  document.querySelectorAll('.conf-level-btn').forEach(btn => btn.addEventListener('click', e => {
-    e.preventDefault();
-    applyConfidenceSelection(parseFloat(btn.dataset.level));
-  }));
-  clearOutputs('Upload a CSV to begin.');
-});
+    document.querySelectorAll('.conf-level-btn').forEach(btn => btn.addEventListener('click', e => {
+      e.preventDefault();
+      applyConfidenceSelection(parseFloat(btn.dataset.level));
+    }));
+    clearOutputs('Upload a CSV to begin.');
+
+    const downloadButton = document.getElementById('mlr-download-results');
+    if (downloadButton) {
+      downloadButton.addEventListener('click', event => {
+        event.preventDefault();
+        handleDownloadFittedAndResiduals();
+      });
+    }
+  });
+
+  function handleDownloadFittedAndResiduals() {
+    if (!lastModel || !lastRawDataset || !Array.isArray(lastRawDataset.rows) || !lastRawDataset.rows.length) {
+      clearOutputs('Run a regression model with uploaded raw data before downloading fitted values and residuals.');
+      return;
+    }
+    const headers = lastRawDataset.headers;
+    const rows = lastRawDataset.rows;
+    const model = lastModel;
+    if (!Array.isArray(model.fitted) || model.fitted.length !== rows.length || !Array.isArray(model.y)) {
+      clearOutputs('Unable to prepare download: fitted values are missing or misaligned.');
+      return;
+    }
+
+    const designMatrix = model.designMatrix;
+    const covB = model.covB;
+    const alpha = typeof model.alpha === 'number' && model.alpha > 0 && model.alpha < 1 ? model.alpha : 0.05;
+    const zCrit = (window.StatsUtils && typeof window.StatsUtils.normInv === 'function')
+      ? window.StatsUtils.normInv(1 - alpha / 2)
+      : 1.96;
+
+    const outHeaders = headers.concat(['y_fitted', 'residual', 'y_fit_ci_lower', 'y_fit_ci_upper']);
+    const lines = [outHeaders.join(',')];
+
+    for (let i = 0; i < rows.length; i++) {
+      const baseRow = headers.map(h => {
+        const value = rows[i][h];
+        if (value == null) return '';
+        const num = parseFloat(value);
+        return Number.isFinite(num) && String(value).trim() === String(num) ? String(num) : String(value);
+      });
+      const fitted = model.fitted[i];
+      const actual = model.y[i];
+      const residual = Number.isFinite(actual) && Number.isFinite(fitted) ? actual - fitted : NaN;
+
+      let lower = NaN;
+      let upper = NaN;
+      if (Array.isArray(designMatrix) && Array.isArray(covB) && designMatrix[i] && covB.length === designMatrix[i].length) {
+        const xRow = designMatrix[i];
+        let varFit = 0;
+        for (let r = 0; r < xRow.length; r++) {
+          for (let c = 0; c < xRow.length; c++) {
+            const cov = covB[r] && typeof covB[r][c] === 'number' ? covB[r][c] : 0;
+            varFit += xRow[r] * cov * xRow[c];
+          }
+        }
+        const seFit = varFit > 0 ? Math.sqrt(varFit) : 0;
+        if (Number.isFinite(fitted) && seFit >= 0) {
+          lower = fitted - zCrit * seFit;
+          upper = fitted + zCrit * seFit;
+        }
+      }
+
+      baseRow.push(Number.isFinite(fitted) ? fitted.toFixed(6) : '');
+      baseRow.push(Number.isFinite(residual) ? residual.toFixed(6) : '');
+      baseRow.push(Number.isFinite(lower) ? lower.toFixed(6) : '');
+      baseRow.push(Number.isFinite(upper) ? upper.toFixed(6) : '');
+      lines.push(baseRow.join(','));
+    }
+
+    downloadTextFile('ml_regression_fitted_residuals.csv', lines.join('\n'), { mimeType: 'text/csv' });
+  }
 

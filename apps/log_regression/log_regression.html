@@ -239,6 +239,16 @@
         <p id="regression-equation-output" class="regression-equation-text">
           Provide data to see the fitted regression equation.
         </p>
+        <p class="template-download">
+          <button type="button" id="logreg-download-results" class="secondary">
+            Download predicted probabilities (CSV)
+          </button>
+        </p>
+        <p class="hint">
+          The downloaded file includes your original raw data plus two columns: <code>p_hat</code> (the model&rsquo;s
+          predicted probability of the focal outcome for each observation) and <code>neg_loglik_contribution</code>,
+          the individual contribution to the negative log-likelihood penalty used to fit the model.
+        </p>
       </div>
 
       <div class="card metrics-panel">

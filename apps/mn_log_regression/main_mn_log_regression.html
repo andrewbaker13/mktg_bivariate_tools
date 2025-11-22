@@ -4,11 +4,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Statistical Test Template</title>
+  <title>Multinomial Logistic Regression Tool</title>
   <!-- Shared design system -->
   <link rel="stylesheet" href="../../shared/css/main.css">
   <!-- App-specific overrides -->
-  <link rel="stylesheet" href="template.css">
+  <link rel="stylesheet" href="main_mn_log_regression.css">
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="../../shared/js/csv_utils.js"></script>
   <script src="../../shared/js/fan_chart_utils.js"></script>
@@ -21,23 +21,59 @@
   <main class="app-main">
     <header class="intro hero-header">
       <div class="hero-header__top">
-        <h1>Template Tool Name</h1>
+        <h1>Multinomial Logistic Regression Tool</h1>
         <div class="hero-context">
-          <span class="badge">Placeholder</span>
+          <span class="badge">Design prototype</span>
         </div>
       </div>
-      <p class="hero-header__lede">Short explanatory tagline describing what this statistical test helps marketers accomplish.</p>
+      <p class="hero-header__lede">
+        Explore multinomial logistic regression for marketing outcomes with more than two categories (for example,
+        multi-level brand choice or multi-step funnel stage). Upload raw data, select the outcome and predictors, and
+        compare predicted class probabilities with diagnostics.
+      </p>
     </header>
 
     <section class="test-overview" aria-labelledby="test-overview-heading">
       <h2 id="test-overview-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
       <div class="card">
-        <p>Use this section to explain when the test applies, what inputs are required, and any assumptions decision-makers should remember.</p>
-        <p class="equation">$$\text{Placeholder equation for primary test statistic}$$</p>
-        <p class="equation">$$\text{Confidence interval or effect size equation placeholder}$$</p>
+        <p>
+          Multinomial logistic regression is used when the outcome has more than two unordered categories
+          (for example, <em>Brand A / Brand B / Brand C</em> or <em>aware / considering / ready to buy</em>).
+          It models how a set of predictors changes the probability of landing in each category, relative to a
+          chosen reference outcome.
+        </p>
+        <p>
+          For each non-reference outcome category \(j\), the model estimates a separate log-odds equation relative
+          to the reference category \(\text{ref}\):
+        </p>
+        <p class="equation">
+          $$
+          \log \frac{P(Y = j)}{P(Y = \text{ref})}
+          = \beta_{0j} + \beta_{1j} x_1 + \cdots + \beta_{pj} x_p,\quad j = 1, \ldots, K - 1.
+          $$
+        </p>
+        <p>
+          These log-odds are converted into predicted probabilities using the multinomial logistic (softmax) link:
+        </p>
+        <p class="equation">
+          $$
+          P(Y = j) = \frac{\exp(\eta_j)}{1 + \sum_{h \neq \text{ref}} \exp(\eta_h)},\quad
+          P(Y = \text{ref}) = \frac{1}{1 + \sum_{h \neq \text{ref}} \exp(\eta_h)}
+          $$
+          where \(\eta_j = \beta_{0j} + \beta_{1j} x_1 + \cdots + \beta_{pj} x_p\).
+        </p>
         <details class="intro-notes" open>
           <summary>Additional Notes / Formulas</summary>
-          <p>List edge-case callouts, recommended references, or simplified formulas here. Collapse by default once real content exists.</p>
+          <p>
+            Choosing the reference outcome category changes the interpretation of coefficients but not the underlying
+            probabilities. A positive coefficient \(\beta_{kj}\) means that as predictor \(x_k\) increases, outcome
+            \(j\) becomes more likely relative to the reference category, holding other predictors constant.
+          </p>
+          <p>
+            This tool focuses on predicted probabilities and pseudo-\(R^2\) as the primary outputs. Traditional
+            inferential details (standard errors, Wald tests, and confidence intervals for each coefficient) are not
+            yet implemented and should be computed in a dedicated statistical package if required.
+          </p>
         </details>
       </div>
     </section>
@@ -70,6 +106,34 @@
           <button type="button" class="mode-button active" data-mode="manual">Manual entry</button>
           <button type="button" class="mode-button" data-mode="summary-upload">Upload summary inputs</button>
           <button type="button" class="mode-button" data-mode="raw-upload">Upload raw data</button>
+        </div>
+
+        <div class="input-group">
+          <h3>Outcome &amp; Reference Category</h3>
+          <p class="hint">
+            Choose the multinomial outcome (with 2 or more categories) and which outcome level should serve as the
+            reference (baseline) category in the model. Coefficients and probability plots will be interpreted relative
+            to this reference outcome.
+          </p>
+          <label for="mnlog-outcome-select">Outcome variable (Y)</label>
+          <select id="mnlog-outcome-select"></select>
+          <label for="mnlog-outcome-ref-select">Reference outcome category</label>
+          <select id="mnlog-outcome-ref-select"></select>
+        </div>
+
+        <div class="input-group">
+          <h3>Select predictors</h3>
+            <p class="hint">
+              Check the box for each predictor you want to include in the model. For categorical predictors, the app will
+              create one coefficient per non-reference category. For continuous predictors, the app will estimate a single
+              slope per outcome contrast.
+            </p>
+          <div id="mnlog-predictor-list" class="predictor-list stacked"></div>
+        </div>
+
+        <div class="input-group">
+          <button type="button" id="mnlog-run-model" class="primary">Run multinomial model</button>
+          <p id="mnlog-run-status" class="upload-status" aria-live="polite"></p>
         </div>
         <div class="mode-panels">
           <div class="mode-panel active" data-mode="manual" id="template-manual-panel">
@@ -147,14 +211,20 @@
       <div class="card">
         <div class="chart-grid">
           <article class="chart-card">
-            <h3>Chart A placeholder (fan chart example)</h3>
+            <h3>Predicted probabilities vs. focal predictor</h3>
             <div class="chart-placeholder" id="chart-a"></div>
-            <p class="chart-note">Use the shared fan chart helper for means/proportions visuals so CI bands, sample-size tick labels, and labels match the suite.</p>
+            <p id="mnlog-effect-note" class="chart-note">
+              After you upload data, choose an outcome, select at least one continuous predictor, and run the model, this chart will show one probability curve per non-reference outcome category as the focal predictor varies (holding other predictors at typical values).
+            </p>
           </article>
           <article class="chart-card">
-            <h3>Chart B placeholder (stacked crosstab example)</h3>
+            <h3>Observed vs predicted outcome distribution</h3>
             <div class="chart-placeholder" id="chart-b"></div>
-            <p class="chart-note">Choose the visualization that best fits the question—stacked crosstabs, heatmaps, slope charts, etc.—instead of defaulting to the same chart every time.</p>
+            <p class="chart-note">
+              This bar chart compares how often each outcome category appears in the modeled data (observed) with the
+              average predicted probability for each category (predicted). Use the controls below to switch between
+              counts and percentages or to hide the predicted bars.
+            </p>
           </article>
         </div>
       </div>
@@ -164,13 +234,13 @@
           <div class="visual-settings-grid">
             <label class="switch-option">
               <input type="checkbox" id="toggle-chart-mode" checked>
-              <span>Example toggle</span>
+              <span>Show predicted distribution as well as observed</span>
             </label>
             <label>
-              Visualization mode
+              Y-axis scale
               <select id="visual-mode">
-                <option value="rows">Rows vs columns</option>
-                <option value="columns">Columns vs rows</option>
+                <option value="rows">Counts</option>
+                <option value="columns">Percent of modeled sample</option>
               </select>
             </label>
           </div>
@@ -181,10 +251,10 @@
     <section class="test-results" aria-labelledby="test-results-heading">
       <h2 id="test-results-heading">TEST RESULTS</h2>
       <div class="card metrics-panel">
-        <div class="metric-output">Statistic: <span id="statistic-value">&ndash;</span></div>
-        <div class="metric-output">Degrees of freedom: <span id="df-value">&ndash;</span></div>
-        <div class="metric-output">p-value: <span id="p-value">&ndash;</span></div>
-        <div class="metric-output">Effect size: <span id="effect-size">&ndash;</span></div>
+        <div class="metric-output">Model log-likelihood: <span id="statistic-value">&ndash;</span></div>
+        <div class="metric-output">Approx. degrees of freedom: <span id="df-value">&ndash;</span></div>
+        <div class="metric-output">p-value (not computed): <span id="p-value">&ndash;</span></div>
+        <div class="metric-output">Pseudo-R&sup2; (McFadden): <span id="effect-size">&ndash;</span></div>
       </div>
       <div class="dual-panels">
         <article class="card dual-panel">
@@ -197,32 +267,29 @@
         </article>
       </div>
       <div class="card summary-table-card">
-        <h3>Summary Table</h3>
+        <h3>Coefficient Table (log-odds relative to reference outcome)</h3>
         <table class="summary-table">
           <thead>
             <tr>
-              <th>Group / Condition</th>
-              <th>Estimate</th>
-              <th>CI</th>
+              <th>Outcome contrast</th>
+              <th>Predictor term</th>
+              <th>Coefficient (log-odds)</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="mnlog-coefficient-table-body">
             <tr>
-              <td>Placeholder row</td>
-              <td>--</td>
-              <td>[--, --]</td>
+              <td colspan="3">Run the model to view coefficients for each outcome category relative to the reference.</td>
             </tr>
           </tbody>
         </table>
         <p class="template-download">
-          <button type="button" id="template-download-results" class="secondary">
-            Download analysis-ready dataset (CSV)
+          <button type="button" id="mnlog-download-results" class="secondary">
+            Download predicted probabilities (CSV)
           </button>
         </p>
         <p class="hint">
-          In real tools, this button should export the original uploaded data plus any analysis columns (for example,
-          predicted values, residuals, cluster assignments, or predicted probabilities). The template wiring simply
-          re-exports the last uploaded numeric dataset so implementers can see the end-to-end pattern.
+          This download exports the original uploaded data plus one column for the most likely outcome category and one
+          column per outcome with its predicted probability from the fitted multinomial model.
         </p>
       </div>
     </section>
@@ -243,12 +310,22 @@
     <footer class="app-footer">
     <p class="page-timestamps">Created: <span id="created-date">YYYY-MM-DD</span> &middot; Last updated: <span id="modified-date">YYYY-MM-DD</span></p>
       <p><a href="../../index.html">Back to Stat Analysis Selection</a></p>
-      <p class="citation">Cite as: Baker, Andrew. (2025). Template Statistical Test Tool. Marketing Bivariate Tools.</p>
+      <p class="citation">Cite as: Baker, Andrew. (2025). Multinomial Logistic Regression Tool. Marketing Bivariate Tools.</p>
     </footer>
 
   <script src="../../shared/js/csv_utils.js"></script>
   <script src="../../shared/js/ui_utils.js"></script>
-  <script src="template.js"></script>
+  <script src="mn_log_model.js"></script>
+  <script src="main_mn_log_regression.js"></script>
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+

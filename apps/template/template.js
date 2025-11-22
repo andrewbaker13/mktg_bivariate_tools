@@ -50,6 +50,7 @@ const DataEntryModes = {
 
 let activeDataEntryMode = DataEntryModes.MANUAL;
 let activeScenarioDataset = null;
+let lastUploadedNumericDataset = null;
 const confidenceButtons = () => document.querySelectorAll('.confidence-button');
 
 function formatAlphaValue(alpha) {
@@ -94,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDataEntryModeToggle();
   setupDataEntryUploads();
   setupVisualSettings();
+  setupTemplateDownloadResults();
   renderPlaceholderFanChart();
   renderPlaceholderStackedChart();
 });
@@ -297,6 +299,7 @@ function setupDataEntryUploads() {
         try {
           const text = reader.result;
           const { headers, rows } = parseDelimitedText(text, null, { maxRows: MAX_UPLOAD_ROWS });
+          lastUploadedNumericDataset = { headers, rows };
           setFeedback(
             `Loaded ${rows.length} row(s) with ${headers.length} column(s). Replace with tool-specific ingestion.`,
             'success'
@@ -344,6 +347,24 @@ function setupDataEntryUploads() {
     templateId: 'template-raw-download',
     templateContent: PLACEHOLDER_RAW_TEMPLATE,
     downloadName: 'raw_template.csv'
+  });
+}
+
+function setupTemplateDownloadResults() {
+  const button = document.getElementById('template-download-results');
+  if (!button) return;
+
+  button.addEventListener('click', event => {
+    event.preventDefault();
+    if (!lastUploadedNumericDataset || !Array.isArray(lastUploadedNumericDataset.rows) || !lastUploadedNumericDataset.rows.length) {
+      alert('Upload a numeric CSV in the summary or raw panels before downloading the analysis-ready dataset.');
+      return;
+    }
+    const { headers, rows } = lastUploadedNumericDataset;
+    const lines = [headers.join(',')].concat(
+      rows.map(row => row.map(value => (Number.isFinite(value) ? String(value) : '')).join(','))
+    );
+    downloadTextFile('template_analysis_dataset.csv', lines.join('\n'), { mimeType: 'text/csv' });
   });
 }
 

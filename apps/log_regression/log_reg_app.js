@@ -23,6 +23,7 @@ const effectState = {
 let lastFilteredRows = [];
 let lastPredictorsInfo = [];
 let lastModel = null;
+let lastRawDataset = null;
 let outcomeCoding = { outcomeName: null, mode: 'numeric01', focalLabel: '1', nonFocalLabel: '0' };
 
 const RAW_UPLOAD_LIMIT = typeof MAX_UPLOAD_ROWS === 'number' ? MAX_UPLOAD_ROWS : 5000;
@@ -492,6 +493,7 @@ function importRawData(text, { isFromScenario = false, scenarioHints = null } = 
   const totalRowCountForStatus = typeof totalRows !== 'undefined' ? totalRows : finalRowCount;
   const droppedCountForStatus = totalRowCountForStatus - finalRowCount;
   dataset = { headers: parsed.headers, rows: parsed.rows };
+  lastRawDataset = { headers: parsed.headers, rows: parsed.rows };
   columnMeta = buildColumnMeta(parsed.rows, parsed.headers);
   const hints = applyScenarioHints(scenarioHints, dataset.headers);
   const defaults = inferDefaults(columnMeta, dataset.headers);
@@ -1921,23 +1923,68 @@ function updateResults() {
   if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();
 }
 
-// ---------- INIT ----------
-document.addEventListener('DOMContentLoaded', () => {
+  // ---------- INIT ----------
+  document.addEventListener('DOMContentLoaded', () => {
   const scenarioContainer = document.getElementById('scenario-description');
   if (scenarioContainer) defaultScenarioDescription = scenarioContainer.innerHTML;
   setupRawUpload();
   setupScenarioSelector();
-  const alphaInput = document.getElementById('alpha');
+    const alphaInput = document.getElementById('alpha');
   if (alphaInput) {
     alphaInput.addEventListener('input', () => syncConfidenceButtonsToAlpha(parseFloat(alphaInput.value)));
     const initAlpha = parseFloat(alphaInput.value);
     if (isFinite(initAlpha)) syncConfidenceButtonsToAlpha(initAlpha, { skipUpdate: true });
-    else applyConfidenceSelection(selectedConfidenceLevel, { syncAlpha: true, skipUpdate: true });
+      else applyConfidenceSelection(selectedConfidenceLevel, { syncAlpha: true, skipUpdate: true });
+    }
+    document.querySelectorAll('.conf-level-btn').forEach(btn => btn.addEventListener('click', e => {
+      e.preventDefault();
+      applyConfidenceSelection(parseFloat(btn.dataset.level));
+    }));
+    clearOutputs('Upload a CSV to begin.');
+
+    const downloadButton = document.getElementById('logreg-download-results');
+    if (downloadButton) {
+      downloadButton.addEventListener('click', event => {
+        event.preventDefault();
+        handleDownloadLogisticResults();
+      });
+    }
+  });
+
+  function handleDownloadLogisticResults() {
+    if (!lastModel || !lastRawDataset || !Array.isArray(lastRawDataset.rows) || !lastRawDataset.rows.length) {
+      clearOutputs('Run a logistic regression model with uploaded raw data before downloading predicted probabilities.');
+      return;
+    }
+    const headers = lastRawDataset.headers;
+    const rows = lastRawDataset.rows;
+    const model = lastModel;
+    if (!Array.isArray(model.fitted) || model.fitted.length !== rows.length || !Array.isArray(model.y)) {
+      clearOutputs('Unable to prepare download: fitted probabilities are missing or misaligned.');
+      return;
+    }
+
+    const outHeaders = headers.concat(['p_hat', 'neg_loglik_contribution']);
+    const lines = [outHeaders.join(',')];
+
+    for (let i = 0; i < rows.length; i++) {
+      const baseRow = headers.map(h => {
+        const value = rows[i][h];
+        if (value == null) return '';
+        const num = parseFloat(value);
+        return Number.isFinite(num) && String(value).trim() === String(num) ? String(num) : String(value);
+      });
+      const pi = model.fitted[i];
+      const yi = model.y[i];
+      let negLogLik = NaN;
+      if (Number.isFinite(pi) && (yi === 0 || yi === 1)) {
+        negLogLik = -(yi ? Math.log(pi) : Math.log(1 - pi));
+      }
+      baseRow.push(Number.isFinite(pi) ? pi.toFixed(6) : '');
+      baseRow.push(Number.isFinite(negLogLik) ? negLogLik.toFixed(6) : '');
+      lines.push(baseRow.join(','));
+    }
+
+    downloadTextFile('logistic_regression_predicted_probabilities.csv', lines.join('\n'), { mimeType: 'text/csv' });
   }
-  document.querySelectorAll('.conf-level-btn').forEach(btn => btn.addEventListener('click', e => {
-    e.preventDefault();
-    applyConfidenceSelection(parseFloat(btn.dataset.level));
-  }));
-  clearOutputs('Upload a CSV to begin.');
-});
 

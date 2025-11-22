@@ -1,0 +1,78 @@
+Design System Principles for Marketing Statistical Tools
+=========================================================
+
+Use this document whenever a new build extends the template or invents new UI/UX patterns. It captures the qualitative rules we have learned from the existing apps so future features stay cohesive.
+
+Tone & Narrative
+----------------
+1. Speak to analytically minded marketers: professional but approachable; swap jargon for plain language when possible.
+2. Provide two narratives for every result: (a) APA-style statistical reporting and (b) managerial interpretation tied to campaigns, KPIs, or test decisions.
+3. Ground scenarios in realistic marketing contexts—campaign tests, funnel diagnostics, loyalty programs, cohort splits, sales performance, etc.
+
+Layout & Visual Hierarchy
+-------------------------
+1. Hero header = H1 + tagline inside the shared blue highlight (`.hero-header`). Cite Created / Last Updated dates in the footer with an APA-style citation.
+2. Headings sit outside cards. Cards contain controls, visualizations, or narratives.
+3. Canonical section order: Overview + Scenarios + Inputs & Settings + Visual Output + Test Results + Diagnostics.
+4. Accordions default closed; only open in the template to illustrate usage.
+5. Confidence selectors use the shared `.confidence-button` style (90% Conf., 95% Conf., 99% Conf.) and stay synchronized with the numeric alpha field (alpha = 1 - confidence).
+6. Manual input grids (means, proportions, counts) use tables so column labels appear once. Avoid stacking mini-cards inside cards.
+
+Controls & Input Behavior
+-------------------------
+1. Pair sliders (`input[type=range]`) with numeric fields and always read from the numeric value so users can enter numbers outside the slider bounds.
+2. Label toggles, switches, and dropdowns with the marketing action they change ("Lock proportions x-axis" instead of "Lock axis").
+3. Support dual inputs (labels + values) so scenarios and uploads can overwrite them cleanly.
+4. Every Inputs & Settings section begins with the "Select Data Entry / Upload Mode" card: Manual (default), Summary upload (CSV with grouped stats), Raw upload (long format `group,value`). Mode buttons toggle panels without shifting the layout.
+5. Manual panels rely on tables/grids. Summary and raw panels reuse the `.dropzone` pattern, include template download buttons, and provide live status text.
+
+Data Handling & Uploads
+-----------------------
+1. Dropzones always support drag/drop, keyboard activation, and a Browse button; wire them with the shared `UIUtils.initDropzone` helper so behavior stays consistent across tools, and emphasize "no server upload" where applicable.
+2. Provide template download links next to each uploader. Templates should mirror the headers and structure the app expects.
+3. Surface validation feedback (row counts, column requirements, supported formats) in the upload status area.
+4. Offer "Download current inputs" / "Reset" affordances wherever uploads or presets can overwrite values.
+5. Preset scenarios display a "Download scenario dataset" button only when a dataset exists. The downloaded file must match the active entry mode (summary CSV headers if the scenario populates aggregated inputs; `group,value` or similar if it feeds the raw loader) so editors can tweak and re-upload the exact structure.
+6. Reuse shared CSV helpers from `shared/js/csv_utils.js`:
+   - `parseDelimitedText` for parsing CSV/TSV,
+   - `detectIdLikeColumns` to flag row-identifier columns,
+   - `maybeConfirmDroppedRows` to warn when incomplete observations will be dropped.
+7. Enforce a shared upload limit using `MAX_UPLOAD_ROWS` (default 5,000 data rows) so all tools behave consistently; override via options only when a specific tool needs a different cap.
+8. After a successful upload, status messages should always confirm:
+   - how many observations were loaded (and used if some rows were dropped),
+   - which variables were imported, and
+   - each variable's role in the analysis (e.g., outcome, predictor, factor, group label, binary indicator).
+
+Charts & Visuals
+----------------
+1. Provide at least one visualization—usually two: Chart A for the core statistic (means, proportions, correlations) and Chart B for comparisons/diagnostics.
+2. Each chart needs a `.chart-note` that explains what to look for and why it matters to marketing decisions.
+3. Include a "Visual Output Settings" `<details>` block for optional toggles (axis locks, fan-band visibility, reference lines) and keep it closed by default in production.
+4. Use `FanChartUtils.renderHorizontalFanChart` for fan charts so band colors, sample-size tick labels, point estimate styling, and CI annotations remain consistent. Only show numeric labels on the outer-most band.
+5. Use `StackedChartUtils.renderStacked100Chart` (and related helpers) for stacked compositions so legends, colors, and accessibility patterns are consistent.
+6. Chart selection is purpose-driven: stacked bars for composition, slope charts for deltas, scatter + regression for correlation, heatmaps for matrices, etc. Don't default to a single chart type across tools.
+
+Diagnostics & Assumptions
+-------------------------
+1. Diagnostics live in the final section inside a card with a `<details>` disclosure.
+2. Start with plain-language reminders of the test's assumptions, then call out sample-size adequacy, variance/spread checks, distribution assumptions, outliers, and any test-specific requirements (expected counts, equal variances, independence, etc.).
+3. Provide actionable guidance (collect more data, combine sparse categories, switch to Spearman, use Welch's correction, adjust alpha, etc.).
+
+Accessibility & Copy Standards
+------------------------------
+1. Use descriptive `aria-label` or `role` attributes for interactive charts and tables.
+2. Avoid color-only cues; pair color states with text, badges, or icons.
+3. Reserve all caps for section headings in the template. Use sentence/title case elsewhere.
+4. Keep copy bilingual-ready: introduce abbreviations ("degrees of freedom (df)") before using them alone.
+
+Extending the Template
+----------------------
+1. Start from `apps/template/index.html` + `template.js` so new features inherit the shared layout, dropzones (via `UIUtils.initDropzone`), fan charts, stacked charts, and scenario rendering (`UIUtils.renderScenarioDescription`).
+2. When inventing new components (tabs, sliders, diagnostics), wrap them in cards and reuse shared classes from `shared/css/main.css` whenever possible.
+3. Document any new patterns directly in this folder (HTML + JS) so future tools can copy/paste the canonical implementation.
+4. Use shared helpers from `shared/js` (for example, `csv_utils.parseDelimitedText`, `csv_utils.detectIdLikeColumns`, `csv_utils.maybeConfirmDroppedRows`, and functions from `stats_utils`) instead of reimplementing parsing or math; ship a minimal placeholder example in the template to keep future work consistent.
+5. Every app footer should include:
+   - a `Created / Last updated` timestamp line, and
+   - a link back to the root selection page using the relative path `../../index.html` with the label `Back to Stat Analysis Selection`.
+
+Use this reference as the "prompt" for AI collaborators: it encodes both visual structure and narrative expectations so new ideas remain faithful to the suite's design language.

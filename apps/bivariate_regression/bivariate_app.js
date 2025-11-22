@@ -492,7 +492,7 @@ function setupRawUpload() {
   setRawUploadStatus('No raw file uploaded.', '', { isHtml: false });
 }
 
-function collectRawUpload() {
+  function collectRawUpload() {
   if (!uploadedRawData || !Array.isArray(uploadedRawData.rows) || !uploadedRawData.rows.length) {
     return {
       rows: [],
@@ -1954,7 +1954,7 @@ function setupSwapButtons() {
   if (swapUpload) swapUpload.addEventListener('click', swapHandler);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
   const createdLabel = document.getElementById('created-date');
   const modifiedLabel = document.getElementById('modified-date');
   if (createdLabel) createdLabel.textContent = CREATED_DATE;
@@ -1972,10 +1972,92 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSwapButtons();
   attachInputListeners();
   setupManualControls();
-  setupEffectControls();
+    setupEffectControls();
   const manualCommit = document.getElementById('manual-commit');
-  if (manualCommit) {
-    manualCommit.addEventListener('click', finalizeManualEntry);
+    if (manualCommit) {
+      manualCommit.addEventListener('click', finalizeManualEntry);
+    }
+    const downloadButton = document.getElementById('bivariate-download-results');
+    if (downloadButton) {
+      downloadButton.addEventListener('click', event => {
+        event.preventDefault();
+        handleDownloadBivariateResults();
+      });
+    }
+    clearOutputs('Enter paired predictor/outcome values or upload a raw file to fit a regression line.');
+  });
+
+  function handleDownloadBivariateResults() {
+    const { rows: numericRows, labels, message } =
+      activeDataEntryMode === DataEntryModes.RAW ? collectRawUpload() : collectManualRaw();
+    if (!numericRows || !numericRows.length) {
+      clearOutputs(message || 'Provide raw data before downloading fitted values and residuals.');
+      return;
+    }
+
+    const yValues = numericRows.map(r => parseFloat(r.y)).filter(v => Number.isFinite(v));
+    const xValues = numericRows.map(r => r.x);
+    const xNumeric = xValues.map(v => parseFloat(v));
+    const xIsNumeric = xNumeric.every(v => Number.isFinite(v));
+
+    if (!xIsNumeric || yValues.length !== numericRows.length) {
+      clearOutputs('Download is only available when the predictor is continuous and both X and Y are numeric.');
+      return;
+    }
+
+    const meanX = StatsUtils.mean(xNumeric);
+    const meanY = StatsUtils.mean(yValues);
+    const covXY = xNumeric.reduce((acc, xv, i) => acc + (xv - meanX) * (yValues[i] - meanY), 0) / (xNumeric.length - 1);
+    const slope = covXY / StatsUtils.variance(xNumeric);
+    const intercept = meanY - slope * meanX;
+
+    const fitted = xNumeric.map(xv => intercept + slope * xv);
+    const residuals = yValues.map((yv, i) => yv - fitted[i]);
+
+    const n = xNumeric.length;
+    const Sxx = xNumeric.reduce((acc, xv) => acc + Math.pow(xv - meanX, 2), 0);
+    const df = n - 2;
+    const s2 = df > 0 ? residuals.reduce((acc, r) => acc + r * r, 0) / df : NaN;
+    const s = s2 > 0 ? Math.sqrt(s2) : NaN;
+
+    const alphaInput = document.getElementById('alpha');
+    const alphaVal = alphaInput ? parseFloat(alphaInput.value) : NaN;
+    const alpha = isFinite(alphaVal) && alphaVal > 0 && alphaVal < 1 ? alphaVal : 1 - selectedConfidenceLevel;
+    const zCrit = (window.StatsUtils && typeof window.StatsUtils.normInv === 'function')
+      ? window.StatsUtils.normInv(1 - alpha / 2)
+      : 1.96;
+
+    const xName = labels.x || 'Predictor';
+    const yName = labels.y || 'Outcome';
+
+    const headers = [xName, yName, 'y_fitted', 'residual', 'y_fit_ci_lower', 'y_fit_ci_upper'];
+    const lines = [headers.join(',')];
+
+    for (let i = 0; i < numericRows.length; i++) {
+      const row = numericRows[i];
+      const xVal = row.x;
+      const yVal = row.y;
+      const f = fitted[i];
+      const r = residuals[i];
+
+      let lower = NaN;
+      let upper = NaN;
+      if (Number.isFinite(f) && Number.isFinite(s) && Sxx > 0 && n > 1) {
+        const seMean = s * Math.sqrt(1 / n + Math.pow(xNumeric[i] - meanX, 2) / Sxx);
+        lower = f - zCrit * seMean;
+        upper = f + zCrit * seMean;
+      }
+
+      const line = [
+        xVal == null ? '' : String(xVal),
+        yVal == null ? '' : String(yVal),
+        Number.isFinite(f) ? f.toFixed(6) : '',
+        Number.isFinite(r) ? r.toFixed(6) : '',
+        Number.isFinite(lower) ? lower.toFixed(6) : '',
+        Number.isFinite(upper) ? upper.toFixed(6) : ''
+      ].join(',');
+      lines.push(line);
+    }
+
+    downloadTextFile('bivariate_regression_fitted_residuals.csv', lines.join('\n'), { mimeType: 'text/csv' });
   }
-  clearOutputs('Enter paired predictor/outcome values or upload a raw file to fit a regression line.');
-});
