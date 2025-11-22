@@ -6,6 +6,12 @@
     return exps.map(v => v / (sumExp || 1));
   }
 
+  // Standard normal cumulative distribution function
+  function normCdf(z) {
+    return 0.5 * (1 + math.erf(z / Math.sqrt(2)));
+  }
+
+
   /**
    * Fit a baseline-category multinomial logistic regression using simple gradient ascent.
    *
@@ -34,15 +40,23 @@
     const p = n ? X[0].length : 0;
     const K = classLabels.length || (Math.max.apply(null, y) + 1);
     if (!n || !p || !K) {
-      return { coefficients: [], classLabels, referenceIndex: refIndex };
+      return {
+        coefficients: [],
+        classLabels,
+        referenceIndex: refIndex
+      };
     }
 
     // Initialize coefficients: K x p, all zeros. Reference class remains zeros.
-    const beta = Array.from({ length: K }, () => new Array(p).fill(0));
+    const beta = Array.from({
+      length: K
+    }, () => new Array(p).fill(0));
 
     for (let iter = 0; iter < maxIter; iter++) {
       // Gradient for each class k and parameter j
-      const grad = Array.from({ length: K }, () => new Array(p).fill(0));
+      const grad = Array.from({
+        length: K
+      }, () => new Array(p).fill(0));
 
       for (let i = 0; i < n; i++) {
         const xi = X[i];
@@ -103,10 +117,103 @@
       }
     }
 
+    // Post-convergence: calculate Hessian and standard errors
+    const nonRefClasses = Array.from({
+      length: K
+    }, (_, i) => i).filter(k => k !== refIndex);
+    const M = nonRefClasses.length * p;
+    const hessian = Array.from({
+      length: M
+    }, () => new Array(M).fill(0));
+
+    // Re-compute final probabilities for all observations
+    const allProbs = X.map(xi => {
+      const scores = nonRefClasses.map(k => {
+        let s = 0;
+        for (let j = 0; j < p; j++) {
+          s += beta[k][j] * xi[j];
+        }
+        return s;
+      });
+      // Add a zero score for the reference class to get full probability distribution
+      const fullScores = new Array(K).fill(0);
+      nonRefClasses.forEach((k, i) => fullScores[k] = scores[i]);
+      return softmaxScores(fullScores);
+    });
+
+    // Construct the Hessian matrix
+    for (let i = 0; i < n; i++) {
+      const xi = X[i];
+      const pi = allProbs[i];
+      for (let kIdx = 0; kIdx < nonRefClasses.length; kIdx++) {
+        for (let lIdx = 0; lIdx < nonRefClasses.length; lIdx++) {
+          const k = nonRefClasses[kIdx];
+          const l = nonRefClasses[lIdx];
+          const isSameClass = k === l ? 1 : 0;
+          const factor = -pi[k] * (isSameClass - pi[l]);
+          for (let j = 0; j < p; j++) {
+            for (let m = 0; m < p; m++) {
+              const row = kIdx * p + j;
+              const col = lIdx * p + m;
+              hessian[row][col] -= xi[j] * xi[m] * factor;
+            }
+          }
+        }
+      }
+    }
+
+    // Add L2 penalty to Hessian diagonal (for non-intercepts)
+    for (let kIdx = 0; kIdx < nonRefClasses.length; kIdx++) {
+      for (let j = 1; j < p; j++) {
+        const row = kIdx * p + j;
+        hessian[row][row] += 2 * l2;
+      }
+    }
+    let stdErrors = null;
+    let pValues = null;
+    let confidenceIntervals = null;
+
+    try {
+      const covMatrix = math.inv(hessian);
+      const variances = math.diag(covMatrix);
+
+      stdErrors = Array.from({
+        length: K
+      }, () => new Array(p).fill(0));
+      pValues = Array.from({
+        length: K
+      }, () => new Array(p).fill(0));
+      confidenceIntervals = Array.from({
+        length: K
+      }, () => new Array(p).fill(null));
+
+      for (let kIdx = 0; kIdx < nonRefClasses.length; kIdx++) {
+        const k = nonRefClasses[kIdx];
+        for (let j = 0; j < p; j++) {
+          const index = kIdx * p + j;
+          const variance = variances[index];
+          if (variance >= 0) {
+            const se = Math.sqrt(variance);
+            stdErrors[k][j] = se;
+            const z = beta[k][j] / se;
+            pValues[k][j] = 2 * (1 - normCdf(Math.abs(z)));
+            const margin = 1.96 * se;
+            confidenceIntervals[k][j] = [beta[k][j] - margin, beta[k][j] + margin];
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Could not invert Hessian matrix:", e);
+    }
+
+
     return {
       coefficients: beta,
       classLabels,
-      referenceIndex: refIndex
+      referenceIndex: refIndex,
+      stdErrors,
+      pValues,
+      confidenceIntervals,
     };
   }
 
@@ -158,4 +265,3 @@
     predict
   };
 })(window);
-

@@ -10,6 +10,7 @@
   <!-- App-specific overrides -->
   <link rel="stylesheet" href="main_mn_log_regression.css">
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
   <script src="../../shared/js/csv_utils.js"></script>
   <script src="../../shared/js/fan_chart_utils.js"></script>
   <script src="../../shared/js/stacked_bar_utils.js"></script>
@@ -68,11 +69,6 @@
             Choosing the reference outcome category changes the interpretation of coefficients but not the underlying
             probabilities. A positive coefficient \(\beta_{kj}\) means that as predictor \(x_k\) increases, outcome
             \(j\) becomes more likely relative to the reference category, holding other predictors constant.
-          </p>
-          <p>
-            This tool focuses on predicted probabilities and pseudo-\(R^2\) as the primary outputs. Traditional
-            inferential details (standard errors, Wald tests, and confidence intervals for each coefficient) are not
-            yet implemented and should be computed in a dedicated statistical package if required.
           </p>
         </details>
       </div>
@@ -217,7 +213,7 @@
               After you upload data, choose an outcome, select at least one continuous predictor, and run the model, this chart will show one probability curve per non-reference outcome category as the focal predictor varies (holding other predictors at typical values).
             </p>
           </article>
-          <article class="chart-card">
+          <article class="card chart-card">
             <h3>Observed vs predicted outcome distribution</h3>
             <div class="chart-placeholder" id="chart-b"></div>
             <p class="chart-note">
@@ -274,11 +270,14 @@
               <th>Outcome contrast</th>
               <th>Predictor term</th>
               <th>Coefficient (log-odds)</th>
+              <th>Std. Error</th>
+              <th>p-value</th>
+              <th>95% CI</th>
             </tr>
           </thead>
           <tbody id="mnlog-coefficient-table-body">
             <tr>
-              <td colspan="3">Run the model to view coefficients for each outcome category relative to the reference.</td>
+              <td colspan="6">Run the model to view coefficients for each outcome category relative to the reference.</td>
             </tr>
           </tbody>
         </table>

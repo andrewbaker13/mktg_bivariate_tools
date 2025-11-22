@@ -1138,8 +1138,7 @@ function updateMnlogResultsPanels(design, fitResult) {
     apaEl.textContent =
       `A multinomial logistic regression was fitted predicting ${outcomeName} with ${K} outcome categories ` +
       `from ${mnlogSelectedPredictors.length} predictor(s) (N = ${n}). ` +
-      `Model log-likelihood was ${logLik.toFixed(2)}, McFadden pseudo-R² = ${Number.isFinite(pseudoR2) ? pseudoR2.toFixed(3) : 'n/a'}. ` +
-      `Formal hypothesis tests and confidence intervals at α = ${alphaText} are not yet implemented in this prototype.`;
+      `Model log-likelihood was ${logLik.toFixed(2)}, McFadden pseudo-R² = ${Number.isFinite(pseudoR2) ? pseudoR2.toFixed(3) : 'n/a'}. `;
   }
 
   if (mgrEl) {
@@ -1203,11 +1202,12 @@ function renderMnlogCoefficientTable(design, fitResult) {
   if (!tableBody || !design || !fitResult) return;
 
   const { classLabels, referenceIndex, predictorInfo } = design;
-  const coeffs = fitResult.coefficients;
-  if (!Array.isArray(classLabels) || !Array.isArray(coeffs)) return;
+  const { coefficients, stdErrors, pValues, confidenceIntervals } = fitResult;
+
+  if (!Array.isArray(classLabels) || !Array.isArray(coefficients)) return;
 
   const K = classLabels.length;
-  const beta = coeffs;
+  const beta = coefficients;
   if (!beta.length || !beta[0] || !Array.isArray(beta[0])) return;
 
   const p = beta[0].length;
@@ -1228,9 +1228,8 @@ function renderMnlogCoefficientTable(design, fitResult) {
   });
 
   if (termLabels.length !== p) {
-    // Fallback: basic row stating mismatch
     tableBody.innerHTML =
-      '<tr><td colspan="3">Unable to map coefficients to predictor terms. Please re-run the model or contact the tool maintainer.</td></tr>';
+      '<tr><td colspan="6">Unable to map coefficients to predictor terms. Please re-run the model or contact the tool maintainer.</td></tr>';
     return;
   }
 
@@ -1239,22 +1238,36 @@ function renderMnlogCoefficientTable(design, fitResult) {
     if (k === referenceIndex) continue;
     const outcomeLabel = `${classLabels[k]} vs ${classLabels[referenceIndex] ?? 'reference'}`;
     const rowCoeffs = beta[k] || [];
+    const rowStdErrors = stdErrors ? stdErrors[k] || [] : [];
+    const rowPValues = pValues ? pValues[k] || [] : [];
+    const rowCIs = confidenceIntervals ? confidenceIntervals[k] || [] : [];
+
     for (let j = 0; j < p; j++) {
       const coef = rowCoeffs[j];
-      const display =
-        Number.isFinite(coef) ? coef.toFixed(3) : '0.000';
+      const se = rowStdErrors[j];
+      const pval = rowPValues[j];
+      const ci = rowCIs[j];
+
+      const coefDisplay = Number.isFinite(coef) ? coef.toFixed(3) : 'n/a';
+      const seDisplay = Number.isFinite(se) ? se.toFixed(3) : 'n/a';
+      const pvalDisplay = Number.isFinite(pval) ? (pval < 0.001 ? '< 0.001' : pval.toFixed(3)) : 'n/a';
+      const ciDisplay = Array.isArray(ci) && Number.isFinite(ci[0]) && Number.isFinite(ci[1]) ? `[${ci[0].toFixed(2)}, ${ci[1].toFixed(2)}]` : 'n/a';
+
       rowsHtml +=
         `<tr>` +
         `<td>${outcomeLabel}</td>` +
         `<td>${termLabels[j]}</td>` +
-        `<td>${display}</td>` +
+        `<td>${coefDisplay}</td>` +
+        `<td>${seDisplay}</td>` +
+        `<td>${pvalDisplay}</td>` +
+        `<td>${ciDisplay}</td>` +
         `</tr>`;
     }
   }
 
   if (!rowsHtml) {
     tableBody.innerHTML =
-      '<tr><td colspan="3">No coefficients available to display.</td></tr>';
+      '<tr><td colspan="6">No coefficients available to display.</td></tr>';
   } else {
     tableBody.innerHTML = rowsHtml;
   }
