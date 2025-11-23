@@ -96,12 +96,29 @@
       <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
       <article class="card data-entry-card">
         <div class="input-header">
-          <h3>Select Data Entry / Upload Mode</h3>
+          <h3>Upload data</h3>
         </div>
         <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
-          <button type="button" class="mode-button active" data-mode="manual">Manual entry</button>
-          <button type="button" class="mode-button" data-mode="summary-upload">Upload summary inputs</button>
-          <button type="button" class="mode-button" data-mode="raw-upload">Upload raw data</button>
+          <button type="button" class="mode-button active" data-mode="raw-upload">Upload raw data</button>
+        </div>
+
+        <div class="mode-panels">
+          <div class="mode-panel active" data-mode="raw-upload" id="template-raw-panel">
+            <div class="data-import-block">
+              <h4>Upload raw long-format data</h4>
+              <p>The template shows <code>group,value,channel,note</code> columns so end users can include the outcome plus optional metadata (channel, creative, timestamp). Customize those columns to the raw format your tool expects, and call out when only two group labels are allowed.</p>
+              <div id="template-raw-dropzone" class="dropzone" role="button" tabindex="0">
+                <p class="dropzone-title">Drag &amp; drop raw case file</p>
+                <p class="dropzone-note">Two columns minimum: group label and numeric metric.</p>
+                <button type="button" id="template-raw-browse" class="secondary">Browse files</button>
+              </div>
+              <input type="file" id="template-raw-input" accept=".csv,.tsv,.txt" hidden>
+              <div class="template-buttons">
+                <button type="button" id="template-raw-download">Download raw template</button>
+              </div>
+              <p id="template-raw-feedback" class="upload-status" aria-live="polite">No raw file uploaded.</p>
+            </div>
+          </div>
         </div>
 
         <div class="input-group">
@@ -128,59 +145,18 @@
         </div>
 
         <div class="input-group">
+          <label class="switch-option">
+            <input type="checkbox" id="mnlog-standardize-continuous">
+            <span>Standardize continuous predictors (mean 0, SD 1)</span>
+          </label>
+          <p class="hint">
+            Standardization affects model fitting and effect plots only. Summary statistics always report predictors on their original scale.
+          </p>
+        </div>
+
+        <div class="input-group">
           <button type="button" id="mnlog-run-model" class="primary">Run multinomial model</button>
           <p id="mnlog-run-status" class="upload-status" aria-live="polite"></p>
-        </div>
-        <div class="mode-panels">
-          <div class="mode-panel active" data-mode="manual" id="template-manual-panel">
-            <article class="group-controls placeholder-group-card">
-              <h4>Manual summaries</h4>
-              <p>Use this structure whenever the test accepts aggregated inputs (means, standard deviations, proportions, etc.). Labels persist so scenarios and uploads overwrite them cleanly.</p>
-              <div class="input-grid">
-                <div>
-                  <label for="group-a">Group A summary</label>
-                  <input id="group-a" type="number" placeholder="e.g., mean or proportion">
-                </div>
-                <div>
-                  <label for="group-b">Group B summary</label>
-                  <input id="group-b" type="number" placeholder="e.g., mean or proportion">
-                </div>
-              </div>
-              <p class="hint">For multi-group tools swap this grid for a table so column labels render once.</p>
-            </article>
-          </div>
-          <div class="mode-panel" data-mode="summary-upload" id="template-summary-panel">
-            <div class="data-import-block">
-              <h4>Upload summary inputs</h4>
-              <p>Default template fields are <code>group,conversions,sample_size,delta0,alpha,notes</code> so stakeholders can capture both aggregated stats and the hypothesized difference/confidence level in one file. Adjust the headers to whatever summaries your test needs (means, SDs, totals, etc.), and remind users if your app only accepts two groups.</p>
-              <div id="template-summary-dropzone" class="dropzone" role="button" tabindex="0">
-                <p class="dropzone-title">Drag &amp; drop summary file</p>
-                <p class="dropzone-note">Up to 2,000 rows. Each row represents one group or condition.</p>
-                <button type="button" id="template-summary-browse" class="secondary">Browse files</button>
-              </div>
-              <input type="file" id="template-summary-input" accept=".csv,.tsv,.txt" hidden>
-              <div class="template-buttons">
-                <button type="button" id="template-summary-download">Download summary template</button>
-              </div>
-              <p id="template-summary-feedback" class="upload-status" aria-live="polite">No summary file uploaded.</p>
-            </div>
-          </div>
-          <div class="mode-panel" data-mode="raw-upload" id="template-raw-panel">
-            <div class="data-import-block">
-              <h4>Upload raw long-format data</h4>
-              <p>The template shows <code>group,value,channel,note</code> columns so end users can include the outcome plus optional metadata (channel, creative, timestamp). Customize those columns to the raw format your tool expects, and call out when only two group labels are allowed.</p>
-              <div id="template-raw-dropzone" class="dropzone" role="button" tabindex="0">
-                <p class="dropzone-title">Drag &amp; drop raw case file</p>
-                <p class="dropzone-note">Two columns minimum: group label and numeric metric.</p>
-                <button type="button" id="template-raw-browse" class="secondary">Browse files</button>
-              </div>
-              <input type="file" id="template-raw-input" accept=".csv,.tsv,.txt" hidden>
-              <div class="template-buttons">
-                <button type="button" id="template-raw-download">Download raw template</button>
-              </div>
-              <p id="template-raw-feedback" class="upload-status" aria-live="polite">No raw file uploaded.</p>
-            </div>
-          </div>
         </div>
       </article>
 
@@ -197,7 +173,22 @@
         </div>
         <details class="advanced-details">
           <summary>Advanced analysis settings</summary>
-          <p>Use this accordion for optional toggles (axis locks, alternative hypotheses, label editing, upload limits, etc.).</p>
+          <p>Adjust optimization settings for the multinomial model. Defaults are suitable for most datasets; increase the maximum iterations or decrease the step size if convergence warnings appear.</p>
+          <div class="input-grid">
+            <div>
+              <label for="mnlog-max-iter">Max iterations</label>
+              <input type="number" id="mnlog-max-iter" min="50" max="50000" step="50" value="200">
+            </div>
+            <div>
+              <label for="mnlog-step-size">Step size (gradient ascent)</label>
+              <input type="number" id="mnlog-step-size" min="0.01" max="1" step="0.01" value="0.20">
+            </div>
+          </div>
+          <p class="hint">Higher max iterations (up to 50,000) can improve convergence for difficult models but will increase run time.</p>
+          <label class="switch-option" style="margin-top: 0.75rem;">
+            <input type="checkbox" id="mnlog-use-momentum">
+            <span>Use momentum on gradient updates (helps when convergence is slow)</span>
+          </label>
         </details>
       </article>
     </section>
@@ -208,19 +199,66 @@
         <div class="chart-grid">
           <article class="chart-card">
             <h3>Predicted probabilities vs. focal predictor</h3>
+            <div class="scenario-controls" style="margin-bottom: 1rem;">
+              <label for="mnlog-focal-select">Focal predictor</label>
+              <div class="scenario-controls__input">
+                <select id="mnlog-focal-select"></select>
+              </div>
+            </div>
+            <div class="scenario-controls" style="margin-bottom: 1rem;">
+              <label for="effect-chart-category-select">Display category</label>
+              <div class="scenario-controls__input">
+                <select id="effect-chart-category-select">
+                  <option value="all">All vs. reference</option>
+                </select>
+              </div>
+            </div>
+            <div class="range-controls" id="mnlog-range-controls">
+              <span>Focal range (continuous):</span>
+              <label><input type="radio" name="mnlog-range" value="sd" checked> Mean ± 2 SD</label>
+              <label><input type="radio" name="mnlog-range" value="observed"> Observed min/max</label>
+              <label><input type="radio" name="mnlog-range" value="custom"> Custom</label>
+              <div class="custom-range" id="mnlog-custom-range-wrapper" style="display:none;">
+                <label>Min <input type="number" id="mnlog-range-min" step="any"></label>
+                <label>Max <input type="number" id="mnlog-range-max" step="any"></label>
+              </div>
+            </div>
+            <div class="effect-constants-card">
+              <h4>Hold other predictors constant</h4>
+              <p class="hint">
+                Choose levels/values for the non-focal predictors used when plotting the focal curve.
+              </p>
+              <div id="mnlog-nonfocal-continuous" class="effect-nonfocal-levels"></div>
+              <div id="mnlog-nonfocal-categorical" class="effect-nonfocal-levels"></div>
+            </div>
             <div class="chart-placeholder" id="chart-a"></div>
             <p id="mnlog-effect-note" class="chart-note">
-              After you upload data, choose an outcome, select at least one continuous predictor, and run the model, this chart will show one probability curve per non-reference outcome category as the focal predictor varies (holding other predictors at typical values).
+              After you upload data, choose an outcome, select at least one predictor (with at least one continuous predictor to see the line view), and run the model, this chart will show how the predicted probability of each outcome changes with the focal predictor while holding others constant.
             </p>
+            <details class="interpretation-aid">
+              <summary>Interpretation Aid</summary>
+              <p class="muted">
+                The line (or bars for categorical focals) shows the predicted probability of each outcome category while holding other predictors constant at chosen values. Steeper slopes or larger gaps between bars imply stronger effects. Confidence bands/bars reflect the statistical uncertainty for those probabilities; wider bands mean less certainty. If bands for different categories overlap heavily, the model may not distinguish them well at those settings.
+              </p>
+            </details>
           </article>
           <article class="card chart-card">
             <h3>Observed vs predicted outcome distribution</h3>
             <div class="chart-placeholder" id="chart-b"></div>
             <p class="chart-note">
               This bar chart compares how often each outcome category appears in the modeled data (observed) with the
-              average predicted probability for each category (predicted). Use the controls below to switch between
-              counts and percentages or to hide the predicted bars.
+              predicted class counts (hard classification by highest predicted probability). Use the controls below to
+              switch between counts and percentages or to hide the predicted bars.
             </p>
+            <details class="interpretation-aid">
+              <summary>Interpretation Aid</summary>
+              <p class="muted">
+                Observed bars show the actual distribution. Predicted bars come from assigning each row to the outcome
+                with the highest predicted probability, so counts are integer (or proportions if you toggle percentage
+                view). Large gaps suggest misfit or missing predictors; close alignment means the model’s classifications
+                mirror the observed mix.
+              </p>
+            </details>
           </article>
         </div>
       </div>
@@ -244,13 +282,70 @@
       </div>
     </section>
 
+    <section class="summary-section" aria-labelledby="summary-heading">
+      <h2 id="summary-heading">SUMMARY STATISTICS</h2>
+      <div class="card summary-stats-card">
+        <h3>Summary Statistics</h3>
+        <div class="summary-stats-grid">
+          <div>
+            <h4>Continuous Predictors</h4>
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Mean</th>
+                  <th>Median</th>
+                  <th>Std. Dev.</th>
+                  <th>Min</th>
+                  <th>Max</th>
+                </tr>
+              </thead>
+              <tbody id="mnlog-numeric-summary-body">
+                <tr><td colspan="6">Provide data to see summary statistics.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h4>Categorical Predictors (% by level)</h4>
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Predictor</th>
+                  <th>Level</th>
+                  <th>Percent</th>
+                </tr>
+              </thead>
+              <tbody id="mnlog-categorical-summary-body">
+                <tr><td colspan="3">Provide data to see level percentages.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="test-results" aria-labelledby="test-results-heading">
       <h2 id="test-results-heading">TEST RESULTS</h2>
+      <div class="card regression-equation-card">
+        <h3>Regression Equation</h3>
+        <details class="interpretation-aid">
+          <summary>Show regression equations</summary>
+          <p id="mnlog-regression-equation" class="regression-equation-text">
+            Run the model to view the fitted log-odds equations for each outcome contrast.
+          </p>
+        </details>
+      </div>
       <div class="card metrics-panel">
         <div class="metric-output">Model log-likelihood: <span id="statistic-value">&ndash;</span></div>
         <div class="metric-output">Approx. degrees of freedom: <span id="df-value">&ndash;</span></div>
         <div class="metric-output">p-value (not computed): <span id="p-value">&ndash;</span></div>
         <div class="metric-output">Pseudo-R&sup2; (McFadden): <span id="effect-size">&ndash;</span></div>
+        <details class="interpretation-aid">
+          <summary>Interpretation Aid</summary>
+          <p class="muted"><strong>Log-likelihood:</strong> Higher (less negative) is better fit; values are comparable only across models on the same data.</p>
+          <p class="muted"><strong>Degrees of freedom:</strong> Rough count of free parameters ((K-1) × predictors); larger models risk overfitting with small samples.</p>
+          <p class="muted"><strong>Pseudo-R²:</strong> McFadden’s measure of improvement over a null model; use for relative comparison, not literal percent variance explained.</p>
+        </details>
       </div>
       <div class="dual-panels">
         <article class="card dual-panel">
@@ -281,6 +376,12 @@
             </tr>
           </tbody>
         </table>
+        <details class="interpretation-aid">
+          <summary>Interpretation Aid</summary>
+          <div id="mnlog-coef-interpretation" class="muted">
+            Coefficients are log-odds relative to the reference outcome. Exponentiating a coefficient gives an odds ratio for that contrast. Large standard errors or very wide CIs indicate unstable estimates (often due to sparse categories or collinearity).
+          </div>
+        </details>
         <p class="template-download">
           <button type="button" id="mnlog-download-results" class="secondary">
             Download predicted probabilities (CSV)
@@ -312,6 +413,13 @@
       <p class="citation">Cite as: Baker, Andrew. (2025). Multinomial Logistic Regression Tool. Marketing Bivariate Tools.</p>
     </footer>
 
+  <div id="mnlog-loading-overlay" class="loading-overlay" aria-hidden="true">
+    <div class="loading-content">
+      <p><strong>Fitting multinomial model…</strong></p>
+      <p class="muted">For larger datasets this may take a few seconds. Please wait.</p>
+    </div>
+  </div>
+
   <script src="../../shared/js/csv_utils.js"></script>
   <script src="../../shared/js/ui_utils.js"></script>
   <script src="mn_log_model.js"></script>
@@ -319,12 +427,3 @@
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-

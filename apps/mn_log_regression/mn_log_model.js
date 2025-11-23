@@ -11,6 +11,23 @@
     return 0.5 * (1 + math.erf(z / Math.sqrt(2)));
   }
 
+  function zForConfidenceLevel(confidenceLevel) {
+    const clamped = Math.max(1e-6, Math.min(0.999999, confidenceLevel || 0.95));
+    const target = 1 - (1 - clamped) / 2; // upper-tail quantile (e.g., 0.975 for 95%)
+    let low = 0;
+    let high = 10;
+    for (let i = 0; i < 60; i++) {
+      const mid = (low + high) / 2;
+      const cdf = normCdf(mid);
+      if (cdf < target) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+    return (low + high) / 2;
+  }
+
 
   /**
    * Fit a baseline-category multinomial logistic regression using simple gradient ascent.
@@ -23,7 +40,9 @@
    * @param {number} [params.maxIter=200]
    * @param {number} [params.stepSize=0.1]
    * @param {number} [params.l2=1e-4] - L2 penalty on non-intercept coefficients.
-   * @param {number} [params.tol=1e-5] - Convergence tolerance on parameter change.
+   * @param {number} [params.tol=1e-4] - Convergence tolerance on parameter change.
+   * @param {number} [params.confidenceLevel=0.95] - Confidence level for coefficient intervals.
+   * @param {number} [params.momentum=0] - Momentum term (0 = none, 0.8–0.9 typical when enabled).
    * @returns {{coefficients: number[][], classLabels: string[], referenceIndex: number}}
    */
   function fit(params) {
@@ -34,7 +53,13 @@
     const maxIter = params.maxIter || 200;
     const stepSize = params.stepSize || 0.1;
     const l2 = params.l2 != null ? params.l2 : 1e-4;
-    const tol = params.tol || 1e-5;
+    const tol = params.tol || 1e-4;
+    const confidenceLevel = typeof params.confidenceLevel === 'number'
+      ? params.confidenceLevel
+      : 0.95;
+    const momentum = typeof params.momentum === 'number' && params.momentum > 0 && params.momentum < 1
+      ? params.momentum
+      : 0;
 
     const n = X.length;
     const p = n ? X[0].length : 0;
@@ -52,11 +77,22 @@
       length: K
     }, () => new Array(p).fill(0));
 
+    // Momentum buffers (same shape as beta)
+    const velocity = Array.from({
+      length: K
+    }, () => new Array(p).fill(0));
+
+    let iterations = 0;
+    let lastMaxChange = null;
+    let lastLogLik = null;
+    const logLikChanges = [];
+
     for (let iter = 0; iter < maxIter; iter++) {
       // Gradient for each class k and parameter j
       const grad = Array.from({
         length: K
       }, () => new Array(p).fill(0));
+      let currentLogLik = 0;
 
       for (let i = 0; i < n; i++) {
         const xi = X[i];
@@ -86,6 +122,13 @@
             gk[j] += diff * xi[j];
           }
         }
+
+        const py = probs[yi];
+        if (py > 0 && isFinite(py)) {
+          currentLogLik += Math.log(py);
+        } else {
+          currentLogLik += Math.log(1e-12);
+        }
       }
 
       // Apply L2 penalty (except intercept column j = 0)
@@ -104,13 +147,33 @@
         if (k === refIndex) continue;
         const bk = beta[k];
         const gk = grad[k];
+        const vk = velocity[k];
         for (let j = 0; j < p; j++) {
-          const delta = (stepSize / n) * gk[j];
+          let effGrad = gk[j];
+          if (momentum > 0) {
+            const vPrev = vk[j];
+            const vNew = momentum * vPrev + gk[j];
+            vk[j] = vNew;
+            effGrad = vNew;
+          }
+          const delta = (stepSize / n) * effGrad;
           bk[j] += delta;
           const absDelta = Math.abs(delta);
           if (absDelta > maxChange) maxChange = absDelta;
         }
       }
+
+      iterations = iter + 1;
+      lastMaxChange = maxChange;
+
+      if (lastLogLik != null) {
+        const delta = currentLogLik - lastLogLik;
+        logLikChanges.push(delta);
+        if (logLikChanges.length > 5) {
+          logLikChanges.shift();
+        }
+      }
+      lastLogLik = currentLogLik;
 
       if (maxChange < tol) {
         break;
@@ -172,9 +235,11 @@
     let stdErrors = null;
     let pValues = null;
     let confidenceIntervals = null;
+    let covMatrix = null;
+    const zScore = zForConfidenceLevel(confidenceLevel);
 
     try {
-      const covMatrix = math.inv(hessian);
+      covMatrix = math.inv(hessian);
       const variances = math.diag(covMatrix);
 
       stdErrors = Array.from({
@@ -197,7 +262,7 @@
             stdErrors[k][j] = se;
             const z = beta[k][j] / se;
             pValues[k][j] = 2 * (1 - normCdf(Math.abs(z)));
-            const margin = 1.96 * se;
+            const margin = zScore * se;
             confidenceIntervals[k][j] = [beta[k][j] - margin, beta[k][j] + margin];
           }
         }
@@ -214,6 +279,18 @@
       stdErrors,
       pValues,
       confidenceIntervals,
+      covarianceMatrix: covMatrix,
+      iterations,
+      maxIter,
+      stepSize,
+      l2,
+      tol,
+      confidenceLevel,
+      optimizer: 'gradient_ascent',
+      momentum,
+      lastMaxChange,
+      logLikChanges,
+      covarianceMethod: covMatrix ? 'inverse_observed_fisher' : null,
     };
   }
 
@@ -260,8 +337,98 @@
     return probs;
   }
 
+  /**
+   * Predict class probabilities with confidence intervals for the log-odds.
+   *
+   * @param {object} params
+   * @param {number[][]} params.X - Design matrix (n x p).
+   * @param {number[][]} params.coefficients - Coefficients (K x p).
+   * @param {number[][]} params.covarianceMatrix - Covariance matrix of coefficients ((K-1)p x (K-1)p).
+   * @param {number} params.referenceIndex - Reference class index.
+   * @param {number} params.confidenceLevel - The confidence level (e.g., 0.95).
+   * @returns {object[]} Array of objects, each with `probs`, `lower`, `upper`.
+   */
+  function predictWithIntervals(params) {
+    const X = params.X || [];
+    const beta = params.coefficients || [];
+    const covMatrix = params.covarianceMatrix;
+    const refIndex = typeof params.referenceIndex === 'number' ? params.referenceIndex : 0;
+    const confidenceLevel = params.confidenceLevel || 0.95;
+
+    const n = X.length;
+    if (!n || !beta.length || !covMatrix) return [];
+    const p = X[0].length;
+    const K = beta.length;
+
+    const zScore = zForConfidenceLevel(confidenceLevel);
+    const nonRefClasses = Array.from({ length: K }, (_, i) => i).filter(k => k !== refIndex);
+    const M = nonRefClasses.length * p;
+
+    const predictions = [];
+
+    for (let i = 0; i < n; i++) {
+      const xi = X[i];
+      // Compute scores and probabilities
+      const scores = [];
+      for (let k = 0; k < K; k++) {
+        let s = 0;
+        if (k !== refIndex) {
+          const bk = beta[k];
+          for (let j = 0; j < p; j++) s += bk[j] * xi[j];
+        }
+        scores.push(s);
+      }
+      const probs = softmaxScores(scores);
+
+      // Gradient of p_k w.r.t. all non-reference coefficients (flattened)
+      const gradients = Array.from({ length: K }, () => new Array(M).fill(0));
+      for (let cIdx = 0; cIdx < nonRefClasses.length; cIdx++) {
+        const c = nonRefClasses[cIdx];
+        for (let j = 0; j < p; j++) {
+          const colIndex = cIdx * p + j;
+          for (let k = 0; k < K; k++) {
+            const indicator = k === c ? 1 : 0;
+            gradients[k][colIndex] = probs[k] * (indicator - probs[c]) * xi[j];
+          }
+        }
+      }
+
+      const lowerProbs = new Array(K).fill(0);
+      const upperProbs = new Array(K).fill(0);
+
+      for (let k = 0; k < K; k++) {
+        let variance = 0;
+        const gk = gradients[k];
+        for (let a = 0; a < M; a++) {
+          const ga = gk[a];
+          if (ga === 0) continue;
+          for (let b = 0; b < M; b++) {
+            const gb = gk[b];
+            if (gb === 0) continue;
+            variance += ga * covMatrix[a][b] * gb;
+          }
+        }
+        const se = Math.sqrt(Math.max(0, variance));
+        const margin = zScore * se;
+        const lower = probs[k] - margin;
+        const upper = probs[k] + margin;
+        lowerProbs[k] = Math.max(0, Math.min(1, Math.min(lower, upper)));
+        upperProbs[k] = Math.min(1, Math.max(lower, upper));
+      }
+
+      predictions.push({
+        probs,
+        lower: lowerProbs,
+        upper: upperProbs,
+      });
+    }
+
+    return predictions;
+  }
+
   global.MNLogit = {
     fit,
-    predict
+    predict,
+    predictWithIntervals,
   };
 })(window);

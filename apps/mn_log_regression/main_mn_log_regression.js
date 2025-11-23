@@ -1,5 +1,10 @@
 // Multinomial Logistic Regression Tool controller (initial wiring)
 const CREATED_DATE = '2025-11-15';
+// Reuse shared upload cap if provided; otherwise default to 5,000 rows.
+const MNLOG_UPLOAD_LIMIT =
+  typeof window !== 'undefined' && typeof window.MAX_UPLOAD_ROWS === 'number'
+    ? window.MAX_UPLOAD_ROWS
+    : 5000;
 let modifiedDate = new Date().toLocaleDateString();
 
 // Basic dataset state for this tool
@@ -11,6 +16,11 @@ let mnlogSelectedPredictors = [];
 let mnlogPredictorSettings = {};
 let mnlogLastModel = null;
 let mnlogLastDesign = null;
+let mnlogEffectState = { focal: null, catLevels: {}, continuousOverrides: {} };
+let mnlogEffectFocal = null;
+let mnlogRangeMode = 'sd';
+let mnlogCustomRange = { min: null, max: null };
+const mnlogSummaryMessage = 'Provide data to see summary statistics.';
 
 // Scenario builders: generate moderately large, realistic-looking multinomial datasets
 // We simulate predictors first, then draw outcomes from a softmax over linear scores so there is structure + noise.
@@ -217,7 +227,6 @@ function buildBrandChoiceScenarioCSV(rowCount = 800) {
   return lines.join('\n');
 }
 
-const PLACEHOLDER_SUMMARY_TEMPLATE = buildFunnelScenarioCSV();
 const PLACEHOLDER_RAW_TEMPLATE = buildBrandChoiceScenarioCSV();
 
 const PLACEHOLDER_SCENARIOS = [
@@ -232,17 +241,27 @@ const PLACEHOLDER_SCENARIOS = [
     label: 'Four-brand choice (Brand A / B / C / D)',
     file: 'scenarios/brand_choice.txt',
     datasetPath: 'scenarios/brand_choice_data.csv'
+  },
+  {
+    id: 'scenario-3',
+    label: 'Esports engagement segments (Casual / Core / Competitive)',
+    file: 'scenarios/esports_engagement.txt',
+    datasetPath: 'scenarios/esports_engagement_data.csv'
+  },
+  {
+    id: 'scenario-4',
+    label: 'Single continuous predictor (idealized convergence)',
+    file: 'scenarios/single_continuous.txt',
+    datasetPath: 'scenarios/single_continuous_data.csv'
   }
 ];
 
 
 const DataEntryModes = {
-  MANUAL: 'manual',
-  SUMMARY: 'summary-upload',
   RAW: 'raw-upload'
 };
 
-let activeDataEntryMode = DataEntryModes.MANUAL;
+let activeDataEntryMode = DataEntryModes.RAW;
 let activeScenarioDataset = null;
 let lastUploadedDataset = null;
 const confidenceButtons = () => document.querySelectorAll('.confidence-button');
@@ -255,11 +274,41 @@ function formatAlphaValue(alpha) {
   return clamped.toFixed(4);
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function applyAlphaValue(alpha) {
   const alphaInput = document.getElementById('alpha');
   if (!alphaInput) return;
   alphaInput.value = formatAlphaValue(alpha);
   reflectConfidenceButtons();
+}
+
+function showMnlogLoading() {
+  const overlay = document.getElementById('mnlog-loading-overlay');
+  if (overlay) overlay.classList.add('active');
+}
+
+function hideMnlogLoading() {
+  const overlay = document.getElementById('mnlog-loading-overlay');
+  if (overlay) overlay.classList.remove('active');
+}
+
+function setMnlogPlaceholders(message = 'Run the multinomial model to see results.') {
+  const coeffBody = document.querySelector('.summary-table-card .summary-table tbody');
+  const equationEl = document.getElementById('mnlog-regression-equation');
+  const numBody = document.getElementById('mnlog-numeric-summary-body');
+  const catBody = document.getElementById('mnlog-categorical-summary-body');
+  if (coeffBody) coeffBody.innerHTML = `<tr><td colspan="6">${message}</td></tr>`;
+  if (equationEl) equationEl.textContent = message;
+  if (numBody) numBody.innerHTML = `<tr><td colspan="6">${mnlogSummaryMessage}</td></tr>`;
+  if (catBody) catBody.innerHTML = `<tr><td colspan="3">${mnlogSummaryMessage}</td></tr>`;
 }
 
 function reflectConfidenceButtons() {
@@ -290,6 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDataEntryUploads();
   setupMnlogDownloadResults();
   setupMnlogRunButton();
+  setupEffectChartCategorySelect();
+  setupEffectFocalSelect();
+  setupRangeControls();
+  setMnlogPlaceholders();
 });
 
 function hydrateTimestamps() {
@@ -341,12 +394,6 @@ function setupScenarioSelect() {
   }
 
   // 2) Load CSV from scenarios folder and auto-populate dataset
-  updateScenarioDownload({
-    filename: selected.datasetPath || 'scenario.csv',
-    content: '', // download button will fetch the file directly or you can leave as-is
-    mimeType: 'text/csv'
-  });
-
   if (window.fetch && selected.datasetPath) {
     const feedback = document.getElementById('template-raw-feedback');
     if (feedback) {
@@ -357,9 +404,17 @@ function setupScenarioSelect() {
     fetch(selected.datasetPath, { cache: 'no-cache' })
       .then(resp => resp.ok ? resp.text() : Promise.reject())
       .then(text => {
-        const { headers, rows } = parseMixedDelimitedText(text, MAX_UPLOAD_ROWS);
+        const { headers, rows } = parseMixedDelimitedText(text, MNLOG_UPLOAD_LIMIT);
         lastUploadedDataset = { headers, rows };
         mnlogDataset = { headers, rows };
+        const filename =
+          (selected.datasetPath && selected.datasetPath.split(/[\\/]/).pop()) ||
+          'scenario.csv';
+        updateScenarioDownload({
+          filename,
+          content: text,
+          mimeType: 'text/csv'
+        });
         if (typeof setDataEntryMode === 'function') {
           setDataEntryMode(DataEntryModes.RAW);
         }
@@ -450,6 +505,252 @@ function setupMnlogRunButton() {
   });
 }
 
+function setupEffectChartCategorySelect() {
+  const select = document.getElementById('effect-chart-category-select');
+  if (!select) return;
+
+  select.addEventListener('change', () => {
+    renderMnlogEffectChart();
+  });
+}
+
+function setupEffectFocalSelect() {
+  const select = document.getElementById('mnlog-focal-select');
+  if (!select) return;
+  select.innerHTML = '';
+  select.addEventListener('change', () => {
+    mnlogEffectFocal = select.value || null;
+    renderMnlogEffectControls();
+    toggleRangeControlsVisibility();
+    renderMnlogEffectChart();
+  });
+}
+
+function setupRangeControls() {
+  const radios = document.querySelectorAll('input[name="mnlog-range"]');
+  const wrapper = document.getElementById('mnlog-custom-range-wrapper');
+  const minInput = document.getElementById('mnlog-range-min');
+  const maxInput = document.getElementById('mnlog-range-max');
+  radios.forEach(r => {
+    r.addEventListener('change', () => {
+      mnlogRangeMode = r.value;
+      if (wrapper) wrapper.style.display = mnlogRangeMode === 'custom' ? 'inline-flex' : 'none';
+      renderMnlogEffectChart();
+    });
+  });
+  [minInput, maxInput].forEach(input => {
+    if (!input) return;
+    input.addEventListener('input', () => {
+      mnlogCustomRange = {
+        min: parseFloat(minInput?.value),
+        max: parseFloat(maxInput?.value)
+      };
+      renderMnlogEffectChart();
+    });
+  });
+}
+
+function toggleRangeControlsVisibility() {
+  const rangeControls = document.getElementById('mnlog-range-controls');
+  if (!rangeControls || !mnlogLastDesign) return;
+  const focal =
+    (mnlogLastDesign.predictorInfo || []).find(info => info.name === mnlogEffectFocal) ||
+    (mnlogLastDesign.predictorInfo || []).find(info => info.type === 'continuous');
+  const show = focal && focal.type === 'continuous';
+  rangeControls.style.display = show ? '' : 'none';
+}
+
+function populateEffectFocalSelect() {
+  const select = document.getElementById('mnlog-focal-select');
+  if (!select || !mnlogLastDesign) return;
+  const { predictorInfo } = mnlogLastDesign;
+  const candidates = predictorInfo || [];
+  select.innerHTML = '';
+  candidates.forEach(info => {
+    const opt = document.createElement('option');
+    opt.value = info.name;
+    opt.textContent = info.name;
+    opt.dataset.type = info.type;
+    select.appendChild(opt);
+  });
+  const match = candidates.find(p => p.name === mnlogEffectFocal);
+  if (match) {
+    select.value = mnlogEffectFocal;
+  } else {
+    mnlogEffectFocal = candidates[0]?.name || null;
+    if (mnlogEffectFocal) select.value = mnlogEffectFocal;
+  }
+  toggleRangeControlsVisibility();
+}
+
+function computeHoldValuesForEffect(design, focalName) {
+  const { predictorInfo, predictorStats } = design;
+  const holdValues = {};
+  (predictorInfo || []).forEach(info => {
+    if (info.name === focalName) return;
+    if (info.type === 'continuous') {
+      const stats = predictorStats?.[info.name] || {};
+      const override = mnlogEffectState.continuousOverrides[info.name];
+      const value = Number.isFinite(override) ? override : stats.mean;
+      holdValues[info.name] = value;
+    } else if (info.type === 'categorical') {
+      const levels = info.levels || [];
+      const override = mnlogEffectState.catLevels[info.name];
+      const mode = predictorStats?.[info.name]?.mode;
+      let chosen = levels.includes(override) ? override : null;
+      if (!chosen && mode && levels.includes(mode)) chosen = mode;
+      if (!chosen && info.refLevel && levels.includes(info.refLevel)) chosen = info.refLevel;
+      if (!chosen) chosen = levels[0] || '';
+      holdValues[info.name] = chosen;
+    }
+  });
+  return holdValues;
+}
+
+function buildEffectDesignRow(design, focalInfo, focalValue, holdValues) {
+  const { predictorInfo } = design;
+  const p = design.X[0].length;
+  const row = new Array(p).fill(0);
+  row[0] = 1;
+  let colIdx = 1;
+  predictorInfo.forEach(info => {
+    if (info.type === 'continuous') {
+      const value = info.name === focalInfo.name ? focalValue : holdValues[info.name];
+      row[colIdx] = Number.isFinite(value) ? value : 0;
+      colIdx += 1;
+    } else {
+      const levels = info.levels || [];
+      const chosen = info.name === focalInfo.name ? focalValue : holdValues[info.name];
+      levels.forEach(level => {
+        if (level === info.refLevel) return;
+        row[colIdx] = level === chosen ? 1 : 0;
+        colIdx += 1;
+      });
+    }
+  });
+  return row;
+}
+
+function renderMnlogEffectControls() {
+  const catContainer = document.getElementById('mnlog-nonfocal-categorical');
+  const contContainer = document.getElementById('mnlog-nonfocal-continuous');
+  if (!mnlogLastDesign || (!catContainer && !contContainer)) return;
+  const { predictorInfo, predictorStats } = mnlogLastDesign;
+  const focal =
+    predictorInfo.find(info => info.name === mnlogEffectFocal) ||
+    predictorInfo.find(info => info.type === 'continuous');
+  if (!focal) {
+    if (catContainer) catContainer.innerHTML = '';
+    if (contContainer) contContainer.innerHTML = '';
+    return;
+  }
+
+  if (catContainer) {
+    catContainer.innerHTML = '';
+    catContainer.style.display = 'none';
+    predictorInfo.forEach(info => {
+      if (info.type !== 'categorical') return;
+      const levels = info.levels || [];
+      if (!levels.length) return;
+      const colIdx = (mnlogDataset.headers || []).indexOf(info.name);
+      const counts = new Map();
+      if (colIdx >= 0 && Array.isArray(mnlogDataset.rows)) {
+        mnlogDataset.rows.forEach(row => {
+          const lvl = row[colIdx] || '(missing)';
+          counts.set(lvl, (counts.get(lvl) || 0) + 1);
+        });
+      }
+      catContainer.style.display = '';
+      const defaultLevel =
+        levels.includes(mnlogEffectState.catLevels[info.name])
+          ? mnlogEffectState.catLevels[info.name]
+          : (predictorStats?.[info.name]?.mode && levels.includes(predictorStats[info.name].mode))
+            ? predictorStats[info.name].mode
+            : info.refLevel && levels.includes(info.refLevel)
+              ? info.refLevel
+              : levels[0];
+      mnlogEffectState.catLevels[info.name] = defaultLevel;
+      const label = document.createElement('label');
+      label.textContent = `${info.name}:`;
+      const select = document.createElement('select');
+      levels.forEach(level => {
+        const opt = document.createElement('option');
+        opt.value = level;
+        const count = counts.get(level);
+        opt.textContent = count ? `${level} (${count})` : level;
+        select.appendChild(opt);
+      });
+      select.value = defaultLevel;
+      select.addEventListener('change', () => {
+        mnlogEffectState.catLevels[info.name] = select.value;
+        renderMnlogEffectChart();
+      });
+      label.appendChild(select);
+      catContainer.appendChild(label);
+    });
+  }
+
+  if (contContainer) {
+    contContainer.innerHTML = '';
+    contContainer.style.display = 'none';
+    predictorInfo.forEach(info => {
+      if (info.type !== 'continuous' || info.name === focal.name) return;
+      const stats = predictorStats?.[info.name] || {};
+      contContainer.style.display = '';
+      const options = [
+        { key: 'mean', label: `Mean (${Number.isFinite(stats.mean) ? stats.mean.toFixed(3) : 'n/a'})`, value: stats.mean },
+        { key: 'median', label: `Median (${Number.isFinite(stats.median) ? stats.median.toFixed(3) : 'n/a'})`, value: stats.median },
+        { key: 'plus1', label: `+1 SD (${Number.isFinite(stats.mean) && Number.isFinite(stats.sd) ? (stats.mean + stats.sd).toFixed(3) : 'n/a'})`, value: Number.isFinite(stats.mean) && Number.isFinite(stats.sd) ? stats.mean + stats.sd : NaN },
+        { key: 'minus1', label: `-1 SD (${Number.isFinite(stats.mean) && Number.isFinite(stats.sd) ? (stats.mean - stats.sd).toFixed(3) : 'n/a'})`, value: Number.isFinite(stats.mean) && Number.isFinite(stats.sd) ? stats.mean - stats.sd : NaN },
+      ];
+      const label = document.createElement('label');
+      label.textContent = `${info.name}:`;
+      const select = document.createElement('select');
+      options.forEach(opt => {
+        const optionEl = document.createElement('option');
+        optionEl.value = opt.value;
+        optionEl.textContent = opt.label;
+        select.appendChild(optionEl);
+      });
+      const current = mnlogEffectState.continuousOverrides[info.name];
+      if (Number.isFinite(current)) {
+        select.value = current;
+      } else if (Number.isFinite(stats.mean)) {
+        select.value = stats.mean;
+        mnlogEffectState.continuousOverrides[info.name] = stats.mean;
+      }
+      select.addEventListener('change', () => {
+        const val = parseFloat(select.value);
+        if (Number.isFinite(val)) {
+          mnlogEffectState.continuousOverrides[info.name] = val;
+          renderMnlogEffectChart();
+        }
+      });
+      label.appendChild(select);
+      contContainer.appendChild(label);
+    });
+  }
+}
+
+function populateEffectChartCategorySelect() {
+  const select = document.getElementById('effect-chart-category-select');
+  if (!select || !mnlogLastDesign) return;
+
+  const { classLabels, referenceIndex } = mnlogLastDesign;
+  
+  while (select.options.length > 1) {
+    select.remove(1);
+  }
+
+  for (let i = 0; i < classLabels.length; i++) {
+    if (i === referenceIndex) continue;
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = classLabels[i];
+    select.appendChild(option);
+  }
+}
+
 function updateScenarioDownload(dataset) {
   const button = document.getElementById('scenario-download');
   activeScenarioDataset = dataset
@@ -484,7 +785,7 @@ function setupScenarioDownloadButton() {
 
 function setDataEntryMode(mode) {
   if (!Object.values(DataEntryModes).includes(mode)) {
-    mode = DataEntryModes.MANUAL;
+    mode = DataEntryModes.RAW;
   }
   activeDataEntryMode = mode;
   document.querySelectorAll('.data-entry-card .mode-button').forEach(button => {
@@ -543,7 +844,7 @@ const handleFile = file => {
   reader.onload = () => {
     try {
       const text = reader.result;
-      const { headers, rows } = parseMixedDelimitedText(text, MAX_UPLOAD_ROWS);
+      const { headers, rows } = parseMixedDelimitedText(text, MNLOG_UPLOAD_LIMIT);
       lastUploadedDataset = { headers, rows };
       mnlogDataset = { headers, rows };
       setFeedback(
@@ -578,15 +879,6 @@ const handleFile = file => {
     }
   };
 
-  initUpload({
-    dropzoneId: 'template-summary-dropzone',
-    inputId: 'template-summary-input',
-    browseId: 'template-summary-browse',
-    feedbackId: 'template-summary-feedback',
-    templateId: 'template-summary-download',
-    templateContent: PLACEHOLDER_SUMMARY_TEMPLATE,
-    downloadName: 'summary_template.csv'
-  });
   initUpload({
     dropzoneId: 'template-raw-dropzone',
     inputId: 'template-raw-input',
@@ -723,8 +1015,6 @@ function populatePredictorList() {
     return;
   }
 
-  const sampleSize = Math.min(rows.length, 200);
-
   headers.forEach(header => {
   if (header === mnlogSelectedOutcome) return;
 
@@ -732,6 +1022,7 @@ function populatePredictorList() {
   const sampleSize = Math.min(rows.length, 200);
   const seenValues = new Set();
   let numericCandidate = true;
+  let integerCandidate = true;
 
   for (let i = 0; i < sampleSize; i++) {
     const row = rows[i];
@@ -742,13 +1033,19 @@ function populatePredictorList() {
     const num = parseFloat(value);
     if (!Number.isFinite(num)) {
       numericCandidate = false;
+      integerCandidate = false;
+    }
+    if (Number.isFinite(num) && !Number.isInteger(num)) {
+      integerCandidate = false;
     }
   }
 
   const uniqueCount = seenValues.size;
   const isText = !numericCandidate;
   const canTreatAsCategorical = true; // always
-  const canTreatAsContinuous = numericCandidate && uniqueCount <= 10;
+  // Treat as continuous when column looks numeric with many distinct values.
+  // Numeric with very few distinct values (e.g., 0/1 or small integers) defaults to categorical.
+  const canTreatAsContinuous = numericCandidate && uniqueCount > 10;
 
   const wrapper = document.createElement('div');
   wrapper.className = 'predictor-row';
@@ -762,10 +1059,19 @@ function populatePredictorList() {
   const label = document.createElement('span');
   label.className = 'predictor-label';
 
+  const looksLikeId =
+    numericCandidate &&
+    integerCandidate &&
+    uniqueCount === sampleSize &&
+    rows.length >= 10;
+
   if (isText || uniqueCount > 1) {
     label.textContent = `${header} (${uniqueCount} distinct value${uniqueCount === 1 ? '' : 's'})`;
   } else {
     label.textContent = header;
+  }
+  if (looksLikeId) {
+    label.textContent += ' (treated as ID; not used as predictor)';
   }
 
   const typeSelect = document.createElement('select');
@@ -781,7 +1087,7 @@ function populatePredictorList() {
 
   // Allowed type options
   if (isText || !canTreatAsContinuous) {
-    // Text or many unique values: categorical only
+    // Text, or numeric with very few distinct values: categorical only
     typeSelect.appendChild(optCat);
     typeSelect.value = 'categorical';
   } else {
@@ -791,8 +1097,13 @@ function populatePredictorList() {
     typeSelect.value = 'continuous';
   }
 
-  // Initially disable the dropdown until the box is checked
-  typeSelect.disabled = !checkbox.checked;
+  // Initially disable the dropdown until the box is checked (and disable entirely for ID-like columns)
+  if (looksLikeId) {
+    checkbox.disabled = true;
+    typeSelect.disabled = true;
+  } else {
+    typeSelect.disabled = !checkbox.checked;
+  }
 
   wrapper.appendChild(checkbox);
   wrapper.appendChild(label);
@@ -800,13 +1111,14 @@ function populatePredictorList() {
   container.appendChild(wrapper);
 
   // Track settings only when included
-  if (checkbox.checked) {
+  if (checkbox.checked && !looksLikeId) {
     mnlogSelectedPredictors.push(header);
     mnlogPredictorSettings[header] = { type: typeSelect.value };
   }
 
   checkbox.addEventListener('change', () => {
     const name = checkbox.value;
+    if (looksLikeId) return;
     typeSelect.disabled = !checkbox.checked;
     if (checkbox.checked) {
       if (!mnlogSelectedPredictors.includes(name)) {
@@ -820,7 +1132,7 @@ function populatePredictorList() {
 
   typeSelect.addEventListener('change', () => {
     const name = checkbox.value;
-    if (!checkbox.checked) return;
+    if (!checkbox.checked || looksLikeId) return;
     mnlogPredictorSettings[name] = mnlogPredictorSettings[name] || {};
     mnlogPredictorSettings[name].type = typeSelect.value;
   });
@@ -883,6 +1195,13 @@ function buildDesignMatrixAndResponse() {
   const X = [];
   const y = [];
   const rowIndices = [];
+  const predictorStats = {};
+  predictorInfo.forEach(info => {
+    predictorStats[info.name] =
+      info.type === 'continuous'
+        ? { values: [] }
+        : { counts: new Map() };
+  });
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -894,6 +1213,7 @@ function buildDesignMatrixAndResponse() {
 
     const xRow = [1]; // intercept
     let valid = true;
+    const rowValues = [];
 
     predictorInfo.forEach(info => {
       if (!valid) return;
@@ -910,8 +1230,10 @@ function buildDesignMatrixAndResponse() {
           return;
         }
         xRow.push(num);
+        rowValues.push({ name: info.name, type: 'continuous', value: num });
       } else {
         const value = String(raw).trim();
+        rowValues.push({ name: info.name, type: 'categorical', value });
         info.levels.forEach(level => {
           if (level === info.refLevel) return;
           xRow.push(value === level ? 1 : 0);
@@ -920,12 +1242,68 @@ function buildDesignMatrixAndResponse() {
     });
 
     if (!valid) continue;
+    rowValues.forEach(entry => {
+      const stats = predictorStats[entry.name];
+      if (!stats) return;
+      if (entry.type === 'continuous') {
+        stats.values.push(entry.value);
+      } else if (entry.type === 'categorical') {
+        const key = entry.value || '';
+        stats.counts.set(key, (stats.counts.get(key) || 0) + 1);
+      }
+    });
     X.push(xRow);
     y.push(yi);
     rowIndices.push(i);
   }
 
   if (!X.length || !y.length) return null;
+
+  const standardizeInput = document.getElementById('mnlog-standardize-continuous');
+  const standardize = !!(standardizeInput && standardizeInput.checked);
+
+  // Optionally standardize continuous predictor columns (mean 0, SD 1)
+  if (standardize) {
+    const contCols = [];
+    let colIndex = 1;
+    (predictorInfo || []).forEach(info => {
+      if (info.type === 'continuous') {
+        contCols.push(colIndex);
+        colIndex += 1;
+      } else if (info.type === 'categorical') {
+        const levels = info.levels || [];
+        colIndex += Math.max(0, levels.length - 1);
+      }
+    });
+
+    contCols.forEach(j => {
+      let sum = 0;
+      let count = 0;
+      for (let i = 0; i < X.length; i++) {
+        const v = X[i][j];
+        if (Number.isFinite(v)) {
+          sum += v;
+          count++;
+        }
+      }
+      if (!count) return;
+      const mean = sum / count;
+      let varSum = 0;
+      for (let i = 0; i < X.length; i++) {
+        const v = X[i][j];
+        if (!Number.isFinite(v)) continue;
+        const diff = v - mean;
+        varSum += diff * diff;
+      }
+      const variance = count > 1 ? varSum / (count - 1) : 0;
+      const sd = Math.sqrt(Math.max(variance, 0)) || 1;
+      for (let i = 0; i < X.length; i++) {
+        const v = X[i][j];
+        if (!Number.isFinite(v)) continue;
+        X[i][j] = (v - mean) / sd;
+      }
+    });
+  }
 
   // Compute column means for effect-plot defaults (excluding intercept)
   const p = X[0].length;
@@ -940,7 +1318,42 @@ function buildDesignMatrixAndResponse() {
     colMeans[j] /= X.length;
   }
 
-  return { X, y, classLabels, referenceIndex, predictorInfo, colMeans, rowIndices };
+  const computedStats = {};
+  predictorInfo.forEach(info => {
+    if (info.type === 'continuous') {
+      const values = predictorStats[info.name]?.values || [];
+      const n = values.length;
+      const mean = n ? values.reduce((acc, v) => acc + v, 0) / n : NaN;
+      const sorted = values.slice().sort((a, b) => a - b);
+      const median = n
+        ? (n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2)
+        : NaN;
+      const variance =
+        n > 1
+          ? values.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / (n - 1)
+          : NaN;
+      computedStats[info.name] = {
+        mean,
+        median,
+        sd: Number.isFinite(variance) ? Math.sqrt(Math.max(variance, 0)) : NaN,
+        min: n ? sorted[0] : NaN,
+        max: n ? sorted[n - 1] : NaN
+      };
+    } else {
+      const counts = predictorStats[info.name]?.counts || new Map();
+      let mode = info.refLevel || null;
+      let bestCount = -Infinity;
+      counts.forEach((count, level) => {
+        if (count > bestCount) {
+          bestCount = count;
+          mode = level;
+        }
+      });
+      computedStats[info.name] = { mode };
+    }
+  });
+
+  return { X, y, classLabels, referenceIndex, predictorInfo, colMeans, rowIndices, predictorStats: computedStats };
 }
 
 function runMultinomialModel() {
@@ -959,20 +1372,51 @@ function runMultinomialModel() {
     return;
   }
 
+  const alphaInput = document.getElementById('alpha');
+  const alphaValue = alphaInput ? parseFloat(alphaInput.value) : NaN;
+  const confidenceLevel =
+    Number.isFinite(alphaValue) && alphaValue > 0 && alphaValue < 1
+      ? 1 - alphaValue
+      : 0.95;
+
+  const maxIterInput = document.getElementById('mnlog-max-iter');
+  const stepSizeInput = document.getElementById('mnlog-step-size');
+  const momentumInput = document.getElementById('mnlog-use-momentum');
+  const maxIterValue = maxIterInput ? parseInt(maxIterInput.value, 10) : NaN;
+  const stepSizeValue = stepSizeInput ? parseFloat(stepSizeInput.value) : NaN;
+  const maxIter =
+    Number.isInteger(maxIterValue) && maxIterValue > 0
+      ? Math.min(maxIterValue, 50000)
+      : 200;
+  const stepSize =
+    Number.isFinite(stepSizeValue) && stepSizeValue > 0 && stepSizeValue <= 1
+      ? stepSizeValue
+      : 0.2;
+  const momentum = momentumInput && momentumInput.checked ? 0.8 : 0;
+
+  showMnlogLoading();
+
   try {
     const fitResult = MNLogit.fit({
       X: design.X,
       y: design.y,
       classLabels: design.classLabels,
       referenceIndex: design.referenceIndex,
-      maxIter: 200,
-      stepSize: 0.2,
+      maxIter,
+      stepSize,
       l2: 1e-4,
-      tol: 1e-5
+      tol: 1e-4,
+      confidenceLevel,
+      momentum
     });
 
     mnlogLastModel = fitResult;
     mnlogLastDesign = design;
+    mnlogEffectState = { focal: null, catLevels: {}, continuousOverrides: {} };
+    mnlogEffectFocal = null;
+    populateEffectChartCategorySelect();
+    populateEffectFocalSelect();
+    renderMnlogEffectControls();
     if (statusEl) {
       statusEl.textContent = `Fitted multinomial model on ${design.X.length} observation(s) with ${design.classLabels.length} outcome categories.`;
     }
@@ -981,6 +1425,8 @@ function runMultinomialModel() {
     renderMnlogEffectChart();
   } catch (error) {
     if (statusEl) statusEl.textContent = error.message || 'Unable to fit multinomial model.';
+  } finally {
+    hideMnlogLoading();
   }
 }
 
@@ -988,76 +1434,212 @@ function renderMnlogEffectChart() {
   const container = document.getElementById('chart-a');
   if (!container || !window.Plotly || !mnlogLastModel || !mnlogLastDesign) return;
 
-  const { X, classLabels, referenceIndex, predictorInfo, colMeans } = mnlogLastDesign;
-  const coeffs = mnlogLastModel.coefficients;
+  const { X, classLabels, referenceIndex, predictorInfo } = mnlogLastDesign;
+  const { coefficients, covarianceMatrix } = mnlogLastModel;
   const note = document.getElementById('mnlog-effect-note');
-
-  // Choose first continuous predictor as focal
-  const focal = predictorInfo.find(info => info.type === 'continuous');
+  const chosenFocal = mnlogEffectFocal;
+  const focal = predictorInfo.find(info => info.name === chosenFocal)
+    || predictorInfo.find(info => info.type === 'continuous');
+  if (!mnlogEffectFocal && focal) {
+    mnlogEffectFocal = focal.name;
+    const focalSelect = document.getElementById('mnlog-focal-select');
+    if (focalSelect) focalSelect.value = mnlogEffectFocal;
+  }
   if (!focal) {
-    container.innerHTML = '<p class="chart-note">Include at least one continuous predictor to see probability curves.</p>';
-    if (note) note.textContent = 'The effect plot is only available when at least one continuous predictor is included.';
+    container.innerHTML = '<p class="chart-note">Include at least one predictor to see effect plots.</p>';
+    if (note) note.textContent = 'Select predictors and run the model to view effect plots.';
     return;
   }
 
-  // Determine column index of focal predictor in design matrix
-  // X columns: [intercept, all continuous, all dummies...]
-  let colIndex = 1;
-  for (const info of predictorInfo) {
-    if (info.name === focal.name) {
-      break;
-    }
-    if (info.type === 'continuous') {
-      colIndex += 1;
-    } else {
-      colIndex += Math.max(0, (info.levels || []).length - 1);
-    }
-  }
+  const holdValues = computeHoldValuesForEffect(mnlogLastDesign, focal.name);
+  const alpha = parseFloat(document.getElementById('alpha').value) || 0.05;
+  const confidenceLevel = 1 - alpha;
 
-  const focalValues = X.map(row => row[colIndex]);
-  const minVal = Math.min.apply(null, focalValues);
-  const maxVal = Math.max.apply(null, focalValues);
-  if (!Number.isFinite(minVal) || !Number.isFinite(maxVal) || minVal === maxVal) {
-    container.innerHTML = '<p class="chart-note">Unable to determine a range for the focal predictor.</p>';
+  const select = document.getElementById('effect-chart-category-select');
+  const selectedCategory = select ? select.value : 'all';
+
+  if (focal.type === 'continuous') {
+    let colIndex = 1;
+    for (const info of predictorInfo) {
+      if (info.name === focal.name) break;
+      colIndex += (info.type === 'continuous' ? 1 : Math.max(0, (info.levels || []).length - 1));
+    }
+
+    const focalValues = X.map(row => row[colIndex]);
+    let minVal = Math.min.apply(null, focalValues);
+    let maxVal = Math.max.apply(null, focalValues);
+    if (!Number.isFinite(minVal) || !Number.isFinite(maxVal) || minVal === maxVal) {
+      container.innerHTML = '<p class="chart-note">Unable to determine a range for the focal predictor.</p>';
+      return;
+    }
+    if (mnlogRangeMode === 'sd') {
+      const stats = (mnlogLastDesign.predictorStats && mnlogLastDesign.predictorStats[focal.name]) || {};
+      if (Number.isFinite(stats.mean) && Number.isFinite(stats.sd)) {
+        minVal = stats.mean - 2 * stats.sd;
+        maxVal = stats.mean + 2 * stats.sd;
+      }
+    } else if (mnlogRangeMode === 'custom' && Number.isFinite(mnlogCustomRange.min) && Number.isFinite(mnlogCustomRange.max) && mnlogCustomRange.max > mnlogCustomRange.min) {
+      minVal = mnlogCustomRange.min;
+      maxVal = mnlogCustomRange.max;
+    }
+
+    const gridSize = 40;
+    const grid = Array.from({ length: gridSize }, (_, i) => minVal + (i / (gridSize - 1)) * (maxVal - minVal));
+
+    const designGrid = grid.map(value =>
+      buildEffectDesignRow(mnlogLastDesign, focal, value, holdValues)
+    );
+
+    const predictions = MNLogit.predictWithIntervals({
+      X: designGrid,
+      coefficients,
+      covarianceMatrix,
+      referenceIndex,
+      confidenceLevel
+    });
+
+    container.classList.remove('chart-placeholder');
+    container.style.minHeight = '320px';
+
+    const traces = [];
+    const colors = Plotly.d3.scale.category10();
+    let traceCounter = 0;
+
+    for (let k = 0; k < classLabels.length; k++) {
+      if (k === referenceIndex) continue;
+      if (selectedCategory !== 'all' && String(k) !== selectedCategory) continue;
+
+      const color = colors(traceCounter);
+      traceCounter++;
+
+      const lowerSeries = predictions.map(p => {
+        const low = Math.min(p.lower[k], p.upper[k]);
+        const withCenter = Math.min(low, p.probs[k]);
+        return withCenter;
+      });
+      const upperSeries = predictions.map(p => {
+        const high = Math.max(p.lower[k], p.upper[k]);
+        const withCenter = Math.max(high, p.probs[k]);
+        return withCenter;
+      });
+
+      traces.push({
+        x: grid.concat(grid.slice().reverse()),
+        y: upperSeries.concat(lowerSeries.slice().reverse()),
+        fill: 'tozeroy',
+        fillcolor: `rgba(${Plotly.d3.rgb(color).r}, ${Plotly.d3.rgb(color).g}, ${Plotly.d3.rgb(color).b}, 0.2)`,
+        line: { color: 'transparent' },
+        name: `${classLabels[k]} CI`,
+        showlegend: false,
+        hoverinfo: 'none',
+        type: 'scatter',
+      });
+
+      traces.push({
+        x: grid,
+        y: predictions.map(p => p.probs[k]),
+        mode: 'lines',
+        line: { color: color },
+        name: classLabels[k],
+        type: 'scatter',
+        hovertemplate: `${classLabels[k]}<br>${focal.name} = %{x:.4g}<br>p = %{y:.4f}<extra></extra>`
+      });
+    }
+
+    const layout = {
+      margin: { t: 30, r: 10, b: 50, l: 60 },
+      xaxis: { title: focal.name },
+      yaxis: { title: 'Predicted probability', range: [0, 1] },
+      legend: { orientation: 'h', x: 0, y: 1.1 }
+    };
+
+    Plotly.newPlot(container, traces, layout, { responsive: true, displaylogo: false });
+
+    if (note) {
+      const holds = [];
+      (predictorInfo || []).forEach(info => {
+        if (info.name === focal.name) return;
+        const held = holdValues[info.name];
+        if (held === undefined) return;
+        holds.push(info.type === 'categorical'
+          ? `${info.name} = ${held}`
+          : `${info.name} = ${Number.isFinite(held) ? held.toFixed(3) : held}`);
+      });
+      const holdText = holds.length ? ` Other predictors held at: ${holds.join(', ')}.` : '';
+      note.textContent =
+        `Each line shows the predicted probability of an outcome category (relative to reference "${mnlogReferenceLevel}") ` +
+        `as ${focal.name} varies. Shaded areas represent ${Math.round(confidenceLevel * 100)}% confidence intervals.` +
+        holdText;
+    }
     return;
   }
 
-  const gridSize = 40;
-  const grid = [];
-  for (let i = 0; i < gridSize; i++) {
-    const t = i / (gridSize - 1);
-    grid.push(minVal + t * (maxVal - minVal));
+  // Categorical focal: bar chart per level
+  const levels = focal.levels || [];
+  if (!levels.length) {
+    container.innerHTML = '<p class="chart-note">No levels found for the focal categorical predictor.</p>';
+    return;
   }
 
-  const designGrid = grid.map(value => {
-    const row = colMeans.slice();
-    row[0] = 1;
-    row[colIndex] = value;
-    return row;
-  });
+  const designRows = levels.map(level =>
+    buildEffectDesignRow(mnlogLastDesign, focal, level, holdValues)
+  );
 
-  const probs = MNLogit.predict({
-    X: designGrid,
-    coefficients: coeffs,
-    referenceIndex
+  const predictions = MNLogit.predictWithIntervals({
+    X: designRows,
+    coefficients,
+    covarianceMatrix,
+    referenceIndex,
+    confidenceLevel
   });
 
   container.classList.remove('chart-placeholder');
   container.style.minHeight = '320px';
 
   const traces = [];
-  for (let k = 0; k < classLabels.length; k++) {
-    if (k === referenceIndex) continue;
-    traces.push({
-      x: grid,
-      y: probs.map(row => row[k]),
-      mode: 'lines',
-      type: 'scatter',
-      name: classLabels[k]
-    });
+  const colors = Plotly.d3.scale.category10();
+  let traceCounter = 0;
+
+  const classIndexes = [];
+  if (selectedCategory === 'all') {
+    for (let k = 0; k < classLabels.length; k++) {
+      if (k === referenceIndex) continue;
+      classIndexes.push(k);
+    }
+  } else {
+    const idx = parseInt(selectedCategory, 10);
+    if (Number.isInteger(idx) && idx >= 0 && idx < classLabels.length) {
+      classIndexes.push(idx);
+    }
   }
 
+  classIndexes.forEach(k => {
+    const color = colors(traceCounter);
+    traceCounter++;
+    const y = predictions.map(p => p.probs[k]);
+    const upper = predictions.map(p => p.upper[k]);
+    const lower = predictions.map(p => p.lower[k]);
+    const errorPlus = upper.map((u, i) => Math.max(0, u - y[i]));
+    const errorMinus = lower.map((l, i) => Math.max(0, y[i] - l));
+
+    traces.push({
+      x: levels,
+      y,
+      type: 'bar',
+      name: classLabels[k],
+      marker: { color },
+      error_y: {
+        type: 'data',
+        array: errorPlus,
+        arrayminus: errorMinus,
+        visible: true
+      },
+      hovertemplate: `${focal.name} = %{x}<br>${classLabels[k]}: %{y:.2%}<extra></extra>`
+    });
+  });
+
   const layout = {
+    barmode: 'group',
     margin: { t: 30, r: 10, b: 50, l: 60 },
     xaxis: { title: focal.name },
     yaxis: { title: 'Predicted probability', range: [0, 1] },
@@ -1067,9 +1649,23 @@ function renderMnlogEffectChart() {
   Plotly.newPlot(container, traces, layout, { responsive: true, displaylogo: false });
 
   if (note) {
+    const holds = [];
+    (predictorInfo || []).forEach(info => {
+      if (info.name === focal.name) return;
+      const held = holdValues[info.name];
+      if (held === undefined) return;
+      holds.push(info.type === 'categorical'
+        ? `${info.name} = ${held}`
+        : `${info.name} = ${Number.isFinite(held) ? held.toFixed(3) : held}`);
+    });
+    const holdText = holds.length ? ` Other predictors held at: ${holds.join(', ')}.` : '';
+    const classText = classIndexes.length === 1
+      ? `Showing ${classLabels[classIndexes[0]]} vs reference "${mnlogReferenceLevel}".`
+      : `Bars grouped by outcome (reference: "${mnlogReferenceLevel}").`;
     note.textContent =
-      `Each line shows the predicted probability of an outcome category (relative to reference "${mnlogReferenceLevel}") ` +
-      `as ${focal.name} varies, holding other predictors at typical values.`;
+      `Bars show predicted probabilities by ${focal.name} level. Error bars are ${Math.round(confidenceLevel * 100)}% intervals. ` +
+      classText +
+      holdText;
   }
 }
 
@@ -1134,15 +1730,166 @@ function updateMnlogResultsPanels(design, fitResult) {
     ? mnlogSelectedPredictors.join(', ')
     : 'no predictors';
 
+  const hasInferential =
+    fitResult &&
+    Array.isArray(fitResult.coefficients) &&
+    Array.isArray(fitResult.stdErrors) &&
+    Array.isArray(fitResult.pValues);
+
+  // -------- APA-style narrative --------
   if (apaEl) {
-    apaEl.textContent =
-      `A multinomial logistic regression was fitted predicting ${outcomeName} with ${K} outcome categories ` +
-      `from ${mnlogSelectedPredictors.length} predictor(s) (N = ${n}). ` +
-      `Model log-likelihood was ${logLik.toFixed(2)}, McFadden pseudo-R² = ${Number.isFinite(pseudoR2) ? pseudoR2.toFixed(3) : 'n/a'}. `;
+    let text =
+      `A baseline-category multinomial logistic regression was fitted predicting ${outcomeName} from ` +
+      `${mnlogSelectedPredictors.length} predictor(s) (N = ${n}, K = ${K} outcome categories). ` +
+      `Model log-likelihood was ${logLik.toFixed(2)}, McFadden pseudo-R\u00b2 = ${Number.isFinite(pseudoR2) ? pseudoR2.toFixed(3) : 'n/a'}. `;
+
+    if (hasInferential) {
+      const { coefficients: beta, stdErrors: seMat, pValues: pMat, confidenceIntervals: ciMat } = fitResult;
+
+      // Build metadata for columns
+      const termMeta = [{ type: 'intercept' }];
+      (design.predictorInfo || []).forEach(info => {
+        if (info.type === 'continuous') {
+          termMeta.push({ type: 'continuous', name: info.name });
+        } else if (info.type === 'categorical') {
+          (info.levels || []).forEach(level => {
+            if (level === info.refLevel) return;
+            termMeta.push({
+              type: 'categorical',
+              name: info.name,
+              level,
+              refLevel: info.refLevel
+            });
+          });
+        }
+      });
+
+      const effects = [];
+      for (let kIdx = 0; kIdx < K; kIdx++) {
+        if (kIdx === design.referenceIndex) continue;
+        const rowB = beta[kIdx] || [];
+        const rowSE = seMat[kIdx] || [];
+        const rowP = pMat[kIdx] || [];
+        for (let j = 1; j < rowB.length && j < termMeta.length; j++) {
+          const meta = termMeta[j];
+          if (!meta || meta.type === 'intercept') continue;
+          const b = rowB[j];
+          const se = rowSE[j];
+          const p = rowP[j];
+          if (!Number.isFinite(b) || !Number.isFinite(se) || !Number.isFinite(p)) continue;
+          const z = b / (se || 1);
+          const ci = ciMat && ciMat[kIdx] ? ciMat[kIdx][j] : null;
+          effects.push({ outcomeIndex: kIdx, meta, b, se, p, z, ci });
+        }
+      }
+
+      effects.sort((a, b) => (a.p || 1) - (b.p || 1));
+      const fmt = (v, d = 3) => (Number.isFinite(v) ? v.toFixed(d) : 'n/a');
+
+      const bestCont = effects.find(e => e.meta.type === 'continuous');
+      const bestCat = effects.find(e => e.meta.type === 'categorical');
+
+      if (bestCont) {
+        const { outcomeIndex, meta, b, se, p, z, ci } = bestCont;
+        const or = Math.exp(b);
+        const outLab = classLabels[outcomeIndex] ?? `Outcome ${outcomeIndex}`;
+        const refLab = classLabels[design.referenceIndex] ?? 'reference';
+        const ciLo = ci && Number.isFinite(ci[0]) ? Math.exp(ci[0]) : null;
+        const ciHi = ci && Number.isFinite(ci[1]) ? Math.exp(ci[1]) : null;
+        text +=
+          ` The strongest continuous effect was ${meta.name} for the contrast ${outLab} vs ${refLab} ` +
+          `(β = ${fmt(b)}, SE = ${fmt(se)}, z = ${fmt(z, 2)}, p = ${p < 0.001 ? '< .001' : fmt(p, 3)}, ` +
+          `OR ≈ ${fmt(or)}${ciLo && ciHi ? `, 95% CI OR [${fmt(ciLo)}, ${fmt(ciHi)}]` : ''}).`;
+      }
+
+      if (bestCat) {
+        const { outcomeIndex, meta, b, se, p, z, ci } = bestCat;
+        const or = Math.exp(b);
+        const outLab = classLabels[outcomeIndex] ?? `Outcome ${outcomeIndex}`;
+        const refLab = classLabels[design.referenceIndex] ?? 'reference';
+        const ciLo = ci && Number.isFinite(ci[0]) ? Math.exp(ci[0]) : null;
+        const ciHi = ci && Number.isFinite(ci[1]) ? Math.exp(ci[1]) : null;
+        text +=
+          ` The strongest categorical contrast was ${meta.name} = ${meta.level} versus ${meta.refLevel || 'reference'} ` +
+          `for ${outLab} vs ${refLab} (β = ${fmt(b)}, SE = ${fmt(se)}, z = ${fmt(z, 2)}, ` +
+          `p = ${p < 0.001 ? '< .001' : fmt(p, 3)}, OR ≈ ${fmt(or)}${ciLo && ciHi ? `, 95% CI OR [${fmt(ciLo)}, ${fmt(ciHi)}]` : ''}).`;
+      }
+    }
+
+    apaEl.innerHTML = text;
   }
 
+  // -------- Managerial narrative --------
   if (mgrEl) {
     const refOutcome = mnlogReferenceLevel || (classLabels[design.referenceIndex] ?? '');
+    let mgrText =
+      `This model estimates how the predictors (${predictorsDesc}) shift the probability of each outcome category ` +
+      `relative to the reference outcome "${refOutcome}". `;
+
+    if (hasInferential) {
+      const { coefficients: beta, stdErrors: seMat, pValues: pMat } = fitResult;
+
+      const termMeta = [{ type: 'intercept' }];
+      (design.predictorInfo || []).forEach(info => {
+        if (info.type === 'continuous') {
+          termMeta.push({ type: 'continuous', name: info.name });
+        } else if (info.type === 'categorical') {
+          (info.levels || []).forEach(level => {
+            if (level === info.refLevel) return;
+            termMeta.push({
+              type: 'categorical',
+              name: info.name,
+              level,
+              refLevel: info.refLevel
+            });
+          });
+        }
+      });
+
+      const effects = [];
+      for (let kIdx = 0; kIdx < K; kIdx++) {
+        if (kIdx === design.referenceIndex) continue;
+        const rowB = beta[kIdx] || [];
+        const rowSE = seMat[kIdx] || [];
+        const rowP = pMat[kIdx] || [];
+        for (let j = 1; j < rowB.length && j < termMeta.length; j++) {
+          const meta = termMeta[j];
+          if (!meta || meta.type === 'intercept') continue;
+          const b = rowB[j];
+          const se = rowSE[j];
+          const p = rowP[j];
+          if (!Number.isFinite(b) || !Number.isFinite(se) || !Number.isFinite(p)) continue;
+          effects.push({ outcomeIndex: kIdx, meta, b, se, p });
+        }
+      }
+
+      effects.sort((a, b) => (a.p || 1) - (b.p || 1));
+      if (effects.length) {
+        const top = effects[0];
+        const or = Math.exp(top.b);
+        const outLab = classLabels[top.outcomeIndex] ?? `Outcome ${top.outcomeIndex}`;
+        const refLab = classLabels[design.referenceIndex] ?? 'reference';
+
+        const describeOR = () => {
+          if (!Number.isFinite(or)) return '';
+          if (or > 1.05) return `about ${or.toFixed(2)} times higher`;
+          if (or < 0.95) return `about ${(1 / or).toFixed(2)} times lower`;
+          return 'roughly similar';
+        };
+
+        if (top.meta.type === 'continuous') {
+          mgrText +=
+            `For a one-unit increase in ${top.meta.name}, the odds of "${outLab}" versus "${refLab}" are ` +
+            `${describeOR()}, holding other predictors constant. `;
+        } else if (top.meta.type === 'categorical') {
+          mgrText +=
+            `Cases with ${top.meta.name} = "${top.meta.level}" have ${describeOR()} odds of ` +
+            `"${outLab}" versus "${refLab}" compared to those at the reference level ` +
+            `"${top.meta.refLevel || 'reference'}", holding other predictors constant. `;
+        }
+      }
+    }
+
     const catPredictors = (design.predictorInfo || []).filter(info => info.type === 'categorical');
     const refDetails = catPredictors.length
       ? ' For categorical predictors, the following reference levels were used: ' +
@@ -1152,14 +1899,14 @@ function updateMnlogResultsPanels(design, fitResult) {
         '.'
       : '';
 
-    mgrEl.textContent =
-      `This model estimates how the predictors (${predictorsDesc}) shift the probability of each outcome category ` +
-      `relative to the reference outcome "${refOutcome}". ` +
-      `Use the probability curves and downloaded predictions to compare which categories are most likely under different predictor values.` +
-      refDetails;
+    mgrEl.innerHTML = mgrText + refDetails;
   }
 
+
+  renderMnlogEquation(design, fitResult);
+  renderMnlogSummaryStats(design);
   renderMnlogCoefficientTable(design, fitResult);
+  renderMnlogCoefInterpretation(design, fitResult);
 }
 
 function updateMnlogDiagnostics(design) {
@@ -1177,9 +1924,15 @@ function updateMnlogDiagnostics(design) {
     classCounts.set(label, (classCounts.get(label) || 0) + 1);
   });
 
+  let minCount = Infinity;
+  let minLabel = null;
   const rowsHtml = Array.from(classCounts.entries())
     .map(([label, count]) => {
       const pct = usedRows ? ((count / usedRows) * 100).toFixed(1) : '0.0';
+      if (count < minCount) {
+        minCount = count;
+        minLabel = label;
+      }
       return `<li>${label}: ${count} (${pct}% of modeled observations)</li>`;
     })
     .join('');
@@ -1189,11 +1942,68 @@ function updateMnlogDiagnostics(design) {
       ? `<p><strong>Row screening:</strong> ${dropped} of ${totalRows} uploaded row(s) were excluded because of missing or invalid values in the outcome or selected predictors.</p>`
       : `<p><strong>Row screening:</strong> All ${usedRows} uploaded row(s) were used in the model.</p>`;
 
+  const rareNote =
+    Number.isFinite(minCount) && usedRows
+      ? `<p><strong>Smallest outcome category:</strong> "${escapeHtml(minLabel)}" with ${minCount} case(s). Very small categories can make estimates unstable; consider combining or dropping extremely rare outcomes when appropriate.</p>`
+      : '';
+
+  // Simple sparsity check for categorical predictors
+  const sparsityNotes = [];
+  (design.predictorInfo || []).forEach(info => {
+    if (info.type !== 'categorical') return;
+    const colIdx = (mnlogDataset.headers || []).indexOf(info.name);
+    if (colIdx < 0) return;
+    const counts = new Map();
+    (mnlogDataset.rows || []).forEach(row => {
+      const val = row[colIdx] || '(missing)';
+      counts.set(val, (counts.get(val) || 0) + 1);
+    });
+    const total = mnlogDataset.rows?.length || 1;
+    const rareLevels = Array.from(counts.entries())
+      .filter(([_, c]) => c / total < 0.05)
+      .map(([level, c]) => `"${escapeHtml(level)}" (${c})`);
+    if (rareLevels.length) {
+      sparsityNotes.push(
+        `<li>${escapeHtml(info.name)}: rare levels ${rareLevels.join(', ')}; consider collapsing levels if estimates look unstable.</li>`
+      );
+    }
+  });
+
+  const sparsityHtml = sparsityNotes.length
+    ? `<p><strong>Rare predictor levels:</strong></p><ul>${sparsityNotes.join('')}</ul>`
+    : '';
+
+  const fit = mnlogLastModel || {};
+  const reachedMax = Number.isFinite(fit.iterations) && Number.isFinite(fit.maxIter) && fit.iterations >= fit.maxIter;
+  const momentumFlag = fit.momentum && fit.momentum > 0 && fit.momentum < 1;
+  const iterNote = Number.isFinite(fit.iterations)
+    ? `<p><strong>Estimation details:</strong> Fitted using simple gradient ascent on the penalized log-likelihood with L2 regularization (ridge) on non-intercept terms${momentumFlag ? ` and momentum (γ ≈ ${fit.momentum.toFixed(2)})` : ''}. Convergence ${reachedMax ? '<strong>may not have been fully achieved</strong> (reached the maximum of ' + (fit.maxIter ?? 200) + ' iterations)' : 'was reached'} in ${fit.iterations} iteration(s) (max ${fit.maxIter ?? 200}), step size = ${fit.stepSize ?? 0.2}, tolerance = ${fit.tol ?? 1e-5}. Standard errors and confidence intervals are based on the inverse of the observed Fisher information (Hessian) at the solution.</p>`
+    : `<p><strong>Estimation details:</strong> Fitted using gradient ascent on the penalized log-likelihood with L2 regularization; standard errors are based on the inverse observed Fisher information (Hessian) at the solution.</p>`;
+
+  const llChanges = Array.isArray(fit.logLikChanges) && fit.logLikChanges.length
+    ? fit.logLikChanges
+    : null;
+  const llNote = llChanges
+    ? `<p><strong>Last ${llChanges.length} log-likelihood changes before end/convergence:</strong></p>` +
+      `<ul>` +
+      llChanges
+        .map((v, idx) => {
+          const label = `ΔLL[${idx + 1}]`;
+          const val = Number.isFinite(v) ? v.toExponential(3) : 'n/a';
+          return `<li>${label} = ${val}</li>`;
+        })
+        .join('') +
+      `</ul>`
+    : '';
+
   diagContainer.innerHTML =
     droppedHtml +
     `<p><strong>Outcome balance (modeled data only):</strong></p>` +
     `<ul>${rowsHtml}</ul>` +
-    `<p>Very small categories or highly unbalanced outcomes can make multinomial estimates unstable. Consider combining very rare categories when appropriate.</p>`;
+    rareNote +
+    sparsityHtml +
+    iterNote +
+    llNote;
 }
 
 function renderMnlogCoefficientTable(design, fitResult) {
@@ -1273,6 +2083,258 @@ function renderMnlogCoefficientTable(design, fitResult) {
   }
 }
 
+function renderMnlogCoefInterpretation(design, fitResult) {
+  const container = document.getElementById('mnlog-coef-interpretation');
+  if (!container || !design || !fitResult) return;
+
+  const { classLabels, referenceIndex, predictorInfo } = design;
+  const { coefficients, stdErrors, pValues, confidenceIntervals } = fitResult;
+  if (!coefficients || !coefficients.length || !Array.isArray(pValues)) {
+    container.textContent = 'Run the model to see example interpretations of key coefficients.';
+    return;
+  }
+
+  const p = coefficients[0]?.length || 0;
+  if (!p || !Array.isArray(predictorInfo)) {
+    container.textContent = 'Run the model to see example interpretations of key coefficients.';
+    return;
+  }
+
+  // Build metadata for each coefficient column to know which predictor/level it represents.
+  const termsMeta = [];
+  termsMeta.push({ type: 'intercept' });
+  (predictorInfo || []).forEach(info => {
+    if (info.type === 'continuous') {
+      termsMeta.push({ type: 'continuous', name: info.name });
+    } else if (info.type === 'categorical') {
+      const levels = info.levels || [];
+      levels.forEach(level => {
+        if (level === info.refLevel) return;
+        termsMeta.push({
+          type: 'categorical',
+          name: info.name,
+          level,
+          refLevel: info.refLevel
+        });
+      });
+    }
+  });
+
+  const effects = [];
+  for (let k = 0; k < classLabels.length; k++) {
+    if (k === referenceIndex) continue;
+    const betaRow = coefficients[k] || [];
+    const seRow = stdErrors ? stdErrors[k] || [] : [];
+    const pRow = pValues ? pValues[k] || [] : [];
+    for (let j = 1; j < p && j < termsMeta.length; j++) {
+      const meta = termsMeta[j];
+      if (!meta || meta.type === 'intercept') continue;
+      const b = betaRow[j];
+      const se = seRow[j];
+      const pval = pRow[j];
+      if (!Number.isFinite(b) || !Number.isFinite(se) || !Number.isFinite(pval)) continue;
+      const z = b / (se || 1);
+      effects.push({
+        outcomeIndex: k,
+        termIndex: j,
+        meta,
+        b,
+        se,
+        p: pval,
+        z: z,
+        ci: confidenceIntervals && confidenceIntervals[k] ? confidenceIntervals[k][j] : null
+      });
+    }
+  }
+
+  if (!effects.length) {
+    container.textContent = 'Run the model to see example interpretations of key coefficients.';
+    return;
+  }
+
+  // Sort by smallest p-value (strongest signal).
+  effects.sort((a, b) => (a.p || 1) - (b.p || 1));
+
+  const examples = [];
+
+  const pickExample = (type) =>
+    effects.find(e => e.meta.type === type && Number.isFinite(e.p));
+
+  const bestCont = pickExample('continuous');
+  const bestCat = pickExample('categorical');
+
+  const fmtNum = (v, d = 3) =>
+    Number.isFinite(v) ? v.toFixed(d) : 'n/a';
+
+  if (bestCont) {
+    const { outcomeIndex, meta, b, se, p, ci } = bestCont;
+    const or = Math.exp(b);
+    const outcome = classLabels[outcomeIndex] ?? `Outcome ${outcomeIndex}`;
+    const refOutcome = classLabels[referenceIndex] ?? 'reference';
+    const ciLo = ci && Number.isFinite(ci[0]) ? Math.exp(ci[0]) : null;
+    const ciHi = ci && Number.isFinite(ci[1]) ? Math.exp(ci[1]) : null;
+    examples.push(
+      `Continuous example: For the contrast <strong>${escapeHtml(outcome)} vs ${escapeHtml(refOutcome)}</strong>, a one-unit increase in <strong>${escapeHtml(meta.name)}</strong> changes the log-odds by ${fmtNum(b)} (SE = ${fmtNum(se)}), p = ${p < 0.001 ? '&lt; 0.001' : fmtNum(p, 3)}. This corresponds to an odds ratio of approximately ${fmtNum(or, 3)} for ${escapeHtml(outcome)} vs ${escapeHtml(refOutcome)}, holding other predictors constant${ciLo && ciHi ? ` (95% CI for the odds ratio ≈ [${fmtNum(ciLo, 3)}, ${fmtNum(ciHi, 3)}])` : ''}.`
+    );
+  }
+
+  if (bestCat) {
+    const { outcomeIndex, meta, b, se, p, ci } = bestCat;
+    const or = Math.exp(b);
+    const outcome = classLabels[outcomeIndex] ?? `Outcome ${outcomeIndex}`;
+    const refOutcome = classLabels[referenceIndex] ?? 'reference';
+    const ciLo = ci && Number.isFinite(ci[0]) ? Math.exp(ci[0]) : null;
+    const ciHi = ci && Number.isFinite(ci[1]) ? Math.exp(ci[1]) : null;
+    examples.push(
+      `Categorical example: For <strong>${escapeHtml(meta.name)}</strong>, being in level <strong>${escapeHtml(meta.level)}</strong> (vs. the reference level <strong>${escapeHtml(meta.refLevel || 'ref')}</strong>) changes the log-odds of <strong>${escapeHtml(outcome)} vs ${escapeHtml(refOutcome)}</strong> by ${fmtNum(b)} (SE = ${fmtNum(se)}), p = ${p < 0.001 ? '&lt; 0.001' : fmtNum(p, 3)}. This corresponds to an odds ratio of approximately ${fmtNum(or, 3)}, meaning the odds of ${escapeHtml(outcome)} vs ${escapeHtml(refOutcome)} are multiplied by about ${fmtNum(or, 3)} for that level${ciLo && ciHi ? ` (95% CI for the odds ratio ≈ [${fmtNum(ciLo, 3)}, ${fmtNum(ciHi, 3)}])` : ''}, holding other predictors constant.`
+    );
+  }
+
+  if (!examples.length) {
+    container.textContent = 'Run the model to see example interpretations of key coefficients.';
+    return;
+  }
+
+  container.innerHTML = examples
+    .map(text => `<p>${text}</p>`)
+    .join('');
+}
+
+function renderMnlogEquation(design, fitResult) {
+  const equationEl = document.getElementById('mnlog-regression-equation');
+  if (!equationEl || !design || !fitResult) return;
+  const { classLabels, referenceIndex, predictorInfo } = design;
+  const { coefficients } = fitResult;
+  if (!coefficients || !coefficients.length) {
+    equationEl.textContent = 'Run the model to view the fitted equations.';
+    return;
+  }
+
+  const termLabels = [];
+  termLabels.push('(Intercept)');
+  (predictorInfo || []).forEach(info => {
+    if (info.type === 'continuous') {
+      termLabels.push(info.name);
+    } else if (info.type === 'categorical') {
+      const levels = info.levels || [];
+      levels.forEach(level => {
+        if (level === info.refLevel) return;
+        termLabels.push(`${info.name} = ${level}`);
+      });
+    }
+  });
+
+  const lines = [];
+  for (let k = 0; k < classLabels.length; k++) {
+    if (k === referenceIndex) continue;
+    const beta = coefficients[k];
+    if (!beta || !beta.length) continue;
+    const parts = beta.map((b, idx) => {
+      const label = termLabels[idx] || `x${idx}`;
+      const sign = b >= 0 ? '+ ' : '- ';
+      const absVal = Math.abs(b).toFixed(3);
+      if (idx === 0) return `${b.toFixed(3)}`;
+      return `${sign}${absVal}·(${label})`;
+    });
+    lines.push(
+      `<strong>logit(P(${escapeHtml(classLabels[k])} / ${escapeHtml(classLabels[referenceIndex] || 'ref')}))</strong> = ${parts.join(' ')}`
+    );
+  }
+  equationEl.innerHTML = lines.length ? lines.join('<br>') : 'Equations unavailable.';
+}
+
+function renderMnlogSummaryStats(design) {
+  const numBody = document.getElementById('mnlog-numeric-summary-body');
+  const catBody = document.getElementById('mnlog-categorical-summary-body');
+  const datasetRows = mnlogDataset?.rows || [];
+  if (!datasetRows.length || !design) {
+    if (numBody) numBody.innerHTML = `<tr><td colspan="6">${mnlogSummaryMessage}</td></tr>`;
+    if (catBody) catBody.innerHTML = `<tr><td colspan="3">${mnlogSummaryMessage}</td></tr>`;
+    return;
+  }
+
+  const numericVars = [];
+  if (mnlogSelectedOutcome) numericVars.push(mnlogSelectedOutcome);
+  (design.predictorInfo || [])
+    .filter(info => info.type === 'continuous')
+    .forEach(info => {
+      if (!numericVars.includes(info.name)) numericVars.push(info.name);
+    });
+
+  if (numBody) {
+    const rowsOut = [];
+    numericVars.forEach(varName => {
+      const idx = mnlogDataset.headers.indexOf(varName);
+      if (idx < 0) return;
+      const values = datasetRows
+        .map(r => parseFloat(r[idx]))
+        .filter(v => Number.isFinite(v));
+      if (!values.length) return;
+      const mean = values.reduce((acc, v) => acc + v, 0) / values.length;
+      const sorted = values.slice().sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      const median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+      const variance = values.length > 1
+        ? values.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / (values.length - 1)
+        : 0;
+      const sd = Math.sqrt(Math.max(variance, 0));
+      const min = sorted[0];
+      const max = sorted[sorted.length - 1];
+      rowsOut.push(`<tr>
+        <td>${escapeHtml(varName)}</td>
+        <td>${mean.toFixed(3)}</td>
+        <td>${median.toFixed(3)}</td>
+        <td>${sd.toFixed(3)}</td>
+        <td>${min.toFixed(3)}</td>
+        <td>${max.toFixed(3)}</td>
+      </tr>`);
+    });
+    numBody.innerHTML = rowsOut.length ? rowsOut.join('') : `<tr><td colspan="6">${mnlogSummaryMessage}</td></tr>`;
+  }
+
+  if (catBody) {
+    const rowsOut = [];
+    // include outcome distribution
+    const outcomeIdx = mnlogDataset.headers.indexOf(mnlogSelectedOutcome);
+    if (outcomeIdx >= 0) {
+      const counts = new Map();
+      datasetRows.forEach(r => {
+        const lvl = r[outcomeIdx] || '(missing)';
+        counts.set(lvl, (counts.get(lvl) || 0) + 1);
+      });
+      const total = datasetRows.length || 1;
+      counts.forEach((count, level) => {
+        rowsOut.push(`<tr>
+          <td>${escapeHtml(mnlogSelectedOutcome || 'Outcome')}</td>
+          <td>${escapeHtml(level)}</td>
+          <td>${((count / total) * 100).toFixed(2)}%</td>
+        </tr>`);
+      });
+    }
+
+    (design.predictorInfo || []).forEach(info => {
+      if (info.type !== 'categorical') return;
+      const idx = mnlogDataset.headers.indexOf(info.name);
+      if (idx < 0) return;
+      const counts = new Map();
+      datasetRows.forEach(r => {
+        const lvl = r[idx] || '(missing)';
+        counts.set(lvl, (counts.get(lvl) || 0) + 1);
+      });
+      const total = datasetRows.length || 1;
+      counts.forEach((count, level) => {
+        rowsOut.push(`<tr>
+          <td>${escapeHtml(info.name)}</td>
+          <td>${escapeHtml(level)}</td>
+          <td>${((count / total) * 100).toFixed(2)}%</td>
+        </tr>`);
+      });
+    });
+
+    catBody.innerHTML = rowsOut.length ? rowsOut.join('') : `<tr><td colspan="3">${mnlogSummaryMessage}</td></tr>`;
+  }
+}
+
 function setupMnlogDownloadResults() {
   const button = document.getElementById('mnlog-download-results');
   if (!button) return;
@@ -1285,7 +2347,7 @@ function setupMnlogDownloadResults() {
     }
     const dataset = mnlogDataset;
     if (!dataset || !Array.isArray(dataset.headers) || !Array.isArray(dataset.rows) || !dataset.rows.length) {
-      alert('Upload a CSV in the summary or raw panels before downloading results.');
+      alert('Upload a CSV in the raw data panel before downloading results.');
       return;
     }
 
@@ -1366,7 +2428,7 @@ function parseMixedDelimitedText(text, maxRows) {
   }
 
   const rows = [];
-  const limit = typeof maxRows === 'number' && maxRows > 0 ? maxRows : MAX_UPLOAD_ROWS;
+  const limit = typeof maxRows === 'number' && maxRows > 0 ? maxRows : MNLOG_UPLOAD_LIMIT;
 
   for (let i = 1; i < lines.length; i++) {
     const parts = lines[i].split(delimiter);
@@ -1395,82 +2457,13 @@ function parseMixedDelimitedText(text, maxRows) {
 
 
 function renderPlaceholderFanChart() {
-  if (!window.FanChartUtils) {
-    return;
-  }
-  const container = document.getElementById('chart-a');
-  if (!container) {
-    return;
-  }
-  container.classList.remove('chart-placeholder');
-  container.style.minHeight = '320px';
-  const groups = [
-    { id: 'group-a', value: 0.32, label: 'Group A', tickLabel: 'Group A (n=450)' },
-    { id: 'group-b', value: 0.41, label: 'Group B', tickLabel: 'Group B (n=460)' }
-  ];
-  const intervals = {
-    'group-a': {
-      0.5: { lower: 0.30, upper: 0.34 },
-      0.8: { lower: 0.29, upper: 0.35 },
-      0.95: { lower: 0.27, upper: 0.36 }
-    },
-    'group-b': {
-      0.5: { lower: 0.39, upper: 0.43 },
-      0.8: { lower: 0.37, upper: 0.45 },
-      0.95: { lower: 0.35, upper: 0.47 }
-    }
-  };
-
-  FanChartUtils.renderHorizontalFanChart({
-    containerId: 'chart-a',
-    groups,
-    intervals,
-    confidenceLevels: [0.5, 0.8, 0.95],
-    xTitle: 'Placeholder metric',
-    axisRange: [0.2, 0.55],
-    referenceLine: {
-      value: 0.33,
-      label: 'Reference',
-      style: { color: '#777', dash: 'dot', width: 1 }
-    },
-    valueFormatter: value => (value * 100).toFixed(1) + '%',
-    ariaLabel: 'Example fan chart showing how the shared helper renders confidence bands.'
-  });
+  // Deprecated placeholder; kept as a no-op to preserve API shape if referenced.
+  return;
 }
 
 function renderPlaceholderStackedChart() {
-  if (!window.StackedChartUtils) {
-    return;
-  }
-  const container = document.getElementById('chart-b');
-  if (!container) {
-    return;
-  }
-  container.classList.remove('chart-placeholder');
-  container.style.minHeight = '320px';
-  container.innerHTML = '';
-
-  const chartHost = document.createElement('div');
-  chartHost.style.minHeight = '280px';
-  container.appendChild(chartHost);
-  const legendHost = document.createElement('div');
-  legendHost.className = 'legend-host';
-  container.appendChild(legendHost);
-
-  const bars = [
-    { label: 'Control', segments: [180, 120, 60] },
-    { label: 'Variant A', segments: [150, 140, 70] },
-    { label: 'Variant B', segments: [130, 160, 90] }
-  ];
-  const stackLabels = ['Engaged', 'Neutral', 'Churn-risk'];
-
-  StackedChartUtils.renderStacked100Chart({
-    container: chartHost,
-    legend: legendHost,
-    bars,
-    stackLabels,
-    axisLabels: { bars: 'Segments', stacks: 'Outcomes' }
-  });
+  // Deprecated placeholder; kept as a no-op to preserve API shape if referenced.
+  return;
 }
 
 // Multinomial-specific visual helpers
@@ -1506,15 +2499,18 @@ function renderMnlogOutcomeDistributionChart() {
     coefficients: coeffs,
     referenceIndex
   });
-  const predSums = new Array(K).fill(0);
+  const predCounts = new Array(K).fill(0);
   probs.forEach(row => {
-    row.forEach((p, k) => {
-      if (Number.isFinite(p)) {
-        predSums[k] += p;
+    let bestIdx = 0;
+    let bestProb = row[0] ?? -Infinity;
+    for (let k = 1; k < row.length; k++) {
+      if (row[k] > bestProb) {
+        bestProb = row[k];
+        bestIdx = k;
       }
-    });
+    }
+    predCounts[bestIdx] += 1;
   });
-  const predAvg = predSums.map(sum => (n ? sum / n : 0));
 
   const toggle = document.getElementById('toggle-chart-mode');
   const showPredicted = !toggle || toggle.checked;
@@ -1527,8 +2523,8 @@ function renderMnlogOutcomeDistributionChart() {
     ? obsCounts.map(c => (n ? c / n : 0))
     : obsCounts.slice();
   const predValues = useProportion
-    ? predAvg
-    : predAvg.map(p => p * n);
+    ? predCounts.map(c => (n ? c / n : 0))
+    : predCounts.slice();
 
   const traces = [
     {
