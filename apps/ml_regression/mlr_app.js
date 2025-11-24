@@ -550,7 +550,7 @@ function setupScenarioSelector() {
 }
 
 // ---------- Variable selection UI ----------
-function renderVariableSelectors() {
+  function renderVariableSelectors() {
   const panel = document.getElementById('variable-selection-panel');
   if (!panel) return;
   if (!dataset.rows.length) { panel.classList.add('hidden'); return; }
@@ -564,7 +564,7 @@ function renderVariableSelectors() {
     });
   }
   const outcomeSelect = document.getElementById('outcome-select');
-  if (outcomeSelect) {
+    if (outcomeSelect) {
     outcomeSelect.innerHTML = '';
     const numericHeaders = dataset.headers.filter(h => columnMeta[h]?.isNumeric);
     if (!numericHeaders.length) {
@@ -587,14 +587,23 @@ function renderVariableSelectors() {
         outcomeSelect.value = selectedOutcome;
       }
     }
-    outcomeSelect.onchange = () => {
-      selectedOutcome = outcomeSelect.value;
-      if (selectedPredictors.includes(selectedOutcome)) {
-        selectedPredictors = selectedPredictors.filter(p => p !== selectedOutcome);
-      }
-      updateResults();
-      renderVariableSelectors();
-    };
+      outcomeSelect.onchange = () => {
+        selectedOutcome = outcomeSelect.value;
+        // Ensure the new outcome is not treated as a predictor.
+        if (selectedPredictors.includes(selectedOutcome)) {
+          selectedPredictors = selectedPredictors.filter(p => p !== selectedOutcome);
+        }
+        // Auto-select all other usable columns as predictors, including the
+        // previous outcome now that it is no longer Y.
+        selectedPredictors = dataset.headers.filter(h => h !== selectedOutcome && !columnMeta[h]?.isConstant);
+        // Reset effect view state so the focal predictor menu
+        // always reflects the current outcome/predictor assignment.
+        effectState.focal = null;
+        effectState.catLevels = {};
+        effectState.continuousOverrides = {};
+        updateResults();
+        renderVariableSelectors();
+      };
   }
   const predictorList = document.getElementById('predictor-list');
   if (!predictorList) return;
@@ -666,28 +675,37 @@ function renderVariableSelectors() {
       refSelect.value = currentRef;
       const initialType = predictorSettings[header]?.type || meta.inferredType;
     refWrapper.style.display = initialType === 'categorical' ? 'block' : 'none';
-      checkbox.addEventListener('change', () => {
-        if (checkbox.checked) {
-        if (!selectedPredictors.includes(header)) selectedPredictors.push(header);
-      } else {
-        selectedPredictors = selectedPredictors.filter(p => p !== header);
-      }
-      updateResults();
-      });
-      typeSelect.addEventListener('change', () => {
-        const newType = typeSelect.value;
-        predictorSettings[header] = predictorSettings[header] || {};
-        predictorSettings[header].type = newType;
-      const isCat = predictorSettings[header].type === 'categorical';
-      refSelect.disabled = !isCat;
-      refWrapper.style.display = isCat ? 'block' : 'none';
-      updateResults();
-    });
-    refSelect.addEventListener('change', () => {
-      predictorSettings[header] = predictorSettings[header] || {};
-      predictorSettings[header].reference = refSelect.value;
-      updateResults();
-    });
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) {
+            if (!selectedPredictors.includes(header)) selectedPredictors.push(header);
+          } else {
+            selectedPredictors = selectedPredictors.filter(p => p !== header);
+          }
+          effectState.focal = null;
+          effectState.catLevels = {};
+          effectState.continuousOverrides = {};
+          updateResults();
+        });
+        typeSelect.addEventListener('change', () => {
+          const newType = typeSelect.value;
+          predictorSettings[header] = predictorSettings[header] || {};
+          predictorSettings[header].type = newType;
+          const isCat = predictorSettings[header].type === 'categorical';
+          refSelect.disabled = !isCat;
+          refWrapper.style.display = isCat ? 'block' : 'none';
+          effectState.focal = null;
+          effectState.catLevels = {};
+          effectState.continuousOverrides = {};
+          updateResults();
+        });
+        refSelect.addEventListener('change', () => {
+          predictorSettings[header] = predictorSettings[header] || {};
+          predictorSettings[header].reference = refSelect.value;
+          effectState.focal = null;
+          effectState.catLevels = {};
+          effectState.continuousOverrides = {};
+          updateResults();
+        });
     wrapper.appendChild(checkbox);
     wrapper.appendChild(label);
     wrapper.appendChild(typeSelect);
@@ -1075,25 +1093,34 @@ function predictFromTerms(terms, beta, values) {
 }
 
 function updateEffectControls(predictorsInfo) {
+  // Fall back to the current selectedPredictors if no predictorsInfo
+  // was provided (e.g., model not yet fit or filtered out).
+  let effectivePredictors = Array.isArray(predictorsInfo) && predictorsInfo.length
+    ? predictorsInfo
+    : selectedPredictors.map(name => {
+        const setting = predictorSettings[name]?.type || columnMeta[name]?.inferredType || 'numeric';
+        return { name, type: setting };
+      });
+
   const focalSelect = document.getElementById('effect-focal-select');
   if (!focalSelect) return;
   focalSelect.innerHTML = '';
-  predictorsInfo.forEach(info => {
+  effectivePredictors.forEach(info => {
     const opt = document.createElement('option');
     opt.value = info.name;
     opt.textContent = info.name;
     focalSelect.appendChild(opt);
   });
-  if (effectState.focal && predictorsInfo.find(p => p.name === effectState.focal)) {
+  if (effectState.focal && effectivePredictors.find(p => p.name === effectState.focal)) {
     focalSelect.value = effectState.focal;
   } else {
-    effectState.focal = predictorsInfo[0]?.name || '';
+    effectState.focal = effectivePredictors[0]?.name || '';
     focalSelect.value = effectState.focal;
   }
   const nonFocalLevels = document.getElementById('effect-nonfocal-levels');
   if (nonFocalLevels) {
     nonFocalLevels.innerHTML = '';
-    predictorsInfo.forEach(info => {
+    effectivePredictors.forEach(info => {
       if (info.type !== 'categorical' || info.name === effectState.focal) return;
       const meta = columnMeta[info.name] || {};
       const levels = meta.distinctValues || [];
@@ -1384,6 +1411,9 @@ function updateResults() {
   const { filtered, dropped, issues, predictorsInfo } = filterRowsForModel();
   lastFilteredRows = filtered; lastPredictorsInfo = predictorsInfo;
   const kept = filtered.length;
+  // Keep effect controls synced with the current predictor assignment,
+  // even if we hit a validation issue and cannot fit the model.
+  updateEffectControls(predictorsInfo);
   if (!dataset.rows.length) { clearOutputs('Upload a CSV with an outcome and predictors to begin.'); return; }
   if (!selectedOutcome) { clearOutputs('Select an outcome variable.'); return; }
   if (!selectedPredictors.length) { clearOutputs('Select at least one predictor.'); return; }
@@ -1393,7 +1423,6 @@ function updateResults() {
   if (model.error) { clearOutputs(model.error); return; }
   lastModel = model;
   assignPredictorPartialEta(model);
-  updateEffectControls(predictorsInfo);
   populateMetrics(model);
   populateCoefficients(model);
   renderEquation(model);
