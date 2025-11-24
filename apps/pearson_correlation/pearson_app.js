@@ -35,6 +35,7 @@ let defaultScenarioDescription = '';
 let activeScenarioDataset = null;
 let uploadedPairedData = null;
 let uploadedMatrixData = null;
+let activeMatrixVariables = null;
 let scatterPairs = [];
 let activeScatterPair = null;
 let selectedCorrelationMethod = CorrelationMethods.PEARSON;
@@ -73,15 +74,31 @@ function formatAlphaValue(value) {
 }
 
 function mean(values) {
-    if (!values.length) return NaN;
+    if (!Array.isArray(values) || !values.length) return NaN;
+    if (window.StatsUtils && typeof StatsUtils.mean === 'function') {
+        return StatsUtils.mean(values);
+    }
     return values.reduce((sum, v) => sum + v, 0) / values.length;
 }
 
 function standardDeviation(values) {
-    if (values.length < 2) return NaN;
+    if (!Array.isArray(values) || values.length < 2) return NaN;
+    if (window.StatsUtils && typeof StatsUtils.standardDeviation === 'function') {
+        return StatsUtils.standardDeviation(values);
+    }
     const m = mean(values);
     const variance = values.reduce((sum, v) => sum + Math.pow(v - m, 2), 0) / (values.length - 1);
     return Math.sqrt(variance);
+}
+
+function median(values) {
+    if (!Array.isArray(values) || !values.length) return NaN;
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    if (sorted.length % 2 === 0) {
+        return (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+    return sorted[mid];
 }
 
 function computeSkewness(values) {
@@ -126,6 +143,9 @@ function getCoefficientSymbol(method = selectedCorrelationMethod) {
 }
 
 function erf(x) {
+    if (window.StatsUtils && typeof StatsUtils.erf === 'function') {
+        return StatsUtils.erf(x);
+    }
     const sign = Math.sign(x);
     x = Math.abs(x);
     const a1 = 0.254829592;
@@ -140,6 +160,9 @@ function erf(x) {
 }
 
 function normCdf(x) {
+    if (window.StatsUtils && typeof StatsUtils.normCdf === 'function') {
+        return StatsUtils.normCdf(x);
+    }
     return 0.5 * (1 + erf(x / Math.sqrt(2)));
 }
 
@@ -625,6 +648,18 @@ function computeCorrelationStats(data, { method = CorrelationMethods.PEARSON } =
         xLabel: data.labels?.x || 'Variable X',
         yLabel: data.labels?.y || 'Variable Y'
     };
+}
+
+function getActiveMatrixVariables() {
+    if (!uploadedMatrixData || !Array.isArray(uploadedMatrixData.variables)) {
+        return [];
+    }
+    const all = uploadedMatrixData.variables.slice();
+    if (!Array.isArray(activeMatrixVariables) || !activeMatrixVariables.length) {
+        return all;
+    }
+    const validSelection = activeMatrixVariables.filter(name => all.includes(name));
+    return validSelection.length ? validSelection : all;
 }
 
 function computeMatrixCorrelations(data, { method = CorrelationMethods.PEARSON } = {}) {
@@ -1182,6 +1217,80 @@ function renderCorrelationHeatmap(stats) {
     }
 }
 
+function handleMatrixVariableChange() {
+    const list = document.getElementById('matrix-variable-list');
+    if (!list || !uploadedMatrixData) return;
+    const checkboxes = list.querySelectorAll('input[type="checkbox"]');
+    const selected = [];
+    checkboxes.forEach(box => {
+        if (box.checked) {
+            selected.push(box.value);
+        }
+    });
+    activeMatrixVariables = selected;
+    updateResults();
+}
+
+function renderMatrixVariableControls(matrix) {
+    const container = document.getElementById('matrix-variable-controls');
+    const list = document.getElementById('matrix-variable-list');
+    if (!container || !list) return;
+    if (!matrix || !Array.isArray(matrix.variables) || !matrix.variables.length) {
+        list.innerHTML = '';
+        container.classList.add('hidden');
+        return;
+    }
+      const variables = matrix.variables;
+      const idCandidates = Array.isArray(matrix.idCandidateVariables) ? matrix.idCandidateVariables : [];
+      const constantVariables = Array.isArray(matrix.constantVariables) ? matrix.constantVariables : [];
+      const idSet = new Set(idCandidates);
+      const constantSet = new Set(constantVariables);
+
+    if (!Array.isArray(activeMatrixVariables) || !activeMatrixVariables.length) {
+        const defaults = variables.filter(name => !idSet.has(name));
+        activeMatrixVariables = defaults.length ? defaults.slice() : variables.slice();
+    } else {
+        activeMatrixVariables = activeMatrixVariables.filter(name => variables.includes(name));
+        if (!activeMatrixVariables.length) {
+            const defaults = variables.filter(name => !idSet.has(name));
+            activeMatrixVariables = defaults.length ? defaults.slice() : variables.slice();
+        }
+    }
+
+    container.classList.remove('hidden');
+    list.innerHTML = '';
+    variables.forEach(name => {
+        const safeId = `matrix-var-${name.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+          const label = document.createElement('label');
+          label.className = 'matrix-var-item';
+          if (idSet.has(name)) {
+              label.classList.add('id-candidate');
+          }
+          if (constantSet.has(name)) {
+              label.classList.add('constant-variable');
+          }
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.id = safeId;
+          checkbox.value = name;
+          const isConstant = constantSet.has(name);
+          checkbox.checked = !isConstant && activeMatrixVariables.includes(name);
+          checkbox.disabled = isConstant;
+          checkbox.addEventListener('change', handleMatrixVariableChange);
+          const textSpan = document.createElement('span');
+          if (idSet.has(name)) {
+              textSpan.textContent = `${name} (ID-like)`;
+          } else if (isConstant) {
+              textSpan.textContent = `${name} (constant - no variation)`;
+          } else {
+              textSpan.textContent = name;
+          }
+        label.appendChild(checkbox);
+        label.appendChild(textSpan);
+        list.appendChild(label);
+    });
+}
+
 function renderVariableStatsTable(stats) {
     const container = document.getElementById('variable-stats');
     if (!container) return;
@@ -1208,6 +1317,84 @@ function renderVariableStatsTable(stats) {
             <tbody>${rows}</tbody>
         </table>
     `;
+}
+
+function renderSummaryStatsTable(stats, data) {
+    const tbody = document.getElementById('pearson-numeric-summary-body');
+    const card = document.querySelector('.summary-stats-card');
+    if (!tbody || !card) return;
+
+    function buildRow(variableName, values) {
+        const clean = Array.isArray(values) ? values.filter(value => Number.isFinite(value)) : [];
+        if (!clean.length) {
+            return null;
+        }
+        const meanValue = mean(clean);
+        const medianValue = median(clean);
+        const sdValue = standardDeviation(clean);
+        const minValue = Math.min(...clean);
+        const maxValue = Math.max(...clean);
+        return {
+            name: variableName,
+            mean: meanValue,
+            median: medianValue,
+            sd: sdValue,
+            min: minValue,
+            max: maxValue
+        };
+    }
+
+    let rowsHtml = '';
+
+    if (!stats || !data) {
+        rowsHtml = '<tr><td colspan="6">Provide data to see summary statistics.</td></tr>';
+    } else if (data.mode === InputModes.MATRIX && Array.isArray(stats.variables) && stats.variables.length) {
+        const variables = stats.variables;
+        const columns = stats.columns || {};
+        const summaries = variables.map(name => buildRow(name, columns[name] || [])).filter(row => row !== null);
+        if (!summaries.length) {
+            rowsHtml = '<tr><td colspan="6">Provide data to see summary statistics.</td></tr>';
+        } else {
+            rowsHtml = summaries.map(row => `
+                <tr>
+                    <td>${escapeHtml(row.name)}</td>
+                    <td>${formatNumber(row.mean)}</td>
+                    <td>${formatNumber(row.median)}</td>
+                    <td>${formatNumber(row.sd)}</td>
+                    <td>${formatNumber(row.min)}</td>
+                    <td>${formatNumber(row.max)}</td>
+                </tr>
+            `).join('');
+        }
+    } else if (data.mode === InputModes.MANUAL || data.mode === InputModes.PAIRED) {
+        const xValues = Array.isArray(data.xValues) ? data.xValues.slice(0, stats.n || data.xValues.length) : [];
+        const yValues = Array.isArray(data.yValues) ? data.yValues.slice(0, stats.n || data.yValues.length) : [];
+        const xLabel = data.labels?.x || stats.xLabel || 'Variable X';
+        const yLabel = data.labels?.y || stats.yLabel || 'Variable Y';
+        const summaries = [
+            buildRow(xLabel, xValues),
+            buildRow(yLabel, yValues)
+        ].filter(row => row !== null);
+        if (!summaries.length) {
+            rowsHtml = '<tr><td colspan="6">Provide data to see summary statistics.</td></tr>';
+        } else {
+            rowsHtml = summaries.map(row => `
+                <tr>
+                    <td>${escapeHtml(row.name)}</td>
+                    <td>${formatNumber(row.mean)}</td>
+                    <td>${formatNumber(row.median)}</td>
+                    <td>${formatNumber(row.sd)}</td>
+                    <td>${formatNumber(row.min)}</td>
+                    <td>${formatNumber(row.max)}</td>
+                </tr>
+            `).join('');
+        }
+    } else {
+        rowsHtml = '<tr><td colspan="6">Provide data to see summary statistics.</td></tr>';
+    }
+
+    tbody.innerHTML = rowsHtml;
+    card.style.display = 'block';
 }
 
 function updateNarratives(stats, data) {
@@ -1462,6 +1649,15 @@ function clearVisuals() {
         Plotly.purge('matrix-heatmap');
     }
     latestMatrixStats = null;
+    const matrixVarControls = document.getElementById('matrix-variable-controls');
+    const matrixVarList = document.getElementById('matrix-variable-list');
+    if (matrixVarList) {
+        matrixVarList.innerHTML = '';
+    }
+    if (matrixVarControls) {
+        matrixVarControls.classList.add('hidden');
+    }
+    activeMatrixVariables = null;
     const meanNote = document.getElementById('mean-diff-chart-note');
     if (meanNote) {
         meanNote.textContent = 'Provide data to summarize the correlation estimate and confidence interval.';
@@ -1476,6 +1672,7 @@ function clearVisuals() {
         matrixNote.textContent = 'Upload multi-column data to view the correlation heatmap.';
     }
     renderVariableStatsTable(null);
+    renderSummaryStatsTable(null, null);
     updateResultCards(null, { mode: activeMode });
     updateNarratives(null, null);
     updateDiagnostics(null, null);
@@ -1491,7 +1688,21 @@ function updateResults() {
         return;
     }
     if (data.mode === InputModes.MATRIX) {
-        const matrixStats = computeMatrixCorrelations(data, { method: selectedCorrelationMethod });
+        const selectedVariables = getActiveMatrixVariables();
+        if (!Array.isArray(selectedVariables) || selectedVariables.length < 2) {
+            updateStatus('Select at least two variables for the correlation matrix.', true);
+            toggleMatrixOutputs(true);
+            toggleSingleOutputs(false);
+            return;
+        }
+        const matrixView = {
+            ...data.matrix,
+            variables: selectedVariables
+        };
+        const matrixStats = computeMatrixCorrelations(
+            { ...data, matrix: matrixView },
+            { method: selectedCorrelationMethod }
+        );
         if (!matrixStats) {
             updateStatus('Unable to compute correlation matrix. Double-check your file.', true);
             clearVisuals();
@@ -1506,6 +1717,7 @@ function updateResults() {
         renderMeanDifferenceChart(matrixStats);
         renderCorrelationHeatmap(matrixStats);
         renderVariableStatsTable(matrixStats);
+        renderSummaryStatsTable(matrixStats, data);
         const pairs = buildMatrixScatterPairs(matrixStats);
         setScatterPairs(pairs);
         updateNarratives(matrixStats, data);
@@ -1530,6 +1742,7 @@ function updateResults() {
     toggleMatrixOutputs(false);
     updateResultCards(stats, data);
     renderMeanDifferenceChart(stats);
+    renderSummaryStatsTable(stats, data);
     const labels = data.labels || { x: stats.xLabel || 'Variable X', y: stats.yLabel || 'Variable Y' };
     setScatterPairs([{
         id: `${labels.x}__${labels.y}`,
@@ -1725,6 +1938,54 @@ function updateUploadStatus(mode, message, status = '') {
     }
 }
 
+function parseMatrixRawText(text) {
+    if (typeof text !== 'string') {
+        throw new Error('Unable to read file contents.');
+    }
+    const trimmed = text.trim();
+    if (!trimmed) {
+        throw new Error('File is empty.');
+    }
+    const lines = trimmed.replace(/\r/g, '').split('\n');
+    if (lines.length < 2) {
+        throw new Error('File must include a header row and at least one data row.');
+    }
+    const headerLine = lines[0];
+    const delimiter = typeof detectDelimiter === 'function'
+        ? detectDelimiter(headerLine)
+        : (headerLine.includes('\t') ? '\t' : ',');
+    const headers = headerLine.split(delimiter).map(h => h.trim().replace(/"/g, ''));
+    if (headers.length < 2) {
+        throw new Error('Provide at least two columns with headers for matrix upload.');
+    }
+    const rows = [];
+    const warnings = [];
+    for (let i = 1; i < lines.length; i++) {
+        const rawLine = lines[i];
+        if (!rawLine || !rawLine.trim()) continue;
+        const parts = rawLine.split(delimiter).map(p => p.trim().replace(/"/g, ''));
+        if (parts.length !== headers.length) {
+            warnings.push(`Row ${i + 1}: expected ${headers.length} columns, found ${parts.length}.`);
+            continue;
+        }
+        const row = {};
+        headers.forEach((h, idx) => {
+            row[h] = parts[idx];
+        });
+        rows.push(row);
+        if (typeof MAX_UPLOAD_ROWS === 'number' && rows.length > MAX_UPLOAD_ROWS) {
+            throw new Error(
+                `Upload limit exceeded: Only ${MAX_UPLOAD_ROWS} row(s) are supported per file. ` +
+                `Split the dataset before re-uploading.`
+            );
+        }
+    }
+    if (!rows.length) {
+        throw new Error(warnings.length ? warnings[0] : 'No valid rows found in the file.');
+    }
+    return { headers, rows, warnings };
+}
+
   function importPairedData(text) {
       try {
           const { headers, rows, errors } = parseDelimitedText(text, 2, { maxRows: MAX_UPLOAD_ROWS });
@@ -1775,15 +2036,105 @@ function updateUploadStatus(mode, message, status = '') {
 
   function importMatrixData(text) {
       try {
-          let { headers, rows, errors } = parseDelimitedText(text, null, { maxRows: MAX_UPLOAD_ROWS });
-          const totalRows = rows.length + (Array.isArray(errors) ? errors.length : 0);
+          activeMatrixVariables = null;
+          const parsed = parseMatrixRawText(text);
+          const headers = parsed.headers;
+          const rawRows = parsed.rows;
+          const structuralWarnings = Array.isArray(parsed.warnings) ? parsed.warnings : [];
+          const totalRows = rawRows.length + structuralWarnings.length;
           if (headers.length < 2) {
               throw new Error('Matrix upload requires at least two columns.');
           }
-          if (typeof maybeConfirmDroppedRows === 'function') {
+
+            let idCandidates = [];
+            if (typeof detectIdLikeColumns === 'function') {
+                idCandidates = detectIdLikeColumns(headers, rawRows) || [];
+            }
+
+          const numericHeaders = [];
+          const numericHeaderIndices = [];
+          const stringHeaders = [];
+          headers.forEach((header, index) => {
+              const values = rawRows.map(row => (row && Object.prototype.hasOwnProperty.call(row, header) ? row[header] : undefined));
+              let isNumeric = true;
+              for (let i = 0; i < values.length; i++) {
+                  const value = values[i];
+                  if (value === null || value === undefined || String(value).trim() === '') {
+                      continue;
+                  }
+                  const num = parseFloat(String(value).trim());
+                  if (!isFinite(num)) {
+                      isNumeric = false;
+                      break;
+                  }
+              }
+              if (isNumeric) {
+                  numericHeaders.push(header);
+                  numericHeaderIndices.push(index);
+              } else {
+                  stringHeaders.push(header);
+              }
+          });
+
+          if (numericHeaders.length < 2) {
+              throw new Error('Matrix upload requires at least two numeric columns after dropping non-numeric fields.');
+          }
+
+            const idIndexSet = new Set(idCandidates.map(c => c.index));
+          const seen = new Set();
+          const variableNames = [];
+          const variableSourceIndices = [];
+          numericHeaders.forEach((header, localIndex) => {
+              const base = header || `Var ${localIndex + 1}`;
+              let candidate = base;
+              let suffix = 2;
+              while (seen.has(candidate)) {
+                  candidate = `${base}_${suffix++}`;
+              }
+              seen.add(candidate);
+              variableNames.push(candidate);
+              variableSourceIndices.push(numericHeaderIndices[localIndex]);
+          });
+
+          const idCandidateVariables = variableNames.filter((_, idx) => idIndexSet.has(variableSourceIndices[idx]));
+
+          const validRowFlags = [];
+          for (let i = 0; i < rawRows.length; i++) {
+              const row = rawRows[i];
+              let hasAnyValue = false;
+              let isComplete = true;
+              for (let j = 0; j < numericHeaders.length; j++) {
+                  const header = numericHeaders[j];
+                  const rawValue = row && Object.prototype.hasOwnProperty.call(row, header) ? row[header] : undefined;
+                  const text = rawValue === null || rawValue === undefined ? '' : String(rawValue).trim();
+                  if (text === '') {
+                      isComplete = false;
+                      break;
+                  }
+                  const num = parseFloat(text);
+                  if (!isFinite(num)) {
+                      isComplete = false;
+                      break;
+                  }
+                  hasAnyValue = true;
+              }
+              validRowFlags.push(isComplete && hasAnyValue);
+          }
+
+          const keptRowIndices = [];
+          validRowFlags.forEach((flag, index) => {
+              if (flag) {
+                  keptRowIndices.push(index);
+              }
+          });
+
+            const keptRows = keptRowIndices.length;
+            const droppedRows = totalRows - keptRows;
+
+          if (typeof maybeConfirmDroppedRows === 'function' && droppedRows > 0) {
               const proceed = maybeConfirmDroppedRows({
                   totalRows,
-                  keptRows: rows.length,
+                  keptRows,
                   contextLabel: 'observations'
               });
               if (!proceed) {
@@ -1793,51 +2144,82 @@ function updateUploadStatus(mode, message, status = '') {
                   return;
               }
           }
-          if (typeof detectIdLikeColumns === 'function') {
-              const idCandidates = detectIdLikeColumns(headers, rows);
-              if (Array.isArray(idCandidates) && idCandidates.length) {
-                  const names = idCandidates.map(c => `"${headers[c.index]}"`).join(', ');
-                  const message = idCandidates.length === 1
-                      ? `The column ${names} has a unique value for every row and may be an observation ID column. Ignore this column for correlation analysis? (Cancel = keep it as a regular variable).`
-                      : `The columns ${names} each have a unique value for every row and may be observation ID columns. Ignore these column(s) for correlation analysis? (Cancel = keep them as regular variables).`;
-                  if (window.confirm(message)) {
-                      const toDrop = new Set(idCandidates.map(c => c.index));
-                      const keptIndices = headers.map((_, idx) => idx).filter(idx => !toDrop.has(idx));
-                      const keptHeaders = keptIndices.map(idx => headers[idx]);
-                      const newRows = rows.map(values => keptIndices.map(idx => values[idx]));
-                      headers = keptHeaders;
-                      rows = newRows;
-                  }
-              }
+
+            const columnStore = {};
+          variableNames.forEach(name => {
+              columnStore[name] = [];
+          });
+          keptRowIndices.forEach(rowIndex => {
+              const row = rawRows[rowIndex];
+              numericHeaders.forEach((header, numericIdx) => {
+                  const varName = variableNames[numericIdx];
+                  const rawValue = row && Object.prototype.hasOwnProperty.call(row, header) ? row[header] : undefined;
+                  const text = rawValue === null || rawValue === undefined ? '' : String(rawValue).trim();
+                  const num = parseFloat(text);
+                  columnStore[varName].push(num);
+              });
+          });
+
+          // Detect constant columns (no variation) among numeric variables.
+          let constantVariables = [];
+          if (typeof detectConstantColumns === 'function' && keptRows > 0) {
+              const asRows = keptRowIndices.map(rowIndex => rawRows[rowIndex]);
+              const constants = detectConstantColumns(headers, asRows) || [];
+              const constantHeaderSet = new Set(constants.map(c => c.header));
+              constantVariables = variableNames.filter((_, idx) => {
+                  const sourceIndex = variableSourceIndices[idx];
+                  return constantHeaderSet.has(headers[sourceIndex]);
+              });
           }
-          const seen = new Set();
-          const variableNames = headers.map((header, index) => {
-              const base = header || `Var ${index + 1}`;
-              let candidate = base;
-              let suffix = 2;
-            while (seen.has(candidate)) {
-                candidate = `${base}_${suffix++}`;
-            }
-            seen.add(candidate);
-            return candidate;
-        });
-        const columnStore = {};
-        variableNames.forEach((name, index) => {
-            columnStore[name] = rows.map(values => values[index]);
-        });
+
           uploadedMatrixData = {
               variables: variableNames,
               columns: columnStore,
-              rowCount: rows.length,
-              errors
+              rowCount: keptRows,
+              errors: structuralWarnings || [],
+              idCandidateVariables,
+              droppedStringColumns: stringHeaders,
+              constantVariables
           };
-          const skippedNote = errors.length ? ` Skipped ${errors.length} observations due to missing or invalid values.` : '';
-          let statusNote = '';
-          if (totalRows > rows.length) {
-              statusNote = ` Using ${rows.length} of ${totalRows} observations.`;
+
+          const details = [];
+          if (stringHeaders.length) {
+              details.push(`Dropped non-numeric columns: ${stringHeaders.join(', ')}.`);
           }
-          setFileFeedback(`Loaded ${rows.length} observations across ${headers.length} variables.${skippedNote}${statusNote}`, 'success');
-          updateUploadStatus(InputModes.MATRIX, `${rows.length} observation(s) ready with ${headers.length} columns.${skippedNote}${statusNote}`, 'success');
+          if (idCandidateVariables.length) {
+              details.push(`Columns treated as ID-like (unchecked by default): ${idCandidateVariables.join(', ')}.`);
+          }
+          if (constantVariables.length) {
+              details.push(`Columns with no variation (constant across all kept rows) will not be useful in correlation summaries: ${constantVariables.join(', ')}.`);
+          }
+          const skippedNote = droppedRows > 0
+              ? ` Skipped ${droppedRows} observation(s) due to missing or invalid values.`
+              : '';
+          const detailsNote = details.length ? ` ${details.join(' ')}` : '';
+          setFileFeedback(
+              `Loaded ${keptRows} observations across ${variableNames.length} numeric column(s).${skippedNote}${detailsNote}`,
+              'success'
+          );
+          let statusNote = '';
+          if (totalRows > keptRows) {
+              statusNote = ` Using ${keptRows} of ${totalRows} observations.`;
+          }
+          updateUploadStatus(
+              InputModes.MATRIX,
+              `${keptRows} observation(s) ready with ${variableNames.length} numeric column(s).${skippedNote}${statusNote}`,
+              'success'
+          );
+
+          if (variableNames.length) {
+              const nonIdDefaults = variableNames.filter(name => !idCandidateVariables.includes(name));
+              activeMatrixVariables = nonIdDefaults.length ? nonIdDefaults.slice() : variableNames.slice();
+          } else {
+              activeMatrixVariables = null;
+          }
+
+          if (typeof renderMatrixVariableControls === 'function') {
+              renderMatrixVariableControls(uploadedMatrixData);
+          }
         updateResults();
     } catch (error) {
         uploadedMatrixData = null;
@@ -2144,6 +2526,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scatterSelect.addEventListener('change', handleScatterSelectChange);
     }
     renderVariableStatsTable(null);
+    renderSummaryStatsTable(null, null);
     switchMode(activeMode, { suppressUpdate: true });
     refreshScenarioDownloadVisibility();
 });

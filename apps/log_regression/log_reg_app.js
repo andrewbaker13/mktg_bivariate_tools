@@ -360,11 +360,14 @@ function buildColumnMeta(rows, headers) {
 
     const shared = sharedMetaByName ? sharedMetaByName[header] : null;
     const isNumeric = shared ? !!shared.isNumeric : numericCount === values.length - missing;
+    const nonMissing = values.length - missing;
+    const isConstant = nonMissing > 0 && distinct.size === 1;
 
     meta[header] = {
       isNumeric,
       missing,
       distinctValues: Array.from(distinct),
+      isConstant,
       inferredType: isNumeric ? 'numeric' : 'categorical',
       looksLikeId: shared ? !!shared.looksLikeId : false
     };
@@ -544,17 +547,24 @@ function importRawData(text, { isFromScenario = false, scenarioHints = null } = 
     });
   }
 
+  const constantPredictors = dataset.headers.filter(h => columnMeta[h]?.isConstant);
   const headerDescriptions = dataset.headers.map(h => {
     if (h === selectedOutcome) return `${h} <em>(Outcome Y)</em>`;
     const meta = columnMeta[h] || {};
     const typeSetting = predictorSettings[h]?.type || meta.inferredType || 'numeric';
     const typeLabel = typeSetting === 'categorical' ? 'Categorical' : 'Continuous';
     const isPredictor = selectedPredictors.includes(h);
+    if (meta.isConstant) {
+      return `${h} <em>(Constant - excluded as predictor, no variation)</em>`;
+    }
     return isPredictor ? `${h} <em>(Predictor X - ${typeLabel})</em>` : `${h} <em>(Unused)</em>`;
   });
   let statusMessage = `Loaded ${dataset.rows.length} observations with headers: <strong>${headerDescriptions.join(', ')}</strong>.`;
   if (droppedCountForStatus > 0) {
     statusMessage += ` Using ${dataset.rows.length} of ${totalRowCountForStatus} observations (rows with missing or invalid values were excluded).`;
+  }
+  if (constantPredictors.length) {
+    statusMessage += ` Constant column(s) were detected and excluded from predictor options because they have no variation: <strong>${constantPredictors.join(', ')}</strong>.`;
   }
   setRawUploadStatus(statusMessage, 'success');
   updateOutcomeCodingFromData();
@@ -767,15 +777,28 @@ function renderVariableSelectors() {
   dataset.headers.forEach(header => {
     if (header === selectedOutcome) return;
     const meta = columnMeta[header] || {};
+    const looksLikeId = !!meta.looksLikeId;
+    const isConstant = !!meta.isConstant;
+    if (looksLikeId) {
+      // Ensure ID-like columns are not treated as predictors
+      selectedPredictors = selectedPredictors.filter(p => p !== header);
+    }
     const wrapper = document.createElement('div');
     wrapper.className = 'predictor-row stacked-row';
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.className = 'predictor-check';
     checkbox.dataset.col = header;
-    checkbox.checked = selectedPredictors.includes(header);
+    checkbox.checked = !looksLikeId && !isConstant && selectedPredictors.includes(header);
+    checkbox.disabled = looksLikeId || isConstant;
     const label = document.createElement('label');
-    label.textContent = header;
+    if (looksLikeId) {
+      label.textContent = `${header} (treated as ID; not used as predictor)`;
+    } else if (isConstant) {
+      label.textContent = `${header} (constant - excluded, no variation)`;
+    } else {
+      label.textContent = header;
+    }
     label.htmlFor = `pred-${header}`;
     checkbox.id = `pred-${header}`;
     const typeSelect = document.createElement('select');
@@ -822,31 +845,38 @@ function renderVariableSelectors() {
       });
     }
     const currentRef = predictorSettings[header]?.reference || distinct[0] || '';
-      refSelect.value = currentRef;
-      const initialType = predictorSettings[header]?.type || meta.inferredType;
+    refSelect.value = currentRef;
+    const initialType = predictorSettings[header]?.type || meta.inferredType;
     refWrapper.style.display = initialType === 'categorical' ? 'block' : 'none';
+
+    if (looksLikeId) {
+      checkbox.disabled = true;
+      typeSelect.disabled = true;
+      refSelect.disabled = true;
+    } else {
       checkbox.addEventListener('change', () => {
         if (checkbox.checked) {
-        if (!selectedPredictors.includes(header)) selectedPredictors.push(header);
-      } else {
-        selectedPredictors = selectedPredictors.filter(p => p !== header);
-      }
-      updateResults();
+          if (!selectedPredictors.includes(header)) selectedPredictors.push(header);
+        } else {
+          selectedPredictors = selectedPredictors.filter(p => p !== header);
+        }
+        updateResults();
       });
       typeSelect.addEventListener('change', () => {
         const newType = typeSelect.value;
         predictorSettings[header] = predictorSettings[header] || {};
         predictorSettings[header].type = newType;
-      const isCat = predictorSettings[header].type === 'categorical';
-      refSelect.disabled = !isCat;
-      refWrapper.style.display = isCat ? 'block' : 'none';
-      updateResults();
-    });
-    refSelect.addEventListener('change', () => {
-      predictorSettings[header] = predictorSettings[header] || {};
-      predictorSettings[header].reference = refSelect.value;
-      updateResults();
-    });
+        const isCat = predictorSettings[header].type === 'categorical';
+        refSelect.disabled = !isCat;
+        refWrapper.style.display = isCat ? 'block' : 'none';
+        updateResults();
+      });
+      refSelect.addEventListener('change', () => {
+        predictorSettings[header] = predictorSettings[header] || {};
+        predictorSettings[header].reference = refSelect.value;
+        updateResults();
+      });
+    }
     wrapper.appendChild(checkbox);
     wrapper.appendChild(label);
     wrapper.appendChild(typeSelect);
@@ -1712,24 +1742,93 @@ function renderNarratives(model) {
   const apa = document.getElementById('apa-report');
   const mgr = document.getElementById('managerial-report');
   if (!apa || !mgr || !model) return;
-  const top = (model.terms || [])
-    .slice(1)
-    .filter(t => Number.isFinite(t.z))
-    .sort((a, b) => Math.abs(b.z) - Math.abs(a.z))[0];
-  const effectText = top
-    ? `${escapeHtml(top.predictor)} (${top.type === 'categorical' ? 'categorical' : 'continuous'}) was associated with a ${formatNumber(top.estimate, 3)} change in log-odds, z = ${formatNumber(top.z, 3)}, p = ${formatP(top.p)}.`
-    : 'Effects could not be estimated.';
+
+  const terms = Array.isArray(model.terms) ? model.terms : [];
+  const effects = terms
+    .filter(t => t.type !== 'intercept' && Number.isFinite(t.p))
+    .sort((a, b) => (a.p || 1) - (b.p || 1));
+
+  let bestContinuous = null;
+  let bestCategorical = null;
+  effects.forEach(e => {
+    if (!bestContinuous && e.type === 'continuous') bestContinuous = e;
+    if (!bestCategorical && e.type === 'categorical') bestCategorical = e;
+  });
+
+  const fmt = (v, d = 3) => formatNumber(v, d);
+
   const modelPVal = Number.isFinite(model.modelChi2) && model.dfModel > 0
     ? 1 - chiSquareCdf(model.modelChi2, model.dfModel)
     : NaN;
-  apa.textContent = `Logistic regression predicting ${escapeHtml(selectedOutcome)}: model chi-square (${model.dfModel} df) = ${formatNumber(model.modelChi2, 3)}, p = ${formatP(modelPVal)}, pseudo R\u00b2 = ${formatNumber(model.pseudoR2, 3)}. ${effectText}`;
-  if (top) {
-    const orTop = Number.isFinite(top.estimate) ? Math.exp(top.estimate) : NaN;
-    mgr.textContent = `The model improves classification of ${escapeHtml(selectedOutcome)} compared with a null (intercept-only) model, with pseudo R\u00b2 \u2248 ${formatNumber(model.pseudoR2 * 100, 1)}% of log-likelihood improvement. The strongest signal is ${top.predictor}: each step in this predictor multiplies the odds that ${escapeHtml(selectedOutcome)} = 1 by about ${formatNumber(orTop, 3)} (holding other predictors constant).`;
+
+  let text =
+    `A logistic regression was fitted predicting ${escapeHtml(selectedOutcome || 'the outcome')} from ` +
+    `${(model.predictorsInfo || []).length} predictor(s) ` +
+    `(n = ${model.n}, model chi-square (${model.dfModel} df) = ${fmt(model.modelChi2, 3)}, ` +
+    `p = ${formatP(modelPVal)}, pseudo R\u00b2 = ${fmt(model.pseudoR2, 3)}). `;
+
+  if (bestContinuous) {
+    const b = bestContinuous.estimate;
+    const se = bestContinuous.se;
+    const z = bestContinuous.z;
+    const p = bestContinuous.p;
+    const or = Math.exp(b);
+    const ciLo = Number.isFinite(bestContinuous.lower) ? Math.exp(bestContinuous.lower) : NaN;
+    const ciHi = Number.isFinite(bestContinuous.upper) ? Math.exp(bestContinuous.upper) : NaN;
+    text +=
+      `The strongest continuous effect was ${escapeHtml(bestContinuous.predictor)} ` +
+      `(b = ${fmt(b)}, SE = ${fmt(se)}, z = ${fmt(z, 3)}, p = ${formatP(p)}, ` +
+      `OR ≈ ${fmt(or)}${Number.isFinite(ciLo) && Number.isFinite(ciHi) ? `, 95% CI OR [${fmt(ciLo)}, ${fmt(ciHi)}]` : ''}). `;
+  }
+
+  if (bestCategorical) {
+    const b = bestCategorical.estimate;
+    const se = bestCategorical.se;
+    const z = bestCategorical.z;
+    const p = bestCategorical.p;
+    const or = Math.exp(b);
+    const ciLo = Number.isFinite(bestCategorical.lower) ? Math.exp(bestCategorical.lower) : NaN;
+    const ciHi = Number.isFinite(bestCategorical.upper) ? Math.exp(bestCategorical.upper) : NaN;
+    const ref = bestCategorical.reference != null ? String(bestCategorical.reference) : 'reference level';
+    text +=
+      `The strongest categorical contrast was ${escapeHtml(bestCategorical.predictor)} = ${escapeHtml(bestCategorical.term)} versus ${escapeHtml(ref)} ` +
+      `(b = ${fmt(b)}, SE = ${fmt(se)}, z = ${fmt(z, 3)}, p = ${formatP(p)}, ` +
+      `OR ≈ ${fmt(or)}${Number.isFinite(ciLo) && Number.isFinite(ciHi) ? `, 95% CI OR [${fmt(ciLo)}, ${fmt(ciHi)}]` : ''}).`;
+  } else if (!bestContinuous) {
+    text += 'Effects could not be estimated.';
+  }
+
+  apa.textContent = text;
+
+  const strongest = bestContinuous || bestCategorical || null;
+
+  if (strongest) {
+    const or = Math.exp(strongest.estimate || 0);
+    let orPhrase = 'roughly similar odds';
+    if (or > 1.05) orPhrase = `about ${fmt(or, 2)} times higher odds`;
+    else if (or < 0.95) orPhrase = `about ${fmt(1 / or, 2)} times lower odds`;
+
+    if (strongest.type === 'continuous') {
+      mgr.textContent =
+        `For each one-unit increase in ${escapeHtml(strongest.predictor)}, the odds that ` +
+        `${escapeHtml(selectedOutcome || 'the outcome')} = 1 are ${orPhrase}, holding other predictors constant. ` +
+        `Overall model fit vs. the null model is summarized by χ²(${model.dfModel}) = ${fmt(model.modelChi2, 3)}, ` +
+        `p = ${formatP(modelPVal)}, pseudo R\u00b2 ≈ ${fmt(model.pseudoR2 * 100, 1)}%.`;
+    } else {
+      const ref = strongest.reference != null ? String(strongest.reference) : 'reference level';
+      mgr.textContent =
+        `Compared to ${escapeHtml(ref)}, cases with ${escapeHtml(strongest.predictor)} = ${escapeHtml(strongest.term)} ` +
+        `have ${orPhrase} that ${escapeHtml(selectedOutcome || 'the outcome')} = 1, controlling for other predictors. ` +
+        `Overall model fit vs. the null model is summarized by χ²(${model.dfModel}) = ${fmt(model.modelChi2, 3)}, ` +
+        `p = ${formatP(modelPVal)}, pseudo R\u00b2 ≈ ${fmt(model.pseudoR2 * 100, 1)}%.`;
+    }
   } else {
-    mgr.textContent = `The model shows limited evidence that the predictors improve classification of ${escapeHtml(selectedOutcome)} beyond the null model. Interpret any apparent effects with caution.`;
+    mgr.textContent =
+      `The logistic model provides limited clear evidence that individual predictors meaningfully shift the odds ` +
+      `that ${escapeHtml(selectedOutcome || 'the outcome')} = 1. Consider reviewing diagnostics and exploring alternative specifications.`;
   }
 }
+
 
 function renderActualFitted(model) {
   const plot = document.getElementById('plot-actual-fitted');

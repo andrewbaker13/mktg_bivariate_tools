@@ -10,7 +10,12 @@ function detectDelimiter(line) {
 }
 
 /**
- * Detect columns that look like row/record identifiers (every non-missing value is unique).
+ * Detect columns that look like row/record identifiers.
+ *
+ * Heuristic:
+ *  - Header name must look like an ID (e.g., "id", "record_id", "user_id", "primary_key").
+ *  - All non-missing values must be unique in the scanned sample.
+ *  - If values are numeric, any numeric values must be integers (no decimals).
  *
  * @param {string[]} headers - Column headers.
  * @param {Array<object|Array>} rows - Parsed rows; either objects keyed by header or arrays aligned with headers.
@@ -22,9 +27,67 @@ function detectIdLikeColumns(headers, rows, { maxSampleRows = MAX_UPLOAD_ROWS } 
     if (!Array.isArray(headers) || !Array.isArray(rows) || !rows.length) {
         return [];
     }
+
+    function headerLooksLikeId(rawHeader) {
+        if (!rawHeader) return false;
+        const lower = String(rawHeader).trim().toLowerCase();
+        if (!lower) return false;
+        const normalized = lower.replace(/[^a-z0-9]+/g, ' ').trim();
+        if (!normalized) return false;
+        const tokens = normalized.split(/\s+/);
+
+        // Exact "id"
+        if (tokens.length === 1 && tokens[0] === 'id') {
+            return true;
+        }
+
+        const idRoots = [
+            'record',
+            'row',
+            'user',
+            'customer',
+            'account',
+            'campaign',
+            'session',
+            'transaction',
+            'order',
+            'visit',
+            'visitor',
+            'member',
+            'client'
+        ];
+
+        // Any token that ends with "id" and starts with a known root (e.g., "customerid")
+        if (tokens.some(token => {
+            if (!token.endsWith('id')) return false;
+            const root = token.slice(0, -2);
+            return idRoots.includes(root);
+        })) {
+            return true;
+        }
+
+        // Patterns like "user id", "customer id", "record id"
+        if (tokens.includes('id') && tokens.some(t => idRoots.includes(t))) {
+            return true;
+        }
+
+        // Keys: "primary key", "pk", "pk key"
+        if (tokens.includes('key')) {
+            if (tokens.includes('primary') || tokens.includes('pk')) {
+                return true;
+            }
+        }
+        if (tokens.length === 1 && (tokens[0] === 'pk' || tokens[0] === 'primarykey')) {
+            return true;
+        }
+
+        return false;
+    }
+
     const sampleSize = Math.min(rows.length, maxSampleRows);
     const valueSets = headers.map(() => new Set());
     const nonMissingCounts = headers.map(() => 0);
+    const hasNonIntegerNumeric = headers.map(() => false);
 
     for (let i = 0; i < sampleSize; i++) {
         const row = rows[i];
@@ -39,18 +102,106 @@ function detectIdLikeColumns(headers, rows, { maxSampleRows = MAX_UPLOAD_ROWS } 
                 value = undefined;
             }
             if (value === null || value === undefined || value === '') continue;
+            const stringValue = String(value);
             nonMissingCounts[j]++;
-            valueSets[j].add(String(value));
+            valueSets[j].add(stringValue);
+
+            const num = Number(stringValue);
+            if (Number.isFinite(num) && !Number.isInteger(num)) {
+                hasNonIntegerNumeric[j] = true;
+            }
         }
     }
 
     const candidates = [];
     headers.forEach((header, index) => {
-        if (nonMissingCounts[index] > 0 && valueSets[index].size === nonMissingCounts[index]) {
-            candidates.push({ header, index });
+        if (!headerLooksLikeId(header)) {
+            return;
         }
+        const nonMissing = nonMissingCounts[index];
+        if (!nonMissing) {
+            return;
+        }
+        const allUnique = valueSets[index].size === nonMissing;
+        if (!allUnique) {
+            return;
+        }
+        // If any numeric values are present and non-integer, treat as non-ID.
+        if (hasNonIntegerNumeric[index]) {
+            return;
+        }
+        candidates.push({ header, index });
     });
     return candidates;
+}
+
+/**
+ * Detect columns that have no variation (all non-missing values are identical).
+ *
+ * These columns are often not useful as predictors because they cannot explain
+ * differences in outcomes. Callers can use this to disable or drop such columns
+ * and to show a user-facing explanation.
+ *
+ * @param {string[]} headers - Column headers.
+ * @param {Array<object|Array>} rows - Parsed rows; either objects keyed by header or arrays aligned with headers.
+ * @param {object} [options]
+ * @param {number} [options.maxSampleRows=MAX_UPLOAD_ROWS] - Max rows to scan.
+ * @returns {{header: string, index: number, value: any, isNumeric: boolean}[]} constant columns.
+ */
+function detectConstantColumns(headers, rows, { maxSampleRows = MAX_UPLOAD_ROWS } = {}) {
+    if (!Array.isArray(headers) || !Array.isArray(rows) || !rows.length) {
+        return [];
+    }
+
+    const sampleSize = Math.min(rows.length, maxSampleRows);
+    const firstValues = headers.map(() => undefined);
+    const allSame = headers.map(() => true);
+    const nonMissingCounts = headers.map(() => 0);
+    const allNumeric = headers.map(() => true);
+
+    for (let i = 0; i < sampleSize; i++) {
+        const row = rows[i];
+        for (let j = 0; j < headers.length; j++) {
+            const header = headers[j];
+            let value;
+            if (Array.isArray(row)) {
+                value = row[j];
+            } else if (row && Object.prototype.hasOwnProperty.call(row, header)) {
+                value = row[header];
+            } else {
+                value = undefined;
+            }
+            if (value === null || value === undefined || value === '') continue;
+
+            nonMissingCounts[j]++;
+
+            if (firstValues[j] === undefined) {
+                firstValues[j] = value;
+            } else if (String(value) !== String(firstValues[j])) {
+                allSame[j] = false;
+            }
+
+            const num = Number(value);
+            if (!Number.isFinite(num)) {
+                allNumeric[j] = false;
+            }
+        }
+    }
+
+    const constants = [];
+    headers.forEach((header, index) => {
+        const nonMissing = nonMissingCounts[index];
+        if (!nonMissing) return;
+        if (!allSame[index]) return;
+        constants.push({
+            header,
+            index,
+            value: firstValues[index],
+            isNumeric: allNumeric[index]
+        });
+    });
+
+    return constants;
 }
 
 /**

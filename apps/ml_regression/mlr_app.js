@@ -283,10 +283,13 @@ function buildColumnMeta(rows, headers) {
       if (distinct.size < 50) distinct.add(String(v));
     });
     const isNumeric = numericCount === values.length - missing;
+    const nonMissing = values.length - missing;
+    const isConstant = nonMissing > 0 && distinct.size === 1;
     meta[header] = {
       isNumeric,
       missing,
       distinctValues: Array.from(distinct),
+      isConstant,
       inferredType: isNumeric ? 'numeric' : 'categorical'
     };
   });
@@ -295,7 +298,8 @@ function buildColumnMeta(rows, headers) {
 function inferDefaults(meta, headers) {
   const numericCols = headers.filter(h => meta[h]?.isNumeric);
   const outcome = numericCols[0] || headers[0];
-  const predictors = headers.filter(h => h !== outcome);
+  // Exclude constant columns from default predictor set (no variation).
+  const predictors = headers.filter(h => h !== outcome && !meta[h]?.isConstant);
   return { outcome, predictors };
 }
 
@@ -377,17 +381,24 @@ function importRawData(text, { isFromScenario = false, scenarioHints = null } = 
     });
   }
 
+  const constantPredictors = dataset.headers.filter(h => columnMeta[h]?.isConstant);
   const headerDescriptions = dataset.headers.map(h => {
     if (h === selectedOutcome) return `${h} <em>(Outcome Y)</em>`;
     const meta = columnMeta[h] || {};
     const typeSetting = predictorSettings[h]?.type || meta.inferredType || 'numeric';
     const typeLabel = typeSetting === 'categorical' ? 'Categorical' : 'Continuous';
     const isPredictor = selectedPredictors.includes(h);
+    if (meta.isConstant) {
+      return `${h} <em>(Constant - excluded as predictor, no variation)</em>`;
+    }
     return isPredictor ? `${h} <em>(Predictor X - ${typeLabel})</em>` : `${h} <em>(Unused)</em>`;
   });
   let statusMessage = `Loaded ${dataset.rows.length} observations with headers: <strong>${headerDescriptions.join(', ')}</strong>.`;
   if (droppedCountForStatus > 0) {
     statusMessage += ` Using ${dataset.rows.length} of ${totalRowCountForStatus} observations (rows with missing or invalid values were excluded).`;
+  }
+  if (constantPredictors.length) {
+    statusMessage += ` Constant column(s) were detected and excluded from predictor options because they have no variation: <strong>${constantPredictors.join(', ')}</strong>.`;
   }
   setRawUploadStatus(statusMessage, 'success');
   renderVariableSelectors();
@@ -597,9 +608,11 @@ function renderVariableSelectors() {
     checkbox.type = 'checkbox';
     checkbox.className = 'predictor-check';
     checkbox.dataset.col = header;
-    checkbox.checked = selectedPredictors.includes(header);
+    const isConstant = !!meta.isConstant;
+    checkbox.checked = !isConstant && selectedPredictors.includes(header);
+    checkbox.disabled = isConstant;
     const label = document.createElement('label');
-    label.textContent = header;
+    label.textContent = isConstant ? `${header} (constant - excluded, no variation)` : header;
     label.htmlFor = `pred-${header}`;
     checkbox.id = `pred-${header}`;
     const typeSelect = document.createElement('select');
@@ -630,6 +643,10 @@ function renderVariableSelectors() {
     refSelect.className = 'predictor-ref';
     refSelect.dataset.col = header;
     refWrapper.appendChild(refSelect);
+    const refHelp = document.createElement('p');
+    refHelp.className = 'muted predictor-ref-help';
+    refHelp.textContent = 'The reference level serves as the baseline category. Coefficients for other levels are interpreted as differences in the outcome relative to this group, holding other predictors constant.';
+    refWrapper.appendChild(refHelp);
     const distinct = meta.distinctValues || [];
     if (!distinct.length) {
       const opt = document.createElement('option');

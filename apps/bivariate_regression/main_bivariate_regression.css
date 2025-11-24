@@ -59,3 +59,23 @@
 .summary-section {
   /* Rely on shared styles; this file only tweaks layout where needed. */
 }
+
+.advanced-card {
+  margin-top: 1rem;
+}
+
+.advanced-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  margin-top: 0.75rem;
+}
+
+.advanced-block h3 {
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.reference-selector {
+  margin-top: 1rem;
+}

@@ -18,6 +18,9 @@
     <header class="intro hero-header">
         <div class="hero-header__top">
             <h1>Pearson Correlation Studio</h1>
+            <div class="hero-context">
+                <span class="badge">Correlation tool</span>
+            </div>
         </div>
         <p class="hero-header__lede">Explore how two metrics move together with narratives, diagnostics, and ready-to-share visuals.</p>
     </header>
@@ -187,7 +190,11 @@
                         <h3>Correlation matrix heatmap</h3>
                         <div id="matrix-heatmap" class="chart-placeholder" aria-label="Correlation matrix heatmap"></div>
                         <p id="matrix-heatmap-note" class="chart-note">Upload multi-column data to view the correlation heatmap.</p>
-                        <div id="variable-stats"></div>
+                        <div id="matrix-variable-controls" class="matrix-only hidden">
+                            <h4>Variables in correlation matrix</h4>
+                            <div id="matrix-variable-list"></div>
+                            <p class="muted">Uncheck ID-like or helper columns you don&rsquo;t want in the matrix.</p>
+                        </div>
                     </article>
                 </div>
             </div>
@@ -214,6 +221,35 @@
                         <p class="muted">Toggles update immediately once charts are rendered. Confidence bands respect the current alpha setting.</p>
                     </div>
                 </details>
+            </div>
+        </section>
+
+        <section class="summary-section" aria-labelledby="summary-heading">
+            <h2 id="summary-heading">SUMMARY STATISTICS</h2>
+            <div class="card summary-stats-card">
+                <h3>Summary Statistics</h3>
+                <div class="summary-stats-grid">
+                    <div>
+                        <h4>Variables in analysis</h4>
+                        <table class="summary-table">
+                            <thead>
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Mean</th>
+                                    <th>Median</th>
+                                    <th>Std. Dev.</th>
+                                    <th>Min</th>
+                                    <th>Max</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pearson-numeric-summary-body">
+                                <tr>
+                                    <td colspan="6">Provide data to see summary statistics.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -277,6 +313,7 @@
 
     <script src="../../shared/js/csv_utils.js"></script>
     <script src="../../shared/js/ui_utils.js"></script>
+    <script src="../../shared/js/stats_utils.js"></script>
     <script src="pearson_app.js"></script>
 </body>
 

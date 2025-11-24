@@ -161,20 +161,25 @@
             </div>
             <p class="upload-status" id="raw-upload-status">No raw file uploaded.</p>
             <div class="data-actions">
-              <button type="button" id="swap-xy-upload" class="secondary hidden">Swap Predictor (X) & Outcome (Y)</button>
+              <button type="button" id="swap-xy-upload" class="secondary hidden">Swap Predictor (X) &amp; Outcome (Y)</button>
             </div>
-            <fieldset class="input-group predictor-type-group">
-                <legend>Predictor type for numeric uploads</legend>
-                <label class="radio-label">
-                  <input type="radio" name="upload-predictor-type" value="continuous" checked>
-                  <span>Continuous (numeric)</span>
-                </label>
-                <label class="radio-label">
-                  <input type="radio" name="upload-predictor-type" value="categorical">
-                  <span>Categorical (group labels)</span>
-                </label>
-              </fieldset>
+            <div class="input-group predictor-type-group">
+              <label for="upload-predictor-type">Predictor type for numeric uploads</label>
+              <select id="upload-predictor-type">
+                <option value="auto" selected>Auto &mdash; infer from data (default)</option>
+                <option value="continuous">Continuous (numeric, slope per 1-unit change)</option>
+                <option value="categorical">Categorical (groups, mean difference vs reference)</option>
+              </select>
+            </div>
             <p class="predictor-type-warning" id="upload-predictor-type-warning"></p>
+            <div id="reference-selector" class="reference-selector" style="display:none;">
+              <label for="reference-level-select">Reference group for categorical predictor</label>
+              <select id="reference-level-select"></select>
+              <p class="muted">
+                The reference group serves as the baseline; estimates for other levels are interpreted as differences
+                relative to this group throughout the coefficients, plots, and narratives.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -194,13 +199,96 @@
       </div>
     </section>
 
+    <section class="card advanced-card">
+      <details class="advanced-details">
+        <summary>Advanced analysis settings</summary>
+        <div class="advanced-grid">
+          <div class="advanced-block">
+            <h3>Hypothesis direction</h3>
+            <p class="muted">
+              Choose whether the slope test is two-sided or directional. Two-sided is the safest default; one-sided tests
+              are only appropriate when you truly care about movement in <em>one</em> direction.
+            </p>
+            <fieldset class="radio-group" aria-label="Hypothesis tail">
+              <label class="radio-label">
+                <input type="radio" name="hypothesis-tail" value="two-sided" checked>
+                <span>Two-sided (H<sub>1</sub>: slope ≠ 0)</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="hypothesis-tail" value="greater">
+                <span>One-sided (H<sub>1</sub>: slope &gt; 0)</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="hypothesis-tail" value="less">
+                <span>One-sided (H<sub>1</sub>: slope &lt; 0)</span>
+              </label>
+            </fieldset>
+            <p class="muted">
+              Directional tests adjust the reported p-value and decision at your chosen alpha but keep confidence
+              intervals two-sided for now.
+            </p>
+          </div>
+
+          <div class="advanced-block">
+            <h3>Robustness &amp; outliers</h3>
+            <p class="muted">
+              Large single-point outliers can dominate a simple regression. Use this setting as a reminder to run
+              sensitivity checks and inspect diagnostics.
+            </p>
+            <label class="switch-option">
+              <input type="checkbox" id="trim-outliers">
+              <span>Exclude extreme outliers (|z| &gt; 3.5 in X or Y) before fitting</span>
+            </label>
+            <p class="muted">
+              When checked, observations where either variable has a z-score above about 3.5 in absolute value are
+              removed before estimating the line and reporting results. Use this when a few extreme points are clearly
+              distorting an otherwise stable relationship.
+            </p>
+          </div>
+
+          <div class="advanced-block">
+            <h3>Scale &amp; transformations</h3>
+            <p class="muted">
+              Log scales can turn curved relationships into straighter lines and make coefficients easier to interpret as
+              approximate percentage effects, but they require strictly positive values.
+            </p>
+            <label class="switch-option">
+              <input type="checkbox" id="log-transform-x">
+              <span>Log-transform predictor X (ln X)</span>
+            </label>
+            <label class="switch-option">
+              <input type="checkbox" id="log-transform-y">
+              <span>Log-transform outcome Y (ln Y)</span>
+            </label>
+            <p class="muted">
+              Only rows with X &gt; 0 or Y &gt; 0 are used when the corresponding log option is checked; non-positive
+              values are dropped. Use these transforms when the diagnostics or plots suggest a curved, multiplicative,
+              or heavy-tailed relationship on the original scale.
+            </p>
+          </div>
+
+          <div class="advanced-block">
+            <h3>Reporting preferences</h3>
+            <label class="switch-option">
+              <input type="checkbox" id="report-std-slope">
+              <span>Show standardized slope (β*) alongside the raw slope</span>
+            </label>
+            <p class="muted">
+              The standardized slope rescales both X and Y to standard deviation units. It can help compare effect sizes
+              across different predictors in other tools that share this pattern.
+            </p>
+          </div>
+        </div>
+      </details>
+    </section>
+
     <section class="visual-output" aria-labelledby="visual-output-heading">
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       <div class="card">
         <article class="chart-card">
           <h3>Actual vs. Fitted</h3>
           <div id="actual-fitted-chart" class="chart-placeholder" role="img" aria-live="polite"
-            aria-label="Scatterplot of observed outcome versus fitted (predicted) values with 45-degree reference line."></div>
+            aria-label="Scatterplot of observed outcome versus fitted (predicted) values with 45-degree (dotted) reference line."></div>
           <p id="actual-fitted-caption" class="chart-note"></p>
           <details class="interpretation-aid">
             <summary>Interpretation Aid</summary>
