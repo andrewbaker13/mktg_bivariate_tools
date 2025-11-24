@@ -41,15 +41,15 @@
         </p>
         <p class="equation">
           <strong>Two independent means (equal variance, approximate t-test):</strong><br>
-          $$ n_{\text{per group}} \approx \frac{2\,(z_{1-\alpha^\*} + z_{1-\beta})^2 \sigma^2}{\Delta^2} $$
+          $$ n_{\text{per group}} \approx \frac{2\,(z_{1-\alpha^*} + z_{1-\beta})^2 \sigma^2}{\Delta^2} $$
           where \(\Delta = \mu_2 - \mu_1\) is the minimal effect you want to detect, \(\sigma\) is the common standard
-          deviation, \(z_{1-\alpha^\*}\) is the normal critical value for your test (two-sided or one-sided), and
+          deviation, \(z_{1-\alpha^*}\) is the normal critical value for your test (two-sided or one-sided), and
           \(z_{1-\beta}\) is the critical value for the desired power.
         </p>
         <p class="equation">
           <strong>Two independent proportions (approximate z-test):</strong><br>
           $$ n_{\text{per group}} \approx
-          \frac{\left[z_{1-\alpha^\*}\sqrt{2\bar{p}(1-\bar{p})} + z_{1-\beta}\sqrt{p_1(1-p_1)+p_2(1-p_2)}\right]^2}{(p_2-p_1)^2} $$
+          \frac{\left[z_{1-\alpha^*}\sqrt{2\bar{p}(1-\bar{p})} + z_{1-\beta}\sqrt{p_1(1-p_1)+p_2(1-p_2)}\right]^2}{(p_2-p_1)^2} $$
           where \(p_1\) and \(p_2\) are the group proportions and \(\bar{p} = (p_1 + p_2)/2\).
         </p>
         <details class="intro-notes">
@@ -75,13 +75,14 @@
             <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario notes</button>
           </div>
         </div>
-        <div id="scenario-description">
-          <p>
-            Use presets to explore common A/B questions (for example, testing a new subject line or a landing page
-            variant). Each scenario sets the baseline rate or mean, a target lift, and default power and confidence so
-            you can see how the design behaves.
-          </p>
-        </div>
+          <div id="scenario-description">
+            <p>
+              Use presets to explore realistic A/B testing questions a marketing analyst might face, such as subject line experiments,
+              landing page redesigns, or new upsell offers at checkout. Each scenario sets a baseline rate or mean, a minimum
+              effect that would justify a rollout, and default confidence/power so you can see how many impressions, visits, or
+              orders you would need before calling a winner.
+            </p>
+          </div>
       </div>
     </section>
 
@@ -235,14 +236,19 @@
         <details class="intro-notes" style="margin-top:0.5rem;">
           <summary>Additional info about these settings</summary>
           <p>
-            <strong>Confidence level &amp; alpha:</strong> The confidence level (for example, 95%) describes how often
-            the procedure would capture the true effect if you repeated the experiment many times. Alpha is the
-            tolerated false-positive rate (for example, 5% for a 95% confidence, two-sided test).
+            <strong>Confidence level &amp; alpha:</strong>
+            <span id="confidence-explainer-text">
+              The confidence level (for example, 95%) describes how often the procedure would capture the true effect if
+              you repeated the experiment many times. Alpha is the tolerated false-positive rate (for example, 5% for a
+              95% confidence, two-sided test).
+            </span>
           </p>
           <p>
-            <strong>Power:</strong> Power is the probability that your test will detect the specified effect size if
-            it is really present in the population. Higher power reduces the risk of a false negative but requires
-            more observations.
+            <strong>Power:</strong>
+            <span id="power-explainer-text">
+              Power is the probability that your test will detect the specified effect size if it is really present in
+              the population. Higher power reduces the risk of a false negative but requires more observations.
+            </span>
           </p>
           <p>
             <strong>Test type:</strong> A two-sided test checks for any difference between groups (better or worse).
@@ -270,22 +276,22 @@
               the x-axis is \(|p_2 - p_1|\) (difference in rates); for means, it is \(|\mu_2 - \mu_1|\).
             </p>
           </article>
-          <article class="chart-card">
-            <h3>Required total sample vs. variability</h3>
-            <div class="chart-placeholder" id="chart-variability"></div>
-            <p id="chart-variability-note" class="chart-note">
-              This chart shows how assumptions about variability affect the required sample size: for proportions,
-              different baselines \(p_1\); for means, different values of the common standard deviation \(\sigma\).
-            </p>
-          </article>
-          <article class="chart-card">
-            <h3>Required total sample vs. power</h3>
-            <div class="chart-placeholder" id="chart-power"></div>
-            <p id="chart-power-note" class="chart-note">
-              This chart plots required sample size against desired power, holding other inputs fixed. Higher power
-              (greater sensitivity) always requires a larger sample size.
-            </p>
-          </article>
+            <article class="chart-card">
+              <h3>Required total sample vs. power</h3>
+              <div class="chart-placeholder" id="chart-power"></div>
+              <p id="chart-power-note" class="chart-note">
+                This chart plots required sample size against desired power, holding other inputs fixed. Higher power
+                (greater sensitivity) always requires a larger sample size.
+              </p>
+            </article>
+            <article class="chart-card">
+              <h3>Required total sample vs. variability</h3>
+              <div class="chart-placeholder" id="chart-variability"></div>
+              <p id="chart-variability-note" class="chart-note">
+                This chart shows how assumptions about variability affect the required sample size: for proportions,
+                different baselines \(p_1\); for means, different values of the common standard deviation \(\sigma\).
+              </p>
+            </article>
         </div>
       </div>
     </section>

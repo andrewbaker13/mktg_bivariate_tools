@@ -73,6 +73,32 @@ const ABScenarios = [
   }
 ];
 
+// Enrich scenario descriptions with more marketing context
+ABScenarios.forEach(scenario => {
+  if (scenario.id === 'email-open-rate') {
+    scenario.description =
+      'You are running a weekly newsletter and want to compare a proven control subject line (Group A) with a new creative (Group B). Historical open rate is around 20%, and marketing leadership would only care about rolling out the new line if it reliably lifts opens to about 25%. This preset shows how many sends you need to have 95% confidence and 80% power to detect that kind of lift.';
+    scenario.descriptionHtml =
+      '<p><strong>Question:</strong> Will a new subject line reliably beat our current control?</p>' +
+      '<p>You are running a weekly newsletter and want to compare a proven control subject line (<strong>Group A</strong>) with a new creative (<strong>Group B</strong>). Historical open rate is around <strong>20%</strong>, and marketing leadership only cares about rolling out the new line if it reliably lifts opens to about <strong>25%</strong>.</p>' +
+      '<p>This preset assumes that 5 percentage points is the <em>minimum meaningful lift</em> and shows how many sends you need at <strong>95% confidence</strong> and <strong>80% power</strong> to detect that improvement.</p>';
+  } else if (scenario.id === 'landing-page-conversion') {
+    scenario.description =
+      'Paid media is sending traffic to your current landing page (Group A), which converts about 5% of visitors. Design has proposed a new layout (Group B) that should increase the add-to-cart or sign-up rate to roughly 6.5%. This scenario treats that 1.5 percentage-point lift as the minimum worth acting on and shows the sample size needed to detect it with 95% confidence and 80% power so you can budget impressions and test duration.';
+    scenario.descriptionHtml =
+      '<p><strong>Question:</strong> Does a redesigned landing page move the needle on conversion?</p>' +
+      '<p>Paid media is sending traffic to your current landing page (<strong>Group A</strong>), which converts about <strong>5%</strong> of visitors. Design has proposed a new layout (<strong>Group B</strong>) that is expected to lift the add-to-cart or sign-up rate to roughly <strong>6.5%</strong>.</p>' +
+      '<p>This preset treats that <strong>1.5 percentage-point lift</strong> as the minimum worth acting on and shows the sample size needed to detect it with <strong>95% confidence</strong> and <strong>80% power</strong>, so you can budget impressions and test duration.</p>';
+  } else if (scenario.id === 'average-order-value') {
+    scenario.description =
+      'E-commerce wants to test a new upsell offer (Group B) against the current checkout flow (Group A). Today the average order value is about $50, with order-to-order variability of roughly $15. Product management is interested in rolling out the upsell if it increases the mean to around $55. This preset shows how many completed orders per arm you need to have 95% confidence and 80% power to detect that $5 shift in average order value.';
+    scenario.descriptionHtml =
+      '<p><strong>Question:</strong> Is a new upsell offer at checkout worth rolling out?</p>' +
+      '<p>E‑commerce wants to test a new upsell offer (<strong>Group B</strong>) against the current checkout flow (<strong>Group A</strong>). Today the average order value is about <strong>$50</strong>, with order-to-order variability of roughly <strong>$15</strong>.</p>' +
+      '<p>Product management is interested in rolling out the upsell if it increases the mean to around <strong>$55</strong>. This preset shows how many completed orders per arm you need to have <strong>95% confidence</strong> and <strong>80% power</strong> to detect that <strong>$5 shift</strong> in average order value.</p>';
+  }
+});
+
 function hydrateTimestamps() {
   const created = document.getElementById('created-date');
   const modified = document.getElementById('modified-date');
@@ -357,7 +383,7 @@ function updateMetrics() {
   }
 }
 
-function updateNarratives() {
+  function updateNarratives() {
   const apaEl = document.getElementById('apa-report');
   const mgrEl = document.getElementById('managerial-report');
   const { n1, n2, nTotal } = SampleSizeABState;
@@ -397,8 +423,8 @@ function updateNarratives() {
       `${n2Label} in your treatment group, for a total of ${nTotalLabel}. This gives roughly ${powerPct}% power ` +
       `to detect a shift of about ${absDelta.toFixed(2)} units in the average outcome, at ${confPct}% confidence.`;
     if (mgrEl) mgrEl.textContent = mgrText;
-  } else {
-    const delta = SampleSizeABState.p2 - SampleSizeABState.p1;
+    } else {
+      const delta = SampleSizeABState.p2 - SampleSizeABState.p1;
     const absDeltaPct = (Math.abs(delta) * 100).toFixed(1);
     const p1Pct = (SampleSizeABState.p1 * 100).toFixed(1);
     const p2Pct = (SampleSizeABState.p2 * 100).toFixed(1);
@@ -412,9 +438,62 @@ function updateNarratives() {
       `At these settings, you would plan for about ${n1Label} users in the control experience and ${n2Label} users ` +
       `in the variant, for a total of ${nTotalLabel}. This gives around ${powerPct}% power to pick up a ` +
       `${absDeltaPct} percentage-point lift from approximately ${p1Pct}% to ${p2Pct}% at ${confPct}% confidence.`;
-    if (mgrEl) mgrEl.textContent = mgrText;
+      if (mgrEl) mgrEl.textContent = mgrText;
+    }
   }
-}
+
+  function updateExplainers() {
+    const confSpan = document.getElementById('confidence-explainer-text');
+    const powerSpan = document.getElementById('power-explainer-text');
+
+    const alpha = SampleSizeABState.alpha;
+    const power = SampleSizeABState.power;
+    const confLevel = 1 - alpha;
+    const confPct = (confLevel * 100).toFixed(1);
+    const alphaPct = (alpha * 100).toFixed(1);
+
+    if (confSpan) {
+      confSpan.textContent =
+        `With a ${confPct}% confidence level (alpha = ${alphaPct}%), if you could repeat this same A/B test many times, about ${confPct}% of the confidence intervals built this way would contain the true effect. ` +
+        `In the remaining ${alphaPct}% of cases you would see results that look like a win or loss purely from random noise.`;
+    }
+
+    if (powerSpan) {
+      const powerPct = (power * 100).toFixed(1);
+      if (SampleSizeABState.mode === OutcomeModes.MEAN) {
+        const m1 = SampleSizeABState.mean1;
+        const m2 = SampleSizeABState.mean2;
+        if (isFinite(m1) && isFinite(m2)) {
+          const diff = m2 - m1;
+          const direction = diff >= 0 ? 'increase' : 'decrease';
+          const absDiff = Math.abs(diff).toFixed(2);
+          powerSpan.textContent =
+            `At ${powerPct}% power, if the true average outcome really ${direction}s from ${m1.toFixed(
+              2
+            )} to ${m2.toFixed(2)} (a change of about ${absDiff} units), a study of this size would detect that shift (reject the null hypothesis) in roughly ${powerPct} out of 100 similar experiments. ` +
+            `In the remaining ${(100 - powerPct).toFixed(1)} out of 100 runs, random noise would hide a real change even though it exists.`;
+          return;
+        }
+      } else {
+        const p1 = SampleSizeABState.p1;
+        const p2 = SampleSizeABState.p2;
+        if (isFinite(p1) && isFinite(p2)) {
+          const diff = p2 - p1;
+          const direction = diff >= 0 ? 'lift' : 'drop';
+          const p1Pct = (p1 * 100).toFixed(1);
+          const p2Pct = (p2 * 100).toFixed(1);
+          const absDiffPct = (Math.abs(diff) * 100).toFixed(1);
+          powerSpan.textContent =
+            `At ${powerPct}% power, if the true conversion rate really moves from ${p1Pct}% to ${p2Pct}% (a ${absDiffPct} percentage-point ${direction}), a study of this size would detect that change (reject the null hypothesis) in roughly ${powerPct} out of 100 similar experiments. ` +
+            `In the remaining ${(100 - powerPct).toFixed(1)} out of 100 runs, random noise would hide a real lift or drop even though it is there.`;
+          return;
+        }
+      }
+
+      powerSpan.textContent =
+        'Power is the probability that your test will detect the effect you have entered above if it is really present in the population. Higher power reduces the risk of a false negative (missing a true effect) but requires more observations.';
+    }
+  }
 
 function buildEffectCurve() {
   const points = [];
@@ -455,6 +534,50 @@ function buildEffectCurve() {
       });
       if (nTotal && isFinite(nTotal)) points.push({ x: d, n: nTotal });
     }
+  }
+
+  function updatePowerExplainer() {
+    const span = document.getElementById('power-explainer-text');
+    if (!span) return;
+
+    const powerPct = (SampleSizeABState.power * 100).toFixed(1);
+
+    if (SampleSizeABState.mode === OutcomeModes.MEAN) {
+      const m1 = SampleSizeABState.mean1;
+      const m2 = SampleSizeABState.mean2;
+      if (isFinite(m1) && isFinite(m2)) {
+        const diff = m2 - m1;
+        const direction = diff >= 0 ? 'increase' : 'decrease';
+        const absDiff = Math.abs(diff).toFixed(2);
+        span.textContent =
+          `With ${powerPct}% power, if the true average really ${direction}s from ${m1.toFixed(2)} to ${m2.toFixed(
+            2
+          )} (a change of about ${absDiff} units), a study of this size would detect that shift in roughly ${powerPct} out of ` +
+          `100 similar experiments; in the rest, random noise would hide it even though the effect is real. Higher power makes it ` +
+          `less likely to miss a real change, but requires more observations.`;
+        return;
+      }
+    } else {
+      const p1 = SampleSizeABState.p1;
+      const p2 = SampleSizeABState.p2;
+      if (isFinite(p1) && isFinite(p2)) {
+        const diff = p2 - p1;
+        const direction = diff >= 0 ? 'lift' : 'drop';
+        const p1Pct = (p1 * 100).toFixed(1);
+        const p2Pct = (p2 * 100).toFixed(1);
+        const absDiffPct = (Math.abs(diff) * 100).toFixed(1);
+        span.textContent =
+          `With ${powerPct}% power, if the true conversion rate really moves from ${p1Pct}% to ${p2Pct}% ` +
+          `(a ${absDiffPct} percentage-point ${direction}), a study of this size would detect that change in roughly ${powerPct} ` +
+          `out of 100 similar experiments; in the rest, random noise would hide it. Higher power makes it less likely to miss a real ` +
+          `lift or drop, but requires more traffic.`;
+        return;
+      }
+    }
+
+    span.textContent =
+      'Power is the probability that your test will detect the effect you have entered above if it is really present in the population. ' +
+      'Higher power reduces the risk of a false negative (missing a true effect) but requires more observations.';
   }
   return points;
 }
@@ -743,7 +866,7 @@ function highlightCurrentOnPowerChart() {
   });
 }
 
-function updateDesign() {
+  function updateDesign() {
   let result;
   if (SampleSizeABState.mode === OutcomeModes.MEAN) {
     result = computeNMeansEqualVariance({
@@ -766,18 +889,19 @@ function updateDesign() {
     });
   }
   SampleSizeABState.n1 = result.n1;
-  SampleSizeABState.n2 = result.n2;
-  SampleSizeABState.nTotal = result.nTotal;
+    SampleSizeABState.n2 = result.n2;
+    SampleSizeABState.nTotal = result.nTotal;
 
-  updateMetrics();
-  updateNarratives();
-  renderEffectChart();
-  renderVariabilityChart();
-  renderPowerChart();
-  highlightCurrentOnEffectChart();
-  highlightCurrentOnVariabilityChart();
-  highlightCurrentOnPowerChart();
-}
+    updateMetrics();
+    updateNarratives();
+    updateExplainers();
+    renderEffectChart();
+    renderVariabilityChart();
+    renderPowerChart();
+    highlightCurrentOnEffectChart();
+    highlightCurrentOnVariabilityChart();
+    highlightCurrentOnPowerChart();
+  }
 
 function updateScenarioDownload(dataset) {
   const btn = document.getElementById('scenario-download');
@@ -822,12 +946,12 @@ function setupScenarioSelect() {
   });
 
   select.addEventListener('change', () => {
-    const scenario = ABScenarios.find(s => s.id === select.value);
-    if (!scenario) {
-      desc.innerHTML =
-        '<p>Use presets to explore common A/B questions, or leave this on Manual to configure your own design.</p>';
-      updateScenarioDownload(null);
-      return;
+      const scenario = ABScenarios.find(s => s.id === select.value);
+      if (!scenario) {
+        desc.innerHTML =
+          '<p>Use presets to explore common A/B questions, or leave this on Manual to configure your own design.</p>';
+        updateScenarioDownload(null);
+        return;
     }
 
     if (scenario.mode === OutcomeModes.MEAN) {
@@ -886,7 +1010,7 @@ function setupScenarioSelect() {
       if (sel) sel.value = scenario.settings.allocationRatio.toString();
     }
 
-    desc.innerHTML = `<p>${scenario.description}</p>`;
+    desc.innerHTML = scenario.descriptionHtml || `<p>${scenario.description}</p>`;
     updateScenarioDownload({
       filename: `${scenario.id}_notes.txt`,
       content: scenario.description
