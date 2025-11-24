@@ -716,14 +716,20 @@ function setupScenarioSelector() {
 
 // ---------- Filtering ----------
 function filterRowsForModel() {
-  if (!dataset.rows.length || !selectedOutcome || !selectedPredictors.length) {
-    return { filtered: [], dropped: 0, issues: ['Upload data and select at least one predictor.'] };
-  }
-  const usedColumns = [selectedOutcome, ...selectedPredictors];
-  const predictorsInfo = selectedPredictors.map(p => {
-    const setting = predictorSettings[p]?.type || columnMeta[p]?.inferredType || 'numeric';
-    return { name: p, type: setting };
-  });
+    if (!dataset.rows.length || !selectedOutcome || !selectedPredictors.length) {
+      return { filtered: [], dropped: 0, issues: ['Upload data and select at least one predictor.'] };
+    }
+    // Drop constant columns from the active predictor set so they do not
+    // trigger categorical-level checks or enter the design matrix.
+    const activePredictors = selectedPredictors.filter(p => !columnMeta[p]?.isConstant);
+    if (!activePredictors.length) {
+      return { filtered: [], dropped: 0, issues: ['Select at least one predictor.'] };
+    }
+    const usedColumns = [selectedOutcome, ...activePredictors];
+    const predictorsInfo = activePredictors.map(p => {
+      const setting = predictorSettings[p]?.type || columnMeta[p]?.inferredType || 'numeric';
+      return { name: p, type: setting };
+    });
   const filtered = [];
   let dropped = 0;
   const issues = [];
@@ -965,7 +971,7 @@ function renderNarratives(model) {
   mgr.textContent = `Model explains ~${formatNumber(model.r2 * 100, 1)}% of outcome variance. Largest signal: ${top ? `${top.predictor}` : 'none'}. Treat effects with caution pending diagnostics.`;
 }
 
-function renderDiagnostics(model) {
+  function renderDiagnostics(model) {
   const diagCol = document.getElementById('diag-collinearity');
   const diagRes = document.getElementById('diag-residuals');
   if (diagCol) diagCol.textContent = model.dfModel >= model.n - 1
@@ -976,7 +982,7 @@ function renderDiagnostics(model) {
     diagRes.textContent = `Residual spread ≈ ${formatNumber(resSpread, 3)}. Check residual vs. fitted and normality plots for variance and outliers.`;
   }
   const resPlot = document.getElementById('plot-residuals');
-  const resCaption = document.getElementById('plot-residuals-caption');
+      const resCaption = document.getElementById('plot-residuals-caption');
   if (resPlot && model) {
     if (!window.Plotly || !model.fitted?.length) {
       resPlot.innerHTML = '<p class="muted">Run an analysis to see residual diagnostics.</p>';
@@ -1111,12 +1117,21 @@ function updateEffectControls(predictorsInfo) {
     opt.textContent = info.name;
     focalSelect.appendChild(opt);
   });
-  if (effectState.focal && effectivePredictors.find(p => p.name === effectState.focal)) {
-    focalSelect.value = effectState.focal;
-  } else {
-    effectState.focal = effectivePredictors[0]?.name || '';
-    focalSelect.value = effectState.focal;
-  }
+    if (effectState.focal && effectivePredictors.find(p => p.name === effectState.focal)) {
+      focalSelect.value = effectState.focal;
+    } else {
+      effectState.focal = effectivePredictors[0]?.name || '';
+      focalSelect.value = effectState.focal;
+    }
+
+    // Hide the continuous range controls when the focal predictor is categorical,
+    // since X-axis range only applies to continuous focal predictors.
+    const focalInfo = effectivePredictors.find(p => p.name === effectState.focal) || null;
+    const rangeControls = document.querySelector('.range-controls');
+    if (rangeControls) {
+      const isContinuousFocal = focalInfo && focalInfo.type !== 'categorical';
+      rangeControls.style.display = isContinuousFocal ? '' : 'none';
+    }
   const nonFocalLevels = document.getElementById('effect-nonfocal-levels');
   if (nonFocalLevels) {
     nonFocalLevels.innerHTML = '';
@@ -1521,8 +1536,29 @@ function updateResults() {
       baseRow.push(Number.isFinite(lower) ? lower.toFixed(6) : '');
       baseRow.push(Number.isFinite(upper) ? upper.toFixed(6) : '');
       lines.push(baseRow.join(','));
-    }
+      }
 
-    downloadTextFile('ml_regression_fitted_residuals.csv', lines.join('\n'), { mimeType: 'text/csv' });
+      downloadTextFile('ml_regression_fitted_residuals.csv', lines.join('\n'), { mimeType: 'text/csv' });
+  }
+
+  // Override earlier equation renderer with clearer categorical formatting.
+  // For categorical terms, show (VARNAME, LEVEL=1), e.g., (Gender, Male=1).
+  function renderEquation(model) {
+    const equationEl = document.getElementById('regression-equation-output');
+    if (!equationEl || !model.terms || !model.terms.length) return;
+    const parts = model.terms.map((term, idx) => {
+      if (idx === 0) {
+        return formatNumber(term.estimate, 3);
+      }
+      const sign = term.estimate >= 0 ? '+' : '-';
+      const absVal = formatNumber(Math.abs(term.estimate), 3);
+      if (term.type === 'categorical') {
+        // Example: + 1.234 * (Gender, Male=1)
+        return `${sign} ${absVal} * (${escapeHtml(term.predictor)}, ${escapeHtml(term.term)}=1)`;
+      }
+      // Continuous predictor: + 0.456 * Spend
+      return `${sign} ${absVal} * ${escapeHtml(term.predictor)}`;
+    });
+    equationEl.innerHTML = `<strong>${escapeHtml(selectedOutcome)}</strong> = ${parts.join(' ')}`;
   }
 
