@@ -293,11 +293,27 @@ function applyAlphaValue(alpha) {
 function showMnlogLoading() {
   const overlay = document.getElementById('mnlog-loading-overlay');
   if (overlay) overlay.classList.add('active');
+  const runButton = document.getElementById('mnlog-run-model');
+  if (runButton && !runButton.classList.contains('is-running')) {
+    runButton.classList.add('is-running');
+    runButton.disabled = true;
+    runButton.dataset.originalLabel = runButton.textContent || 'Run multinomial model';
+    runButton.innerHTML =
+      '<span class="btn-spinner" aria-hidden="true"></span><span class="btn-label">Running...</span>';
+  }
 }
 
 function hideMnlogLoading() {
   const overlay = document.getElementById('mnlog-loading-overlay');
   if (overlay) overlay.classList.remove('active');
+  const runButton = document.getElementById('mnlog-run-model');
+  if (runButton && runButton.classList.contains('is-running')) {
+    runButton.classList.remove('is-running');
+    runButton.disabled = false;
+    const original = runButton.dataset.originalLabel || 'Run multinomial model';
+    runButton.textContent = original;
+    delete runButton.dataset.originalLabel;
+  }
 }
 
 function setMnlogPlaceholders(message = 'Run the multinomial model to see results.') {
@@ -996,6 +1012,36 @@ function updateOutcomeLevelsForSelectedOutcome() {
   refSelect.value = mnlogReferenceLevel;
 }
 
+function inferMnlogPredictorMeta(headers, rows, outcomeName) {
+  if (
+    !Array.isArray(headers) ||
+    !headers.length ||
+    !Array.isArray(rows) ||
+    !rows.length ||
+    !window.PredictorUtils ||
+    typeof window.PredictorUtils.inferPredictorMeta !== 'function'
+  ) {
+    return [];
+  }
+
+  const meta = window.PredictorUtils.inferPredictorMeta(headers, rows, {
+    outcomeName,
+    sampleSize: 200,
+    minContinuousDistinct: 10
+  });
+
+  // For this app we only need a subset of fields and keep the previous
+  // property names for compatibility.
+  return meta.map(entry => ({
+    name: entry.name,
+    colIndex: entry.colIndex,
+    uniqueCount: entry.uniqueCount,
+    isText: entry.isText,
+    canTreatAsContinuous: entry.canContinuous,
+    looksLikeId: entry.looksLikeId
+  }));
+}
+
 function populatePredictorList() {
   const container = document.getElementById('mnlog-predictor-list');
   if (!container) return;
@@ -1015,129 +1061,95 @@ function populatePredictorList() {
     return;
   }
 
-  headers.forEach(header => {
-  if (header === mnlogSelectedOutcome) return;
+  const metaList = inferMnlogPredictorMeta(headers, rows, mnlogSelectedOutcome);
 
-  const colIndex = headers.indexOf(header);
-  const sampleSize = Math.min(rows.length, 200);
-  const seenValues = new Set();
-  let numericCandidate = true;
-  let integerCandidate = true;
+  metaList.forEach(meta => {
+    const { name, uniqueCount, isText, canTreatAsContinuous, looksLikeId } = meta;
 
-  for (let i = 0; i < sampleSize; i++) {
-    const row = rows[i];
-    const raw = row[colIndex];
-    if (raw === null || raw === undefined || String(raw).trim() === '') continue;
-    const value = String(raw).trim();
-    seenValues.add(value);
-    const num = parseFloat(value);
-    if (!Number.isFinite(num)) {
-      numericCandidate = false;
-      integerCandidate = false;
-    }
-    if (Number.isFinite(num) && !Number.isInteger(num)) {
-      integerCandidate = false;
-    }
-  }
+    const wrapper = document.createElement('div');
+    wrapper.className = 'predictor-row';
 
-  const uniqueCount = seenValues.size;
-  const isText = !numericCandidate;
-  const canTreatAsCategorical = true; // always
-  // Treat as continuous when column looks numeric with many distinct values.
-  // Numeric with very few distinct values (e.g., 0/1 or small integers) defaults to categorical.
-  const canTreatAsContinuous = numericCandidate && uniqueCount > 10;
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'predictor-toggle';
+    checkbox.value = name;
+    checkbox.checked = false; // default: user must opt in
 
-  const wrapper = document.createElement('div');
-  wrapper.className = 'predictor-row';
+    const label = document.createElement('span');
+    label.className = 'predictor-label';
 
-  const checkbox = document.createElement('input');
-  checkbox.type = 'checkbox';
-  checkbox.className = 'predictor-toggle';
-  checkbox.value = header;
-  checkbox.checked = false; // default: user must opt in
-
-  const label = document.createElement('span');
-  label.className = 'predictor-label';
-
-  const looksLikeId =
-    numericCandidate &&
-    integerCandidate &&
-    uniqueCount === sampleSize &&
-    rows.length >= 10;
-
-  if (isText || uniqueCount > 1) {
-    label.textContent = `${header} (${uniqueCount} distinct value${uniqueCount === 1 ? '' : 's'})`;
-  } else {
-    label.textContent = header;
-  }
-  if (looksLikeId) {
-    label.textContent += ' (treated as ID; not used as predictor)';
-  }
-
-  const typeSelect = document.createElement('select');
-  typeSelect.className = 'predictor-type-select';
-
-  const optCont = document.createElement('option');
-  optCont.value = 'continuous';
-  optCont.textContent = 'Continuous';
-
-  const optCat = document.createElement('option');
-  optCat.value = 'categorical';
-  optCat.textContent = 'Categorical';
-
-  // Allowed type options
-  if (isText || !canTreatAsContinuous) {
-    // Text, or numeric with very few distinct values: categorical only
-    typeSelect.appendChild(optCat);
-    typeSelect.value = 'categorical';
-  } else {
-    // Numeric with <= 10 unique values: allow both
-    typeSelect.appendChild(optCont);
-    typeSelect.appendChild(optCat);
-    typeSelect.value = 'continuous';
-  }
-
-  // Initially disable the dropdown until the box is checked (and disable entirely for ID-like columns)
-  if (looksLikeId) {
-    checkbox.disabled = true;
-    typeSelect.disabled = true;
-  } else {
-    typeSelect.disabled = !checkbox.checked;
-  }
-
-  wrapper.appendChild(checkbox);
-  wrapper.appendChild(label);
-  wrapper.appendChild(typeSelect);
-  container.appendChild(wrapper);
-
-  // Track settings only when included
-  if (checkbox.checked && !looksLikeId) {
-    mnlogSelectedPredictors.push(header);
-    mnlogPredictorSettings[header] = { type: typeSelect.value };
-  }
-
-  checkbox.addEventListener('change', () => {
-    const name = checkbox.value;
-    if (looksLikeId) return;
-    typeSelect.disabled = !checkbox.checked;
-    if (checkbox.checked) {
-      if (!mnlogSelectedPredictors.includes(name)) {
-        mnlogSelectedPredictors.push(name);
-      }
-      mnlogPredictorSettings[name] = { type: typeSelect.value };
+    if (isText || uniqueCount > 1) {
+      label.textContent = `${name} (${uniqueCount} distinct value${uniqueCount === 1 ? '' : 's'})`;
     } else {
-      mnlogSelectedPredictors = mnlogSelectedPredictors.filter(p => p !== name);
+      label.textContent = name;
     }
-  });
+    if (looksLikeId) {
+      label.textContent += ' (treated as ID; not used as predictor)';
+    }
 
-  typeSelect.addEventListener('change', () => {
-    const name = checkbox.value;
-    if (!checkbox.checked || looksLikeId) return;
-    mnlogPredictorSettings[name] = mnlogPredictorSettings[name] || {};
-    mnlogPredictorSettings[name].type = typeSelect.value;
-  });
-});
+    const typeSelect = document.createElement('select');
+    typeSelect.className = 'predictor-type-select';
 
+    const optCont = document.createElement('option');
+    optCont.value = 'continuous';
+    optCont.textContent = 'Continuous';
+
+    const optCat = document.createElement('option');
+    optCat.value = 'categorical';
+    optCat.textContent = 'Categorical';
+
+    // Allowed type options
+    if (isText || !canTreatAsContinuous) {
+      // Text, or numeric with very few distinct values: categorical only
+      typeSelect.appendChild(optCat);
+      typeSelect.value = 'categorical';
+    } else {
+      // Numeric with many distinct values: allow both, default continuous
+      typeSelect.appendChild(optCont);
+      typeSelect.appendChild(optCat);
+      typeSelect.value = 'continuous';
+    }
+
+    // Initially disable the dropdown until the box is checked (and disable entirely for ID-like columns)
+    if (looksLikeId) {
+      checkbox.disabled = true;
+      typeSelect.disabled = true;
+    } else {
+      typeSelect.disabled = !checkbox.checked;
+    }
+
+    wrapper.appendChild(checkbox);
+    wrapper.appendChild(label);
+    wrapper.appendChild(typeSelect);
+    container.appendChild(wrapper);
+
+    // Track settings only when included
+    if (checkbox.checked && !looksLikeId) {
+      mnlogSelectedPredictors.push(name);
+      mnlogPredictorSettings[name] = { type: typeSelect.value };
+    }
+
+    checkbox.addEventListener('change', () => {
+      const predictorName = checkbox.value;
+      if (looksLikeId) return;
+      typeSelect.disabled = !checkbox.checked;
+      if (checkbox.checked) {
+        if (!mnlogSelectedPredictors.includes(predictorName)) {
+          mnlogSelectedPredictors.push(predictorName);
+        }
+        mnlogPredictorSettings[predictorName] = { type: typeSelect.value };
+      } else {
+        mnlogSelectedPredictors = mnlogSelectedPredictors.filter(p => p !== predictorName);
+      }
+    });
+
+    typeSelect.addEventListener('change', () => {
+      const predictorName = checkbox.value;
+      if (!checkbox.checked || looksLikeId) return;
+      mnlogPredictorSettings[predictorName] = mnlogPredictorSettings[predictorName] || {};
+      mnlogPredictorSettings[predictorName].type = typeSelect.value;
+    });
+  });
 
   if (!mnlogSelectedPredictors.length) {
     container.insertAdjacentHTML(
@@ -1396,38 +1408,42 @@ function runMultinomialModel() {
 
   showMnlogLoading();
 
-  try {
-    const fitResult = MNLogit.fit({
-      X: design.X,
-      y: design.y,
-      classLabels: design.classLabels,
-      referenceIndex: design.referenceIndex,
-      maxIter,
-      stepSize,
-      l2: 1e-4,
-      tol: 1e-4,
-      confidenceLevel,
-      momentum
-    });
+  // Defer heavy fitting work to allow the UI (button state, overlay)
+  // to paint before MNLogit.fit runs synchronously.
+  setTimeout(() => {
+    try {
+      const fitResult = MNLogit.fit({
+        X: design.X,
+        y: design.y,
+        classLabels: design.classLabels,
+        referenceIndex: design.referenceIndex,
+        maxIter,
+        stepSize,
+        l2: 1e-4,
+        tol: 1e-4,
+        confidenceLevel,
+        momentum
+      });
 
-    mnlogLastModel = fitResult;
-    mnlogLastDesign = design;
-    mnlogEffectState = { focal: null, catLevels: {}, continuousOverrides: {} };
-    mnlogEffectFocal = null;
-    populateEffectChartCategorySelect();
-    populateEffectFocalSelect();
-    renderMnlogEffectControls();
-    if (statusEl) {
-      statusEl.textContent = `Fitted multinomial model on ${design.X.length} observation(s) with ${design.classLabels.length} outcome categories.`;
+      mnlogLastModel = fitResult;
+      mnlogLastDesign = design;
+      mnlogEffectState = { focal: null, catLevels: {}, continuousOverrides: {} };
+      mnlogEffectFocal = null;
+      populateEffectChartCategorySelect();
+      populateEffectFocalSelect();
+      renderMnlogEffectControls();
+      if (statusEl) {
+        statusEl.textContent = `Fitted multinomial model on ${design.X.length} observation(s) with ${design.classLabels.length} outcome categories.`;
+      }
+      updateMnlogResultsPanels(design, fitResult);
+      updateMnlogDiagnostics(design);
+      renderMnlogEffectChart();
+    } catch (error) {
+      if (statusEl) statusEl.textContent = error.message || 'Unable to fit multinomial model.';
+    } finally {
+      hideMnlogLoading();
     }
-    updateMnlogResultsPanels(design, fitResult);
-    updateMnlogDiagnostics(design);
-    renderMnlogEffectChart();
-  } catch (error) {
-    if (statusEl) statusEl.textContent = error.message || 'Unable to fit multinomial model.';
-  } finally {
-    hideMnlogLoading();
-  }
+  }, 0);
 }
 
 function renderMnlogEffectChart() {
@@ -1669,6 +1685,80 @@ function renderMnlogEffectChart() {
   }
 }
 
+// Summarize fitted effects (continuous and categorical) so multiple
+// narratives (APA, managerial, interpretation aids) can share logic.
+function summarizeMnlogEffects(design, fitResult) {
+  const { classLabels, referenceIndex, predictorInfo } = design || {};
+  const { coefficients: beta, stdErrors: seMat, pValues: pMat, confidenceIntervals: ciMat } =
+    fitResult || {};
+
+  if (
+    !design ||
+    !fitResult ||
+    !Array.isArray(classLabels) ||
+    !Array.isArray(beta) ||
+    !Array.isArray(seMat) ||
+    !Array.isArray(pMat)
+  ) {
+    return { effects: [], bestContinuous: null, bestCategorical: null };
+  }
+
+  const K = classLabels.length;
+
+  // Build metadata for columns
+  const termMeta = [{ type: 'intercept' }];
+  (predictorInfo || []).forEach(info => {
+    if (info.type === 'continuous') {
+      termMeta.push({ type: 'continuous', name: info.name });
+    } else if (info.type === 'categorical') {
+      (info.levels || []).forEach(level => {
+        if (level === info.refLevel) return;
+        termMeta.push({
+          type: 'categorical',
+          name: info.name,
+          level,
+          refLevel: info.refLevel
+        });
+      });
+    }
+  });
+
+  const effects = [];
+  for (let kIdx = 0; kIdx < K; kIdx++) {
+    if (kIdx === referenceIndex) continue;
+    const rowB = beta[kIdx] || [];
+    const rowSE = seMat[kIdx] || [];
+    const rowP = pMat[kIdx] || [];
+    for (let j = 1; j < rowB.length && j < termMeta.length; j++) {
+      const meta = termMeta[j];
+      if (!meta || meta.type === 'intercept') continue;
+      const b = rowB[j];
+      const se = rowSE[j];
+      const p = rowP[j];
+      if (!Number.isFinite(b) || !Number.isFinite(se) || !Number.isFinite(p)) continue;
+      const z = b / (se || 1);
+      const ci = ciMat && ciMat[kIdx] ? ciMat[kIdx][j] : null;
+      effects.push({ outcomeIndex: kIdx, meta, b, se, p, z, ci });
+    }
+  }
+
+  effects.sort((a, b) => (a.p || 1) - (b.p || 1));
+
+  let bestContinuous = null;
+  let bestCategorical = null;
+  for (const eff of effects) {
+    if (!bestContinuous && eff.meta.type === 'continuous') {
+      bestContinuous = eff;
+    }
+    if (!bestCategorical && eff.meta.type === 'categorical') {
+      bestCategorical = eff;
+    }
+    if (bestContinuous && bestCategorical) break;
+  }
+
+  return { effects, bestContinuous, bestCategorical };
+}
+
 function updateMnlogResultsPanels(design, fitResult) {
   if (!design || !fitResult) return;
   const statEl = document.getElementById('statistic-value');
@@ -1735,6 +1825,7 @@ function updateMnlogResultsPanels(design, fitResult) {
     Array.isArray(fitResult.coefficients) &&
     Array.isArray(fitResult.stdErrors) &&
     Array.isArray(fitResult.pValues);
+  const effectSummary = hasInferential ? summarizeMnlogEffects(design, fitResult) : null;
 
   // -------- APA-style narrative --------
   if (apaEl) {
@@ -1826,44 +1917,8 @@ function updateMnlogResultsPanels(design, fitResult) {
       `This model estimates how the predictors (${predictorsDesc}) shift the probability of each outcome category ` +
       `relative to the reference outcome "${refOutcome}". `;
 
-    if (hasInferential) {
-      const { coefficients: beta, stdErrors: seMat, pValues: pMat } = fitResult;
-
-      const termMeta = [{ type: 'intercept' }];
-      (design.predictorInfo || []).forEach(info => {
-        if (info.type === 'continuous') {
-          termMeta.push({ type: 'continuous', name: info.name });
-        } else if (info.type === 'categorical') {
-          (info.levels || []).forEach(level => {
-            if (level === info.refLevel) return;
-            termMeta.push({
-              type: 'categorical',
-              name: info.name,
-              level,
-              refLevel: info.refLevel
-            });
-          });
-        }
-      });
-
-      const effects = [];
-      for (let kIdx = 0; kIdx < K; kIdx++) {
-        if (kIdx === design.referenceIndex) continue;
-        const rowB = beta[kIdx] || [];
-        const rowSE = seMat[kIdx] || [];
-        const rowP = pMat[kIdx] || [];
-        for (let j = 1; j < rowB.length && j < termMeta.length; j++) {
-          const meta = termMeta[j];
-          if (!meta || meta.type === 'intercept') continue;
-          const b = rowB[j];
-          const se = rowSE[j];
-          const p = rowP[j];
-          if (!Number.isFinite(b) || !Number.isFinite(se) || !Number.isFinite(p)) continue;
-          effects.push({ outcomeIndex: kIdx, meta, b, se, p });
-        }
-      }
-
-      effects.sort((a, b) => (a.p || 1) - (b.p || 1));
+    if (hasInferential && effectSummary) {
+      const effects = effectSummary.effects || [];
       if (effects.length) {
         const top = effects[0];
         const or = Math.exp(top.b);
@@ -1974,27 +2029,26 @@ function updateMnlogDiagnostics(design) {
     : '';
 
   const fit = mnlogLastModel || {};
-  const reachedMax = Number.isFinite(fit.iterations) && Number.isFinite(fit.maxIter) && fit.iterations >= fit.maxIter;
-  const momentumFlag = fit.momentum && fit.momentum > 0 && fit.momentum < 1;
-  const iterNote = Number.isFinite(fit.iterations)
-    ? `<p><strong>Estimation details:</strong> Fitted using simple gradient ascent on the penalized log-likelihood with L2 regularization (ridge) on non-intercept terms${momentumFlag ? ` and momentum (γ ≈ ${fit.momentum.toFixed(2)})` : ''}. Convergence ${reachedMax ? '<strong>may not have been fully achieved</strong> (reached the maximum of ' + (fit.maxIter ?? 200) + ' iterations)' : 'was reached'} in ${fit.iterations} iteration(s) (max ${fit.maxIter ?? 200}), step size = ${fit.stepSize ?? 0.2}, tolerance = ${fit.tol ?? 1e-5}. Standard errors and confidence intervals are based on the inverse of the observed Fisher information (Hessian) at the solution.</p>`
-    : `<p><strong>Estimation details:</strong> Fitted using gradient ascent on the penalized log-likelihood with L2 regularization; standard errors are based on the inverse observed Fisher information (Hessian) at the solution.</p>`;
+let iterNote = '';
 
-  const llChanges = Array.isArray(fit.logLikChanges) && fit.logLikChanges.length
-    ? fit.logLikChanges
-    : null;
-  const llNote = llChanges
-    ? `<p><strong>Last ${llChanges.length} log-likelihood changes before end/convergence:</strong></p>` +
-      `<ul>` +
-      llChanges
-        .map((v, idx) => {
-          const label = `ΔLL[${idx + 1}]`;
-          const val = Number.isFinite(v) ? v.toExponential(3) : 'n/a';
-          return `<li>${label} = ${val}</li>`;
-        })
-        .join('') +
-      `</ul>`
-    : '';
+    if (window.StatsUtils && typeof window.StatsUtils.buildEstimationDetailsHtml === 'function') {
+      const coreHtml = window.StatsUtils.buildEstimationDetailsHtml({
+        engine: 'gradient_ascent',
+        iterations: fit.iterations,
+        maxIter: fit.maxIter,
+        stepSize: fit.stepSize,
+        tol: fit.tol,
+        momentum: fit.momentum,
+        lastMaxChange: fit.lastMaxChange,
+        logLikChanges: fit.logLikChanges
+      });
+      if (coreHtml) {
+        const prefix =
+          '<p><strong>Estimator:</strong> Baseline-category multinomial logistic regression fitted via gradient ascent on the penalized log-likelihood with L2 (ridge) regularization on non-intercept terms.</p>';
+        iterNote = prefix + coreHtml;
+      }
+    }
+
 
   diagContainer.innerHTML =
     droppedHtml +
@@ -2002,8 +2056,7 @@ function updateMnlogDiagnostics(design) {
     `<ul>${rowsHtml}</ul>` +
     rareNote +
     sparsityHtml +
-    iterNote +
-    llNote;
+    iterNote;
 }
 
 function renderMnlogCoefficientTable(design, fitResult) {

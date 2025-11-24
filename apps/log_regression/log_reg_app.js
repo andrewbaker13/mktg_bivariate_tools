@@ -283,6 +283,16 @@ function clearOutputs(message = 'Provide data to see results.') {
   if (constantsNote) constantsNote.textContent = '';
 }
 
+function showLogregLoading() {
+  const overlay = document.getElementById('logreg-loading-overlay');
+  if (overlay) overlay.classList.add('active');
+}
+
+function hideLogregLoading() {
+  const overlay = document.getElementById('logreg-loading-overlay');
+  if (overlay) overlay.classList.remove('active');
+}
+
 // ---------- Data ingest ----------
 function parseRawUploadText(text) {
   if (typeof text !== 'string') throw new Error('Unable to read file contents.');
@@ -316,25 +326,50 @@ function parseRawUploadText(text) {
 }
 function buildColumnMeta(rows, headers) {
   const meta = {};
+
+  // If shared predictor utilities are available, use them for
+  // consistent numeric / ID-like detection across tools.
+  let sharedMetaByName = null;
+  if (window.PredictorUtils && typeof window.PredictorUtils.inferPredictorMeta === 'function') {
+    try {
+      const sharedMeta = window.PredictorUtils.inferPredictorMeta(headers, rows, {
+        outcomeName: null,
+        sampleSize: 200,
+        minContinuousDistinct: 10
+      });
+      sharedMetaByName = sharedMeta.reduce((acc, entry) => {
+        acc[entry.name] = entry;
+        return acc;
+      }, {});
+    } catch (e) {
+      sharedMetaByName = null;
+    }
+  }
+
   headers.forEach(header => {
     const values = rows.map(r => r[header]);
-    let numericCount = 0;
     let missing = 0;
     const distinct = new Set();
+    let numericCount = 0;
     values.forEach(v => {
       if (v === null || v === undefined || v === '') { missing++; return; }
       const num = parseFloat(v);
       if (Number.isFinite(num)) numericCount++;
       if (distinct.size < 50) distinct.add(String(v));
     });
-    const isNumeric = numericCount === values.length - missing;
+
+    const shared = sharedMetaByName ? sharedMetaByName[header] : null;
+    const isNumeric = shared ? !!shared.isNumeric : numericCount === values.length - missing;
+
     meta[header] = {
       isNumeric,
       missing,
       distinctValues: Array.from(distinct),
-      inferredType: isNumeric ? 'numeric' : 'categorical'
+      inferredType: isNumeric ? 'numeric' : 'categorical',
+      looksLikeId: shared ? !!shared.looksLikeId : false
     };
   });
+
   return meta;
 }
 
@@ -854,7 +889,7 @@ function filterRowsForModel() {
 }
 
 // ---------- Modeling ----------
-function buildDesignMatrixAndFit(rows, predictorsInfo, outcomeName, alpha) {
+  function buildDesignMatrixAndFit(rows, predictorsInfo, outcomeName, alpha) {
   const y = [];
   const X = [];
   const terms = [{ predictor: 'Intercept', term: 'Intercept', label: 'Intercept', type: 'intercept' }];
@@ -874,7 +909,7 @@ function buildDesignMatrixAndFit(rows, predictorsInfo, outcomeName, alpha) {
       terms.push({ predictor: info.name, term: info.name, label: info.name, type: 'continuous' });
     }
   });
-  for (const row of rows) {
+    for (const row of rows) {
     const raw = row[outcomeName];
     let yv;
     if (outcomeCoding.mode === 'numeric01') {
@@ -905,11 +940,56 @@ function buildDesignMatrixAndFit(rows, predictorsInfo, outcomeName, alpha) {
       }
     });
     if (xRow.some(v => !Number.isFinite(v))) return { error: 'Non-numeric value detected in a continuous predictor.' };
-    X.push(xRow); y.push(yv);
-  }
-  const n = y.length;
-  const p = X[0]?.length || 0;
-  if (p <= 1) return { error: 'No predictors available to fit the model.' };
+      X.push(xRow); y.push(yv);
+    }
+    const n = y.length;
+    const p = X[0]?.length || 0;
+    if (p <= 1) return { error: 'No predictors available to fit the model.' };
+
+    // Optionally standardize continuous predictor columns (mean 0, SD 1)
+    const standardizeInput = document.getElementById('logreg-standardize-continuous');
+    const standardize = !!(standardizeInput && standardizeInput.checked);
+    if (standardize) {
+      const contCols = [];
+      let colIndex = 1; // skip intercept
+      predictorsInfo.forEach(info => {
+        if (info.type === 'categorical') {
+          const meta = columnMeta[info.name] || {};
+          const levels = meta.distinctValues || [];
+          colIndex += Math.max(0, levels.length - 1);
+        } else {
+          contCols.push(colIndex);
+          colIndex += 1;
+        }
+      });
+      contCols.forEach(j => {
+        let sum = 0;
+        let count = 0;
+        for (let i = 0; i < X.length; i++) {
+          const v = X[i][j];
+          if (Number.isFinite(v)) {
+            sum += v;
+            count++;
+          }
+        }
+        if (!count) return;
+        const mean = sum / count;
+        let varSum = 0;
+        for (let i = 0; i < X.length; i++) {
+          const v = X[i][j];
+          if (!Number.isFinite(v)) continue;
+          const diff = v - mean;
+          varSum += diff * diff;
+        }
+        const variance = count > 1 ? varSum / (count - 1) : 0;
+        const sd = Math.sqrt(Math.max(variance, 0)) || 1;
+        for (let i = 0; i < X.length; i++) {
+          const v = X[i][j];
+          if (!Number.isFinite(v)) continue;
+          X[i][j] = (v - mean) / sd;
+        }
+      });
+    }
 
   // Fit intercept-only (null) model
   const yMean = StatsUtils.mean(y);
@@ -1007,8 +1087,8 @@ function buildDesignMatrixAndFit(rows, predictorsInfo, outcomeName, alpha) {
     return sign * Math.sqrt(Math.max(contrib, 0));
   });
 
-  return {
-    n,
+    return {
+      n,
     dfModel,
     alpha,
     logLik,
@@ -1023,10 +1103,10 @@ function buildDesignMatrixAndFit(rows, predictorsInfo, outcomeName, alpha) {
     y,
     predictorsInfo,
     designMatrix: X,
-    covB,
-    outcomeFocalLabel: outcomeCoding.focalLabel,
-    outcomeNonFocalLabel: outcomeCoding.nonFocalLabel
-  };
+      covB,
+      outcomeFocalLabel: outcomeCoding.focalLabel,
+      outcomeNonFocalLabel: outcomeCoding.nonFocalLabel
+    };
 }
 
 function fitSSE(X, y) {
@@ -1126,23 +1206,69 @@ function renderEquation(model) {
     equationEl.innerHTML = `<strong>logit(Pr(${escapeHtml(selectedOutcome)}=1))</strong> = ${parts.join(' ')}`;
   }
 
-function renderNarratives(model) {
-  const apa = document.getElementById('apa-report');
-  const mgr = document.getElementById('managerial-report');
-  if (!apa || !mgr) return;
-  const top = model.terms.slice(1).filter(t => Number.isFinite(t.t)).sort((a, b) => Math.abs(b.t) - Math.abs(a.t))[0];
-  const effectText = top
-    ? `${escapeHtml(top.predictor)} (${top.type === 'categorical' ? 'categorical' : 'continuous'}) had an estimated effect of ${formatNumber(top.estimate, 3)}, t = ${formatNumber(top.t, 3)}, p = ${formatP(top.p)}.`
-    : 'Effects could not be estimated.';
-  apa.textContent = `Multiple linear regression: R² = ${formatNumber(model.r2, 3)}, adj. R² = ${formatNumber(model.adjR2, 3)}, F(${model.dfModel}, ${model.dfError}) = ${formatNumber(model.fStat, 3)}. ${effectText}`;
-  mgr.textContent = `Model explains ~${formatNumber(model.r2 * 100, 1)}% of outcome variance. Largest signal: ${top ? `${top.predictor}` : 'none'}. Treat effects with caution pending diagnostics.`;
-}
 
-function renderDiagnostics(model) {
-  const diagCol = document.getElementById('diag-collinearity');
-  const diagRes = document.getElementById('diag-residuals');
-  if (diagCol) diagCol.textContent = model.dfModel >= model.n - 1
-    ? 'Model is saturated; drop predictors or add rows.'
+
+  function renderDiagnostics(model, rows, dropped) {
+    const diagContainer = document.getElementById('diagnostics-content');
+    const rowScreenEl = document.getElementById('diag-row-screening');
+    const outcomeEl = document.getElementById('diag-outcome-balance');
+    const rareEl = document.getElementById('diag-rare-levels');
+    const diagCol = document.getElementById('diag-collinearity');
+    const diagRes = document.getElementById('diag-residuals');
+
+    const totalRows = Array.isArray(dataset.rows) ? dataset.rows.length : 0;
+    const usedRows = Array.isArray(rows) ? rows.length : 0;
+
+    if (rowScreenEl) {
+      if (dropped > 0 && totalRows) {
+        rowScreenEl.innerHTML =
+          `<strong>Row screening:</strong> ${dropped} of ${totalRows} uploaded row(s) were excluded because of missing or invalid values in the outcome or selected predictors. ${usedRows} row(s) were used in the model.`;
+      } else if (usedRows) {
+        rowScreenEl.innerHTML =
+          `<strong>Row screening:</strong> All ${usedRows} uploaded row(s) were used in the model.`;
+      } else {
+        rowScreenEl.textContent = '';
+      }
+    }
+
+    if (outcomeEl && model && Array.isArray(model.y)) {
+      const n = model.y.length || 0;
+      const count1 = model.y.filter(v => v === 1).length;
+      const count0 = model.y.filter(v => v === 0).length;
+      const pct1 = n ? ((count1 / n) * 100).toFixed(1) : '0.0';
+      const pct0 = n ? ((count0 / n) * 100).toFixed(1) : '0.0';
+      outcomeEl.innerHTML =
+        `<strong>Outcome balance (modeled data):</strong> ` +
+        `${escapeHtml(outcomeCoding.focalLabel ?? '1')} = ${count1} (${pct1}%), ` +
+        `${escapeHtml(outcomeCoding.nonFocalLabel ?? '0')} = ${count0} (${pct0}%).`;
+    }
+
+    if (rareEl && model && Array.isArray(model.predictorsInfo)) {
+      const notes = [];
+      model.predictorsInfo.forEach(info => {
+        if (info.type !== 'categorical') return;
+        const counts = new Map();
+        (rows || []).forEach(r => {
+          const lvl = r[info.name] ?? '(missing)';
+          counts.set(lvl, (counts.get(lvl) || 0) + 1);
+        });
+        const total = usedRows || 1;
+        const rareLevels = Array.from(counts.entries())
+          .filter(([_, c]) => c / total < 0.05)
+          .map(([level, c]) => `"${escapeHtml(level)}" (${c})`);
+        if (rareLevels.length) {
+          notes.push(
+            `${escapeHtml(info.name)}: rare levels ${rareLevels.join(', ')}; consider collapsing levels if estimates look unstable.`
+          );
+        }
+      });
+      rareEl.innerHTML = notes.length
+        ? `<strong>Rare predictor levels:</strong> ${notes.join(' ')}`
+        : '';
+    }
+
+    if (diagCol) diagCol.textContent = model.dfModel >= model.n - 1
+      ? 'Model is saturated; drop predictors or add rows.'
       : 'No explicit collinearity check beyond matrix invertibility; if the model failed, remove redundant predictors or collapse sparse levels.';
   if (diagRes) {
     const resSpread = StatsUtils.standardDeviation(model.residuals);
@@ -1889,7 +2015,7 @@ function renderCoefInterpretation(model) {
 }
 
 // ---------- Main update ----------
-function updateResults() {
+  function updateResults() {
   const alphaInput = document.getElementById('alpha');
   const alphaValue = alphaInput ? parseFloat(alphaInput.value) : NaN;
   const alpha = isFinite(alphaValue) && alphaValue > 0 && alphaValue < 1 ? alphaValue : 1 - selectedConfidenceLevel;
@@ -1897,7 +2023,7 @@ function updateResults() {
   const alphaEl = document.getElementById('metric-alpha');
   if (alphaEl) alphaEl.textContent = formatAlpha(alpha);
   const summaryEl = document.getElementById('assignment-summary'); if (summaryEl) summaryEl.textContent = '';
-  const { filtered, dropped, issues, predictorsInfo } = filterRowsForModel();
+    const { filtered, dropped, issues, predictorsInfo } = filterRowsForModel();
   lastFilteredRows = filtered; lastPredictorsInfo = predictorsInfo;
   const kept = filtered.length;
   if (!dataset.rows.length) { clearOutputs('Upload a CSV with an outcome and predictors to begin.'); return; }
@@ -1905,23 +2031,28 @@ function updateResults() {
   if (!selectedPredictors.length) { clearOutputs('Select at least one predictor.'); return; }
   if (issues.length) { clearOutputs(issues[0]); return; }
   if (kept < 5) { clearOutputs('Need at least 5 complete rows to proceed.'); return; }
-  updateOutcomeCodingFromData();
-  const model = buildDesignMatrixAndFit(filtered, predictorsInfo, selectedOutcome, alpha);
-  if (model.error) { clearOutputs(model.error); return; }
-  lastModel = model;
-  updateEffectControls(predictorsInfo);
-  populateMetrics(model);
-  populateCoefficients(model);
-  renderEquation(model);
-  renderNarratives(model);
-  renderDiagnostics(model);
-  renderSummaryStats(model, filtered, predictorsInfo);
-  renderEffectPlot(model, filtered, predictorsInfo);
-  renderActualFitted(model);
-  renderCoefInterpretation(model);
-  const modifiedLabel = document.getElementById('modified-date');
-  if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();
-}
+    updateOutcomeCodingFromData();
+    showLogregLoading();
+    try {
+      const model = buildDesignMatrixAndFit(filtered, predictorsInfo, selectedOutcome, alpha);
+      if (model.error) { clearOutputs(model.error); return; }
+      lastModel = model;
+      updateEffectControls(predictorsInfo);
+      populateMetrics(model);
+      populateCoefficients(model);
+      renderEquation(model);
+      renderNarratives(model);
+      renderDiagnostics(model, filtered, dropped);
+      renderSummaryStats(model, filtered, predictorsInfo);
+      renderEffectPlot(model, filtered, predictorsInfo);
+      renderActualFitted(model);
+      renderCoefInterpretation(model);
+      const modifiedLabel = document.getElementById('modified-date');
+      if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();
+    } finally {
+      hideLogregLoading();
+    }
+  }
 
   // ---------- INIT ----------
   document.addEventListener('DOMContentLoaded', () => {

@@ -93,6 +93,79 @@
     return -(((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
   }
 
+  /**
+   * Build a short HTML snippet describing optimizer / estimation details.
+   * The caller passes what it knows; fields may be omitted.
+   *
+   * @param {Object} info
+   * @param {string} info.engine - e.g., 'gradient_ascent' or 'irls'.
+   * @param {number} [info.iterations]
+   * @param {number} [info.maxIter]
+   * @param {number} [info.stepSize]
+   * @param {number} [info.tol]
+   * @param {number} [info.momentum]
+   * @param {number} [info.lastMaxChange]
+   * @param {number[]} [info.logLikChanges]
+   * @returns {string} HTML string.
+   */
+  function buildEstimationDetailsHtml(info) {
+    if (!info || typeof info !== 'object') {
+      return '';
+    }
+    const engine = info.engine || 'optimizer';
+    const iterations = Number.isFinite(info.iterations) ? info.iterations : null;
+    const maxIter = Number.isFinite(info.maxIter) ? info.maxIter : null;
+    const stepSize = Number.isFinite(info.stepSize) ? info.stepSize : null;
+    const tol = Number.isFinite(info.tol) ? info.tol : null;
+    const momentum = Number.isFinite(info.momentum) ? info.momentum : null;
+    const lastMaxChange =
+      typeof info.lastMaxChange === 'number' && Number.isFinite(info.lastMaxChange)
+        ? info.lastMaxChange
+        : null;
+
+    const reachedMaxIter = iterations !== null && maxIter !== null && iterations >= maxIter;
+    const flagNotFullyConverged =
+      reachedMaxIter && (lastMaxChange === null || lastMaxChange > 0.01);
+
+    let engineLabel = 'the optimization routine';
+    if (engine === 'gradient_ascent') {
+      engineLabel = 'simple gradient ascent on the penalized log-likelihood';
+    } else if (engine === 'irls') {
+      engineLabel = 'iteratively reweighted least squares (IRLS) for logistic regression';
+    }
+
+    let parts = [];
+    parts.push(
+      `<strong>Estimation details:</strong> Fitted using ${engineLabel}` +
+        (momentum ? ` with momentum = ${momentum.toFixed(2)}` : '') +
+        '.'
+    );
+    if (iterations !== null) {
+      parts.push(
+        ` Convergence ${flagNotFullyConverged ? 'may not have been fully achieved' : 'was effectively reached'}` +
+          ` in ${iterations} iteration(s)` +
+          (maxIter !== null ? ` (max ${maxIter})` : '') +
+          (stepSize !== null ? `, step size = ${stepSize}` : '') +
+          (tol !== null ? `, tolerance = ${tol}` : '') +
+          '.'
+      );
+    }
+
+    const changes = Array.isArray(info.logLikChanges) ? info.logLikChanges : null;
+    let changesHtml = '';
+    if (changes && changes.length) {
+      changesHtml += `<p><strong>Last ${changes.length} log-likelihood changes before end/convergence:</strong></p><ul>`;
+      changes.forEach((v, idx) => {
+        const label = `ΔLL[${idx + 1}]`;
+        const val = Number.isFinite(v) ? v.toExponential(3) : 'n/a';
+        changesHtml += `<li>${label} = ${val}</li>`;
+      });
+      changesHtml += '</ul>';
+    }
+
+    return `<p>${parts.join(' ')}</p>${changesHtml}`;
+  }
+
   // Expose the functions on a single global object
   global.StatsUtils = {
     mean,
@@ -100,7 +173,8 @@
     standardDeviation,
     erf,
     normCdf,
-    normInv
+    normInv,
+    buildEstimationDetailsHtml
   };
 
 })(window);
