@@ -1,0 +1,31 @@
+# Title
+Customer Valuation with RFM and Segments
+
+# Description
+<p>
+You are working on a customer valuation project for a subscription-based ecommerce brand. Leadership wants a more data-driven way to identify which customers to prioritize for retention campaigns, win-back offers, and premium upsell programs. Rather than relying on simple rules-of-thumb (“High Value” vs. “Low Value” tags in the CRM), they want an explicit model that explains and predicts <strong>CustomerValue</strong> based on RFM-style signals.
+</p>
+<p>
+For each customer in a recent cohort, you have:
+</p>
+<ul>
+  <li><strong>CustomerValue:</strong> a synthesized value score in USD that combines past profit and projected near-term potential.</li>
+  <li><strong>Recency:</strong> days since the customer’s last order (lower values are more recent).</li>
+  <li><strong>Frequency:</strong> number of completed orders in the last 12 months.</li>
+  <li><strong>MonetaryValue:</strong> typical order value for that customer (average basket size).</li>
+  <li><strong>Segment:</strong> current CRM label (<em>High Value</em>, <em>Medium Value</em>, <em>Low Value</em>, <em>At Risk</em>).</li>
+</ul>
+<p>
+The dataset is intentionally realistic: highly engaged customers tend to have higher frequency and monetary value, but there is substantial overlap between segments and plenty of noise. Some “At Risk” customers still show surprisingly strong historical value; some “Medium Value” customers have decent frequency but modest basket sizes. Your job is not to find a perfect classifier but to build a model that explains a meaningful portion of the variance in CustomerValue and helps refine how the business uses its RFM and segment labels.
+</p>
+<p>
+Your analytical goal is to use multiple linear regression to quantify how much CustomerValue changes, on average, with recency, frequency, and monetary value, and to understand how much extra value the “High Value” segment represents beyond what RFM alone would predict.
+</p>
+
+# How to use
+<ul>
+  <li><strong>Build the model:</strong> Use <em>CustomerValue</em> as the outcome and include <em>Recency</em>, <em>Frequency</em>, <em>MonetaryValue</em>, and <em>Segment</em> (categorical) as predictors.</li>
+  <li><strong>Interpret RFM coefficients:</strong> Translate the recency, frequency, and monetary coefficients into statements like “holding other factors constant, an additional order is associated with roughly \$X higher value.”</li>
+  <li><strong>Evaluate segment effects:</strong> Compare segment coefficients to see how much extra value the CRM labels capture beyond RFM—and whether some segments (e.g., “At Risk”) are misaligned with their modeled value.</li>
+  <li><strong>Assess model fit:</strong> Use R-squared, residual SE, and diagnostic plots to discuss how much of CustomerValue is explained vs. unexplained, and how that influences downstream decisions about targeting and budget.</li>
+</ul>

@@ -1,0 +1,33 @@
+# Title
+B2B Email Outreach: Predicting Demo Request Responses
+
+# Description
+<p>
+You are supporting a B2B SaaS sales team that runs multi-touch email sequences to generate product demos. Sales leadership wants to know which types of leads are most likely to <strong>respond to outreach</strong> by booking a demo, so they can prioritize reps' time and refine targeting. Rather than relying on simple heuristics like "opened at least once," they want a model that connects engagement metrics and lead attributes to the probability of a response.
+</p>
+<p>
+For each lead that was enrolled in a recent email sequence, you have:
+</p>
+<ul>
+  <li><strong>Responded:</strong> binary indicator (1 = booked a demo within 21 days of the first email, 0 = no demo booked).</li>
+  <li><strong>Emails_Sent:</strong> number of emails delivered in the sequence before the lead was exited (due to response, opt-out, or sequence completion).</li>
+  <li><strong>Total_Opens:</strong> total number of opens recorded across the sequence.</li>
+  <li><strong>Lead_Score:</strong> numeric score from marketing automation (0–100) based on firmographics and website behavior.</li>
+  <li><strong>Industry:</strong> lead's primary industry (<em>SaaS</em>, <em>Ecommerce</em>, <em>Manufacturing</em>, <em>Agency</em>).</li>
+</ul>
+<p>
+The patterns are intentionally realistic. Higher lead scores and more opens are associated with a greater likelihood of response, but they are far from perfect predictors: some high-score leads never respond, and a handful of modest-score leads still book demos. Industry matters, but only moderately: SaaS and ecommerce leads respond a bit more often, while manufacturing and agency leads are somewhat less likely, with plenty of overlap.
+</p>
+<p>
+Your analytical goal is to use <strong>logistic regression</strong> to model the probability that a lead responds (<code>Responded = 1</code>) as a function of email volume, engagement, lead score, and industry. The focus is on interpretable effects—for example, "holding industry and emails sent constant, a 10-point increase in lead score multiplies the odds of response by about X"—rather than on building a perfect classifier.
+</p>
+
+# How to use
+<ul>
+  <li><strong>Outcome:</strong> set <em>Responded</em> as the binary outcome (1 = yes, 0 = no).</li>
+  <li><strong>Predictors:</strong> include <em>Emails_Sent</em>, <em>Total_Opens</em>, and <em>Lead_Score</em> as numeric predictors, and treat <em>Industry</em> as categorical.</li>
+  <li><strong>Interpret odds ratios:</strong> translate coefficients into odds ratios that describe how the odds of a demo response change with more opens or a higher lead score, holding other variables constant.</li>
+  <li><strong>Compare industries:</strong> use the industry coefficients to discuss which segments are relatively more or less responsive after accounting for engagement and lead quality.</li>
+  <li><strong>Connect to sales strategy:</strong> summarize how the model might inform lead prioritization, SDR territory planning, or adjustments to sequence length for different industries.</li>
+</ul>
+

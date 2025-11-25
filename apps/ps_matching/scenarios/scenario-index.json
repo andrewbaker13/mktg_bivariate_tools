@@ -1,0 +1,28 @@
+[
+  {
+    "id": "Influencer Campaign Conversion",
+    "label": "Predict purchase conversion from influencer stories",
+    "file": "scenarios/influencer_conversion.txt",
+    "dataset": "scenarios/influencer_conversion_data.csv",
+    "outcome": "Converted",
+    "predictors": ["Story_Views", "Swipe_Ups", "Influencer_Tier", "Audience_Region"],
+    "types": { "Influencer_Tier": "categorical", "Audience_Region": "categorical" }
+  },
+  {
+    "id": "B2B Email Outreach Response",
+    "label": "Predict demo responses to email sequences",
+    "file": "scenarios/email_outreach.txt",
+    "dataset": "scenarios/email_outreach_data.csv",
+    "outcome": "Responded",
+    "predictors": ["Emails_Sent", "Total_Opens", "Lead_Score", "Industry"],
+    "types": { "Industry": "categorical" }
+  },
+  {
+    "id": "Promo Incentive vs Recency",
+    "label": "Conversion by promo incentive strength and visit recency",
+    "file": "scenarios/incentive_recency.txt",
+    "dataset": "scenarios/incentive_recency_data.csv",
+    "outcome": "Converted",
+    "predictors": ["High_Incentive", "Days_Since_Last_Visit"]
+  }
+]
