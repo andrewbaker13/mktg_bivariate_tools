@@ -1165,7 +1165,12 @@ function updateEffectControls(predictorsInfo) {
       nonFocalLevels.appendChild(label);
     });
   }
-  focalSelect.onchange = () => { effectState.focal = focalSelect.value; renderEffectPlot(lastModel, lastFilteredRows, lastPredictorsInfo); };
+  focalSelect.onchange = () => {
+    effectState.focal = focalSelect.value;
+    // Rebuild non-focal categorical controls for the new focal predictor
+    updateEffectControls(lastPredictorsInfo);
+    renderEffectPlot(lastModel, lastFilteredRows, lastPredictorsInfo);
+  };
   document.querySelectorAll('input[name="effect-range"]').forEach(r => {
     r.onchange = () => {
       effectState.rangeMode = r.value;
