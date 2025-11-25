@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sample Size Planner &mdash; Correlation / Simple Regression</title>
+  <!-- Shared design system -->
+  <link rel="stylesheet" href="../../shared/css/main.css">
+  <!-- App-specific overrides -->
+  <link rel="stylesheet" href="main_sample_size_corr_regression.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="../../shared/js/stats_utils.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Sample Size Planner</h1>
+        <div class="hero-context">
+          <span class="badge">Correlation / regression</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Plan the required sample size to detect a non-zero correlation or slope in simple linear regression with your chosen confidence level, power,
+        and expected effect size. Connect planning directly to the Pearson correlation and bivariate regression tools.
+      </p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="test-overview-heading">
+      <h2 id="test-overview-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
+      <div class="card">
+        <p>
+          This planner treats the association between two variables either as a Pearson correlation \(r\) or as the slope \(\beta_1\) in a simple linear
+          regression \(Y = \beta_0 + \beta_1 X + \varepsilon\). Power calculations use the Fisher \(z\) transform for correlation (which also underlies the
+          simple regression slope test when there is a single predictor).
+        </p>
+        <p class="equation">
+          <strong>Fisher \(z\) transform for correlation:</strong><br>
+          $$ z(r) = \tfrac12 \ln\left(\frac{1 + r}{1 - r}\right), \quad \text{with}\ \operatorname{SE}\big(z(r)\big) \approx \frac{1}{\sqrt{n - 3}}. $$
+        </p>
+        <p class="equation">
+          <strong>Approximate sample size to detect \(r_1\) vs. \(r_0\):</strong><br>
+          $$ n \approx 3 + \left(\frac{z_{1-\alpha^\*} + z_{1-\beta}}{\lvert z(r_1) - z(r_0)\rvert}\right)^2, $$
+          where \(\alpha^\*\) reflects a one- or two-sided test, \(1-\beta\) is the desired power, and \(n\) is the number of independent observations.
+        </p>
+        <details class="intro-notes">
+          <summary>Additional notes &amp; assumptions</summary>
+          <p>
+            These formulas assume independent observations, a roughly linear relationship, and approximate normality of the test statistic. When you think in
+            terms of simple regression, the correlation \(r\) and the slope \(\beta_1\) are tightly linked: stronger slopes correspond to larger \(\lvert r\rvert\),
+            which reduces the required sample size for a given power and confidence level.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <section class="scenario-section" aria-labelledby="scenario-heading">
+      <h2 id="scenario-heading">PLANNING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Load a correlation / regression scenario</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Manual inputs (no preset)</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario notes</button>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>
+            Use presets to explore common marketing questions, such as the correlation between ad spend and revenue or the relationship between engagement and
+            Net Promoter Score. Each scenario sets an expected correlation, a null correlation (usually 0), and default confidence/power so you can see how many
+            observations you need before running a full regression or correlation analysis.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="inputs-heading">
+      <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>Design the study</h3>
+        </div>
+
+        <div class="mode-toggle" role="tablist" aria-label="Association type">
+          <button type="button" class="mode-button active" data-mode="correlation">Correlation (Pearson r)</button>
+          <button type="button" class="mode-button" data-mode="regression">Simple regression slope</button>
+        </div>
+
+        <div class="mode-panels">
+          <div class="mode-panel active" data-mode="correlation" id="panel-correlation">
+            <article class="group-controls">
+              <h4>Effect size (correlation)</h4>
+              <div class="input-grid">
+                <div>
+                  <label for="rho0-input">Null correlation \(r_0\)</label>
+                  <input id="rho0-input" type="number" min="-1" max="1" step="0.01" value="0">
+                  <p class="hint">Correlation under the null (often 0 for "no association").</p>
+                </div>
+                <div>
+                  <label for="rho1-input">Expected correlation \(r_1\)</label>
+                  <input id="rho1-input" type="number" min="-0.99" max="0.99" step="0.01" value="0.30">
+                  <p class="hint">Small effects: ~0.1, moderate: ~0.3, large: ~0.5 or more.</p>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="mode-panel" data-mode="regression" id="panel-regression">
+            <article class="group-controls">
+              <h4>Effect size (regression)</h4>
+              <div class="input-grid">
+                <div>
+                  <label for="rho0-reg-input">Null correlation \(r_0\) (regression view)</label>
+                  <input id="rho0-reg-input" type="number" min="-1" max="1" step="0.01" value="0">
+                  <p class="hint">Baseline correlation under the null hypothesis for the slope test (often 0 for "no linear association").</p>
+                </div>
+                <div>
+                  <label for="rho1-reg-input">Expected correlation \(r_1\) (regression view)</label>
+                  <input id="rho1-reg-input" type="number" min="-0.99" max="0.99" step="0.01" value="0.30">
+                  <p class="hint">The correlation you would consider a meaningful regression effect to be able to detect.</p>
+                </div>
+              </div>
+              <p class="muted" style="margin-top:0.5rem;">
+                For simple regression with one predictor, the significance test on the slope is determined by the correlation between \(X\) and \(Y\).
+                This view lets you set \(r_0\) and \(r_1\) while thinking in "slope" language; the planner uses these same values to compute how many observations
+                you need for both the Pearson correlation and the simple regression slope test.
+              </p>
+            </article>
+          </div>
+        </div>
+
+        <div class="input-grid" style="margin-top:1rem;">
+          <div>
+            <label>Confidence level</label>
+            <div class="confidence-buttons" aria-label="Confidence level">
+              <button class="confidence-button" data-level="0.90">90% Conf.</button>
+              <button class="confidence-button active" data-level="0.95">95% Conf.</button>
+              <button class="confidence-button" data-level="0.99">99% Conf.</button>
+            </div>
+            <label for="alpha" style="margin-top:0.25rem;">Significance level (&alpha;)</label>
+            <input type="number" id="alpha" min="0.001" max="0.2" step="0.001" value="0.050">
+            <p class="hint">Confidence = 1 - alpha for a two-sided test.</p>
+          </div>
+          <div>
+            <label for="power">Desired power</label>
+            <input type="number" id="power" min="0.5" max="0.99" step="0.01" value="0.80">
+            <p class="hint">Common choices are 80% or 90% power.</p>
+          </div>
+        </div>
+
+        <details class="advanced-details" style="margin-top:0.75rem;">
+          <summary>Advanced settings</summary>
+          <div class="input-grid" style="margin-top:0.5rem;">
+            <div>
+              <label for="sidedness">Test type</label>
+              <select id="sidedness">
+                <option value="two">Two-sided (default)</option>
+                <option value="one">One-sided</option>
+              </select>
+              <p class="hint">
+                Two-sided tests are standard when any increase or decrease in the association matters. One-sided tests focus on a directional effect and
+                reduce the required sample size, but must be justified by your decision context.
+              </p>
+            </div>
+          </div>
+        </details>
+
+        <details class="intro-notes" style="margin-top:0.5rem;">
+          <summary>Additional info about these settings</summary>
+          <p>
+            <strong>Confidence level &amp; alpha:</strong>
+            <span id="confidence-explainer-text">
+              The confidence level (for example, 95%) describes how often the procedure would capture the true correlation if you repeated the experiment many times.
+              Alpha is the tolerated false-positive rate (for example, 5% for a 95% confidence, two-sided test).
+            </span>
+          </p>
+          <p>
+            <strong>Effect size (correlation r):</strong>
+            <span id="effect-explainer-text">
+              The null correlation \(r_0\) and expected correlation \(r_1\) describe how strong a linear relationship you want to be able to rule out or detect.
+              Small correlations (around 0.10) are subtle; moderate (around 0.30) are noticeable; large (around 0.50+) indicate a strong linear trend.
+            </span>
+          </p>
+          <p>
+            <strong>Power:</strong>
+            <span id="power-explainer-text">
+              Power is the probability that your test will detect the specified correlation if it is really present in the population.
+              Higher power reduces the risk of a false negative but requires more observations.
+            </span>
+          </p>
+          <p>
+            <strong>Test type (one- vs. two-sided):</strong>
+            <span id="sidedness-explainer-text">
+              Two-sided tests look for any increase or decrease in the correlation, which is standard when you care about changes in either direction.
+              One-sided tests focus on a specific direction (for example, positive correlation only) and can reduce required sample size, but they ignore evidence in the opposite direction.
+            </span>
+          </p>
+        </details>
+      </article>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      <div class="card">
+        <div class="chart-grid">
+          <article class="chart-card">
+            <h3>Required total sample vs. effect size</h3>
+            <div id="chart-effect" class="chart-placeholder"></div>
+            <p id="chart-effect-note" class="chart-note">
+              This chart shows how required sample size changes as the absolute difference \(|r_1 - r_0|\) grows. Stronger correlations (larger \(|r_1|\) away
+              from \(r_0\)) reduce the required sample size for the same confidence and power.
+            </p>
+          </article>
+          <article class="chart-card">
+            <h3>Required total sample vs. power</h3>
+            <div id="chart-power" class="chart-placeholder"></div>
+            <p id="chart-power-note" class="chart-note">
+              This chart plots required sample size against desired power, holding the effect size and alpha fixed. Higher power (greater sensitivity) always
+              requires a larger sample size.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="test-results" aria-labelledby="test-results-heading">
+      <h2 id="test-results-heading">DESIGN SUMMARY</h2>
+      <div class="card metrics-panel">
+        <div class="metric-output">
+          <span>Required total sample size (N):</span>
+          <span id="metric-n" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Null vs. expected correlation:</span>
+          <span id="metric-r" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Design alpha / confidence:</span>
+          <span id="metric-alpha" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Design power:</span>
+          <span id="metric-power" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Test type:</span>
+          <span id="metric-test" class="dynamic-value">&ndash;</span>
+        </div>
+      </div>
+
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>Statistical Planning Statement</h3>
+          <p id="apa-report">
+            Provide a null correlation, expected correlation, alpha, and power to generate a concise planning statement.
+          </p>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="managerial-report">
+            This panel translates the design into plain language, explaining roughly how many paired observations you need to detect the planned association
+            at your chosen confidence and power.
+          </p>
+        </article>
+      </div>
+
+      <details class="intro-notes" style="margin-top:0.75rem;">
+        <summary>How to interpret this sample size</summary>
+        <p id="sample-size-explainer-text">
+          Once you enter a null correlation, expected correlation, confidence level, and power, this section will explain what the required total sample size (N) means in practical terms.
+          It will draw on your current settings to give a plain-language example of how often the study would successfully flag a real association versus how often it might miss it or produce a false alarm.
+        </p>
+      </details>
+    </section>
+
+    <section class="diagnostics-section" aria-labelledby="diagnostics-heading">
+      <h2 id="diagnostics-heading">DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+      <div class="card">
+        <details class="diagnostics-details">
+          <summary>Diagnostics &amp; Assumption Checks</summary>
+          <div id="diagnostics-content">
+            <p>
+              These sample size formulas assume independent observations, reasonably linear relationships, and no extreme outliers. They are planning-level
+              approximations: once you collect data, you should still inspect scatterplots, residuals (for regression), and stability across segments.
+            </p>
+            <p>
+              If the required sample size is infeasible, you can target a larger effect (for example, \(r_1 = 0.4\) instead of 0.2), lower the required power
+              (for example, from 90% to 80%), or accept a higher alpha with clear communication of the trade-offs.
+            </p>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="created-date">2025-11-24</span> &middot; Last updated:
+      <span id="modified-date">2025-11-24</span>
+    </p>
+    <p><a href="../../index.html">Back to Stat Analysis Selection</a></p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). Sample Size Planner (Correlation / Simple Regression). Marketing
+      Bivariate Tools.</p>
+  </footer>
+
+  <script src="../../shared/js/ui_utils.js"></script>
+  <script src="main_sample_size_corr_regression.js"></script>
+</body>
+
+</html>

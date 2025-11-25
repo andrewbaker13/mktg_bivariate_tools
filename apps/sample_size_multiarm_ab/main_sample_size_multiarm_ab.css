@@ -1,0 +1,48 @@
+.arm-table {
+  display: grid;
+  grid-template-columns: 1fr;
+  row-gap: 0.25rem;
+}
+
+.arm-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.4fr 1.2fr;
+  column-gap: 0.5rem;
+  align-items: center;
+}
+
+.arm-row.arm-header {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.arm-tag {
+  font-weight: 500;
+}
+
+.arm-label-input,
+.arm-rate-input {
+  width: 100%;
+}
+
+.goal-buttons {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.goal-button {
+  border-radius: 9999px;
+  border: 1px solid #d1d5db;
+  padding: 0.25rem 0.75rem;
+  background: #f9fafb;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.goal-button.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}

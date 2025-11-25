@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Series Forecaster — ARIMA</title>
+  <link rel="stylesheet" href="../../shared/css/main.css">
+  <link rel="stylesheet" href="main_arima_forecaster.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="../../shared/js/csv_utils.js"></script>
+  <script src="../../shared/js/stats_utils.js"></script>
+  <script src="../../shared/js/time_series_utils.js"></script>
+</head>
+
+<body>
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Time Series Forecaster</h1>
+        <div class="hero-context">
+          <span class="badge">ARIMA</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Upload a single time series (date + metric), explore ARIMA models, and generate short-term forecasts with
+        diagnostics and narrative explanations. This tool is designed for marketing metrics such as weekly revenue,
+        monthly active users, or campaign response volume.
+      </p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="test-overview-heading">
+      <h2 id="test-overview-heading">OVERVIEW &amp; MODELING APPROACH</h2>
+      <div class="card">
+        <p>
+          This app fits ARIMA models to a univariate time series using a JavaScript ARIMA engine. You can start with a
+          simple automatic search over a small grid of ARIMA(p,d,q) models, and then refine the order manually using
+          patterns in the autocorrelation (ACF) and partial autocorrelation (PACF) plots.
+        </p>
+        <details class="intro-notes">
+          <summary>What is ARIMA doing under the hood?</summary>
+          <p>
+            ARIMA models combine three ingredients:
+            (1) <strong>Autoregressive (AR)</strong> terms that regress the series on its own lags,
+            (2) <strong>Integrated (I)</strong> differencing to remove trends, and
+            (3) <strong>Moving average (MA)</strong> terms that model serially correlated shocks.
+            For many marketing series, a low-order ARIMA model after an appropriate differencing step is enough to
+            capture the main pattern and produce reasonable short-term forecasts.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="data-inputs-heading">
+      <h2 id="data-inputs-heading">DATA &amp; SETTINGS</h2>
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>Upload or paste a time series</h3>
+        </div>
+
+        <div class="input-grid">
+          <div>
+            <label for="file-input">Upload CSV (date + value)</label>
+            <input type="file" id="file-input" accept=".csv,text/csv">
+            <p class="hint">Expected columns: a date/time column and a numeric metric column. Extra columns will be ignored.</p>
+          </div>
+          <div>
+            <label for="paste-area">Or paste data (CSV format)</label>
+            <textarea id="paste-area" rows="4" placeholder="date,value&#10;2023-01-01,123&#10;2023-01-08,145"></textarea>
+            <button type="button" id="paste-parse-btn" class="secondary" style="margin-top:0.5rem;">Parse pasted data</button>
+          </div>
+        </div>
+
+        <div class="input-grid" style="margin-top:1rem;">
+          <div>
+            <label for="date-column-select">Date column</label>
+            <select id="date-column-select"></select>
+          </div>
+          <div>
+            <label for="value-column-select">Metric column</label>
+            <select id="value-column-select"></select>
+          </div>
+          <div>
+            <label for="frequency-select">Frequency</label>
+            <select id="frequency-select">
+              <option value="auto">Auto-detect</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+            <p class="hint">Frequency helps interpret lags and the forecast horizon (e.g., weeks vs. months).</p>
+          </div>
+        </div>
+
+        <details class="advanced-details" style="margin-top:0.75rem;">
+          <summary>Transform &amp; difference</summary>
+          <div class="input-grid" style="margin-top:0.5rem;">
+            <div>
+              <label><input type="checkbox" id="log-transform-checkbox"> Log transform series</label>
+              <p class="hint">Log transform can help stabilize variance for strictly positive metrics (e.g., revenue, counts).</p>
+            </div>
+            <div>
+              <label for="difference-order-input">Difference order (d)</label>
+              <input type="number" id="difference-order-input" min="0" max="2" step="1" value="0">
+              <p class="hint">Set d = 1 to remove a linear trend; leave at 0 if the series already looks roughly stationary.</p>
+            </div>
+          </div>
+        </details>
+      </article>
+    </section>
+
+    <section class="input-card" aria-labelledby="model-settings-heading">
+      <h2 id="model-settings-heading">MODEL SETTINGS</h2>
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>Choose ARIMA orders</h3>
+        </div>
+
+        <div class="mode-toggle" role="tablist" aria-label="Model selection mode">
+          <button type="button" class="mode-button active" data-mode="auto">Auto (suggest orders)</button>
+          <button type="button" class="mode-button" data-mode="manual">Manual (set p, d, q)</button>
+        </div>
+
+        <div class="mode-panels">
+          <div class="mode-panel active" data-mode="auto" id="panel-auto">
+            <article class="group-controls">
+              <h4>Automatic order search</h4>
+              <p class="hint">
+                The auto mode will search over a small grid of candidate ARIMA(p,d,q) models (for example, p and q up to 2)
+                using AIC or related criteria, and suggest a reasonable starting point. You can refine this in the manual
+                panel after reviewing diagnostics.
+              </p>
+              <div class="input-grid">
+                <div>
+                  <label for="auto-max-p">Max AR order (p)</label>
+                  <input type="number" id="auto-max-p" min="0" max="3" step="1" value="2">
+                </div>
+                <div>
+                  <label for="auto-max-q">Max MA order (q)</label>
+                  <input type="number" id="auto-max-q" min="0" max="3" step="1" value="2">
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="mode-panel" data-mode="manual" id="panel-manual">
+            <article class="group-controls">
+              <h4>Manual ARIMA orders</h4>
+              <div class="input-grid">
+                <div>
+                  <label for="ar-order-input">AR order (p)</label>
+                  <input type="number" id="ar-order-input" min="0" max="3" step="1" value="1">
+                </div>
+                <div>
+                  <label for="diff-order-manual-input">Difference (d)</label>
+                  <input type="number" id="diff-order-manual-input" min="0" max="2" step="1" value="0">
+                </div>
+                <div>
+                  <label for="ma-order-input">MA order (q)</label>
+                  <input type="number" id="ma-order-input" min="0" max="3" step="1" value="1">
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="input-grid" style="margin-top:1rem;">
+          <div>
+            <label for="forecast-horizon-input">Forecast horizon (steps ahead)</label>
+            <input type="number" id="forecast-horizon-input" min="1" max="52" step="1" value="12">
+            <p class="hint">For weekly data, 12 steps is about 3 months; for monthly data, 12 steps is about 1 year.</p>
+          </div>
+          <div>
+            <label>Confidence level for forecast intervals</label>
+            <div class="confidence-buttons" aria-label="Forecast interval confidence">
+              <button class="confidence-button" data-level="0.80">80% Conf.</button>
+              <button class="confidence-button active" data-level="0.95">95% Conf.</button>
+              <button class="confidence-button" data-level="0.99">99% Conf.</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:0.75rem;">
+          <button type="button" id="fit-model-btn" class="primary">Fit ARIMA model &amp; forecast</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      <div class="card">
+        <div class="chart-grid">
+          <article class="chart-card">
+            <h3>Time series &amp; forecast</h3>
+            <div id="chart-series" class="chart-placeholder"></div>
+            <p class="chart-note">
+              This chart shows the historical series, the in-sample fitted values, and the ARIMA forecast with
+              prediction intervals for the selected horizon.
+            </p>
+          </article>
+          <article class="chart-card">
+            <h3>ACF &amp; PACF (transformed series)</h3>
+            <div id="chart-acf" class="chart-placeholder"></div>
+            <div id="chart-pacf" class="chart-placeholder" style="margin-top:0.75rem;"></div>
+            <p class="chart-note">
+              Use autocorrelation (ACF) and partial autocorrelation (PACF) patterns as a qualitative cross-check on the
+              chosen AR and MA orders.
+            </p>
+          </article>
+          <article class="chart-card">
+            <h3>Residual diagnostics</h3>
+            <div id="chart-residuals" class="chart-placeholder"></div>
+            <p class="chart-note">
+              Residual plots help check whether the model has captured most of the structure in the series. Ideally,
+              residuals look like noise with no obvious pattern or autocorrelation.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="test-results" aria-labelledby="results-heading">
+      <h2 id="results-heading">FORECAST SUMMARY</h2>
+      <div class="card metrics-panel">
+        <div class="metric-output">
+          <span>Selected model:</span>
+          <span id="metric-model" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Forecast horizon:</span>
+          <span id="metric-horizon" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Interval confidence:</span>
+          <span id="metric-forecast-conf" class="dynamic-value">&ndash;</span>
+        </div>
+      </div>
+
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>Statistical Summary</h3>
+          <p id="statistical-summary">
+            Upload a time series and fit an ARIMA model to see a summary of the selected orders, fit statistics, and
+            forecast properties.
+          </p>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="managerial-summary">
+            This panel will translate the forecast into plain language: what range of future values is plausible, how
+            far ahead the pattern is likely to remain stable, and how much uncertainty you should expect in planning
+            decisions.
+          </p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="created-date">2025-11-24</span> &middot; Last updated:
+      <span id="modified-date">2025-11-24</span>
+    </p>
+    <p><a href="../../index.html">Back to Stat Analysis Selection</a></p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). Time Series Forecaster (ARIMA). Marketing Bivariate Tools.</p>
+  </footer>
+
+  <script src="../../shared/js/ui_utils.js"></script>
+  <script src="main_arima_forecaster.js"></script>
+</body>
+
+</html>
+

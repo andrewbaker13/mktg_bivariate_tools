@@ -1,0 +1,16 @@
+.chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr);
+  gap: 1rem;
+}
+
+.chart-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-placeholder {
+  width: 100%;
+  min-height: 260px;
+}
+

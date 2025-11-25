@@ -1,0 +1,24 @@
+/* Minimal overrides for the correlation / regression sample size planner.
+   This file stays intentionally light and relies on the shared design system. */
+
+.data-entry-card .input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.chart-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-placeholder {
+  min-height: 260px;
+}
+
