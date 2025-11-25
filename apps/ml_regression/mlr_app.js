@@ -213,7 +213,7 @@ function setRawUploadStatus(message, status = '', { isHtml = true } = {}) {
   statusEl.classList.remove('success', 'error');
   if (status) statusEl.classList.add(status);
 }
-function clearOutputs(message = 'Provide data to see results.') {
+  function clearOutputs(message = 'Provide data to see results.') {
   const metrics = ['metric-r2', 'metric-adj-r2', 'metric-f', 'metric-pmodel', 'metric-rmse', 'metric-mae', 'metric-resse', 'metric-df', 'metric-n', 'metric-alpha'];
   metrics.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '--'; });
   const apa = document.getElementById('apa-report');
@@ -234,9 +234,13 @@ function clearOutputs(message = 'Provide data to see results.') {
   });
   const coefInterp = document.getElementById('coef-interpretation');
   if (coefInterp) coefInterp.textContent = 'Run the model to see column descriptions and examples.';
-  const constantsNote = document.getElementById('effect-constants-note');
-  if (constantsNote) constantsNote.textContent = '';
-}
+    const constantsNote = document.getElementById('effect-constants-note');
+    if (constantsNote) constantsNote.textContent = '';
+    const nonFocalContinuous = document.getElementById('effect-nonfocal-continuous');
+    const nonFocalLevels = document.getElementById('effect-nonfocal-levels');
+    if (nonFocalContinuous) nonFocalContinuous.innerHTML = '';
+    if (nonFocalLevels) nonFocalLevels.innerHTML = '';
+  }
 
 // ---------- Data ingest ----------
 function parseRawUploadText(text) {
@@ -1182,13 +1186,18 @@ function updateEffectControls(predictorsInfo) {
   if (wrapper) wrapper.style.display = effectState.rangeMode === 'custom' ? 'inline-flex' : 'none';
 }
 
-function renderEffectPlot(model, rows, predictorsInfo) {
-  const plot = document.getElementById('plot-effect');
-  const caption = document.getElementById('plot-effect-caption');
-  const constantsNote = document.getElementById('effect-constants-note');
-  const interp = document.getElementById('effect-interpretation');
-  const nonFocalContinuous = document.getElementById('effect-nonfocal-continuous');
-  if (!plot || !model || !rows || !rows.length) return;
+  function renderEffectPlot(model, rows, predictorsInfo) {
+    const plot = document.getElementById('plot-effect');
+    const caption = document.getElementById('plot-effect-caption');
+    const constantsNote = document.getElementById('effect-constants-note');
+    const interp = document.getElementById('effect-interpretation');
+    const nonFocalContinuous = document.getElementById('effect-nonfocal-continuous');
+    const nonFocalLevels = document.getElementById('effect-nonfocal-levels');
+    if (!plot || !model || !rows || !rows.length) {
+      if (nonFocalContinuous) nonFocalContinuous.innerHTML = '';
+      if (nonFocalLevels) nonFocalLevels.innerHTML = '';
+      return;
+    }
   if (!effectState.focal || !predictorsInfo.find(p => p.name === effectState.focal)) {
     plot.innerHTML = '<p class="muted">Select a focal predictor to view its effect.</p>';
     if (caption) caption.textContent = '';
