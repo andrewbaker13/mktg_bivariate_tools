@@ -17,6 +17,59 @@ const SamplingDesigns = {
   CONVENIENCE: 'convenience'
 };
 
+const SamplingScenarios = [
+  {
+    id: 'balanced-srs',
+    label: 'Balanced segments under SRS',
+    description:
+      'Three equally-sized customer segments in a panel. Use simple random sampling to draw a moderate sample and see how the sample composition and mean value fluctuate around the true population values.',
+    config: {
+      numGroups: 3,
+      populationScenario: 'balanced',
+      design: SamplingDesigns.SRS,
+      sampleSize: 80,
+      showValues: false,
+      statisticMode: 'overall',
+      showTrueMean: true,
+      showTrueSubgroupMeans: false
+    }
+  },
+  {
+    id: 'premium-oversample',
+    label: 'Premium segment oversampled (stratified)',
+    description:
+      'A small, high-value premium segment (Group C) exists alongside two larger segments. Use stratified sampling with extra weight on Group C to ensure enough premium customers are included for precise subgroup estimates, then compare subgroup means to the population.',
+    config: {
+      numGroups: 3,
+      populationScenario: 'skewedB',
+      design: SamplingDesigns.STRATIFIED,
+      sampleSize: 120,
+      showValues: true,
+      strataWeights: [1, 1, 3],
+      statisticMode: 'subgroups',
+      subgroupDisplay: 2,
+      showTrueMean: true,
+      showTrueSubgroupMeans: true
+    }
+  },
+  {
+    id: 'regional-clusters',
+    label: 'Regional clusters vs. convenience',
+    description:
+      'A national customer base with four regions of similar size. Start with a cluster sample that selects whole regions, then switch to the convenience design to see how only sampling from one corner of the grid can bias both proportions and mean values.',
+    config: {
+      numGroups: 4,
+      populationScenario: 'balanced',
+      design: SamplingDesigns.CLUSTER,
+      sampleSize: 80,
+      showValues: false,
+      statisticMode: 'overall',
+      showTrueMean: true,
+      showTrueSubgroupMeans: false
+    }
+  }
+];
+
 let population = []; // { id, row, col, group, value }
 let currentSample = [];
 let samplingHistory = []; // overall sample mean per draw
@@ -155,6 +208,80 @@ function computeGroupSizes(numGroups, scenario) {
     }
   }
   return sizes;
+}
+
+function applySamplingScenario(id) {
+  const scenario = SamplingScenarios.find(s => s.id === id);
+  const descEl = document.getElementById('sampling-scenario-description');
+  if (!scenario) {
+    if (descEl) {
+      descEl.innerHTML =
+        '<p>Use these presets to explore sampling case studies, or leave this on Manual to configure your own population and design.</p>';
+    }
+    return;
+  }
+
+  if (descEl) {
+    descEl.innerHTML = `<p>${scenario.description}</p>`;
+  }
+
+  const cfg = scenario.config || {};
+  const numGroupsSelect = document.getElementById('num-groups-select');
+  const popScenarioSelect = document.getElementById('population-scenario-select');
+  const designSelect = document.getElementById('sampling-design-select');
+  const sampleSizeInput = document.getElementById('sample-size-input');
+  const showValuesCheckbox = document.getElementById('show-values-checkbox');
+  const statModeSelect = document.getElementById('statistic-mode-select');
+  const subgroupDisplaySelect = document.getElementById('subgroup-display-select');
+  const showTrueMeanCheckbox = document.getElementById('show-true-mean-checkbox');
+  const showTrueSubCheckbox = document.getElementById('show-true-subgroup-means-checkbox');
+
+  const numGroups = cfg.numGroups || 3;
+  const scenarioKey = cfg.populationScenario || 'balanced';
+
+  if (numGroupsSelect) numGroupsSelect.value = String(numGroups);
+  if (popScenarioSelect) popScenarioSelect.value = scenarioKey;
+
+  updateStrataWeightVisibility();
+  initPopulation(numGroups, scenarioKey);
+
+  if (designSelect && cfg.design) {
+    designSelect.value = cfg.design;
+  }
+  if (sampleSizeInput && cfg.sampleSize) {
+    sampleSizeInput.value = String(cfg.sampleSize);
+  }
+  if (showValuesCheckbox && typeof cfg.showValues === 'boolean') {
+    showValuesCheckbox.checked = cfg.showValues;
+  }
+
+  if (Array.isArray(cfg.strataWeights)) {
+    for (let g = 0; g < cfg.strataWeights.length; g++) {
+      const wInput = document.getElementById(`strata-weight-${g}`);
+      if (wInput && typeof cfg.strataWeights[g] === 'number') {
+        wInput.value = String(cfg.strataWeights[g]);
+      }
+    }
+  }
+
+  if (statModeSelect && cfg.statisticMode) {
+    statModeSelect.value = cfg.statisticMode;
+  }
+  if (subgroupDisplaySelect && typeof cfg.subgroupDisplay === 'number') {
+    subgroupDisplaySelect.value = String(cfg.subgroupDisplay);
+  } else if (subgroupDisplaySelect && cfg.subgroupDisplay === 'all') {
+    subgroupDisplaySelect.value = 'all';
+  }
+
+  if (showTrueMeanCheckbox && typeof cfg.showTrueMean === 'boolean') {
+    showTrueMeanCheckbox.checked = cfg.showTrueMean;
+  }
+  if (showTrueSubCheckbox && typeof cfg.showTrueSubgroupMeans === 'boolean') {
+    showTrueSubCheckbox.checked = cfg.showTrueSubgroupMeans;
+  }
+
+  resetSamplingStatePreservePopulation();
+  renderSamplingDistribution();
 }
 
 function renderPopulation() {
@@ -775,6 +902,25 @@ document.addEventListener('DOMContentLoaded', () => {
     regenerate();
   } else {
     initPopulation(3, 'balanced');
+  }
+
+  const samplingScenarioSelect = document.getElementById('sampling-scenario-select');
+  if (samplingScenarioSelect) {
+    samplingScenarioSelect.innerHTML = '<option value="">Manual settings (no preset)</option>';
+    SamplingScenarios.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = s.label;
+      samplingScenarioSelect.appendChild(opt);
+    });
+    samplingScenarioSelect.addEventListener('change', () => {
+      const id = samplingScenarioSelect.value;
+      if (!id) {
+        applySamplingScenario(null);
+      } else {
+        applySamplingScenario(id);
+      }
+    });
   }
 
   const designSelect = document.getElementById('sampling-design-select');

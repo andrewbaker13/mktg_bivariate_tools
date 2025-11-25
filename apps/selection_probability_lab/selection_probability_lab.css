@@ -1,0 +1,55 @@
+.selection-lab-grid {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+  gap: 1.25rem;
+}
+
+.selection-population-grid {
+  max-width: 420px;
+  margin-inline: auto;
+}
+
+.selection-population-grid .person {
+  border-radius: 3px;
+  border: 1px solid #e5e7eb;
+  font-size: 0.7rem;
+}
+
+.selection-population-grid .person.special {
+  background-color: #fee2e2;
+  border-color: #f97316;
+}
+
+.selection-population-grid .person.sampled {
+  box-shadow: 0 0 0 2px #2563eb;
+}
+
+.selection-math-panel .metric-output span:first-child {
+  font-weight: 600;
+}
+
+.selection-table-wrapper {
+  max-height: 260px;
+  overflow: auto;
+}
+
+#distribution-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+#distribution-table th,
+#distribution-table td {
+  border: 1px solid #e5e7eb;
+  padding: 0.25rem 0.5rem;
+  text-align: right;
+}
+
+#distribution-table th:first-child,
+#distribution-table td:first-child {
+  text-align: center;
+}
+
+#distribution-table thead {
+  background-color: #f9fafb;
+}
