@@ -140,6 +140,7 @@ const SelectionScenarios = [
 
 let currentPopulation = []; // { id, isSpecial }
 let currentSampleIds = [];
+let currentSampleCounts = {}; // id -> count in last sample
 let simCounts = []; // counts of K over many simulations
 
 function clamp(val, min, max) {
@@ -174,6 +175,7 @@ function initPopulationForLab() {
     currentPopulation.push({ id: i, isSpecial: i < r });
   }
   currentSampleIds = [];
+  currentSampleCounts = {};
   simCounts = [];
   renderPopulationGrid();
   renderDistribution();
@@ -206,10 +208,18 @@ function renderPopulationGrid() {
     if (person.isSpecial) {
       div.classList.add('special');
     }
-    if (currentSampleIds.includes(person.id)) {
+    const count = currentSampleCounts[person.id] || 0;
+    if (count > 0 || currentSampleIds.includes(person.id)) {
       div.classList.add('sampled');
     }
     div.textContent = (person.id + 1).toString();
+
+    if (count > 1) {
+      const badge = document.createElement('span');
+      badge.className = 'person-multi-badge';
+      badge.textContent = `x ${count}`;
+      div.appendChild(badge);
+    }
     container.appendChild(div);
   });
 
@@ -244,6 +254,10 @@ function drawSampleOnceLab() {
   }
 
   currentSampleIds = ids;
+  currentSampleCounts = {};
+  ids.forEach(id => {
+    currentSampleCounts[id] = (currentSampleCounts[id] || 0) + 1;
+  });
   const warningEl = document.getElementById('sampling-warning');
   if (warningEl) warningEl.textContent = '';
   renderPopulationGrid();
@@ -265,6 +279,7 @@ function simulateManySamplesLab() {
   const maxK = Math.min(r, n);
   simCounts = new Array(maxK + 1).fill(0);
   currentSampleIds = [];
+  currentSampleCounts = {};
 
   for (let s = 0; s < sims; s++) {
     let ids = [];
@@ -286,6 +301,10 @@ function simulateManySamplesLab() {
     }
     if (s === sims - 1) {
       currentSampleIds = ids;
+      currentSampleCounts = {};
+      ids.forEach(id => {
+        currentSampleCounts[id] = (currentSampleCounts[id] || 0) + 1;
+      });
     }
   }
 
@@ -298,6 +317,7 @@ function simulateManySamplesLab() {
 function clearSimulationLab() {
   simCounts = [];
   currentSampleIds = [];
+  currentSampleCounts = {};
   renderPopulationGrid();
   renderDistribution();
   updateMetrics();
