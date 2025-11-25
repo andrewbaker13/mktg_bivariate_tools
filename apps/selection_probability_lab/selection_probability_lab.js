@@ -6,9 +6,26 @@ let selectionLabModifiedDate = new Date().toLocaleDateString();
 const SelectionScenarios = [
   {
     id: 'vip-panel',
-    label: 'VIP customers in a one-off panel sample',
-    description:
-      'A panel of N = 200 customers includes r = 10 VIPs. Marketing draws a one-off sample of n = 40 without replacement and wants to know the chance at least one VIP appears in the sample.',
+    label: 'VIP customers in a loyalty survey sample',
+    description: `
+      <p>
+        You are supporting a loyalty team that wants feedback from their most profitable customers before changing the benefits
+        structure. The CRM contains a small, cleaned list of <strong>N = 200</strong> loyalty members, of whom
+        <strong>r = 10</strong> are tagged as <em>VIPs</em> based on spend and engagement.
+      </p>
+      <p>
+        Your manager wants to invite only <strong>n = 40</strong> members to a short survey with an upgraded incentive, drawing
+        the list <strong>without replacement</strong>. Before locking in the sample, they ask: “What is the probability that
+        at least one VIP ends up in that invited group?” This matters, because if no VIPs are included you may miss the reaction
+        of the customers who drive most of the margin.
+      </p>
+      <p>
+        In this preset, the “special” outcome corresponds to “is a VIP customer.” The lab shows the exact probability of
+        including at least one VIP in the survey sample, and how that probability changes as you adjust the total panel size,
+        the number of VIPs, or the survey sample size. This is the same logic you would use when checking whether a sampling
+        plan is likely to capture an important segment.
+      </p>
+    `,
     settings: {
       populationSize: 200,
       sampleSize: 40,
@@ -16,14 +33,32 @@ const SelectionScenarios = [
       successCount: 1,
       samplingMode: 'without_replacement',
       probabilityMode: 'at_least_one',
-      simulations: 3000
+      simulations: 3000,
+      specialLabel: 'is a VIP customer'
     }
   },
   {
     id: 'lead-ads',
-    label: 'High-value leads in repeated ad impressions',
-    description:
-      'Each ad impression independently reaches one user out of N = 100 in a retargeting pool, with r = 5 of them being high-value prospects. You are interested in the chance of reaching at least one high-value prospect after n = 50 impressions (with replacement).',
+    label: 'High-value leads in a retargeting burst',
+    description: `
+      <p>
+        You are running a short retargeting burst to people who abandoned their cart last week. Your warm audience list has
+        <strong>N = 100</strong> users, but only <strong>r = 5</strong> of them have been scored by sales as
+        <em>high-value prospects</em> based on predicted lifetime value.
+      </p>
+      <p>
+        Over the next few days you expect around <strong>n = 50</strong> paid impressions from this audience. Each impression
+        effectively targets one person at random from the list, <strong>with replacement</strong>, because the same user can
+        be shown your ad multiple times. Your stakeholder asks: “What is the probability that at least one of those impressions
+        reaches a high-value prospect?”
+      </p>
+      <p>
+        In this preset, the “special” outcome is “is a high-value prospect.” The binomial-style model treats each impression
+        as an independent trial with probability <strong>p = r/N</strong> of landing on a high-value person. The tool shows
+        how the probability of at least one “valuable” impression grows as you increase the number of impressions or improve
+        the quality of the audience, which is exactly the trade-off you face when planning small, targeted campaigns.
+      </p>
+    `,
     settings: {
       populationSize: 100,
       sampleSize: 50,
@@ -31,14 +66,32 @@ const SelectionScenarios = [
       successCount: 1,
       samplingMode: 'with_replacement',
       probabilityMode: 'at_least_one',
-      simulations: 3000
+      simulations: 3000,
+      specialLabel: 'is a high-value prospect'
     }
   },
   {
     id: 'qc-defects',
-    label: 'Quality control: exactly k defects in a batch',
-    description:
-      'A batch of N = 120 emails has r = 8 with a formatting defect. A QA analyst checks n = 20 emails without replacement and wants the probability of finding exactly k = 2 defective emails in the checked sample.',
+    label: 'Quality control on a campaign asset batch',
+    description: `
+      <p>
+        Your team is about to launch a multi-variant email campaign. Before scheduling the send, a QA analyst pulls a batch of
+        <strong>N = 120</strong> prepared email versions (subject-line and creative combinations) and suspects that about
+        <strong>r = 8</strong> may contain a visible defect, such as a broken personalization tag or off-brand headline.
+      </p>
+      <p>
+        Because of time pressure, the analyst can manually inspect only <strong>n = 20</strong> emails, sampled
+        <strong>without replacement</strong> from the batch. They ask: “What is the probability that this spot check will
+        uncover <em>exactly</em> <strong>k = 2</strong> defective emails?” If too few defects are likely to be caught by
+        checking 20, the team may decide to increase the QA sample or delay the send.
+      </p>
+      <p>
+        In this preset, the “special” outcome is “contains a formatting defect.” The lab uses the hypergeometric distribution
+        to compute the exact probability of seeing 0, 1, 2, … defects in the checked sample, and compares those probabilities
+        to Monte Carlo simulations. This mirrors the kind of reasoning you use whenever you rely on spot checks to control
+        quality for creative assets, landing pages, or product listings.
+      </p>
+    `,
     settings: {
       populationSize: 120,
       sampleSize: 20,
@@ -46,7 +99,41 @@ const SelectionScenarios = [
       successCount: 2,
       samplingMode: 'without_replacement',
       probabilityMode: 'exact_k',
-      simulations: 4000
+      simulations: 4000,
+      specialLabel: 'has a formatting defect'
+    }
+  },
+  {
+    id: 'player-homeruns',
+    label: 'Projecting home runs in upcoming at-bats',
+    description: `
+      <p>
+        Imagine you are helping a sponsorship team that wants to build a social promotion around a popular hitter. Over the
+        current season they have tracked <strong>N = 200</strong> plate appearances for the player and recorded
+        <strong>r = 5</strong> home runs. They would like to use this historical rate as a simple guide for what might happen
+        in the next few games.
+      </p>
+      <p>
+        For the promotion, the team is interested in the player’s next <strong>n = 10</strong> at-bats. They ask: “What is the
+        distribution of the number of home runs we might see in those 10 at-bats, assuming the per-at-bat home-run probability
+        stays roughly the same?” This is naturally modeled as repeated, independent trials with probability
+        \(p \approx r/N = 5/200\) of a home run in any given at-bat.
+      </p>
+      <p>
+        In this preset, the “special” outcome is “hits a home run,” and the model uses the binomial (with-replacement) setting
+        to approximate future performance. You can explore the probability of seeing exactly \(k\) home runs, or at least one
+        home run, in the next 10 at-bats, and see how sensitive those probabilities are to the assumed underlying rate.
+      </p>
+    `,
+    settings: {
+      populationSize: 200,
+      sampleSize: 10,
+      specialCount: 5,
+      successCount: 1,
+      samplingMode: 'with_replacement',
+      probabilityMode: 'exact_k',
+      simulations: 4000,
+      specialLabel: 'hits a home run'
     }
   }
 ];
@@ -66,7 +153,7 @@ function syncInputsBounds() {
   const kInput = document.getElementById('success-count-input');
   if (!NInput || !nInput || !rInput || !kInput) return;
 
-  let N = clamp(parseInt(NInput.value || '100', 10) || 100, 1, 500);
+  let N = clamp(parseInt(NInput.value || '100', 10) || 100, 1, 5000);
   NInput.value = N;
   let n = clamp(parseInt(nInput.value || '20', 10) || 20, 1, 200);
   n = clamp(n, 1, N);
@@ -92,6 +179,12 @@ function initPopulationForLab() {
   renderDistribution();
   updateMathPanels();
   updateMetrics();
+}
+
+function getSpecialLabel() {
+  const input = document.getElementById('special-label-input');
+  const raw = input && typeof input.value === 'string' ? input.value.trim() : '';
+  return raw || 'special';
 }
 
 function renderPopulationGrid() {
@@ -123,7 +216,8 @@ function renderPopulationGrid() {
   const summaryEl = document.getElementById('population-summary');
   if (summaryEl) {
     const specialCount = currentPopulation.filter(p => p.isSpecial).length;
-    summaryEl.textContent = `Population of N = ${N} items. Special items (highlighted): r = ${specialCount}. The current sample outlines the n drawn items (if any).`;
+    const label = getSpecialLabel();
+    summaryEl.textContent = `Population of N = ${N} items. Items where the outcome "${label}" is true are highlighted (r = ${specialCount}). The current sample outlines the n drawn items (if any).`;
   }
 }
 
@@ -275,6 +369,7 @@ function renderDistribution() {
   const N = currentPopulation.length;
   const n = clamp(parseInt(document.getElementById('sample-size-input').value || '20', 10) || 20, 1, N);
   const r = clamp(parseInt(document.getElementById('special-count-input').value || '5', 10) || 5, 1, N);
+  const label = getSpecialLabel();
 
   const xs = [];
   const exactYs = [];
@@ -313,7 +408,7 @@ function renderDistribution() {
     {
       barmode: 'group',
       margin: { t: 30, r: 20, b: 50, l: 60 },
-      xaxis: { title: 'k (number of special items in sample)' },
+      xaxis: { title: `k (number of "${label}" outcomes in sample)` },
       yaxis: { title: 'Probability', rangemode: 'tozero' },
       legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: 1.15 }
     },
@@ -324,7 +419,11 @@ function renderDistribution() {
 
   const noteEl = document.getElementById('distribution-note');
   if (noteEl) {
-    noteEl.textContent = `The distribution of K, the number of special items in a sample of size n = ${n} from a population with N = ${N} and r = ${r} special items.`;
+    if (simsTotal > 0) {
+      noteEl.textContent = `The distribution of K, the number of draws in which the outcome "${label}" occurs, in a sample of size n = ${n} from a population with N = ${N} and r = ${r} such cases in the population. The orange bars reflect ${simsTotal.toLocaleString()} simulated samples.`;
+    } else {
+      noteEl.textContent = `The distribution of K, the number of draws in which the outcome "${label}" occurs, in a sample of size n = ${n} from a population with N = ${N} and r = ${r} such cases in the population. Run simulations to add the orange empirical bars.`;
+    }
   }
 }
 
@@ -336,11 +435,42 @@ function renderDistributionTable(xs, exactProbs, simFreqs) {
   const totalSim = simFreqs.reduce((a, b) => a + b, 0);
   let cum = 0;
 
+  const maxRows = 40;
+  const step = xs.length > maxRows ? Math.ceil(xs.length / maxRows) : 1;
+
+   let exampleIdx = 0;
+   let bestProb = -1;
+   for (let i = 0; i < xs.length; i++) {
+     const p = exactProbs[i] || 0;
+     if (p > bestProb) {
+       bestProb = p;
+       exampleIdx = i;
+     }
+   }
+
+   let exampleK = null;
+   let exampleExact = null;
+   let exampleFreq = null;
+   let exampleSimProb = null;
+   let exampleCum = null;
+
   xs.forEach((k, idx) => {
     const exact = exactProbs[idx] || 0;
     cum += exact;
     const freq = simFreqs[idx] || 0;
     const simProb = totalSim > 0 ? freq / totalSim : 0;
+
+    if (idx === exampleIdx) {
+      exampleK = k;
+      exampleExact = exact;
+      exampleFreq = freq;
+      exampleSimProb = totalSim > 0 ? simProb : null;
+      exampleCum = cum;
+    }
+
+    if (step > 1 && idx % step !== 0 && idx !== 0 && idx !== xs.length - 1) {
+      return;
+    }
 
     const tr = document.createElement('tr');
     const tdK = document.createElement('td');
@@ -365,6 +495,28 @@ function renderDistributionTable(xs, exactProbs, simFreqs) {
 
     tbody.appendChild(tr);
   });
+
+   const setExampleText = (id, value) => {
+     const el = document.getElementById(id);
+     if (el) {
+       el.textContent = value;
+     }
+   };
+
+   if (exampleK !== null) {
+     setExampleText('table-example-k', String(exampleK));
+     setExampleText('table-example-theoretical', exampleExact != null ? exampleExact.toFixed(4) : '–');
+     setExampleText(
+       'table-example-frequency',
+       exampleFreq != null && totalSim > 0 ? exampleFreq.toString() : totalSim > 0 ? '0' : '–'
+     );
+     setExampleText('table-example-total', totalSim > 0 ? totalSim.toLocaleString() : '0');
+     setExampleText(
+       'table-example-simprob',
+       exampleSimProb != null && totalSim > 0 ? exampleSimProb.toFixed(4) : '–'
+     );
+     setExampleText('table-example-cum', exampleCum != null ? exampleCum.toFixed(4) : '–');
+   }
 }
 
 function updateMetrics() {
@@ -423,7 +575,8 @@ function updateMetrics() {
     if (mode === 'without_replacement' && n > N) {
       warningEl.textContent = 'Sample size n cannot exceed population size N when sampling without replacement.';
     } else if (r > N) {
-      warningEl.textContent = 'Number of special items r cannot exceed N.';
+      const label = getSpecialLabel();
+      warningEl.textContent = `Number of "${label}" cases r cannot exceed N.`;
     } else {
       warningEl.textContent = '';
     }
@@ -598,10 +751,18 @@ document.addEventListener('DOMContentLoaded', () => {
     scenarioSelect.addEventListener('change', () => {
       const id = scenarioSelect.value;
       if (!id) {
-        const desc = document.getElementById('selection-scenario-description');
-        if (desc) {
-          desc.innerHTML =
-            '<p>Use these presets to explore selection case studies, or leave this on Manual to configure your own population and event of interest.</p>';
+        if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+          window.UIUtils.renderScenarioDescription({
+            containerId: 'selection-scenario-description',
+            defaultHtml:
+              '<p>Use these presets to explore selection case studies, or leave this on Manual to configure your own population and event of interest.</p>'
+          });
+        } else {
+          const desc = document.getElementById('selection-scenario-description');
+          if (desc) {
+            desc.innerHTML =
+              '<p>Use these presets to explore selection case studies, or leave this on Manual to configure your own population and event of interest.</p>';
+          }
         }
         return;
       }
@@ -613,6 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'population-size-input',
     'sample-size-input',
     'special-count-input',
+    'special-label-input',
     'success-count-input',
     'sampling-mode-select',
     'probability-mode-select'
@@ -624,11 +786,6 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('change', () => {
       initPopulationForLab();
     });
-    if (el.tagName === 'INPUT' && el.type === 'number') {
-      el.addEventListener('input', () => {
-        initPopulationForLab();
-      });
-    }
   });
 
   const simOnceBtn = document.getElementById('simulate-once-btn');
@@ -660,14 +817,28 @@ function applySelectionScenario(id) {
   const scenario = SelectionScenarios.find(s => s.id === id);
   const descEl = document.getElementById('selection-scenario-description');
   if (!scenario) {
-    if (descEl) {
+    if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+      window.UIUtils.renderScenarioDescription({
+        containerId: 'selection-scenario-description',
+        defaultHtml:
+          '<p>Use these presets to explore selection case studies, or leave this on Manual to configure your own population and event of interest.</p>'
+      });
+    } else if (descEl) {
       descEl.innerHTML =
         '<p>Use these presets to explore selection case studies, or leave this on Manual to configure your own population and event of interest.</p>';
     }
     return;
   }
 
-  if (descEl) {
+  if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+    window.UIUtils.renderScenarioDescription({
+      containerId: 'selection-scenario-description',
+      title: scenario.label,
+      description: scenario.description,
+      defaultHtml:
+        '<p>Use these presets to explore selection case studies, or leave this on Manual to configure your own population and event of interest.</p>'
+    });
+  } else if (descEl) {
     descEl.innerHTML = `<p>${scenario.description}</p>`;
   }
 
@@ -679,6 +850,7 @@ function applySelectionScenario(id) {
   const samplingModeSelect = document.getElementById('sampling-mode-select');
   const probModeSelect = document.getElementById('probability-mode-select');
   const simsInput = document.getElementById('num-simulations-input');
+  const specialLabelInput = document.getElementById('special-label-input');
 
   if (NInput && typeof cfg.populationSize === 'number') {
     NInput.value = String(cfg.populationSize);
@@ -700,6 +872,9 @@ function applySelectionScenario(id) {
   }
   if (simsInput && typeof cfg.simulations === 'number') {
     simsInput.value = String(cfg.simulations);
+  }
+  if (specialLabelInput && typeof cfg.specialLabel === 'string') {
+    specialLabelInput.value = cfg.specialLabel;
   }
 
   initPopulationForLab();

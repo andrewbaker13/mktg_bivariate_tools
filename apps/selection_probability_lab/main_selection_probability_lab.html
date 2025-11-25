@@ -82,7 +82,7 @@
         <div class="input-grid">
           <div>
             <label for="population-size-input">Population size (\(N\))</label>
-            <input type="number" id="population-size-input" min="1" max="500" step="1" value="100">
+            <input type="number" id="population-size-input" min="1" max="5000" step="1" value="100">
             <p class="hint">Total number of items in the population.</p>
           </div>
           <div>
@@ -99,6 +99,11 @@
             <label for="success-count-input">Target count of specials in sample (\(k\))</label>
             <input type="number" id="success-count-input" min="0" max="20" step="1" value="1">
             <p class="hint">Used when computing \(P(K = k)\). For "at least one", the app uses the complement rule.</p>
+          </div>
+          <div>
+            <label for="special-label-input">Label for the "special" outcome</label>
+            <input type="text" id="special-label-input" maxlength="60" value="special" placeholder="e.g., opens email, is a VIP customer">
+            <p class="hint">This short phrase will replace the word "special" in narrative descriptions (for example, "opens email" or "is a VIP customer").</p>
           </div>
         </div>
 
@@ -174,7 +179,8 @@
             <div id="distribution-chart" class="chart-placeholder"></div>
             <p id="distribution-note" class="chart-note">
               The chart compares the <strong>theoretical distribution</strong> of \(K\), the number of special items in the sample,
-              to the <strong>empirical distribution</strong> from simulated samples. Bars show probabilities for each possible value of \(K\).
+              to the <strong>empirical distribution</strong> from simulated samples. Bars show probabilities for each possible value of \(K\);
+              the orange bars are based on the number of simulated samples you have run.
             </p>
           </article>
         </div>
@@ -228,6 +234,29 @@
           </p>
         </details>
       </div>
+      <div class="card" style="margin-top:0.75rem;">
+        <details class="advanced-details">
+          <summary>Understanding the \(\binom{n}{k}\) notation</summary>
+          <p>
+            In the equations below you will see expressions written as \(\binom{n}{k}\) or \(\binom{N}{n}\). This is read
+            out loud as “<em>n choose k</em>” and it counts how many different groups of \(k\) items you can form from a
+            larger pool of \(n\) items when order does not matter.
+          </p>
+          <p>
+            For example, if there are \(n = 10\) customers and you want to know how many different samples of size \(k = 3\)
+            you could draw, \(\binom{10}{3} = 120\). That means there are 120 distinct 3‑person groups you might see.
+          </p>
+          <p>
+            Mathematically, \(\binom{n}{k}\) is computed as
+            \[
+              \binom{n}{k} = \frac{n!}{k!\,(n-k)!},
+            \]
+            where \(n!\) (“<em>n factorial</em>”) means \(n \times (n-1) \times \dots \times 2 \times 1\). In practice, the
+            app uses a more numerically stable version of this calculation, but the idea is the same: it is counting how many
+            ways you can choose positions for the “special” outcomes inside the sample.
+          </p>
+        </details>
+      </div>
 
       <div class="dual-panels">
         <article class="card dual-panel">
@@ -262,6 +291,36 @@
             </tbody>
           </table>
         </div>
+        <details class="advanced-details" style="margin-top:0.75rem;">
+          <summary>How to read this table</summary>
+          <p>
+            <strong>k (number of specials):</strong> each row corresponds to a specific value of \(k\), the number of times the
+            chosen outcome (your "special" label) occurs in the sample. The example row highlighted here corresponds to
+            \(k =\) <span id="table-example-k">2</span>, meaning exactly that many specials are observed in the sample.
+          </p>
+          <p>
+            <strong>Theoretical P(K = k):</strong> this column shows the exact probability that a random sample will contain
+            exactly \(k\) specials, computed from the hypergeometric or binomial model. In your current table, the example row
+            has theoretical probability <span id="table-example-theoretical">0.1800</span>.
+          </p>
+          <p>
+            <strong>Simulated frequency:</strong> after you run simulations, this column counts how many of those simulated
+            samples produced each value of \(k\). For the example row, the table shows
+            <span id="table-example-frequency">360</span> out of
+            <span id="table-example-total">2,000</span> simulated samples landing on that value of \(k\).
+          </p>
+          <p>
+            <strong>Simulated P(K = k):</strong> this is the simulated frequency divided by the total number of simulations.
+            In your current table, the example row has simulated probability
+            <span id="table-example-simprob">0.1800</span>, which should be close to the theoretical value if you have run
+            enough simulations.
+          </p>
+          <p>
+            <strong>Cumulative P(K &le; k):</strong> this column adds up the theoretical probabilities from 0 up through that row’s
+            value of \(k\). If the cumulative value in the row for \(k = 2\) is 0.6500, you can read that as “there is a 65%
+            chance of seeing at most two specials in the sample.”
+          </p>
+        </details>
       </div>
     </section>
   </main>
