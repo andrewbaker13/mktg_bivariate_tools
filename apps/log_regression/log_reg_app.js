@@ -2138,97 +2138,80 @@ function renderCoefInterpretation(model) {
 }
 
 // ---------- Main update ----------
-  function updateResults() {
+function updateResults() {
   const alphaInput = document.getElementById('alpha');
   const alphaValue = alphaInput ? parseFloat(alphaInput.value) : NaN;
   const alpha = isFinite(alphaValue) && alphaValue > 0 && alphaValue < 1 ? alphaValue : 1 - selectedConfidenceLevel;
   if (alphaInput && (!isFinite(alphaValue) || alphaValue <= 0 || alphaValue >= 1)) alphaInput.value = formatAlpha(alpha);
   const alphaEl = document.getElementById('metric-alpha');
   if (alphaEl) alphaEl.textContent = formatAlpha(alpha);
-  const summaryEl = document.getElementById('assignment-summary'); if (summaryEl) summaryEl.textContent = '';
-    const { filtered, dropped, issues, predictorsInfo } = filterRowsForModel();
-  lastFilteredRows = filtered; lastPredictorsInfo = predictorsInfo;
+  const summaryEl = document.getElementById('assignment-summary');
+  if (summaryEl) summaryEl.textContent = '';
+  const { filtered, dropped, issues, predictorsInfo } = filterRowsForModel();
+  lastFilteredRows = filtered;
+  lastPredictorsInfo = predictorsInfo;
   const kept = filtered.length;
   if (!dataset.rows.length) { clearOutputs('Upload a CSV with an outcome and predictors to begin.'); return; }
   if (!selectedOutcome) { clearOutputs('Select an outcome variable.'); return; }
   if (!selectedPredictors.length) { clearOutputs('Select at least one predictor.'); return; }
   if (issues.length) { clearOutputs(issues[0]); return; }
   if (kept < 5) { clearOutputs('Need at least 5 complete rows to proceed.'); return; }
-    updateOutcomeCodingFromData();
-  function updateResults() {
-    const alphaInput = document.getElementById('alpha');
-    const alphaValue = alphaInput ? parseFloat(alphaInput.value) : NaN;
-    const alpha = isFinite(alphaValue) && alphaValue > 0 && alphaValue < 1 ? alphaValue : 1 - selectedConfidenceLevel;
-    if (alphaInput && (!isFinite(alphaValue) || alphaValue <= 0 || alphaValue >= 1)) alphaInput.value = formatAlpha(alpha);
-    const alphaEl = document.getElementById('metric-alpha');
-    if (alphaEl) alphaEl.textContent = formatAlpha(alpha);
-    const summaryEl = document.getElementById('assignment-summary'); if (summaryEl) summaryEl.textContent = '';
-    const { filtered, dropped, issues, predictorsInfo } = filterRowsForModel();
-    lastFilteredRows = filtered; lastPredictorsInfo = predictorsInfo;
-    const kept = filtered.length;
-    if (!dataset.rows.length) { clearOutputs('Upload a CSV with an outcome and predictors to begin.'); return; }
-    if (!selectedOutcome) { clearOutputs('Select an outcome variable.'); return; }
-    if (!selectedPredictors.length) { clearOutputs('Select at least one predictor.'); return; }
-    if (issues.length) { clearOutputs(issues[0]); return; }
-    if (kept < 5) { clearOutputs('Need at least 5 complete rows to proceed.'); return; }
 
-    updateOutcomeCodingFromData();
-    showLogregLoading();
-    try {
-      const model = buildDesignMatrixAndFit(filtered, predictorsInfo, selectedOutcome, alpha);
-      if (model.error) { clearOutputs(model.error); return; }
-      lastModel = model;
+  updateOutcomeCodingFromData();
+  showLogregLoading();
+  try {
+    const model = buildDesignMatrixAndFit(filtered, predictorsInfo, selectedOutcome, alpha);
+    if (model.error) { clearOutputs(model.error); return; }
+    lastModel = model;
 
-      // ---------- NEW: log this run to the Django backend (fire-and-forget) ----------
-      const scenarioSelect = document.getElementById('scenario-select');
-      const scenarioId = scenarioSelect ? scenarioSelect.value || null : null;
-      const standardizeInput = document.getElementById('logreg-standardize-continuous');
-      const standardize = !!(standardizeInput && standardizeInput.checked);
+    // ---------- NEW: log this run to the Django backend (fire-and-forget) ----------
+    const scenarioSelect = document.getElementById('scenario-select');
+    const scenarioId = scenarioSelect ? scenarioSelect.value || null : null;
+    const standardizeInput = document.getElementById('logreg-standardize-continuous');
+    const standardize = !!(standardizeInput && standardizeInput.checked);
 
-      const paramsForLog = {
-        outcome: selectedOutcome,
-        predictors: [...selectedPredictors],
-        n_uploaded: Array.isArray(dataset.rows) ? dataset.rows.length : null,
-        n_used: kept,
-        alpha: alpha,
-        confidence_level: 1 - alpha,
-        scenario_id: scenarioId,
-        standardize_continuous: standardize
-      };
+    const paramsForLog = {
+      outcome: selectedOutcome,
+      predictors: [...selectedPredictors],
+      n_uploaded: Array.isArray(dataset.rows) ? dataset.rows.length : null,
+      n_used: kept,
+      alpha: alpha,
+      confidence_level: 1 - alpha,
+      scenario_id: scenarioId,
+      standardize_continuous: standardize
+    };
 
-      const modelPVal = Number.isFinite(model.modelChi2) && model.dfModel > 0
-        ? 1 - chiSquareCdf(model.modelChi2, model.dfModel)
-        : NaN;
+    const modelPVal = Number.isFinite(model.modelChi2) && model.dfModel > 0
+      ? 1 - chiSquareCdf(model.modelChi2, model.dfModel)
+      : NaN;
 
-      const summaryText =
-        `Logistic regression run: outcome=${selectedOutcome}, ` +
-        `${selectedPredictors.length} predictor(s), n=${model.n}, ` +
-        `chi2(${model.dfModel})=${formatNumber(model.modelChi2, 3)}, ` +
-        `p=${formatP(modelPVal)}, pseudoR2=${formatNumber(model.pseudoR2, 3)}, ` +
-        `alpha=${formatAlpha(alpha)}.`;
+    const summaryText =
+      `Logistic regression run: outcome=${selectedOutcome}, ` +
+      `${selectedPredictors.length} predictor(s), n=${model.n}, ` +
+      `chi2(${model.dfModel})=${formatNumber(model.modelChi2, 3)}, ` +
+      `p=${formatP(modelPVal)}, pseudoR2=${formatNumber(model.pseudoR2, 3)}, ` +
+      `alpha=${formatAlpha(alpha)}.`;
 
-      // Fire-and-forget; we don't await so UI stays snappy.
-      logToolRunToBackend(paramsForLog, summaryText);
-      // -------------------------------------------------------------------------------
+    // Fire-and-forget; we don't await so UI stays snappy.
+    logToolRunToBackend(paramsForLog, summaryText);
+    // -------------------------------------------------------------------------------
 
-      updateEffectControls(predictorsInfo);
-      populateMetrics(model);
-      populateCoefficients(model);
-      renderEquation(model);
-      renderNarratives(model);
-      renderDiagnostics(model, filtered, dropped);
-      renderSummaryStats(model, filtered, predictorsInfo);
-      renderEffectPlot(model, filtered, predictorsInfo);
-      renderActualFitted(model);
-      renderCoefInterpretation(model);
-      const modifiedLabel = document.getElementById('modified-date');
-      if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();
-    } finally {
-      hideLogregLoading();
-    }
+    updateEffectControls(predictorsInfo);
+    populateMetrics(model);
+    populateCoefficients(model);
+    renderEquation(model);
+    renderNarratives(model);
+    renderDiagnostics(model, filtered, dropped);
+    renderSummaryStats(model, filtered, predictorsInfo);
+    renderEffectPlot(model, filtered, predictorsInfo);
+    renderActualFitted(model);
+    renderCoefInterpretation(model);
+    const modifiedLabel = document.getElementById('modified-date');
+    if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();
+  } finally {
+    hideLogregLoading();
   }
-
-  }
+}
 
   // ---------- INIT ----------
   document.addEventListener('DOMContentLoaded', () => {
