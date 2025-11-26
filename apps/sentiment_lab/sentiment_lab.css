@@ -1,0 +1,91 @@
+.sentiment-grid {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+  gap: 1.25rem;
+}
+
+.sentiment-summary .metric-output span:first-child {
+  font-weight: 600;
+}
+
+.sentiment-table-card {
+  margin-top: 0.75rem;
+}
+
+#sentiment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+#sentiment-table th,
+#sentiment-table td {
+  border: 1px solid #e5e7eb;
+  padding: 0.25rem 0.5rem;
+  vertical-align: top;
+}
+
+#sentiment-table th {
+  background-color: #f9fafb;
+}
+
+#sentiment-table td:nth-child(1) {
+  width: 3rem;
+  text-align: right;
+}
+
+#sentiment-table td:nth-child(3),
+#sentiment-table td:nth-child(4),
+#sentiment-table td:nth-child(5),
+#sentiment-table td:nth-child(6) {
+  width: 4.5rem;
+  text-align: right;
+}
+
+#sentiment-table td:nth-child(7) {
+  width: 5.5rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.sentiment-label-positive {
+  color: #166534;
+  font-weight: 600;
+}
+
+.sentiment-label-neutral {
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.sentiment-label-negative {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.sentiment-example-text {
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.sentiment-example-line {
+  font-size: 0.9rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background-color: #f9fafb;
+  word-break: break-word;
+}
+
+.sentiment-token-positive {
+  color: #166534;
+  font-weight: 600;
+}
+
+.sentiment-token-negative {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.sentiment-token-neutral {
+  color: #9ca3af;
+}

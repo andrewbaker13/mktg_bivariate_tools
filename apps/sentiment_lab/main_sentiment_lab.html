@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sentiment Analysis Lab</title>
+  <link rel="stylesheet" href="../../shared/css/main.css">
+  <link rel="stylesheet" href="sentiment_lab.css">
+</head>
+
+<body>
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Sentiment Analysis Lab</h1>
+        <div class="hero-context">
+          <span class="badge">Text Analysis</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Upload text data and explore how lexicon-based sentiment analysis scores each record. This lab uses a VADER-style
+        approach and walks through both overall scores and a detailed, token-by-token breakdown for a sample sentence.
+      </p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="sentiment-overview-heading">
+      <h2 id="sentiment-overview-heading">OVERVIEW &amp; CONCEPTS</h2>
+      <div class="card">
+        <p>
+          Sentiment analysis tries to turn text into a numeric summary of how positive, neutral, or negative it is. VADER
+          (Valence Aware Dictionary and sEntiment Reasoner) is a popular, rule-based method that uses a sentiment dictionary
+          plus heuristics for punctuation, capitalization, negation, and intensifiers.
+        </p>
+        <details class="intro-notes">
+          <summary>What this lab shows</summary>
+          <p>
+            <strong>Per-record sentiment:</strong> each row of your data receives positive, neutral, negative, and compound
+            sentiment scores, along with a categorical label (positive / neutral / negative) based on the compound value.
+          </p>
+          <p>
+            <strong>VADER-style mechanics:</strong> the analyzer looks up each token in a lexicon, adjusts scores based on
+            nearby intensifiers (like "very"), negations ("not good"), and punctuation emphasis ("!!!"), and then combines
+            everything into overall scores.
+          </p>
+          <p>
+            <strong>Worked example:</strong> for one randomly chosen text sample, the lab displays a step-by-step breakdown
+            of tokenization and scoring so you can see exactly how the final sentiment numbers were computed.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <section class="scenario-section" aria-labelledby="sentiment-scenarios-heading">
+      <h2 id="sentiment-scenarios-heading">CASE STUDIES</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="sentiment-scenario-select">Load a sentiment case study</label>
+          <div class="scenario-controls__input">
+            <select id="sentiment-scenario-select">
+              <option value="">Manual settings (no preset)</option>
+            </select>
+          </div>
+        </div>
+        <div id="sentiment-scenario-description">
+          <p>
+            Use these case studies to practice reading sentiment outputs before uploading your own data. Presets include
+            simulated Reddit-style posts about a university’s online enrollment system and detailed reviews of a new
+            influencer swimwear brand.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="sentiment-inputs-heading">
+      <h2 id="sentiment-inputs-heading">LOAD TEXT DATA</h2>
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>Upload or paste text</h3>
+        </div>
+
+        <div class="input-grid">
+          <div>
+            <label for="text-column-select">Text column (for CSV/TSV files)</label>
+            <select id="text-column-select">
+              <option value="">(Upload a file first)</option>
+            </select>
+            <p class="hint">Choose which column contains the text you want to analyze.</p>
+          </div>
+          <div>
+            <label for="sentiment-file-input">Upload CSV/TSV file</label>
+            <div id="sentiment-dropzone" class="dropzone" tabindex="0">
+              <p class="dropzone__label">Drop a CSV/TSV file here or click to browse.</p>
+              <button id="sentiment-browse-btn" type="button" class="secondary">Browse files</button>
+              <input id="sentiment-file-input" type="file" style="display:none;" />
+            </div>
+            <p class="hint">The first row should contain column names; text should be in one of the columns.</p>
+          </div>
+        </div>
+
+        <div class="input-grid" style="margin-top:0.75rem;">
+          <div>
+            <label for="manual-textarea">Or paste text (one row per line)</label>
+            <textarea id="manual-textarea" rows="5" placeholder="Paste sentences or reviews here, one per line."></textarea>
+            <p class="hint">If you paste text here, the tool will ignore any uploaded file and use these lines instead.</p>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button type="button" id="run-sentiment-btn" class="primary">Run sentiment analysis</button>
+            <p id="sentiment-status" class="hint"></p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="visual-output" aria-labelledby="sentiment-output-heading">
+      <h2 id="sentiment-output-heading">SUMMARY &amp; VISUALS</h2>
+      <div class="card">
+        <div class="chart-grid sentiment-grid">
+          <article class="chart-card">
+            <h3>Sentiment summary</h3>
+            <div class="sentiment-summary">
+              <div class="metric-output">
+                <span>Average compound score:</span>
+                <span id="sentiment-avg-compound" class="dynamic-value">&ndash;</span>
+              </div>
+              <div class="metric-output">
+                <span>Records labeled positive:</span>
+                <span id="sentiment-count-positive" class="dynamic-value">&ndash;</span>
+              </div>
+              <div class="metric-output">
+                <span>Records labeled neutral:</span>
+                <span id="sentiment-count-neutral" class="dynamic-value">&ndash;</span>
+              </div>
+              <div class="metric-output">
+                <span>Records labeled negative:</span>
+                <span id="sentiment-count-negative" class="dynamic-value">&ndash;</span>
+              </div>
+            </div>
+            <p id="sentiment-summary-note" class="chart-note">
+              Run the analysis to see overall sentiment across your text records.
+            </p>
+          </article>
+          <article class="chart-card">
+            <h3>Labels distribution</h3>
+            <div id="sentiment-label-chart" class="chart-placeholder"></div>
+            <p class="chart-note">
+              This bar chart shows how many records are classified as positive, neutral, or negative based on VADER's compound
+              score thresholds.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="test-results" aria-labelledby="sentiment-details-heading">
+      <h2 id="sentiment-details-heading">DETAILED RESULTS &amp; WORKED EXAMPLE</h2>
+      <div class="card sentiment-table-card">
+        <h3>Per-record sentiment</h3>
+        <div class="selection-table-wrapper">
+          <table id="sentiment-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Text</th>
+                <th>compound</th>
+                <th>pos</th>
+                <th>neu</th>
+                <th>neg</th>
+                <th>Label</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Filled dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:0.75rem;">
+        <h3>How VADER scored two examples</h3>
+        <p class="sentiment-example-text" id="sentiment-example-text-positive">
+          Run the analysis to see how each token in a relatively positive record contributes to its final sentiment score.
+        </p>
+        <div id="sentiment-example-line-positive" class="sentiment-example-line"></div>
+        <p id="sentiment-example-summary-positive" class="chart-note"></p>
+
+        <p class="sentiment-example-text" id="sentiment-example-text-negative" style="margin-top:0.75rem;">
+          Run the analysis to see how each token in a relatively negative record contributes to its final sentiment score.
+        </p>
+        <div id="sentiment-example-line-negative" class="sentiment-example-line"></div>
+        <p id="sentiment-example-summary-negative" class="chart-note"></p>
+        <details class="advanced-details" style="margin-top:0.5rem;">
+          <summary>How this example is computed</summary>
+          <p>
+            The analyzer first tokenizes the sentence and looks up each token in a sentiment lexicon. Tokens with known sentiment
+            (e.g., "great", "terrible") get a base score; others are neutral.
+          </p>
+          <p>
+            Next, local rules adjust those base scores. Intensifiers like "very" or "extremely" boost nearby sentiment words;
+            negations like "not" flip or attenuate scores; and all-caps or repeated punctuation can add emphasis.
+          </p>
+          <p>
+            Finally, the adjusted token scores are combined into overall positive, neutral, and negative proportions and a
+            single compound score in \([-1, 1]\). The example above shows each token's contribution so you can see how the
+            final numbers arise from the text.
+          </p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="created-date">2025-11-25</span> &middot; Last updated:
+      <span id="modified-date">2025-11-25</span>
+    </p>
+    <p><a href="../../index.html">Back to Stat Analysis Selection</a></p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). Sentiment Analysis Lab. Marketing Bivariate Tools.</p>
+  </footer>
+
+  <script src="../../shared/js/ui_utils.js"></script>
+  <script src="vader_analyzer.js"></script>
+  <script src="sentiment_lab.js"></script>
+</body>
+
+</html>
