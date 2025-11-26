@@ -1,0 +1,16 @@
+# Title
+Customer Survey Responses
+
+# Description
+<p>
+This dataset contains responses from 30 customers surveyed as part of a comprehensive brand perception and purchase behavior study. Variables include demographic information (age, income level), brand metrics (awareness, purchase intent, NPS), satisfaction ratings, product category preferences, communication channel preferences, visit frequency, and annual spending.
+</p>
+<p>
+Your customer insights team recently conducted this survey to understand how brand perception drives purchase behavior and loyalty. Results reveal interesting patterns: some younger customers show high NPS despite lower income levels, while certain segments prefer social media channels over traditional email. There are scattered missing responses where customers skipped particular questions or declined to provide financial information.
+</p>
+<p>
+Your analytical goal is to use <strong>univariate analysis</strong> to build a baseline understanding of each variable: What is the age and income distribution of your customer base? How is brand awareness distributed? What NPS and satisfaction patterns emerge? Which product categories and communication channels are preferred? What are typical visit frequencies and annual spending levels? This univariate profiling will identify key customer segments, common response patterns, and data quality issues that warrant investigation before deeper multivariate analysis.
+</p>
+
+# Raw Data File
+file=scenarios/customer_survey.csv

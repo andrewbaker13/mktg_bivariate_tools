@@ -1,0 +1,16 @@
+# Title
+Influencer Engagement Analysis
+
+# Description
+<p>
+This dataset contains engagement and performance metrics from 30 social media influencers across Instagram, TikTok, and YouTube. The table aggregates follower counts, engagement rates, post frequency, audience demographics, content categories, and conversion data collected from Q3-Q4 influencer marketing campaigns.
+</p>
+<p>
+Your marketing team is planning Q1 influencer partnerships and wants to understand the distribution of engagement patterns, follower dynamics, and content performance across platforms. Some influencers drive significant brand fit despite modest engagement rates, while others show strong engagement but questionable audience quality. There are also strategic gaps—certain content categories and platform combinations are underrepresented.
+</p>
+<p>
+Your analytical goal is to use <strong>univariate analysis</strong> to profile each metric independently: which platforms dominate follower counts? How much does engagement rate vary? What is the typical cost per post and conversion rate? Are there outliers or patterns that suggest certain influencer segments or platforms warrant deeper investigation? This univariate view will inform which influencers to prioritize, how to segment partnership opportunities, and where to expect the strongest ROI.
+</p>
+
+# Raw Data File
+file=scenarios/influencer_engagement.csv

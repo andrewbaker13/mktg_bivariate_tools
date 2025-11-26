@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Univariate Statistics Analyzer</title>
+    <!-- Global shared styles -->
+    <link rel="stylesheet" href="../../shared/css/main.css">
+    <!-- App-specific styles -->
+    <link rel="stylesheet" href="main_univariate_analyzer.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="../../shared/js/csv_utils.js"></script>
+    <script src="../../shared/js/ui_utils.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-290ZJ9RE04');
+    </script>
+</head>
+
+<body>
+    <header class="intro hero-header">
+        <div class="hero-header__top">
+            <h1>Univariate Statistics Analyzer</h1>
+            <div class="hero-context">
+                <span class="badge">Descriptive statistics tool</span>
+            </div>
+        </div>
+        <p class="hero-header__lede">Quickly explore distributions, detect data types, and generate summary tables for marketing datasets. Upload a CSV with multiple variables and instantly visualize patterns.</p>
+    </header>
+
+    <main class="app-main">
+        <section class="test-overview" aria-labelledby="overview-heading">
+            <h2 id="overview-heading">OVERVIEW &amp; OBJECTIVE</h2>
+            <div class="card">
+                <p>Univariate analysis examines a single variable at a time to understand its distribution, central tendency, spread, and shape. This tool automatically detects whether each variable is <strong>continuous</strong> or <strong>categorical</strong> and calculates appropriate summary statistics.</p>
+                <details class="intro-notes" open>
+                    <summary>What this tool does</summary>
+                    <ul>
+                        <li><strong>Continuous variables:</strong> Mean, median, mode, standard deviation, variance, range, IQR, min, max, percentiles (Q1, Q3), skewness, and kurtosis. Visualized with box plots and histograms.</li>
+                        <li><strong>Categorical variables:</strong> Frequency tables with counts and percentages. Top 10 categories shown by default; toggle to view all unique values. Visualized with bar charts.</li>
+                        <li><strong>Missing data detection:</strong> Reports missing values per variable (count and %).</li>
+                        <li><strong>Instant switching:</strong> Select a variable from the dropdown to instantly update statistics and visualizations.</li>
+                        <li><strong>Exportable summaries:</strong> Download summary tables as CSV files for reporting.</li>
+                    </ul>
+                </details>
+            </div>
+        </section>
+
+        <section class="scenario-section" aria-labelledby="scenario-heading">
+            <h2 id="scenario-heading">MARKETING SCENARIOS</h2>
+            <div class="card">
+                <div class="scenario-controls">
+                    <label for="scenario-select">Load a marketing use case:</label>
+                    <div class="scenario-controls__input">
+                        <select id="scenario-select">
+                            <option value="">Manual inputs (no preset)</option>
+                        </select>
+                        <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
+                    </div>
+                </div>
+                <div id="scenario-description">
+                    <p>Select a preset to load example marketing datasets (e.g., influencer engagement data, survey responses, e-commerce metrics). Each preset demonstrates how the tool handles mixed data types and real-world patterns. You can download the scenario data to inspect its structure.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="input-card" aria-labelledby="input-settings-heading">
+            <h2 id="input-settings-heading">INPUTS &amp; SETTINGS</h2>
+            <div class="card">
+                <div class="input-header">
+                    <h3>Upload Data or Select Variables</h3>
+                </div>
+
+                <div id="file-dropzone" class="dropzone" aria-live="polite">
+                    <div class="dropzone-content">
+                        <p class="dropzone-title">Drag &amp; Drop data file (.csv, .tsv)</p>
+                        <p id="dropzone-instructions">Provide a CSV or TSV with column headers. The tool auto-detects whether each column is continuous or categorical. Up to 5,000 rows per file.</p>
+                        <button type="button" id="browse-files" class="secondary">Browse files</button>
+                        <p class="dropzone-note">We only scan files locally—no uploads leave your browser.</p>
+                    </div>
+                    <input type="file" id="file-input" accept=".csv,.tsv,.txt" hidden>
+                </div>
+
+                <p id="file-feedback" class="upload-status" role="status" aria-live="polite"></p>
+
+                <div id="variable-selector" class="variable-selector hidden">
+                    <div class="selector-header">
+                        <h3>Variables in Dataset</h3>
+                        <div class="selector-controls">
+                            <button type="button" id="select-all-btn" class="secondary small">All</button>
+                            <button type="button" id="deselect-all-btn" class="secondary small">None</button>
+                        </div>
+                    </div>
+                    <div id="variable-list" class="variable-list">
+                        <!-- Variables will be populated here -->
+                    </div>
+                    <p id="data-summary" class="data-summary-text"></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="results-section" class="results-section hidden" aria-labelledby="results-heading">
+            <h2 id="results-heading">STATISTICS &amp; VISUALIZATIONS</h2>
+
+            <div class="card variable-navigation">
+                <label for="variable-dropdown">Select variable to display:</label>
+                <select id="variable-dropdown">
+                    <option value="">-- Choose a variable --</option>
+                </select>
+                <div class="type-override-controls">
+                    <label>Manual type override:</label>
+                    <div class="type-buttons">
+                        <button type="button" id="type-continuous-btn" class="secondary small" title="Analyze as continuous variable">Continuous</button>
+                        <button type="button" id="type-categorical-btn" class="secondary small" title="Analyze as categorical variable">Categorical</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="variable-display" class="variable-display">
+                <div class="display-header">
+                    <h3 id="variable-title"></h3>
+                    <span id="variable-type-badge" class="badge"></span>
+                </div>
+
+                <div class="stats-content">
+                    <div id="stats-table-container" class="stats-table-container">
+                        <h4>Summary Statistics</h4>
+                        <div id="stats-table"></div>
+                    </div>
+
+                    <div id="visualization-container" class="visualization-container">
+                        <div class="viz-controls">
+                            <div id="viz-toggle" class="viz-toggle hidden">
+                                <button type="button" class="viz-button active" data-viz="chart">Chart</button>
+                                <button type="button" class="viz-button" data-viz="alternate">Alternate</button>
+                            </div>
+                        </div>
+                        <div id="chart-container" class="chart-container"></div>
+                        <div id="chart-narrative" class="chart-narrative" aria-live="polite"></div>
+                    </div>
+                </div>
+
+                <div id="missing-data-info" class="missing-data-info">
+                    <p id="missing-data-text"></p>
+                </div>
+
+                <div id="categorical-extra-info" class="categorical-extra-info hidden">
+                    <label>
+                        <input type="checkbox" id="show-all-categories">
+                        Show all unique categories (currently showing top 10)
+                    </label>
+                </div>
+            </div>
+
+            <div class="card summary-tables-section">
+                <h3>Summary Tables</h3>
+                <div class="summary-nav">
+                    <button type="button" class="summary-tab active" data-tab="continuous">Continuous Variables</button>
+                    <button type="button" class="summary-tab" data-tab="categorical">Categorical Variables</button>
+                </div>
+
+                <div id="continuous-summary-table" class="summary-table-content active">
+                    <div id="continuous-table-display"></div>
+                    <button type="button" id="export-continuous-btn" class="secondary small">Export as CSV</button>
+                </div>
+
+                <div id="categorical-summary-table" class="summary-table-content">
+                    <div id="categorical-table-display"></div>
+                    <button type="button" id="export-categorical-btn" class="secondary small">Export as CSV</button>
+                </div>
+            </div>
+
+            <div class="dual-panels">
+                <article class="card dual-panel">
+                    <h3>APA-Style Statistical Reporting</h3>
+                    <p id="apa-report">Summary will appear after analysis.</p>
+                </article>
+                <article class="card dual-panel">
+                    <h3>Managerial Interpretation</h3>
+                    <p id="managerial-report">Business-facing insights will appear after analysis.</p>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p class="page-timestamps">Created: <span id="created-date">2025-11-26</span> &middot; Last updated: <span id="modified-date">2025-11-26</span></p>
+        <p><a href="../../index.html">Back to Stat Analysis Selection</a></p>
+        <p class="citation">Cite as: Baker, Andrew. (2025). Univariate Statistics Analyzer. Marketing Bivariate Tools. https://github.com/andrewbaker13/mktg_bivariate_tools/apps/univariate_analyzer/main_univariate_analyzer.html</p>
+    </footer>
+
+    <script src="main_univariate_analyzer.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,16 @@
+# Title
+E-Commerce Order Data
+
+# Description
+<p>
+This dataset contains transaction-level information from 30 orders placed across your e-commerce platform during Q4 campaigns. Each record represents one order and includes customer demographics (age), order value, product category, device type used (mobile, desktop, tablet), marketing channel (paid search, email, organic, social, etc.), promotion code usage, customer segment (new, standard, VIP), repeat purchase status, days to conversion, return rates, and product review ratings.
+</p>
+<p>
+Your e-commerce and paid media teams are preparing the Q1 budget allocation and want to understand how orders distribute across channels, customer segments, and device types. They suspect mobile orders are growing, certain channels drive higher average order values, and VIP customers behave differently from new buyers. There are also data quality questions—some fields have missing values (product categories, review ratings) that need investigation before campaign targeting.
+</p>
+<p>
+Your analytical goal is to use <strong>univariate analysis</strong> to establish a baseline understanding of each metric: What is the distribution of order values? How do customers segment by age and spending? Which marketing channels dominate traffic? What are typical days-to-conversion by channel? Which product categories perform best? How is return rate distributed? What are the device type preferences? What proportion of orders use promo codes? This univariate foundation will inform channel allocation decisions, audience targeting strategies, and help identify anomalies or opportunities for deeper investigation.
+</p>
+
+# Raw Data File
+file=scenarios/ecommerce_orders.csv
