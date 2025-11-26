@@ -78,6 +78,11 @@
         <div class="input-header">
           <h3>Configure the scenario</h3>
         </div>
+        <p class="muted">
+          Think of this section as describing a story like: <em>"Out of \(N\) customers, \(r\) have some outcome I care about, and I draw a sample of size \(n\).
+          What is the chance I see this outcome \(k\) times?"</em>. The labels and numbers you choose below are the ones used throughout the visuals,
+          equations, and narrative explanations.
+        </p>
 
         <div class="input-grid">
           <div>
@@ -123,11 +128,36 @@
               <option value="at_least_one">At least one: \(P(K \ge 1)\)</option>
             </select>
             <p class="hint">Choose whether to focus on a specific count or the chance of seeing at least one special item.</p>
+            <details class="advanced-details" style="margin-top:0.25rem;">
+              <summary>What event are we measuring?</summary>
+              <p>
+                When you select <strong>Exact: \(P(K = k)\)</strong>, the event is
+                &ldquo;the sample contains <em>exactly</em> \(k\) items with this outcome&rdquo;. For example, if you set \(k = 2\),
+                the app is computing the chance that exactly two of your \(n\) sampled units have the outcome (such as being a VIP or containing a defect).
+              </p>
+              <p>
+                When you select <strong>At least one: \(P(K \ge 1)\)</strong>, the event is
+                &ldquo;the sample contains <em>one or more</em> such items&rdquo;. This is the natural choice for questions like
+                &ldquo;What is the chance we see <em>any</em> VIP customers in this sample of size \(n\)?&rdquo;.
+              </p>
+            </details>
           </div>
           <div>
             <label for="num-simulations-input">Number of simulated samples</label>
             <input type="number" id="num-simulations-input" min="100" max="5000" step="100" value="2000">
             <p class="hint">Used for Monte Carlo simulation to approximate the distribution.</p>
+            <details class="advanced-details" style="margin-top:0.25rem;">
+              <summary>How does simulation help?</summary>
+              <p>
+                Each simulated sample is a &ldquo;what if&rdquo; run of your design: we draw \(n\) items using the sampling mode you chose
+                and count how many have the outcome of interest. Repeating this many times builds up the orange bars in the distribution chart.
+              </p>
+              <p>
+                As you increase the number of simulated samples, the simulated probabilities \(P(K = k)\) should get closer to the exact
+                hypergeometric / binomial probabilities shown in blue, illustrating the link between theoretical probability models and
+                long-run frequencies.
+              </p>
+            </details>
           </div>
         </div>
 

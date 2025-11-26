@@ -176,8 +176,12 @@
           </div>
         </details>
 
-        <div style="margin-top:0.75rem;">
+        <div style="margin-top:0.75rem; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
           <button type="button" id="draw-sample-btn" class="primary">Draw one sample</button>
+          <span class="muted">
+            Total number of samples drawn:
+            <span id="total-samples-count">0</span>
+          </span>
         </div>
         <p id="sampling-warning" class="hint"></p>
       </article>
@@ -192,7 +196,8 @@
             <div id="population-grid" class="population-grid"></div>
             <p id="population-summary" class="chart-note">
               The grid shows the full population. Colors represent groups; highlighted individuals are included in the
-              current sample.
+              current sample. When you choose <em>Convenience sampling</em>, the grey framed region shows the narrowed
+              part of the population that has any chance to be sampled.
             </p>
           </article>
           <article class="chart-card">

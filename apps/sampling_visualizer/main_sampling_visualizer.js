@@ -22,7 +22,7 @@ const SamplingScenarios = [
     id: 'balanced-srs',
     label: 'Balanced segments under SRS',
     description:
-      'Three equally-sized customer segments in a panel. Use simple random sampling to draw a moderate sample and see how the sample composition and mean value fluctuate around the true population values.',
+      'Imagine an email panel with three equally sized customer segments (A, B, C) that you treat as a single population. Use simple random sampling to draw a moderate sample and see how, over repeated draws, each segment tends to appear in proportion to its size and the overall mean value stays close to the true population mean.',
     config: {
       numGroups: 3,
       populationScenario: 'balanced',
@@ -38,7 +38,7 @@ const SamplingScenarios = [
     id: 'premium-oversample',
     label: 'Premium segment oversampled (stratified)',
     description:
-      'A small, high-value premium segment (Group C) exists alongside two larger segments. Use stratified sampling with extra weight on Group C to ensure enough premium customers are included for precise subgroup estimates, then compare subgroup means to the population.',
+      'Suppose you have two large standard segments and one much smaller premium segment (Group C) of high-value customers. Use stratified sampling with extra weight on Group C so that the sample contains many more premium customers than a purely random draw would; then compare how the subgroup means and proportions look in the sample versus in the full population to understand why oversampling small but important segments is common in marketing research.',
     config: {
       numGroups: 3,
       populationScenario: 'skewedB',
@@ -56,7 +56,7 @@ const SamplingScenarios = [
     id: 'regional-clusters',
     label: 'Regional clusters vs. convenience',
     description:
-      'A national customer base with four regions of similar size. Start with a cluster sample that selects whole regions, then switch to the convenience design to see how only sampling from one corner of the grid can bias both proportions and mean values.',
+      'Think of a national customer base spread across four geographic regions. Start with a cluster sample that selects whole regions at a time, then switch to the convenience design that only samples from one visible corner of the grid to see how ignoring parts of the population can distort both group proportions and average values, even when the overall population looks well mixed.',
     config: {
       numGroups: 4,
       populationScenario: 'balanced',
@@ -74,6 +74,7 @@ let population = []; // { id, row, col, group, value }
 let currentSample = [];
 let samplingHistory = []; // overall sample mean per draw
 let samplingHistoryByGroup = []; // { mean, group } records for subgroup means
+let distributionSampleCount = 0; // number of samples contributing to current sampling distribution
 
 function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
@@ -164,6 +165,7 @@ function initPopulation(numGroups, scenario) {
   currentSample = [];
   samplingHistory = [];
   samplingHistoryByGroup = [];
+  distributionSampleCount = 0;
   renderPopulation();
   updateSummary(null);
   renderSamplingDistribution();
@@ -432,9 +434,11 @@ function drawSampleOnce() {
       samplingHistoryByGroup.push({ group: g, mean: m });
     }
   });
+  distributionSampleCount += 1;
   renderPopulation();
   updateSummary({ n: actualN, design, estProp, estMean });
   renderSamplingDistribution();
+  updateTotalSamplesDrawnDisplay();
 }
 
 function simulateManySamples() {
@@ -445,6 +449,7 @@ function simulateManySamples() {
   const iterations = clamp(parseInt(numInput?.value || '200', 10) || 200, 10, 1000);
   samplingHistory = [];
   samplingHistoryByGroup = [];
+  distributionSampleCount = 0;
   let lastIds = [];
   for (let i = 0; i < iterations; i++) {
     let ids = [];
@@ -471,6 +476,7 @@ function simulateManySamples() {
     });
     lastIds = ids;
   }
+  distributionSampleCount = iterations;
   // Keep last sample (with chosen design) in grid for visual reference
   currentSample = lastIds;
   renderPopulation();
@@ -486,6 +492,7 @@ function simulateManySamples() {
   }
   updateSummary({ n: actualN, design, estProp: lastProp, estMean: lastMean });
   renderSamplingDistribution();
+  updateTotalSamplesDrawnDisplay();
 }
 
 function sampleSRS(n) {
@@ -728,6 +735,35 @@ function renderSamplingDistribution() {
     return;
   }
 
+  // Compute axis ranges based on the overall mean distribution so that
+  // subgroup views share the same X/Y scales as the overall view.
+  const NUM_BINS = 15;
+  let axisXMin = null;
+  let axisXMax = null;
+  let axisYMax = null;
+  if (overallValues.length) {
+    let minOverall = Math.min(...overallValues);
+    let maxOverall = Math.max(...overallValues);
+    let xMinOverall = minOverall;
+    let xMaxOverall = maxOverall;
+    if (xMinOverall === xMaxOverall) {
+      xMinOverall = xMinOverall - 0.5;
+      xMaxOverall = xMaxOverall + 0.5;
+    }
+    const binWidthOverall = (xMaxOverall - xMinOverall) / NUM_BINS;
+    const countsOverall = new Array(NUM_BINS).fill(0);
+    overallValues.forEach(v => {
+      let idx = Math.floor((v - xMinOverall) / binWidthOverall);
+      if (idx < 0) idx = 0;
+      if (idx >= NUM_BINS) idx = NUM_BINS - 1;
+      countsOverall[idx] += 1;
+    });
+    const maxCountOverall = countsOverall.reduce((a, b) => (b > a ? b : a), 0);
+    axisXMin = xMinOverall;
+    axisXMax = xMaxOverall;
+    axisYMax = maxCountOverall || 1;
+  }
+
   // Prepare records, with optional subgroup filter
   let records;
   if (useOverall) {
@@ -751,21 +787,25 @@ function renderSamplingDistribution() {
 
   // Stacked dot plot: approximate histogram using dots
   const values = records.map(r => r.mean);
-  const minVal = Math.min(...values);
-  const maxVal = Math.max(...values);
-  let xMin = minVal;
-  let xMax = maxVal;
-  if (xMin === xMax) {
-    xMin = xMin - 0.5;
-    xMax = xMax + 0.5;
+  let xMin = axisXMin;
+  let xMax = axisXMax;
+  if (xMin === null || xMax === null) {
+    const minVal = Math.min(...values);
+    const maxVal = Math.max(...values);
+    xMin = minVal;
+    xMax = maxVal;
+    if (xMin === xMax) {
+      xMin = xMin - 0.5;
+      xMax = xMax + 0.5;
+    }
   }
-  const numBins = 15;
+  const numBins = NUM_BINS;
   const binWidth = (xMax - xMin) / numBins;
   const counts = new Array(numBins).fill(0);
   const xPoints = [];
   const yPoints = [];
-
   const groupsForPoints = [];
+  let yMaxLocal = 0;
 
   records.forEach(rec => {
     const v = rec.mean;
@@ -773,6 +813,7 @@ function renderSamplingDistribution() {
     if (idx < 0) idx = 0;
     if (idx >= numBins) idx = numBins - 1;
     counts[idx] += 1;
+    if (counts[idx] > yMaxLocal) yMaxLocal = counts[idx];
     const center = xMin + (idx + 0.5) * binWidth;
     xPoints.push(center);
     yPoints.push(counts[idx]);
@@ -858,22 +899,50 @@ function renderSamplingDistribution() {
     [trace],
     {
       margin: { t: 20, r: 20, b: 60, l: 60 },
-      xaxis: { title: 'Sample mean value', rangemode: 'tozero' },
-      yaxis: { title: '', showticklabels: false },
+      xaxis: {
+        title: 'Sample mean value',
+        range: [xMin, xMax]
+      },
+      yaxis: {
+        title: '',
+        showticklabels: false,
+        range: [0, axisYMax || yMaxLocal || 1]
+      },
       shapes,
       annotations,
       showlegend: false
     },
     { responsive: true }
   );
+
+  const noteEl = document.getElementById('sampling-distribution-note');
+  if (noteEl) {
+    const countText =
+      distributionSampleCount > 0
+        ? ` Total samples contributing to this distribution (including single draws and simulations): ${distributionSampleCount}.`
+        : '';
+    noteEl.textContent =
+      'This chart accumulates the sample mean of the value of interest in repeated samples of the same size under the selected design. ' +
+      'Compare how tightly (or loosely) the sample means cluster around the true population mean and whether some designs are visibly biased.' +
+      countText;
+  }
 }
 
 function resetSamplingStatePreservePopulation() {
   currentSample = [];
   samplingHistory = [];
+  samplingHistoryByGroup = [];
+  distributionSampleCount = 0;
   renderPopulation();
   updateSummary(null);
   renderSamplingDistribution();
+}
+
+function updateTotalSamplesDrawnDisplay() {
+  const el = document.getElementById('total-samples-count');
+  if (el) {
+    el.textContent = distributionSampleCount.toString();
+  }
 }
 
 function setSamplingWarning(message) {
@@ -886,6 +955,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const modifiedLabel = document.getElementById('modified-date');
   if (createdLabel) createdLabel.textContent = SAMPLING_CREATED_DATE;
   if (modifiedLabel) modifiedLabel.textContent = samplingModifiedDate;
+
+  const showValuesHint = document.querySelector('#show-values-checkbox')?.closest('div')?.querySelector('.hint');
+  if (showValuesHint) {
+    showValuesHint.textContent =
+      'Values (roughly 10–500) represent the metric of interest (for example, monthly coffee spend). In practice you never see everyone’s value in the population; we reveal them here only as a teaching aid so you can visually compare the true population and any sample drawn from it.';
+  }
 
   const numGroupsSelect = document.getElementById('num-groups-select');
   const popScenarioSelect = document.getElementById('population-scenario-select');
@@ -1018,6 +1093,6 @@ function generatePersonValue(col) {
   const u2 = Math.random() || 1e-6;
   const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
   const val = baseMean + sd * z;
-  const clipped = clamp(Math.round(val), 10, 200);
+  const clipped = clamp(Math.round(val), 10, 500);
   return clipped;
 }
