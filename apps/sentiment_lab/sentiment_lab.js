@@ -326,7 +326,7 @@ function renderSentimentExampleTwo() {
     }
 
     const explanation = window.VaderAnalyzer.explain(row.text);
-    textEl.textContent = `Example #${row.index} (${label}): "${row.text}"`;
+    textEl.textContent = `Example #${row.index}: "${row.text}"`;
 
     // Build an inline sequence: token | token | ...
     lineEl.innerHTML = '';
@@ -347,11 +347,13 @@ function renderSentimentExampleTwo() {
 
       let text = tokenInfo.token;
       if (tokenInfo.finalValence !== 0) {
+        const valStr = tokenInfo.finalValence.toFixed(2);
+        const valDisplay = tokenInfo.finalValence > 0 ? `+${valStr}` : valStr;
         const modsText =
           tokenInfo.modifiers && tokenInfo.modifiers.length
-            ? `, ${tokenInfo.modifiers.join(', ')}`
+            ? `; ${tokenInfo.modifiers.join(', ')}`
             : '';
-        text += ` (${tokenInfo.finalValence.toFixed(2)}${modsText})`;
+        text += ` (val=${valDisplay}${modsText})`;
       }
 
       span.textContent = text;
