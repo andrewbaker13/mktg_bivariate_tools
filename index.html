@@ -15,7 +15,66 @@
 
       gtag('config', 'G-290ZJ9RE04');
     </script>
+    <style>
+      .auth-bar {
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 0.75rem 0;
+        text-align: right;
+      }
+      .auth-bar__container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .auth-bar__links {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        margin-left: auto;
+      }
+      .auth-bar__links a {
+        color: #3b82f6;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+      .auth-bar__links a:hover {
+        text-decoration: underline;
+      }
+      .auth-bar__status {
+        color: #10b981;
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+      .auth-bar__logout {
+        color: #6b7280;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        text-decoration: underline;
+        padding: 0;
+        margin-left: 0.75rem;
+      }
+      .auth-bar__logout:hover {
+        color: #374151;
+      }
+    </style>
 </head><body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="login.html">Login</a>
+        <a href="register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+  
   <main class="app-main">
     <header class="intro hero-header">
       <div class="hero-header__top">
@@ -401,6 +460,27 @@
 
       btn.addEventListener('click', suggest);
     }());
+  </script>
+  
+  <script src="shared/js/auth_tracking.js"></script>
+  <script>
+    // Update auth bar based on login status
+    document.addEventListener('DOMContentLoaded', function() {
+      const authBarContent = document.getElementById('auth-bar-content');
+      
+      if (isAuthenticated()) {
+        const username = getCurrentUsername();
+        authBarContent.innerHTML = `
+          <span class="auth-bar__status">✓ Logged in as <strong>${username}</strong></span>
+          <button class="auth-bar__logout" onclick="handleLogout()">Logout</button>
+        `;
+      }
+    });
+    
+    async function handleLogout() {
+      await logout();
+      location.reload();
+    }
   </script>
 </body>
 
