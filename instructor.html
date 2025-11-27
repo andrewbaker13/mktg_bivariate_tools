@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Dashboard - Marketing Analytics Tools</title>
+    <link rel="stylesheet" href="shared/css/main.css">
+    <style>
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .dashboard-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .dashboard-card h3 {
+            margin-top: 0;
+            color: #1f2937;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 0.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #2563eb;
+        }
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #6b7280;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .message.error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .message.success {
+            background: #d1fae5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+        .course-list {
+            list-style: none;
+            padding: 0;
+        }
+        .course-item {
+            background: #f9fafb;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+        }
+        .course-item h4 {
+            margin: 0 0 0.5rem 0;
+            color: #1f2937;
+        }
+        .course-item p {
+            margin: 0.25rem 0;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        .code-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .code-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 0.5rem;
+            border-radius: 4px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .code-badge.used {
+            background: #f3f4f6;
+            color: #9ca3af;
+            text-decoration: line-through;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-box {
+            background: #f0f9ff;
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-box .number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e40af;
+        }
+        .stat-box .label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="intro hero-header">
+            <div class="hero-header__top">
+                <h1>Instructor Dashboard</h1>
+                <div class="hero-context">
+                    <span class="badge">Course Management</span>
+                </div>
+            </div>
+            <p class="hero-header__lede">
+                Create courses, generate registration codes, and monitor student usage.
+            </p>
+        </header>
+
+        <div id="access-denied" style="display: none;">
+            <div class="card">
+                <h2 style="color: #dc2626;">⚠️ Access Denied</h2>
+                <p>You must be logged in as an instructor to access this page.</p>
+                <a href="login.html" class="btn">Login</a>
+            </div>
+        </div>
+
+        <div id="dashboard-content" style="display: none;">
+            <div class="dashboard-grid">
+                <!-- Create Course Section -->
+                <div class="dashboard-card">
+                    <h3>Create New Course</h3>
+                    <div id="create-message" class="message"></div>
+                    <form id="create-course-form">
+                        <div class="form-group">
+                            <label for="course-name">Course Name *</label>
+                            <input type="text" id="course-name" required placeholder="e.g., Marketing Analytics Fall 2025">
+                        </div>
+                        <div class="form-group">
+                            <label for="instructor-name">Instructor Name</label>
+                            <input type="text" id="instructor-name" placeholder="Your name">
+                        </div>
+                        <div class="form-group">
+                            <label for="code-count">Number of Registration Codes *</label>
+                            <input type="number" id="code-count" min="1" max="500" value="30" required>
+                            <small style="color: #6b7280; font-size: 0.875rem;">Generate codes for your students (1-500)</small>
+                        </div>
+                        <button type="submit" class="btn" id="create-btn">Create Course & Generate Codes</button>
+                    </form>
+                </div>
+
+                <!-- Course Overview Section -->
+                <div class="dashboard-card" style="grid-column: span 2;">
+                    <h3>Your Courses</h3>
+                    <div id="courses-loading" class="loading">Loading courses...</div>
+                    <div id="courses-list" style="display: none;">
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <div class="number" id="total-courses">0</div>
+                                <div class="label">Total Courses</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="number" id="total-students">0</div>
+                                <div class="label">Total Students</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="number" id="total-codes">0</div>
+                                <div class="label">Available Codes</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="number" id="used-codes">0</div>
+                                <div class="label">Used Codes</div>
+                            </div>
+                        </div>
+                        <ul class="course-list" id="course-items"></ul>
+                    </div>
+                    <div id="no-courses" style="display: none;">
+                        <p style="color: #6b7280; text-align: center; padding: 2rem;">No courses yet. Create your first course above!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="shared/js/auth_tracking.js"></script>
+    <script>
+        const API_BASE = 'https://drbaker-backend.onrender.com/api';
+
+        // Check if user is authenticated and is staff
+        async function checkAccess() {
+            if (!isAuthenticated()) {
+                document.getElementById('access-denied').style.display = 'block';
+                return false;
+            }
+
+            try {
+                const profile = await getUserProfile();
+                // For now, allow all logged-in users. You can add is_staff check later
+                document.getElementById('dashboard-content').style.display = 'block';
+                loadCourses();
+                return true;
+            } catch (error) {
+                document.getElementById('access-denied').style.display = 'block';
+                return false;
+            }
+        }
+
+        // Load all courses
+        async function loadCourses() {
+            const token = getAuthToken();
+            const loadingEl = document.getElementById('courses-loading');
+            const listEl = document.getElementById('courses-list');
+            const noCoursesEl = document.getElementById('no-courses');
+
+            try {
+                const response = await fetch(`${API_BASE}/courses/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load courses');
+
+                const courses = await response.json();
+                loadingEl.style.display = 'none';
+
+                if (courses.length === 0) {
+                    noCoursesEl.style.display = 'block';
+                    return;
+                }
+
+                listEl.style.display = 'block';
+                displayCourses(courses);
+            } catch (error) {
+                console.error('Error loading courses:', error);
+                loadingEl.innerHTML = `<p style="color: #dc2626;">Error loading courses: ${error.message}</p>`;
+            }
+        }
+
+        // Display courses in the list
+        function displayCourses(courses) {
+            const itemsEl = document.getElementById('course-items');
+            itemsEl.innerHTML = '';
+
+            let totalStudents = 0;
+            let totalCodes = 0;
+            let usedCodes = 0;
+
+            courses.forEach(course => {
+                totalStudents += course.student_count || 0;
+                totalCodes += course.available_codes || 0;
+                usedCodes += course.used_codes || 0;
+
+                const li = document.createElement('li');
+                li.className = 'course-item';
+                li.innerHTML = `
+                    <h4>${course.name}</h4>
+                    <p><strong>Instructor:</strong> ${course.instructor || 'Not specified'}</p>
+                    <p><strong>Students:</strong> ${course.student_count || 0} | <strong>Available Codes:</strong> ${course.available_codes || 0} | <strong>Used Codes:</strong> ${course.used_codes || 0}</p>
+                    <p><strong>Created:</strong> ${new Date(course.created_at).toLocaleDateString()}</p>
+                    <button class="btn btn-secondary" onclick="viewCodes(${course.id}, '${course.name}')" style="margin-top: 0.75rem;">View All Codes</button>
+                `;
+                itemsEl.appendChild(li);
+            });
+
+            // Update stats
+            document.getElementById('total-courses').textContent = courses.length;
+            document.getElementById('total-students').textContent = totalStudents;
+            document.getElementById('total-codes').textContent = totalCodes;
+            document.getElementById('used-codes').textContent = usedCodes;
+        }
+        
+        // View all codes for a course
+        async function viewCodes(courseId, courseName) {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/courses/${courseId}/codes/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load codes');
+                
+                const data = await response.json();
+                
+                // Create modal or alert with codes
+                const codesList = data.codes.map(c => 
+                    `${c.code} ${c.is_used ? '(USED by ' + (c.used_by_username || 'someone') + ')' : '(Available)'}`
+                ).join('\n');
+                
+                alert(`Registration Codes for ${courseName}:\n\n${codesList}\n\nTotal: ${data.codes.length} codes`);
+            } catch (error) {
+                alert('Error loading codes: ' + error.message);
+            }
+        }
+
+        // Create course with codes
+        document.getElementById('create-course-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const messageEl = document.getElementById('create-message');
+            const submitBtn = document.getElementById('create-btn');
+            
+            messageEl.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating...';
+
+            const courseName = document.getElementById('course-name').value.trim();
+            const instructorName = document.getElementById('instructor-name').value.trim();
+            const codeCount = parseInt(document.getElementById('code-count').value);
+
+            const token = getAuthToken();
+
+            try {
+                // Create course
+                const courseResponse = await fetch(`${API_BASE}/courses/create/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: courseName,
+                        instructor: instructorName || getCurrentUsername(),
+                        num_codes: codeCount
+                    })
+                });
+
+                if (!courseResponse.ok) {
+                    const error = await courseResponse.json();
+                    throw new Error(error.error || 'Failed to create course');
+                }
+
+                const result = await courseResponse.json();
+
+                messageEl.className = 'message success';
+                messageEl.textContent = `✓ Created course "${result.name}" with ${result.codes_generated} registration codes!`;
+                messageEl.style.display = 'block';
+
+                // Reset form
+                document.getElementById('create-course-form').reset();
+
+                // Reload courses
+                loadCourses();
+
+            } catch (error) {
+                messageEl.className = 'message error';
+                messageEl.textContent = error.message;
+                messageEl.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Course & Generate Codes';
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', checkAccess);
+    </script>
+</body>
+</html>
