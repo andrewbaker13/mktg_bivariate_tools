@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Marketing Analytics Tools</title>
+    <link rel="stylesheet" href="shared/css/main.css">
+    <style>
+        .auth-container {
+            max-width: 500px;
+            margin: 3rem auto;
+            padding: 2rem;
+        }
+        .auth-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .form-group small {
+            display: block;
+            margin-top: 0.25rem;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #2563eb;
+        }
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .success-message {
+            background: #d1fae5;
+            color: #059669;
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .auth-links {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .auth-links a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+        .info-box {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+        .info-box p {
+            margin: 0;
+            color: #1e40af;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-form">
+            <h1>Register</h1>
+            <p style="color: #6b7280; margin-bottom: 1rem;">Create your account to access analytics tools</p>
+            
+            <div class="info-box">
+                <p><strong>Registration Code Required:</strong> You need a course registration code from your instructor to create an account.</p>
+            </div>
+            
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+            
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="registration-code">Course Registration Code *</label>
+                    <input type="text" id="registration-code" name="registration-code" required placeholder="8-character code from instructor">
+                    <small>Ask your instructor for this code</small>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first-name">First Name</label>
+                        <input type="text" id="first-name" name="first-name" autocomplete="given-name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="last-name">Last Name</label>
+                        <input type="text" id="last-name" name="last-name" autocomplete="family-name">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="username">Username *</label>
+                    <input type="text" id="username" name="username" required autocomplete="username">
+                    <small>Choose a unique username</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required autocomplete="email">
+                    <small>Used for password resets</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password *</label>
+                    <input type="password" id="password" name="password" required autocomplete="new-password">
+                    <small>At least 8 characters</small>
+                </div>
+                
+                <button type="submit" class="btn" id="submit-btn">Create Account</button>
+            </form>
+            
+            <div class="auth-links">
+                <p>Already have an account? <a href="login.html">Login</a></p>
+                <p><a href="index.html">Back to tools</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="shared/js/auth_tracking.js"></script>
+    <script>
+        const form = document.getElementById('register-form');
+        const errorMsg = document.getElementById('error-message');
+        const successMsg = document.getElementById('success-message');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        // Check if already logged in
+        if (isAuthenticated()) {
+            successMsg.textContent = 'You are already logged in. Redirecting...';
+            successMsg.style.display = 'block';
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating account...';
+            
+            const registrationCode = document.getElementById('registration-code').value.trim();
+            const firstName = document.getElementById('first-name').value.trim();
+            const lastName = document.getElementById('last-name').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await register(
+                    username,
+                    email,
+                    password,
+                    registrationCode,
+                    firstName,
+                    lastName
+                );
+                
+                successMsg.textContent = `Welcome, ${response.username}! Account created successfully. Redirecting...`;
+                successMsg.style.display = 'block';
+                
+                // Redirect to tools page
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+                
+            } catch (error) {
+                errorMsg.textContent = error.message;
+                errorMsg.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

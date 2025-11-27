@@ -1737,6 +1737,19 @@ function updateResults() {
         toggleMatrixOutputs(false);
         return;
     }
+    
+    // Track tool usage
+    logToolUsage('pearson-correlation', {
+        n: stats.n,
+        r: stats.r,
+        p_value: stats.pValue,
+        method: selectedCorrelationMethod,
+        data_mode: activeMode,
+        has_labels: !!(data.labels && data.labels.x && data.labels.y)
+    }, `r = ${stats.r.toFixed(3)}, p = ${stats.pValue < 0.001 ? '<.001' : stats.pValue.toFixed(4)}, n = ${stats.n}`).catch(err => {
+        console.warn('Usage tracking failed:', err);
+    });
+    
     updateStatus('Analysis complete. Interpret the cards, charts, and diagnostics below.');
     toggleSingleOutputs(true);
     toggleMatrixOutputs(false);
