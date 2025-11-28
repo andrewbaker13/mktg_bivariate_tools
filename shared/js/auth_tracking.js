@@ -98,7 +98,15 @@ async function register(username, email, password, registrationCode, firstName =
     
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Registration failed');
+        console.error('Registration error:', error);
+        // Try to extract meaningful error message
+        const message = error.detail || error.error || error.message || 
+                       (error.username && `Username: ${error.username[0]}`) ||
+                       (error.email && `Email: ${error.email[0]}`) ||
+                       (error.password && `Password: ${error.password[0]}`) ||
+                       (error.registration_code && `Code: ${error.registration_code[0]}`) ||
+                       JSON.stringify(error);
+        throw new Error(message);
     }
     
     const data = await response.json();
