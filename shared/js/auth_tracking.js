@@ -425,6 +425,91 @@ if (typeof module !== 'undefined' && module.exports) {
         getToolDetails,
         getMyScenarios,
         getToolScenarios,
-        initAuthUI
+        initAuthUI,
+        logFeatureUsage,
+        getMyFeatureUsage
     };
 }
+
+// ========================================
+// Feature Usage Tracking Functions
+// ========================================
+
+/**
+ * Log when a user interacts with a specific feature
+ * @param {string} toolSlug - Tool identifier (e.g., 'pearson-correlation')
+ * @param {string} featureType - Type of feature (export_chart, view_help, etc.)
+ * @param {object} metadata - Optional additional data about the interaction
+ * @param {number} toolRunId - Optional ID of the tool run this relates to
+ * @returns {Promise<object>} Feature usage record
+ * 
+ * Feature types:
+ * - export_chart: User exported a chart/graph
+ * - export_data: User downloaded CSV/Excel data
+ * - copy_results: User copied results to clipboard
+ * - toggle_advanced: User opened advanced options
+ * - view_help: User clicked help/documentation
+ * - view_interpretation: User viewed interpretation guide
+ * - change_confidence: User changed confidence level
+ * - toggle_visualization: User toggled visualization options
+ * - download_report: User downloaded full report
+ * - share_results: User shared or printed results
+ * - reset_tool: User reset tool to defaults
+ */
+async function logFeatureUsage(toolSlug, featureType, metadata = {}, toolRunId = null) {
+    try {
+        const payload = {
+            tool_slug: toolSlug,
+            feature_type: featureType,
+            metadata: metadata
+        };
+        
+        if (toolRunId) {
+            payload.tool_run_id = toolRunId;
+        }
+        
+        const response = await fetch(`${API_BASE}/feature-usage/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(isAuthenticated() && { 'Authorization': `Token ${getAuthToken()}` })
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            console.error('Feature logging error:', error);
+            return null;
+        }
+        
+        return await response.json();
+    } catch (err) {
+        console.error('Feature logging failed:', err);
+        return null;
+    }
+}
+
+/**
+ * Get user's feature usage statistics
+ * Requires authentication
+ * @returns {Promise<object>} Feature usage stats
+ */
+async function getMyFeatureUsage() {
+    if (!isAuthenticated()) {
+        throw new Error('Authentication required');
+    }
+    
+    const response = await fetch(`${API_BASE}/analytics/my-features/`, {
+        headers: {
+            'Authorization': `Token ${getAuthToken()}`
+        }
+    });
+    
+    if (!response.ok) {
+        throw new Error('Failed to fetch feature usage');
+    }
+    
+    return await response.json();
+}
+
