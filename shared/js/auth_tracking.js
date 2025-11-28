@@ -176,15 +176,31 @@ async function getUserProfile() {
  * @param {string} toolSlug - Unique identifier for the tool (e.g., 'pearson-correlation')
  * @param {object} params - Parameters used in the tool
  * @param {string} resultSummary - Brief description of what was generated
+ * @param {object} trackingOptions - Optional: { scenario: 'scenario name', dataSource: 'scenario'|'upload'|'manual' }
  * @returns {Promise<object>} Response from backend
  */
-async function logToolUsage(toolSlug, params = {}, resultSummary = '') {
+async function logToolUsage(toolSlug, params = {}, resultSummary = '', trackingOptions = {}) {
     const token = getAuthToken();
     
     // If not authenticated, don't track (or could track anonymously)
     if (!token) {
         console.log('User not authenticated, skipping usage tracking');
         return null;
+    }
+    
+    const payload = {
+        tool_slug: toolSlug,
+        page_url: window.location.href,
+        params_json: params,
+        result_summary: resultSummary
+    };
+    
+    // Add scenario tracking if provided
+    if (trackingOptions.scenario) {
+        payload.scenario_name = trackingOptions.scenario;
+    }
+    if (trackingOptions.dataSource) {
+        payload.data_source = trackingOptions.dataSource;
     }
     
     try {
@@ -194,12 +210,7 @@ async function logToolUsage(toolSlug, params = {}, resultSummary = '') {
                 'Content-Type': 'application/json',
                 'Authorization': `Token ${token}`
             },
-            body: JSON.stringify({
-                tool_slug: toolSlug,
-                page_url: window.location.href,
-                params_json: params,
-                result_summary: resultSummary
-            })
+            body: JSON.stringify(payload)
         });
         
         if (!response.ok) {
@@ -358,6 +369,45 @@ if (typeof window !== 'undefined') {
     });
 }
 
+/**
+ * Get user's scenario usage analytics
+ * @returns {Promise<object>} Scenario usage data
+ */
+async function getMyScenarios() {
+    const token = getAuthToken();
+    if (!token) return null;
+    
+    try {
+        const response = await fetch(`${API_BASE}/analytics/my-scenarios/`, {
+            headers: { 'Authorization': `Token ${token}` }
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching scenario data:', error);
+        return null;
+    }
+}
+
+/**
+ * Get scenario popularity for a specific tool
+ * @param {string} toolSlug - Tool identifier
+ * @returns {Promise<object>} Tool scenario analytics
+ */
+async function getToolScenarios(toolSlug) {
+    const token = getAuthToken();
+    if (!token) return null;
+    
+    try {
+        const response = await fetch(`${API_BASE}/analytics/tool/${toolSlug}/scenarios/`, {
+            headers: { 'Authorization': `Token ${token}` }
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching tool scenarios:', error);
+        return null;
+    }
+}
+
 // Export functions for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -373,6 +423,8 @@ if (typeof module !== 'undefined' && module.exports) {
         getMyStats,
         getCourseAnalytics,
         getToolDetails,
+        getMyScenarios,
+        getToolScenarios,
         initAuthUI
     };
 }
