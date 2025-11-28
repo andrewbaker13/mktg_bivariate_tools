@@ -158,6 +158,111 @@
             padding: 2rem;
             color: #6b7280;
         }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            overflow: auto;
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 2% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 900px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .close {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #9ca3af;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+        .close:hover {
+            color: #4b5563;
+        }
+        .code-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .code-table th,
+        .code-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .code-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+        .code-table tr:hover {
+            background-color: #f9fafb;
+        }
+        .badge-used {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-available {
+            background: #d1fae5;
+            color: #059669;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-expired {
+            background: #fef3c7;
+            color: #d97706;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-inactive {
+            background: #f3f4f6;
+            color: #6b7280;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .btn-small {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            margin-left: 0.25rem;
+        }
+        .btn-danger {
+            background: #dc2626;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        .btn-success {
+            background: #059669;
+        }
+        .btn-success:hover {
+            background: #047857;
+        }
     </style>
 </head>
 <body>
@@ -202,6 +307,11 @@
                             <input type="number" id="code-count" min="1" max="500" value="30" required>
                             <small style="color: #6b7280; font-size: 0.875rem;">Generate codes for your students (1-500)</small>
                         </div>
+                        <div class="form-group">
+                            <label for="expiration-days">Code Expiration (Days)</label>
+                            <input type="number" id="expiration-days" min="1" value="365">
+                            <small style="color: #6b7280; font-size: 0.875rem;">Codes expire after this many days (default: 365)</small>
+                        </div>
                         <button type="submit" class="btn" id="create-btn">Create Course & Generate Codes</button>
                     </form>
                 </div>
@@ -239,13 +349,34 @@
         </div>
     </div>
 
+    <!-- Code Management Modal -->
+    <div id="codeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalCourseName">Course Codes</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modal-message" class="message"></div>
+            <table class="code-table" id="codeTable">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Status</th>
+                        <th>Used By</th>
+                        <th>Activated</th>
+                        <th>Expires</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="codeTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
     <script src="shared/js/auth_tracking.js"></script>
     <script>
-        // Switch between local and production
-        const API_BASE = window.location.hostname === 'localhost' || window.location.protocol === 'file:'
-            ? 'http://localhost:8000/api'
-            : 'https://drbaker-backend.onrender.com/api';
-
+        // API_BASE is already defined in auth_tracking.js
+        
         // Check if user is authenticated and is staff
         async function checkAccess() {
             if (!isAuthenticated()) {
@@ -316,7 +447,10 @@
                     <p><strong>Instructor:</strong> ${course.instructor || 'Not specified'}</p>
                     <p><strong>Students:</strong> ${course.student_count || 0} | <strong>Available Codes:</strong> ${course.available_codes || 0} | <strong>Used Codes:</strong> ${course.used_codes || 0}</p>
                     <p><strong>Created:</strong> ${new Date(course.created_at).toLocaleDateString()}</p>
-                    <button class="btn btn-secondary" onclick="viewCodes(${course.id}, '${course.name}')" style="margin-top: 0.75rem;">View All Codes</button>
+                    <div style="margin-top: 0.75rem;">
+                        <button class="btn btn-secondary" onclick="viewCodes(${course.id}, '${course.name.replace(/'/g, "\\'")}')">View & Manage Codes</button>
+                        <button class="btn" onclick="downloadCSV(${course.id}, '${course.name.replace(/'/g, "\\'")}')" style="margin-left: 0.5rem;">⬇ Download CSV</button>
+                    </div>
                 `;
                 itemsEl.appendChild(li);
             });
@@ -328,7 +462,7 @@
             document.getElementById('used-codes').textContent = usedCodes;
         }
         
-        // View all codes for a course
+        // View all codes for a course in modal
         async function viewCodes(courseId, courseName) {
             const token = getAuthToken();
             
@@ -341,14 +475,125 @@
                 
                 const data = await response.json();
                 
-                // Create modal or alert with codes
-                const codesList = data.codes.map(c => 
-                    `${c.code} ${c.is_used ? '(USED by ' + (c.used_by_username || 'someone') + ')' : '(Available)'}`
-                ).join('\n');
+                // Show modal
+                document.getElementById('modalCourseName').textContent = `${courseName} - Registration Codes`;
+                const tbody = document.getElementById('codeTableBody');
+                tbody.innerHTML = '';
                 
-                alert(`Registration Codes for ${courseName}:\n\n${codesList}\n\nTotal: ${data.codes.length} codes`);
+                data.codes.forEach(code => {
+                    const now = new Date();
+                    const expiresAt = code.expires_at ? new Date(code.expires_at) : null;
+                    const isExpired = expiresAt && expiresAt < now;
+                    
+                    let statusBadge = '';
+                    if (code.is_used) {
+                        statusBadge = '<span class="badge-used">USED</span>';
+                    } else if (!code.is_active) {
+                        statusBadge = '<span class="badge-inactive">INACTIVE</span>';
+                    } else if (isExpired) {
+                        statusBadge = '<span class="badge-expired">EXPIRED</span>';
+                    } else {
+                        statusBadge = '<span class="badge-available">AVAILABLE</span>';
+                    }
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td style="font-family: monospace; font-weight: 600;">${code.code}</td>
+                        <td>${statusBadge}</td>
+                        <td>${code.used_by || '-'}</td>
+                        <td>${code.used_at ? new Date(code.used_at).toLocaleString() : '-'}</td>
+                        <td>${expiresAt ? expiresAt.toLocaleString() : 'Never'}</td>
+                        <td>
+                            ${!code.is_used ? `
+                                <button class="btn btn-small" onclick="editExpiration(${code.id}, '${code.code}')">Edit Expiry</button>
+                                ${code.is_active ? 
+                                    `<button class="btn btn-small btn-danger" onclick="toggleCodeStatus(${code.id}, false)">Deactivate</button>` :
+                                    `<button class="btn btn-small btn-success" onclick="toggleCodeStatus(${code.id}, true)">Reactivate</button>`
+                                }
+                            ` : '<span style="color: #9ca3af;">N/A</span>'}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                document.getElementById('codeModal').style.display = 'block';
             } catch (error) {
                 alert('Error loading codes: ' + error.message);
+            }
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('codeModal').style.display = 'none';
+        }
+        
+        // Download CSV of codes
+        async function downloadCSV(courseId, courseName) {
+            const token = getAuthToken();
+            window.location.href = `${API_BASE}/courses/${courseId}/codes/csv/?token=${token}`;
+        }
+        
+        // Edit expiration date
+        async function editExpiration(codeId, codeText) {
+            const newDate = prompt(`Set new expiration date for code ${codeText}.\n\nEnter date in format: YYYY-MM-DD HH:MM\n(Example: 2025-12-31 23:59)`);
+            
+            if (!newDate) return;
+            
+            try {
+                // Convert to ISO format
+                const isoDate = new Date(newDate).toISOString();
+                
+                const token = getAuthToken();
+                const response = await fetch(`${API_BASE}/registration-codes/${codeId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ expires_at: isoDate })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to update expiration');
+                }
+                
+                alert('Expiration date updated successfully!');
+                // Reload the modal
+                closeModal();
+                // Note: You'll need to store courseId and courseName to reload
+            } catch (error) {
+                alert('Error updating expiration: ' + error.message);
+            }
+        }
+        
+        // Toggle code active status (deactivate/reactivate)
+        async function toggleCodeStatus(codeId, activate) {
+            const action = activate ? 'reactivate' : 'deactivate';
+            
+            if (!confirm(`Are you sure you want to ${action} this code?`)) return;
+            
+            try {
+                const token = getAuthToken();
+                const response = await fetch(`${API_BASE}/registration-codes/${codeId}/${action}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || `Failed to ${action} code`);
+                }
+                
+                alert(`Code ${activate ? 'reactivated' : 'deactivated'} successfully!`);
+                closeModal();
+                // Reload courses to refresh data
+                loadCourses();
+            } catch (error) {
+                alert(`Error ${action}ing code: ` + error.message);
             }
         }
 
@@ -366,6 +611,7 @@
             const courseName = document.getElementById('course-name').value.trim();
             const instructorName = document.getElementById('instructor-name').value.trim();
             const codeCount = parseInt(document.getElementById('code-count').value);
+            const expirationDays = parseInt(document.getElementById('expiration-days').value);
 
             const token = getAuthToken();
 
@@ -380,7 +626,8 @@
                     body: JSON.stringify({
                         name: courseName,
                         instructor: instructorName || getCurrentUsername(),
-                        num_codes: codeCount
+                        num_codes: codeCount,
+                        code_expiration_days: expirationDays
                     })
                 });
 
