@@ -107,6 +107,67 @@
             color: #1e40af;
             font-size: 0.9rem;
         }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: #6b7280;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+        .password-toggle:hover {
+            color: #3b82f6;
+        }
+        .validation-message {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .validation-message.error {
+            color: #dc2626;
+            display: block;
+        }
+        .validation-message.success {
+            color: #059669;
+            display: block;
+        }
+        .form-group input.error {
+            border-color: #dc2626;
+        }
+        .form-group input.success {
+            border-color: #059669;
+        }
+        .password-strength {
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .strength-bar {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 0.25rem;
+        }
+        .strength-fill {
+            height: 100%;
+            transition: width 0.3s, background 0.3s;
+            width: 0;
+        }
+        .strength-fill.weak { width: 33%; background: #dc2626; }
+        .strength-fill.medium { width: 66%; background: #f59e0b; }
+        .strength-fill.strong { width: 100%; background: #059669; }
+        .strength-text {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
     </style>
 </head>
 <body>
@@ -155,8 +216,30 @@
                 
                 <div class="form-group">
                     <label for="password">Password *</label>
-                    <input type="password" id="password" name="password" required autocomplete="new-password">
-                    <small>At least 8 characters</small>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" required autocomplete="new-password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                            <span>👁️</span>
+                        </button>
+                    </div>
+                    <div class="password-strength" id="password-strength">
+                        <div class="strength-bar">
+                            <div class="strength-fill" id="strength-fill"></div>
+                        </div>
+                        <div class="strength-text" id="strength-text"></div>
+                    </div>
+                    <small>At least 8 characters, mix of letters and numbers recommended</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password-confirm">Confirm Password *</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password-confirm" name="password-confirm" required autocomplete="new-password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('password-confirm', this)">
+                            <span>👁️</span>
+                        </button>
+                    </div>
+                    <div class="validation-message" id="password-match-message"></div>
                 </div>
                 
                 <button type="submit" class="btn" id="submit-btn">Create Account</button>
@@ -176,6 +259,99 @@
         const successMsg = document.getElementById('success-message');
         const submitBtn = document.getElementById('submit-btn');
         
+        // Password visibility toggle
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('span');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                icon.textContent = '👁️';
+            }
+        }
+        
+        // Password strength checker
+        function checkPasswordStrength(password) {
+            const strengthBar = document.getElementById('strength-fill');
+            const strengthText = document.getElementById('strength-text');
+            const strengthContainer = document.getElementById('password-strength');
+            
+            if (!password) {
+                strengthContainer.style.display = 'none';
+                return 0;
+            }
+            
+            strengthContainer.style.display = 'block';
+            
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+            
+            strengthBar.className = 'strength-fill';
+            
+            if (strength <= 2) {
+                strengthBar.classList.add('weak');
+                strengthText.textContent = '⚠️ Weak password';
+                strengthText.style.color = '#dc2626';
+                return 1;
+            } else if (strength <= 3) {
+                strengthBar.classList.add('medium');
+                strengthText.textContent = '⚡ Medium strength';
+                strengthText.style.color = '#f59e0b';
+                return 2;
+            } else {
+                strengthBar.classList.add('strong');
+                strengthText.textContent = '✅ Strong password';
+                strengthText.style.color = '#059669';
+                return 3;
+            }
+        }
+        
+        // Real-time password validation
+        const passwordInput = document.getElementById('password');
+        const passwordConfirm = document.getElementById('password-confirm');
+        const matchMessage = document.getElementById('password-match-message');
+        
+        passwordInput.addEventListener('input', (e) => {
+            checkPasswordStrength(e.target.value);
+            if (passwordConfirm.value) {
+                validatePasswordMatch();
+            }
+        });
+        
+        passwordConfirm.addEventListener('input', validatePasswordMatch);
+        
+        function validatePasswordMatch() {
+            const password = passwordInput.value;
+            const confirm = passwordConfirm.value;
+            
+            if (!confirm) {
+                matchMessage.style.display = 'none';
+                passwordConfirm.classList.remove('error', 'success');
+                return false;
+            }
+            
+            if (password === confirm) {
+                matchMessage.textContent = '✅ Passwords match';
+                matchMessage.className = 'validation-message success';
+                passwordConfirm.classList.remove('error');
+                passwordConfirm.classList.add('success');
+                return true;
+            } else {
+                matchMessage.textContent = '❌ Passwords do not match';
+                matchMessage.className = 'validation-message error';
+                passwordConfirm.classList.remove('success');
+                passwordConfirm.classList.add('error');
+                return false;
+            }
+        }
+        
         // Check if already logged in
         if (isAuthenticated()) {
             successMsg.textContent = 'You are already logged in. Redirecting...';
@@ -190,6 +366,22 @@
             
             errorMsg.style.display = 'none';
             successMsg.style.display = 'none';
+            
+            // Validate password match
+            if (!validatePasswordMatch()) {
+                errorMsg.textContent = '❌ Passwords do not match. Please re-enter.';
+                errorMsg.style.display = 'block';
+                return;
+            }
+            
+            // Validate password strength
+            const password = document.getElementById('password').value;
+            if (password.length < 8) {
+                errorMsg.textContent = '❌ Password must be at least 8 characters long.';
+                errorMsg.style.display = 'block';
+                return;
+            }
+            
             submitBtn.disabled = true;
             submitBtn.textContent = 'Creating account...';
             
@@ -198,7 +390,6 @@
             const lastName = document.getElementById('last-name').value.trim();
             const username = document.getElementById('username').value.trim();
             const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
             
             try {
                 const response = await register(
@@ -219,7 +410,22 @@
                 }, 2000);
                 
             } catch (error) {
-                errorMsg.textContent = error.message;
+                // Parse error message for better user feedback
+                let displayMessage = error.message;
+                
+                if (displayMessage.includes('registration code')) {
+                    displayMessage = '❌ Invalid registration code. Please check with your instructor.';
+                } else if (displayMessage.includes('username')) {
+                    displayMessage = '❌ Username already taken. Please choose another.';
+                } else if (displayMessage.includes('email')) {
+                    displayMessage = '❌ Email already registered. Try logging in instead.';
+                } else if (displayMessage.includes('expired')) {
+                    displayMessage = '❌ Registration code has expired. Contact your instructor for a new code.';
+                } else if (!displayMessage.startsWith('❌')) {
+                    displayMessage = '❌ ' + displayMessage;
+                }
+                
+                errorMsg.textContent = displayMessage;
                 errorMsg.style.display = 'block';
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Account';
