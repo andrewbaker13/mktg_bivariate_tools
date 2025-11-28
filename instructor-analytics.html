@@ -196,6 +196,35 @@
                 </div>
             </div>
 
+            <!-- At-Risk Students Dashboard -->
+            <div class="at-risk-container" id="at-risk-dashboard" style="display: none;">
+                <div class="chart-container">
+                    <h3>⚠️ At-Risk Students</h3>
+                    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 1.5rem;">
+                        <div style="background: #fee2e2; padding: 1rem; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: 700; color: #991b1b;" id="high-risk-count">0</div>
+                            <div style="font-size: 0.875rem; color: #991b1b;">High Risk</div>
+                        </div>
+                        <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: 700; color: #92400e;" id="medium-risk-count">0</div>
+                            <div style="font-size: 0.875rem; color: #92400e;">Medium Risk</div>
+                        </div>
+                        <div style="background: #d1fae5; padding: 1rem; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 2rem; font-weight: 700; color: #065f46;" id="low-risk-count">0</div>
+                            <div style="font-size: 0.875rem; color: #065f46;">On Track</div>
+                        </div>
+                    </div>
+                    <div id="at-risk-list"></div>
+                </div>
+            </div>
+
+            <!-- Activity Heatmap -->
+            <div class="chart-container" id="heatmap-section" style="display: none;">
+                <h3>📅 Class Activity Patterns</h3>
+                <div id="heatmap-viz"></div>
+                <div id="peak-hours" style="margin-top: 1.5rem;"></div>
+            </div>
+
             <!-- Charts -->
             <div class="chart-grid">
                 <div class="chart-container">
@@ -228,6 +257,17 @@
                     </thead>
                     <tbody id="student-table-body"></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Student Detail Modal -->
+        <div id="student-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+            <div style="background: white; margin: 2rem auto; max-width: 1200px; border-radius: 8px; padding: 2rem; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 id="modal-student-name">Student Details</h2>
+                    <button onclick="closeStudentModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                </div>
+                <div id="modal-student-content"></div>
             </div>
         </div>
     </div>
@@ -313,6 +353,10 @@
                 // Render student table
                 studentData = students.students;
                 renderStudentTable(studentData);
+                
+                // Load advanced analytics
+                loadAtRiskStudents(courseId);
+                loadActivityHeatmap(courseId);
                 
                 // Show dashboard
                 document.getElementById('loading').style.display = 'none';
@@ -406,6 +450,141 @@
             });
         }
 
+        async function loadAtRiskStudents(courseId) {
+            try {
+                const response = await fetch(`${API_BASE}/analytics/course/${courseId}/at-risk/`, {
+                    headers: { 'Authorization': `Token ${getAuthToken()}` }
+                });
+                const data = await response.json();
+                
+                document.getElementById('high-risk-count').textContent = data.summary.high_risk;
+                document.getElementById('medium-risk-count').textContent = data.summary.medium_risk;
+                document.getElementById('low-risk-count').textContent = data.summary.low_risk;
+                
+                const list = document.getElementById('at-risk-list');
+                const riskyStudents = data.students.filter(s => s.risk_level !== 'low');
+                
+                if (riskyStudents.length === 0) {
+                    list.innerHTML = '<p style="color: #6b7280; text-align: center;">✅ All students are on track!</p>';
+                } else {
+                    list.innerHTML = riskyStudents.map(student => `
+                        <div style="background: ${student.color === 'red' ? '#fee2e2' : '#fef3c7'}; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; cursor: pointer;"
+                             onclick="loadStudentDetail(${student.student_id})">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-weight: 700;">${student.icon} ${student.first_name} ${student.last_name}</span>
+                                    <span style="color: #6b7280; margin-left: 0.5rem;">(${student.username})</span>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.875rem; color: #6b7280;">${student.metrics.total_runs} runs, ${student.metrics.days_since_activity} days inactive</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
+                                ${student.risk_factors.join(' • ')}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                document.getElementById('at-risk-dashboard').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading at-risk students:', error);
+            }
+        }
+
+        async function loadActivityHeatmap(courseId) {
+            try {
+                const response = await fetch(`${API_BASE}/analytics/course/${courseId}/heatmap/`, {
+                    headers: { 'Authorization': `Token ${getAuthToken()}` }
+                });
+                const data = await response.json();
+                
+                // Display peak hours
+                if (data.peak_hours.length > 0) {
+                    document.getElementById('peak-hours').innerHTML = `
+                        <h4>📊 Peak Activity Hours:</h4>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            ${data.peak_hours.map(([hour, count]) => `
+                                <div style="background: #dbeafe; padding: 0.75rem; border-radius: 4px;">
+                                    <div style="font-weight: 700;">${hour}:00</div>
+                                    <div style="font-size: 0.875rem; color: #6b7280;">${count} activities</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    
+                    document.getElementById('heatmap-section').style.display = 'block';
+                } else {
+                    document.getElementById('heatmap-section').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading activity heatmap:', error);
+            }
+        }
+
+        async function loadStudentDetail(studentId) {
+            try {
+                const response = await fetch(`${API_BASE}/analytics/student/${studentId}/`, {
+                    headers: { 'Authorization': `Token ${getAuthToken()}` }
+                });
+                const data = await response.json();
+                
+                document.getElementById('modal-student-name').textContent = 
+                    `${data.student.first_name} ${data.student.last_name} (${data.student.username})`;
+                
+                document.getElementById('modal-student-content').innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                        <div style="background: #f9fafb; padding: 1rem; border-radius: 8px;">
+                            <div style="font-size: 0.875rem; color: #6b7280;">Total Runs</div>
+                            <div style="font-size: 2rem; font-weight: 700;">${data.summary.total_runs}</div>
+                        </div>
+                        <div style="background: #f9fafb; padding: 1rem; border-radius: 8px;">
+                            <div style="font-size: 0.875rem; color: #6b7280;">Unique Tools</div>
+                            <div style="font-size: 2rem; font-weight: 700;">${data.summary.unique_tools}</div>
+                        </div>
+                        <div style="background: #f9fafb; padding: 1rem; border-radius: 8px;">
+                            <div style="font-size: 0.875rem; color: #6b7280;">Active Days</div>
+                            <div style="font-size: 2rem; font-weight: 700;">${data.summary.unique_days_active}</div>
+                        </div>
+                        <div style="background: #f9fafb; padding: 1rem; border-radius: 8px;">
+                            <div style="font-size: 0.875rem; color: #6b7280;">Days Since Activity</div>
+                            <div style="font-size: 2rem; font-weight: 700;">${data.summary.days_since_activity || 0}</div>
+                        </div>
+                    </div>
+                    
+                    <h4>Tool Usage:</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;">
+                        ${data.tool_usage.slice(0, 10).map(tool => `
+                            <div style="background: #dbeafe; padding: 0.5rem 1rem; border-radius: 4px;">
+                                ${tool.tool__name}: ${tool.count}
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <h4>Recent Activity:</h4>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        ${data.recent_activity.length > 0 ? data.recent_activity.map(activity => `
+                            <div style="padding: 0.75rem; border-bottom: 1px solid #e5e7eb;">
+                                <div style="font-weight: 600;">${activity.tool}</div>
+                                <div style="font-size: 0.875rem; color: #6b7280;">
+                                    ${new Date(activity.timestamp).toLocaleString()} • ${activity.scenario}
+                                </div>
+                            </div>
+                        `).join('') : '<p style="color: #6b7280; text-align: center;">No recent activity</p>'}
+                    </div>
+                `;
+                
+                document.getElementById('student-modal').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading student details:', error);
+                alert('Failed to load student details');
+            }
+        }
+
+        function closeStudentModal() {
+            document.getElementById('student-modal').style.display = 'none';
+        }
+
         function renderStudentTable(students) {
             const tbody = document.getElementById('student-table-body');
             tbody.innerHTML = '';
@@ -428,7 +607,7 @@
                 }
                 
                 tr.innerHTML = `
-                    <td><strong>${student.username}</strong></td>
+                    <td><strong><a href="#" onclick="loadStudentDetail(${student.student_id}); return false;" style="color: #3b82f6; text-decoration: none;">${student.username}</a></strong></td>
                     <td>${student.email || '-'}</td>
                     <td>${student.total_runs}</td>
                     <td>${student.tools_used}</td>

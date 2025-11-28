@@ -191,6 +191,14 @@
                     <div class="stat-label">Member Since</div>
                     <div class="stat-number" id="member-since" style="font-size: 1.5rem;">--</div>
                 </div>
+                <div class="stat-card purple">
+                    <div class="stat-label">🏆 Badges Earned</div>
+                    <div class="stat-number" id="badges-earned">0</div>
+                </div>
+                <div class="stat-card pink">
+                    <div class="stat-label">📊 Class Rank</div>
+                    <div class="stat-number" id="percentile-rank" style="font-size: 1.3rem;">--</div>
+                </div>
             </div>
 
             <div class="dashboard-grid">
@@ -203,8 +211,21 @@
                 <!-- Top Tools -->
                 <div class="chart-container">
                     <h3>🔥 Your Top Tools</h3>
-                    <ul class="tools-list" id="top-tools-list"></ul>
+                    <ul id="top-tools-list" class="tools-list"></ul>
                 </div>
+            </div>
+
+            <!-- Achievements Section -->
+            <div class="chart-container">
+                <h3>🏆 Your Achievements</h3>
+                <div id="badges-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
+                <div id="next-milestones" style="margin-top: 1.5rem;"></div>
+            </div>
+
+            <!-- Peer Comparison -->
+            <div class="chart-container" id="peer-comparison" style="display: none;">
+                <h3>📊 How You Compare to Classmates</h3>
+                <div id="percentile-details"></div>
             </div>
 
             <!-- Untried Tools -->
@@ -262,6 +283,23 @@
                 });
                 const usage = await usageResponse.json();
                 
+                // Load badges
+                const badgesResponse = await fetch(`${API_BASE}/analytics/my-badges/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                const badges = await badgesResponse.json();
+                
+                // Load percentile (may not be enrolled in a course)
+                let percentile = { enrolled: false };
+                try {
+                    const percentileResponse = await fetch(`${API_BASE}/analytics/my-percentile/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    });
+                    percentile = await percentileResponse.json();
+                } catch (e) {
+                    console.log('Not enrolled in a course');
+                }
+                
                 // Update UI
                 document.getElementById('username-badge').textContent = stats.user;
                 document.getElementById('total-runs').textContent = stats.total_runs;
@@ -282,6 +320,10 @@
                 
                 // Render recent activity
                 renderRecentActivity(usage.recent_runs);
+                
+                // Display badges and percentile
+                displayBadges(badges);
+                displayPercentile(percentile);
                 
                 // Show dashboard
                 document.getElementById('loading').style.display = 'none';
@@ -414,6 +456,88 @@
             if (seconds < 604800) return Math.floor(seconds / 86400) + ' days ago';
             
             return date.toLocaleDateString();
+        }
+
+        function displayBadges(badges) {
+            const container = document.getElementById('badges-container');
+            const milestonesContainer = document.getElementById('next-milestones');
+            
+            document.getElementById('badges-earned').textContent = badges.total_badges;
+            
+            if (badges.badges.length === 0) {
+                container.innerHTML = '<p style="color: #6b7280; text-align: center; grid-column: 1/-1;">Keep using tools to earn your first badge! 🎯</p>';
+                milestonesContainer.innerHTML = '';
+                return;
+            }
+            
+            const tierColors = {
+                'gold': 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                'silver': 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)',
+                'bronze': 'linear-gradient(135deg, #d97706 0%, #92400e 100%)'
+            };
+            
+            container.innerHTML = badges.badges.map(badge => `
+                <div style="background: ${tierColors[badge.tier] || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}; color: white; padding: 1.5rem; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 3rem;">${badge.icon}</div>
+                    <div style="font-weight: 700; margin: 0.5rem 0; font-size: 1.1rem;">${badge.name}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">${badge.description}</div>
+                </div>
+            `).join('');
+            
+            if (badges.next_milestones && badges.next_milestones.length > 0) {
+                milestonesContainer.innerHTML = `
+                    <h4 style="margin-bottom: 1rem; color: #374151;">Next Achievements:</h4>
+                    ${badges.next_milestones.map(m => `
+                        <div style="margin: 1rem 0; background: #f9fafb; padding: 1rem; border-radius: 6px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-weight: 600; color: #374151;">${m.badge}</span>
+                                <span style="color: #6b7280;">${m.current}/${m.target}</span>
+                            </div>
+                            <div style="background: #e5e7eb; height: 10px; border-radius: 5px; overflow: hidden;">
+                                <div style="background: #3b82f6; height: 100%; border-radius: 5px; width: ${m.progress}%; transition: width 0.3s;"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            } else {
+                milestonesContainer.innerHTML = '<p style="color: #6b7280; text-align: center;">🎉 You\'ve earned all available badges! Amazing work!</p>';
+            }
+        }
+
+        function displayPercentile(percentile) {
+            if (!percentile.enrolled) {
+                document.getElementById('percentile-rank').textContent = '--';
+                return;
+            }
+            
+            document.getElementById('percentile-rank').textContent = `${percentile.rank_category.icon} Top ${Math.round(100 - percentile.percentiles.average)}%`;
+            
+            const peerSection = document.getElementById('peer-comparison');
+            peerSection.style.display = 'block';
+            
+            document.getElementById('percentile-details').innerHTML = `
+                <div style="background: #f9fafb; padding: 1.5rem; border-radius: 8px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                        <div style="background: white; padding: 1.5rem; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">Your Rank</div>
+                            <div style="font-size: 2rem; font-weight: 700; color: #1f2937; margin: 0.5rem 0;">
+                                ${percentile.rank_category.icon} ${percentile.rank_category.label}
+                            </div>
+                            <div style="font-size: 0.875rem; color: #6b7280;">In ${percentile.course}</div>
+                        </div>
+                        <div style="background: white; padding: 1.5rem; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">Tool Runs</div>
+                            <div style="font-size: 2rem; font-weight: 700; color: #3b82f6; margin: 0.5rem 0;">${Math.round(percentile.percentiles.total_runs)}%</div>
+                            <div style="font-size: 0.875rem; color: #6b7280;">${percentile.your_stats.total_runs} runs (class avg: ${Math.round(percentile.course_averages.total_runs)})</div>
+                        </div>
+                        <div style="background: white; padding: 1.5rem; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                            <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">Tools Explored</div>
+                            <div style="font-size: 2rem; font-weight: 700; color: #10b981; margin: 0.5rem 0;">${Math.round(percentile.percentiles.unique_tools)}%</div>
+                            <div style="font-size: 0.875rem; color: #6b7280;">${percentile.your_stats.unique_tools} tools (class avg: ${Math.round(percentile.course_averages.unique_tools)})</div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // Load dashboard on page load
