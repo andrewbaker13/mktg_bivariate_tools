@@ -465,13 +465,30 @@
   <script src="shared/js/auth_tracking.js"></script>
   <script>
     // Update auth bar based on login status
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
       const authBarContent = document.getElementById('auth-bar-content');
       
       if (isAuthenticated()) {
         const username = getCurrentUsername();
+        
+        // Check if user is staff (for instructor/admin links)
+        const token = getAuthToken();
+        let isStaff = false;
+        try {
+          const profile = await fetch(`${API_BASE}/auth/profile/`, {
+            headers: { 'Authorization': `Token ${token}` }
+          }).then(r => r.json());
+          isStaff = profile.is_staff || false;
+        } catch (e) {
+          console.error('Error checking staff status:', e);
+        }
+        
         authBarContent.innerHTML = `
           <span class="auth-bar__status">✓ Logged in as <strong>${username}</strong></span>
+          <a href="student-dashboard.html">My Dashboard</a>
+          ${isStaff ? '<a href="instructor-analytics.html">Course Analytics</a>' : ''}
+          ${isStaff ? '<a href="instructor.html">Manage Courses</a>' : ''}
+          ${isStaff ? '<a href="admin-dashboard.html">System Dashboard</a>' : ''}
           <button class="auth-bar__logout" onclick="handleLogout()">Logout</button>
         `;
       }
