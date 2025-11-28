@@ -5,7 +5,10 @@
  * for Dr. Baker Marketing Analytics Tools
  */
 
-const API_BASE = 'https://drbaker-backend.onrender.com/api';
+// Switch between local and production
+const API_BASE = window.location.hostname === 'localhost' || window.location.protocol === 'file:'
+    ? 'http://localhost:8000/api'
+    : 'https://drbaker-backend.onrender.com/api';
 
 // ========================================
 // Authentication Functions
