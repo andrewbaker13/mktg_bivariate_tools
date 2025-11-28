@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Analytics Dashboard | Dr. Baker Marketing</title>
+    <link rel="stylesheet" href="shared/css/global.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-card.green {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        .stat-card.orange {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .stat-card.blue {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .chart-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+        .chart-container h3 {
+            margin-top: 0;
+            color: #1f2937;
+        }
+        .tools-list {
+            list-style: none;
+            padding: 0;
+        }
+        .tool-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: #f9fafb;
+            border-radius: 4px;
+            border-left: 4px solid #3b82f6;
+        }
+        .tool-name {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .tool-count {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #3b82f6;
+            transition: width 0.3s;
+        }
+        .recent-activity {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+        .activity-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        .activity-time {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        .untried-tools {
+            background: #fef3c7;
+            border: 2px dashed #f59e0b;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+        .untried-tools h3 {
+            color: #92400e;
+            margin-top: 0;
+        }
+        .tool-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .tool-badge {
+            background: white;
+            color: #92400e;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            border: 1px solid #fbbf24;
+        }
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        @media (max-width: 968px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="intro hero-header">
+            <div class="hero-header__top">
+                <h1>📊 My Analytics Dashboard</h1>
+                <div class="hero-context">
+                    <span class="badge" id="username-badge">Loading...</span>
+                </div>
+            </div>
+            <p class="hero-header__lede">
+                Track your learning progress and tool usage statistics.
+            </p>
+        </header>
+
+        <div id="loading" class="loading">
+            <p>Loading your analytics...</p>
+        </div>
+
+        <div id="dashboard-content" style="display: none;">
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Tool Runs</div>
+                    <div class="stat-number" id="total-runs">0</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-label">Tools Explored</div>
+                    <div class="stat-number" id="tools-used">0/22</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-label">Last 7 Days</div>
+                    <div class="stat-number" id="recent-activity">0</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-label">Member Since</div>
+                    <div class="stat-number" id="member-since" style="font-size: 1.5rem;">--</div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Usage Timeline Chart -->
+                <div class="chart-container">
+                    <h3>📈 Your Activity Timeline (Last 30 Days)</h3>
+                    <canvas id="timelineChart"></canvas>
+                </div>
+
+                <!-- Top Tools -->
+                <div class="chart-container">
+                    <h3>🔥 Your Top Tools</h3>
+                    <ul class="tools-list" id="top-tools-list"></ul>
+                </div>
+            </div>
+
+            <!-- Untried Tools -->
+            <div class="untried-tools" id="untried-section" style="display: none;">
+                <h3>🆕 Tools You Haven't Tried Yet</h3>
+                <p style="color: #92400e;">Expand your skills by exploring these tools:</p>
+                <div class="tool-badges" id="untried-badges"></div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity">
+                <h3>🕒 Recent Activity</h3>
+                <div id="recent-activity-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="shared/js/auth_tracking.js"></script>
+    <script>
+        let timelineChart = null;
+
+        // Check authentication
+        if (!isAuthenticated()) {
+            window.location.href = 'login.html?redirect=student-dashboard.html';
+        }
+
+        // All available tools (update this list as you add more tools)
+        const ALL_TOOLS = [
+            'pearson-correlation', 'bivariate-regression', 'ml-regression', 
+            'log-regression', 'ind-ttest', 'paired-ttest', 'onewayanova',
+            'ab-proportion', 'chisquare', 'mcnemar', 'kmeans', 'hierarchical',
+            'pca', 'factor-analysis', 'conjoint', 'cluster-analysis',
+            'discriminant', 'manova', 'ancova', 'sem', 'time-series', 'forecasting'
+        ];
+
+        async function loadDashboard() {
+            const token = getAuthToken();
+            
+            try {
+                // Load basic stats
+                const statsResponse = await fetch(`${API_BASE}/analytics/my-stats/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                const stats = await statsResponse.json();
+                
+                // Load timeline
+                const timelineResponse = await fetch(`${API_BASE}/analytics/my-timeline/?days=30`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                const timeline = await timelineResponse.json();
+                
+                // Load usage details
+                const usageResponse = await fetch(`${API_BASE}/analytics/my-usage/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                const usage = await usageResponse.json();
+                
+                // Update UI
+                document.getElementById('username-badge').textContent = stats.user;
+                document.getElementById('total-runs').textContent = stats.total_runs;
+                document.getElementById('tools-used').textContent = `${stats.runs_by_tool.length}/22`;
+                document.getElementById('recent-activity').textContent = stats.runs_last_7_days;
+                
+                const memberDate = new Date(stats.member_since);
+                document.getElementById('member-since').textContent = memberDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                
+                // Render timeline chart
+                renderTimelineChart(timeline.timeline);
+                
+                // Render top tools
+                renderTopTools(stats.runs_by_tool);
+                
+                // Show untried tools
+                showUntriedTools(stats.runs_by_tool);
+                
+                // Render recent activity
+                renderRecentActivity(usage.recent_runs);
+                
+                // Show dashboard
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                document.getElementById('loading').innerHTML = '<p style="color: #dc2626;">Error loading dashboard. Please try again.</p>';
+            }
+        }
+
+        function renderTimelineChart(timelineData) {
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            
+            const labels = timelineData.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            const data = timelineData.map(d => d.count);
+            
+            timelineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tool Runs',
+                        data: data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTopTools(toolsData) {
+            const list = document.getElementById('top-tools-list');
+            list.innerHTML = '';
+            
+            const top5 = toolsData.slice(0, 5);
+            const maxCount = top5[0]?.count || 1;
+            
+            top5.forEach(tool => {
+                const li = document.createElement('li');
+                li.className = 'tool-item';
+                
+                const percentage = (tool.count / maxCount) * 100;
+                
+                li.innerHTML = `
+                    <div style="flex: 1;">
+                        <div class="tool-name">${tool.tool__name}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                    <div class="tool-count">${tool.count}</div>
+                `;
+                list.appendChild(li);
+            });
+            
+            if (top5.length === 0) {
+                list.innerHTML = '<p style="color: #6b7280; text-align: center;">No tool usage yet. Start exploring!</p>';
+            }
+        }
+
+        function showUntriedTools(toolsData) {
+            const usedSlugs = toolsData.map(t => t.tool__slug);
+            const untried = ALL_TOOLS.filter(slug => !usedSlugs.includes(slug));
+            
+            if (untried.length > 0) {
+                document.getElementById('untried-section').style.display = 'block';
+                const badges = document.getElementById('untried-badges');
+                badges.innerHTML = untried.map(slug => {
+                    const name = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                    return `<span class="tool-badge">${name}</span>`;
+                }).join('');
+            }
+        }
+
+        function renderRecentActivity(recentRuns) {
+            const list = document.getElementById('recent-activity-list');
+            list.innerHTML = '';
+            
+            const recent10 = recentRuns.slice(0, 10);
+            
+            recent10.forEach(run => {
+                const div = document.createElement('div');
+                div.className = 'activity-item';
+                
+                const date = new Date(run.timestamp);
+                const timeAgo = getTimeAgo(date);
+                
+                div.innerHTML = `
+                    <div><strong>${run.tool_name}</strong></div>
+                    <div class="activity-time">${timeAgo}</div>
+                    ${run.result_summary ? `<div style="font-size: 0.875rem; color: #6b7280; margin-top: 0.25rem;">${run.result_summary}</div>` : ''}
+                `;
+                list.appendChild(div);
+            });
+            
+            if (recent10.length === 0) {
+                list.innerHTML = '<p style="color: #6b7280; text-align: center;">No recent activity.</p>';
+            }
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + ' minutes ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + ' hours ago';
+            if (seconds < 604800) return Math.floor(seconds / 86400) + ' days ago';
+            
+            return date.toLocaleDateString();
+        }
+
+        // Load dashboard on page load
+        loadDashboard();
+    </script>
+</body>
+</html>

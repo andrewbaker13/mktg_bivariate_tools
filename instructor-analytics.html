@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Analytics | Dr. Baker Marketing</title>
+    <link rel="stylesheet" href="shared/css/global.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .course-selector {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+        .course-selector select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #3b82f6;
+        }
+        .stat-card.green {
+            border-left-color: #10b981;
+        }
+        .stat-card.orange {
+            border-left-color: #f59e0b;
+        }
+        .stat-card.purple {
+            border-left-color: #8b5cf6;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0.5rem 0;
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .chart-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        .student-table {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f9fafb;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        tr:hover {
+            background: #f9fafb;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .badge-high {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .badge-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .badge-low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        .btn:hover {
+            background: #2563eb;
+        }
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+        @media (max-width: 968px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="intro hero-header">
+            <div class="hero-header__top">
+                <h1>📊 Course Analytics</h1>
+                <div class="hero-context">
+                    <span class="badge">Instructor Dashboard</span>
+                </div>
+            </div>
+            <p class="hero-header__lede">
+                Monitor student engagement and track course performance.
+            </p>
+        </header>
+
+        <!-- Course Selector -->
+        <div class="course-selector">
+            <label for="course-select" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Select Course:</label>
+            <select id="course-select">
+                <option value="">Loading courses...</option>
+            </select>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <p>Loading analytics...</p>
+        </div>
+
+        <div id="dashboard-content" style="display: none;">
+            <!-- Engagement Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Students</div>
+                    <div class="stat-number" id="total-students">0</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-label">Active Students</div>
+                    <div class="stat-number" id="active-students">0</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-label">Engagement Rate</div>
+                    <div class="stat-number" id="engagement-rate">0%</div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-label">Total Tool Runs</div>
+                    <div class="stat-number" id="total-runs">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Runs/Student</div>
+                    <div class="stat-number" id="avg-runs">0</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-label">Tools Adopted</div>
+                    <div class="stat-number" id="tools-adopted">0/22</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <h3>📈 Course Activity Timeline (30 Days)</h3>
+                    <canvas id="timelineChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>🔥 Most Used Tools</h3>
+                    <canvas id="toolsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Student Activity Table -->
+            <div class="student-table">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="margin: 0;">Student Activity</h3>
+                    <button class="btn" onclick="exportStudentData()">⬇ Export CSV</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Email</th>
+                            <th>Total Runs</th>
+                            <th>Tools Used</th>
+                            <th>Most Used Tool</th>
+                            <th>Last Active</th>
+                            <th>Engagement</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="shared/js/auth_tracking.js"></script>
+    <script>
+        let currentCourseId = null;
+        let studentData = [];
+        let timelineChart = null;
+        let toolsChart = null;
+
+        // Check authentication
+        if (!isAuthenticated()) {
+            window.location.href = 'login.html?redirect=instructor-analytics.html';
+        }
+
+        async function loadCourses() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/courses/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                const data = await response.json();
+                
+                const select = document.getElementById('course-select');
+                select.innerHTML = '<option value="">-- Select a course --</option>';
+                
+                data.courses.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course.id;
+                    option.textContent = `${course.name} (${course.student_count} students)`;
+                    select.appendChild(option);
+                });
+                
+                select.addEventListener('change', (e) => {
+                    if (e.target.value) {
+                        loadCourseAnalytics(parseInt(e.target.value));
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading courses:', error);
+            }
+        }
+
+        async function loadCourseAnalytics(courseId) {
+            currentCourseId = courseId;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('dashboard-content').style.display = 'none';
+            
+            const token = getAuthToken();
+            
+            try {
+                // Load all analytics data in parallel
+                const [engagement, students, tools, timeline] = await Promise.all([
+                    fetch(`${API_BASE}/analytics/course/${courseId}/engagement/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    }).then(r => r.json()),
+                    fetch(`${API_BASE}/analytics/course/${courseId}/students/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    }).then(r => r.json()),
+                    fetch(`${API_BASE}/analytics/course/${courseId}/tools/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    }).then(r => r.json()),
+                    fetch(`${API_BASE}/analytics/course/${courseId}/timeline/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    }).then(r => r.json())
+                ]);
+                
+                // Update stats
+                document.getElementById('total-students').textContent = engagement.students.total;
+                document.getElementById('active-students').textContent = engagement.students.with_activity;
+                document.getElementById('engagement-rate').textContent = engagement.students.engagement_rate + '%';
+                document.getElementById('total-runs').textContent = engagement.usage.total_runs;
+                document.getElementById('avg-runs').textContent = engagement.usage.avg_runs_per_student;
+                document.getElementById('tools-adopted').textContent = `${engagement.usage.tools_used}/22`;
+                
+                // Render charts
+                renderTimelineChart(timeline.timeline);
+                renderToolsChart(tools.tools);
+                
+                // Render student table
+                studentData = students.students;
+                renderStudentTable(studentData);
+                
+                // Show dashboard
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                document.getElementById('loading').innerHTML = '<p style="color: #dc2626;">Error loading analytics. Please try again.</p>';
+            }
+        }
+
+        function renderTimelineChart(timelineData) {
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            
+            if (timelineChart) timelineChart.destroy();
+            
+            const labels = timelineData.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            const data = timelineData.map(d => d.count);
+            
+            timelineChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tool Runs',
+                        data: data,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderToolsChart(toolsData) {
+            const ctx = document.getElementById('toolsChart').getContext('2d');
+            
+            if (toolsChart) toolsChart.destroy();
+            
+            const top10 = toolsData.slice(0, 10);
+            const labels = top10.map(t => t.tool__name.substring(0, 20));
+            const data = top10.map(t => t.total_runs);
+            
+            toolsChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+                            '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderStudentTable(students) {
+            const tbody = document.getElementById('student-table-body');
+            tbody.innerHTML = '';
+            
+            students.forEach(student => {
+                const tr = document.createElement('tr');
+                
+                const lastActive = student.last_activity ? 
+                    new Date(student.last_activity).toLocaleDateString() : 'Never';
+                
+                let engagementBadge = '';
+                if (student.total_runs === 0) {
+                    engagementBadge = '<span class="badge badge-low">Inactive</span>';
+                } else if (student.total_runs >= 20) {
+                    engagementBadge = '<span class="badge badge-high">High</span>';
+                } else if (student.total_runs >= 5) {
+                    engagementBadge = '<span class="badge badge-medium">Medium</span>';
+                } else {
+                    engagementBadge = '<span class="badge badge-low">Low</span>';
+                }
+                
+                tr.innerHTML = `
+                    <td><strong>${student.username}</strong></td>
+                    <td>${student.email || '-'}</td>
+                    <td>${student.total_runs}</td>
+                    <td>${student.tools_used}</td>
+                    <td>${student.most_used_tool || '-'}</td>
+                    <td>${lastActive}</td>
+                    <td>${engagementBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            if (students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #6b7280;">No students enrolled yet.</td></tr>';
+            }
+        }
+
+        function exportStudentData() {
+            if (studentData.length === 0) {
+                alert('No data to export');
+                return;
+            }
+            
+            // Create CSV content
+            const headers = ['Username', 'Email', 'Total Runs', 'Tools Used', 'Most Used Tool', 'Last Active', 'First Active'];
+            const rows = studentData.map(s => [
+                s.username,
+                s.email || '',
+                s.total_runs,
+                s.tools_used,
+                s.most_used_tool || '',
+                s.last_activity ? new Date(s.last_activity).toLocaleString() : 'Never',
+                s.first_activity ? new Date(s.first_activity).toLocaleString() : 'Never'
+            ]);
+            
+            let csv = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+            
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `course_${currentCourseId}_students_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Load courses on page load
+        loadCourses();
+    </script>
+</body>
+</html>

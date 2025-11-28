@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Dashboard | Dr. Baker Marketing</title>
+    <link rel="stylesheet" href="shared/css/global.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-card.green {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        .stat-card.orange {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .stat-card.blue {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .chart-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        .comparison-table {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f9fafb;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+        }
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        tr:hover {
+            background: #f9fafb;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .badge-high {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .badge-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .badge-low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 2rem 0 1rem 0;
+        }
+        @media (max-width: 1200px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="intro hero-header">
+            <div class="hero-header__top">
+                <h1>🎯 System Dashboard</h1>
+                <div class="hero-context">
+                    <span class="badge">Administrator View</span>
+                </div>
+            </div>
+            <p class="hero-header__lede">
+                Platform-wide analytics and performance metrics.
+            </p>
+        </header>
+
+        <div id="loading" class="loading">
+            <p>Loading system analytics...</p>
+        </div>
+
+        <div id="dashboard-content" style="display: none;">
+            <!-- System Overview Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Users</div>
+                    <div class="stat-number" id="total-users">0</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-label">Active Users (30d)</div>
+                    <div class="stat-number" id="active-users">0</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-label">Total Tool Runs</div>
+                    <div class="stat-number" id="total-runs">0</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-label">Engagement Rate</div>
+                    <div class="stat-number" id="engagement-rate">0%</div>
+                </div>
+            </div>
+
+            <!-- Growth Charts -->
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <h3>📈 User Registrations (30 Days)</h3>
+                    <canvas id="registrationsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>📊 Tool Usage Growth (30 Days)</h3>
+                    <canvas id="usageChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Tool Rankings -->
+            <div class="chart-container">
+                <h3>🏆 Most Popular Tools (System-Wide)</h3>
+                <canvas id="toolsRankingChart"></canvas>
+            </div>
+
+            <!-- Course Comparison -->
+            <h2 class="section-title">Course Performance Comparison</h2>
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>Instructor</th>
+                            <th>Students</th>
+                            <th>Active Students</th>
+                            <th>Engagement Rate</th>
+                            <th>Total Runs</th>
+                            <th>Avg Runs/Student</th>
+                            <th>Performance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="course-comparison-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="shared/js/auth_tracking.js"></script>
+    <script>
+        let registrationsChart = null;
+        let usageChart = null;
+        let toolsRankingChart = null;
+
+        // Check authentication and staff status
+        if (!isAuthenticated()) {
+            window.location.href = 'login.html?redirect=admin-dashboard.html';
+        }
+
+        async function loadSystemDashboard() {
+            const token = getAuthToken();
+            
+            try {
+                // Load all data in parallel
+                const [overview, growth, tools, courses] = await Promise.all([
+                    fetch(`${API_BASE}/analytics/system/overview/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    }).then(r => r.json()),
+                    fetch(`${API_BASE}/analytics/system/growth/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    }).then(r => r.json()),
+                    fetch(`${API_BASE}/analytics/system/tools/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    }).then(r => r.json()),
+                    fetch(`${API_BASE}/analytics/system/courses/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    }).then(r => r.json())
+                ]);
+                
+                // Update overview stats
+                document.getElementById('total-users').textContent = overview.users.total;
+                document.getElementById('active-users').textContent = overview.users.active_last_30_days;
+                document.getElementById('total-runs').textContent = overview.usage.total_runs;
+                document.getElementById('engagement-rate').textContent = overview.users.engagement_rate + '%';
+                
+                // Render charts
+                renderGrowthCharts(growth.timeline);
+                renderToolsRanking(tools.tools);
+                renderCourseComparison(courses.courses);
+                
+                // Show dashboard
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading system dashboard:', error);
+                if (error.message && error.message.includes('403')) {
+                    document.getElementById('loading').innerHTML = '<p style="color: #dc2626;">⚠️ Access Denied: You must be a staff member to view this dashboard.</p>';
+                } else {
+                    document.getElementById('loading').innerHTML = '<p style="color: #dc2626;">Error loading dashboard. Please try again.</p>';
+                }
+            }
+        }
+
+        function renderGrowthCharts(timelineData) {
+            const labels = timelineData.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            
+            // Registrations chart
+            const regCtx = document.getElementById('registrationsChart').getContext('2d');
+            const regData = timelineData.map(d => d.registrations);
+            
+            registrationsChart = new Chart(regCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'New Users',
+                        data: regData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Usage chart
+            const usageCtx = document.getElementById('usageChart').getContext('2d');
+            const usageData = timelineData.map(d => d.tool_runs);
+            
+            usageChart = new Chart(usageCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tool Runs',
+                        data: usageData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderToolsRanking(toolsData) {
+            const ctx = document.getElementById('toolsRankingChart').getContext('2d');
+            
+            const top15 = toolsData.slice(0, 15);
+            const labels = top15.map(t => t.tool__name);
+            const data = top15.map(t => t.total_runs);
+            
+            toolsRankingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Runs',
+                        data: data,
+                        backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                        borderColor: '#8b5cf6',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCourseComparison(courses) {
+            const tbody = document.getElementById('course-comparison-body');
+            tbody.innerHTML = '';
+            
+            courses.forEach(course => {
+                const tr = document.createElement('tr');
+                
+                let performanceBadge = '';
+                if (course.engagement_rate >= 70) {
+                    performanceBadge = '<span class="badge badge-high">Excellent</span>';
+                } else if (course.engagement_rate >= 40) {
+                    performanceBadge = '<span class="badge badge-medium">Good</span>';
+                } else {
+                    performanceBadge = '<span class="badge badge-low">Needs Attention</span>';
+                }
+                
+                tr.innerHTML = `
+                    <td><strong>${course.course_name}</strong></td>
+                    <td>${course.instructor || '-'}</td>
+                    <td>${course.total_students}</td>
+                    <td>${course.active_students}</td>
+                    <td>${course.engagement_rate}%</td>
+                    <td>${course.total_runs}</td>
+                    <td>${course.avg_runs_per_student}</td>
+                    <td>${performanceBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            if (courses.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #6b7280;">No courses yet.</td></tr>';
+            }
+        }
+
+        // Load dashboard on page load
+        loadSystemDashboard();
+    </script>
+</body>
+</html>
