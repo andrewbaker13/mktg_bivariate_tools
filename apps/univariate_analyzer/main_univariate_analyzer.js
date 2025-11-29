@@ -7,6 +7,28 @@ const CREATED_DATE = new Date().toLocaleDateString('en-US', { year: 'numeric', m
 const MAX_ROWS = 5000;
 const MAX_CATEGORIES_DISPLAY = 10;
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-univariate-analyzer-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('univariate-analyzer', {}, `Univariate analysis completed`);
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for Univariate Analyzer');
+  }
+}
+
 const SCENARIOS = Object.freeze({
     INFLUENCER: 'influencer',
     SURVEY: 'survey',
@@ -921,6 +943,8 @@ document.addEventListener('DOMContentLoaded', () => {
         selectionTimeout = setTimeout(() => {
             if (selectedVariables.size > 0 && uploadedData.length > 0) {
                 displayResults();
+                hasSuccessfulRun = true;
+                checkAndTrackUsage();
             }
         }, 300);
     });

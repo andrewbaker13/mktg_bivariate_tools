@@ -3,6 +3,28 @@
 const SAMPLING_CREATED_DATE = '2025-11-25';
 let samplingModifiedDate = new Date().toLocaleDateString();
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-sampling-visualizer-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('sampling-visualizer', {}, `Sampling visualization completed`);
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for Sampling Visualizer');
+  }
+}
+
 const POP_ROWS = 40;
 const POP_COLS = 25;
 const POP_SIZE = POP_ROWS * POP_COLS;
@@ -731,6 +753,12 @@ function renderSamplingDistribution() {
     return;
   }
   if (!useOverall && !subgroupRecords.length) {
+    Plotly.purge(container);
+    return;
+  }
+
+  hasSuccessfulRun = true;
+  checkAndTrackUsage();
     Plotly.purge(container);
     return;
   }

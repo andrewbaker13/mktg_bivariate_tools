@@ -3,6 +3,28 @@
 const CREATED_DATE = '2025-11-21';
 let modifiedDate = new Date().toLocaleDateString();
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-sample-size-ab-calculator-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('sample-size-ab-calculator', {}, `A/B test sample size calculation completed`);
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for A/B Test Sample Size Calculator');
+  }
+}
+
 const OutcomeModes = {
   PROPORTION: 'proportion',
   MEAN: 'mean'
@@ -901,6 +923,9 @@ function highlightCurrentOnPowerChart() {
     highlightCurrentOnEffectChart();
     highlightCurrentOnVariabilityChart();
     highlightCurrentOnPowerChart();
+
+    hasSuccessfulRun = true;
+    checkAndTrackUsage();
   }
 
 function updateScenarioDownload(dataset) {

@@ -3,6 +3,28 @@
 const SENTIMENT_LAB_CREATED_DATE = '2025-11-25';
 let sentimentLabModifiedDate = new Date().toLocaleDateString();
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-sentiment-lab-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('sentiment-lab', {}, `Sentiment analysis completed`);
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for Sentiment Lab');
+  }
+}
+
 let sentimentRows = []; // { index, text, scores, label }
 
 const SentimentScenarios = [
@@ -147,6 +169,9 @@ function runSentimentAnalysis() {
   renderSentimentTable();
   renderSentimentLabelChart();
   renderSentimentExampleTwo();
+
+  hasSuccessfulRun = true;
+  checkAndTrackUsage();
 
   if (status) status.textContent = `Analyzed ${sentimentRows.length} text record(s).`;
 }

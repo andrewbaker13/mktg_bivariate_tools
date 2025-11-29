@@ -3,6 +3,28 @@
 const MULTI_CREATED_DATE = '2025-11-24';
 let multiModifiedDate = new Date().toLocaleDateString();
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-sample-size-multiarm-ab-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('sample-size-multiarm-ab', {}, `Multi-arm A/B test sample size calculation completed`);
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for Multi-arm A/B Test Sample Size Calculator');
+  }
+}
+
 const MultiOutcomeModes = {
   PROPORTION: 'proportion',
   MEAN: 'mean'
@@ -434,6 +456,9 @@ function updateMultiDesign() {
 
   renderMultiEffectChart();
   renderMultiPowerChart();
+
+  hasSuccessfulRun = true;
+  checkAndTrackUsage();
 
   const modifiedLabel = document.getElementById('modified-date');
   if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();

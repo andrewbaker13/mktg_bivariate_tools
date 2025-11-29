@@ -3,6 +3,28 @@
 const SELECTION_LAB_CREATED_DATE = '2025-11-25';
 let selectionLabModifiedDate = new Date().toLocaleDateString();
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-selection-probability-lab-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('selection-probability-lab', {}, `Selection probability calculation completed`);
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for Selection Probability Lab');
+  }
+}
+
 const SelectionScenarios = [
   {
     id: 'vip-panel',
@@ -385,6 +407,9 @@ function renderDistribution() {
     Plotly.purge(container);
     return;
   }
+
+  hasSuccessfulRun = true;
+  checkAndTrackUsage();
 
   const N = currentPopulation.length;
   const n = clamp(parseInt(document.getElementById('sample-size-input').value || '20', 10) || 20, 1, N);
