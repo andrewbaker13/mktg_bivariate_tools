@@ -204,7 +204,7 @@ async function logToolUsage(toolSlug, params = {}, resultSummary = '', trackingO
     }
     
     try {
-        const response = await fetch(`${API_BASE}/log-tool-run/`, {
+        const response = await fetch(`${API_BASE}/tool-run/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
