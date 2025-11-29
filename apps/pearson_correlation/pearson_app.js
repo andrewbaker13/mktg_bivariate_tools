@@ -1,6 +1,10 @@
 const CREATED_DATE = new Date('2025-11-06').toLocaleDateString();
 let modifiedDate = new Date().toLocaleDateString();
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
 const InputModes = Object.freeze({
     MANUAL: 'manual',
     PAIRED: 'paired',
@@ -140,6 +144,33 @@ function describeCorrelationMethod(method = selectedCorrelationMethod, { short =
 
 function getCoefficientSymbol(method = selectedCorrelationMethod) {
     return method === CorrelationMethods.SPEARMAN ? SYMBOLS.spearman : 'r';
+}
+
+// Usage tracking function
+function checkAndTrackUsage() {
+    // Check if user meets all criteria for tracking
+    const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60; // Convert to minutes
+    
+    // Criteria: 3+ minutes, successful run, authenticated
+    if (timeOnPage < 3) return;
+    if (!hasSuccessfulRun) return;
+    if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+    
+    // Check if already tracked today using localStorage
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const storageKey = `tool-tracked-pearson-correlation-${today}`;
+    
+    if (localStorage.getItem(storageKey)) return; // Already tracked today
+    
+    // Track the usage
+    if (typeof logToolRun === 'function') {
+        logToolRun('pearson-correlation', 'Pearson Correlation', {
+            method: selectedCorrelationMethod,
+            mode: activeMode
+        });
+        localStorage.setItem(storageKey, 'true');
+        console.log('Usage tracked for Pearson Correlation');
+    }
 }
 
 function erf(x) {
@@ -1711,6 +1742,8 @@ function updateResults() {
             return;
         }
         updateStatus('Matrix analysis complete. Explore the heatmap, intervals, and scatter dropdown below.');
+        hasSuccessfulRun = true;
+        checkAndTrackUsage();
         toggleSingleOutputs(false);
         toggleMatrixOutputs(true);
         updateResultCards(null, data);
@@ -1751,6 +1784,8 @@ function updateResults() {
     });
     
     updateStatus('Analysis complete. Interpret the cards, charts, and diagnostics below.');
+    hasSuccessfulRun = true;
+    checkAndTrackUsage();
     toggleSingleOutputs(true);
     toggleMatrixOutputs(false);
     updateResultCards(stats, data);
