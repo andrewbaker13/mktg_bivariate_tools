@@ -1,5 +1,27 @@
 // Logistic Regression Tool - rebuilt controller
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-ps-matching-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('ps-matching', {}, `Propensity score matching completed`);
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for Propensity Score Matching');
+  }
+}
+
 // ---------- State ----------
 let selectedOutcome = null;
 let selectedPredictors = [];
@@ -2146,6 +2168,10 @@ function renderCoefInterpretation(model) {
       renderEffectPlot(model, filtered, predictorsInfo);
       renderActualFitted(model);
       renderCoefInterpretation(model);
+
+      hasSuccessfulRun = true;
+      checkAndTrackUsage();
+
       const modifiedLabel = document.getElementById('modified-date');
       if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();
     } finally {

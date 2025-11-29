@@ -1,5 +1,27 @@
 // Minimal, stable chi-square app logic (no chart/features)
 (function () {
+  // Usage tracking variables
+  let pageLoadTime = Date.now();
+  let hasSuccessfulRun = false;
+
+  // Usage tracking function
+  function checkAndTrackUsage() {
+    const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+    if (timeOnPage < 3) return;
+    if (!hasSuccessfulRun) return;
+    if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const storageKey = `tool-tracked-chisquare-${today}`;
+    if (localStorage.getItem(storageKey)) return;
+    
+    if (typeof logToolUsage === 'function') {
+      logToolUsage('chisquare', {}, `Chi-square test completed`);
+      localStorage.setItem(storageKey, 'true');
+      console.log('Usage tracked for Chi-square Test');
+    }
+  }
+
   var rowsInput = document.getElementById('rows');
   var colsInput = document.getElementById('cols');
   var alphaSelect = document.getElementById('alpha');
@@ -336,6 +358,9 @@
     updateCellLabels(obs, E, rowTotals, colTotals, grand);
     // Diagnostics panel
     updateDiagnosticsPanel(obs, E, rowTotals, colTotals, grand, res);
+
+    hasSuccessfulRun = true;
+    checkAndTrackUsage();
   }
 
   function computeTotals(obs) {

@@ -3,6 +3,28 @@
 const COMPOUND_LAB_CREATED_DATE = '2025-11-28';
 let compoundLabModifiedDate = new Date().toLocaleDateString();
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-compound-event-probability-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('compound-event-probability', {}, `Compound event probability calculation completed`);
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for Compound Event Probability');
+  }
+}
+
 const EventScenarios = [
   {
     id: 'dice-rolls',
@@ -322,6 +344,9 @@ function updateCalculations() {
   // Update APA and Managerial reports
   updateAPAReport(n, p, k, mode, approxMode, targetProb, eventLabel);
   updateManagerialReport(n, p, k, mode, targetProb, eventLabel);
+
+  hasSuccessfulRun = true;
+  checkAndTrackUsage();
 }
 
 function calculatePMF(n, p, approxMode) {
