@@ -1,6 +1,28 @@
 const CREATED_DATE = new Date('2025-11-06').toLocaleDateString();
 let modifiedDate = new Date().toLocaleDateString();
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-paired-ttest-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('paired-ttest', {}, `Paired t-test analysis completed`);
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for Paired t-test');
+  }
+}
+
 const InputModes = Object.freeze({
     MANUAL: 'manual',
     PAIRED: 'paired',
@@ -871,6 +893,8 @@ function updateResults() {
     renderDifferenceChart(data);
     updateNarratives(stats, data);
     updateDiagnostics(stats, data);
+    hasSuccessfulRun = true;
+    checkAndTrackUsage();
     modifiedDate = new Date().toLocaleDateString();
     const modifiedLabel = document.getElementById('modified-date');
     if (modifiedLabel) {

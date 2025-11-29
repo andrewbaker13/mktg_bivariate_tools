@@ -10,6 +10,28 @@
       if(updatedEl) updatedEl.textContent = s;
     })();
 
+    // Usage tracking variables
+    let pageLoadTime = Date.now();
+    let hasSuccessfulRun = false;
+
+    // Usage tracking function
+    function checkAndTrackUsage() {
+      const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+      if (timeOnPage < 3) return;
+      if (!hasSuccessfulRun) return;
+      if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+      
+      const today = new Date().toISOString().split('T')[0];
+      const storageKey = `tool-tracked-ab-proportion-${today}`;
+      if (localStorage.getItem(storageKey)) return;
+      
+      if (typeof logToolUsage === 'function') {
+        logToolUsage('ab-proportion', {}, `A/B proportion test completed`);
+        localStorage.setItem(storageKey, 'true');
+        console.log('Usage tracked for A/B Proportion Test');
+      }
+    }
+
     // helpers
     const q = (id)=>document.getElementById(id);
 
@@ -1066,6 +1088,9 @@
       // (Optional) also update preserved metrics panel if you use it
       if (q("sample_size")) q("sample_size").textContent = "";
       if (q("p2_rate")) q("p2_rate").textContent = "";
+      
+      hasSuccessfulRun = true;
+      checkAndTrackUsage();
     }
 
     // bind controls

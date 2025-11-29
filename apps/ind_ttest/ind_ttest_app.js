@@ -2,7 +2,30 @@
 const CREATED_DATE = new Date('2025-11-06').toLocaleDateString();
 let modifiedDate = new Date().toLocaleDateString();
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
 let selectedConfidenceLevel = 0.95;
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-ind-ttest-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('ind-ttest', {}, `Independent t-test analysis completed`);
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for Independent t-test');
+  }
+}
+
 const scenarioState = {
     manifest: [],
     defaultDescription: ''
@@ -1323,6 +1346,8 @@ function updateResults() {
     document.getElementById('means-chart-title').textContent = `${group1Name} vs ${group2Name} Means Fan Chart (${sortedLevels.map(l => Math.round(l * 100)).join('% / ')}% intervals)`;
     document.getElementById('diff-chart-title').textContent = `Difference Fan Chart (${group1Name} âˆ’ ${group2Name}; ${sortedLevels.map(l => Math.round(l * 100)).join('% / ')}% intervals)`;
 
+    hasSuccessfulRun = true;
+    checkAndTrackUsage();
     modifiedDate = new Date().toLocaleDateString();
     document.getElementById('modified-date').textContent = modifiedDate;
 }

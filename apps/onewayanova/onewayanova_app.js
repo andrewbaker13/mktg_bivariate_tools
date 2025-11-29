@@ -1,6 +1,28 @@
 const CREATED_DATE = new Date('2025-11-06').toLocaleDateString();
 let modifiedDate = new Date().toLocaleDateString();
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-onewayanova-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('onewayanova', {}, `One-way ANOVA analysis completed`);
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for One-way ANOVA');
+  }
+}
+
 const MAX_GROUPS = 10;
 const MIN_GROUPS = 2;
 const DEFAULT_GROUPS = 3;
@@ -2072,6 +2094,8 @@ function updateResults() {
     updateDiagnostics(anovaStats, groups);
     updateSummaryTable(groups, intervals, sortedLevels[sortedLevels.length - 1], anovaStats);
 
+    hasSuccessfulRun = true;
+    checkAndTrackUsage();
     modifiedDate = new Date().toLocaleDateString();
     const modifiedLabel = document.getElementById('modified-date');
     if (modifiedLabel) {
