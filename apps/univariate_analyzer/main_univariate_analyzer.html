@@ -39,15 +39,54 @@
         <section class="test-overview" aria-labelledby="overview-heading">
             <h2 id="overview-heading">OVERVIEW &amp; OBJECTIVE</h2>
             <div class="card">
-                <p>Univariate analysis examines a single variable at a time to understand its distribution, central tendency, spread, and shape. This tool automatically detects whether each variable is <strong>continuous</strong> or <strong>categorical</strong> and calculates appropriate summary statistics.</p>
+                <p><strong>What is univariate analysis?</strong> Univariate analysis examines <em>one variable at a time</em> to understand its distribution, central tendency (typical values), spread (variability), and shape. This is often your <strong>first step</strong> in any data analysis project—before looking at relationships between variables, you need to understand each variable individually.</p>
+                
+                <p><strong>Why start here?</strong> This tool helps you spot data quality issues (missing values, outliers), understand your customer base (what's typical vs. unusual), and make informed decisions about which variables matter for deeper analysis.</p>
+                
                 <details class="intro-notes" open>
-                    <summary>What this tool does</summary>
+                    <summary>Understanding Variable Types <span class="help-icon" title="Click to learn more">ℹ️</span></summary>
+                    <div class="variable-type-explainer">
+                        <div class="type-card">
+                            <h4>📊 Continuous Variables (Quantitative)</h4>
+                            <p><strong>What they are:</strong> Numbers that can take any value within a range. Examples: age, revenue, website visit duration, number of clicks, satisfaction score (1-10).</p>
+                            <p><strong>What we measure:</strong></p>
+                            <ul>
+                                <li><strong>Mean</strong> — The average. Tells you the "typical" value but can be skewed by outliers.</li>
+                                <li><strong>Median</strong> — The middle value when sorted. More resistant to outliers than the mean.</li>
+                                <li><strong>Mode</strong> — The most frequently occurring value.</li>
+                                <li><strong>Standard Deviation (SD)</strong> — How spread out the data is from the mean. Smaller = more consistent, larger = more variable.</li>
+                                <li><strong>Range & IQR</strong> — Range shows min to max. IQR (interquartile range) shows the middle 50% of data, filtering out extreme values.</li>
+                                <li><strong>Skewness</strong> — Measures if data leans left or right. Positive skew = long tail on right (most values are low). Negative skew = long tail on left (most values are high).</li>
+                                <li><strong>Kurtosis</strong> — Measures if data has heavy tails (extreme values) or is peaked. High kurtosis = more outliers.</li>
+                            </ul>
+                            <p><strong>Visualizations:</strong> Box plots show quartiles and outliers. Histograms show distribution shape. Violin plots combine both. Density plots smooth out histograms.</p>
+                        </div>
+                        
+                        <div class="type-card">
+                            <h4>🏷️ Categorical Variables (Qualitative)</h4>
+                            <p><strong>What they are:</strong> Labels or categories. Examples: customer segment (A/B/C), product type, region, yes/no responses, gender, campaign name.</p>
+                            <p><strong>What we measure:</strong></p>
+                            <ul>
+                                <li><strong>Frequency</strong> — How many times each category appears.</li>
+                                <li><strong>Percentage</strong> — What proportion of the total each category represents.</li>
+                                <li><strong>Mode</strong> — The most common category.</li>
+                                <li><strong>Unique values</strong> — How many distinct categories exist.</li>
+                            </ul>
+                            <p><strong>Visualizations:</strong> Bar charts show counts per category. Pie charts show proportions. Horizontal bars work better when you have many categories.</p>
+                        </div>
+                    </div>
+                </details>
+                
+                <details class="intro-notes">
+                    <summary>What this tool does for you</summary>
                     <ul>
-                        <li><strong>Continuous variables:</strong> Mean, median, mode, standard deviation, variance, range, IQR, min, max, percentiles (Q1, Q3), skewness, and kurtosis. Visualized with box plots and histograms.</li>
-                        <li><strong>Categorical variables:</strong> Frequency tables with counts and percentages. Top 10 categories shown by default; toggle to view all unique values. Visualized with bar charts.</li>
-                        <li><strong>Missing data detection:</strong> Reports missing values per variable (count and %).</li>
-                        <li><strong>Instant switching:</strong> Select a variable from the dropdown to instantly update statistics and visualizations.</li>
-                        <li><strong>Exportable summaries:</strong> Download summary tables as CSV files for reporting.</li>
+                        <li><strong>🔍 Auto-detection:</strong> Automatically identifies if each variable is continuous (numeric) or categorical (labels), so you don't have to decide.</li>
+                        <li><strong>📈 Multiple visualizations:</strong> Choose from box plots, histograms, violin plots, and density plots for continuous variables; bar charts, pie charts, and horizontal bars for categorical variables.</li>
+                        <li><strong>📊 Comprehensive statistics:</strong> Every relevant statistic calculated automatically—mean, median, SD, range, IQR, skewness, kurtosis for continuous; frequencies, percentages, mode for categorical.</li>
+                        <li><strong>⚠️ Missing data alerts:</strong> Shows exactly how many values are missing and what percentage, helping you assess data quality.</li>
+                        <li><strong>💡 Plain language explanations:</strong> Every statistic includes both technical definitions and practical interpretations ("what does this mean for my business?").</li>
+                        <li><strong>📥 Export capabilities:</strong> Download summary tables as CSV for presentations or further analysis in Excel.</li>
+                        <li><strong>🔄 Manual override:</strong> If the tool misclassifies a variable, you can manually switch between continuous and categorical analysis.</li>
                     </ul>
                 </details>
             </div>
@@ -131,19 +170,37 @@
 
                 <div class="stats-content">
                     <div id="stats-table-container" class="stats-table-container">
-                        <h4>Summary Statistics</h4>
+                        <div class="stats-header">
+                            <h4>Summary Statistics</h4>
+                            <button type="button" class="help-toggle" id="stats-help-toggle" aria-label="Toggle statistics explanations">
+                                <span class="help-icon">ℹ️</span> Explain these
+                            </button>
+                        </div>
+                        <div id="stats-explanations" class="stats-explanations hidden">
+                            <div class="explanation-content" id="explanation-content">
+                                <!-- Explanations will be dynamically inserted here -->
+                            </div>
+                        </div>
                         <div id="stats-table"></div>
                     </div>
 
                     <div id="visualization-container" class="visualization-container">
                         <div class="viz-controls">
-                            <div id="viz-toggle" class="viz-toggle hidden">
-                                <button type="button" class="viz-button active" data-viz="chart">Chart</button>
-                                <button type="button" class="viz-button" data-viz="alternate">Alternate</button>
+                            <div class="viz-header">
+                                <label for="chart-type-select">Visualization type:</label>
+                                <select id="chart-type-select" class="chart-type-select">
+                                    <option value="box">Box Plot</option>
+                                    <option value="histogram">Histogram</option>
+                                    <option value="violin">Violin Plot</option>
+                                    <option value="density">Density Curve</option>
+                                </select>
                             </div>
                         </div>
                         <div id="chart-container" class="chart-container"></div>
                         <div id="chart-narrative" class="chart-narrative" aria-live="polite"></div>
+                        <div id="chart-interpretation" class="chart-interpretation">
+                            <!-- Dynamic interpretation based on data characteristics -->
+                        </div>
                     </div>
                 </div>
 

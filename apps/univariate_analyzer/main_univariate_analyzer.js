@@ -47,7 +47,7 @@ let dataTypes = new Map(); // maps column name to DataType
 let manualOverrides = new Map(); // maps column name to manually overridden DataType
 let selectedVariables = new Set();
 let activeVariable = null;
-let activeVisualization = 'chart'; // 'chart' or 'alternate' (histogram or bar chart)
+let activeChartType = 'box'; // For continuous: 'box', 'histogram', 'violin', 'density'. For categorical: 'bar', 'pie', 'horizontal'
 let showAllCategories = false;
 let activeScenarioDataset = null;
 
@@ -510,6 +510,7 @@ function displayContinuousStats(variableName, values) {
     // Display stats table
     const statsTable = document.getElementById('stats-table');
     statsTable.innerHTML = `
+        <table>
         <thead>
             <tr>
                 <th>Statistic</th>
@@ -524,29 +525,51 @@ function displayContinuousStats(variableName, values) {
                 </tr>
             `).join('')}
         </tbody>
+        </table>
     `;
     
-    // Display visualizations
-    document.getElementById('viz-toggle').classList.remove('hidden');
+    // Update chart type selector for continuous
+    const chartSelect = document.getElementById('chart-type-select');
+    if (chartSelect) {
+        chartSelect.innerHTML = `
+            <option value="box" ${activeChartType === 'box' ? 'selected' : ''}>Box Plot</option>
+            <option value="histogram" ${activeChartType === 'histogram' ? 'selected' : ''}>Histogram</option>
+            <option value="violin" ${activeChartType === 'violin' ? 'selected' : ''}>Violin Plot</option>
+            <option value="density" ${activeChartType === 'density' ? 'selected' : ''}>Density Curve</option>
+        `;
+    }
+    
+    // Hide categorical controls, show continuous chart selector
     document.getElementById('categorical-extra-info').classList.add('hidden');
     
-    const vizButtons = document.querySelectorAll('.viz-button');
-    vizButtons.forEach(btn => {
-        btn.textContent = btn.dataset.viz === 'chart' ? 'Box Plot' : 'Histogram';
-        btn.classList.toggle('active', btn.dataset.viz === 'chart');
-    });
+    // Populate stats explanations
+    const explanationContent = document.getElementById('explanation-content');
+    if (explanationContent) {
+        explanationContent.innerHTML = generateStatsExplanations(DataType.CONTINUOUS);
+    }
     
-    activeVisualization = 'chart';
+    // Display visualization based on selected chart type
     displayContinuousVisualization(variableName, values);
 }
 
 function displayContinuousVisualization(variableName, values) {
     const numValues = values.filter(v => v !== null).map(tryParseNumber).filter(v => v !== null);
     
-    if (activeVisualization === 'chart') {
-        displayBoxPlot(variableName, numValues);
-    } else {
-        displayHistogram(variableName, numValues);
+    switch(activeChartType) {
+        case 'box':
+            displayBoxPlot(variableName, numValues);
+            break;
+        case 'histogram':
+            displayHistogram(variableName, numValues);
+            break;
+        case 'violin':
+            displayViolinPlot(variableName, numValues);
+            break;
+        case 'density':
+            displayDensityPlot(variableName, numValues);
+            break;
+        default:
+            displayBoxPlot(variableName, numValues);
     }
     
     updateChartNarrative(variableName, DataType.CONTINUOUS, values);
@@ -595,13 +618,359 @@ function displayHistogram(variableName, values) {
     Plotly.newPlot('chart-container', [trace], layout, { responsive: true });
 }
 
+// ==================== New Visualization Functions ====================
+
+function displayViolinPlot(variableName, values) {
+    const trace = {
+        y: values,
+        name: variableName,
+        type: 'violin',
+        box: { visible: true },
+        meanline: { visible: true },
+        marker: { color: 'rgba(54, 162, 235, 0.7)' }
+    };
+    
+    const layout = {
+        title: `Violin Plot: ${variableName}`,
+        yaxis: { title: variableName },
+        margin: { b: 60 },
+        height: 400
+    };
+    
+    Plotly.newPlot('chart-container', [trace], layout, { responsive: true });
+}
+
+function displayDensityPlot(variableName, values) {
+    // Create a kernel density estimate using Plotly's built-in density
+    const trace = {
+        x: values,
+        type: 'histogram',
+        histnorm: 'probability density',
+        marker: { color: 'rgba(54, 162, 235, 0.3)', line: { color: 'rgba(54, 162, 235, 1)', width: 2 } },
+        name: 'Density'
+    };
+    
+    const layout = {
+        title: `Density Plot: ${variableName}`,
+        xaxis: { title: variableName },
+        yaxis: { title: 'Density' },
+        margin: { b: 60 },
+        height: 400,
+        showlegend: false
+    };
+    
+    Plotly.newPlot('chart-container', [trace], layout, { responsive: true });
+}
+
+function displayPieChart(variableName, frequencyTable) {
+    const trace = {
+        labels: frequencyTable.map(item => item.value),
+        values: frequencyTable.map(item => item.count),
+        type: 'pie',
+        textinfo: 'label+percent',
+        textposition: 'outside',
+        marker: {
+            colors: [
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(255, 206, 86, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(153, 102, 255, 0.8)',
+                'rgba(255, 159, 64, 0.8)',
+                'rgba(199, 199, 199, 0.8)',
+                'rgba(83, 102, 255, 0.8)',
+                'rgba(255, 99, 255, 0.8)',
+                'rgba(99, 255, 132, 0.8)'
+            ]
+        }
+    };
+    
+    const layout = {
+        title: `Pie Chart: ${variableName}`,
+        height: 400,
+        margin: { t: 40, b: 40, l: 40, r: 40 }
+    };
+    
+    Plotly.newPlot('chart-container', [trace], layout, { responsive: true });
+}
+
+function displayHorizontalBarChart(variableName, frequencyTable) {
+    const trace = {
+        y: frequencyTable.map(item => item.value),
+        x: frequencyTable.map(item => item.count),
+        type: 'bar',
+        orientation: 'h',
+        marker: { color: 'rgba(255, 159, 64, 0.7)' }
+    };
+    
+    const layout = {
+        title: `Horizontal Bar Chart: ${variableName}`,
+        xaxis: { title: 'Count' },
+        yaxis: { title: 'Category' },
+        margin: { l: 150, b: 60 },
+        height: Math.max(300, frequencyTable.length * 30)
+    };
+    
+    Plotly.newPlot('chart-container', [trace], layout, { responsive: true });
+}
+
+// ==================== Educational Content Generators ====================
+
+function generateStatsExplanations(type) {
+    if (type === DataType.CONTINUOUS) {
+        return `
+            <div class="explanation-grid">
+                <div class="explanation-item">
+                    <strong>Mean</strong>
+                    <p><strong>Technical:</strong> The arithmetic average of all values. Sum all values and divide by count.</p>
+                    <p><strong>Plain English:</strong> The "typical" value. If you picked a random customer, this is close to what you'd expect.</p>
+                    <p><strong>⚠️ Watch out:</strong> Outliers (extreme values) can pull the mean way up or down, making it misleading.</p>
+                </div>
+                
+                <div class="explanation-item">
+                    <strong>Median</strong>
+                    <p><strong>Technical:</strong> The middle value when all values are sorted. 50% of values are below, 50% above.</p>
+                    <p><strong>Plain English:</strong> The "center" value. Unlike mean, it's not affected by extreme outliers.</p>
+                    <p><strong>💡 When to use:</strong> If your mean and median are very different, use median—it's more reliable with skewed data.</p>
+                </div>
+                
+                <div class="explanation-item">
+                    <strong>Standard Deviation (SD)</strong>
+                    <p><strong>Technical:</strong> Measures spread around the mean. Calculated as the square root of variance.</p>
+                    <p><strong>Plain English:</strong> How much variation exists. Small SD = consistent data. Large SD = widely varying data.</p>
+                    <p><strong>💡 Rule of thumb:</strong> ~68% of data falls within 1 SD of mean, ~95% within 2 SD.</p>
+                </div>
+                
+                <div class="explanation-item">
+                    <strong>IQR (Interquartile Range)</strong>
+                    <p><strong>Technical:</strong> Q3 - Q1. The range containing the middle 50% of data.</p>
+                    <p><strong>Plain English:</strong> Where most of your "typical" values live, ignoring the extreme highs and lows.</p>
+                    <p><strong>💡 Use it for:</strong> Spotting outliers. Anything beyond 1.5 × IQR from Q1 or Q3 is unusual.</p>
+                </div>
+                
+                <div class="explanation-item">
+                    <strong>Skewness</strong>
+                    <p><strong>Technical:</strong> Measures asymmetry. Positive = long right tail. Negative = long left tail. Zero = symmetric.</p>
+                    <p><strong>Plain English:</strong> Does your data lean one way? Positive skew = most values are low with some high outliers (like income). Negative skew = most values are high with some low outliers.</p>
+                    <p><strong>💡 Interpretation:</strong> |Skew| < 0.5 = fairly symmetric. |Skew| > 1 = highly skewed.</p>
+                </div>
+                
+                <div class="explanation-item">
+                    <strong>Kurtosis</strong>
+                    <p><strong>Technical:</strong> Measures "tailedness" (how much data is in tails vs. peak). Excess kurtosis compares to normal distribution.</p>
+                    <p><strong>Plain English:</strong> Does your data have lots of extreme values (outliers)? High kurtosis = heavy tails, more outliers. Low kurtosis = thin tails, fewer outliers.</p>
+                    <p><strong>💡 Interpretation:</strong> Kurtosis > 1 = watch for outliers. Kurtosis < -1 = very flat distribution.</p>
+                </div>
+            </div>
+        `;
+    } else {
+        return `
+            <div class="explanation-grid">
+                <div class="explanation-item">
+                    <strong>Frequency</strong>
+                    <p><strong>Technical:</strong> Count of how many times each category appears in the dataset.</p>
+                    <p><strong>Plain English:</strong> How popular is each option? Higher frequency = more common.</p>
+                </div>
+                
+                <div class="explanation-item">
+                    <strong>Percentage</strong>
+                    <p><strong>Technical:</strong> (Category count ÷ Total count) × 100.</p>
+                    <p><strong>Plain English:</strong> What share of your total does each category represent? Makes comparisons easier than raw counts.</p>
+                </div>
+                
+                <div class="explanation-item">
+                    <strong>Mode</strong>
+                    <p><strong>Technical:</strong> The category with the highest frequency.</p>
+                    <p><strong>Plain English:</strong> The most common answer. Your "winning" category.</p>
+                    <p><strong>💡 Marketing insight:</strong> If mode has >50%, you have a clear winner. If <30%, preferences are spread out.</p>
+                </div>
+                
+                <div class="explanation-item">
+                    <strong>Unique Values</strong>
+                    <p><strong>Technical:</strong> Count of distinct categories in the variable.</p>
+                    <p><strong>Plain English:</strong> How many options do customers have? High count = diverse responses. Low count = concentrated preferences.</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function generateDynamicInterpretation(variableName, type, values) {
+    if (type === DataType.CONTINUOUS) {
+        const mean = getMean(values);
+        const median = getMedian(values);
+        const sd = getStandardDeviation(values);
+        const skew = getSkewness(values);
+        const kurt = getKurtosis(values);
+        const iqr = getIQR(values);
+        const min = getMin(values);
+        const max = getMax(values);
+        
+        let insights = [];
+        
+        // Mean vs Median comparison
+        if (mean !== null && median !== null) {
+            const diff = Math.abs(mean - median);
+            const relativeDiff = sd !== null ? diff / sd : 0;
+            if (relativeDiff < 0.1) {
+                insights.push(`<p><strong>✓ Symmetry:</strong> Mean (${formatNumber(mean, 2)}) and median (${formatNumber(median, 2)}) are very close, suggesting a fairly balanced, symmetric distribution. This is good—it means the average is representative.</p>`);
+            } else if (mean > median) {
+                insights.push(`<p><strong>⚠️ Right Skew:</strong> Mean (${formatNumber(mean, 2)}) > median (${formatNumber(median, 2)}), indicating high-value outliers are pulling the average up. The median is more reliable here. Consider: Are there a few big spenders or high performers skewing the average?</p>`);
+            } else {
+                insights.push(`<p><strong>⚠️ Left Skew:</strong> Mean (${formatNumber(mean, 2)}) < median (${formatNumber(median, 2)}), indicating low-value outliers are pulling the average down. Consider: Are there data quality issues or a segment performing poorly?</p>`);
+            }
+        }
+        
+        // Spread interpretation
+        if (sd !== null && mean !== null && mean !== 0) {
+            const cv = sd / Math.abs(mean);
+            if (cv < 0.15) {
+                insights.push(`<p><strong>✓ Low Variability:</strong> Standard deviation is small relative to the mean (CV = ${formatNumber(cv, 3)}). Your data is consistent—customers behave similarly. This makes predictions easier.</p>`);
+            } else if (cv > 0.5) {
+                insights.push(`<p><strong>⚠️ High Variability:</strong> Standard deviation is large relative to the mean (CV = ${formatNumber(cv, 3)}). Your data is all over the place. Consider segmenting customers—there might be distinct groups with different behaviors.</p>`);
+            } else {
+                insights.push(`<p><strong>Moderate Variability:</strong> There's meaningful spread in your data (CV = ${formatNumber(cv, 3)}), but it's not chaotic. This is normal for many marketing metrics.</p>`);
+            }
+        }
+        
+        // Skewness insight
+        if (skew !== null) {
+            const absSkew = Math.abs(skew);
+            if (absSkew > 1) {
+                insights.push(`<p><strong>⚠️ Strong Skew:</strong> Skewness = ${formatNumber(skew, 3)}. Your distribution is highly asymmetric. ${skew > 0 ? 'Most customers are at the low end, with a few high-value outliers.' : 'Most customers are at the high end, with a few low-value outliers.'} For analysis, consider using median instead of mean, or log-transforming your data.</p>`);
+            }
+        }
+        
+        // Kurtosis insight
+        if (kurt !== null && kurt > 3) {
+            insights.push(`<p><strong>⚠️ Heavy Tails:</strong> Kurtosis = ${formatNumber(kurt, 3)}. Your data has more extreme values (outliers) than a normal distribution would. Investigate these outliers—they might be errors, or they might be your most valuable customers.</p>`);
+        }
+        
+        // Range insight
+        if (min !== null && max !== null && iqr !== null) {
+            const range = max - min;
+            const rangeToIQR = range / iqr;
+            if (rangeToIQR > 5) {
+                insights.push(`<p><strong>Wide Range with Outliers:</strong> Your data spans from ${formatNumber(min, 2)} to ${formatNumber(max, 2)}, but the middle 50% only covers ${formatNumber(iqr, 2)} units. This suggests extreme outliers. Use box plots to identify them.</p>`);
+            }
+        }
+        
+        return insights.length > 0 ? insights.join('') : '<p>No specific concerns detected. Your data looks reasonably well-behaved.</p>';
+        
+    } else {
+        // Categorical interpretation
+        const freqTable = getFrequencyTable(values);
+        const total = values.filter(v => v !== null && v !== undefined && v !== '').length;
+        const uniqueCount = freqTable.length;
+        
+        let insights = [];
+        
+        if (freqTable.length > 0) {
+            const topPct = (freqTable[0].count / total) * 100;
+            const topCategory = freqTable[0].value;
+            
+            if (topPct > 70) {
+                insights.push(`<p><strong>✓ Clear Winner:</strong> "${escapeHtml(topCategory)}" dominates at ${formatNumber(topPct, 1)}%. You have a clear market leader. Focus marketing efforts here, or investigate why other options lag.</p>`);
+            } else if (topPct > 40) {
+                insights.push(`<p><strong>Leading Category:</strong> "${escapeHtml(topCategory)}" leads at ${formatNumber(topPct, 1)}%, but ${uniqueCount - 1} other categories have significant share. Consider a tiered marketing strategy targeting top 2-3 categories.</p>`);
+            } else {
+                insights.push(`<p><strong>Distributed Preferences:</strong> No single category dominates (top category at ${formatNumber(topPct, 1)}%). Your audience is diverse. Avoid one-size-fits-all messaging—segment by preference and personalize.</p>`);
+            }
+            
+            if (uniqueCount > 20) {
+                insights.push(`<p><strong>⚠️ High Diversity:</strong> ${uniqueCount} unique categories is a lot. Consider grouping into broader segments for easier analysis and action.</p>`);
+            }
+            
+            // Check for "Other" or long tail
+            const top5Share = freqTable.slice(0, 5).reduce((sum, item) => sum + item.percentage, 0);
+            if (top5Share < 70 && uniqueCount > 10) {
+                insights.push(`<p><strong>Long Tail Effect:</strong> Top 5 categories only account for ${formatNumber(top5Share, 1)}%. You have a long tail of niche categories. Focus on the vital few (80/20 rule) unless serving niche markets is your strategy.</p>`);
+            }
+        }
+        
+        return insights.length > 0 ? insights.join('') : '<p>Review the frequency table to identify patterns in your categorical data.</p>';
+    }
+}
+
+function updateChartNarrative(variableName, type, values) {
+    const narrativeEl = document.getElementById('chart-narrative');
+    const interpretationEl = document.getElementById('chart-interpretation');
+    
+    if (!narrativeEl || !interpretationEl) return;
+    
+    if (!variableName || !values) {
+        narrativeEl.textContent = '';
+        interpretationEl.innerHTML = '';
+        return;
+    }
+    
+    let narrativeText = '';
+    
+    if (type === DataType.CONTINUOUS) {
+        const chartType = activeChartType;
+        
+        if (chartType === 'box') {
+            const q1 = getPercentile(values, 25);
+            const median = getMedian(values);
+            const q3 = getPercentile(values, 75);
+            const iqr = getIQR(values);
+            const mean = getMean(values);
+            
+            narrativeText = `<strong>📦 Box Plot Guide:</strong> The box shows where the middle 50% of your data lives (from Q1 = ${formatNumber(q1, 2)} to Q3 = ${formatNumber(q3, 2)}). The line inside is the median (${formatNumber(median, 2)}). The diamond shows the mean (${formatNumber(mean, 2)}). Whiskers extend to show typical range. Dots beyond whiskers are outliers—unusual values that deserve investigation. <strong>Quick check:</strong> If median and mean are close, your data is balanced. If they're far apart, you have skew.`;
+            
+        } else if (chartType === 'histogram') {
+            const mean = getMean(values);
+            const sd = getStandardDeviation(values);
+            const skew = getSkewness(values);
+            
+            narrativeText = `<strong>📊 Histogram Guide:</strong> Each bar shows how many values fall in that range. The shape tells the story: Bell-shaped = normal (most common in nature). Skewed left/right = asymmetric (common in business with outliers). Flat = evenly distributed. Bimodal (two peaks) = you might have two distinct customer groups. <strong>Your data:</strong> Mean = ${formatNumber(mean, 2)}, SD = ${formatNumber(sd, 2)}. ${Math.abs(skew) < 0.5 ? 'Shape looks fairly symmetric.' : skew > 0 ? 'Skewed right—most values are low.' : 'Skewed left—most values are high.'}`;
+            
+        } else if (chartType === 'violin') {
+            const median = getMedian(values);
+            
+            narrativeText = `<strong>🎻 Violin Plot Guide:</strong> Combines box plot + density. The width shows how many values are at each level—wider means more data points. The box in the middle shows quartiles (just like a box plot). The white dot is the median (${formatNumber(median, 2)}). <strong>Use this to:</strong> See the full distribution shape at a glance. Spot bimodal patterns (two bulges = two groups). Identify where most customers cluster.`;
+            
+        } else if (chartType === 'density') {
+            const mean = getMean(values);
+            const sd = getStandardDeviation(values);
+            
+            narrativeText = `<strong>📈 Density Plot Guide:</strong> A smoothed histogram showing probability density. Peaks = where values are most common. Tails = rare values. Area under curve = 1 (100% of data). <strong>Why use this:</strong> Easier to see overall shape than histogram (no binning artifacts). Compare to normal curve mentally—does it follow bell shape? <strong>Your data:</strong> Centered around ${formatNumber(mean, 2)} with spread of ±${formatNumber(sd, 2)}.`;
+        }
+        
+    } else {
+        // Categorical narratives
+        const freqTable = getFrequencyTable(values);
+        const chartType = activeChartType || 'bar';
+        
+        if (freqTable.length > 0) {
+            const topCategory = freqTable[0].value;
+            const topCount = freqTable[0].count;
+            const topPct = freqTable[0].percentage;
+            
+            if (chartType === 'bar') {
+                narrativeText = `<strong>📊 Bar Chart Guide:</strong> Each bar's height shows frequency (count). Taller = more popular. <strong>Your leader:</strong> "${escapeHtml(topCategory)}" with ${topCount} responses (${formatNumber(topPct, 1)}%). Compare heights to see relative popularity. Use this to prioritize marketing focus on top categories.`;
+                
+            } else if (chartType === 'pie') {
+                narrativeText = `<strong>🥧 Pie Chart Guide:</strong> Each slice shows proportion of the whole. Bigger slices = larger market share. <strong>Your leader:</strong> "${escapeHtml(topCategory)}" at ${formatNumber(topPct, 1)}%. <strong>When to use:</strong> Great for showing composition (how the whole breaks down). Less useful if you have many small categories (slices get hard to read).`;
+                
+            } else if (chartType === 'horizontal') {
+                narrativeText = `<strong>↔️ Horizontal Bar Guide:</strong> Same as vertical bars but rotated. Easier to read when category names are long. Bars are sorted by frequency (longest = most popular). <strong>Your leader:</strong> "${escapeHtml(topCategory)}" with ${topCount} responses. <strong>Pro tip:</strong> Look for natural breaks—gaps between bars suggest distinct tiers (e.g., top 3 vs. everyone else).`;
+            }
+        }
+    }
+    
+    narrativeEl.innerHTML = narrativeText;
+    interpretationEl.innerHTML = generateDynamicInterpretation(variableName, type, values);
+}
+
 function displayCategoricalStats(variableName, values) {
     const frequencyTable = getFrequencyTable(values);
-    const displayTable = getTopCategories(frequencyTable);
+    const displayTable = showAllCategories ? frequencyTable : getTopCategories(frequencyTable);
     
     // Display stats table
     const statsTable = document.getElementById('stats-table');
     statsTable.innerHTML = `
+        <table>
         <thead>
             <tr>
                 <th>Category</th>
@@ -618,13 +987,48 @@ function displayCategoricalStats(variableName, values) {
                 </tr>
             `).join('')}
         </tbody>
+        </table>
     `;
     
-    // Display visualizations
-    document.getElementById('viz-toggle').classList.add('hidden');
+    // Update chart type selector for categorical
+    const chartSelect = document.getElementById('chart-type-select');
+    if (chartSelect) {
+        chartSelect.innerHTML = `
+            <option value="bar" ${activeChartType === 'bar' ? 'selected' : ''}>Bar Chart</option>
+            <option value="pie" ${activeChartType === 'pie' ? 'selected' : ''}>Pie Chart</option>
+            <option value="horizontal" ${activeChartType === 'horizontal' ? 'selected' : ''}>Horizontal Bar</option>
+        `;
+    }
+    
+    // Show categorical controls
     document.getElementById('categorical-extra-info').classList.remove('hidden');
     
-    displayBarChart(variableName, displayTable);
+    // Populate stats explanations
+    const explanationContent = document.getElementById('explanation-content');
+    if (explanationContent) {
+        explanationContent.innerHTML = generateStatsExplanations(DataType.CATEGORICAL);
+    }
+    
+    // Display visualization based on selected chart type
+    displayCategoricalVisualization(variableName, displayTable, values);
+}
+
+function displayCategoricalVisualization(variableName, frequencyTable, originalValues) {
+    switch(activeChartType) {
+        case 'bar':
+            displayBarChart(variableName, frequencyTable);
+            break;
+        case 'pie':
+            displayPieChart(variableName, frequencyTable);
+            break;
+        case 'horizontal':
+            displayHorizontalBarChart(variableName, frequencyTable);
+            break;
+        default:
+            displayBarChart(variableName, frequencyTable);
+    }
+    
+    updateChartNarrative(variableName, DataType.CATEGORICAL, originalValues);
 }
 
 function displayBarChart(variableName, frequencyTable) {
@@ -640,15 +1044,10 @@ function displayBarChart(variableName, frequencyTable) {
         xaxis: { title: 'Category' },
         yaxis: { title: 'Count' },
         margin: { b: 100 },
-        height: 300
+        height: 400
     };
     
     Plotly.newPlot('chart-container', [trace], layout, { responsive: true });
-    
-    // Get the original values for narrative generation
-    const dataIndex = data_parsed[0].indexOf(variableName);
-    const values = data_parsed.slice(1).map(row => row[dataIndex]);
-    updateChartNarrative(variableName, DataType.CATEGORICAL, values);
 }
 
 function displayMissingDataInfo(values) {
@@ -844,43 +1243,6 @@ function updateNarratives(variableName, type, values) {
     mgrEl.textContent = narrative.managerial;
 }
 
-function updateChartNarrative(variableName, type, values) {
-    const narrativeEl = document.getElementById('chart-narrative');
-    if (!narrativeEl) return;
-    
-    if (!variableName || !values) {
-        narrativeEl.textContent = '';
-        return;
-    }
-    
-    let text = '';
-    
-    if (type === DataType.CONTINUOUS) {
-        if (activeVisualization === 'chart') {
-            // Box plot explanation
-            const q1 = getPercentile(values, 25);
-            const median = getMedian(values);
-            const q3 = getPercentile(values, 75);
-            const iqr = getIQR(values);
-            const mean = getMean(values);
-            
-            text = `<strong>Box Plot Guide:</strong> The box represents the middle 50% of data (interquartile range). The line inside shows the median. The whiskers extend to show data spread. The dotted diamond represents the mean. In this chart: median = ${formatNumber(median, 2)}, mean = ${formatNumber(mean, 2)}, Q1 = ${formatNumber(q1, 2)}, Q3 = ${formatNumber(q3, 2)}. If data points appear as circles, they may be outliers beyond the whisker range.`;
-        } else {
-            // Histogram explanation
-            text = `<strong>Histogram Guide:</strong> Each bar shows how many values fall in that range. Taller bars mean more data points. The shape reveals the distribution: symmetric (normal-looking), skewed left (tail on left), or skewed right (tail on right). Use this to spot patterns and whether data clusters in certain ranges or spreads evenly.`;
-        }
-    } else {
-        // Categorical bar chart explanation
-        const freqTable = getFrequencyTable(values);
-        const topCategory = freqTable.length > 0 ? freqTable[0].value : 'N/A';
-        const topCount = freqTable.length > 0 ? freqTable[0].count : 0;
-        
-        text = `<strong>Bar Chart Guide:</strong> Each bar represents a category, with height showing frequency (count). Taller bars indicate more responses in that category. This chart shows "${escapeHtml(topCategory)}" is the most frequent (${topCount} responses). Use this to identify dominant categories and compare preference distribution across all options.`;
-    }
-    
-    narrativeEl.innerHTML = text;
-}
-
 // ==================== Event Listeners ====================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -959,30 +1321,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Visualization toggle for continuous variables
-    document.querySelectorAll('.viz-button').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.viz-button').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            activeVisualization = e.target.dataset.viz;
+    // Chart type selector
+    document.getElementById('chart-type-select').addEventListener('change', (e) => {
+        activeChartType = e.target.value;
+        if (activeVariable) {
             const effectiveType = manualOverrides.has(activeVariable) ? manualOverrides.get(activeVariable) : dataTypes.get(activeVariable);
-            if (activeVariable && effectiveType === DataType.CONTINUOUS) {
-                const values = uploadedData.map(row => row[activeVariable]);
+            const values = uploadedData.map(row => row[activeVariable]);
+            if (effectiveType === DataType.CONTINUOUS) {
                 displayContinuousVisualization(activeVariable, values);
+            } else {
+                const frequencyTable = getFrequencyTable(values);
+                const displayTable = showAllCategories ? frequencyTable : getTopCategories(frequencyTable);
+                displayCategoricalVisualization(activeVariable, displayTable, values);
             }
-        });
+        }
     });
+    
+    // Stats help toggle
+    const statsHelpToggle = document.getElementById('stats-help-toggle');
+    const statsExplanations = document.getElementById('stats-explanations');
+    if (statsHelpToggle && statsExplanations) {
+        statsHelpToggle.addEventListener('click', () => {
+            statsExplanations.classList.toggle('hidden');
+            const isHidden = statsExplanations.classList.contains('hidden');
+            statsHelpToggle.innerHTML = isHidden 
+                ? '<span class="help-icon">ℹ️</span> Explain these'
+                : '<span class="help-icon">✖</span> Hide explanations';
+        });
+    }
 
     // Manual type override buttons
     document.getElementById('type-continuous-btn').addEventListener('click', () => {
         if (!activeVariable) return;
         manualOverrides.set(activeVariable, DataType.CONTINUOUS);
+        activeChartType = 'box'; // Reset to default for continuous
         displayVariableStats(activeVariable);
     });
 
     document.getElementById('type-categorical-btn').addEventListener('click', () => {
         if (!activeVariable) return;
         manualOverrides.set(activeVariable, DataType.CATEGORICAL);
+        activeChartType = 'bar'; // Reset to default for categorical
         displayVariableStats(activeVariable);
     });
     
@@ -991,10 +1370,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showAllCategories = e.target.checked;
         const effectiveType = manualOverrides.has(activeVariable) ? manualOverrides.get(activeVariable) : dataTypes.get(activeVariable);
         if (activeVariable && effectiveType === DataType.CATEGORICAL) {
-            const values = uploadedData.map(row => row[activeVariable]);
-            const frequencyTable = getFrequencyTable(values);
-            const displayTable = showAllCategories ? frequencyTable : getTopCategories(frequencyTable);
-            displayBarChart(activeVariable, displayTable);
+            displayVariableStats(activeVariable);
         }
     });
     

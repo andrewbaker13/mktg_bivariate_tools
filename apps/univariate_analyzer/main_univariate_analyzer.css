@@ -306,7 +306,213 @@
     border-radius: 0.4rem;
     font-size: 0.9rem;
     color: var(--app-text);
+    line-height: 1.6;
+}
+
+/* Chart Interpretation Section */
+.chart-interpretation {
+    margin-top: 1rem;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, rgba(54, 162, 235, 0.08) 0%, rgba(54, 162, 235, 0.03) 100%);
+    border: 1px solid rgba(54, 162, 235, 0.2);
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    color: var(--app-text);
+    line-height: 1.7;
+}
+
+.chart-interpretation strong {
+    color: var(--app-accent);
+    font-weight: 600;
+}
+
+.chart-interpretation p {
+    margin: 0.75rem 0;
+}
+
+.chart-interpretation p:first-child {
+    margin-top: 0;
+}
+
+.chart-interpretation p:last-child {
+    margin-bottom: 0;
+}
+
+/* Chart Type Selector */
+.viz-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.viz-header label {
+    font-weight: 600;
+    color: var(--app-text);
+    font-size: 0.95rem;
+}
+
+.chart-type-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--app-border);
+    border-radius: 0.4rem;
+    background-color: var(--app-bg);
+    color: var(--app-text);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chart-type-select:hover {
+    border-color: var(--app-accent);
+}
+
+.chart-type-select:focus {
+    outline: none;
+    border-color: var(--app-accent);
+    box-shadow: 0 0 0 3px rgba(54, 162, 235, 0.1);
+}
+
+/* Stats Explanations Section */
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.stats-header h4 {
+    margin: 0;
+}
+
+.help-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.9rem;
+    background-color: var(--app-accent);
+    color: white;
+    border: none;
+    border-radius: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.help-toggle:hover {
+    background-color: rgba(54, 162, 235, 0.9);
+    transform: translateY(-1px);
+}
+
+.help-icon {
+    font-size: 1.1em;
+}
+
+.stats-explanations {
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(255, 206, 86, 0.08) 0%, rgba(255, 206, 86, 0.03) 100%);
+    border: 1px solid rgba(255, 206, 86, 0.3);
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.stats-explanations.hidden {
+    display: none;
+}
+
+.explanation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.explanation-item {
+    padding: 1rem;
+    background-color: var(--app-bg);
+    border-radius: 0.4rem;
+    border: 1px solid var(--app-border);
+}
+
+.explanation-item strong {
+    display: block;
+    font-size: 1rem;
+    color: var(--app-accent);
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+}
+
+.explanation-item p {
+    margin: 0.5rem 0;
+    font-size: 0.88rem;
     line-height: 1.5;
+}
+
+.explanation-item p strong {
+    display: inline;
+    font-size: inherit;
+    color: var(--app-text);
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+.explanation-item p:first-of-type {
+    margin-top: 0;
+}
+
+.explanation-item p:last-child {
+    margin-bottom: 0;
+}
+
+/* Variable Type Explainer Cards */
+.variable-type-explainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.type-card {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(54, 162, 235, 0.05) 0%, rgba(54, 162, 235, 0.02) 100%);
+    border: 1px solid rgba(54, 162, 235, 0.15);
+    border-radius: 0.5rem;
+}
+
+.type-card h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--app-accent);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.type-card p {
+    margin: 0.75rem 0;
+    line-height: 1.6;
+}
+
+.type-card ul {
+    margin: 0.75rem 0;
+    padding-left: 1.5rem;
+}
+
+.type-card li {
+    margin: 0.5rem 0;
+    line-height: 1.5;
+}
+
+.type-card li strong {
+    color: var(--app-accent);
+}
+
+/* Help Icons in Details */
+.intro-notes summary .help-icon {
+    margin-left: 0.5rem;
+    font-size: 0.9em;
+    color: var(--app-accent);
+    cursor: help;
 }
 
 /* Missing Data Info */
@@ -493,5 +699,28 @@
 
     .dual-panels {
         grid-template-columns: 1fr;
+    }
+    
+    .explanation-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .variable-type-explainer {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .viz-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .chart-type-select {
+        width: 100%;
     }
 }
