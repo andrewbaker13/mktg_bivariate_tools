@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compound Event Probability Calculator</title>
+  <link rel="stylesheet" href="../../shared/css/main.css">
+  <link rel="stylesheet" href="compound_event_probability.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-290ZJ9RE04');
+    </script>
+</head>
+
+<body>
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Compound Event Probability Calculator</h1>
+        <div class="hero-context">
+          <span class="badge">Probability</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Calculate probabilities for repeated independent events using the binomial model. Determine the likelihood of
+        seeing an event occur a specific number of times across multiple trials—whether you're rolling dice, analyzing
+        conversion rates, or evaluating quality control outcomes.
+      </p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="overview-heading">
+      <h2 id="overview-heading">OVERVIEW &amp; CONCEPTS</h2>
+      <div class="card">
+        <p>
+          This calculator answers questions like: <em>"If an event has probability \(p\) of occurring on each trial,
+          and I run \(n\) independent trials, what is the probability I see the event occur exactly \(k\) times?"</em>
+          or <em>"What is the probability I see it at least \(k\) times?"</em>
+        </p>
+        <details class="intro-notes">
+          <summary>Key concepts illustrated</summary>
+          <p><strong>Binomial distribution:</strong> models the number of successes in a fixed number of independent
+            trials, each with the same probability of success. This is the foundation for understanding repeated events
+            in marketing, gaming, quality control, and many other domains.</p>
+          <p><strong>Independent trials:</strong> each trial's outcome does not affect others. For example, each die
+            roll is independent, and each customer's decision to convert can be treated as independent if your sample
+            is large enough relative to the population.</p>
+          <p><strong>"At least" and "at most" calculations:</strong> these use the complement rule or cumulative
+            probabilities. For example, \(P(X \ge k) = 1 - P(X < k) = 1 - P(X \le k-1)\), which the app computes
+            directly from the binomial cumulative distribution function.</p>
+          <p><strong>Normal and Poisson approximations:</strong> when \(n\) is large, the binomial distribution can be
+            approximated by a normal distribution (especially when \(np\) and \(n(1-p)\) are both large) or by a
+            Poisson distribution (when \(n\) is large and \(p\) is small). The app shows these approximations and
+            compares them to the exact binomial probabilities.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="scenario-section" aria-labelledby="scenario-heading">
+      <h2 id="scenario-heading">MARKETING &amp; PRACTICAL SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="event-scenario-select">Load a preset scenario</label>
+          <div class="scenario-controls__input">
+            <select id="event-scenario-select">
+              <option value="">Manual settings (no preset)</option>
+            </select>
+          </div>
+        </div>
+        <div id="event-scenario-description">
+          <p>
+            Use these presets to explore realistic probability questions: conversion rates in marketing campaigns,
+            quality control in production, dice rolling in games, email open rates, and more. Each scenario
+            demonstrates how the binomial model applies to real-world repeated-event problems.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="inputs-heading">
+      <h2 id="inputs-heading">EVENT &amp; TRIAL SETTINGS</h2>
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>Configure the event and trials</h3>
+        </div>
+        <p class="muted">
+          Define a single event with a known probability (like "customer converts", "die shows 1", or "email is
+          opened"), specify how many independent trials you're running, and choose the outcome you want to calculate
+          the probability for (exactly \(k\) successes, at least \(k\), at most \(k\), or between two values).
+        </p>
+
+        <div class="input-grid">
+          <div>
+            <label for="event-label-input">Event name</label>
+            <input type="text" id="event-label-input" maxlength="80" value="success" placeholder="e.g., customer converts, die shows 1">
+            <p class="hint">A short description of the event you're tracking (e.g., "customer converts", "email
+              opened", "die shows 1").</p>
+          </div>
+          <div>
+            <label for="event-probability-input">Probability of event on each trial (\(p\))</label>
+            <input type="number" id="event-probability-input" min="0" max="1" step="0.0001" value="0.1667">
+            <p class="hint">The probability that the event occurs on a single trial. For a six-sided die showing 1,
+              this is \(1/6 \approx 0.1667\).</p>
+          </div>
+          <div>
+            <label for="num-trials-input">Number of trials (\(n\))</label>
+            <input type="number" id="num-trials-input" min="1" max="10000" step="1" value="23">
+            <p class="hint">How many independent trials you're running. For dice, this is the number of rolls.</p>
+          </div>
+          <div>
+            <label for="target-successes-input">Target number of successes (\(k\))</label>
+            <input type="number" id="target-successes-input" min="0" max="100" step="1" value="7">
+            <p class="hint">The threshold you care about—used for "exactly", "at least", or "at most" calculations.</p>
+          </div>
+        </div>
+
+        <div class="input-grid" style="margin-top:0.75rem;">
+          <div>
+            <label for="comparison-mode-select">Probability mode</label>
+            <select id="comparison-mode-select">
+              <option value="at_least" selected>At least \(k\): \(P(X \ge k)\)</option>
+              <option value="exact">Exactly \(k\): \(P(X = k)\)</option>
+              <option value="at_most">At most \(k\): \(P(X \le k)\)</option>
+              <option value="between">Between \(k_1\) and \(k_2\)</option>
+            </select>
+            <p class="hint">Choose whether you want the probability of exactly \(k\) successes, at least \(k\), at
+              most \(k\), or a range.</p>
+          </div>
+          <div id="range-inputs-container" style="display: none;">
+            <label for="range-lower-input">Lower bound (\(k_1\))</label>
+            <input type="number" id="range-lower-input" min="0" max="100" step="1" value="5">
+            <label for="range-upper-input" style="margin-top: 0.5rem;">Upper bound (\(k_2\))</label>
+            <input type="number" id="range-upper-input" min="0" max="100" step="1" value="10">
+            <p class="hint">Specify the range of successes you care about (inclusive).</p>
+          </div>
+          <div>
+            <label for="approximation-mode-select">Distribution mode</label>
+            <select id="approximation-mode-select">
+              <option value="exact" selected>Exact binomial</option>
+              <option value="normal">Normal approximation</option>
+              <option value="poisson">Poisson approximation</option>
+            </select>
+            <p class="hint">Use exact binomial or choose an approximation (normal works when \(n\) is large; Poisson
+              when \(n\) is large and \(p\) is small).</p>
+          </div>
+          <div>
+            <label for="num-simulations-input">Number of simulated trials</label>
+            <input type="number" id="num-simulations-input" min="100" max="10000" step="100" value="3000">
+            <p class="hint">How many Monte Carlo simulations to run for comparison with theoretical probabilities.</p>
+          </div>
+        </div>
+
+        <div style="margin-top:0.75rem;">
+          <button type="button" id="simulate-once-btn" class="secondary">Run one trial set</button>
+          <button type="button" id="simulate-many-btn" class="primary" style="margin-left:0.5rem;">Simulate many trial sets</button>
+          <button type="button" id="clear-sim-btn" class="secondary" style="margin-left:0.5rem;">Clear simulation history</button>
+        </div>
+        <p id="event-warning" class="hint"></p>
+        <details class="advanced-details" style="margin-top:0.75rem;">
+          <summary>More about these settings</summary>
+          <p>
+            <strong>Event probability \(p\):</strong> the chance the event happens on a single trial. For a fair coin,
+            \(p = 0.5\); for a six-sided die showing 1, \(p = 1/6 \approx 0.1667\); for a marketing conversion rate of
+            3%, \(p = 0.03\).
+          </p>
+          <p>
+            <strong>Number of trials \(n\):</strong> how many times you repeat the event. For dice, this is rolls; for
+            marketing, this might be ad impressions, email sends, or website visits.
+          </p>
+          <p>
+            <strong>Target successes \(k\):</strong> the specific count you're interested in. If you want to know the
+            probability of seeing exactly 7 conversions out of 100 visitors, set \(k = 7\) and choose "Exactly \(k\)".
+          </p>
+          <p>
+            <strong>Approximation modes:</strong> the <em>exact binomial</em> is always correct but can be slow for
+            very large \(n\). The <em>normal approximation</em> works well when \(np \ge 10\) and \(n(1-p) \ge 10\).
+            The <em>Poisson approximation</em> is useful when \(n\) is large and \(p\) is small (typically \(np < 10\)).
+          </p>
+        </details>
+      </article>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      <div class="card">
+        <div class="chart-grid compound-lab-grid">
+          <article class="chart-card">
+            <h3>Probability mass function</h3>
+            <div id="pmf-chart" class="chart-placeholder"></div>
+            <p id="pmf-note" class="chart-note">
+              The chart shows the probability distribution for the number of successes \(X\). Blue bars represent the
+              theoretical probabilities from the chosen model; orange bars show the empirical distribution from
+              simulations. The highlighted region corresponds to your selected probability mode.
+            </p>
+          </article>
+          <article class="chart-card">
+            <h3>Cumulative distribution function</h3>
+            <div id="cdf-chart" class="chart-placeholder"></div>
+            <p id="cdf-note" class="chart-note">
+              This chart shows \(P(X \le k)\) for each value of \(k\). The cumulative distribution makes it easy to
+              read "at most" probabilities directly and visualize how quickly probability accumulates as \(k\)
+              increases.
+            </p>
+          </article>
+        </div>
+        <details class="intro-notes" style="margin-top:0.75rem;">
+          <summary>How to interpret these charts</summary>
+          <p>
+            The <strong>PMF (probability mass function)</strong> shows the probability of seeing exactly each possible
+            number of successes. The height of each bar is \(P(X = k)\). When you select "at least \(k\)" or "at most
+            \(k\)", the app highlights the relevant bars so you can see which outcomes contribute to the probability.
+          </p>
+          <p>
+            The <strong>CDF (cumulative distribution function)</strong> adds up probabilities from left to right,
+            showing \(P(X \le k)\). This is especially useful for "at most" questions: just read the height of the
+            curve at your target \(k\). The CDF always starts at 0 when \(k\) is below the minimum possible value and
+            approaches 1 as \(k\) increases.
+          </p>
+          <p>
+            <strong>Simulated bars (orange):</strong> the app runs Monte Carlo simulations, each consisting of \(n\)
+            independent trials. It counts how many successes occurred in each simulation run, then plots the empirical
+            distribution. With enough simulations, the orange bars should closely match the blue theoretical bars,
+            illustrating the connection between probability models and observed frequencies.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <section class="test-results" aria-labelledby="math-heading">
+      <h2 id="math-heading">MATH DETAILS &amp; WORKED EXAMPLES</h2>
+      <div class="card metrics-panel compound-math-panel">
+        <div class="metric-output">
+          <span>Target probability (current mode):</span>
+          <span id="metric-target-prob" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Simulated probability (current mode):</span>
+          <span id="metric-sim-prob" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Expected number of successes \(E[X]\):</span>
+          <span id="metric-expected-x" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Standard deviation \(\sigma_X\):</span>
+          <span id="metric-std-dev" class="dynamic-value">&ndash;</span>
+        </div>
+      </div>
+      <div class="card" style="margin-top:0.75rem;">
+        <details class="advanced-details">
+          <summary>Interpreting these metrics</summary>
+          <p>
+            <strong>Target probability:</strong> the theoretical probability for your selected mode (exactly \(k\), at
+            least \(k\), at most \(k\), or between \(k_1\) and \(k_2\)). This is computed from the binomial
+            distribution (or the chosen approximation).
+          </p>
+          <p>
+            <strong>Simulated probability:</strong> the proportion of simulated trial sets that satisfy your selected
+            condition. With enough simulations, this should converge to the target probability.
+          </p>
+          <p>
+            <strong>Expected number of successes \(E[X] = np\):</strong> the average number of successes you would see
+            if you repeated this experiment many times. For a binomial distribution, this is simply the number of
+            trials times the probability of success on each trial.
+          </p>
+          <p>
+            <strong>Standard deviation \(\sigma_X = \sqrt{np(1-p)}\):</strong> measures the typical spread of the
+            number of successes around the expected value. A larger standard deviation means more variability in
+            outcomes.
+          </p>
+        </details>
+      </div>
+      <div class="card" style="margin-top:0.75rem;">
+        <details class="advanced-details">
+          <summary>Understanding the binomial coefficient \(\binom{n}{k}\)</summary>
+          <p>
+            The binomial coefficient \(\binom{n}{k}\), read as "\(n\) choose \(k\)", counts the number of ways to
+            choose \(k\) successes from \(n\) trials when order doesn't matter. It's computed as:
+            \[
+              \binom{n}{k} = \frac{n!}{k!\,(n-k)!}
+            \]
+            where \(n!\) (n factorial) means \(n \times (n-1) \times \dots \times 2 \times 1\).
+          </p>
+          <p>
+            For example, if you roll a die 10 times and want to know how many different patterns have exactly 3 ones,
+            \(\binom{10}{3} = 120\) tells you there are 120 distinct ways to arrange three ones among ten rolls.
+          </p>
+          <p>
+            In the binomial probability formula, \(\binom{n}{k}\) accounts for all the different orderings of \(k\)
+            successes and \(n-k\) failures, which is why it appears in front of the \(p^k(1-p)^{n-k}\) term.
+          </p>
+        </details>
+      </div>
+
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>General equations</h3>
+          <div id="equations-general">
+            <!-- Filled dynamically with MathJax content -->
+          </div>
+        </article>
+        <article class="card dual-panel">
+          <h3>Worked with your numbers</h3>
+          <div id="equations-worked">
+            <!-- Filled dynamically with MathJax content -->
+          </div>
+        </article>
+      </div>
+
+      <div class="card" style="margin-top:1rem;">
+        <h3>Complete probability distribution</h3>
+        <div class="compound-table-wrapper">
+          <table id="distribution-table">
+            <thead>
+              <tr>
+                <th>\(k\) (successes)</th>
+                <th>Theoretical \(P(X = k)\)</th>
+                <th>Simulated frequency</th>
+                <th>Simulated \(P(X = k)\)</th>
+                <th>Cumulative \(P(X \le k)\)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Filled dynamically -->
+            </tbody>
+          </table>
+        </div>
+        <details class="advanced-details" style="margin-top:0.75rem;">
+          <summary>How to read this table</summary>
+          <p>
+            <strong>\(k\) (successes):</strong> each row corresponds to a specific number of successes. For example, if
+            \(k = 5\), that row shows the probability of seeing exactly 5 successes out of \(n\) trials.
+          </p>
+          <p>
+            <strong>Theoretical \(P(X = k)\):</strong> the exact probability from the binomial formula (or chosen
+            approximation). In the example row for \(k = 7\), this might show 0.0523, meaning there's a 5.23% chance of
+            seeing exactly 7 successes.
+          </p>
+          <p>
+            <strong>Simulated frequency:</strong> how many of your simulated trial sets resulted in exactly \(k\)
+            successes. For example, if you ran 3,000 simulations and 157 of them had exactly 7 successes, this column
+            shows 157.
+          </p>
+          <p>
+            <strong>Simulated \(P(X = k)\):</strong> the simulated frequency divided by the total number of
+            simulations. In the example, 157/3000 = 0.0523, which should be close to the theoretical value if you ran
+            enough simulations.
+          </p>
+          <p>
+            <strong>Cumulative \(P(X \le k)\):</strong> adds up all theoretical probabilities from 0 through \(k\). If
+            this value is 0.8234 for \(k = 7\), you can interpret that as "there's an 82.34% chance of seeing 7 or
+            fewer successes."
+          </p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="created-date">2025-11-28</span> &middot; Last updated:
+      <span id="modified-date">2025-11-28</span>
+    </p>
+    <p><a href="../../index.html">Back to Stat Analysis Selection</a></p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). Compound Event Probability Calculator. Marketing Bivariate Tools.</p>
+  </footer>
+
+  <script src="../../shared/js/ui_utils.js"></script>
+  <script src="compound_event_probability.js"></script>
+</body>
+
+</html>

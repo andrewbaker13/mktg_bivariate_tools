@@ -1,0 +1,48 @@
+.compound-lab-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.compound-math-panel .metric-output span:first-child {
+  font-weight: 600;
+}
+
+.compound-table-wrapper {
+  max-height: 400px;
+  overflow: auto;
+}
+
+#distribution-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+#distribution-table th,
+#distribution-table td {
+  border: 1px solid #e5e7eb;
+  padding: 0.25rem 0.5rem;
+  text-align: right;
+}
+
+#distribution-table th:first-child,
+#distribution-table td:first-child {
+  text-align: center;
+}
+
+#distribution-table thead {
+  background-color: #f9fafb;
+}
+
+#distribution-table tbody tr.highlighted {
+  background-color: #fef3c7;
+}
+
+#range-inputs-container {
+  display: flex;
+  flex-direction: column;
+}
+
+#range-inputs-container label {
+  margin-bottom: 0.25rem;
+}
