@@ -813,11 +813,11 @@ function generateDynamicInterpretation(variableName, type, values) {
             const diff = Math.abs(mean - median);
             const relativeDiff = sd !== null ? diff / sd : 0;
             if (relativeDiff < 0.1) {
-                insights.push(`<p><strong>✓ Symmetry:</strong> Mean (${formatNumber(mean, 2)}) and median (${formatNumber(median, 2)}) are very close, suggesting a fairly balanced, symmetric distribution. This is good—it means the average is representative.</p>`);
+                insights.push(`<p><strong>Symmetry:</strong> Mean (${formatNumber(mean, 2)}) and median (${formatNumber(median, 2)}) are very close, suggesting a fairly balanced, symmetric distribution. This is good—it means the average is representative.</p>`);
             } else if (mean > median) {
-                insights.push(`<p><strong>⚠️ Right Skew:</strong> Mean (${formatNumber(mean, 2)}) > median (${formatNumber(median, 2)}), indicating high-value outliers are pulling the average up. The median is more reliable here. Consider: Are there a few big spenders or high performers skewing the average?</p>`);
+                insights.push(`<p><strong>Right Skew:</strong> Mean (${formatNumber(mean, 2)}) > median (${formatNumber(median, 2)}), indicating high-value outliers are pulling the average up. The median is more reliable here. Consider: Are there a few big spenders or high performers skewing the average?</p>`);
             } else {
-                insights.push(`<p><strong>⚠️ Left Skew:</strong> Mean (${formatNumber(mean, 2)}) < median (${formatNumber(median, 2)}), indicating low-value outliers are pulling the average down. Consider: Are there data quality issues or a segment performing poorly?</p>`);
+                insights.push(`<p><strong>Left Skew:</strong> Mean (${formatNumber(mean, 2)}) < median (${formatNumber(median, 2)}), indicating low-value outliers are pulling the average down. Consider: Are there data quality issues or a segment performing poorly?</p>`);
             }
         }
         
@@ -825,9 +825,9 @@ function generateDynamicInterpretation(variableName, type, values) {
         if (sd !== null && mean !== null && mean !== 0) {
             const cv = sd / Math.abs(mean);
             if (cv < 0.15) {
-                insights.push(`<p><strong>✓ Low Variability:</strong> Standard deviation is small relative to the mean (CV = ${formatNumber(cv, 3)}). Your data is consistent—customers behave similarly. This makes predictions easier.</p>`);
+                insights.push(`<p><strong>Low Variability:</strong> Standard deviation is small relative to the mean (CV = ${formatNumber(cv, 3)}). Your data is consistent—customers behave similarly. This makes predictions easier.</p>`);
             } else if (cv > 0.5) {
-                insights.push(`<p><strong>⚠️ High Variability:</strong> Standard deviation is large relative to the mean (CV = ${formatNumber(cv, 3)}). Your data is all over the place. Consider segmenting customers—there might be distinct groups with different behaviors.</p>`);
+                insights.push(`<p><strong>High Variability:</strong> Standard deviation is large relative to the mean (CV = ${formatNumber(cv, 3)}). Your data is all over the place. Consider segmenting customers—there might be distinct groups with different behaviors.</p>`);
             } else {
                 insights.push(`<p><strong>Moderate Variability:</strong> There's meaningful spread in your data (CV = ${formatNumber(cv, 3)}), but it's not chaotic. This is normal for many marketing metrics.</p>`);
             }
@@ -837,13 +837,13 @@ function generateDynamicInterpretation(variableName, type, values) {
         if (skew !== null) {
             const absSkew = Math.abs(skew);
             if (absSkew > 1) {
-                insights.push(`<p><strong>⚠️ Strong Skew:</strong> Skewness = ${formatNumber(skew, 3)}. Your distribution is highly asymmetric. ${skew > 0 ? 'Most customers are at the low end, with a few high-value outliers.' : 'Most customers are at the high end, with a few low-value outliers.'} For analysis, consider using median instead of mean, or log-transforming your data.</p>`);
+                insights.push(`<p><strong>Strong Skew:</strong> Skewness = ${formatNumber(skew, 3)}. Your distribution is highly asymmetric. ${skew > 0 ? 'Most customers are at the low end, with a few high-value outliers.' : 'Most customers are at the high end, with a few low-value outliers.'} For analysis, consider using median instead of mean, or log-transforming your data.</p>`);
             }
         }
         
         // Kurtosis insight
         if (kurt !== null && kurt > 3) {
-            insights.push(`<p><strong>⚠️ Heavy Tails:</strong> Kurtosis = ${formatNumber(kurt, 3)}. Your data has more extreme values (outliers) than a normal distribution would. Investigate these outliers—they might be errors, or they might be your most valuable customers.</p>`);
+            insights.push(`<p><strong>Heavy Tails:</strong> Kurtosis = ${formatNumber(kurt, 3)}. Your data has more extreme values (outliers) than a normal distribution would. Investigate these outliers—they might be errors, or they might be your most valuable customers.</p>`);
         }
         
         // Range insight
@@ -870,7 +870,7 @@ function generateDynamicInterpretation(variableName, type, values) {
             const topCategory = freqTable[0].value;
             
             if (topPct > 70) {
-                insights.push(`<p><strong>✓ Clear Winner:</strong> "${escapeHtml(topCategory)}" dominates at ${formatNumber(topPct, 1)}%. You have a clear market leader. Focus marketing efforts here, or investigate why other options lag.</p>`);
+                insights.push(`<p><strong>Clear Winner:</strong> "${escapeHtml(topCategory)}" dominates at ${formatNumber(topPct, 1)}%. You have a clear market leader. Focus marketing efforts here, or investigate why other options lag.</p>`);
             } else if (topPct > 40) {
                 insights.push(`<p><strong>Leading Category:</strong> "${escapeHtml(topCategory)}" leads at ${formatNumber(topPct, 1)}%, but ${uniqueCount - 1} other categories have significant share. Consider a tiered marketing strategy targeting top 2-3 categories.</p>`);
             } else {
@@ -878,7 +878,7 @@ function generateDynamicInterpretation(variableName, type, values) {
             }
             
             if (uniqueCount > 20) {
-                insights.push(`<p><strong>⚠️ High Diversity:</strong> ${uniqueCount} unique categories is a lot. Consider grouping into broader segments for easier analysis and action.</p>`);
+                insights.push(`<p><strong>High Diversity:</strong> ${uniqueCount} unique categories is a lot. Consider grouping into broader segments for easier analysis and action.</p>`);
             }
             
             // Check for "Other" or long tail
@@ -916,25 +916,25 @@ function updateChartNarrative(variableName, type, values) {
             const iqr = getIQR(values);
             const mean = getMean(values);
             
-            narrativeText = `<strong>📦 Box Plot Guide:</strong> The box shows where the middle 50% of your data lives (from Q1 = ${formatNumber(q1, 2)} to Q3 = ${formatNumber(q3, 2)}). The line inside is the median (${formatNumber(median, 2)}). The diamond shows the mean (${formatNumber(mean, 2)}). Whiskers extend to show typical range. Dots beyond whiskers are outliers—unusual values that deserve investigation. <strong>Quick check:</strong> If median and mean are close, your data is balanced. If they're far apart, you have skew.`;
+            narrativeText = `<strong>Box Plot Guide:</strong> The box shows where the middle 50% of your data lives (from Q1 = ${formatNumber(q1, 2)} to Q3 = ${formatNumber(q3, 2)}). The line inside is the median (${formatNumber(median, 2)}). The diamond shows the mean (${formatNumber(mean, 2)}). Whiskers extend to show typical range. Dots beyond whiskers are outliers—unusual values that deserve investigation. <strong>Quick check:</strong> If median and mean are close, your data is balanced. If they're far apart, you have skew.`;
             
         } else if (chartType === 'histogram') {
             const mean = getMean(values);
             const sd = getStandardDeviation(values);
             const skew = getSkewness(values);
             
-            narrativeText = `<strong>📊 Histogram Guide:</strong> Each bar shows how many values fall in that range. The shape tells the story: Bell-shaped = normal (most common in nature). Skewed left/right = asymmetric (common in business with outliers). Flat = evenly distributed. Bimodal (two peaks) = you might have two distinct customer groups. <strong>Your data:</strong> Mean = ${formatNumber(mean, 2)}, SD = ${formatNumber(sd, 2)}. ${Math.abs(skew) < 0.5 ? 'Shape looks fairly symmetric.' : skew > 0 ? 'Skewed right—most values are low.' : 'Skewed left—most values are high.'}`;
+            narrativeText = `<strong>Histogram Guide:</strong> Each bar shows how many values fall in that range. The shape tells the story: Bell-shaped = normal (most common in nature). Skewed left/right = asymmetric (common in business with outliers). Flat = evenly distributed. Bimodal (two peaks) = you might have two distinct customer groups. <strong>Your data:</strong> Mean = ${formatNumber(mean, 2)}, SD = ${formatNumber(sd, 2)}. ${Math.abs(skew) < 0.5 ? 'Shape looks fairly symmetric.' : skew > 0 ? 'Skewed right—most values are low.' : 'Skewed left—most values are high.'}`;
             
         } else if (chartType === 'violin') {
             const median = getMedian(values);
             
-            narrativeText = `<strong>🎻 Violin Plot Guide:</strong> Combines box plot + density. The width shows how many values are at each level—wider means more data points. The box in the middle shows quartiles (just like a box plot). The white dot is the median (${formatNumber(median, 2)}). <strong>Use this to:</strong> See the full distribution shape at a glance. Spot bimodal patterns (two bulges = two groups). Identify where most customers cluster.`;
+            narrativeText = `<strong>Violin Plot Guide:</strong> Combines box plot + density. The width shows how many values are at each level—wider means more data points. The box in the middle shows quartiles (just like a box plot). The white dot is the median (${formatNumber(median, 2)}). <strong>Use this to:</strong> See the full distribution shape at a glance. Spot bimodal patterns (two bulges = two groups). Identify where most customers cluster.`;
             
         } else if (chartType === 'density') {
             const mean = getMean(values);
             const sd = getStandardDeviation(values);
             
-            narrativeText = `<strong>📈 Density Plot Guide:</strong> A smoothed histogram showing probability density. Peaks = where values are most common. Tails = rare values. Area under curve = 1 (100% of data). <strong>Why use this:</strong> Easier to see overall shape than histogram (no binning artifacts). Compare to normal curve mentally—does it follow bell shape? <strong>Your data:</strong> Centered around ${formatNumber(mean, 2)} with spread of ±${formatNumber(sd, 2)}.`;
+            narrativeText = `<strong>Density Plot Guide:</strong> A smoothed histogram showing probability density. Peaks = where values are most common. Tails = rare values. Area under curve = 1 (100% of data). <strong>Why use this:</strong> Easier to see overall shape than histogram (no binning artifacts). Compare to normal curve mentally—does it follow bell shape? <strong>Your data:</strong> Centered around ${formatNumber(mean, 2)} with spread of ±${formatNumber(sd, 2)}.`;
         }
         
     } else {
@@ -948,13 +948,13 @@ function updateChartNarrative(variableName, type, values) {
             const topPct = freqTable[0].percentage;
             
             if (chartType === 'bar') {
-                narrativeText = `<strong>📊 Bar Chart Guide:</strong> Each bar's height shows frequency (count). Taller = more popular. <strong>Your leader:</strong> "${escapeHtml(topCategory)}" with ${topCount} responses (${formatNumber(topPct, 1)}%). Compare heights to see relative popularity. Use this to prioritize marketing focus on top categories.`;
+                narrativeText = `<strong>Bar Chart Guide:</strong> Each bar's height shows frequency (count). Taller = more popular. <strong>Your leader:</strong> "${escapeHtml(topCategory)}" with ${topCount} responses (${formatNumber(topPct, 1)}%). Compare heights to see relative popularity. Use this to prioritize marketing focus on top categories.`;
                 
             } else if (chartType === 'pie') {
-                narrativeText = `<strong>🥧 Pie Chart Guide:</strong> Each slice shows proportion of the whole. Bigger slices = larger market share. <strong>Your leader:</strong> "${escapeHtml(topCategory)}" at ${formatNumber(topPct, 1)}%. <strong>When to use:</strong> Great for showing composition (how the whole breaks down). Less useful if you have many small categories (slices get hard to read).`;
+                narrativeText = `<strong>Pie Chart Guide:</strong> Each slice shows proportion of the whole. Bigger slices = larger market share. <strong>Your leader:</strong> "${escapeHtml(topCategory)}" at ${formatNumber(topPct, 1)}%. <strong>When to use:</strong> Great for showing composition (how the whole breaks down). Less useful if you have many small categories (slices get hard to read).`;
                 
             } else if (chartType === 'horizontal') {
-                narrativeText = `<strong>↔️ Horizontal Bar Guide:</strong> Same as vertical bars but rotated. Easier to read when category names are long. Bars are sorted by frequency (longest = most popular). <strong>Your leader:</strong> "${escapeHtml(topCategory)}" with ${topCount} responses. <strong>Pro tip:</strong> Look for natural breaks—gaps between bars suggest distinct tiers (e.g., top 3 vs. everyone else).`;
+                narrativeText = `<strong>Horizontal Bar Guide:</strong> Same as vertical bars but rotated. Easier to read when category names are long. Bars are sorted by frequency (longest = most popular). <strong>Your leader:</strong> "${escapeHtml(topCategory)}" with ${topCount} responses. <strong>Pro tip:</strong> Look for natural breaks—gaps between bars suggest distinct tiers (e.g., top 3 vs. everyone else).`;
             }
         }
     }
