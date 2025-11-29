@@ -31,7 +31,7 @@ This audit reviews all statistical web applications in the toolkit to identify:
 - **A/B Sample Size Calculator** - Best-in-class for planning tools
 
 **🎯 HIGH-PRIORITY FIXES NEEDED:**
-1. **Auth Tracking Missing:** 17 of 22 apps lack `auth_tracking.js` integration
+1. ✅ **Auth Tracking Missing:** ~~17 of 22 apps lack `auth_tracking.js` integration~~ **COMPLETED** - All 16 tools now have auth tracking
 2. **Scenario Downloads Disabled:** Many apps have hidden/disabled download buttons
 3. **Incomplete Partial Audits:** ANOVA, Chi-Square, McNemar need full file review to verify reporting sections
 4. **Propensity Score Matching:** Title claims PSM but appears to be logistic regression only - needs verification
@@ -141,12 +141,12 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ Diagnostics & assumptions
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration** - Missing `auth_tracking.js` script tag
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED** - Auth tracking script added
 - ⚠️ Interpretation section could have more detailed dropdown helps
 - ⚠️ Chart narrative could be more prominent
 
 **Recommendations:**
-1. Add `<script src="../../shared/js/auth_tracking.js"></script>` before closing body
+1. ✅ ~~Add `<script src="../../shared/js/auth_tracking.js"></script>` before closing body~~ **DONE**
 2. Add interpretation aid dropdowns under charts
 3. Consider adding "download results table" button
 
@@ -170,12 +170,12 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ Advanced settings (CI method: Wald vs Wilson)
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ Chart interpretation aids could be expanded
 - ⚠️ Missing "Additional Notes" details expansion in some places
 
 **Recommendations:**
-1. Add auth tracking
+1. ✅ ~~Add auth tracking~~ **DONE**
 2. Expand interpretation aids under charts
 3. Add more help content in diagnostics section
 
@@ -198,13 +198,13 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ Diagnostics section
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ **No visual output settings section** (unlike other tests with charts)
 - ⚠️ Missing interpretation aids under charts
 - ⚠️ Diagnostics content is placeholder text only
 
 **Recommendations:**
-1. Add auth tracking
+1. ✅ ~~Add auth tracking~~ **DONE**
 2. Add visual output settings section with chart customization
 3. Add interpretation aid dropdowns
 4. Flesh out diagnostics content with actual checks
@@ -227,13 +227,13 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ⚠️ **No APA-style reporting section visible in excerpt**
 - ⚠️ **No managerial interpretation section visible**
 - ⚠️ **No visual output settings section**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ Diagnostics section not visible in excerpt
 
 **Recommendations:**
 1. Verify APA & managerial reporting sections exist (review full file)
 2. Add visual output settings for ANOVA charts
-3. Add auth tracking
+3. ✅ ~~Add auth tracking~~ **DONE**
 4. Add interpretation aids
 
 ---
@@ -255,13 +255,13 @@ These apps demonstrate the **most complete** implementation of your design patte
 **Missing/Incomplete:**
 - ⚠️ **No APA-style reporting section visible**
 - ⚠️ **No managerial interpretation section visible**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ Diagnostics section not visible in excerpt
 - ⚠️ Different visual style (custom stacked chart vs Plotly)
 
 **Recommendations:**
 1. Add dual-panel reporting (APA + managerial)
-2. Add auth tracking
+2. ✅ ~~Add auth tracking~~ **DONE**
 3. Verify diagnostics section exists
 4. Consider standardizing on Plotly for consistency
 
@@ -284,12 +284,12 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ⚠️ **No APA-style reporting section visible in excerpt**
 - ⚠️ **No managerial interpretation section visible**
 - ⚠️ **No visual output section** (unique - relies on table only?)
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 
 **Recommendations:**
 1. Add dual-panel reporting (APA + managerial)
 2. Consider adding visualization (bar chart of concordant/discordant pairs)
-3. Add auth tracking
+3. ✅ ~~Add auth tracking~~ **DONE**
 4. Add interpretation aids
 
 ---
@@ -313,13 +313,13 @@ These apps demonstrate the **most complete** implementation of your design patte
 **Missing/Incomplete:**
 - ⚠️ **No APA-style reporting** (less applicable for exploratory analysis, but could have structured summary)
 - ⚠️ **No managerial interpretation section** (could benefit from business-focused narrative)
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED** (Note: K-means already had it per audit)
 - ⚠️ Confidence level buttons not applicable here (exploratory)
 
 **Recommendations:**
 1. Add "Key Findings" section (replaces APA reporting)
 2. Add "Business Interpretation" section (replaces managerial)
-3. Add auth tracking
+3. ✅ Auth tracking already present
 4. Add more interpretation aids for elbow/silhouette plots
 
 ---
@@ -415,11 +415,11 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ Loading overlay
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ Scenarios download button is hidden/disabled
 
 **Recommendations:**
-1. Add auth tracking
+1. ✅ ~~Add auth tracking~~ **DONE**
 2. Enable scenario download functionality
 3. This is already one of the most complete apps - excellent model to follow
 
@@ -477,11 +477,11 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ "Estimate σ from range" helper in means mode
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ Scenario download button hidden
 
 **Recommendations:**
-1. Add auth tracking
+1. ✅ ~~Add auth tracking~~ **DONE**
 2. Enable scenario downloads
 3. Exceptional educational depth - best-in-class for sample size tools
 
@@ -508,11 +508,11 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ Diagnostics section
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ Scenario download button hidden
 
 **Recommendations:**
-1. Add auth tracking
+1. ✅ ~~Add auth tracking~~ **DONE**
 2. Enable scenario downloads
 3. Excellent bridge between theory and practice
 
@@ -538,12 +538,12 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ Managerial interpretation
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ No diagnostics section visible
 - ⚠️ Scenarios have no download button
 
 **Recommendations:**
-1. Add auth tracking
+1. ✅ ~~Add auth tracking~~ **DONE**
 2. Add diagnostics section
 3. This is the most sophisticated sample size calculator - excellent educational tool
 
@@ -571,12 +571,12 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ Dual panels: "Design Comparison" + "Teaching Notes"
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ **No APA/Managerial reporting** (N/A for simulation tool - has "Design Comparison" instead)
 - ✅ N/A: No diagnostics (simulation/visualization tool)
 
 **Recommendations:**
-1. Add auth tracking
+1. ✅ ~~Add auth tracking~~ **DONE**
 2. Excellent educational structure - dual panels work well for teaching context
 
 ---
@@ -603,12 +603,12 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ Complete probability distribution table
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ **No APA/Managerial reporting** (N/A - educational lab has worked examples instead)
 - ✅ N/A: No diagnostics (educational tool)
 
 **Recommendations:**
-1. Add auth tracking
+1. ✅ ~~Add auth tracking~~ **DONE**
 2. This is a GOLD STANDARD for educational content - extremely comprehensive
 3. Could serve as template for educational depth in other tools
 
@@ -640,11 +640,11 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ Complete distribution table with detailed "How to read" aid
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ✅ N/A: No diagnostics (probability calculator)
 
 **Recommendations:**
-1. Add auth tracking
+1. ✅ ~~Add auth tracking~~ **DONE**
 2. This is THE GOLD STANDARD for educational depth - should be used as template
 3. Exceptional balance of theory and practice
 
@@ -667,14 +667,14 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ Advanced details explaining VADER mechanics
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ **No APA/Managerial reporting** (less applicable for text analysis, but could have "Key Findings" panel)
 - ⚠️ **No confidence level controls** (N/A for sentiment)
 - ⚠️ **No diagnostics section**
 - ⚠️ Scenarios have no download
 
 **Recommendations:**
-1. Add auth tracking
+1. ✅ ~~Add auth tracking~~ **DONE**
 2. Add "Key Findings" and "Business Interpretation" dual panels
 3. Add download results button (export sentiment scores)
 4. Enable scenario downloads
@@ -705,13 +705,13 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ Managerial interpretation
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ **No confidence level controls** (N/A for descriptive tool)
 - ⚠️ **No diagnostics section** (could add normality tests, outlier detection)
 - ⚠️ Scenario download hidden/disabled
 
 **Recommendations:**
-1. Add auth tracking
+1. ✅ ~~Add auth tracking~~ **DONE**
 2. Consider adding diagnostics (normality tests, outlier flagging)
 3. Enable scenario downloads
 4. Excellent auto-detection of variable types
@@ -745,13 +745,13 @@ These apps demonstrate the **most complete** implementation of your design patte
 - ✅ Loading overlay
 
 **Missing/Incomplete:**
-- ⚠️ **No auth tracking integration**
+- ✅ ~~**No auth tracking integration**~~ **COMPLETED**
 - ⚠️ **Title says "Propensity Score Matching" but implementation appears to be logistic regression only** - matching functionality not visible in HTML
 - ⚠️ Scenario download hidden
 - ⚠️ No visual output settings section
 
 **Recommendations:**
-1. Add auth tracking
+1. ✅ ~~Add auth tracking~~ **DONE**
 2. **CRITICAL:** Verify if propensity score matching is implemented in JS, or if this is mislabeled logistic regression
 3. If PSM is implemented, add matching diagnostics (balance tables, common support checks)
 4. Add visual output settings
@@ -798,8 +798,8 @@ These apps demonstrate the **most complete** implementation of your design patte
 
 #### 6. **Auth Tracking Integration**
 - ✅ **Have tracking:** Pearson, Bivariate Reg, K-means, ML Reg, Log Reg, Chi-square
-- ⚠️ **Missing tracking:** Ind t-test, A/B Proportion, Paired t-test, ANOVA, McNemar
-- **RECOMMENDATION:** Add `auth_tracking.js` to ALL apps
+- ✅ **Added tracking (Nov 29, 2025):** Ind t-test, A/B Proportion, Paired t-test, ANOVA, McNemar, MN Log Reg, all 4 sample size calculators, Sampling Visualizer, Selection Prob Lab, Compound Event Prob, Sentiment Lab, Univariate Analyzer, PS Matching
+- ✅ **COMPLETED:** All 22 apps now have `auth_tracking.js` integration
 
 #### 7. **Download Capabilities**
 - ✅ **Have downloads:** Bivariate Reg (fitted values), Chi-square (inputs), Scenario CSVs
@@ -818,19 +818,23 @@ These apps demonstrate the **most complete** implementation of your design patte
 
 ### HIGH PRIORITY (Universal Improvements)
 
-#### 1. **Add Auth Tracking to All Apps** 🔴
-**Missing from:**
-- Independent t-test
-- A/B Proportion Test
-- Paired t-test
-- One-Way ANOVA
-- McNemar Test
-- (Others TBD after full audit)
+#### 1. **Add Auth Tracking to All Apps** ✅ **COMPLETED**
+**Status:** All 16 tools now have auth tracking integration (Nov 29, 2025)
+- ✅ Independent t-test
+- ✅ A/B Proportion Test
+- ✅ Paired t-test
+- ✅ One-Way ANOVA
+- ✅ McNemar Test
+- ✅ Multinomial Logistic Regression
+- ✅ All 4 Sample Size Calculators
+- ✅ Sampling Visualizer
+- ✅ Selection Probability Lab
+- ✅ Compound Event Probability
+- ✅ Sentiment Lab
+- ✅ Univariate Analyzer
+- ✅ PS Matching
 
-**Action:** Add this line before closing `</body>` tag:
-```html
-<script src="../../shared/js/auth_tracking.js"></script>
-```
+**Action Taken:** Added `<script src="../../shared/js/auth_tracking.js"></script>` before closing `</body>` tag in all tools
 
 #### 2. **Add Dual-Panel Reporting (APA + Managerial)** 🔴
 **Missing from:**
@@ -1078,26 +1082,26 @@ These apps demonstrate the **most complete** implementation of your design patte
 |----------|---------------|---------------|--------------|-----------------|---------------------|-----------|----------|
 | Pearson Correlation | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Complete |
 | Bivariate Regression | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Complete |
-| Ind t-test | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | 🟡 Partial | ✅ Yes | 🟡 High |
-| A/B Proportion | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | 🟡 Partial | ✅ Yes | 🟡 High |
-| Paired t-test | ✅ Yes | ❌ No | ✅ Yes | ❌ No | 🟡 Partial | ✅ Yes | 🟡 High |
-| One-Way ANOVA | 🟡 Partial | ❌ No | ❓ TBD | ❓ TBD | ❓ TBD | ✅ Yes | 🔴 High |
-| Chi-Square | 🟡 Partial | ❌ No | ❓ TBD | ✅ Yes | ❓ TBD | ✅ Yes | 🔴 High |
-| McNemar | 🟡 Partial | ❌ No | ❓ TBD | ❌ No | ❓ TBD | ✅ Yes | 🔴 High |
+| Ind t-test | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | 🟡 Partial | ✅ Yes | 🟡 High |
+| A/B Proportion | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | 🟡 Partial | ✅ Yes | 🟡 High |
+| Paired t-test | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | 🟡 Partial | ✅ Yes | 🟡 High |
+| One-Way ANOVA | 🟡 Partial | ✅ Yes | ❓ TBD | ❓ TBD | ❓ TBD | ✅ Yes | 🔴 High |
+| Chi-Square | 🟡 Partial | ✅ Yes | ❓ TBD | ✅ Yes | ❓ TBD | ✅ Yes | 🔴 High |
+| McNemar | 🟡 Partial | ✅ Yes | ❓ TBD | ❌ No | ❓ TBD | ✅ Yes | 🔴 High |
 | K-Means | 🟡 Partial | ✅ Yes | ❌ No | ❓ TBD | 🟡 Partial | ✅ Yes | 🟡 Medium |
 | ML Regression | 🟡 Partial | ✅ Yes | ❓ TBD | ❓ TBD | ✅ Yes | ✅ Yes | 🟡 Medium |
 | Log Regression | 🟡 Partial | ✅ Yes | ❓ TBD | ❓ TBD | ✅ Yes | ✅ Yes | 🟡 Medium |
-| MN Log Regression | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | 🟡 High |
-| Sample Size (Single) | ✅ Yes | ❌ No | ✅ Yes | N/A | ✅ Yes | ✅ Yes | 🟡 Medium |
-| Sample Size (A/B) | ✅ Yes | ❌ No | ✅ Yes | N/A | ✅ Yes | ✅ Yes | 🟡 Medium |
-| Sample Size (Corr/Reg) | ✅ Yes | ❌ No | ✅ Yes | N/A | ✅ Yes | ✅ Yes | 🟡 Medium |
-| Sample Size (Multi-arm) | ✅ Yes | ❌ No | ✅ Yes | N/A | ✅ Yes | ✅ Yes | 🟡 Medium |
-| Sampling Visualizer | ✅ Yes | ❌ No | 🟡 Teaching | N/A | ✅ Yes | ✅ Yes | 🟢 Medium |
-| Selection Prob Lab | ✅ Yes | ❌ No | 🟡 Educational | N/A | ✅ Yes | ✅ Yes | 🟢 Low |
-| Compound Event Prob | ✅ Yes | ❌ No | ✅ Yes | N/A | ✅ Yes | ✅ Yes | ✅ GOLD |
-| Sentiment Lab | ✅ Yes | ❌ No | ❌ No | N/A | 🟡 Partial | ✅ Yes | 🟡 Medium |
-| Univariate Analyzer | ✅ Yes | ❌ No | ✅ Yes | N/A | ✅ Yes | ✅ Yes | 🟡 Medium |
-| PS Matching | ✅ Yes | ❌ No | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | 🔴 High |
+| MN Log Regression | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | 🟡 High |
+| Sample Size (Single) | ✅ Yes | ✅ Yes | ✅ Yes | N/A | ✅ Yes | ✅ Yes | 🟡 Medium |
+| Sample Size (A/B) | ✅ Yes | ✅ Yes | ✅ Yes | N/A | ✅ Yes | ✅ Yes | 🟡 Medium |
+| Sample Size (Corr/Reg) | ✅ Yes | ✅ Yes | ✅ Yes | N/A | ✅ Yes | ✅ Yes | 🟡 Medium |
+| Sample Size (Multi-arm) | ✅ Yes | ✅ Yes | ✅ Yes | N/A | ✅ Yes | ✅ Yes | 🟡 Medium |
+| Sampling Visualizer | ✅ Yes | ✅ Yes | 🟡 Teaching | N/A | ✅ Yes | ✅ Yes | 🟢 Medium |
+| Selection Prob Lab | ✅ Yes | ✅ Yes | 🟡 Educational | N/A | ✅ Yes | ✅ Yes | 🟢 Low |
+| Compound Event Prob | ✅ Yes | ✅ Yes | ✅ Yes | N/A | ✅ Yes | ✅ Yes | ✅ GOLD |
+| Sentiment Lab | ✅ Yes | ✅ Yes | ❌ No | N/A | 🟡 Partial | ✅ Yes | 🟡 Medium |
+| Univariate Analyzer | ✅ Yes | ✅ Yes | ✅ Yes | N/A | ✅ Yes | ✅ Yes | 🟡 Medium |
+| PS Matching | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No | ✅ Yes | ✅ Yes | 🔴 High |
 
 **Legend:**
 - ✅ Yes = Feature present and complete
@@ -1351,7 +1355,7 @@ Prioritize based on:
 | 🟡 Needs Review | 3 | ANOVA, Chi-Square, McNemar (partial audits) |
 
 ### Critical Issues Identified
-1. **Auth Tracking:** 77% of apps (17/22) missing integration
+1. ✅ ~~**Auth Tracking:** 77% of apps (17/22) missing integration~~ **RESOLVED** (Nov 29, 2025) - All apps now have auth tracking
 2. **Scenario Downloads:** Most apps have disabled download buttons
 3. **PS Matching:** Title/functionality mismatch needs investigation
 4. **Partial Audits:** 3 apps need full file review for complete assessment
@@ -1377,7 +1381,7 @@ Prioritize based on:
 ### Recommendations Priority Matrix
 
 **🔴 Critical (Do First):**
-- Add auth tracking (17 apps × 10 min = 3 hours)
+- ✅ ~~Add auth tracking (17 apps × 10 min = 3 hours)~~ **COMPLETED** (Nov 29, 2025)
 - Verify PS Matching functionality vs. title
 - Complete partial audits for ANOVA, Chi-Square, McNemar
 
@@ -1406,15 +1410,16 @@ Prioritize based on:
 
 ### Success Metrics
 After implementing recommended changes:
-- ✅ 100% of apps have auth tracking
-- ✅ 100% of scenario downloads functional
-- ✅ 100% of charts have interpretation aids
-- ✅ 90%+ of hypothesis tests have dual-panel reporting
-- ✅ All apps verified for complete implementation
-- ✅ Gold standard patterns documented and reusable
+- ✅ **100% of apps have auth tracking** - **ACHIEVED** (Nov 29, 2025)
+- ⏳ 100% of scenario downloads functional
+- ⏳ 100% of charts have interpretation aids
+- ⏳ 90%+ of hypothesis tests have dual-panel reporting
+- ⏳ All apps verified for complete implementation
+- ⏳ Gold standard patterns documented and reusable
 
 ---
 
-**Document Version:** 2.0 (Complete Audit)  
-**Last Updated:** November 28, 2025  
+**Document Version:** 2.1 (Auth Tracking Complete)  
+**Last Updated:** November 29, 2025  
+**Major Update:** All 16 tools now have auth tracking integration  
 **Next Review:** After Phase 2 completion (verify ANOVA, Chi-Square, McNemar; fix PS Matching)
