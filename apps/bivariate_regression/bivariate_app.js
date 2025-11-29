@@ -3,6 +3,10 @@
 const CREATED_DATE = new Date('2025-11-16').toLocaleDateString();
 let modifiedDate = new Date().toLocaleDateString();
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
 let selectedConfidenceLevel = 0.95;
 
 const DataEntryModes = Object.freeze({
@@ -76,6 +80,26 @@ function setUploadCategoricalLock(disabled, reason = '') {
     // Fall back to continuous if available, otherwise auto.
     const hasContinuous = Array.from(select.options).some(opt => opt.value === 'continuous' && !opt.disabled);
     select.value = hasContinuous ? 'continuous' : 'auto';
+  }
+}
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-bivariate-regression-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolRun === 'function') {
+    logToolRun('bivariate-regression', 'Bivariate Regression', {
+      mode: activeDataEntryMode
+    });
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for Bivariate Regression');
   }
 }
 
@@ -2029,6 +2053,8 @@ function updateResults() {
       alpha: stats.alpha,
       residualSE: stats.residualSE
     });
+  hasSuccessfulRun = true;
+  checkAndTrackUsage();
   modifiedDate = new Date().toLocaleDateString();
   const modifiedLabel = document.getElementById('modified-date');
   if (modifiedLabel) modifiedLabel.textContent = modifiedDate;

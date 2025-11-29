@@ -1,5 +1,9 @@
 // Logistic Regression Tool - rebuilt controller
 
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
 // ---------- State ----------
 let selectedOutcome = null;
 let selectedPredictors = [];
@@ -57,6 +61,28 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-log-regression-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolRun === 'function') {
+    logToolRun('log-regression', 'Logistic Regression', {
+      outcome: selectedOutcome,
+      predictor_count: selectedPredictors.length
+    });
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for Logistic Regression');
+  }
+}
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -2206,6 +2232,8 @@ function updateResults() {
     renderEffectPlot(model, filtered, predictorsInfo);
     renderActualFitted(model);
     renderCoefInterpretation(model);
+    hasSuccessfulRun = true;
+    checkAndTrackUsage();
     const modifiedLabel = document.getElementById('modified-date');
     if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();
   } finally {

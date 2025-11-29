@@ -1,5 +1,10 @@
 // Multinomial Logistic Regression Tool controller (initial wiring)
 const CREATED_DATE = '2025-11-15';
+
+// Usage tracking variables
+let pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
 // Reuse shared upload cap if provided; otherwise default to 5,000 rows.
 const MNLOG_UPLOAD_LIMIT =
   typeof window !== 'undefined' && typeof window.MAX_UPLOAD_ROWS === 'number'
@@ -21,6 +26,28 @@ let mnlogEffectFocal = null;
 let mnlogRangeMode = 'sd';
 let mnlogCustomRange = { min: null, max: null };
 const mnlogSummaryMessage = 'Provide data to see summary statistics.';
+
+// Usage tracking function
+function checkAndTrackUsage() {
+  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
+  if (timeOnPage < 3) return;
+  if (!hasSuccessfulRun) return;
+  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
+  
+  const today = new Date().toISOString().split('T')[0];
+  const storageKey = `tool-tracked-mn-log-regression-${today}`;
+  if (localStorage.getItem(storageKey)) return;
+  
+  if (typeof logToolRun === 'function') {
+    logToolRun('mn-log-regression', 'Multinomial Logistic Regression', {
+      outcome: mnlogSelectedOutcome,
+      predictor_count: mnlogSelectedPredictors.length,
+      outcome_levels: mnlogOutcomeLevels.length
+    });
+    localStorage.setItem(storageKey, 'true');
+    console.log('Usage tracked for Multinomial Logistic Regression');
+  }
+}
 
 // Scenario builders: generate moderately large, realistic-looking multinomial datasets
 // We simulate predictors first, then draw outcomes from a softmax over linear scores so there is structure + noise.
@@ -1438,6 +1465,8 @@ function runMultinomialModel() {
       updateMnlogResultsPanels(design, fitResult);
       updateMnlogDiagnostics(design);
       renderMnlogEffectChart();
+      hasSuccessfulRun = true;
+      checkAndTrackUsage();
     } catch (error) {
       if (statusEl) statusEl.textContent = error.message || 'Unable to fit multinomial model.';
     } finally {
