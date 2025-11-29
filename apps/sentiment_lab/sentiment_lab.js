@@ -516,6 +516,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const scenarioSelect = document.getElementById('sentiment-scenario-select');
+  const downloadBtn = document.getElementById('scenario-download');
+  
   if (scenarioSelect) {
     scenarioSelect.innerHTML = '<option value="">Manual settings (no preset)</option>';
     SentimentScenarios.forEach(s => {
@@ -530,6 +532,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const descEl = document.getElementById('sentiment-scenario-description');
       const manual = document.getElementById('manual-textarea');
       const status = document.getElementById('sentiment-status');
+
+      // Show/hide download button
+      if (downloadBtn) {
+        if (id) {
+          downloadBtn.classList.remove('hidden');
+          downloadBtn.disabled = false;
+        } else {
+          downloadBtn.classList.add('hidden');
+          downloadBtn.disabled = true;
+        }
+      }
 
       if (!id) {
         if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
@@ -566,6 +579,38 @@ document.addEventListener('DOMContentLoaded', () => {
       if (status) {
         status.textContent = `Loaded ${scenario.lines.length} preset text record(s) into the paste area. Click "Run sentiment analysis" to score them.`;
       }
+    });
+  }
+
+  // Download button handler
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      const id = scenarioSelect ? scenarioSelect.value : '';
+      if (!id) return;
+      
+      const scenario = SentimentScenarios.find(s => s.id === id);
+      if (!scenario || !scenario.lines || !scenario.lines.length) return;
+      
+      // Create CSV with text column
+      const rows = [['text']];
+      scenario.lines.forEach(line => {
+        // Escape quotes and wrap in quotes if contains comma or newline
+        const escaped = line.replace(/"/g, '""');
+        const needsQuotes = escaped.includes(',') || escaped.includes('\n') || escaped.includes('\r');
+        rows.push([needsQuotes ? `"${escaped}"` : escaped]);
+      });
+      
+      const csv = rows.map(row => row.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const filename = `sentiment_${id.replace(/[^a-z0-9]/gi, '_')}.csv`;
+      
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
     });
   }
 });
