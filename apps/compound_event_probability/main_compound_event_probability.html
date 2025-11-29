@@ -60,6 +60,51 @@
             Poisson distribution (when \(n\) is large and \(p\) is small). The app shows these approximations and
             compares them to the exact binomial probabilities.</p>
         </details>
+        <details class="additional-notes">
+          <summary>Understanding the Binomial Model</summary>
+          <p>
+            The binomial distribution is one of the most fundamental discrete probability distributions, applicable whenever you have:
+          </p>
+          <ul>
+            <li><strong>Fixed number of trials:</strong> You must know in advance how many times the event will be attempted (denoted \(n\)).</li>
+            <li><strong>Binary outcomes:</strong> Each trial results in success or failure (yes/no, convert/don't convert, heads/tails).</li>
+            <li><strong>Constant probability:</strong> The probability \(p\) remains the same for every trial.</li>
+            <li><strong>Independence:</strong> The outcome of one trial doesn't affect others.</li>
+          </ul>
+          <p>
+            When these conditions hold, the number of successes \(X\) follows a binomial distribution with parameters \(n\) and \(p\), written as \(X \sim \text{Binomial}(n, p)\).
+          </p>
+        </details>
+        <details class="additional-notes">
+          <summary>When to Use Approximations</summary>
+          <p>
+            <strong>Exact Binomial:</strong> Always correct but can be computationally intensive when \(n\) is very large (e.g., \(n > 1000\)). Use this when you need precise probabilities and computational cost isn't a concern.
+          </p>
+          <p>
+            <strong>Normal Approximation:</strong> Works well when both \(np \ge 10\) and \(n(1-p) \ge 10\). The binomial distribution becomes symmetric and bell-shaped as \(n\) increases, making it well-approximated by a normal distribution with mean \(\mu = np\) and standard deviation \(\sigma = \sqrt{np(1-p)}\). Use the continuity correction (adding or subtracting 0.5) for better accuracy.
+          </p>
+          <p>
+            <strong>Poisson Approximation:</strong> Best when \(n\) is large and \(p\) is small, typically when \(np < 10\) and \(n > 20\). This situation arises in rare-event scenarios (e.g., defects in manufacturing, rare conversions). The Poisson distribution with \(\lambda = np\) provides a good approximation and simplifies calculations.
+          </p>
+          <p>
+            <strong>Common Pitfall:</strong> Don't use the normal approximation when \(p\) is very close to 0 or 1 unless \(n\) is extremely large. The distribution will be heavily skewed, and the normal approximation will perform poorly.
+          </p>
+        </details>
+        <details class="additional-notes">
+          <summary>Relationship to Other Distributions</summary>
+          <p>
+            <strong>Bernoulli Distribution:</strong> A binomial distribution with \(n = 1\) is called a Bernoulli distribution. It represents a single trial with success probability \(p\).
+          </p>
+          <p>
+            <strong>Geometric Distribution:</strong> While the binomial asks "How many successes in \(n\) trials?", the geometric distribution asks "How many trials until the first success?" If you're waiting for an event to occur (e.g., time until first conversion), use the geometric distribution.
+          </p>
+          <p>
+            <strong>Negative Binomial:</strong> Extends the geometric concept: "How many trials until I see \(r\) successes?" This is useful when you're modeling time-to-event scenarios with multiple events.
+          </p>
+          <p>
+            <strong>Hypergeometric Distribution:</strong> Use this instead of binomial when sampling <em>without replacement</em> from a finite population. For example, drawing cards from a deck without replacing them violates the independence assumption of the binomial.
+          </p>
+        </details>
       </div>
     </section>
 
@@ -230,6 +275,41 @@
             illustrating the connection between probability models and observed frequencies.
           </p>
         </details>
+        <details class="interpretation-aid">
+          <summary>Interpretation Aid: Reading PMF Charts</summary>
+          <p class="muted">
+            <strong>Shape tells a story:</strong> A symmetric, bell-shaped PMF suggests \(p\) is near 0.5 and \(n\) is reasonably large.
+            A right-skewed PMF (tail to the right) indicates \(p\) is small—most trials result in few successes.
+            A left-skewed PMF (tail to the left) indicates \(p\) is large—most trials result in many successes.
+          </p>
+          <p class="muted">
+            <strong>Peak location:</strong> The mode (highest bar) is near \(np\), the expected number of successes. If \(np = 10\) and the peak is around 10, your distribution is centered as expected.
+          </p>
+          <p class="muted">
+            <strong>Spread:</strong> A wide PMF means high variability in outcomes; a narrow PMF means outcomes are concentrated near the mean. Variance is \(np(1-p)\), so outcomes are most variable when \(p = 0.5\).
+          </p>
+          <p class="muted">
+            <strong>Highlighted regions:</strong> When you select "at least \(k\)", the app highlights all bars from \(k\) onward. The total area of highlighted bars equals your target probability. This visual cue helps you see whether you're looking at a tail probability (rare outcome) or a central probability (common outcome).
+          </p>
+        </details>
+        <details class="interpretation-aid">
+          <summary>Interpretation Aid: Reading CDF Charts</summary>
+          <p class="muted">
+            <strong>Direct "at most" answers:</strong> The CDF at \(k\) gives \(P(X \le k)\) directly. If you want to know the probability of 10 or fewer successes, find \(k = 10\) on the x-axis and read the y-value.
+          </p>
+          <p class="muted">
+            <strong>"At least" calculations:</strong> For \(P(X \ge k)\), use \(1 - P(X \le k-1)\). Find the CDF at \(k-1\) and subtract from 1.
+          </p>
+          <p class="muted">
+            <strong>Range probabilities:</strong> To find \(P(k_1 \le X \le k_2)\), compute \(\text{CDF}(k_2) - \text{CDF}(k_1 - 1)\).
+          </p>
+          <p class="muted">
+            <strong>Steepness:</strong> A steep CDF indicates probabilities are concentrated in a narrow range. A gradual CDF means outcomes are spread out. The steepest part of the CDF corresponds to the mode of the PMF.
+          </p>
+          <p class="muted">
+            <strong>Comparison with simulation:</strong> The orange line shows the empirical CDF from your simulations. With enough simulation runs, this should closely track the blue theoretical curve, validating the binomial model.
+          </p>
+        </details>
       </div>
     </section>
 
@@ -253,6 +333,18 @@
           <span id="metric-std-dev" class="dynamic-value">&ndash;</span>
         </div>
       </div>
+
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>APA-Style Statistical Reporting</h3>
+          <p id="apa-report">Configure event parameters and run simulation to see formal statistical reporting.</p>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="managerial-report">Business-facing interpretation will appear after running calculations.</p>
+        </article>
+      </div>
+
       <div class="card" style="margin-top:0.75rem;">
         <details class="advanced-details">
           <summary>Interpreting these metrics</summary>

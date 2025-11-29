@@ -318,6 +318,10 @@ function updateCalculations() {
   
   // Update distribution table
   updateDistributionTable(pmf, n);
+  
+  // Update APA and Managerial reports
+  updateAPAReport(n, p, k, mode, approxMode, targetProb, eventLabel);
+  updateManagerialReport(n, p, k, mode, targetProb, eventLabel);
 }
 
 function calculatePMF(n, p, approxMode) {
@@ -485,20 +489,24 @@ function clearSimulations() {
 }
 
 function updatePMFChart(pmf, n, k, mode, eventLabel) {
+  const p = parseFloat(document.getElementById('event-probability-input').value);
+  const expectedValue = n * p;
+  const stdDev = Math.sqrt(n * p * (1 - p));
   const highlightIndices = getHighlightIndices(n, k, mode);
   
   const theoreticalTrace = {
     x: Array.from({length: pmf.length}, (_, i) => i),
     y: pmf,
     type: 'bar',
-    name: 'Theoretical',
+    name: 'Theoretical PMF',
     marker: {
       color: pmf.map((_, i) => highlightIndices.includes(i) ? '#3b82f6' : '#93c5fd'),
       line: {
         color: '#1e40af',
         width: 1
       }
-    }
+    },
+    hovertemplate: 'k = %{x}<br>P(X = k) = %{y:.5f}<extra></extra>'
   };
   
   const traces = [theoreticalTrace];
@@ -515,7 +523,7 @@ function updatePMFChart(pmf, n, k, mode, eventLabel) {
       x: Array.from({length: simPMF.length}, (_, i) => i),
       y: simPMF,
       type: 'bar',
-      name: 'Simulated',
+      name: 'Simulated PMF',
       marker: {
         color: simPMF.map((_, i) => highlightIndices.includes(i) ? '#f97316' : '#fdba74'),
         line: {
@@ -523,35 +531,129 @@ function updatePMFChart(pmf, n, k, mode, eventLabel) {
           width: 1
         }
       },
-      opacity: 0.7
+      opacity: 0.7,
+      hovertemplate: 'k = %{x}<br>Empirical P(X = k) = %{y:.5f}<extra></extra>'
     };
     
     traces.push(simulatedTrace);
   }
   
+  const maxProb = Math.max(...pmf);
+  const modeValue = pmf.indexOf(maxProb);
+  
+  // Add annotation for expected value and mode
+  const annotations = [
+    {
+      x: expectedValue,
+      y: maxProb * 1.05,
+      text: `E[X] = ${expectedValue.toFixed(1)}`,
+      showarrow: true,
+      arrowhead: 2,
+      arrowsize: 1,
+      arrowwidth: 2,
+      arrowcolor: '#059669',
+      ax: 0,
+      ay: -40,
+      font: {
+        size: 11,
+        color: '#059669'
+      },
+      bgcolor: 'rgba(255, 255, 255, 0.8)',
+      borderpad: 4
+    }
+  ];
+  
+  if (Math.abs(modeValue - expectedValue) > 1) {
+    annotations.push({
+      x: modeValue,
+      y: maxProb,
+      text: `Mode = ${modeValue}`,
+      showarrow: true,
+      arrowhead: 2,
+      arrowsize: 1,
+      arrowwidth: 2,
+      arrowcolor: '#7c3aed',
+      ax: 0,
+      ay: -30,
+      font: {
+        size: 11,
+        color: '#7c3aed'
+      },
+      bgcolor: 'rgba(255, 255, 255, 0.8)',
+      borderpad: 4
+    });
+  }
+  
   const layout = {
-    title: '',
+    title: {
+      text: `Probability Mass Function<br><sub>Distribution shape: ${getDistributionShape(p, n)}</sub>`,
+      font: { size: 14 }
+    },
     xaxis: {
-      title: `Number of times "${eventLabel}" occurs`,
+      title: {
+        text: `Number of "${eventLabel}" occurrences (k)`,
+        font: { size: 12 }
+      },
       dtick: Math.ceil(n / 20)
     },
     yaxis: {
-      title: 'Probability',
-      range: [0, Math.max(...pmf) * 1.1]
+      title: {
+        text: 'P(X = k)',
+        font: { size: 12 }
+      },
+      range: [0, maxProb * 1.15]
     },
     barmode: 'overlay',
     showlegend: true,
     legend: {
-      x: 0.7,
-      y: 0.98
+      x: 0.65,
+      y: 0.98,
+      bgcolor: 'rgba(255, 255, 255, 0.8)',
+      bordercolor: '#cbd5e1',
+      borderwidth: 1
     },
-    margin: {l: 60, r: 30, t: 30, b: 60}
+    annotations: annotations,
+    margin: {l: 60, r: 30, t: 60, b: 70}
   };
   
   Plotly.newPlot('pmf-chart', traces, layout, {responsive: true, displayModeBar: false});
+  
+  // Update PMF note with more context
+  const pmfNote = document.getElementById('pmf-note');
+  if (pmfNote) {
+    let modeDescription = '';
+    if (mode === 'exact') modeDescription = `k = ${k}`;
+    else if (mode === 'at_least') modeDescription = `k ≥ ${k}`;
+    else if (mode === 'at_most') modeDescription = `k ≤ ${k}`;
+    else if (mode === 'between') {
+      const k1 = parseInt(document.getElementById('range-lower-input').value);
+      const k2 = parseInt(document.getElementById('range-upper-input').value);
+      modeDescription = `${k1} ≤ k ≤ ${k2}`;
+    }
+    
+    const shape = getDistributionShape(p, n);
+    pmfNote.textContent = `The PMF shows the probability of each possible number of "${eventLabel}" occurrences. The distribution is ${shape.toLowerCase()}. Highlighted bars (darker shading) show outcomes matching your selection (${modeDescription}). The green annotation marks the expected value E[X] = ${expectedValue.toFixed(1)}, where outcomes tend to cluster. ${simulationHistory.length > 0 ? `Orange bars show empirical frequencies from ${simulationHistory.length} simulations, validating the theoretical model.` : 'Run simulations to compare theoretical probabilities with empirical results.'}`;
+  }
+}
+
+function getDistributionShape(p, n) {
+  if (Math.abs(p - 0.5) < 0.1 && n >= 20) {
+    return 'Approximately symmetric (bell-shaped)';
+  } else if (p < 0.3) {
+    return 'Right-skewed (tail extends right)';
+  } else if (p > 0.7) {
+    return 'Left-skewed (tail extends left)';
+  } else {
+    return 'Moderately symmetric';
+  }
 }
 
 function updateCDFChart(pmf, n, eventLabel) {
+  const p = parseFloat(document.getElementById('event-probability-input').value);
+  const expectedValue = n * p;
+  const k = parseInt(document.getElementById('target-successes-input').value);
+  const mode = document.getElementById('comparison-mode-select').value;
+  
   const cdf = [];
   let cumSum = 0;
   pmf.forEach(p => {
@@ -564,33 +666,160 @@ function updateCDFChart(pmf, n, eventLabel) {
     y: cdf,
     type: 'scatter',
     mode: 'lines+markers',
-    name: 'CDF',
+    name: 'Theoretical CDF',
     line: {
       color: '#3b82f6',
-      width: 2,
+      width: 3,
       shape: 'hv'
     },
     marker: {
       color: '#1e40af',
-      size: 4
-    }
+      size: 5
+    },
+    hovertemplate: 'k = %{x}<br>P(X ≤ k) = %{y:.5f}<extra></extra>'
   };
   
+  const traces = [trace];
+  
+  // Add simulated CDF if we have data
+  if (simulationHistory.length > 0) {
+    const simCounts = new Array(n + 1).fill(0);
+    simulationHistory.forEach(x => {
+      if (x >= 0 && x <= n) simCounts[x]++;
+    });
+    const simCDF = [];
+    let simCumSum = 0;
+    simCounts.forEach(c => {
+      simCumSum += c / simulationHistory.length;
+      simCDF.push(simCumSum);
+    });
+    
+    const simTrace = {
+      x: Array.from({length: simCDF.length}, (_, i) => i),
+      y: simCDF,
+      type: 'scatter',
+      mode: 'lines+markers',
+      name: 'Simulated CDF',
+      line: {
+        color: '#f97316',
+        width: 2,
+        shape: 'hv',
+        dash: 'dot'
+      },
+      marker: {
+        color: '#c2410c',
+        size: 4
+      },
+      opacity: 0.8,
+      hovertemplate: 'k = %{x}<br>Empirical P(X ≤ k) = %{y:.5f}<extra></extra>'
+    };
+    
+    traces.push(simTrace);
+  }
+  
+  // Add annotations for key percentiles
+  const annotations = [];
+  
+  // Mark the median (50th percentile)
+  const medianIndex = cdf.findIndex(val => val >= 0.5);
+  if (medianIndex >= 0) {
+    annotations.push({
+      x: medianIndex,
+      y: 0.5,
+      text: `Median (k = ${medianIndex})`,
+      showarrow: true,
+      arrowhead: 2,
+      arrowsize: 1,
+      arrowwidth: 2,
+      arrowcolor: '#7c3aed',
+      ax: 40,
+      ay: 0,
+      font: {
+        size: 11,
+        color: '#7c3aed'
+      },
+      bgcolor: 'rgba(255, 255, 255, 0.8)',
+      borderpad: 4
+    });
+  }
+  
+  // Mark the target k if in range
+  if (k >= 0 && k <= n) {
+    const cdfAtK = cdf[k];
+    let targetText = '';
+    if (mode === 'at_most') {
+      targetText = `P(X ≤ ${k}) = ${cdfAtK.toFixed(3)}`;
+    } else if (mode === 'at_least') {
+      targetText = `P(X ≥ ${k}) = ${(1 - (k > 0 ? cdf[k-1] : 0)).toFixed(3)}`;
+    } else if (mode === 'exact') {
+      targetText = `At k = ${k}: CDF = ${cdfAtK.toFixed(3)}`;
+    }
+    
+    if (targetText && Math.abs(k - medianIndex) > 2) {
+      annotations.push({
+        x: k,
+        y: cdfAtK,
+        text: targetText,
+        showarrow: true,
+        arrowhead: 2,
+        arrowsize: 1,
+        arrowwidth: 2,
+        arrowcolor: '#059669',
+        ax: k < n/2 ? 40 : -40,
+        ay: -30,
+        font: {
+          size: 11,
+          color: '#059669'
+        },
+        bgcolor: 'rgba(255, 255, 255, 0.8)',
+        borderpad: 4
+      });
+    }
+  }
+  
   const layout = {
-    title: '',
+    title: {
+      text: `Cumulative Distribution Function<br><sub>Shows P(X ≤ k) for each k</sub>`,
+      font: { size: 14 }
+    },
     xaxis: {
-      title: `Number of times "${eventLabel}" occurs`,
+      title: {
+        text: `Number of "${eventLabel}" occurrences (k)`,
+        font: { size: 12 }
+      },
       dtick: Math.ceil(n / 20)
     },
     yaxis: {
-      title: 'Cumulative Probability',
-      range: [0, 1.05]
+      title: {
+        text: 'P(X ≤ k)',
+        font: { size: 12 }
+      },
+      range: [0, 1.05],
+      tickformat: '.2f'
     },
-    showlegend: false,
-    margin: {l: 60, r: 30, t: 30, b: 60}
+    showlegend: simulationHistory.length > 0,
+    legend: {
+      x: 0.65,
+      y: 0.15,
+      bgcolor: 'rgba(255, 255, 255, 0.8)',
+      bordercolor: '#cbd5e1',
+      borderwidth: 1
+    },
+    annotations: annotations,
+    margin: {l: 60, r: 30, t: 60, b: 70}
   };
   
-  Plotly.newPlot('cdf-chart', [trace], layout, {responsive: true, displayModeBar: false});
+  Plotly.newPlot('cdf-chart', traces, layout, {responsive: true, displayModeBar: false});
+  
+  // Update CDF note with more context
+  const cdfNote = document.getElementById('cdf-note');
+  if (cdfNote) {
+    const medianIndex = cdf.findIndex(val => val >= 0.5);
+    const quartile1 = cdf.findIndex(val => val >= 0.25);
+    const quartile3 = cdf.findIndex(val => val >= 0.75);
+    
+    cdfNote.textContent = `The CDF shows cumulative probabilities P(X ≤ k), rising from 0 to 1 as k increases. The median is at k = ${medianIndex} (50% of outcomes fall at or below this value). The interquartile range spans k = ${quartile1} to k = ${quartile3}, capturing the middle 50% of outcomes. Use this chart to quickly read "at most" probabilities: find your k on the x-axis and read the y-value. For "at least" questions, subtract the CDF at (k-1) from 1. ${simulationHistory.length > 0 ? `The orange dotted line shows the empirical CDF from ${simulationHistory.length} simulations.` : 'Run simulations to validate the theoretical CDF with empirical data.'}`;
+  }
 }
 
 function getHighlightIndices(n, k, mode) {
@@ -727,6 +956,101 @@ function updateDistributionTable(pmf, n) {
     
     tbody.appendChild(row);
   }
+}
+
+function updateAPAReport(n, p, k, mode, approxMode, targetProb, eventLabel) {
+  const apaNode = document.getElementById('apa-report');
+  if (!apaNode) return;
+  
+  const expectedValue = (n * p).toFixed(2);
+  const stdDev = Math.sqrt(n * p * (1 - p)).toFixed(2);
+  const pPercent = (p * 100).toFixed(2);
+  const probPercent = (targetProb * 100).toFixed(2);
+  
+  let modeDescription = '';
+  let probNotation = '';
+  
+  if (mode === 'exact') {
+    modeDescription = `exactly ${k}`;
+    probNotation = `P(X = ${k})`;
+  } else if (mode === 'at_least') {
+    modeDescription = `at least ${k}`;
+    probNotation = `P(X ≥ ${k})`;
+  } else if (mode === 'at_most') {
+    modeDescription = `at most ${k}`;
+    probNotation = `P(X ≤ ${k})`;
+  } else if (mode === 'between') {
+    const k1 = parseInt(document.getElementById('range-lower-input').value);
+    const k2 = parseInt(document.getElementById('range-upper-input').value);
+    modeDescription = `between ${k1} and ${k2} (inclusive)`;
+    probNotation = `P(${k1} ≤ X ≤ ${k2})`;
+  }
+  
+  const methodText = approxMode === 'exact' 
+    ? 'exact binomial distribution' 
+    : approxMode === 'normal' 
+      ? 'normal approximation to the binomial'
+      : 'Poisson approximation to the binomial';
+  
+  const apaReport = `A binomial probability analysis was conducted for ${n} independent trials with success probability p = ${pPercent}% per trial. The number of successes X follows a binomial distribution with expected value E[X] = ${expectedValue} and standard deviation σ = ${stdDev}. Using the ${methodText}, the probability of observing ${modeDescription} successes is ${probNotation} = ${targetProb.toFixed(4)} (${probPercent}%). This result assumes independent trials with constant success probability across all trials.`;
+  
+  apaNode.textContent = apaReport;
+}
+
+function updateManagerialReport(n, p, k, mode, targetProb, eventLabel) {
+  const mgrNode = document.getElementById('managerial-report');
+  if (!mgrNode) return;
+  
+  const expectedValue = (n * p).toFixed(1);
+  const probPercent = (targetProb * 100).toFixed(1);
+  const pPercent = (p * 100).toFixed(1);
+  
+  let modeDescription = '';
+  let actionableInsight = '';
+  
+  if (mode === 'exact') {
+    modeDescription = `seeing exactly ${k} ${eventLabel}`;
+    if (targetProb < 0.05) {
+      actionableInsight = `This is a rare outcome (less than 5% chance). If you observe exactly ${k} ${eventLabel}, it may warrant further investigation as it deviates significantly from the expected ${expectedValue}.`;
+    } else if (targetProb > 0.15) {
+      actionableInsight = `This is a reasonably common outcome (over 15% chance). Observing exactly ${k} ${eventLabel} would be well within normal expectations.`;
+    } else {
+      actionableInsight = `This is a moderately likely outcome. While not the most probable, ${k} ${eventLabel} is a plausible result given your parameters.`;
+    }
+  } else if (mode === 'at_least') {
+    modeDescription = `at least ${k} ${eventLabel}`;
+    if (targetProb < 0.05) {
+      actionableInsight = `This is unlikely (less than 5% probability). If this occurs, consider it a noteworthy event—it may indicate your baseline rate has improved, or you've experienced fortunate random variation. Plan contingencies for higher-than-expected success scenarios.`;
+    } else if (targetProb > 0.50) {
+      actionableInsight = `This outcome is more likely than not (over 50% chance). You should expect to see at least ${k} ${eventLabel} in most trials. Plan resources and operations accordingly for scenarios with ${k} or more successes.`;
+    } else {
+      actionableInsight = `There's a ${probPercent}% chance of this occurring. While possible, it's not the most likely scenario. Consider building flexibility into your plans to handle both sides of this threshold.`;
+    }
+  } else if (mode === 'at_most') {
+    modeDescription = `at most ${k} ${eventLabel}`;
+    if (targetProb < 0.05) {
+      actionableInsight = `Very low probability (under 5%). If you observe ${k} or fewer ${eventLabel}, this may signal a problem—your success rate might be lower than expected, or you're experiencing an unusual run of bad luck. Investigate potential causes.`;
+    } else if (targetProb > 0.50) {
+      actionableInsight = `Quite likely (over 50% chance). You should expect ${k} or fewer ${eventLabel} in most trials. If your business requires more successes, consider strategies to increase your per-trial success rate (currently ${pPercent}%) or increase the number of trials.`;
+    } else {
+      actionableInsight = `There's a ${probPercent}% chance of ${k} or fewer ${eventLabel}. This moderate probability suggests variability in outcomes—sometimes you'll exceed this threshold, sometimes you won't. Build operational flexibility to handle both scenarios.`;
+    }
+  } else if (mode === 'between') {
+    const k1 = parseInt(document.getElementById('range-lower-input').value);
+    const k2 = parseInt(document.getElementById('range-upper-input').value);
+    modeDescription = `between ${k1} and ${k2} ${eventLabel}`;
+    if (targetProb < 0.30) {
+      actionableInsight = `This range captures less than 30% of likely outcomes. If your business depends on hitting this specific range, you may face frequent misses. Consider widening acceptable bounds or adjusting your per-trial success rate.`;
+    } else if (targetProb > 0.70) {
+      actionableInsight = `This range is highly probable (over 70% chance), covering most expected outcomes. If your operations are optimized for ${k1}-${k2} ${eventLabel}, you're well-positioned for typical scenarios.`;
+    } else {
+      actionableInsight = `This range covers ${probPercent}% of possible outcomes, a moderate probability. Your results will fall in this range more often than not, but prepare for scenarios outside it as well.`;
+    }
+  }
+  
+  const managerialReport = `With ${n} trials and a ${pPercent}% success rate per trial, you can expect an average of ${expectedValue} ${eventLabel}. The probability of ${modeDescription} is ${probPercent}%. ${actionableInsight}`;
+  
+  mgrNode.textContent = managerialReport;
 }
 
 // Initialize on page load
