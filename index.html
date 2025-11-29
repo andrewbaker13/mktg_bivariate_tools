@@ -242,6 +242,13 @@
         color: #d97706;
         font-size: 1.05rem;
       }
+
+      /* Print/PDF Styles */
+      @media print {
+        .no-print { display: none !important; }
+        body { background: white; }
+        .card { border: none; box-shadow: none; page-break-inside: avoid; }
+      }
     </style>
 </head><body>
   <div class="auth-bar">
@@ -344,6 +351,12 @@
           <strong>Not sure which test to use?</strong> Follow this guided path to find the right statistical tool for your marketing question. 
           Each question narrows down your options based on your data structure and research goal.
         </p>
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <button id="print-decision-tree" style="padding:0.75rem 1.5rem; background:#3b82f6; color:white; border:none; border-radius:8px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); transition:all 0.2s;" onmouseover="this.style.background='#2563eb'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'" onmouseout="this.style.background='#3b82f6'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+            📄 Print Full Decision Tree (PDF)
+          </button>
+          <p style="font-size:0.85rem; color:#6b7280; margin-top:0.5rem;">Download a complete flowchart of all test selection paths as a study guide</p>
+        </div>
         
         <div id="test-helper-tree" style="max-width:900px; margin:0 auto;">
           <!-- Question 1: Outcome Type -->
@@ -814,8 +827,10 @@
     </section>
   </main>
   <script>
+    console.log('=== Script starting ===');
     // Decision Tree Logic
     (function () {
+      console.log('=== IIFE starting ===');
       const decisionState = {
         outcome: null,
         predictorCount: null,
@@ -1027,54 +1042,133 @@
 
         return html || '<p>Unable to determine recommendation. Please try again.</p>';
       }
+      console.log('=== IIFE completed successfully ===');
     }());
-  </script>
-        let common = '';
-        let alternatives = '';
-        if (outcome === 'numeric' && preds === 'one') {
-          if (predType === 'numeric') {
-            common = 'Pearson Correlation (<a href="apps/pearson_correlation/main_pearson.html">open tool</a>)';
-            alternatives = 'Bivariate Linear Regression (<a href="apps/bivariate_regression/main_bivariate_regression.html">open tool</a>) for a fitted line through the cloud of points.';
-          } else if (predType === 'binary_group') {
-            if (groups === 'two_paired') {
-              common = 'Paired Sample t-test (<a href="apps/paired_ttest/main_paired_ttest.html">open tool</a>)';
-              alternatives = 'Simple bivariate regression with a binary indicator (not typically needed for introductory work).';
-            } else {
-              common = 'Welch\u2019s t-test for independent means (<a href="apps/ind_ttest/main_ind_ttest.html">open tool</a>)';
-              alternatives = 'Bivariate Linear Regression with a binary predictor coded as 0/1, which produces an equivalent mean-difference test.';
-            }
-          } else if (predType === 'categorical3') {
-            common = 'One-Way ANOVA (<a href="apps/onewayanova/main_onewayanova.html">open tool</a>)';
-            alternatives = 'Bivariate Linear Regression with dummy variables for each group, which is algebraically equivalent.';
+    
+    console.log('=== After IIFE, before PDF handler ===');
+    // PDF Generation - Separate handler
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded, looking for PDF button...');
+      const pdfButton = document.getElementById('print-decision-tree');
+      console.log('PDF button found:', pdfButton);
+      if (pdfButton) {
+        pdfButton.addEventListener('click', function() {
+          console.log('PDF button clicked!');
+          const printWindow = window.open('', '_blank');
+          if (!printWindow) {
+            alert('Please allow pop-ups for this site to generate the PDF.');
+            return;
           }
-        } else if (outcome === 'numeric' && preds === 'multiple') {
-          common = 'Multiple Linear Regression (general linear model for one numeric outcome and multiple predictors) (<a href="apps/ml_regression/ml_regression.html">open tool</a>)';
-          alternatives = 'Generalized linear models (e.g., with different link functions) for more advanced use cases (not implemented here).';
-        } else if (outcome === 'binary' && preds === 'one') {
-          if (groups === 'two_ind') {
-            common = 'A/B Proportion test for two independent groups (<a href="apps/ab_proportion/main_ab_proportion.html">open tool</a>)';
-            alternatives = 'Simple logistic regression with a single group indicator as the predictor.';
-          } else if (groups === 'two_paired') {
-            common = 'McNemar test for paired yes/no data (<a href="apps/mcnemar/main_mcnemar.html">open tool</a>)';
-            alternatives = 'More advanced matched-pair logistic models (e.g., conditional logistic regression; not implemented here).';
-          } else {
-            common = 'Simple logistic regression (one binary outcome and one predictor). Use the Logistic Regression app (<a href="apps/log_regression/log_regression.html">open tool</a>) and include just one predictor.';
-            alternatives = 'For some marketing experiments, a proportion test or odds-ratio comparison could also be reported alongside the logistic model.';
-          }
-        } else if (outcome === 'binary' && preds === 'multiple') {
-          common = 'Logistic Regression for a binary outcome with multiple predictors (<a href="apps/log_regression/log_regression.html">open tool</a>)';
-          alternatives = 'Probit or complementary log-log models as alternative links (advanced; not implemented here).';
-        } else if (outcome === 'categorical') {
-          if (groups === 'none') {
-            common = 'Chi-square test of association for two categorical variables (<a href="apps/chisquare/main_chisquare.html">open tool</a>)';
-            alternatives = 'Log-linear models or multinomial logistic regression when you want a more detailed modeling approach (advanced; not implemented here).';
-          } else {
-            common = 'Consider a multinomial or ordinal logistic model (not yet implemented here).';
-            alternatives = 'Chi-square tests on collapsed categories can sometimes be used as a rough alternative, but with information loss.';
-          }
-        } else {
-          common = 'This combination is more advanced; consider a generalized linear model or mixed-effects model.';
-          alternatives = 'Consult a statistics reference or instructor for guidance on appropriate advanced methods.';
+          const htmlContent = generatePDFContent();
+          printWindow.document.write(htmlContent);
+          printWindow.document.close();
+        });
+      } else {
+        console.error('PDF button not found in DOM');
+      }
+    });
+    
+    function generatePDFContent() {
+      return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Statistical Test Selection Decision Tree</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; color: #1f2937; max-width: 1000px; margin: 0 auto; padding: 2rem; background: white; }
+    .flowchart-title { text-align: center; color: #1e40af; margin-bottom: 0.5rem; font-size: 2rem; font-weight: 700; }
+    .flowchart-subtitle { text-align: center; color: #6b7280; margin-bottom: 2rem; font-size: 1rem; }
+    .flow-level { margin-bottom: 3rem; page-break-inside: avoid; }
+    .flow-level-title { background: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; }
+    .flow-branches { margin-left: 2rem; }
+    .flow-branch { border-left: 3px solid #3b82f6; padding-left: 1.5rem; margin-bottom: 2rem; page-break-inside: avoid; }
+    .branch-choice { background: #eff6ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .branch-choice-title { font-weight: 600; color: #1e40af; margin-bottom: 0.25rem; font-size: 1.05rem; }
+    .branch-choice-desc { font-size: 0.9rem; color: #4b5563; }
+    .flow-result { background: #d1fae5; border: 2px solid #10b981; border-radius: 8px; padding: 1rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+    .flow-result-title { font-weight: 700; color: #065f46; margin-bottom: 0.5rem; font-size: 1.05rem; }
+    .flow-result-desc { font-size: 0.9rem; color: #047857; margin-bottom: 0.5rem; }
+    .flow-result-tool { font-size: 0.85rem; color: #065f46; font-weight: 600; }
+    .nested-branch { margin-left: 1.5rem; margin-top: 1rem; border-left: 3px solid #8b5cf6; padding-left: 1rem; }
+    .nested-choice { background: #f5f3ff; border: 2px solid #8b5cf6; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.75rem; }
+    .nested-choice-title { font-weight: 600; color: #5b21b6; margin-bottom: 0.25rem; }
+    .sub-result { background: #fef3c7; border: 2px solid #f59e0b; border-radius: 6px; padding: 0.75rem; margin: 0.5rem 0 0.5rem 1rem; }
+    .sub-result-title { font-weight: 600; color: #92400e; }
+    .sub-result-desc { font-size: 0.85rem; color: #78350f; margin-top: 0.25rem; }
+    .sub-result-tool { font-size: 0.8rem; font-weight: 600; color: #92400e; margin-top: 0.25rem; }
+    @media print { body { padding: 1rem; } .flow-level, .flow-branch { page-break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  <h1 class="flowchart-title">📊 Statistical Test Selection Guide</h1>
+  <p class="flowchart-subtitle">Complete Decision Tree for Marketing Analytics</p>
+  <div class="flow-level">
+    <div class="flow-level-title">Step 1: Outcome Variable Type</div>
+    <div class="flow-branches">
+      <div class="flow-branch">
+        <div class="branch-choice"><div class="branch-choice-title">📊 Numeric/Continuous Outcome</div><div class="branch-choice-desc">Examples: Revenue, conversion rate (%), satisfaction score, time on site</div></div>
+        <div class="flow-level-title" style="background:#8b5cf6; font-size:1rem;">Step 2: Number of Predictors</div>
+        <div class="nested-branch">
+          <div class="nested-choice"><div class="nested-choice-title">One Predictor</div></div>
+          <div style="margin-left:1rem;">
+            <div class="flow-level-title" style="background:#ec4899; font-size:0.95rem;">Step 3: Predictor Type</div>
+            <div class="flow-result"><div class="flow-result-title">✅ Numeric Predictor → Pearson Correlation</div><div class="flow-result-desc">Use when: Both outcome and predictor are numeric (e.g., "As ad spend ↑, does revenue ↑?")</div><div class="flow-result-tool">Tool: Pearson Correlation / Bivariate Regression</div></div>
+            <div class="flow-result"><div class="flow-result-title">✅ Binary Group Predictor</div><div class="sub-result"><div class="sub-result-title">Independent Groups → Welch's t-test</div><div class="sub-result-desc">Different people in each group (e.g., Email A recipients vs. Email B recipients)</div><div class="sub-result-tool">Tool: Independent t-test</div></div><div class="sub-result"><div class="sub-result-title">Paired Groups → Paired t-test</div><div class="sub-result-desc">Same people measured twice (e.g., before/after campaign on same customers)</div><div class="sub-result-tool">Tool: Paired t-test</div></div></div>
+            <div class="flow-result"><div class="flow-result-title">✅ Categorical Predictor (3+ levels) → One-Way ANOVA</div><div class="flow-result-desc">Use when: Comparing means across 3+ groups (e.g., "Which of 4 landing pages generates most revenue?")</div><div class="flow-result-tool">Tool: One-Way ANOVA</div></div>
+          </div>
+        </div>
+        <div class="nested-branch" style="margin-top:1.5rem;">
+          <div class="nested-choice"><div class="nested-choice-title">Multiple Predictors</div></div>
+          <div class="flow-result"><div class="flow-result-title">✅ Multiple Linear Regression</div><div class="flow-result-desc">Use when: Modeling numeric outcome with multiple predictors simultaneously (e.g., "CLV based on recency, frequency, monetary value, AND segment")</div><div class="flow-result-tool">Tool: Multiple Linear Regression</div></div>
+        </div>
+      </div>
+      <div class="flow-branch">
+        <div class="branch-choice"><div class="branch-choice-title">✓ Binary Outcome</div><div class="branch-choice-desc">Examples: Converted (yes/no), clicked ad (yes/no), churned (yes/no)</div></div>
+        <div class="flow-level-title" style="background:#8b5cf6; font-size:1rem;">Step 2: Number of Predictors</div>
+        <div class="nested-branch">
+          <div class="nested-choice"><div class="nested-choice-title">One Predictor</div></div>
+          <div style="margin-left:1rem;">
+            <div class="sub-result"><div class="sub-result-title">Independent Groups → A/B Proportion Test</div><div class="sub-result-desc">Different people in each group (e.g., Version A vs. Version B conversion rates)</div><div class="sub-result-tool">Tool: A/B Proportion Test</div></div>
+            <div class="sub-result"><div class="sub-result-title">Paired Groups → McNemar Test</div><div class="sub-result-desc">Same people measured twice (e.g., subscription status before/after offer)</div><div class="sub-result-tool">Tool: McNemar Test</div></div>
+          </div>
+        </div>
+        <div class="nested-branch" style="margin-top:1.5rem;">
+          <div class="nested-choice"><div class="nested-choice-title">Multiple Predictors</div></div>
+          <div class="flow-result"><div class="flow-result-title">✅ Logistic Regression</div><div class="flow-result-desc">Use when: Predicting yes/no outcome with multiple factors (e.g., "What predicts conversion: traffic source, device type, AND time of day?")</div><div class="flow-result-tool">Tool: Logistic Regression</div></div>
+        </div>
+      </div>
+      <div class="flow-branch">
+        <div class="branch-choice"><div class="branch-choice-title">🏷️ Categorical Outcome (3+ levels)</div><div class="branch-choice-desc">Examples: Product chosen (A/B/C/D), customer segment (high/med/low)</div></div>
+        <div class="flow-level-title" style="background:#8b5cf6; font-size:1rem;">Step 2: Number of Predictors</div>
+        <div class="nested-branch">
+          <div class="nested-choice"><div class="nested-choice-title">One Predictor (Association Question)</div></div>
+          <div class="flow-result"><div class="flow-result-title">✅ Chi-square Test of Association</div><div class="flow-result-desc">Use when: Testing if two categorical variables are related (e.g., "Does product choice vary by customer segment?")</div><div class="flow-result-tool">Tool: Chi-square Test</div></div>
+        </div>
+        <div class="nested-branch" style="margin-top:1rem;">
+          <div class="nested-choice"><div class="nested-choice-title">Multiple Predictors</div></div>
+          <div class="flow-result"><div class="flow-result-title">✅ Multinomial Logistic Regression</div><div class="flow-result-desc">Use when: Predicting categorical outcome with 3+ levels using multiple predictors (e.g., "What predicts product choice: price sensitivity, brand loyalty, AND demographics?")</div><div class="flow-result-tool">Tool: Multinomial Logistic Regression</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:3rem; padding:1.5rem; background:#f3f4f6; border-radius:8px; border-left:4px solid #3b82f6;">
+    <h3 style="color:#1e40af; margin-top:0;">💡 Quick Reference Tips</h3>
+    <ul style="color:#4b5563; line-height:1.8;">
+      <li><strong>Independent vs. Paired:</strong> Can you draw a line connecting each observation in Group 1 to a specific paired observation in Group 2? If yes → Paired. If no → Independent.</li>
+      <li><strong>Predictor = Independent Variable (X):</strong> What you think influences the outcome (e.g., ad spend, email version, customer segment).</li>
+      <li><strong>Outcome = Dependent Variable (Y):</strong> What you're measuring or predicting (e.g., revenue, conversion, satisfaction).</li>
+      <li><strong>Start with One Predictor:</strong> Build understanding with simple bivariate relationships before adding complexity with multiple predictors.</li>
+      <li><strong>Always Explore First:</strong> Use the Univariate Analyzer to understand distributions, outliers, and data quality before hypothesis testing.</li>
+    </ul>
+  </div>
+  <div style="text-align:center; margin-top:2rem; color:#9ca3af; font-size:0.85rem;">
+    <p>Statistical Test Selection Guide • Marketing Analytics Tools</p>
+    <p>Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+  </div>
+  <scr` + `ipt>window.onload = function() { setTimeout(function() { window.print(); }, 500); };</scr` + `ipt>
+</body>
+</html>`;
+    }
   </script>
   
   <script src="shared/js/auth_tracking.js"></script>
