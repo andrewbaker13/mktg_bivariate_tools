@@ -83,6 +83,165 @@
         outline-offset: 2px;
         background: transparent !important;
       }
+      
+      /* Decision Tree Styles */
+      .decision-node {
+        background: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        opacity: 0.4;
+        pointer-events: none;
+        transition: all 0.3s ease;
+        display: none;
+      }
+      .decision-node.active {
+        opacity: 1;
+        pointer-events: auto;
+        border-color: #3b82f6;
+        box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+        display: block;
+      }
+      .node-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .step-number {
+        background: #3b82f6;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      .node-title {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #1e293b;
+      }
+      .node-help {
+        margin-bottom: 1.25rem;
+      }
+      .node-help details {
+        background: #eff6ff;
+        border-left: 3px solid #3b82f6;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .node-help summary {
+        font-weight: 600;
+        color: #1e40af;
+        list-style: none;
+        cursor: pointer;
+      }
+      .node-help summary::-webkit-details-marker {
+        display: none;
+      }
+      .node-help details[open] summary {
+        margin-bottom: 0.75rem;
+      }
+      .node-help p, .node-help ul {
+        color: #475569;
+        line-height: 1.6;
+      }
+      .node-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+      .decision-btn {
+        background: white;
+        border: 2px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .decision-btn:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+        transform: translateY(-2px);
+      }
+      .decision-btn .btn-icon {
+        font-size: 2rem;
+        display: block;
+      }
+      .decision-btn .btn-label {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 1rem;
+        display: block;
+      }
+      .decision-btn .btn-example {
+        font-size: 0.85rem;
+        color: #64748b;
+        display: block;
+        line-height: 1.4;
+      }
+      .path-connector {
+        height: 30px;
+        width: 3px;
+        background: linear-gradient(to bottom, #3b82f6, #e5e7eb);
+        margin: 0 auto;
+        border-radius: 2px;
+      }
+      .decision-result {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 3px solid #3b82f6;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-top: 2rem;
+      }
+      .result-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+      .result-icon {
+        font-size: 2rem;
+      }
+      .result-header h3 {
+        margin: 0;
+        color: #1e40af;
+        font-size: 1.5rem;
+      }
+      .result-recommendation {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #10b981;
+      }
+      .result-recommendation h4 {
+        margin: 0 0 0.75rem 0;
+        color: #059669;
+        font-size: 1.15rem;
+      }
+      .result-recommendation p {
+        margin: 0.5rem 0;
+        line-height: 1.6;
+      }
+      .result-alternative {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border-left: 4px solid #f59e0b;
+      }
+      .result-alternative h4 {
+        margin: 0 0 0.75rem 0;
+        color: #d97706;
+        font-size: 1.05rem;
+      }
     </style>
 </head><body>
   <div class="auth-bar">
@@ -101,6 +260,7 @@
         <h1>Marketing Analytics Statistics Tools</h1>
         <div class="hero-context">
           <span class="badge">Student Guide</span>
+          <span class="badge" style="background:#10b981;">23 Tools Available</span>
         </div>
       </div>
       <p class="hero-header__lede">
@@ -109,26 +269,65 @@
       </p>
     </header>
 
+    <section class="test-overview" aria-labelledby="quick-nav-heading">
+      <h2 id="quick-nav-heading">Quick Navigation</h2>
+      <div class="card">
+        <p style="margin-bottom:0.75rem;">Jump to a category:</p>
+        <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+          <a href="#getting-started" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📊 Getting Started</a>
+          <a href="#exploratory" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📈 Descriptive Analysis</a>
+          <a href="#comparing-groups" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📉 Comparing Groups</a>
+          <a href="#categorical" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📊 Categorical Analysis</a>
+          <a href="#modeling" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">🔮 Predictive Modeling</a>
+          <a href="#clustering" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">🎯 Clustering</a>
+          <a href="#probability" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">🎲 Probability & Simulation</a>
+          <a href="#planning" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📐 Study Design</a>
+          <a href="#test-picker" style="padding:0.4rem 0.8rem; background:#fef3c7; border-radius:4px; text-decoration:none; color:#92400e; font-size:0.9rem;">💡 Test Picker</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="test-overview" aria-labelledby="getting-started">
+      <h2 id="getting-started">📊 Getting Started</h2>
+      <div class="card">
+        <p><strong>New to statistical analysis?</strong> Start with these tools to understand your data before running tests:</p>
+        <div class="tool-directory">
+          <article class="tool-card">
+            <h4>
+              <a href="apps/univariate_analyzer/main_univariate_analyzer.html">Univariate Analyzer</a>
+              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">Start Here</span>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.25rem;">Beginner</span>
+            </h4>
+            <p>
+              Explore a single variable's distribution, central tendency, spread, and outliers. Perfect for understanding your data 
+              <em>before</em> running hypothesis tests. See histograms, boxplots, normality tests, and descriptive statistics.
+            </p>
+            <p class="muted">Data: one numeric or categorical column from your dataset.</p>
+          </article>
+        </div>
+        <p class="muted" style="margin-top:1rem;">
+          <strong>💡 Pro tip:</strong> Always run exploratory analysis (like the Univariate Analyzer) before conducting hypothesis tests. 
+          Understanding distributions, outliers, and data quality helps you choose the right test and interpret results correctly.
+        </p>
+      </div>
+    </section>
+
     <section class="test-overview" aria-labelledby="how-to-choose-heading">
       <h2 id="how-to-choose-heading">How to Choose a Tool</h2>
       <div class="card">
-        <p>Start with the kind of outcome you are measuring and how your data were collected:</p>
+        <p>Match your research question to the right tool based on your data structure:</p>
         <ul>
-          <li><strong>Two numeric metrics</strong> on the same people &rarr; <em>association</em> question &rarr;
-            Pearson Correlation.</li>
-          <li><strong>One numeric metric</strong> for <em>two independent groups</em> &rarr; mean comparison &rarr;
-            Welch's t-test.</li>
-          <li><strong>One numeric metric</strong> measured <em>twice on the same people</em> (before/after, A vs. B)
-            &rarr; Paired t-test.</li>
+          <li><strong>Single variable exploration</strong> &rarr; Univariate Analyzer (start here!).</li>
+          <li><strong>Two numeric metrics</strong> on the same people &rarr; <em>association</em> question &rarr; Pearson Correlation.</li>
+          <li><strong>One numeric metric</strong> for <em>two independent groups</em> &rarr; mean comparison &rarr; Welch's t-test.</li>
+          <li><strong>One numeric metric</strong> measured <em>twice on the same people</em> (before/after, A vs. B) &rarr; Paired t-test.</li>
           <li><strong>One numeric metric</strong> for <em>three or more groups</em> &rarr; One-Way ANOVA.</li>
-          <li><strong>Binary outcome</strong> (convert vs. not, click vs. no click) for <em>two independent groups</em>
-            &rarr; A/B Proportion tool.</li>
-          <li><strong>Binary outcome measured twice on the same people</strong> (pre/post, control vs. treatment on the
-            same accounts) &rarr; McNemar test.</li>
-          <li><strong>Two categorical variables</strong> (e.g., device type by response, segment by offer) &rarr;
-            Chi-square test of association.</li>
+          <li><strong>Binary outcome</strong> (convert vs. not, click vs. no click) for <em>two independent groups</em> &rarr; A/B Proportion tool.</li>
+          <li><strong>Binary outcome measured twice on the same people</strong> (pre/post, control vs. treatment on the same accounts) &rarr; McNemar test.</li>
+          <li><strong>Two categorical variables</strong> (e.g., device type by response, segment by offer) &rarr; Chi-square test of association.</li>
           <li><strong>One numeric outcome with multiple predictors</strong> &rarr; Multiple Linear Regression.</li>
           <li><strong>Binary outcome with multiple predictors</strong> &rarr; Logistic Regression.</li>
+          <li><strong>Repeated independent events</strong> (dice rolls, conversion attempts) &rarr; Compound Event Probability Calculator.</li>
         </ul>
         <p class="muted">
           Unsure where to start? Use the Test Picker helper below or read the "TEST OVERVIEW &amp; EQUATIONS" section inside each app for assumptions,
@@ -138,59 +337,162 @@
     </section>
 
     <section class="scenario-section" aria-labelledby="helper-heading">
-      <h2 id="helper-heading">Interactive Test Picker (Helper)</h2>
+      <h2 id="helper-heading" style="scroll-margin-top:2rem;">💡 Interactive Test Picker (Decision Tree)</h2>
+      <a id="test-picker" style="position:relative; top:-80px;"></a>
       <div class="card">
-        <p>
-          Not sure which statistical test fits your marketing question? Answer a few quick questions and this helper will suggest
-          a test (or tests) to consider. It may recommend tools that are not yet implemented here, so you see the broader landscape.
+        <p style="font-size:1.05rem; margin-bottom:1.5rem;">
+          <strong>Not sure which test to use?</strong> Follow this guided path to find the right statistical tool for your marketing question. 
+          Each question narrows down your options based on your data structure and research goal.
         </p>
-        <div id="test-helper" class="tool-directory">
-          <article class="tool-card">
-            <h3>Which test should I use?</h3>
-            <p class="muted">
-              Describe your outcome, predictors, and study design to get a recommendation.
-              The <strong>Common test used</strong> is the default classroom choice; <strong>Alternative statistical tests</strong> are
-              equivalent or closely related approaches that could also answer the same question.
-            </p>
-            <div class="helper-controls">
-              <label for="helper-outcome-type" style="display:block;"><strong>1. Outcome type</strong></label>
-              <select id="helper-outcome-type">
-                <option value="">-- Select outcome type --</option>
-                <option value="numeric">Numeric (continuous)</option>
-                <option value="binary">Binary (yes/no, convert/not)</option>
-                <option value="categorical">Categorical (3+ unordered categories)</option>
-              </select>
-
-              <label for="helper-predictors" style="margin-top:0.5rem; display:block;"><strong>2. Number of predictors</strong></label>
-              <select id="helper-predictors">
-                <option value="">-- Select predictor setup --</option>
-                <option value="one">One main predictor</option>
-                <option value="multiple">Multiple predictors (build a model)</option>
-              </select>
-
-              <div id="helper-predictor-type-wrapper" style="margin-top:0.5rem; display:none;">
-                <label for="helper-predictor-type" style="display:block;"><strong>3. If you have one main predictor, what type is it?</strong></label>
-                <select id="helper-predictor-type">
-                  <option value="">-- Select predictor type --</option>
-                  <option value="numeric">Numeric (e.g., spend, time, ratings)</option>
-                  <option value="binary_group">Binary group indicator (e.g., Control vs. Treatment)</option>
-                  <option value="categorical3">Categorical with 3+ levels (e.g., 4 creative versions)</option>
-                </select>
-              </div>
-
-              <label for="helper-groups" style="margin-top:0.5rem; display:block;"><strong>4. Group structure (how your data are organized)</strong></label>
-              <select id="helper-groups">
-                <option value="">-- Select group structure --</option>
-                <option value="none">No group variable (each row is one case with its own predictor and outcome)</option>
-                <option value="two_ind">Two independent groups (different people/accounts in each group)</option>
-                <option value="two_paired">Two paired measurements on the same people/accounts (before/after or A/B)</option>
-                <option value="three_plus">Three or more groups (one grouping variable with 3+ categories)</option>
-              </select>
-
-              <button type="button" id="helper-suggest" class="primary" style="margin-top:0.75rem;">Suggest a test</button>
-              <div id="helper-result" class="muted" style="margin-top:0.75rem; padding:0.75rem 1rem; border-left:4px solid #f59e0b; background-color:#fef3c7; border-radius:4px; display:none;"></div>
+        
+        <div id="test-helper-tree" style="max-width:900px; margin:0 auto;">
+          <!-- Question 1: Outcome Type -->
+          <div class="decision-node active" id="node-outcome" data-step="1">
+            <div class="node-header">
+              <span class="step-number">Step 1</span>
+              <h3 class="node-title">What are you measuring? (Your Outcome Variable)</h3>
             </div>
-          </article>
+            <div class="node-help">
+              <details>
+                <summary>💡 Help me understand "outcome variable"</summary>
+                <p>The <strong>outcome</strong> (also called dependent variable or Y) is what you're trying to predict, explain, or measure. In marketing:</p>
+                <ul style="margin:0.5rem 0 0 1.5rem; font-size:0.9rem;">
+                  <li><strong>Numeric:</strong> Revenue, conversion rate (%), time on site, order value, satisfaction score</li>
+                  <li><strong>Binary:</strong> Did convert (yes/no), clicked ad (yes/no), churned (yes/no)</li>
+                  <li><strong>Categorical:</strong> Product chosen (A/B/C/D), segment membership (high/med/low)</li>
+                </ul>
+              </details>
+            </div>
+            <div class="node-options">
+              <button class="decision-btn" data-choice="numeric" data-next="predictor-count">
+                <span class="btn-icon">📊</span>
+                <span class="btn-label">Numeric / Continuous</span>
+                <span class="btn-example">Revenue, ratings, time, percentages</span>
+              </button>
+              <button class="decision-btn" data-choice="binary" data-next="predictor-count">
+                <span class="btn-icon">✓✗</span>
+                <span class="btn-label">Binary / Yes-No</span>
+                <span class="btn-example">Converted, clicked, purchased (0 or 1)</span>
+              </button>
+              <button class="decision-btn" data-choice="categorical" data-next="predictor-count">
+                <span class="btn-icon">🏷️</span>
+                <span class="btn-label">Categorical (3+ levels)</span>
+                <span class="btn-example">Product choice, segment, brand selected</span>
+              </button>
+            </div>
+            <div class="path-connector"></div>
+          </div>
+
+          <!-- Question 2: Number of Predictors -->
+          <div class="decision-node" id="node-predictor-count" data-step="2">
+            <div class="node-header">
+              <span class="step-number">Step 2</span>
+              <h3 class="node-title">How many predictors are you analyzing?</h3>
+            </div>
+            <div class="node-help">
+              <details>
+                <summary>💡 Help me understand "predictors"</summary>
+                <p>A <strong>predictor</strong> (also called independent variable or X) is what you think influences or explains the outcome. Examples:</p>
+                <ul style="margin:0.5rem 0 0 1.5rem; font-size:0.9rem;">
+                  <li><strong>One predictor:</strong> "Does ad spend affect revenue?" (X = spend, Y = revenue)</li>
+                  <li><strong>Multiple predictors:</strong> "What drives revenue: spend, seasonality, AND campaign type?" (X₁ = spend, X₂ = season, X₃ = campaign)</li>
+                </ul>
+                <p style="margin-top:0.5rem; font-size:0.9rem;"><em>Tip: Start with one predictor to understand the basic relationship, then add more for modeling.</em></p>
+              </details>
+            </div>
+            <div class="node-options">
+              <button class="decision-btn" data-choice="one" data-next="predictor-type">
+                <span class="btn-icon">1️⃣</span>
+                <span class="btn-label">One Main Predictor</span>
+                <span class="btn-example">Testing one factor (e.g., Control vs. Treatment)</span>
+              </button>
+              <button class="decision-btn" data-choice="multiple" data-next="result">
+                <span class="btn-icon">📈</span>
+                <span class="btn-label">Multiple Predictors</span>
+                <span class="btn-example">Building a model with several factors</span>
+              </button>
+            </div>
+            <div class="path-connector"></div>
+          </div>
+
+          <!-- Question 3: Predictor Type (only shows if "one predictor") -->
+          <div class="decision-node" id="node-predictor-type" data-step="3">
+            <div class="node-header">
+              <span class="step-number">Step 3</span>
+              <h3 class="node-title">What type of predictor do you have?</h3>
+            </div>
+            <div class="node-help">
+              <details>
+                <summary>💡 Help me choose predictor type</summary>
+                <p>Your predictor's type determines which test you'll use:</p>
+                <ul style="margin:0.5rem 0 0 1.5rem; font-size:0.9rem;">
+                  <li><strong>Numeric:</strong> Ad spend ($), days since last purchase, customer age, discount %</li>
+                  <li><strong>Binary groups:</strong> Control vs. Treatment, Email A vs. Email B, Before vs. After</li>
+                  <li><strong>3+ groups:</strong> Four email designs, three price points, five geographic regions</li>
+                </ul>
+              </details>
+            </div>
+            <div class="node-options">
+              <button class="decision-btn" data-choice="numeric" data-next="result">
+                <span class="btn-icon">📊</span>
+                <span class="btn-label">Numeric Predictor</span>
+                <span class="btn-example">Spend, time, age, distance, price</span>
+              </button>
+              <button class="decision-btn" data-choice="binary_group" data-next="group-structure">
+                <span class="btn-icon">🔀</span>
+                <span class="btn-label">Two Groups</span>
+                <span class="btn-example">Control vs. Treatment, A vs. B</span>
+              </button>
+              <button class="decision-btn" data-choice="categorical3" data-next="result">
+                <span class="btn-icon">🏷️</span>
+                <span class="btn-label">3+ Groups/Categories</span>
+                <span class="btn-example">Four versions, three segments, five regions</span>
+              </button>
+            </div>
+            <div class="path-connector"></div>
+          </div>
+
+          <!-- Question 4: Group Structure (only for binary groups) -->
+          <div class="decision-node" id="node-group-structure" data-step="4">
+            <div class="node-header">
+              <span class="step-number">Step 4</span>
+              <h3 class="node-title">How is your data structured?</h3>
+            </div>
+            <div class="node-help">
+              <details>
+                <summary>💡 Independent vs. Paired data</summary>
+                <p>This is about whether the same people/accounts appear in both groups:</p>
+                <ul style="margin:0.5rem 0 0 1.5rem; font-size:0.9rem;">
+                  <li><strong>Independent:</strong> Different customers in each group. Example: Group A gets Email 1, Group B gets Email 2 (different people)</li>
+                  <li><strong>Paired/Matched:</strong> Same customers measured twice. Example: Same customers see Offer A then Offer B, or before/after campaign</li>
+                </ul>
+                <p style="margin-top:0.5rem; font-size:0.9rem;"><em>Key question: Can you draw a line connecting each observation in Group 1 to a specific paired observation in Group 2?</em></p>
+              </details>
+            </div>
+            <div class="node-options">
+              <button class="decision-btn" data-choice="two_ind" data-next="result">
+                <span class="btn-icon">👥</span>
+                <span class="btn-label">Independent Groups</span>
+                <span class="btn-example">Different customers in each group</span>
+              </button>
+              <button class="decision-btn" data-choice="two_paired" data-next="result">
+                <span class="btn-icon">🔗</span>
+                <span class="btn-label">Paired/Matched Groups</span>
+                <span class="btn-example">Same customers measured twice (before/after)</span>
+              </button>
+            </div>
+            <div class="path-connector"></div>
+          </div>
+
+          <!-- Result Area -->
+          <div class="decision-result" id="decision-result" style="display:none;">
+            <div class="result-header">
+              <span class="result-icon">✨</span>
+              <h3>Recommended Statistical Test</h3>
+            </div>
+            <div id="result-content"></div>
+            <button type="button" class="secondary" id="reset-helper" style="margin-top:1rem;">↺ Start Over</button>
+          </div>
         </div>
       </div>
     </section>
@@ -199,222 +501,534 @@
       <h2 id="directory-heading">Browse Tools by Category</h2>
       <div class="card">
         <p class="muted">
-          Tools are grouped into analysis, modeling, planning, and teaching categories. Start with the section that matches your question, then pick a specific app.
+          Tools are organized by analysis type. Each card shows the tool's purpose, complexity level, and data requirements.
         </p>
-        <div class="tool-directory">
-          <h3>Correlation &amp; Regression</h3>
+
+        <div class="tool-directory" style="margin-top:1.5rem;">
+          <h3 id="exploratory" style="scroll-margin-top:2rem;">📈 Descriptive &amp; Exploratory Analysis</h3>
           <article class="tool-card">
-            <h4><a href="apps/pearson_correlation/main_pearson.html">Pearson Correlation</a></h4>
+            <h4>
+              <a href="apps/univariate_analyzer/main_univariate_analyzer.html">Univariate Analyzer</a>
+              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">Start Here</span>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.25rem;">Beginner</span>
+            </h4>
+            <p>
+              Explore a single variable's distribution, central tendency, spread, and outliers. See histograms, boxplots, normality tests, and comprehensive descriptive statistics.
+              Perfect for understanding your data <em>before</em> running hypothesis tests.
+            </p>
+            <p class="muted">Data: one numeric or categorical column from your dataset.</p>
+          </article>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/pearson_correlation/main_pearson.html">Pearson Correlation</a>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
+            </h4>
             <p>
               Explores whether two continuous marketing metrics move together
-              (for example, <em>ad spend vs. revenue</em> or <em>time on site vs. conversion rate</em>).
+              (for example, <em>ad spend vs. revenue</em> or <em>time on site vs. conversion rate</em>). 
+              Includes correlation coefficient, significance tests, and scatterplots.
             </p>
             <p class="muted">Data: pairs of numeric values for each case.</p>
           </article>
-          <article class="tool-card">
-            <h4><a href="apps/bivariate_regression/main_bivariate_regression.html">Bivariate Linear Regression</a></h4>
-            <p>
-              Fits a straight-line relationship between one predictor and one outcome, either for a continuous predictor
-              (for example, <em>weekly ad spend vs. revenue</em>) or a binary group indicator.
-            </p>
-            <p class="muted">Data: summary stats (n, means, SDs, r) or raw paired observations.</p>
-          </article>
-          <article class="tool-card">
-            <h4><a href="apps/ml_regression/ml_regression.html">Multiple Linear Regression</a></h4>
-            <p>
-              Models a numeric outcome using multiple predictors (continuous and categorical) with diagnostics and effect plots
-              (for example, <em>customer value vs. recency, frequency, and segment</em>).
-            </p>
-            <p class="muted">Data: raw rows with one numeric outcome and several predictors.</p>
-          </article>
-          <article class="tool-card">
-            <h4><a href="apps/log_regression/log_regression.html">Logistic Regression</a></h4>
-            <p>
-              Models a binary outcome using multiple predictors to estimate odds ratios and predicted probabilities
-              (for example, <em>conversion vs. not convert based on traffic source, offer, and device</em>).
-            </p>
-            <p class="muted">Data: raw rows with one binary outcome and several predictors.</p>
-          </article>
         </div>
 
         <div class="tool-directory" style="margin-top:1.5rem;">
-          <h3>Unsupervised &amp; Advanced Models</h3>
+          <h3 id="comparing-groups" style="scroll-margin-top:2rem;">📉 Comparing Groups (Hypothesis Testing)</h3>
           <article class="tool-card">
-            <h4><a href="apps/kmeans/main_kmeans.html">K-Means Clustering</a></h4>
-            <p>
-              Segments records into a specified number of clusters based on numeric predictors,
-              assigning each case to the nearest cluster center.
-            </p>
-            <p class="muted">Data: raw rows with two or more numeric predictors for clustering.</p>
-          </article>
-          <article class="tool-card">
-            <h4><a href="apps/mn_log_regression/main_mn_log_regression.html">Multinomial Logistic Regression</a></h4>
-            <p>
-              Models a categorical outcome with 3+ levels using multiple predictors, framed as a choice model.
-            </p>
-            <p class="muted">Data: raw rows with one categorical outcome and multiple predictors.</p>
-          </article>
-        </div>
-
-        <div class="tool-directory" style="margin-top:1.5rem;">
-          <h3>Means &amp; Proportions</h3>
-          <article class="tool-card">
-            <h4><a href="apps/ind_ttest/main_ind_ttest.html">Welch's t-test (Independent Means)</a></h4>
+            <h4>
+              <a href="apps/ind_ttest/main_ind_ttest.html">Welch's t-test (Independent Means)</a>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
+            </h4>
             <p>
               Compares average performance between two independent groups when variances and sample sizes may differ
-              (for example, <em>Control vs. New Subject Line</em>).
+              (for example, <em>Control vs. New Subject Line</em>). Includes effect sizes, confidence intervals, and power analysis.
             </p>
             <p class="muted">Data: group means/SDs and sample sizes, or raw outcomes for each group.</p>
           </article>
           <article class="tool-card">
-            <h4><a href="apps/paired_ttest/main_paired_ttest.html">Paired Sample t-test</a></h4>
+            <h4>
+              <a href="apps/paired_ttest/main_paired_ttest.html">Paired Sample t-test</a>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
+            </h4>
             <p>
               Evaluates before/after or A/B measurements on the same people or accounts
-              (for example, <em>pre-course vs. post-course scores</em>).
+              (for example, <em>pre-course vs. post-course scores</em>). Tests whether the mean difference differs from zero.
             </p>
             <p class="muted">Data: paired numeric observations or paired summary statistics.</p>
           </article>
           <article class="tool-card">
-            <h4><a href="apps/onewayanova/main_onewayanova.html">One-Way ANOVA</a></h4>
+            <h4>
+              <a href="apps/onewayanova/main_onewayanova.html">One-Way ANOVA</a>
+              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
+            </h4>
             <p>
               Tests whether <em>three or more</em> groups differ on a numeric outcome
-              (for example, <em>four landing page designs vs. revenue per visitor</em>).
+              (for example, <em>four landing page designs vs. revenue per visitor</em>). Includes post-hoc pairwise comparisons.
             </p>
             <p class="muted">Data: group means/SDs and sample sizes, or long-format raw data.</p>
           </article>
           <article class="tool-card">
-            <h4><a href="apps/ab_proportion/main_ab_proportion.html">A/B Proportion Tool</a></h4>
+            <h4>
+              <a href="apps/ab_proportion/main_ab_proportion.html">A/B Proportion Test</a>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
+            </h4>
             <p>
               Compares conversion rates or other binary outcomes between two independent variants
-              (for example, <em>Newsletter CTA A vs. CTA B</em>).
+              (for example, <em>Newsletter CTA A vs. CTA B</em>). Shows relative lift, confidence intervals, and sample size recommendations.
             </p>
             <p class="muted">Data: conversions and sample sizes, or raw 0/1 outcomes by group.</p>
           </article>
-        </div>
-
-        <div class="tool-directory" style="margin-top:1.5rem;">
-          <h3>Categorical &amp; Matched-Pair Tests</h3>
           <article class="tool-card">
-            <h4><a href="apps/chisquare/main_chisquare.html">Chi-square Test of Association</a></h4>
-            <p>
-              Checks whether two categorical variables are related
-              (for example, <em>device type by signup status</em> or <em>segment by offer selection</em>).
-            </p>
-            <p class="muted">Data: contingency table counts or raw categorical outcomes.</p>
-          </article>
-          <article class="tool-card">
-            <h4><a href="apps/mcnemar/main_mcnemar.html">McNemar Test</a></h4>
+            <h4>
+              <a href="apps/mcnemar/main_mcnemar.html">McNemar Test</a>
+              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
+            </h4>
             <p>
               Focuses on "switchers" in paired yes/no data, such as matched pre/post responses
-              (for example, <em>same customers under two creative treatments</em>).
+              (for example, <em>same customers under two creative treatments</em>). Tests marginal homogeneity in 2×2 tables.
             </p>
             <p class="muted">Data: 2 &times; 2 matched table or raw paired outcomes.</p>
           </article>
         </div>
 
         <div class="tool-directory" style="margin-top:1.5rem;">
-          <h3>Planning &amp; Sample Size</h3>
+          <h3 id="categorical" style="scroll-margin-top:2rem;">📊 Categorical Analysis</h3>
           <article class="tool-card">
-            <h4><a href="apps/sample_size_calculator/main_sample_size_calculator.html">Sample Size Planner (Single outcome)</a></h4>
+            <h4>
+              <a href="apps/chisquare/main_chisquare.html">Chi-square Test of Association</a>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
+            </h4>
             <p>
-              Plans how many observations you need to estimate or detect a change in a <em>single mean or single proportion</em>
-              (for example, <em>overall conversion rate or average order value</em>).
+              Checks whether two categorical variables are related
+              (for example, <em>device type by signup status</em> or <em>segment by offer selection</em>). 
+              Shows expected vs. observed frequencies and standardized residuals.
             </p>
-          </article>
-          <article class="tool-card">
-            <h4><a href="apps/sample_size_AB_calculator/main_sample_size_ab_calculator.html">Sample Size Planner (A/B tests)</a></h4>
-            <p>
-              Plans total sample size for <em>A/B tests</em> comparing two means or two proportions, given the lift that would be
-              worth acting on, your confidence level, and desired power.
-            </p>
-          </article>
-          <article class="tool-card">
-            <h4><a href="apps/sample_size_corr_regression/main_sample_size_corr_regression.html">Sample Size Planner (Correlation / Regression)</a></h4>
-            <p>
-              Plans how many <em>paired observations</em> you need to detect a non-zero correlation or simple regression slope between two metrics
-              (for example, <em>media spend vs. revenue</em> or <em>engagement vs. satisfaction</em>).
-            </p>
-          </article>
-          <article class="tool-card">
-            <h4><a href="apps/sample_size_multiarm_ab/main_sample_size_multiarm_ab.html">Sample Size Planner (Multi‑arm A/B)</a></h4>
-            <p>
-              Plans the per‑arm and total sample size for tests with a control and multiple variants (A/B/C/…), for either proportions or means,
-              under goals focused on minimum lift vs. control and/or any meaningful difference across arms.
-            </p>
+            <p class="muted">Data: contingency table counts or raw categorical outcomes.</p>
           </article>
         </div>
 
         <div class="tool-directory" style="margin-top:1.5rem;">
-          <h3>Sampling &amp; Design</h3>
+          <h3 id="modeling" style="scroll-margin-top:2rem;">🔮 Predictive Modeling &amp; Regression</h3>
           <article class="tool-card">
-            <h4><a href="apps/sampling_visualizer/main_sampling_visualizer.html">Sampling Designs Visualizer</a></h4>
+            <h4>
+              <a href="apps/bivariate_regression/main_bivariate_regression.html">Bivariate Linear Regression</a>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
+            </h4>
+            <p>
+              Fits a straight-line relationship between one predictor and one outcome, either for a continuous predictor
+              (for example, <em>weekly ad spend vs. revenue</em>) or a binary group indicator. 
+              Shows slope, intercept, R², and residual diagnostics.
+            </p>
+            <p class="muted">Data: summary stats (n, means, SDs, r) or raw paired observations.</p>
+          </article>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/ml_regression/ml_regression.html">Multiple Linear Regression</a>
+              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
+            </h4>
+            <p>
+              Models a numeric outcome using multiple predictors (continuous and categorical) with diagnostics and effect plots
+              (for example, <em>customer value vs. recency, frequency, and segment</em>). 
+              Includes multicollinearity checks, residual plots, and coefficient interpretation.
+            </p>
+            <p class="muted">Data: raw rows with one numeric outcome and several predictors.</p>
+          </article>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/log_regression/log_regression.html">Logistic Regression</a>
+              <span class="badge" style="background:#fbbf24; color:#78350f; font-size:0.75rem; margin-left:0.5rem;">Advanced</span>
+            </h4>
+            <p>
+              Models a binary outcome using multiple predictors to estimate odds ratios and predicted probabilities
+              (for example, <em>conversion vs. not convert based on traffic source, offer, and device</em>). 
+              Shows log-odds, odds ratios, ROC curves, and classification metrics.
+            </p>
+            <p class="muted">Data: raw rows with one binary outcome and several predictors.</p>
+          </article>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/mn_log_regression/main_mn_log_regression.html">Multinomial Logistic Regression</a>
+              <span class="badge" style="background:#fbbf24; color:#78350f; font-size:0.75rem; margin-left:0.5rem;">Advanced</span>
+            </h4>
+            <p>
+              Models a categorical outcome with 3+ levels using multiple predictors, framed as a choice model
+              (for example, <em>product choice based on price, brand, and customer segment</em>). 
+              Estimates relative risk ratios for each outcome level.
+            </p>
+            <p class="muted">Data: raw rows with one categorical outcome and multiple predictors.</p>
+          </article>
+        </div>
+
+        <div class="tool-directory" style="margin-top:1.5rem;">
+          <h3 id="clustering" style="scroll-margin-top:2rem;">🎯 Segmentation &amp; Clustering</h3>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/kmeans/main_kmeans.html">K-Means Clustering</a>
+              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
+            </h4>
+            <p>
+              Segments records into a specified number of clusters based on numeric predictors,
+              assigning each case to the nearest cluster center. Includes elbow plots, silhouette scores, and cluster profiles.
+              Perfect for customer segmentation or market analysis.
+            </p>
+            <p class="muted">Data: raw rows with two or more numeric predictors for clustering.</p>
+          </article>
+        </div>
+
+        <div class="tool-directory" style="margin-top:1.5rem;">
+          <h3 id="probability" style="scroll-margin-top:2rem;">🎲 Probability &amp; Simulation</h3>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/compound_event_probability/main_compound_event_probability.html">Compound Event Probability Calculator</a>
+              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">NEW</span>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.25rem;">Beginner</span>
+            </h4>
+            <p>
+              Calculate probabilities for repeated independent events using the binomial distribution. 
+              Answer questions like "What's the probability of 7+ conversions in 23 trials with 10% success rate?" 
+              Includes exact binomial, normal approximation, Poisson approximation, Monte Carlo simulation, and extensive educational content.
+            </p>
+            <p class="muted">Data: event probability, number of trials, and target success count.</p>
+          </article>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/sentiment_lab/main_sentiment_lab.html">Sentiment Analysis Lab</a>
+              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">NEW</span>
+              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.25rem;">Intermediate</span>
+            </h4>
+            <p>
+              Analyze text sentiment using lexicon-based scoring methods. 
+              Process customer reviews, social media posts, or survey responses to extract sentiment scores and classify text as positive, negative, or neutral.
+              Includes word-level analysis and aggregated statistics.
+            </p>
+            <p class="muted">Data: text strings (reviews, comments, survey responses).</p>
+          </article>
+        </div>
+
+        <div class="tool-directory" style="margin-top:1.5rem;">
+          <h3 id="planning" style="scroll-margin-top:2rem;">📐 Study Design &amp; Planning</h3>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/sample_size_calculator/main_sample_size_calculator.html">Sample Size Planner (Single outcome)</a>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
+            </h4>
+            <p>
+              Plans how many observations you need to estimate or detect a change in a <em>single mean or single proportion</em>
+              (for example, <em>overall conversion rate or average order value</em>).
+              Supports both estimation (precision-based) and hypothesis testing (power-based) scenarios.
+            </p>
+            <p class="muted">Input: effect size, significance level, desired power or margin of error.</p>
+          </article>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/sample_size_AB_calculator/main_sample_size_ab_calculator.html">Sample Size Planner (A/B tests)</a>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
+            </h4>
+            <p>
+              Plans total sample size for <em>A/B tests</em> comparing two means or two proportions, given the lift that would be
+              worth acting on, your confidence level, and desired power.
+              Essential for experiment planning before launching tests.
+            </p>
+            <p class="muted">Input: baseline rate/mean, minimum detectable effect, alpha, power.</p>
+          </article>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/sample_size_corr_regression/main_sample_size_corr_regression.html">Sample Size Planner (Correlation / Regression)</a>
+              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
+            </h4>
+            <p>
+              Plans how many <em>paired observations</em> you need to detect a non-zero correlation or simple regression slope between two metrics
+              (for example, <em>media spend vs. revenue</em> or <em>engagement vs. satisfaction</em>).
+              Accounts for expected effect size and desired statistical power.
+            </p>
+            <p class="muted">Input: expected correlation, significance level, desired power.</p>
+          </article>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/sample_size_multiarm_ab/main_sample_size_multiarm_ab.html">Sample Size Planner (Multi‑arm A/B)</a>
+              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
+            </h4>
+            <p>
+              Plans the per‑arm and total sample size for tests with a control and multiple variants (A/B/C/…), for either proportions or means,
+              under goals focused on minimum lift vs. control and/or any meaningful difference across arms.
+              Handles multiple comparison adjustments.
+            </p>
+            <p class="muted">Input: number of arms, baseline rate/mean, minimum detectable effect, alpha, power.</p>
+          </article>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/sampling_visualizer/main_sampling_visualizer.html">Sampling Designs Visualizer</a>
+              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
+            </h4>
             <p>
               Shows how simple random, stratified, cluster, systematic, and convenience sampling select individuals from the same population, and how
               each design affects the composition and variability of sample estimates.
+              Interactive visual tool for understanding sampling methodology.
             </p>
+            <p class="muted">Interactive simulation: compare sampling methods on the same population.</p>
           </article>
           <article class="tool-card">
-            <h4><a href="apps/selection_probability_lab/main_selection_probability_lab.html">Selection Probability Lab</a></h4>
+            <h4>
+              <a href="apps/selection_probability_lab/main_selection_probability_lab.html">Selection Probability Lab</a>
+              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
+            </h4>
             <p>
               Explores the probability that specific items are selected from a finite population under sampling with or without replacement,
               showing exact hypergeometric/binomial math, live equations, and simulated draws.
+              Deepens understanding of sampling probability mechanics.
             </p>
+            <p class="muted">Interactive simulation: explore selection probabilities with/without replacement.</p>
           </article>
         </div>
       </div>
     </section>
 
     <section class="diagnostics-section" aria-labelledby="study-tips-heading">
-      <h2 id="study-tips-heading">Tips for Students</h2>
+      <h2 id="study-tips-heading">📚 Tips for Students</h2>
       <div class="card">
+        <h3>General Study Advice</h3>
         <ul>
-          <li>Always sketch your research question in plain language <em>before</em> choosing a test.</li>
-          <li>Match the tool to the <strong>data structure</strong> (numeric vs. categorical, independent vs. paired).</li>
-          <li>Use the built-in narratives as a starting point, then rewrite them in your own words for assignments.</li>
-          <li>Experiment with the sample scenarios and then upload your own data once you are comfortable.</li>
+          <li><strong>Start with exploration:</strong> Use the Univariate Analyzer to understand your data <em>before</em> choosing a test.</li>
+          <li><strong>Sketch your question:</strong> Write out your research question in plain language before picking a tool.</li>
+          <li><strong>Match data structure:</strong> Choose tools based on your data type (numeric vs. categorical) and study design (independent vs. paired).</li>
+          <li><strong>Try scenarios first:</strong> Experiment with built-in sample scenarios before uploading your own data.</li>
+          <li><strong>Learn from narratives:</strong> Use the APA-style writeups as templates, then rewrite them in your own words for assignments.</li>
         </ul>
-        <p class="muted">These apps are designed as teaching tools: they show equations, diagnostics, and APA-style
-          reporting so you can see how the math connects to marketing decisions.</p>
+        <h3 style="margin-top:1.5rem;">Complexity Guide</h3>
+        <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
+          <div style="padding:0.5rem 1rem; background:#dbeafe; border-radius:6px; border-left:4px solid #3b82f6;">
+            <strong>🟢 Beginner:</strong> Start here if you're new to statistics. Clear inputs, straightforward interpretation.
+          </div>
+          <div style="padding:0.5rem 1rem; background:#fef3c7; border-radius:6px; border-left:4px solid #f59e0b;">
+            <strong>🟡 Intermediate:</strong> Requires understanding of multiple concepts or more complex data structures.
+          </div>
+          <div style="padding:0.5rem 1rem; background:#fee2e2; border-radius:6px; border-left:4px solid #ef4444;">
+            <strong>🔴 Advanced:</strong> Assumes solid statistical foundation. Best used after mastering beginner/intermediate tools.
+          </div>
+        </div>
+        <p class="muted" style="margin-top:1rem;">
+          These apps are designed as teaching tools: they show equations, diagnostics, and APA-style
+          reporting so you can see how the math connects to marketing decisions.
+        </p>
       </div>
     </section>
   </main>
   <script>
+    // Decision Tree Logic
     (function () {
-      const outcomeSel = document.getElementById('helper-outcome-type');
-      const groupsSel = document.getElementById('helper-groups');
-      const predsSel = document.getElementById('helper-predictors');
-      const predTypeWrapper = document.getElementById('helper-predictor-type-wrapper');
-      const predTypeSel = document.getElementById('helper-predictor-type');
-      const btn = document.getElementById('helper-suggest');
-      const resultEl = document.getElementById('helper-result');
-      if (!outcomeSel || !groupsSel || !predsSel || !btn || !resultEl) return;
+      const decisionState = {
+        outcome: null,
+        predictorCount: null,
+        predictorType: null,
+        groupStructure: null
+      };
 
-      if (predsSel && predTypeWrapper && predTypeSel) {
-        predsSel.addEventListener('change', function () {
-          if (predsSel.value === 'one') {
-            predTypeWrapper.style.display = 'block';
+      // Add event listeners to all decision buttons
+      document.querySelectorAll('.decision-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const choice = this.dataset.choice;
+          const nextNode = this.dataset.next;
+          const currentNode = this.closest('.decision-node');
+          
+          // Store the choice based on current step
+          const step = currentNode.dataset.step;
+          if (step === '1') {
+            decisionState.outcome = choice;
+          } else if (step === '2') {
+            decisionState.predictorCount = choice;
+          } else if (step === '3') {
+            decisionState.predictorType = choice;
+          } else if (step === '4') {
+            decisionState.groupStructure = choice;
+          }
+
+          // Deactivate current node
+          currentNode.classList.remove('active');
+
+          // Show result or next node
+          if (nextNode === 'result') {
+            showResult();
           } else {
-            predTypeWrapper.style.display = 'none';
-            predTypeSel.value = '';
+            const nextElement = document.getElementById('node-' + nextNode);
+            if (nextElement) {
+              nextElement.classList.add('active');
+              nextElement.style.display = 'block';
+              nextElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
           }
         });
+      });
+
+      // Reset button
+      document.getElementById('reset-helper')?.addEventListener('click', function() {
+        decisionState.outcome = null;
+        decisionState.predictorCount = null;
+        decisionState.predictorType = null;
+        decisionState.groupStructure = null;
+        
+        document.querySelectorAll('.decision-node').forEach(node => {
+          node.classList.remove('active');
+          if (node.id !== 'node-outcome') {
+            node.style.display = 'none';
+          }
+        });
+        document.getElementById('node-outcome').classList.add('active');
+        document.getElementById('decision-result').style.display = 'none';
+        document.getElementById('node-outcome').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+
+      function showResult() {
+        const resultDiv = document.getElementById('decision-result');
+        const contentDiv = document.getElementById('result-content');
+        
+        let recommendation = getRecommendation();
+        contentDiv.innerHTML = recommendation;
+        resultDiv.style.display = 'block';
+        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
 
-      function suggest() {
-        const outcome = outcomeSel.value;
-        const groups = groupsSel.value;
-        const preds = predsSel.value;
-        const predType = predTypeSel ? predTypeSel.value : '';
-        if (!outcome || !preds || !groups) {
-          resultEl.textContent = 'Please choose an outcome type, number of predictors, and group structure.';
-          return;
-        }
-        if (preds === 'one' && predTypeWrapper && predTypeSel && !predType) {
-          resultEl.textContent = 'Please specify the type of your single main predictor (numeric, binary group indicator, or categorical with 3+ levels).';
-          return;
+      function getRecommendation() {
+        const { outcome, predictorCount, predictorType, groupStructure } = decisionState;
+        let html = '';
+
+        // NUMERIC OUTCOME
+        if (outcome === 'numeric') {
+          if (predictorCount === 'one') {
+            if (predictorType === 'numeric') {
+              html = `
+                <div class="result-recommendation">
+                  <h4>✅ Recommended: Pearson Correlation</h4>
+                  <p><strong>Marketing Context:</strong> Use this when exploring whether two numeric metrics move together (e.g., "As ad spend increases, does revenue increase?").</p>
+                  <p><a href="apps/pearson_correlation/main_pearson.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Pearson Correlation Tool →</a></p>
+                </div>
+                <div class="result-alternative">
+                  <h4>📊 Alternative: Bivariate Linear Regression</h4>
+                  <p>Fits a line through your data points and gives you a slope (how much Y changes per unit of X). Same relationship as correlation, but with a prediction equation.</p>
+                  <p><a href="apps/bivariate_regression/main_bivariate_regression.html">Open Bivariate Regression Tool →</a></p>
+                </div>`;
+            } else if (predictorType === 'binary_group') {
+              if (groupStructure === 'two_paired') {
+                html = `
+                  <div class="result-recommendation">
+                    <h4>✅ Recommended: Paired Sample t-test</h4>
+                    <p><strong>Marketing Context:</strong> Use when the same customers/accounts are measured twice (e.g., "Did customer satisfaction improve after our website redesign?" measured on the same customers before and after).</p>
+                    <p><a href="apps/paired_ttest/main_paired_ttest.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Paired t-test Tool →</a></p>
+                  </div>
+                  <div class="result-alternative">
+                    <h4>📊 Note on Design</h4>
+                    <p>Paired designs are powerful because they control for individual differences—each person serves as their own control. Common in before/after campaign analysis and A/B tests where same users see both versions.</p>
+                  </div>`;
+              } else {
+                html = `
+                  <div class="result-recommendation">
+                    <h4>✅ Recommended: Welch's t-test (Independent Means)</h4>
+                    <p><strong>Marketing Context:</strong> Use when comparing averages between two independent groups (e.g., "Did Email A generate higher revenue per customer than Email B?" where different customers got each email).</p>
+                    <p><a href="apps/ind_ttest/main_ind_ttest.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Welch's t-test Tool →</a></p>
+                  </div>
+                  <div class="result-alternative">
+                    <h4>📊 Alternative: Bivariate Linear Regression</h4>
+                    <p>Using a binary predictor (0/1) in regression gives the same result as a t-test, but frames it as a predictive model. The slope equals the mean difference.</p>
+                    <p><a href="apps/bivariate_regression/main_bivariate_regression.html">Open Bivariate Regression Tool →</a></p>
+                  </div>`;
+              }
+            } else if (predictorType === 'categorical3') {
+              html = `
+                <div class="result-recommendation">
+                  <h4>✅ Recommended: One-Way ANOVA</h4>
+                  <p><strong>Marketing Context:</strong> Use when comparing means across three or more groups (e.g., "Which of our four landing page designs generates highest revenue per visitor?").</p>
+                  <p><a href="apps/onewayanova/main_onewayanova.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open One-Way ANOVA Tool →</a></p>
+                </div>
+                <div class="result-alternative">
+                  <h4>📊 After ANOVA</h4>
+                  <p>ANOVA tells you if <em>any</em> groups differ. Follow up with post-hoc pairwise comparisons to see which specific pairs differ (e.g., "Is Design A better than Design B?"). The tool includes these comparisons.</p>
+                </div>`;
+            }
+          } else if (predictorCount === 'multiple') {
+            html = `
+              <div class="result-recommendation">
+                <h4>✅ Recommended: Multiple Linear Regression</h4>
+                <p><strong>Marketing Context:</strong> Use when modeling a numeric outcome with multiple predictors simultaneously (e.g., "Customer lifetime value based on recency, frequency, monetary value, AND customer segment").</p>
+                <p><a href="apps/ml_regression/ml_regression.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Multiple Regression Tool →</a></p>
+              </div>
+              <div class="result-alternative">
+                <h4>📊 Why Multiple Regression?</h4>
+                <p>Multiple regression lets you control for confounding variables and see the <em>unique</em> effect of each predictor while holding others constant. Essential for marketing attribution and predictive modeling.</p>
+              </div>`;
+          }
         }
 
-        let suggestion = '';
+        // BINARY OUTCOME
+        else if (outcome === 'binary') {
+          if (predictorCount === 'one') {
+            if (groupStructure === 'two_paired') {
+              html = `
+                <div class="result-recommendation">
+                  <h4>✅ Recommended: McNemar Test</h4>
+                  <p><strong>Marketing Context:</strong> Use for paired yes/no data (e.g., "Did customers change their subscription status after seeing our new offer?" measured on same customers before and after).</p>
+                  <p><a href="apps/mcnemar/main_mcnemar.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open McNemar Test Tool →</a></p>
+                </div>
+                <div class="result-alternative">
+                  <h4>📊 What McNemar Does</h4>
+                  <p>Focuses on "switchers"—people who changed from yes to no or no to yes. Ignores people who stayed the same in both periods, which makes it powerful for detecting change.</p>
+                </div>`;
+            } else {
+              html = `
+                <div class="result-recommendation">
+                  <h4>✅ Recommended: A/B Proportion Test</h4>
+                  <p><strong>Marketing Context:</strong> Use when comparing conversion rates between two independent groups (e.g., "Did landing page A have a higher conversion rate than landing page B?").</p>
+                  <p><a href="apps/ab_proportion/main_ab_proportion.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open A/B Proportion Tool →</a></p>
+                </div>
+                <div class="result-alternative">
+                  <h4>📊 Alternative: Logistic Regression</h4>
+                  <p>For a single binary predictor, logistic regression gives similar results but frames it as an odds ratio. Use the Logistic Regression tool with one predictor.</p>
+                  <p><a href="apps/log_regression/log_regression.html">Open Logistic Regression Tool →</a></p>
+                </div>`;
+            }
+          } else if (predictorCount === 'multiple') {
+            html = `
+              <div class="result-recommendation">
+                <h4>✅ Recommended: Logistic Regression</h4>
+                <p><strong>Marketing Context:</strong> Use when predicting a yes/no outcome with multiple predictors (e.g., "What predicts conversion: traffic source, device type, AND time of day?").</p>
+                <p><a href="apps/log_regression/log_regression.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Logistic Regression Tool →</a></p>
+              </div>
+              <div class="result-alternative">
+                <h4>📊 Understanding Logistic Regression</h4>
+                <p>Estimates odds ratios for each predictor. An odds ratio of 2.0 means that factor doubles the odds of conversion. Critical for marketing attribution, lead scoring, and churn prediction.</p>
+              </div>`;
+          }
+        }
+
+        // CATEGORICAL OUTCOME (3+ levels)
+        else if (outcome === 'categorical') {
+          if (predictorCount === 'one') {
+            html = `
+              <div class="result-recommendation">
+                <h4>✅ Recommended: Chi-square Test of Association</h4>
+                <p><strong>Marketing Context:</strong> Use when exploring whether two categorical variables are related (e.g., "Does product choice vary by customer segment?" or "Is device type related to purchase category?").</p>
+                <p><a href="apps/chisquare/main_chisquare.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Chi-square Test Tool →</a></p>
+              </div>
+              <div class="result-alternative">
+                <h4>📊 When to Use</h4>
+                <p>Chi-square tests whether the distribution of one categorical variable differs across levels of another. Perfect for cross-tabulation analysis in market research and customer segmentation.</p>
+              </div>`;
+          } else if (predictorCount === 'multiple') {
+            html = `
+              <div class="result-recommendation">
+                <h4>✅ Recommended: Multinomial Logistic Regression</h4>
+                <p><strong>Marketing Context:</strong> Use when predicting a categorical outcome with 3+ levels using multiple predictors (e.g., "What predicts which product a customer chooses: price sensitivity, brand loyalty, AND demographics?").</p>
+                <p><a href="apps/mn_log_regression/main_mn_log_regression.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Multinomial Logistic Regression Tool →</a></p>
+              </div>
+              <div class="result-alternative">
+                <h4>📊 Choice Modeling</h4>
+                <p>Multinomial logistic regression is the foundation of choice modeling in marketing. Estimates relative risk ratios comparing each outcome to a reference category. Essential for product preference analysis.</p>
+              </div>`;
+          }
+        }
+
+        return html || '<p>Unable to determine recommendation. Please try again.</p>';
+      }
+    }());
+  </script>
         let common = '';
         let alternatives = '';
         if (outcome === 'numeric' && preds === 'one') {
@@ -461,25 +1075,6 @@
         } else {
           common = 'This combination is more advanced; consider a generalized linear model or mixed-effects model.';
           alternatives = 'Consult a statistics reference or instructor for guidance on appropriate advanced methods.';
-        }
-
-        if (common || alternatives) {
-          suggestion = `<div style="font-size:0.95rem;">
-  <div><strong>Common test used (primary choice):</strong><br>${common || 'Not clearly defined at this level.'}</div>
-  <hr style="margin:0.5rem 0; border:none; border-top:1px solid #fbbf24;">
-  <div><strong>Alternative statistical tests (equivalent or related):</strong><br>${alternatives || 'None commonly used beyond the main test at this level (advanced options exist).'}
-  </div>
-</div>`;
-        } else {
-          suggestion = '<div style="font-size:0.95rem;">No recommendation could be generated for this combination of answers.</div>';
-        }
-
-        resultEl.style.display = 'block';
-        resultEl.innerHTML = suggestion;
-      }
-
-      btn.addEventListener('click', suggest);
-    }());
   </script>
   
   <script src="shared/js/auth_tracking.js"></script>
