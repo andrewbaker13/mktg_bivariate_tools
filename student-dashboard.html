@@ -135,6 +135,14 @@
             border-radius: 4px;
             font-size: 0.9rem;
             border: 1px solid #fbbf24;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .tool-badge:hover {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .loading {
             text-align: center;
@@ -260,6 +268,32 @@
             'pca', 'factor-analysis', 'conjoint', 'cluster-analysis',
             'discriminant', 'manova', 'ancova', 'sem', 'time-series', 'forecasting'
         ];
+        
+        // Mapping of tool slugs to their actual paths and display names
+        const TOOL_MAP = {
+            'pearson-correlation': { path: 'apps/pearson_correlation/main_pearson.html', name: 'Pearson Correlation' },
+            'bivariate-regression': { path: 'apps/bivariate_regression/main_bivariate_regression.html', name: 'Bivariate Regression' },
+            'ml-regression': { path: 'apps/ml_regression/ml_regression.html', name: 'Multiple Linear Regression' },
+            'log-regression': { path: 'apps/log_regression/log_regression.html', name: 'Logistic Regression' },
+            'ind-ttest': { path: 'apps/ind_ttest/main_ind_ttest.html', name: 'Independent t-test' },
+            'paired-ttest': { path: 'apps/paired_ttest/main_paired_ttest.html', name: 'Paired t-test' },
+            'onewayanova': { path: 'apps/onewayanova/main_onewayanova.html', name: 'One-Way ANOVA' },
+            'ab-proportion': { path: 'apps/ab_proportion/main_ab_proportion.html', name: 'A/B Proportion Test' },
+            'chisquare': { path: 'apps/chisquare/main_chisquare.html', name: 'Chi-Square Test' },
+            'mcnemar': { path: 'apps/mcnemar/main_mcnemar.html', name: 'McNemar Test' },
+            'kmeans': { path: 'apps/kmeans/main_kmeans.html', name: 'K-Means Clustering' },
+            'mn-log-regression': { path: 'apps/mn_log_regression/main_mn_log_regression.html', name: 'Multinomial Logistic Regression' },
+            'sample-size-calculator': { path: 'apps/sample_size_calculator/main_sample_size_calculator.html', name: 'Sample Size Calculator' },
+            'sample-size-ab': { path: 'apps/sample_size_AB_calculator/main_sample_size_ab_calculator.html', name: 'A/B Sample Size Calculator' },
+            'sample-size-corr': { path: 'apps/sample_size_corr_regression/main_sample_size_corr_regression.html', name: 'Correlation/Regression Sample Size' },
+            'sample-size-multiarm': { path: 'apps/sample_size_multiarm_ab/main_sample_size_multiarm_ab.html', name: 'Multi-arm A/B Sample Size' },
+            'sampling-visualizer': { path: 'apps/sampling_visualizer/main_sampling_visualizer.html', name: 'Sampling Visualizer' },
+            'selection-probability': { path: 'apps/selection_probability_lab/main_selection_probability_lab.html', name: 'Selection Probability Lab' },
+            'compound-event': { path: 'apps/compound_event_probability/main_compound_event_probability.html', name: 'Compound Event Probability' },
+            'sentiment-lab': { path: 'apps/sentiment_lab/main_sentiment_lab.html', name: 'Sentiment Analysis Lab' },
+            'univariate-analyzer': { path: 'apps/univariate_analyzer/main_univariate_analyzer.html', name: 'Univariate Analyzer' },
+            'ps-matching': { path: 'apps/ps_matching/log_regression.html', name: 'Propensity Score Matching' }
+        };
 
         async function loadDashboard() {
             const token = getAuthToken();
@@ -409,14 +443,15 @@
 
         function showUntriedTools(toolsData) {
             const usedSlugs = toolsData.map(t => t.tool__slug);
-            const untried = ALL_TOOLS.filter(slug => !usedSlugs.includes(slug));
+            const untried = ALL_TOOLS.filter(slug => !usedSlugs.includes(slug) && TOOL_MAP[slug]);
             
             if (untried.length > 0) {
                 document.getElementById('untried-section').style.display = 'block';
                 const badges = document.getElementById('untried-badges');
                 badges.innerHTML = untried.map(slug => {
-                    const name = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                    return `<span class="tool-badge">${name}</span>`;
+                    const tool = TOOL_MAP[slug];
+                    if (!tool) return ''; // Skip if no mapping found
+                    return `<a href="${tool.path}" class="tool-badge" style="text-decoration: none; display: inline-block;">${tool.name}</a>`;
                 }).join('');
             }
         }
