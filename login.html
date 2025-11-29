@@ -170,29 +170,24 @@
             
             <!-- Reset Password Tab -->
             <div id="reset-tab" class="tab-content">
-                <p style="color: #6b7280; margin-bottom: 1.5rem;">Enter your email to receive a reset code, then enter the code and your new password.</p>
+                <p style="color: #6b7280; margin-bottom: 1.5rem;">Enter the reset code from your email along with your username and new password.</p>
                 
-                <!-- Step 1: Request Reset Code -->
-                <form id="request-reset-form" style="display: block;">
-                    <div class="form-group">
-                        <label for="reset-email">Email Address</label>
-                        <input type="email" id="reset-email" name="email" required>
-                    </div>
-                    <button type="submit" class="btn" id="request-btn">Send Reset Code</button>
-                </form>
-                
-                <!-- Step 2: Enter Code and New Password -->
-                <form id="reset-password-form" style="display: none;">
+                <form id="reset-password-form">
                     <div class="form-group">
                         <label for="reset-code">Reset Code (from email)</label>
-                        <input type="text" id="reset-code" name="reset_code" required maxlength="6" placeholder="123456">
+                        <input type="text" id="reset-code" name="reset_code" required maxlength="6" placeholder="123456" autocomplete="off">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reset-username">Username</label>
+                        <input type="text" id="reset-username" name="username" required autocomplete="username">
                     </div>
                     
                     <div class="form-group">
                         <label for="new-password">New Password</label>
                         <div class="password-wrapper">
-                            <input type="password" id="new-password" name="new_password" required minlength="8">
-                            <button type="button" class="password-toggle" onclick="toggleNewPassword()">
+                            <input type="password" id="new-password" name="new_password" required minlength="8" autocomplete="new-password">
+                            <button type="button" class="password-toggle" onclick="togglePasswordField('new-password', 'toggle-new-icon')">
                                 <span id="toggle-new-icon">👁️</span>
                             </button>
                         </div>
@@ -201,11 +196,15 @@
                     
                     <div class="form-group">
                         <label for="confirm-password">Confirm New Password</label>
-                        <input type="password" id="confirm-password" required minlength="8">
+                        <div class="password-wrapper">
+                            <input type="password" id="confirm-password" required minlength="8" autocomplete="new-password">
+                            <button type="button" class="password-toggle" onclick="togglePasswordField('confirm-password', 'toggle-confirm-icon')">
+                                <span id="toggle-confirm-icon">👁️</span>
+                            </button>
+                        </div>
                     </div>
                     
                     <button type="submit" class="btn" id="reset-btn">Reset Password</button>
-                    <button type="button" class="btn" style="background: #6b7280; margin-top: 0.5rem;" onclick="backToRequestForm()">Back</button>
                 </form>
             </div>
             
@@ -247,10 +246,10 @@
             }
         }
         
-        // Password visibility toggle
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const toggleIcon = document.getElementById('toggle-icon');
+        // Password visibility toggle - unified function
+        function togglePasswordField(fieldId, iconId) {
+            const passwordInput = document.getElementById(fieldId);
+            const toggleIcon = document.getElementById(iconId);
             
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
@@ -261,22 +260,12 @@
             }
         }
         
-        function toggleNewPassword() {
-            const passwordInput = document.getElementById('new-password');
-            const toggleIcon = document.getElementById('toggle-new-icon');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.textContent = '🙈';
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.textContent = '👁️';
-            }
+        // Backwards compatibility for login password toggle
+        function togglePassword() {
+            togglePasswordField('password', 'toggle-icon');
         }
         
         function backToRequestForm() {
-            document.getElementById('request-reset-form').style.display = 'block';
-            document.getElementById('reset-password-form').style.display = 'none';
             errorMsg.style.display = 'none';
             successMsg.style.display = 'none';
         }
@@ -331,54 +320,6 @@
             }
         });
         
-        // Request reset code form
-        const requestResetForm = document.getElementById('request-reset-form');
-        const requestBtn = document.getElementById('request-btn');
-        
-        requestResetForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
-            requestBtn.disabled = true;
-            requestBtn.textContent = 'Sending...';
-            
-            const email = document.getElementById('reset-email').value;
-            
-            try {
-                const response = await fetch(`${API_BASE}/auth/request-reset/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email })
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to send reset code');
-                }
-                
-                successMsg.textContent = '✅ Reset code sent! Check your email and enter the code below.';
-                successMsg.style.display = 'block';
-                
-                // Switch to reset form
-                setTimeout(() => {
-                    document.getElementById('request-reset-form').style.display = 'none';
-                    document.getElementById('reset-password-form').style.display = 'block';
-                    successMsg.style.display = 'none';
-                }, 2000);
-                
-            } catch (error) {
-                errorMsg.textContent = '❌ ' + error.message;
-                errorMsg.style.display = 'block';
-            } finally {
-                requestBtn.disabled = false;
-                requestBtn.textContent = 'Send Reset Code';
-            }
-        });
-        
         // Reset password form
         const resetPasswordForm = document.getElementById('reset-password-form');
         const resetBtn = document.getElementById('reset-btn');
@@ -402,7 +343,7 @@
             resetBtn.disabled = true;
             resetBtn.textContent = 'Resetting...';
             
-            const email = document.getElementById('reset-email').value;
+            const username = document.getElementById('reset-username').value;
             const resetCode = document.getElementById('reset-code').value;
             
             try {
@@ -412,7 +353,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        email,
+                        username,
                         reset_code: resetCode,
                         new_password: newPassword
                     })
@@ -430,10 +371,7 @@
                 // Switch back to login tab
                 setTimeout(() => {
                     switchTab('login');
-                    document.getElementById('request-reset-form').style.display = 'block';
-                    document.getElementById('reset-password-form').style.display = 'none';
                     resetPasswordForm.reset();
-                    requestResetForm.reset();
                 }, 2000);
                 
             } catch (error) {
