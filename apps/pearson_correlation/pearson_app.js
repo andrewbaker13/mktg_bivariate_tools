@@ -163,11 +163,11 @@ function checkAndTrackUsage() {
     if (localStorage.getItem(storageKey)) return; // Already tracked today
     
     // Track the usage
-    if (typeof logToolRun === 'function') {
-        logToolRun('pearson-correlation', 'Pearson Correlation', {
+    if (typeof logToolUsage === 'function') {
+        logToolUsage('pearson-correlation', {
             method: selectedCorrelationMethod,
             mode: activeMode
-        });
+        }, `Pearson correlation analysis completed`);
         localStorage.setItem(storageKey, 'true');
         console.log('Usage tracked for Pearson Correlation');
     }

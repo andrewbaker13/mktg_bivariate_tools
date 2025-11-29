@@ -73,11 +73,11 @@ function checkAndTrackUsage() {
   const storageKey = `tool-tracked-log-regression-${today}`;
   if (localStorage.getItem(storageKey)) return;
   
-  if (typeof logToolRun === 'function') {
-    logToolRun('log-regression', 'Logistic Regression', {
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('log-regression', {
       outcome: selectedOutcome,
       predictor_count: selectedPredictors.length
-    });
+    }, `Logistic regression analysis completed`);
     localStorage.setItem(storageKey, 'true');
     console.log('Usage tracked for Logistic Regression');
   }

@@ -38,12 +38,12 @@ function checkAndTrackUsage() {
   const storageKey = `tool-tracked-mn-log-regression-${today}`;
   if (localStorage.getItem(storageKey)) return;
   
-  if (typeof logToolRun === 'function') {
-    logToolRun('mn-log-regression', 'Multinomial Logistic Regression', {
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('mn-log-regression', {
       outcome: mnlogSelectedOutcome,
       predictor_count: mnlogSelectedPredictors.length,
       outcome_levels: mnlogOutcomeLevels.length
-    });
+    }, `Multinomial logistic regression analysis completed`);
     localStorage.setItem(storageKey, 'true');
     console.log('Usage tracked for Multinomial Logistic Regression');
   }

@@ -72,11 +72,11 @@ function checkAndTrackUsage() {
   const storageKey = `tool-tracked-ml-regression-${today}`;
   if (localStorage.getItem(storageKey)) return;
   
-  if (typeof logToolRun === 'function') {
-    logToolRun('ml-regression', 'Multiple Linear Regression', {
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('ml-regression', {
       outcome: selectedOutcome,
       predictor_count: selectedPredictors.length
-    });
+    }, `Multiple linear regression analysis completed`);
     localStorage.setItem(storageKey, 'true');
     console.log('Usage tracked for Multiple Linear Regression');
   }

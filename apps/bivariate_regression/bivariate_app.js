@@ -94,10 +94,10 @@ function checkAndTrackUsage() {
   const storageKey = `tool-tracked-bivariate-regression-${today}`;
   if (localStorage.getItem(storageKey)) return;
   
-  if (typeof logToolRun === 'function') {
-    logToolRun('bivariate-regression', 'Bivariate Regression', {
+  if (typeof logToolUsage === 'function') {
+    logToolUsage('bivariate-regression', {
       mode: activeDataEntryMode
-    });
+    }, `Bivariate regression analysis completed`);
     localStorage.setItem(storageKey, 'true');
     console.log('Usage tracked for Bivariate Regression');
   }
