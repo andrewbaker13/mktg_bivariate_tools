@@ -39,16 +39,16 @@
 
       authBarContent.innerHTML = `
         <span class="auth-bar__status">✓ Logged in as <strong>${username}</strong></span>
-        <a href="${getRelativePathToRoot()}student-dashboard.html">My Dashboard</a>
-        ${isStaff ? `<a href="${getRelativePathToRoot()}instructor-analytics.html">Course Analytics</a>` : ''}
-        ${isStaff ? `<a href="${getRelativePathToRoot()}instructor.html">Manage Courses</a>` : ''}
-        ${isStaff ? `<a href="${getRelativePathToRoot()}admin-dashboard.html">System Dashboard</a>` : ''}
+        <a href="${getRelativePathToRoot()}admin_pages/student-dashboard.html">My Dashboard</a>
+        ${isStaff ? `<a href="${getRelativePathToRoot()}admin_pages/instructor-analytics.html">Course Analytics</a>` : ''}
+        ${isStaff ? `<a href="${getRelativePathToRoot()}admin_pages/instructor.html">Manage Courses</a>` : ''}
+        ${isStaff ? `<a href="${getRelativePathToRoot()}admin_pages/admin-dashboard.html">System Dashboard</a>` : ''}
         <button class="auth-bar__logout" onclick="handleAuthBarLogout()">Logout</button>
       `;
     } else {
       authBarContent.innerHTML = `
-        <a href="${getRelativePathToRoot()}login.html">Login</a>
-        <a href="${getRelativePathToRoot()}register.html">Create Account</a>
+        <a href="${getRelativePathToRoot()}admin_pages/login.html">Login</a>
+        <a href="${getRelativePathToRoot()}admin_pages/register.html">Create Account</a>
       `;
     }
   }
@@ -57,8 +57,11 @@
   function getRelativePathToRoot() {
     const path = window.location.pathname;
     if (path.includes('/apps/')) {
-      return '../../';
+      // Apps are now 3 levels deep: apps/category/tool/
+      return '../../../';
     } else if (path.includes('/old_site/')) {
+      return '../';
+    } else if (path.includes('/admin_pages/')) {
       return '../';
     }
     return '';

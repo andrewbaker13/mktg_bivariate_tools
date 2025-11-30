@@ -354,7 +354,7 @@ function initAuthUI() {
     } else {
         authDiv.innerHTML = `
             <span style="color: #f59e0b;">⚠ Not logged in - usage not being tracked</span>
-            <a href="/login.html" style="margin-left: 1rem; color: #3b82f6; text-decoration: underline;">Login</a>
+            <a href="/admin_pages/login.html" style="margin-left: 1rem; color: #3b82f6; text-decoration: underline;">Login</a>
         `;
         heroHeader.appendChild(authDiv);
     }
