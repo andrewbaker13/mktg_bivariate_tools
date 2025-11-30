@@ -1,0 +1,607 @@
+/**
+ * Multiple Regression with Interactions & Non-Linear Effects
+ * Custom styling
+ */
+
+/* Interaction type selector */
+.interaction-type-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.radio-option:hover {
+  border-color: #4a90e2;
+  background-color: #f8f9fa;
+}
+
+.radio-option input[type="radio"] {
+  margin-right: 0.75rem;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.radio-option input[type="radio"]:checked + span {
+  font-weight: 600;
+  color: #2c5aa0;
+}
+
+.radio-option span {
+  flex: 1;
+  font-size: 1rem;
+}
+
+/* Interaction variable selectors */
+.interaction-var-selectors {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #4a90e2;
+}
+
+.var-selector-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.var-selector-group h4 {
+  margin: 0 0 1rem 0;
+  color: #2c5aa0;
+  font-size: 1.1rem;
+}
+
+.selector-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+.selector-row label {
+  font-weight: 500;
+  text-align: right;
+}
+
+.selector-row select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.var-selector-group button.secondary {
+  margin-top: 0.5rem;
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  background-color: #fff;
+  border: 1px solid #4a90e2;
+  color: #4a90e2;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.var-selector-group button.secondary:hover {
+  background-color: #4a90e2;
+  color: #fff;
+}
+
+.helper-text {
+  font-size: 0.9rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+/* Switch option for checkboxes */
+.switch-option {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.switch-option input[type="checkbox"] {
+  margin-right: 0.75rem;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.switch-option span {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Advanced settings */
+.advanced-settings {
+  margin-top: 1rem;
+}
+
+.advanced-settings summary {
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.75rem;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.advanced-settings summary:hover {
+  background-color: #e0e0e0;
+}
+
+.advanced-settings-content {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-left: 3px solid #4a90e2;
+}
+
+/* Confidence buttons */
+.confidence-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.confidence-button {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  background-color: #fff;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.confidence-button:hover {
+  border-color: #4a90e2;
+  background-color: #f8f9fa;
+}
+
+.confidence-button.selected {
+  border-color: #4a90e2;
+  background-color: #4a90e2;
+  color: #fff;
+}
+
+/* Regression equation styling */
+.regression-equation-text {
+  font-family: 'Courier New', monospace;
+  font-size: 1.05rem;
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #4a90e2;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Interaction plot card */
+#interaction-plot-card {
+  margin-top: 2rem;
+  border-top: 3px solid #4a90e2;
+  padding-top: 2rem;
+}
+
+/* Chart placeholder */
+.chart-placeholder {
+  min-height: 400px;
+  width: 100%;
+}
+
+/* Interpretation aid styling */
+.interpretation-aid {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background-color: #fff9e6;
+}
+
+.interpretation-aid summary {
+  font-weight: 600;
+  cursor: pointer;
+  color: #856404;
+  padding: 0.5rem;
+}
+
+.interpretation-aid .muted {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  line-height: 1.6;
+}
+
+/* Coefficient interpretation guide */
+#coef-interpretation {
+  padding: 1rem;
+}
+
+#coef-interpretation ul {
+  margin-left: 1.5rem;
+  line-height: 1.8;
+}
+
+/* Summary statistics grid */
+.summary-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .summary-stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.summary-stats-grid h4 {
+  margin-bottom: 1rem;
+  color: #2c5aa0;
+}
+
+/* Summary table */
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.summary-table th {
+  background-color: #f0f0f0;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #ddd;
+}
+
+.summary-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #eee;
+}
+
+.summary-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Diagnostics section */
+.diagnostics-details {
+  margin-top: 1rem;
+}
+
+.diagnostics-details summary {
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.75rem;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.diagnostics-details summary:hover {
+  background-color: #e0e0e0;
+}
+
+#diagnostics-content {
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.diagnostic-block {
+  margin-bottom: 2rem;
+}
+
+.diagnostic-block h4 {
+  color: #2c5aa0;
+  margin-bottom: 0.75rem;
+}
+
+.diagnostic-block ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  line-height: 1.8;
+}
+
+/* Dual panels for APA and Managerial reports */
+.dual-panels {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .dual-panels {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.dual-panel {
+  padding: 1.5rem;
+}
+
+.dual-panel h3 {
+  margin-bottom: 1rem;
+  color: #2c5aa0;
+  border-bottom: 2px solid #4a90e2;
+  padding-bottom: 0.5rem;
+}
+
+/* Scenario controls */
+.scenario-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.scenario-controls__input {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.scenario-controls select {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+#scenario-description {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  line-height: 1.6;
+}
+
+/* Metrics panel */
+.metrics-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.metric-output {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #4a90e2;
+}
+
+.metric-output span:first-child {
+  font-weight: 600;
+  color: #555;
+}
+
+.dynamic-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2c5aa0;
+}
+
+/* Additional notes/details styling */
+.additional-notes {
+  margin-top: 1rem;
+  border-left: 4px solid #4a90e2;
+  padding-left: 1rem;
+}
+
+.additional-notes summary {
+  font-weight: 600;
+  cursor: pointer;
+  color: #2c5aa0;
+  padding: 0.5rem 0;
+}
+
+.additional-content {
+  margin-top: 0.75rem;
+  line-height: 1.7;
+}
+
+.additional-content h4 {
+  margin-top: 1rem;
+  color: #2c5aa0;
+}
+
+.additional-content ul {
+  margin-left: 1.5rem;
+  line-height: 1.8;
+}
+
+/* Badge styling */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: #ff6b6b;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Hero header enhancements */
+.hero-context {
+  margin-top: 0.5rem;
+}
+
+/* Utility classes */
+.hidden {
+  display: none !important;
+}
+
+.muted {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+/* Equation styling */
+.equation {
+  background-color: #f8f9fa;
+  padding: 1rem 1.5rem;
+  border-radius: 6px;
+  margin: 1rem 0;
+  border-left: 4px solid #4a90e2;
+}
+
+.equation strong {
+  color: #2c5aa0;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* Panel intro text */
+.panel-intro {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  color: #555;
+}
+
+/* Dropzone styling */
+.dropzone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  background-color: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropzone:hover {
+  border-color: #4a90e2;
+  background-color: #f0f7ff;
+}
+
+.dropzone-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.dropzone-note {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.upload-status {
+  margin-top: 1rem;
+  font-style: italic;
+  color: #666;
+}
+
+/* Variable selection panel */
+.variable-selectors-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .variable-selectors-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.variable-column label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #2c5aa0;
+}
+
+.variable-column select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.predictor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#assignment-summary {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #e8f4f8;
+  border-radius: 6px;
+}
+
+/* Chart note */
+.chart-note {
+  margin-top: 1rem;
+  font-style: italic;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Template download */
+.template-download {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.template-download button {
+  padding: 0.75rem 1.5rem;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.template-download button:hover {
+  background-color: #357abd;
+}
+
+/* Footer styling */
+.app-footer {
+  margin-top: 4rem;
+  padding: 2rem 1rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.page-timestamps {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.citation {
+  font-size: 0.85rem;
+  color: #555;
+  font-style: italic;
+  margin-top: 1rem;
+}

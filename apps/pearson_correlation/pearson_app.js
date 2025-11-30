@@ -151,8 +151,8 @@ function checkAndTrackUsage() {
     // Check if user meets all criteria for tracking
     const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60; // Convert to minutes
     
-    // Criteria: 3+ minutes, successful run, authenticated
-    if (timeOnPage < 3) return;
+    // Criteria: 10 seconds (testing), successful run, authenticated
+    if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
     if (!hasSuccessfulRun) return;
     if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
     

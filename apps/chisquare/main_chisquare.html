@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="../../shared/css/main.css">
+    <link rel="stylesheet" href="../../shared/css/auth_bar.css">
     <link rel="stylesheet" href="main_chisquare.css">
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <!-- Google tag (gtag.js) -->
@@ -21,6 +22,15 @@
     </script>
   </head>
   <body>
+    <div class="auth-bar">
+      <div class="auth-bar__container">
+        <div></div>
+        <div id="auth-bar-content" class="auth-bar__links">
+          <a href="../../login.html">Login</a>
+          <a href="../../register.html">Create Account</a>
+        </div>
+      </div>
+    </div>
     <main class="app-main">
       <header class="intro hero-header">
         <div class="hero-header__top">
@@ -289,6 +299,7 @@
     <script src="../../shared/js/ui_utils.js"></script>
     <script src="../../shared/js/stacked_bar_utils.js"></script>
     <script src="../../shared/js/auth_tracking.js"></script>
+    <script src="../../shared/js/auth_bar.js"></script>
     <script src="chisquare_app.js"></script>
     <script>
       (function () {

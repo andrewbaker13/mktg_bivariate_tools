@@ -30,7 +30,7 @@ const mnlogSummaryMessage = 'Provide data to see summary statistics.';
 // Usage tracking function
 function checkAndTrackUsage() {
   const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 3) return;
+  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
   if (!hasSuccessfulRun) return;
   if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
   

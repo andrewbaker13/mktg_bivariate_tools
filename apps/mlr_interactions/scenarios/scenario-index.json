@@ -1,0 +1,45 @@
+[
+  {
+    "id": "ad-spend-seasonality",
+    "label": "Ad Spend × Seasonality Interaction",
+    "file": "scenarios/ad_spend_seasonality_interaction.txt",
+    "dataset": "scenarios/ad_spend_seasonality_data.csv",
+    "outcome": "revenue",
+    "predictors": ["ad_spend", "season"],
+    "interactionType": "continuous_categorical",
+    "focal": "ad_spend",
+    "moderator": "season"
+  },
+  {
+    "id": "email-frequency-quadratic",
+    "label": "Email Frequency Quadratic Effect",
+    "file": "scenarios/email_frequency_engagement_quadratic.txt",
+    "dataset": "scenarios/email_frequency_engagement_data.csv",
+    "outcome": "engagement_score",
+    "predictors": ["email_frequency", "segment"],
+    "interactionType": "quadratic",
+    "quadraticVar": "email_frequency"
+  },
+  {
+    "id": "price-quality",
+    "label": "Price × Quality Interaction",
+    "file": "scenarios/price_quality_interaction.txt",
+    "dataset": "scenarios/price_quality_interaction_data.csv",
+    "outcome": "purchase_intent",
+    "predictors": ["price", "quality_rating"],
+    "interactionType": "continuous_continuous",
+    "focal": "price",
+    "moderator": "quality_rating"
+  },
+  {
+    "id": "dnd-level-class",
+    "label": "D&D: Level × Class Interaction",
+    "file": "scenarios/dnd_level_class_interaction.txt",
+    "dataset": "scenarios/dnd_level_class_damage_data.csv",
+    "outcome": "avg_damage_per_round",
+    "predictors": ["character_level", "class_type"],
+    "interactionType": "continuous_categorical",
+    "focal": "character_level",
+    "moderator": "class_type"
+  }
+]

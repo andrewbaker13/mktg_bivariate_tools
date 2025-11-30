@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Logistic Regression Tool</title>
   <link rel="stylesheet" href="../../shared/css/main.css">
+  <link rel="stylesheet" href="../../shared/css/auth_bar.css">
   <link rel="stylesheet" href="log_regression.css">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="../../shared/js/predictor_utils.js"></script>
@@ -20,6 +21,15 @@
       gtag('config', 'G-290ZJ9RE04');
     </script>
 </head><body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../login.html">Login</a>
+        <a href="../../register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
   <header class="intro hero-header">
     <div class="hero-header__top">
       <h1>Logistic Regression Tool</h1>
@@ -374,6 +384,8 @@
   <script src="../../shared/js/fan_chart_utils.js"></script>
   <script src="../../shared/js/stacked_bar_utils.js"></script>
   <script src="../../shared/js/ui_utils.js"></script>
+  <script src="../../shared/js/auth_tracking.js"></script>
+  <script src="../../shared/js/auth_bar.js"></script>
   <script src="log_reg_app.js"></script>
   <div id="logreg-loading-overlay" class="loading-overlay" aria-hidden="true">
     <div class="loading-content">

@@ -7,6 +7,7 @@
     <title>Univariate Statistics Analyzer</title>
     <!-- Global shared styles -->
     <link rel="stylesheet" href="../../shared/css/main.css">
+    <link rel="stylesheet" href="../../shared/css/auth_bar.css">
     <!-- App-specific styles -->
     <link rel="stylesheet" href="main_univariate_analyzer.css">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -25,6 +26,15 @@
 </head>
 
 <body>
+    <div class="auth-bar">
+      <div class="auth-bar__container">
+        <div></div>
+        <div id="auth-bar-content" class="auth-bar__links">
+          <a href="../../login.html">Login</a>
+          <a href="../../register.html">Create Account</a>
+        </div>
+      </div>
+    </div>
     <header class="intro hero-header">
         <div class="hero-header__top">
             <h1>Univariate Statistics Analyzer</h1>
@@ -254,6 +264,7 @@
     </footer>
 
     <script src="../../shared/js/auth_tracking.js"></script>
+    <script src="../../shared/js/auth_bar.js"></script>
     <script src="main_univariate_analyzer.js"></script>
 </body>
 

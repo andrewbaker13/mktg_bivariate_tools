@@ -1,0 +1,1241 @@
+/**
+ * Multiple Regression with Interactions & Non-Linear Effects
+ * mlr_interactions_app.js
+ */
+
+(function () {
+  'use strict';
+
+  // Global state
+  const state = {
+    rawData: [],
+    parsedData: [],
+    outcome: null,
+    predictors: [],
+    alpha: 0.05,
+    interactionType: 'none', // 'none', 'cont_cont', 'cont_cat', 'cat_cat', 'quadratic'
+    focal: null,
+    moderator: null,
+    quadraticVar: null,
+    centerContinuous: true,
+    showConfidenceBands: true,
+    scenarioData: []
+  };
+
+  // Matrix operations
+  function transpose(mat) {
+    if (!mat || mat.length === 0) return [];
+    return mat[0].map((_, colIndex) => mat.map(row => row[colIndex]));
+  }
+
+  function multiplyMatrices(A, B) {
+    const rowsA = A.length;
+    const colsA = A[0].length;
+    const colsB = B[0].length;
+    const result = Array.from({ length: rowsA }, () => Array(colsB).fill(0));
+    for (let i = 0; i < rowsA; i++) {
+      for (let j = 0; j < colsB; j++) {
+        for (let k = 0; k < colsA; k++) {
+          result[i][j] += A[i][k] * B[k][j];
+        }
+      }
+    }
+    return result;
+  }
+
+  function invertMatrix(mat) {
+    const n = mat.length;
+    const augmented = mat.map((row, i) =>
+      row.concat(Array.from({ length: n }, (_, j) => (i === j ? 1 : 0)))
+    );
+
+    for (let i = 0; i < n; i++) {
+      let maxRow = i;
+      for (let k = i + 1; k < n; k++) {
+        if (Math.abs(augmented[k][i]) > Math.abs(augmented[maxRow][i])) maxRow = k;
+      }
+      [augmented[i], augmented[maxRow]] = [augmented[maxRow], augmented[i]];
+
+      const pivot = augmented[i][i];
+      if (Math.abs(pivot) < 1e-10) throw new Error('Matrix is singular');
+      for (let j = 0; j < 2 * n; j++) augmented[i][j] /= pivot;
+
+      for (let k = 0; k < n; k++) {
+        if (k !== i) {
+          const factor = augmented[k][i];
+          for (let j = 0; j < 2 * n; j++) {
+            augmented[k][j] -= factor * augmented[i][j];
+          }
+        }
+      }
+    }
+    return augmented.map(row => row.slice(n));
+  }
+
+  // Statistical functions
+  function mean(arr) {
+    return arr.reduce((a, b) => a + b, 0) / arr.length;
+  }
+
+  function stdDev(arr) {
+    const m = mean(arr);
+    const variance = arr.reduce((sum, val) => sum + (val - m) ** 2, 0) / (arr.length - 1);
+    return Math.sqrt(variance);
+  }
+
+  function quantile(arr, q) {
+    const sorted = [...arr].sort((a, b) => a - b);
+    const pos = (sorted.length - 1) * q;
+    const base = Math.floor(pos);
+    const rest = pos - base;
+    if (sorted[base + 1] !== undefined) {
+      return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+    }
+    return sorted[base];
+  }
+
+  // Build design matrix with interactions/quadratic
+  function buildDesignMatrix(data, predictors, interactionConfig) {
+    const n = data.length;
+    const designMatrix = [];
+    const columnNames = ['Intercept'];
+    
+    // Track which predictors need centering
+    const continuousVars = {};
+    predictors.forEach(p => {
+      if (p.type === 'numeric') {
+        const values = data.map(d => d[p.name]);
+        continuousVars[p.name] = {
+          values: values,
+          mean: mean(values),
+          sd: stdDev(values)
+        };
+      }
+    });
+
+    // Helper to get centered or raw value
+    function getValue(row, predName, shouldCenter) {
+      const pred = predictors.find(p => p.name === predName);
+      if (pred.type === 'numeric') {
+        const rawVal = row[predName];
+        if (shouldCenter && state.centerContinuous) {
+          return rawVal - continuousVars[predName].mean;
+        }
+        return rawVal;
+      }
+      return row[predName]; // categorical - return as-is
+    }
+
+    // Build rows
+    for (let i = 0; i < n; i++) {
+      const row = [1]; // intercept
+      
+      // Main effects
+      predictors.forEach(pred => {
+        if (pred.type === 'numeric') {
+          // Check if this predictor is involved in interaction
+          const involvedInInteraction = 
+            (interactionConfig.focal === pred.name || interactionConfig.moderator === pred.name || interactionConfig.quadraticVar === pred.name);
+          row.push(getValue(data[i], pred.name, involvedInInteraction));
+        } else {
+          // Categorical: use dummy coding
+          pred.levels.slice(1).forEach(level => {
+            row.push(data[i][pred.name] === level ? 1 : 0);
+          });
+        }
+      });
+
+      // Interaction or quadratic term
+      if (interactionConfig.type === 'cont_cont') {
+        const val1 = getValue(data[i], interactionConfig.focal, true);
+        const val2 = getValue(data[i], interactionConfig.moderator, true);
+        row.push(val1 * val2);
+      } else if (interactionConfig.type === 'cont_cat') {
+        // Interaction: continuous × categorical
+        const contVar = interactionConfig.focal;
+        const catVar = interactionConfig.moderator;
+        // Determine which is which
+        let continuous, categorical;
+        const focalPred = predictors.find(p => p.name === interactionConfig.focal);
+        if (focalPred.type === 'numeric') {
+          continuous = interactionConfig.focal;
+          categorical = interactionConfig.moderator;
+        } else {
+          continuous = interactionConfig.moderator;
+          categorical = interactionConfig.focal;
+        }
+        
+        const contVal = getValue(data[i], continuous, true);
+        const catPred = predictors.find(p => p.name === categorical);
+        catPred.levels.slice(1).forEach(level => {
+          const catDummy = data[i][categorical] === level ? 1 : 0;
+          row.push(contVal * catDummy);
+        });
+      } else if (interactionConfig.type === 'cat_cat') {
+        // Categorical × categorical interaction
+        const cat1 = predictors.find(p => p.name === interactionConfig.focal);
+        const cat2 = predictors.find(p => p.name === interactionConfig.moderator);
+        
+        cat1.levels.slice(1).forEach(level1 => {
+          cat2.levels.slice(1).forEach(level2 => {
+            const dummy1 = data[i][cat1.name] === level1 ? 1 : 0;
+            const dummy2 = data[i][cat2.name] === level2 ? 1 : 0;
+            row.push(dummy1 * dummy2);
+          });
+        });
+      } else if (interactionConfig.type === 'quadratic') {
+        const val = getValue(data[i], interactionConfig.quadraticVar, true);
+        row.push(val * val);
+      }
+
+      designMatrix.push(row);
+    }
+
+    // Build column names
+    predictors.forEach(pred => {
+      if (pred.type === 'numeric') {
+        columnNames.push(pred.name);
+      } else {
+        pred.levels.slice(1).forEach(level => {
+          columnNames.push(`${pred.name}_${level}`);
+        });
+      }
+    });
+
+    // Add interaction/quadratic term names
+    if (interactionConfig.type === 'cont_cont') {
+      columnNames.push(`${interactionConfig.focal} × ${interactionConfig.moderator}`);
+    } else if (interactionConfig.type === 'cont_cat') {
+      const focalPred = predictors.find(p => p.name === interactionConfig.focal);
+      let continuous, categorical;
+      if (focalPred.type === 'numeric') {
+        continuous = interactionConfig.focal;
+        categorical = interactionConfig.moderator;
+      } else {
+        continuous = interactionConfig.moderator;
+        categorical = interactionConfig.focal;
+      }
+      const catPred = predictors.find(p => p.name === categorical);
+      catPred.levels.slice(1).forEach(level => {
+        columnNames.push(`${continuous} × ${categorical}_${level}`);
+      });
+    } else if (interactionConfig.type === 'cat_cat') {
+      const cat1 = predictors.find(p => p.name === interactionConfig.focal);
+      const cat2 = predictors.find(p => p.name === interactionConfig.moderator);
+      cat1.levels.slice(1).forEach(level1 => {
+        cat2.levels.slice(1).forEach(level2 => {
+          columnNames.push(`${cat1.name}_${level1} × ${cat2.name}_${level2}`);
+        });
+      });
+    } else if (interactionConfig.type === 'quadratic') {
+      columnNames.push(`${interactionConfig.quadraticVar}²`);
+    }
+
+    return { matrix: designMatrix, names: columnNames, continuousVars };
+  }
+
+  // Fit regression model
+  function fitRegression() {
+    const interactionConfig = {
+      type: state.interactionType,
+      focal: state.focal,
+      moderator: state.moderator,
+      quadraticVar: state.quadraticVar
+    };
+
+    const { matrix: X, names: columnNames, continuousVars } = buildDesignMatrix(
+      state.parsedData,
+      state.predictors,
+      interactionConfig
+    );
+
+    const y = state.parsedData.map(d => d[state.outcome]);
+    const n = y.length;
+    const k = columnNames.length - 1; // exclude intercept from df count
+
+    // (X'X)^-1 X'y
+    const Xt = transpose(X);
+    const XtX = multiplyMatrices(Xt, X);
+    const XtX_inv = invertMatrix(XtX);
+    const Xty = multiplyMatrices(Xt, y.map(v => [v]));
+    const beta = multiplyMatrices(XtX_inv, Xty).map(row => row[0]);
+
+    // Fitted values and residuals
+    const yHat = X.map(row => row.reduce((sum, val, idx) => sum + val * beta[idx], 0));
+    const residuals = y.map((val, i) => val - yHat[i]);
+
+    // SSE, SST, R²
+    const yMean = mean(y);
+    const SSE = residuals.reduce((sum, r) => sum + r * r, 0);
+    const SST = y.reduce((sum, val) => sum + (val - yMean) ** 2, 0);
+    const SSR = SST - SSE;
+    const R2 = SSR / SST;
+    const adjR2 = 1 - ((1 - R2) * (n - 1)) / (n - k - 1);
+
+    // MSE, RMSE, MAE
+    const MSE = SSE / (n - k - 1);
+    const RMSE = Math.sqrt(MSE);
+    const MAE = residuals.reduce((sum, r) => sum + Math.abs(r), 0) / n;
+
+    // Standard errors
+    const varCovar = XtX_inv.map(row => row.map(val => val * MSE));
+    const SE = beta.map((_, i) => Math.sqrt(varCovar[i][i]));
+
+    // t-statistics
+    const tStats = beta.map((b, i) => b / SE[i]);
+
+    // p-values (two-tailed)
+    const pValues = tStats.map(t => {
+      const p = 2 * (1 - tCDF(Math.abs(t), n - k - 1));
+      return p;
+    });
+
+    // Confidence intervals
+    const tCrit = tInv(1 - state.alpha / 2, n - k - 1);
+    const CI = beta.map((b, i) => [b - tCrit * SE[i], b + tCrit * SE[i]]);
+
+    // Model F-test
+    const MSR = SSR / k;
+    const F = MSR / MSE;
+    const pModel = 1 - fCDF(F, k, n - k - 1);
+
+    // VIF calculation
+    const VIF = [];
+    for (let j = 1; j < beta.length; j++) {
+      const Xj = X.map(row => row[j]);
+      const XminusJ = X.map(row => row.filter((_, idx) => idx !== j));
+      try {
+        const XtX_j = multiplyMatrices(transpose(XminusJ), XminusJ);
+        const XtX_inv_j = invertMatrix(XtX_j);
+        const Xty_j = multiplyMatrices(transpose(XminusJ), Xj.map(v => [v]));
+        const beta_j = multiplyMatrices(XtX_inv_j, Xty_j).map(row => row[0]);
+        const yHat_j = XminusJ.map(row => row.reduce((sum, val, idx) => sum + val * beta_j[idx], 0));
+        const SST_j = Xj.reduce((sum, val) => sum + (val - mean(Xj)) ** 2, 0);
+        const SSE_j = Xj.reduce((sum, val, i) => sum + (val - yHat_j[i]) ** 2, 0);
+        const R2_j = 1 - SSE_j / SST_j;
+        VIF.push(1 / (1 - R2_j));
+      } catch (e) {
+        VIF.push(NaN);
+      }
+    }
+
+    return {
+      beta,
+      SE,
+      tStats,
+      pValues,
+      CI,
+      R2,
+      adjR2,
+      F,
+      pModel,
+      RMSE,
+      MAE,
+      n,
+      k,
+      yHat,
+      residuals,
+      columnNames,
+      VIF,
+      continuousVars
+    };
+  }
+
+  // t-distribution CDF (approximation)
+  function tCDF(t, df) {
+    const x = df / (df + t * t);
+    return 1 - 0.5 * betaInc(x, df / 2, 0.5);
+  }
+
+  // Inverse t-distribution
+  function tInv(p, df) {
+    // Binary search
+    let low = -10, high = 10;
+    while (high - low > 1e-6) {
+      const mid = (low + high) / 2;
+      if (tCDF(mid, df) < p) low = mid;
+      else high = mid;
+    }
+    return (low + high) / 2;
+  }
+
+  // F-distribution CDF
+  function fCDF(f, d1, d2) {
+    const x = d2 / (d2 + d1 * f);
+    return 1 - betaInc(x, d2 / 2, d1 / 2);
+  }
+
+  // Beta incomplete function (approximation)
+  function betaInc(x, a, b) {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    const bt = Math.exp(
+      gammaLn(a + b) - gammaLn(a) - gammaLn(b) + a * Math.log(x) + b * Math.log(1 - x)
+    );
+    if (x < (a + 1) / (a + b + 2)) {
+      return (bt * betaCF(x, a, b)) / a;
+    }
+    return 1 - (bt * betaCF(1 - x, b, a)) / b;
+  }
+
+  function betaCF(x, a, b) {
+    const maxIter = 100;
+    const eps = 3e-7;
+    const qab = a + b;
+    const qap = a + 1;
+    const qam = a - 1;
+    let c = 1;
+    let d = 1 - (qab * x) / qap;
+    if (Math.abs(d) < 1e-30) d = 1e-30;
+    d = 1 / d;
+    let h = d;
+    for (let m = 1; m <= maxIter; m++) {
+      const m2 = 2 * m;
+      let aa = (m * (b - m) * x) / ((qam + m2) * (a + m2));
+      d = 1 + aa * d;
+      if (Math.abs(d) < 1e-30) d = 1e-30;
+      c = 1 + aa / c;
+      if (Math.abs(c) < 1e-30) c = 1e-30;
+      d = 1 / d;
+      h *= d * c;
+      aa = (-(a + m) * (qab + m) * x) / ((a + m2) * (qap + m2));
+      d = 1 + aa * d;
+      if (Math.abs(d) < 1e-30) d = 1e-30;
+      c = 1 + aa / c;
+      if (Math.abs(c) < 1e-30) c = 1e-30;
+      d = 1 / d;
+      const del = d * c;
+      h *= del;
+      if (Math.abs(del - 1) < eps) break;
+    }
+    return h;
+  }
+
+  function gammaLn(x) {
+    const cof = [
+      76.18009172947146, -86.50532032941677, 24.01409824083091,
+      -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5
+    ];
+    let y = x;
+    let tmp = x + 5.5;
+    tmp -= (x + 0.5) * Math.log(tmp);
+    let ser = 1.000000000190015;
+    for (let j = 0; j < 6; j++) ser += cof[j] / ++y;
+    return -tmp + Math.log((2.5066282746310005 * ser) / x);
+  }
+
+  // Update UI with results
+  function updateResults(results) {
+    // Metrics
+    document.getElementById('metric-r2').textContent = results.R2.toFixed(4);
+    document.getElementById('metric-adj-r2').textContent = results.adjR2.toFixed(4);
+    document.getElementById('metric-f').textContent = `${results.F.toFixed(2)}`;
+    document.getElementById('metric-pmodel').textContent = results.pModel < 0.001 ? '< .001' : results.pModel.toFixed(4);
+    document.getElementById('metric-rmse').textContent = results.RMSE.toFixed(2);
+    document.getElementById('metric-mae').textContent = results.MAE.toFixed(2);
+    document.getElementById('metric-n').textContent = results.n;
+    document.getElementById('metric-alpha').textContent = state.alpha;
+
+    // Regression equation
+    let equation = `Ŷ = ${results.beta[0].toFixed(2)}`;
+    for (let i = 1; i < results.beta.length; i++) {
+      const coef = results.beta[i];
+      const sign = coef >= 0 ? '+' : '';
+      equation += ` ${sign} ${coef.toFixed(2)}(${results.columnNames[i]})`;
+    }
+    document.getElementById('regression-equation-output').textContent = equation;
+
+    // Coefficient table
+    const tbody = document.getElementById('coef-table-body');
+    tbody.innerHTML = '';
+    results.columnNames.forEach((name, i) => {
+      const row = tbody.insertRow();
+      row.insertCell().textContent = i === 0 ? 'Intercept' : name.split('_')[0];
+      row.insertCell().textContent = name;
+      row.insertCell().textContent = results.beta[i].toFixed(4);
+      row.insertCell().textContent = results.SE[i].toFixed(4);
+      row.insertCell().textContent = results.tStats[i].toFixed(3);
+      const pCell = row.insertCell();
+      pCell.textContent = results.pValues[i] < 0.001 ? '< .001' : results.pValues[i].toFixed(4);
+      if (results.pValues[i] < state.alpha) pCell.style.fontWeight = 'bold';
+      row.insertCell().textContent = results.CI[i][0].toFixed(4);
+      row.insertCell().textContent = results.CI[i][1].toFixed(4);
+    });
+
+    // Update CI headers
+    const confLevel = ((1 - state.alpha) * 100).toFixed(0);
+    document.getElementById('coef-ci-lower-header').textContent = `${confLevel}% CI Lower`;
+    document.getElementById('coef-ci-upper-header').textContent = `${confLevel}% CI Upper`;
+
+    // APA report
+    generateAPAReport(results);
+
+    // Managerial report
+    generateManagerialReport(results);
+
+    // Plots
+    plotActualFitted(results);
+    plotInteraction(results);
+    plotResiduals(results);
+
+    // Diagnostics
+    generateDiagnostics(results);
+  }
+
+  // Generate APA-style report
+  function generateAPAReport(results) {
+    let report = `A multiple regression was conducted to predict ${state.outcome} from ${state.predictors.length} predictor(s)`;
+    
+    if (state.interactionType !== 'none') {
+      report += `, including a${state.interactionType === 'cont_cont' || state.interactionType === 'cont_cat' ? 'n interaction' : ' '} `;
+      if (state.interactionType === 'quadratic') {
+        report += `quadratic effect for ${state.quadraticVar}`;
+      } else {
+        report += `${state.interactionType.replace('_', ' × ')} interaction between ${state.focal} and ${state.moderator}`;
+      }
+    }
+    
+    report += `. The overall model was ${results.pModel < state.alpha ? '' : 'not '}significant, <em>F</em>(${results.k}, ${results.n - results.k - 1}) = ${results.F.toFixed(2)}, <em>p</em> ${results.pModel < 0.001 ? '< .001' : `= ${results.pModel.toFixed(3)}`}, <em>R</em>² = ${results.R2.toFixed(3)}, adjusted <em>R</em>² = ${results.adjR2.toFixed(3)}. `;
+
+    // Mention significant predictors
+    const sigPreds = results.columnNames.slice(1).filter((_, i) => results.pValues[i + 1] < state.alpha);
+    if (sigPreds.length > 0) {
+      report += `Significant predictors included: ${sigPreds.join(', ')}.`;
+    }
+
+    document.getElementById('apa-report').innerHTML = report;
+  }
+
+  // Generate managerial interpretation
+  function generateManagerialReport(results) {
+    let report = `The model explains ${(results.R2 * 100).toFixed(1)}% of the variance in ${state.outcome}. `;
+
+    if (state.interactionType === 'cont_cont' || state.interactionType === 'cont_cat') {
+      const interactionIdx = results.columnNames.findIndex(name => name.includes('×'));
+      if (interactionIdx >= 0 && results.pValues[interactionIdx] < state.alpha) {
+        report += `<strong>Key finding:</strong> The effect of ${state.focal} on ${state.outcome} depends on ${state.moderator}. `;
+        report += `This suggests a "one-size-fits-all" strategy may be suboptimal—tailor your approach based on ${state.moderator} levels.`;
+      } else {
+        report += `The interaction between ${state.focal} and ${state.moderator} was not statistically significant, suggesting the effect of ${state.focal} is consistent across levels of ${state.moderator}.`;
+      }
+    } else if (state.interactionType === 'quadratic') {
+      const quadIdx = results.columnNames.findIndex(name => name.includes('²'));
+      if (quadIdx >= 0 && results.pValues[quadIdx] < state.alpha) {
+        const beta1 = results.beta[results.columnNames.indexOf(state.quadraticVar)];
+        const beta2 = results.beta[quadIdx];
+        const turningPoint = -beta1 / (2 * beta2);
+        report += `<strong>Key finding:</strong> There is a ${beta2 < 0 ? 'diminishing returns' : 'accelerating'} effect for ${state.quadraticVar}. `;
+        report += `The turning point occurs at ${state.quadraticVar} ≈ ${turningPoint.toFixed(2)}`;
+        if (state.centerContinuous) {
+          report += ` (relative to the mean of ${results.continuousVars[state.quadraticVar].mean.toFixed(2)})`;
+        }
+        report += `.`;
+      }
+    }
+
+    document.getElementById('managerial-report').innerHTML = report;
+  }
+
+  // Plot actual vs fitted
+  function plotActualFitted(results) {
+    const y = state.parsedData.map(d => d[state.outcome]);
+    const trace1 = {
+      x: results.yHat,
+      y: y,
+      mode: 'markers',
+      type: 'scatter',
+      name: 'Actual vs Fitted',
+      marker: { color: 'steelblue', size: 6 }
+    };
+    const trace2 = {
+      x: [Math.min(...results.yHat), Math.max(...results.yHat)],
+      y: [Math.min(...results.yHat), Math.max(...results.yHat)],
+      mode: 'lines',
+      type: 'scatter',
+      name: '45° line',
+      line: { color: 'red', dash: 'dash' }
+    };
+    const layout = {
+      xaxis: { title: 'Fitted values' },
+      yaxis: { title: `Actual ${state.outcome}` },
+      showlegend: false,
+      margin: { t: 30 }
+    };
+    Plotly.newPlot('plot-actual-fitted', [trace1, trace2], layout, { responsive: true });
+  }
+
+  // Plot interaction effect
+  function plotInteraction(results) {
+    if (state.interactionType === 'none') {
+      document.getElementById('interaction-plot-card').style.display = 'none';
+      return;
+    }
+    document.getElementById('interaction-plot-card').style.display = 'block';
+
+    if (state.interactionType === 'cont_cont') {
+      plotContinuousContinuous(results);
+    } else if (state.interactionType === 'cont_cat') {
+      plotContinuousCategorical(results);
+    } else if (state.interactionType === 'cat_cat') {
+      plotCategoricalCategorical(results);
+    } else if (state.interactionType === 'quadratic') {
+      plotQuadratic(results);
+    }
+  }
+
+  // Plot continuous × continuous interaction
+  function plotContinuousContinuous(results) {
+    document.getElementById('interaction-plot-title').textContent = `${state.focal} × ${state.moderator} Interaction`;
+    
+    const focalVar = results.continuousVars[state.focal];
+    const modVar = results.continuousVars[state.moderator];
+    
+    // Three levels of moderator: -1SD, mean, +1SD
+    const modLevels = [
+      { value: modVar.mean - modVar.sd, label: '-1 SD' },
+      { value: modVar.mean, label: 'Mean' },
+      { value: modVar.mean + modVar.sd, label: '+1 SD' }
+    ];
+    
+    const focalRange = [];
+    const focalMin = focalVar.mean - 2 * focalVar.sd;
+    const focalMax = focalVar.mean + 2 * focalVar.sd;
+    for (let i = 0; i <= 50; i++) {
+      focalRange.push(focalMin + (i / 50) * (focalMax - focalMin));
+    }
+    
+    const traces = modLevels.map((modLevel, idx) => {
+      const predictions = focalRange.map(focalVal => {
+        // Create synthetic data point
+        const syntheticRow = {};
+        state.predictors.forEach(p => {
+          if (p.name === state.focal) {
+            syntheticRow[p.name] = focalVal;
+          } else if (p.name === state.moderator) {
+            syntheticRow[p.name] = modLevel.value;
+          } else if (p.type === 'numeric') {
+            syntheticRow[p.name] = results.continuousVars[p.name].mean;
+          } else {
+            syntheticRow[p.name] = p.levels[0]; // reference category
+          }
+        });
+        
+        // Build design matrix row
+        const interactionConfig = {
+          type: state.interactionType,
+          focal: state.focal,
+          moderator: state.moderator,
+          quadraticVar: state.quadraticVar
+        };
+        const { matrix } = buildDesignMatrix([syntheticRow], state.predictors, interactionConfig);
+        const yHat = matrix[0].reduce((sum, val, i) => sum + val * results.beta[i], 0);
+        return yHat;
+      });
+      
+      return {
+        x: focalRange,
+        y: predictions,
+        mode: 'lines',
+        name: `${state.moderator} at ${modLevel.label}`,
+        line: { width: 2 }
+      };
+    });
+    
+    const layout = {
+      xaxis: { title: state.focal },
+      yaxis: { title: `Predicted ${state.outcome}` },
+      showlegend: true,
+      legend: { x: 0.02, y: 0.98 },
+      margin: { t: 30 }
+    };
+    
+    Plotly.newPlot('plot-interaction', traces, layout, { responsive: true });
+    
+    document.getElementById('interaction-interpretation').textContent = 
+      `The plot shows how the effect of ${state.focal} on ${state.outcome} varies depending on the level of ${state.moderator}. ` +
+      `Non-parallel lines indicate an interaction effect. If lines cross or diverge substantially, the relationship is highly moderated.`;
+  }
+
+  // Plot continuous × categorical interaction
+  function plotContinuousCategorical(results) {
+    // Determine which is continuous, which is categorical
+    const focalPred = state.predictors.find(p => p.name === state.focal);
+    const modPred = state.predictors.find(p => p.name === state.moderator);
+    
+    let continuous, categorical, contPred, catPred;
+    if (focalPred.type === 'numeric') {
+      continuous = state.focal;
+      categorical = state.moderator;
+      contPred = focalPred;
+      catPred = modPred;
+    } else {
+      continuous = state.moderator;
+      categorical = state.focal;
+      contPred = modPred;
+      catPred = focalPred;
+    }
+    
+    document.getElementById('interaction-plot-title').textContent = `${continuous} × ${categorical} Interaction`;
+    
+    const contVar = results.continuousVars[continuous];
+    const contRange = [];
+    const contMin = contVar.mean - 2 * contVar.sd;
+    const contMax = contVar.mean + 2 * contVar.sd;
+    for (let i = 0; i <= 50; i++) {
+      contRange.push(contMin + (i / 50) * (contMax - contMin));
+    }
+    
+    const traces = catPred.levels.map(level => {
+      const predictions = contRange.map(contVal => {
+        const syntheticRow = {};
+        state.predictors.forEach(p => {
+          if (p.name === continuous) {
+            syntheticRow[p.name] = contVal;
+          } else if (p.name === categorical) {
+            syntheticRow[p.name] = level;
+          } else if (p.type === 'numeric') {
+            syntheticRow[p.name] = results.continuousVars[p.name].mean;
+          } else {
+            syntheticRow[p.name] = p.levels[0];
+          }
+        });
+        
+        const interactionConfig = {
+          type: state.interactionType,
+          focal: state.focal,
+          moderator: state.moderator,
+          quadraticVar: state.quadraticVar
+        };
+        const { matrix } = buildDesignMatrix([syntheticRow], state.predictors, interactionConfig);
+        const yHat = matrix[0].reduce((sum, val, i) => sum + val * results.beta[i], 0);
+        return yHat;
+      });
+      
+      return {
+        x: contRange,
+        y: predictions,
+        mode: 'lines',
+        name: `${categorical} = ${level}`,
+        line: { width: 2 }
+      };
+    });
+    
+    const layout = {
+      xaxis: { title: continuous },
+      yaxis: { title: `Predicted ${state.outcome}` },
+      showlegend: true,
+      legend: { x: 0.02, y: 0.98 },
+      margin: { t: 30 }
+    };
+    
+    Plotly.newPlot('plot-interaction', traces, layout, { responsive: true });
+    
+    document.getElementById('interaction-interpretation').textContent = 
+      `Each line represents the relationship between ${continuous} and ${state.outcome} within one category of ${categorical}. ` +
+      `Different slopes indicate the continuous predictor's effect varies by category.`;
+  }
+
+  // Plot categorical × categorical interaction
+  function plotCategoricalCategorical(results) {
+    document.getElementById('interaction-plot-title').textContent = `${state.focal} × ${state.moderator} Interaction`;
+    
+    const focalPred = state.predictors.find(p => p.name === state.focal);
+    const modPred = state.predictors.find(p => p.name === state.moderator);
+    
+    const traces = modPred.levels.map(modLevel => {
+      const yVals = focalPred.levels.map(focalLevel => {
+        const syntheticRow = {};
+        state.predictors.forEach(p => {
+          if (p.name === state.focal) {
+            syntheticRow[p.name] = focalLevel;
+          } else if (p.name === state.moderator) {
+            syntheticRow[p.name] = modLevel;
+          } else if (p.type === 'numeric') {
+            syntheticRow[p.name] = results.continuousVars[p.name].mean;
+          } else {
+            syntheticRow[p.name] = p.levels[0];
+          }
+        });
+        
+        const interactionConfig = {
+          type: state.interactionType,
+          focal: state.focal,
+          moderator: state.moderator,
+          quadraticVar: state.quadraticVar
+        };
+        const { matrix } = buildDesignMatrix([syntheticRow], state.predictors, interactionConfig);
+        const yHat = matrix[0].reduce((sum, val, i) => sum + val * results.beta[i], 0);
+        return yHat;
+      });
+      
+      return {
+        x: focalPred.levels,
+        y: yVals,
+        type: 'bar',
+        name: `${state.moderator} = ${modLevel}`
+      };
+    });
+    
+    const layout = {
+      xaxis: { title: state.focal },
+      yaxis: { title: `Predicted ${state.outcome}` },
+      barmode: 'group',
+      showlegend: true,
+      margin: { t: 30 }
+    };
+    
+    Plotly.newPlot('plot-interaction', traces, layout, { responsive: true });
+    
+    document.getElementById('interaction-interpretation').textContent = 
+      `The grouped bars show predicted ${state.outcome} for each combination of ${state.focal} and ${state.moderator}. ` +
+      `If the pattern differs across ${state.moderator} levels, an interaction is present.`;
+  }
+
+  // Plot quadratic effect
+  function plotQuadratic(results) {
+    document.getElementById('interaction-plot-title').textContent = `Quadratic Effect: ${state.quadraticVar}`;
+    
+    const quadVar = results.continuousVars[state.quadraticVar];
+    const quadRange = [];
+    const quadMin = quadVar.mean - 2.5 * quadVar.sd;
+    const quadMax = quadVar.mean + 2.5 * quadVar.sd;
+    for (let i = 0; i <= 100; i++) {
+      quadRange.push(quadMin + (i / 100) * (quadMax - quadMin));
+    }
+    
+    const predictions = quadRange.map(quadVal => {
+      const syntheticRow = {};
+      state.predictors.forEach(p => {
+        if (p.name === state.quadraticVar) {
+          syntheticRow[p.name] = quadVal;
+        } else if (p.type === 'numeric') {
+          syntheticRow[p.name] = results.continuousVars[p.name].mean;
+        } else {
+          syntheticRow[p.name] = p.levels[0];
+        }
+      });
+      
+      const interactionConfig = {
+        type: state.interactionType,
+        focal: state.focal,
+        moderator: state.moderator,
+        quadraticVar: state.quadraticVar
+      };
+      const { matrix } = buildDesignMatrix([syntheticRow], state.predictors, interactionConfig);
+      const yHat = matrix[0].reduce((sum, val, i) => sum + val * results.beta[i], 0);
+      return yHat;
+    });
+    
+    const trace = {
+      x: quadRange,
+      y: predictions,
+      mode: 'lines',
+      name: 'Predicted values',
+      line: { width: 3, color: 'purple' }
+    };
+    
+    // Calculate turning point
+    const linearIdx = results.columnNames.indexOf(state.quadraticVar);
+    const quadIdx = results.columnNames.findIndex(name => name.includes('²'));
+    const beta1 = results.beta[linearIdx];
+    const beta2 = results.beta[quadIdx];
+    const turningPoint = -beta1 / (2 * beta2);
+    
+    // Add turning point marker
+    const turningPred = (() => {
+      const syntheticRow = {};
+      state.predictors.forEach(p => {
+        if (p.name === state.quadraticVar) {
+          syntheticRow[p.name] = turningPoint;
+        } else if (p.type === 'numeric') {
+          syntheticRow[p.name] = results.continuousVars[p.name].mean;
+        } else {
+          syntheticRow[p.name] = p.levels[0];
+        }
+      });
+      const interactionConfig = {
+        type: state.interactionType,
+        focal: state.focal,
+        moderator: state.moderator,
+        quadraticVar: state.quadraticVar
+      };
+      const { matrix } = buildDesignMatrix([syntheticRow], state.predictors, interactionConfig);
+      return matrix[0].reduce((sum, val, i) => sum + val * results.beta[i], 0);
+    })();
+    
+    const turningTrace = {
+      x: [turningPoint],
+      y: [turningPred],
+      mode: 'markers',
+      name: 'Turning point',
+      marker: { size: 12, color: 'red', symbol: 'star' }
+    };
+    
+    const layout = {
+      xaxis: { title: state.quadraticVar },
+      yaxis: { title: `Predicted ${state.outcome}` },
+      showlegend: true,
+      annotations: [{
+        x: turningPoint,
+        y: turningPred,
+        text: `Turning point: ${turningPoint.toFixed(2)}`,
+        showarrow: true,
+        arrowhead: 2,
+        ax: 40,
+        ay: -40
+      }],
+      margin: { t: 30 }
+    };
+    
+    Plotly.newPlot('plot-interaction', [trace, turningTrace], layout, { responsive: true });
+    
+    document.getElementById('interaction-interpretation').textContent = 
+      `The curved line shows a ${beta2 < 0 ? 'inverted U-shape (diminishing returns)' : 'U-shape (accelerating)'} relationship. ` +
+      `The ${beta2 < 0 ? 'maximum' : 'minimum'} occurs at ${state.quadraticVar} ≈ ${turningPoint.toFixed(2)}. ` +
+      `This suggests an optimal level exists${state.centerContinuous ? ' (relative to the mean of ' + quadVar.mean.toFixed(2) + ')' : ''}.`;
+  }
+
+  // Plot residuals vs fitted
+  function plotResiduals(results) {
+    const trace = {
+      x: results.yHat,
+      y: results.residuals,
+      mode: 'markers',
+      type: 'scatter',
+      marker: { color: 'steelblue', size: 6 }
+    };
+    const layout = {
+      xaxis: { title: 'Fitted values' },
+      yaxis: { title: 'Residuals' },
+      showlegend: false,
+      shapes: [{
+        type: 'line',
+        x0: Math.min(...results.yHat),
+        x1: Math.max(...results.yHat),
+        y0: 0,
+        y1: 0,
+        line: { color: 'red', dash: 'dash' }
+      }],
+      margin: { t: 30 }
+    };
+    Plotly.newPlot('plot-residuals', [trace], layout, { responsive: true });
+  }
+
+  // Generate diagnostics
+  function generateDiagnostics(results) {
+    let diagHTML = '<h4>Multicollinearity (VIF)</h4><ul>';
+    results.columnNames.slice(1).forEach((name, i) => {
+      const vif = results.VIF[i];
+      const flag = vif > 10 ? ' <strong>(High VIF - potential multicollinearity)</strong>' : '';
+      diagHTML += `<li>${name}: VIF = ${vif.toFixed(2)}${flag}</li>`;
+    });
+    diagHTML += '</ul>';
+    
+    diagHTML += '<h4>Residual Checks</h4><ul>';
+    diagHTML += `<li>Mean of residuals: ${mean(results.residuals).toFixed(4)} (should be ≈ 0)</li>`;
+    diagHTML += `<li>Std. dev. of residuals: ${stdDev(results.residuals).toFixed(2)}</li>`;
+    diagHTML += '</ul>';
+    
+    document.getElementById('diag-collinearity').innerHTML = diagHTML;
+  }
+
+  // Initialize
+  function init() {
+    // Load scenarios
+    fetch('scenarios/scenario-index.json')
+      .then(r => r.json())
+      .then(scenarios => {
+        state.scenarioData = scenarios;
+        const select = document.getElementById('scenario-select');
+        scenarios.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = s.label;
+          select.appendChild(opt);
+        });
+      });
+
+    // Event listeners
+    document.getElementById('scenario-select').addEventListener('change', loadScenario);
+    document.getElementById('raw-input').addEventListener('change', handleFileUpload);
+    document.getElementById('alpha').addEventListener('input', () => {
+      state.alpha = parseFloat(document.getElementById('alpha').value);
+    });
+    
+    // Confidence level buttons
+    document.querySelectorAll('.conf-level-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const level = parseFloat(btn.dataset.level);
+        state.alpha = 1 - level;
+        document.getElementById('alpha').value = state.alpha.toFixed(3);
+        document.querySelectorAll('.conf-level-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+    });
+
+    // Interaction type selection
+    document.querySelectorAll('input[name="interaction-type"]').forEach(radio => {
+      radio.addEventListener('change', handleInteractionTypeChange);
+    });
+
+    // Advanced settings
+    document.getElementById('center-continuous').addEventListener('change', (e) => {
+      state.centerContinuous = e.target.checked;
+    });
+    document.getElementById('show-confidence-bands').addEventListener('change', (e) => {
+      state.showConfidenceBands = e.target.checked;
+    });
+  }
+
+  function handleInteractionTypeChange(e) {
+    state.interactionType = e.target.value;
+    
+    // Hide all selector groups
+    document.querySelectorAll('.var-selector-group').forEach(el => el.classList.add('hidden'));
+    
+    if (state.interactionType === 'none') {
+      document.getElementById('interaction-variable-selectors').classList.add('hidden');
+    } else {
+      document.getElementById('interaction-variable-selectors').classList.remove('hidden');
+      
+      // Show appropriate selector
+      if (state.interactionType === 'cont_cont') {
+        document.getElementById('cont-cont-selectors').classList.remove('hidden');
+        populateInteractionSelectors('cont_cont');
+      } else if (state.interactionType === 'cont_cat') {
+        document.getElementById('cont-cat-selectors').classList.remove('hidden');
+        populateInteractionSelectors('cont_cat');
+      } else if (state.interactionType === 'cat_cat') {
+        document.getElementById('cat-cat-selectors').classList.remove('hidden');
+        populateInteractionSelectors('cat_cat');
+      } else if (state.interactionType === 'quadratic') {
+        document.getElementById('quadratic-selectors').classList.remove('hidden');
+        populateInteractionSelectors('quadratic');
+      }
+    }
+  }
+
+  function populateInteractionSelectors(type) {
+    if (type === 'cont_cont') {
+      const continuous = state.predictors.filter(p => p.type === 'numeric');
+      const select1 = document.getElementById('focal-cont-cont');
+      const select2 = document.getElementById('moderator-cont-cont');
+      select1.innerHTML = '';
+      select2.innerHTML = '';
+      continuous.forEach(p => {
+        select1.appendChild(new Option(p.name, p.name));
+        select2.appendChild(new Option(p.name, p.name));
+      });
+      if (continuous.length >= 2) {
+        select2.selectedIndex = 1;
+      }
+      
+      // Swap button
+      document.getElementById('swap-cont-cont').onclick = () => {
+        [select1.value, select2.value] = [select2.value, select1.value];
+      };
+    } else if (type === 'cont_cat') {
+      const continuous = state.predictors.filter(p => p.type === 'numeric');
+      const categorical = state.predictors.filter(p => p.type === 'categorical');
+      const select1 = document.getElementById('focal-cont-cat');
+      const select2 = document.getElementById('moderator-cont-cat');
+      select1.innerHTML = '';
+      select2.innerHTML = '';
+      
+      [...continuous, ...categorical].forEach(p => {
+        select1.appendChild(new Option(p.name, p.name));
+        select2.appendChild(new Option(p.name, p.name));
+      });
+      if (continuous.length > 0 && categorical.length > 0) {
+        select1.value = continuous[0].name;
+        select2.value = categorical[0].name;
+      }
+      
+      document.getElementById('swap-cont-cat').onclick = () => {
+        [select1.value, select2.value] = [select2.value, select1.value];
+      };
+    } else if (type === 'cat_cat') {
+      const categorical = state.predictors.filter(p => p.type === 'categorical');
+      const select1 = document.getElementById('focal-cat-cat');
+      const select2 = document.getElementById('moderator-cat-cat');
+      select1.innerHTML = '';
+      select2.innerHTML = '';
+      categorical.forEach(p => {
+        select1.appendChild(new Option(p.name, p.name));
+        select2.appendChild(new Option(p.name, p.name));
+      });
+      if (categorical.length >= 2) {
+        select2.selectedIndex = 1;
+      }
+      
+      document.getElementById('swap-cat-cat').onclick = () => {
+        [select1.value, select2.value] = [select2.value, select1.value];
+      };
+    } else if (type === 'quadratic') {
+      const continuous = state.predictors.filter(p => p.type === 'numeric');
+      const select = document.getElementById('quadratic-var');
+      select.innerHTML = '';
+      continuous.forEach(p => {
+        select.appendChild(new Option(p.name, p.name));
+      });
+    }
+  }
+
+  function loadScenario(e) {
+    const scenarioId = e.target.value;
+    if (!scenarioId) return;
+    
+    const scenario = state.scenarioData.find(s => s.id === scenarioId);
+    if (!scenario) return;
+    
+    // Load scenario description
+    fetch(scenario.file)
+      .then(r => r.text())
+      .then(text => {
+        document.getElementById('scenario-description').innerHTML = text;
+      });
+    
+    // Load dataset
+    fetch(scenario.dataset)
+      .then(r => r.text())
+      .then(csv => {
+        // Parse CSV (simplified - assumes parseCSV utility exists)
+        const lines = csv.trim().split('\n');
+        const headers = lines[0].split(',');
+        state.rawData = lines.slice(1).map(line => {
+          const values = line.split(',');
+          const row = {};
+          headers.forEach((h, i) => {
+            row[h.trim()] = values[i].trim();
+          });
+          return row;
+        });
+        
+        // Auto-assign variables from scenario
+        state.outcome = scenario.outcome;
+        state.predictors = scenario.predictors.map(p => {
+          const values = state.rawData.map(d => d[p]);
+          const isNumeric = !isNaN(parseFloat(values[0]));
+          if (isNumeric) {
+            return { name: p, type: 'numeric' };
+          } else {
+            const levels = [...new Set(values)];
+            return { name: p, type: 'categorical', levels: levels, reference: levels[0] };
+          }
+        });
+        
+        // Parse data
+        state.parsedData = state.rawData.map(row => {
+          const parsed = {};
+          parsed[state.outcome] = parseFloat(row[state.outcome]);
+          state.predictors.forEach(p => {
+            if (p.type === 'numeric') {
+              parsed[p.name] = parseFloat(row[p.name]);
+            } else {
+              parsed[p.name] = row[p.name];
+            }
+          });
+          return parsed;
+        });
+        
+        // Set interaction type from scenario
+        if (scenario.interactionType) {
+          const typeMap = {
+            'continuous_continuous': 'cont_cont',
+            'continuous_categorical': 'cont_cat',
+            'categorical_categorical': 'cat_cat',
+            'quadratic': 'quadratic'
+          };
+          state.interactionType = typeMap[scenario.interactionType] || 'none';
+          
+          // Set radio button
+          document.querySelector(`input[name="interaction-type"][value="${state.interactionType}"]`).checked = true;
+          handleInteractionTypeChange({ target: { value: state.interactionType } });
+          
+          if (scenario.focal) state.focal = scenario.focal;
+          if (scenario.moderator) state.moderator = scenario.moderator;
+          if (scenario.quadraticVar) state.quadraticVar = scenario.quadraticVar;
+          
+          // Set dropdowns
+          setTimeout(() => {
+            if (state.interactionType === 'cont_cont') {
+              document.getElementById('focal-cont-cont').value = state.focal;
+              document.getElementById('moderator-cont-cont').value = state.moderator;
+            } else if (state.interactionType === 'cont_cat') {
+              document.getElementById('focal-cont-cat').value = state.focal;
+              document.getElementById('moderator-cont-cat').value = state.moderator;
+            } else if (state.interactionType === 'cat_cat') {
+              document.getElementById('focal-cat-cat').value = state.focal;
+              document.getElementById('moderator-cat-cat').value = state.moderator;
+            } else if (state.interactionType === 'quadratic') {
+              document.getElementById('quadratic-var').value = state.quadraticVar;
+            }
+          }, 100);
+        }
+        
+        // Show variable panel
+        document.getElementById('variable-selection-panel').classList.remove('hidden');
+        document.getElementById('interaction-selection-panel').classList.remove('hidden');
+        
+        // Run analysis
+        runAnalysis();
+      });
+  }
+
+  function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target.result;
+      // Parse CSV (simplified)
+      const lines = text.trim().split('\n');
+      const headers = lines[0].split(',');
+      state.rawData = lines.slice(1).map(line => {
+        const values = line.split(',');
+        const row = {};
+        headers.forEach((h, i) => {
+          row[h.trim()] = values[i].trim();
+        });
+        return row;
+      });
+      
+      // Show variable selection UI
+      document.getElementById('variable-selection-panel').classList.remove('hidden');
+      document.getElementById('raw-upload-status').textContent = `Loaded ${state.rawData.length} rows from ${file.name}`;
+    };
+    reader.readAsText(file);
+  }
+
+  function runAnalysis() {
+    // Get focal/moderator from UI
+    if (state.interactionType === 'cont_cont') {
+      state.focal = document.getElementById('focal-cont-cont').value;
+      state.moderator = document.getElementById('moderator-cont-cont').value;
+    } else if (state.interactionType === 'cont_cat') {
+      state.focal = document.getElementById('focal-cont-cat').value;
+      state.moderator = document.getElementById('moderator-cont-cat').value;
+    } else if (state.interactionType === 'cat_cat') {
+      state.focal = document.getElementById('focal-cat-cat').value;
+      state.moderator = document.getElementById('moderator-cat-cat').value;
+    } else if (state.interactionType === 'quadratic') {
+      state.quadraticVar = document.getElementById('quadratic-var').value;
+    }
+    
+    try {
+      const results = fitRegression();
+      updateResults(results);
+    } catch (error) {
+      console.error('Analysis error:', error);
+      alert('Error running analysis: ' + error.message);
+    }
+  }
+
+  // Initialize on load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();

@@ -7,6 +7,7 @@
   <title>k-Means Clustering Explorer</title>
   <!-- Shared design system -->
   <link rel="stylesheet" href="../../shared/css/main.css">
+  <link rel="stylesheet" href="../../shared/css/auth_bar.css">
   <!-- App-specific overrides -->
   <link rel="stylesheet" href="main_kmeans.css">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -23,6 +24,15 @@
       gtag('config', 'G-290ZJ9RE04');
     </script>
 </head><body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../login.html">Login</a>
+        <a href="../../register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
   <main class="app-main">
     <header class="intro hero-header">
       <div class="hero-header__top">
@@ -352,6 +362,7 @@
   </footer>
 
   <script src="../../shared/js/auth_tracking.js"></script>
+  <script src="../../shared/js/auth_bar.js"></script>
   <script src="main_kmeans.js"></script>
 </body>
 

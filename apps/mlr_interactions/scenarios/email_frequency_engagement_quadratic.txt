@@ -1,0 +1,32 @@
+# Title
+Email Frequency Quadratic Effect on Customer Engagement
+
+# Description
+<div class="scenario-description">
+  <p>
+    Your CRM team is debating the optimal email frequency for customer engagement. Send too few emails and customers forget about your brand. Send too many and you risk fatigue, unsubscribes, and diminishing engagement. The relationship might be <strong>non-linear</strong>—specifically, an inverted U-shape (quadratic).
+  </p>
+  <p>
+    You tracked 200 customers over six months, recording:
+  </p>
+  <ul>
+    <li><strong>Engagement Score</strong> (outcome, 0-100 scale based on opens, clicks, purchases)</li>
+    <li><strong>Monthly Email Frequency</strong> (continuous predictor, emails per month)</li>
+    <li><strong>Customer Segment</strong> (categorical control: Budget, Standard, Premium)</li>
+  </ul>
+  <p>
+    The hypothesis is that engagement increases with email frequency up to a point, then <em>decreases</em> as frequency becomes excessive. This is captured by a <strong>quadratic term</strong> (email_frequency²).
+  </p>
+  <p>
+    <strong>What you'll learn:</strong> This scenario demonstrates a <strong>quadratic (non-linear) effect</strong>. The squared term allows for a curved relationship. If the quadratic coefficient is negative and significant, it confirms the inverted U-shape. You can identify the optimal email frequency—the "sweet spot" where engagement peaks.
+  </p>
+</div>
+
+# How to use
+<ul>
+  <li><strong>Select interaction type:</strong> Choose "Quadratic effect (X²)"</li>
+  <li><strong>Assign variable:</strong> Select email_frequency as the quadratic predictor</li>
+  <li><strong>Interpret the plot:</strong> Look for the parabola showing engagement rising then falling</li>
+  <li><strong>Find the turning point:</strong> The tool will calculate the email frequency that maximizes engagement</li>
+  <li><strong>Business implication:</strong> Set email cadence policies based on the optimal frequency</li>
+</ul>

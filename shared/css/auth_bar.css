@@ -1,0 +1,76 @@
+/* Shared authentication bar styles */
+.auth-bar {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.75rem 0;
+  text-align: right;
+}
+
+.auth-bar__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.auth-bar__links {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  margin-left: auto;
+}
+
+.auth-bar__links a {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.auth-bar__links a:hover {
+  text-decoration: underline;
+}
+
+.auth-bar__status {
+  color: #10b981;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* Logout button - override ALL button styles */
+button.auth-bar__logout,
+.auth-bar__logout {
+  color: #6b7280 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  cursor: pointer;
+  font-size: 0.9rem !important;
+  text-decoration: underline;
+  padding: 0.25rem 0.5rem !important;
+  margin-left: 0.75rem;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  font-weight: normal !important;
+}
+
+button.auth-bar__logout:hover,
+button.auth-bar__logout:focus,
+button.auth-bar__logout:active,
+.auth-bar__logout:hover,
+.auth-bar__logout:focus,
+.auth-bar__logout:active {
+  color: #374151 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+button.auth-bar__logout:focus-visible,
+.auth-bar__logout:focus-visible {
+  outline: 2px dotted #6b7280;
+  outline-offset: 2px;
+  background: transparent !important;
+}
