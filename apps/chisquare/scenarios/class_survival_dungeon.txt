@@ -1,0 +1,35 @@
+# Title
+Character Class vs Dungeon Survival Rate
+
+# Description
+<p>
+After completing one hundred dungeon encounters across various campaigns, your Dungeon Master compiled survival data by character class. The party has noticed an apparent pattern: barbarians seem to walk out of dangerous situations relatively unscathed, while wizards are frequently making death saving throws or rolling up new character sheets.
+</p>
+<p>
+The anecdotal evidence is compelling, but you want to move beyond "it feels like wizards die more often" to a statistical statement about whether character class is truly associated with survival outcomes. Two classes are compared:
+</p>
+<ul>
+  <li><strong>Barbarians:</strong> High hit points, damage resistance while raging, and generally built to absorb damage.</li>
+  <li><strong>Wizards:</strong> Low hit points, physically fragile, but powerful spellcasting abilities that can control the battlefield if they survive long enough to cast.</li>
+</ul>
+<p>
+The data shows a clear difference in survival rates: 45 out of 50 barbarians survived their encounters (90% survival), while only 30 out of 50 wizards made it through (60% survival). The question is whether this difference is statistically significant or could have occurred by chance given the randomness inherent in dice-based combat.
+</p>
+<p>
+Your analytical goal is to use a chi-square test of independence to determine whether character class and survival outcome are associated. The results will help your party make informed decisions about party composition for high-risk dungeons—should you bring more tanks to protect the squishy spellcasters, or is the survival difference within the realm of random variation?
+</p>
+
+# Alpha
+0.05
+
+# Rows
+Barbarian
+Wizard
+
+# Columns
+Survived
+Perished
+
+# Matrix
+45|5
+30|20

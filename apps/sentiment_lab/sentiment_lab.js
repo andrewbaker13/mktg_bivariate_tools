@@ -3,6 +3,13 @@
 const SENTIMENT_LAB_CREATED_DATE = '2025-11-25';
 let sentimentLabModifiedDate = new Date().toLocaleDateString();
 
+// Scenario state
+let scenarioManifest = [];
+let activeScenarioDataset = null;
+
+// Sentiment data
+let sentimentRows = [];
+
 // Usage tracking variables
 let pageLoadTime = Date.now();
 let hasSuccessfulRun = false;
@@ -93,7 +100,8 @@ const SentimentScenarios = [
       "Overall, I’m really happy with this purchase and I do feel very confident recommending the swimwear to friends who care about style. The designs are fresh, the branding is strong, and the suits look amazing in photos, which is exactly what drew me in. At the same time, the line isn’t perfect yet; the sizing runs a touch inconsistent between styles, and the fit around the hips can be a little unpredictable. For me, the gorgeous look outweighs the minor comfort issues, but I hope future drops refine the fit so it feels as good as it looks."
     ]
   }
-];
+  }
+}
 
 function classifyCompound(compound) {
   if (compound >= 0.05) return 'positive';
@@ -518,33 +526,112 @@ document.addEventListener('DOMContentLoaded', () => {
   const scenarioSelect = document.getElementById('sentiment-scenario-select');
   const downloadBtn = document.getElementById('scenario-download');
   
-  if (scenarioSelect) {
+  // Fetch scenario index
+  async function fetchScenarioIndex() {
+    try {
+      const resp = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
+      if (!resp.ok) throw new Error(`Unable to load scenario index (${resp.status})`);
+      const data = await resp.json();
+      scenarioManifest = Array.isArray(data) ? data : [];
+      populateScenarioSelect();
+    } catch (err) {
+      console.error('Error loading scenario index:', err);
+      scenarioManifest = [];
+    }
+  }
+
+  function populateScenarioSelect() {
+    if (!scenarioSelect) return;
     scenarioSelect.innerHTML = '<option value="">Manual settings (no preset)</option>';
-    SentimentScenarios.forEach(s => {
+    scenarioManifest.forEach(entry => {
       const opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = s.label;
+      opt.value = entry.id;
+      opt.textContent = entry.label || entry.id;
       scenarioSelect.appendChild(opt);
     });
+  }
 
+  async function loadScenario(id) {
+    const scenario = scenarioManifest.find(s => s.id === id);
+    if (!scenario) return;
+
+    // Handle download button
+    if (downloadBtn) {
+      activeScenarioDataset = scenario.dataset || null;
+      downloadBtn.classList.toggle('hidden', !scenario.dataset);
+      downloadBtn.disabled = !scenario.dataset;
+    }
+
+    // Load description
+    const descEl = document.getElementById('sentiment-scenario-description');
+    if (scenario.file) {
+      try {
+        const resp = await fetch(scenario.file, { cache: 'no-cache' });
+        if (resp.ok) {
+          const text = await resp.text();
+          if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+            window.UIUtils.renderScenarioDescription({
+              containerId: 'sentiment-scenario-description',
+              description: `<p>${text.split('\n\n').join('</p><p>')}</p>`,
+              defaultHtml: ''
+            });
+          } else if (descEl) {
+            descEl.innerHTML = `<p>${text.split('\n\n').join('</p><p>')}</p>`;
+          }
+        }
+      } catch (err) {
+        console.error('Error loading scenario description:', err);
+      }
+    }
+
+    // Load dataset into textarea
+    const manual = document.getElementById('manual-textarea');
+    const status = document.getElementById('sentiment-status');
+    
+    if (scenario.dataset && manual) {
+      try {
+        const resp = await fetch(scenario.dataset, { cache: 'no-cache' });
+        if (resp.ok) {
+          const csv = await resp.text();
+          // Parse CSV to get just the text column values
+          const lines = csv.split(/\r?\n/).filter(line => line.trim().length > 0);
+          // Skip header row and extract text (handle quoted values)
+          const textLines = lines.slice(1).map(line => {
+            // Simple CSV parsing: if starts with quote, extract quoted value
+            if (line.startsWith('"')) {
+              const match = line.match(/^"((?:[^"]|"")*)"/);
+              return match ? match[1].replace(/""/g, '"') : line;
+            }
+            return line;
+          });
+          
+          manual.value = textLines.join('\n');
+          
+          if (status) {
+            status.textContent = `Loaded ${textLines.length} preset text record(s) into the paste area. Click "Run sentiment analysis" to score them.`;
+          }
+        }
+      } catch (err) {
+        console.error('Error loading scenario dataset:', err);
+        if (status) {
+          status.textContent = 'Error loading scenario data.';
+        }
+      }
+    }
+  }
+  
+  if (scenarioSelect) {
     scenarioSelect.addEventListener('change', () => {
       const id = scenarioSelect.value;
       const descEl = document.getElementById('sentiment-scenario-description');
-      const manual = document.getElementById('manual-textarea');
-      const status = document.getElementById('sentiment-status');
 
-      // Show/hide download button
-      if (downloadBtn) {
-        if (id) {
-          downloadBtn.classList.remove('hidden');
-          downloadBtn.disabled = false;
-        } else {
+      if (!id) {
+        activeScenarioDataset = null;
+        if (downloadBtn) {
           downloadBtn.classList.add('hidden');
           downloadBtn.disabled = true;
         }
-      }
-
-      if (!id) {
+        
         if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
           window.UIUtils.renderScenarioDescription({
             containerId: 'sentiment-scenario-description',
@@ -558,59 +645,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const scenario = SentimentScenarios.find(s => s.id === id);
-      if (!scenario) return;
-
-      if (manual && scenario.lines && scenario.lines.length) {
-        manual.value = scenario.lines.join('\n');
-      }
-
-      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
-        window.UIUtils.renderScenarioDescription({
-          containerId: 'sentiment-scenario-description',
-          title: scenario.label,
-          description: scenario.description,
-          defaultHtml: ''
-        });
-      } else if (descEl) {
-        descEl.innerHTML = scenario.description || '';
-      }
-
-      if (status) {
-        status.textContent = `Loaded ${scenario.lines.length} preset text record(s) into the paste area. Click "Run sentiment analysis" to score them.`;
-      }
+      loadScenario(id);
     });
+    
+    // Load scenarios on init
+    fetchScenarioIndex();
   }
 
   // Download button handler
   if (downloadBtn) {
     downloadBtn.addEventListener('click', () => {
-      const id = scenarioSelect ? scenarioSelect.value : '';
-      if (!id) return;
+      if (!activeScenarioDataset) return;
       
-      const scenario = SentimentScenarios.find(s => s.id === id);
-      if (!scenario || !scenario.lines || !scenario.lines.length) return;
-      
-      // Create CSV with text column
-      const rows = [['text']];
-      scenario.lines.forEach(line => {
-        // Escape quotes and wrap in quotes if contains comma or newline
-        const escaped = line.replace(/"/g, '""');
-        const needsQuotes = escaped.includes(',') || escaped.includes('\n') || escaped.includes('\r');
-        rows.push([needsQuotes ? `"${escaped}"` : escaped]);
-      });
-      
-      const csv = rows.map(row => row.join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const filename = `sentiment_${id.replace(/[^a-z0-9]/gi, '_')}.csv`;
-      
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
+      // Download the actual CSV file
+      const a = document.createElement('a');
+      a.href = activeScenarioDataset;
+      a.download = activeScenarioDataset.split('/').pop() || 'sentiment_data.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     });
   }
 });

@@ -1,0 +1,5 @@
+Influencer swimwear brand: detailed guest reviews
+
+Long-form, simulated reviews of a new swimwear brand launched by a popular online influencer. Overall sentiment is strongly positive about the look, colors, and design, but many reviews also raise nuanced concerns about fit and sizing for different body types.
+
+Use this case to explore how sentiment can be positive in aggregate while still surfacing specific, actionable pain points. Imagine you are preparing a summary for the influencer's team, highlighting both strong brand love and recurring feedback about comfort and sizing consistency.

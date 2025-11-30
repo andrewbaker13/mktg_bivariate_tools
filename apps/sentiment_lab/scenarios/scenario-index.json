@@ -1,0 +1,14 @@
+[
+  {
+    "id": "enrollment-reddit",
+    "label": "Reddit posts about an online enrollment system",
+    "file": "scenarios/enrollment_reddit.txt",
+    "dataset": "scenarios/enrollment_reddit_posts.csv"
+  },
+  {
+    "id": "influencer-swimwear",
+    "label": "Influencer swimwear brand: detailed guest reviews",
+    "file": "scenarios/influencer_swimwear.txt",
+    "dataset": "scenarios/influencer_swimwear_reviews.csv"
+  }
+]

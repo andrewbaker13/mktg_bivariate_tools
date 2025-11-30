@@ -1,0 +1,5 @@
+Reddit posts about an online enrollment system
+
+Simulated Reddit-style posts reacting to a new online course enrollment system at a Southern California university. Some students are impressed by the speed and clarity of the new interface; others are frustrated by bugs, timeouts, and confusing waitlist rules.
+
+Use this case to practice reading sentiment labels in the context of student experience research. Imagine you are summarizing overall sentiment for stakeholders deciding whether the rollout was a success or needs urgent fixes.
