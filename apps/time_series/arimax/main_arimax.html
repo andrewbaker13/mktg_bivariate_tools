@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARIMAX Time Series Forecasting Tool</title>
+  <!-- Shared design system -->
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+  <!-- App-specific overrides -->
+  <link rel="stylesheet" href="main_arimax.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-290ZJ9RE04');
+  </script>
+</head>
+
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../login.html">Login</a>
+        <a href="../../register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>ARIMAX Time Series Forecasting Tool</h1>
+        <div class="hero-context">
+          <span class="badge">New</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Forecast marketing metrics using ARIMAX (AutoRegressive Integrated Moving Average with eXogenous variables).
+        Upload time series data, select external predictors like ad spend or seasonality indicators, and generate
+        forecasts with confidence intervals.
+      </p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="test-overview-heading">
+      <h2 id="test-overview-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
+      <div class="card">
+        <p>
+          ARIMAX extends the classic ARIMA model by incorporating external (exogenous) predictor variables.
+          This is especially useful in marketing where outcomes like sales or conversions are influenced by
+          controllable inputs such as advertising spend, promotions, or seasonal campaigns.
+        </p>
+        <p class="equation">
+          <strong>ARIMAX Model:</strong>
+          $$
+          (1 - \phi_1 B - \cdots - \phi_p B^p)(1 - B)^d Y_t = 
+          (1 + \theta_1 B + \cdots + \theta_q B^q)\varepsilon_t + \sum_{j=1}^{k} \beta_j X_{j,t}
+          $$
+        </p>
+        <p>
+          where \(Y_t\) is the outcome at time \(t\), \(B\) is the backshift operator, \(d\) is the differencing order,
+          \(\phi\) are AR coefficients, \(\theta\) are MA coefficients, and \(\beta_j\) are coefficients for
+          exogenous predictors \(X_j\).
+        </p>
+        <details class="intro-notes" open>
+          <summary>Key Concepts</summary>
+          <ul>
+            <li><strong>AR (p):</strong> Autoregressive terms capture how past values of the series influence current values.</li>
+            <li><strong>I (d):</strong> Integration (differencing) removes trends to achieve stationarity.</li>
+            <li><strong>MA (q):</strong> Moving average terms model the influence of past forecast errors.</li>
+            <li><strong>X (exogenous):</strong> External predictors like ad spend, promotions, or economic indicators.</li>
+          </ul>
+        </details>
+        <details class="intro-notes">
+          <summary>When to Use ARIMAX</summary>
+          <p>
+            Use ARIMAX when you have a time series outcome (sales, traffic, conversions) that you believe is influenced
+            by external factors you can measure and potentially control. Common marketing applications include:
+          </p>
+          <ul>
+            <li>Forecasting sales with advertising spend as an exogenous variable</li>
+            <li>Modeling website traffic with marketing campaign indicators</li>
+            <li>Predicting revenue with economic indicators or seasonal dummies</li>
+          </ul>
+        </details>
+      </div>
+    </section>
+
+    <section class="scenario-section" aria-labelledby="scenario-heading">
+      <h2 id="scenario-heading">MARKETING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Practical scenario</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Manual inputs (no preset)</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>Use presets to auto-load realistic marketing time series data. The download button exposes the exact
+            dataset used so you can tweak it in Excel before re-uploading.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="inputs-heading">
+      <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>Upload Time Series Data</h3>
+        </div>
+
+        <div class="mode-panel active" id="arimax-raw-panel">
+          <div class="data-import-block">
+            <p>Upload a CSV with at least a date/time column and a numeric outcome column. Optional columns for
+              exogenous predictors (ad spend, promotions, etc.) can be included.</p>
+            <div id="arimax-dropzone" class="dropzone" role="button" tabindex="0">
+              <p class="dropzone-title">Drag &amp; drop time series file</p>
+              <p class="dropzone-note">CSV with columns: date, outcome, [optional exogenous variables]</p>
+              <button type="button" id="arimax-browse" class="secondary">Browse files</button>
+            </div>
+            <input type="file" id="arimax-input" accept=".csv,.tsv,.txt" hidden>
+            <div class="template-buttons">
+              <button type="button" id="arimax-template-download">Download template</button>
+            </div>
+            <p id="arimax-upload-feedback" class="upload-status" aria-live="polite">No file uploaded.</p>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <h3>Column Selection</h3>
+          <p class="hint">Select which columns represent the time period, outcome (Y), and any exogenous predictors (X).</p>
+          
+          <label for="arimax-date-select">Time Period Column</label>
+          <select id="arimax-date-select"></select>
+          <details class="date-format-help">
+            <summary>Date/Time Format Help</summary>
+            <div class="format-help-content">
+              <p><strong>Supported date formats:</strong></p>
+              <ul>
+                <li><code>YYYY-MM-DD</code> (e.g., 2024-01-15)</li>
+                <li><code>YYYY-MM</code> (e.g., 2024-01)</li>
+                <li><code>MM/DD/YYYY</code> (e.g., 01/15/2024)</li>
+                <li><code>DD/MM/YYYY</code> (e.g., 15/01/2024)</li>
+              </ul>
+              <p><strong>Not supported:</strong></p>
+              <ul>
+                <li>Spelled-out months (e.g., "January 2024")</li>
+                <li>Relative dates (e.g., "Last week")</li>
+                <li>Inconsistent formats within the same column</li>
+              </ul>
+              <div class="surefire-method">
+                <h5>💡 Surefire Method (Recommended)</h5>
+                <p>If you're having trouble with date parsing, <strong>use simple sequential labels</strong> instead:</p>
+                <ul>
+                  <li><code>1, 2, 3, 4, ...</code> (numeric sequence)</li>
+                  <li><code>t1, t2, t3, t4, ...</code> (labeled sequence)</li>
+                  <li><code>Period1, Period2, Period3, ...</code></li>
+                  <li><code>Week1, Week2, Week3, ...</code> or <code>Month1, Month2, ...</code></li>
+                </ul>
+                <p class="hint">The model only needs to know the <em>order</em> of your observations &mdash; actual dates are just for labeling the output. Sequential numbers work perfectly!</p>
+              </div>
+            </div>
+          </details>
+          
+          <label for="arimax-outcome-select">Outcome Variable (Y)</label>
+          <select id="arimax-outcome-select"></select>
+          
+          <label>Exogenous Predictors (X)</label>
+          <div id="arimax-exog-list" class="predictor-list stacked">
+            <p class="muted">Upload data to select exogenous predictors.</p>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <h3>Model Specification</h3>
+          <p class="hint">Set the ARIMA order (p, d, q). Use the diagnostics panel to help choose appropriate values.</p>
+          
+          <div class="input-grid arimax-order-grid">
+            <div>
+              <label for="arimax-p">AR order (p)</label>
+              <input type="number" id="arimax-p" min="0" max="5" step="1" value="1">
+            </div>
+            <div>
+              <label for="arimax-d">Differencing (d)</label>
+              <input type="number" id="arimax-d" min="0" max="2" step="1" value="1">
+            </div>
+            <div>
+              <label for="arimax-q">MA order (q)</label>
+              <input type="number" id="arimax-q" min="0" max="5" step="1" value="1">
+            </div>
+          </div>
+          
+          <div class="input-grid forecast-settings-grid">
+            <div>
+              <label for="arimax-forecast-periods">Forecast Periods (0-10)</label>
+              <input type="range" id="arimax-forecast-periods" min="0" max="10" step="1" value="6">
+              <output id="forecast-periods-display" class="range-output">6 periods</output>
+            </div>
+            <div>
+              <label>Confidence Level</label>
+              <div class="confidence-buttons inline" role="group" aria-label="Select forecast confidence level">
+                <button type="button" class="confidence-button" data-level="0.90">90%</button>
+                <button type="button" class="confidence-button active" data-level="0.95">95%</button>
+                <button type="button" class="confidence-button" data-level="0.99">99%</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <button type="button" id="arimax-check-stationarity" class="secondary">Check Stationarity (ADF Test)</button>
+          <button type="button" id="arimax-run-model" class="primary">Fit ARIMAX Model</button>
+          <button type="button" id="arimax-update-forecast" class="secondary" disabled>Update Forecast</button>
+          <p id="arimax-run-status" class="upload-status" aria-live="polite"></p>
+        </div>
+      </article>
+
+      <article class="card analysis-settings test-options">
+        <h3>Analysis Settings</h3>
+        <div class="input-group">
+          <label for="arimax-alpha">Significance level for coefficients (&alpha;)</label>
+          <input type="number" id="arimax-alpha" min="0.001" max="0.2" step="0.001" value="0.050">
+          <p class="hint">Used for coefficient p-values and significance stars.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      
+      <!-- Time Series with Forecasts - Full Width -->
+      <div class="card">
+        <article class="chart-card">
+          <h3>Time Series with Forecasts</h3>
+          <div id="chart-forecast" class="chart-placeholder chart-full-width"></div>
+          <p id="forecast-chart-note" class="chart-note">
+            Upload data and fit the model to see the time series plot with forecasts and confidence intervals.
+          </p>
+          
+          <!-- Forecast Scenario Controls -->
+          <div id="forecast-exog-controls" class="forecast-scenario-controls hidden">
+            <h4>📊 Forecast Scenario: Set Exogenous Predictor Values</h4>
+            <p class="hint">Define what values the exogenous predictors will have during the forecast period. These settings affect the forecast values.</p>
+            <div id="forecast-exog-inputs" class="forecast-exog-grid">
+              <!-- Dynamically populated -->
+            </div>
+            <button type="button" id="apply-forecast-scenario" class="secondary">Apply &amp; Update Forecast</button>
+          </div>
+          
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p class="muted">
+              The solid blue line shows historical values, while the red dashed line shows forecasts.
+              The shaded area represents the confidence interval &mdash; wider bands indicate more uncertainty
+              in future predictions. Forecasts depend on the assumed values for exogenous predictors above.
+            </p>
+          </details>
+        </article>
+      </div>
+      
+      <!-- Residuals Section - Residuals Chart + ACF/PACF -->
+      <div class="card">
+        <h3>Residuals Diagnostics</h3>
+        <div class="residuals-diagnostics-grid">
+          <article class="chart-card">
+            <h4>Residuals Over Time</h4>
+            <div class="chart-placeholder" id="chart-residuals"></div>
+            <p class="chart-note">
+              Residuals should appear randomly scattered around zero with no obvious patterns.
+            </p>
+          </article>
+          <article class="chart-card">
+            <h4>ACF of Residuals</h4>
+            <div class="chart-placeholder" id="chart-acf"></div>
+          </article>
+          <article class="chart-card">
+            <h4>PACF of Residuals</h4>
+            <div class="chart-placeholder" id="chart-pacf"></div>
+          </article>
+        </div>
+        <details class="interpretation-aid" open>
+          <summary>Interpretation Aid: Understanding Residual Diagnostics</summary>
+          <div class="acf-pacf-guide">
+            <div class="guide-section">
+              <h5>📊 Residuals Over Time</h5>
+              <p>Good model fit produces residuals that look like <strong>white noise</strong>: randomly distributed around zero with constant variance. Look for:</p>
+              <ul>
+                <li><strong>No trends:</strong> Residuals shouldn't drift up or down over time</li>
+                <li><strong>Constant spread:</strong> The "band" of residuals should be roughly the same width throughout</li>
+                <li><strong>No patterns:</strong> Cycles or repeating structures suggest missed seasonality</li>
+              </ul>
+            </div>
+            
+            <div class="guide-section">
+              <h5>📈 ACF &amp; PACF Charts</h5>
+              <p><strong>ACF (Autocorrelation):</strong> Measures correlation with past values at each lag.</p>
+              <p><strong>PACF (Partial Autocorrelation):</strong> Direct correlation at each lag, removing intermediate effects.</p>
+              <ul>
+                <li><strong>Bars outside red lines:</strong> Statistically significant autocorrelation (potential problem)</li>
+                <li><strong>All bars inside red lines:</strong> Residuals are white noise (good!)</li>
+              </ul>
+            </div>
+            
+            <div class="guide-section">
+              <h5>⚠️ Problem Patterns &amp; Solutions</h5>
+              <table class="guide-table">
+                <thead>
+                  <tr><th>Pattern</th><th>Meaning</th><th>Try This</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Significant ACF spikes at lags 1, 2, 3...</td>
+                    <td>MA terms needed</td>
+                    <td>Increase q (MA order)</td>
+                  </tr>
+                  <tr>
+                    <td>Significant PACF spikes at lags 1, 2, 3...</td>
+                    <td>AR terms needed</td>
+                    <td>Increase p (AR order)</td>
+                  </tr>
+                  <tr>
+                    <td>Slow decay in ACF</td>
+                    <td>Series not stationary</td>
+                    <td>Increase d (differencing)</td>
+                  </tr>
+                  <tr>
+                    <td>Spikes at seasonal lags (12, 24...)</td>
+                    <td>Seasonal pattern</td>
+                    <td>Add seasonal dummies as exogenous</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="summary-section" aria-labelledby="summary-heading">
+      <h2 id="summary-heading">SUMMARY STATISTICS</h2>
+      <div class="card summary-stats-card">
+        <h3>Descriptive Statistics</h3>
+        <div class="summary-stats-grid">
+          <div>
+            <h4>Outcome Variable</h4>
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Statistic</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody id="arimax-outcome-stats-body">
+                <tr><td colspan="2">Provide data to see summary statistics.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h4>Exogenous Predictors</h4>
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Mean</th>
+                  <th>Std. Dev.</th>
+                  <th>Min</th>
+                  <th>Max</th>
+                </tr>
+              </thead>
+              <tbody id="arimax-exog-stats-body">
+                <tr><td colspan="5">Provide data to see predictor statistics.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="test-results" aria-labelledby="test-results-heading">
+      <h2 id="test-results-heading">MODEL RESULTS</h2>
+      <div class="card metrics-panel">
+        <div class="metric-output">Model specification: <span id="arimax-spec-value">&ndash;</span></div>
+        <div class="metric-output">AIC: <span id="arimax-aic-value">&ndash;</span></div>
+        <div class="metric-output">BIC: <span id="arimax-bic-value">&ndash;</span></div>
+        <div class="metric-output">RMSE: <span id="arimax-rmse-value">&ndash;</span></div>
+        <div class="metric-output">MAE: <span id="arimax-mae-value">&ndash;</span></div>
+        <details class="interpretation-aid">
+          <summary>Interpretation Aid</summary>
+          <p class="muted"><strong>AIC/BIC:</strong> Lower values indicate better model fit relative to complexity. Use these to compare different (p,d,q) specifications.</p>
+          <p class="muted"><strong>RMSE:</strong> Root Mean Square Error &mdash; average magnitude of prediction errors in the same units as the outcome.</p>
+          <p class="muted"><strong>MAE:</strong> Mean Absolute Error &mdash; average absolute deviation, less sensitive to outliers than RMSE.</p>
+        </details>
+      </div>
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>APA-Style Report</h3>
+          <p id="arimax-apa-report">Fit the model to see the APA-style statistical report.</p>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="arimax-managerial-report">Business-focused interpretation will appear here after fitting the model.</p>
+        </article>
+      </div>
+      <div class="card summary-table-card">
+        <h3>Coefficient Estimates</h3>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th>Estimate</th>
+              <th>Std. Error</th>
+              <th>p-value</th>
+              <th>95% CI</th>
+            </tr>
+          </thead>
+          <tbody id="arimax-coef-table-body">
+            <tr>
+              <td colspan="5">Fit the model to view coefficient estimates.</td>
+            </tr>
+          </tbody>
+        </table>
+        <details class="interpretation-aid" open>
+          <summary>Interpretation Aid: Understanding Coefficients</summary>
+          <div class="coef-guide">
+            <div class="guide-section">
+              <h5>📊 Types of Coefficients</h5>
+              
+              <div class="coef-type">
+                <h6>AR Coefficients (ar.L1, ar.L2, ...)</h6>
+                <p><strong>What they mean:</strong> How much yesterday's (or earlier) values influence today's value, after accounting for the trend.</p>
+                <ul>
+                  <li><strong>Positive (e.g., 0.7):</strong> Strong persistence &mdash; if sales were high last period, they'll likely be high this period</li>
+                  <li><strong>Negative (e.g., -0.3):</strong> Mean reversion &mdash; high values tend to be followed by lower values</li>
+                  <li><strong>Close to 0:</strong> Past values don't strongly predict current values</li>
+                  <li><strong>Close to 1:</strong> Random walk behavior &mdash; today ≈ yesterday + noise</li>
+                </ul>
+                <p class="example"><em>Example:</em> ar.L1 = 0.65 means "about 65% of last period's deviation from the mean carries over to this period."</p>
+              </div>
+              
+              <div class="coef-type">
+                <h6>MA Coefficients (ma.L1, ma.L2, ...)</h6>
+                <p><strong>What they mean:</strong> How much past forecast <em>errors</em> affect current values. These capture short-term adjustments.</p>
+                <ul>
+                  <li><strong>Positive (e.g., 0.5):</strong> If we under-predicted last period, we adjust upward this period</li>
+                  <li><strong>Negative (e.g., -0.4):</strong> If we under-predicted last period, we actually adjust downward (unusual)</li>
+                </ul>
+                <p class="example"><em>Example:</em> ma.L1 = 0.45 means "if our model was off by $100 last period, add about $45 to this period's prediction."</p>
+              </div>
+              
+              <div class="coef-type">
+                <h6>Exogenous Coefficients (your predictor names)</h6>
+                <p><strong>What they mean:</strong> The direct effect of each external variable on your outcome, holding time-series dynamics constant.</p>
+                <ul>
+                  <li>Interpreted like standard regression coefficients</li>
+                  <li>A one-unit increase in the predictor changes the outcome by the coefficient value</li>
+                </ul>
+                <p class="example"><em>Example:</em> ad_spend = 2.3 means "each additional $1 spent on advertising is associated with $2.30 more in sales, after accounting for trends and seasonality."</p>
+              </div>
+              
+              <div class="coef-type">
+                <h6>Sigma² (sigma2)</h6>
+                <p><strong>What it means:</strong> The estimated variance of the random error term. Larger values = more unexplained variability.</p>
+              </div>
+            </div>
+            
+            <div class="guide-section">
+              <h5>📈 Statistical Significance</h5>
+              <ul>
+                <li><strong>p-value < 0.05:</strong> Coefficient is statistically significant (highlighted in green)</li>
+                <li><strong>p-value > 0.05:</strong> Cannot rule out that the true effect is zero</li>
+                <li><strong>Confidence Interval:</strong> If it doesn't include 0, the coefficient is significant</li>
+              </ul>
+              <p class="hint">Non-significant AR or MA terms might indicate you've over-specified the model. Try reducing p or q.</p>
+            </div>
+            
+            <div class="guide-section">
+              <h5>⚠️ Common Issues</h5>
+              <ul>
+                <li><strong>Very large standard errors:</strong> Possible multicollinearity or insufficient data</li>
+                <li><strong>AR coefficient > 1:</strong> Model may be unstable; try increasing d (differencing)</li>
+                <li><strong>All exogenous coefficients non-significant:</strong> External variables may not help; try a simpler ARIMA model</li>
+              </ul>
+            </div>
+          </div>
+        </details>
+      </div>
+      <div class="card">
+        <h3>Forecasts</h3>
+        <table class="summary-table" id="arimax-forecast-table">
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th>Forecast</th>
+              <th>Lower (95%)</th>
+              <th>Upper (95%)</th>
+            </tr>
+          </thead>
+          <tbody id="arimax-forecast-table-body">
+            <tr>
+              <td colspan="4" class="muted">Fit the model to view forecasts. Use the slider to select 0-10 forecast periods.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="template-download">
+          <button type="button" id="arimax-download-results" class="secondary">
+            Download forecasts (CSV)
+          </button>
+        </p>
+      </div>
+    </section>
+
+    <section class="diagnostics-section" aria-labelledby="diagnostics-heading">
+      <h2 id="diagnostics-heading">DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+      <div class="card">
+        <details class="diagnostics-details" open>
+          <summary>Stationarity &amp; Model Diagnostics</summary>
+          <div id="arimax-diagnostics-content">
+            <p class="muted">Click "Check Stationarity" or fit the model to see diagnostic tests.</p>
+            
+            <div class="diagnostic-section">
+              <h4>Augmented Dickey-Fuller Test (ADF)</h4>
+              <div id="arimax-adf-results">
+                <p class="muted">Tests whether the series has a unit root (non-stationary).</p>
+              </div>
+              <details class="nested-help">
+                <summary>What is the ADF Test?</summary>
+                <div class="help-content">
+                  <p>The ADF test checks if your time series is <strong>stationary</strong> (statistical properties don't change over time). ARIMA models require stationarity.</p>
+                  <ul>
+                    <li><strong>p-value < 0.05:</strong> ✅ Series is stationary. Good to proceed.</li>
+                    <li><strong>p-value ≥ 0.05:</strong> ⚠️ Series is non-stationary. Differencing (d > 0) is needed.</li>
+                  </ul>
+                  <p><strong>What makes a series non-stationary?</strong></p>
+                  <ul>
+                    <li>Trends (consistently going up or down)</li>
+                    <li>Changing variance (volatility increases over time)</li>
+                    <li>Seasonal patterns with changing amplitude</li>
+                  </ul>
+                  <p><strong>The fix:</strong> Differencing (setting d=1 or d=2) removes trends. The model then works with changes rather than levels.</p>
+                </div>
+              </details>
+            </div>
+            
+            <div class="diagnostic-section">
+              <h4>Ljung-Box Test (Residual Autocorrelation)</h4>
+              <div id="arimax-ljungbox-results">
+                <p class="muted">Tests whether residuals exhibit significant autocorrelation.</p>
+              </div>
+              <details class="nested-help">
+                <summary>What is the Ljung-Box Test?</summary>
+                <div class="help-content">
+                  <p>This test checks if there's leftover pattern in your residuals (the differences between actual and fitted values).</p>
+                  <ul>
+                    <li><strong>p-value > 0.05:</strong> ✅ No significant autocorrelation. Residuals look like random noise. Model is adequate.</li>
+                    <li><strong>p-value ≤ 0.05:</strong> ⚠️ Significant autocorrelation detected. The model is missing some structure.</li>
+                  </ul>
+                  <p><strong>If you see significant autocorrelation:</strong></p>
+                  <ul>
+                    <li>Try increasing p (AR order) if PACF shows spikes</li>
+                    <li>Try increasing q (MA order) if ACF shows spikes</li>
+                    <li>Check for seasonal patterns you haven't accounted for</li>
+                    <li>Consider adding more exogenous variables</li>
+                  </ul>
+                </div>
+              </details>
+            </div>
+            
+            <div class="diagnostic-section">
+              <h4>Model Selection Guidance</h4>
+              <div id="arimax-order-guidance">
+                <div class="order-guide-grid">
+                  <div class="order-guide-item">
+                    <h5>Choosing p (AR order)</h5>
+                    <p>Look at the <strong>PACF plot</strong> of your original series:</p>
+                    <ul>
+                      <li>Count significant spikes (bars outside red lines)</li>
+                      <li>The number of spikes before cutoff = suggested p</li>
+                      <li>Typical values: 0, 1, or 2</li>
+                    </ul>
+                    <p class="example">PACF shows 2 significant spikes → try p=2</p>
+                  </div>
+                  
+                  <div class="order-guide-item">
+                    <h5>Choosing d (Differencing)</h5>
+                    <p>Based on the <strong>ADF test</strong>:</p>
+                    <ul>
+                      <li>ADF p-value < 0.05 → d=0 (already stationary)</li>
+                      <li>ADF p-value ≥ 0.05 → try d=1</li>
+                      <li>Still non-stationary with d=1 → try d=2</li>
+                      <li>Rarely need d > 2</li>
+                    </ul>
+                    <p class="example">Upward trend in data → likely need d=1</p>
+                  </div>
+                  
+                  <div class="order-guide-item">
+                    <h5>Choosing q (MA order)</h5>
+                    <p>Look at the <strong>ACF plot</strong> of your original series:</p>
+                    <ul>
+                      <li>Count significant spikes after lag 0</li>
+                      <li>Spikes that cut off sharply suggest MA terms</li>
+                      <li>Typical values: 0, 1, or 2</li>
+                    </ul>
+                    <p class="example">ACF shows 1 significant spike at lag 1 → try q=1</p>
+                  </div>
+                </div>
+                
+                <div class="common-models">
+                  <h5>Common Starting Points</h5>
+                  <table class="guide-table">
+                    <thead>
+                      <tr><th>Model</th><th>When to Use</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>ARIMA(1,1,1)</td><td>Good default for trending data with some persistence</td></tr>
+                      <tr><td>ARIMA(0,1,1)</td><td>Random walk with smoothing (simple exponential smoothing)</td></tr>
+                      <tr><td>ARIMA(1,0,0)</td><td>Stationary data with persistence (AR(1) process)</td></tr>
+                      <tr><td>ARIMA(0,1,0)</td><td>Pure random walk (tomorrow = today + noise)</td></tr>
+                      <tr><td>ARIMA(2,1,2)</td><td>More complex dynamics; try if simpler models fail diagnostics</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div class="model-comparison-tip">
+                  <h5>💡 Model Comparison Tip</h5>
+                  <p>Try a few different (p, d, q) combinations and compare:</p>
+                  <ul>
+                    <li><strong>AIC/BIC:</strong> Lower is better (penalizes complexity)</li>
+                    <li><strong>Ljung-Box p-value:</strong> Should be > 0.05</li>
+                    <li><strong>RMSE:</strong> Lower is better prediction accuracy</li>
+                  </ul>
+                  <p>The best model balances fit (low RMSE) with simplicity (few parameters, low AIC).</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="created-date">2025-11-30</span> &middot; Last updated: <span id="modified-date">2025-11-30</span></p>
+    <p><a href="../../index.html">Back to Stat Analysis Selection</a></p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). ARIMAX Time Series Forecasting Tool. Marketing Bivariate Tools.</p>
+  </footer>
+
+  <div id="arimax-loading-overlay" class="loading-overlay" aria-hidden="true">
+    <div class="loading-content">
+      <p><strong>Fitting ARIMAX model…</strong></p>
+      <p class="muted">This may take a few seconds. Please wait.</p>
+    </div>
+  </div>
+
+  <script src="../../../shared/js/csv_utils.js"></script>
+  <script src="../../../shared/js/ui_utils.js"></script>
+  <script src="../../../shared/js/auth_tracking.js"></script>
+  <script src="../../../shared/js/auth_bar.js"></script>
+  <script src="arimax_app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multiple Regression with Interactions & Non-Linear Effects</title>
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+  <link rel="stylesheet" href="mlr_interactions.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-290ZJ9RE04');
+  </script>
+</head>
+
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../login.html">Login</a>
+        <a href="../../register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="intro hero-header">
+    <div class="hero-header__top">
+      <h1>Multiple Regression with Interactions & Non-Linear Effects</h1>
+      <div class="hero-context">
+        <span class="badge">Advanced</span>
+      </div>
+    </div>
+    <p class="hero-header__lede">
+      Build on multiple regression by adding interaction terms (moderation effects) and quadratic terms (non-linear relationships). Understand how the effect of one predictor depends on another, or how relationships curve rather than staying linear.
+    </p>
+  </header>
+
+  <main class="app-main">
+    <section class="test-overview">
+      <h2>OVERVIEW & CONCEPTS</h2>
+      <div class="card">
+        <p>
+          <strong>This tool extends multiple linear regression</strong> to handle two powerful concepts:
+        </p>
+        <ol>
+          <li><strong>Interactions (Moderation):</strong> When the effect of predictor X₁ on outcome Y <em>depends on</em> the level of another predictor X₂</li>
+          <li><strong>Non-linear effects (Quadratic):</strong> When a predictor's relationship with the outcome is curved (e.g., inverted U-shape)</li>
+        </ol>
+        
+        <h4>Interaction Effects</h4>
+        <p class="equation">
+          <strong>With interaction term:</strong>
+          $$ Y_i = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \beta_3 (X_{1i} \times X_{2i}) + \varepsilon_i $$
+        </p>
+        <p>
+          The interaction coefficient (\(\beta_3\)) tells you how much the effect of X₁ changes for each unit increase in X₂. 
+          <strong>Key insight:</strong> If \(\beta_3\) is significant, the relationship between X₁ and Y is <em>not constant</em>—it varies depending on X₂.
+        </p>
+
+        <h4>Quadratic Effects</h4>
+        <p class="equation">
+          <strong>With quadratic term:</strong>
+          $$ Y_i = \beta_0 + \beta_1 X_{i} + \beta_2 X_{i}^2 + \varepsilon_i $$
+        </p>
+        <p>
+          The quadratic coefficient (\(\beta_2\)) captures curvature. If \(\beta_2 < 0\), the relationship is an inverted U (increases then decreases). 
+          If \(\beta_2 > 0\), it's a U-shape (decreases then increases). <strong>Business relevance:</strong> Find optimal points (e.g., ideal price, optimal ad frequency).
+        </p>
+
+        <details class="additional-notes">
+          <summary>Why Interactions Matter</summary>
+          <div class="additional-content">
+            <p>
+              Real-world effects rarely operate in isolation. <strong>Moderation</strong> (statistical interactions) recognizes that contexts matter:
+            </p>
+            <ul>
+              <li>Ad spend might drive revenue more during holidays than off-season</li>
+              <li>Price increases might hurt sales for low-quality products but enhance prestige for luxury items</li>
+              <li>Training programs might boost performance for junior employees but have little effect on seasoned veterans</li>
+            </ul>
+            <p>
+              <strong>Managerial implication:</strong> One-size-fits-all strategies miss opportunities. If an interaction is significant, you should tailor your approach based on the moderator.
+            </p>
+          </div>
+        </details>
+
+        <details class="additional-notes">
+          <summary>Why Centering Matters for Interactions</summary>
+          <div class="additional-content">
+            <p>
+              When including interaction terms, <strong>mean-centering</strong> continuous predictors is recommended (and enabled by default in this tool). Here's why:
+            </p>
+            <ul>
+              <li><strong>Interpretability:</strong> After centering, "main effects" represent effects when the other variable is at its mean (not at zero, which might be meaningless)</li>
+              <li><strong>Multicollinearity reduction:</strong> Interaction terms are highly correlated with their component predictors. Centering reduces this correlation</li>
+              <li><strong>Focal vs. moderator distinction:</strong> Centering helps you interpret which variable is the "focal predictor" (whose effect you're studying) vs. the "moderator" (what changes that effect)</li>
+            </ul>
+            <p>
+              <strong>Example:</strong> If studying ad_spend × seasonality, centering ad_spend means the season coefficients represent effects "at average ad spend levels," not at zero spend (which never happens).
+            </p>
+            <p>
+              <em>Advanced users can disable centering, but interpretations become more complex.</em>
+            </p>
+          </div>
+        </details>
+
+        <details class="additional-notes">
+          <summary>Simple Slopes & Probing Interactions</summary>
+          <div class="additional-content">
+            <p>
+              When an interaction is significant, the next step is <strong>simple slopes analysis</strong>: testing whether the focal predictor's effect is significant at different levels of the moderator.
+            </p>
+            <p>
+              <strong>For continuous moderators,</strong> we conventionally test at three levels:
+            </p>
+            <ul>
+              <li><strong>Low:</strong> Moderator at -1 standard deviation below its mean</li>
+              <li><strong>Average:</strong> Moderator at its mean</li>
+              <li><strong>High:</strong> Moderator at +1 standard deviation above its mean</li>
+            </ul>
+            <p>
+              <strong>For categorical moderators,</strong> we test the focal predictor effect within each category separately.
+            </p>
+            <p>
+              This tool visualizes these simple slopes in the interaction plots, making it easy to see where effects are strong vs. weak.
+            </p>
+          </div>
+        </details>
+
+        <details class="additional-notes">
+          <summary>Quadratic Terms & Finding Optimal Points</summary>
+          <div class="additional-content">
+            <p>
+              Quadratic effects capture <strong>non-monotonic relationships</strong>—where "more is better" only up to a point, then becomes "too much of a good thing."
+            </p>
+            <p>
+              <strong>The turning point</strong> (maximum or minimum) occurs at:
+              $$ X^* = -\frac{\beta_1}{2 \beta_2} $$
+            </p>
+            <p>
+              <strong>Business applications:</strong>
+            </p>
+            <ul>
+              <li><strong>Optimal pricing:</strong> Too low = leaving money on table; too high = driving customers away</li>
+              <li><strong>Ideal ad frequency:</strong> Too few = insufficient awareness; too many = annoyance and fatigue</li>
+              <li><strong>Perfect difficulty level:</strong> Too easy = boredom; too hard = frustration</li>
+            </ul>
+            <p>
+              <strong>Interpretation note:</strong> Check that the optimal point falls within your observed data range. Extrapolating beyond observed values is risky.
+            </p>
+          </div>
+        </details>
+
+        <details class="additional-notes">
+          <summary>Tool Limitation: One Interaction/Quadratic at a Time</summary>
+          <div class="additional-content">
+            <p>
+              <strong>For educational clarity,</strong> this tool restricts you to <strong>one interaction or quadratic effect per model</strong>. This is <em>not</em> a limitation of regression in general—real models often include multiple interactions.
+            </p>
+            <p>
+              <strong>Why this restriction helps learning:</strong>
+            </p>
+            <ul>
+              <li>Focuses attention on understanding <em>one</em> moderation or non-linear effect deeply</li>
+              <li>Keeps visualizations clear and interpretable</li>
+              <li>Prevents overfitting with limited sample sizes</li>
+              <li>Teaches principles that extend to more complex models</li>
+            </ul>
+            <p>
+              <strong>For professional analysis</strong> requiring multiple interactions or three-way interactions, use statistical software like R, Python, SPSS, or Stata.
+            </p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="scenario-section">
+      <h2>SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Load a scenario:</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Manual inputs (no preset)</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>
+              Download scenario dataset
+            </button>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>
+            Use presets to explore realistic scenarios demonstrating interactions and non-linear effects in marketing, pricing, and gaming contexts. Each scenario can be downloaded, edited in Excel, and re-uploaded.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="inputs-panel">
+      <h2>INPUTS & SETTINGS</h2>
+      
+      <div class="card data-entry-card">
+        <div class="input-header">
+          <h3>Upload Raw Data File</h3>
+        </div>
+        <p class="panel-intro">
+          Upload a CSV file with raw case-level data. Include one outcome variable and multiple predictors (numeric or categorical).
+        </p>
+        <div class="dropzone" id="raw-dropzone" role="button" tabindex="0">
+          <p class="dropzone-title">Drag & Drop raw data file (.csv, .tsv, .txt)</p>
+          <p class="dropzone-note">Include headers; at least one numeric outcome and 2+ predictors.</p>
+          <button type="button" id="raw-browse" class="secondary">Browse files</button>
+        </div>
+        <input type="file" id="raw-input" accept=".csv,.tsv,.txt" hidden>
+        <p class="upload-status" id="raw-upload-status">No file uploaded.</p>
+      </div>
+
+      <div id="variable-selection-panel" class="card variable-selection-panel hidden">
+        <h3>Assign Variables</h3>
+        <p>Select your outcome (Y) and predictors. Set predictor types and reference levels for categorical variables.</p>
+        <div class="variable-selectors-grid">
+          <div class="variable-column">
+            <label for="outcome-select">Outcome (numeric)</label>
+            <select id="outcome-select"></select>
+          </div>
+          <div class="variable-column">
+            <h4>Predictors</h4>
+            <div id="predictor-list" class="predictor-list stacked"></div>
+          </div>
+        </div>
+        <div id="assignment-summary" class="muted"></div>
+        <p id="input-status" class="muted"></p>
+        <p id="row-filter-status" class="muted"></p>
+      </div>
+
+      <div id="interaction-selection-panel" class="card interaction-panel hidden">
+        <h3>Interaction / Non-Linear Effect</h3>
+        <p>Choose one interaction or quadratic effect to include in your model:</p>
+        
+        <div class="interaction-type-selector">
+          <label class="radio-option">
+            <input type="radio" name="interaction-type" value="none" checked>
+            <span>No interaction/quadratic (standard MLR)</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="interaction-type" value="cont_cont">
+            <span>Continuous × Continuous interaction</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="interaction-type" value="cont_cat">
+            <span>Continuous × Categorical interaction</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="interaction-type" value="cat_cat">
+            <span>Categorical × Categorical interaction</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="interaction-type" value="quadratic">
+            <span>Quadratic effect (X²)</span>
+          </label>
+        </div>
+
+        <div id="interaction-variable-selectors" class="interaction-var-selectors hidden">
+          <div id="cont-cont-selectors" class="var-selector-group hidden">
+            <h4>Continuous × Continuous Interaction</h4>
+            <div class="selector-row">
+              <label for="focal-cont-cont">Focal predictor:</label>
+              <select id="focal-cont-cont"></select>
+            </div>
+            <div class="selector-row">
+              <label for="moderator-cont-cont">Moderator:</label>
+              <select id="moderator-cont-cont"></select>
+            </div>
+            <button type="button" id="swap-cont-cont" class="secondary">Swap focal ↔ moderator</button>
+            <p class="helper-text">Focal = predictor whose effect you're studying; Moderator = what changes that effect</p>
+          </div>
+
+          <div id="cont-cat-selectors" class="var-selector-group hidden">
+            <h4>Continuous × Categorical Interaction</h4>
+            <div class="selector-row">
+              <label for="focal-cont-cat">Focal predictor:</label>
+              <select id="focal-cont-cat"></select>
+            </div>
+            <div class="selector-row">
+              <label for="moderator-cont-cat">Moderator:</label>
+              <select id="moderator-cont-cat"></select>
+            </div>
+            <button type="button" id="swap-cont-cat" class="secondary">Swap focal ↔ moderator</button>
+            <p class="helper-text">Focal = predictor whose effect you're studying; Moderator = grouping variable</p>
+          </div>
+
+          <div id="cat-cat-selectors" class="var-selector-group hidden">
+            <h4>Categorical × Categorical Interaction</h4>
+            <div class="selector-row">
+              <label for="focal-cat-cat">Focal predictor:</label>
+              <select id="focal-cat-cat"></select>
+            </div>
+            <div class="selector-row">
+              <label for="moderator-cat-cat">Moderator:</label>
+              <select id="moderator-cat-cat"></select>
+            </div>
+            <button type="button" id="swap-cat-cat" class="secondary">Swap focal ↔ moderator</button>
+          </div>
+
+          <div id="quadratic-selectors" class="var-selector-group hidden">
+            <h4>Quadratic Effect (X²)</h4>
+            <div class="selector-row">
+              <label for="quadratic-var">Continuous predictor:</label>
+              <select id="quadratic-var"></select>
+            </div>
+            <p class="helper-text">Adds X² term to capture curved (non-linear) relationship</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card confidence-card">
+        <h3>Confidence Level & Reporting</h3>
+        <p>Set the significance level for hypothesis tests and confidence intervals.</p>
+        <div class="alpha-controls">
+          <label for="alpha">Significance level (α)</label>
+          <input type="number" id="alpha" min="0.001" max="0.5" step="0.001" value="0.05">
+          <div class="confidence-buttons" role="group" aria-label="Select confidence level">
+            <button type="button" class="confidence-button conf-level-btn" data-level="0.90">90% Conf.</button>
+            <button type="button" class="confidence-button conf-level-btn selected" data-level="0.95">95% Conf.</button>
+            <button type="button" class="confidence-button conf-level-btn" data-level="0.99">99% Conf.</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card advanced-settings-card">
+        <details class="advanced-settings">
+          <summary>Advanced Analysis Settings</summary>
+          <div class="advanced-settings-content">
+            <label class="switch-option">
+              <input type="checkbox" id="center-continuous" checked>
+              <span>Mean-center continuous predictors for interactions (recommended)</span>
+            </label>
+            <p class="helper-text">
+              Centering improves interpretability and reduces multicollinearity. Main effects then represent effects "at average levels" of other variables. Disable only if you have specific reasons.
+            </p>
+            
+            <label class="switch-option">
+              <input type="checkbox" id="show-confidence-bands" checked>
+              <span>Show confidence bands on interaction plots</span>
+            </label>
+            <p class="helper-text">
+              Toggle visibility of shaded confidence intervals around predicted lines. Useful for assessing uncertainty in simple slopes.
+            </p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      <div class="card">
+        <article class="chart-card">
+          <h3>Actual vs. Fitted</h3>
+          <div id="plot-actual-fitted" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Plot of actual versus fitted outcome values."></div>
+          <p id="plot-actual-fitted-caption" class="chart-note"></p>
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p class="muted">
+              Each point compares an observed outcome to its predicted value. Points near the 45-degree line indicate better fit. This plot helps diagnose whether the model (including interactions/quadratic) adequately captures the data structure.
+            </p>
+          </details>
+        </article>
+
+        <article class="chart-card" id="interaction-plot-card">
+          <h3 id="interaction-plot-title">Interaction / Effect Plot</h3>
+          <div id="plot-interaction" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Interaction or non-linear effect visualization."></div>
+          <p id="plot-interaction-caption" class="chart-note"></p>
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p id="interaction-interpretation" class="muted"></p>
+          </details>
+        </article>
+      </div>
+    </section>
+
+    <section class="summary-section" aria-labelledby="summary-heading">
+      <h2 id="summary-heading">SUMMARY STATISTICS</h2>
+      <div class="card summary-stats-card">
+        <h3>Summary Statistics</h3>
+        <div class="summary-stats-grid">
+          <div>
+            <h4>Outcome & Continuous Predictors</h4>
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Mean</th>
+                  <th>Median</th>
+                  <th>Std. Dev.</th>
+                  <th>Min</th>
+                  <th>Max</th>
+                </tr>
+              </thead>
+              <tbody id="numeric-summary-body">
+                <tr><td colspan="6">Provide data to see summary statistics.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h4>Categorical Predictors (% by level)</h4>
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Predictor</th>
+                  <th>Level</th>
+                  <th>Percent</th>
+                </tr>
+              </thead>
+              <tbody id="categorical-summary-body">
+                <tr><td colspan="3">Provide data to see level percentages.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="test-results" aria-labelledby="test-results-heading">
+      <h2 id="test-results-heading">TEST RESULTS</h2>
+
+      <div class="card regression-equation-card">
+        <h3>Regression Equation</h3>
+        <p id="regression-equation-output" class="regression-equation-text">
+          Provide data to see the fitted regression equation.
+        </p>
+        <p id="regression-equation-note" class="helper-text" style="display: none; margin-top: 0.5em; padding: 0.5em; background-color: #fff3cd; border-left: 3px solid #ffc107;"></p>
+        <p class="template-download">
+          <button type="button" id="mlr-download-results" class="secondary">
+            Download fitted values & residuals (CSV)
+          </button>
+        </p>
+      </div>
+
+      <div class="card metrics-panel">
+        <div class="metric-output"><span>R-squared:</span><span id="metric-r2" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output"><span>Adj. R-squared:</span><span id="metric-adj-r2" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output"><span>Model F:</span><span id="metric-f" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output"><span>Model p-value:</span><span id="metric-pmodel" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output"><span>RMSE:</span><span id="metric-rmse" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output"><span>MAE:</span><span id="metric-mae" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output"><span>Sample size (n):</span><span id="metric-n" class="dynamic-value">&ndash;</span></div>
+        <div class="metric-output"><span>Alpha:</span><span id="metric-alpha" class="dynamic-value">&ndash;</span></div>
+      </div>
+
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>APA-Style Statistical Reporting</h3>
+          <p id="apa-report"></p>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="managerial-report"></p>
+        </article>
+      </div>
+
+      <div class="card summary-section">
+        <h3>Coefficient Estimates</h3>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Predictor</th>
+              <th>Term</th>
+              <th>Estimate</th>
+              <th>Std. Error</th>
+              <th>t</th>
+              <th>p-value</th>
+              <th id="coef-ci-lower-header">Lower CI</th>
+              <th id="coef-ci-upper-header">Upper CI</th>
+            </tr>
+          </thead>
+          <tbody id="coef-table-body">
+            <tr><td colspan="8">Provide data to see coefficient estimates.</td></tr>
+          </tbody>
+        </table>
+        <details class="interpretation-aid">
+          <summary>Coefficient Interpretation Guide</summary>
+          <div id="coef-interpretation" class="muted"></div>
+        </details>
+      </div>
+    </section>
+
+    <section class="diagnostics-section">
+      <h2>DIAGNOSTICS & ASSUMPTIONS</h2>
+      <div class="card">
+        <details class="diagnostics-details">
+          <summary>Diagnostics & Assumption Checks</summary>
+          <div id="diagnostics-content">
+            <p class="muted">Run the analysis to see checks on multicollinearity, residual patterns, and model fit.</p>
+            <div id="diag-collinearity" class="diagnostic-block"></div>
+            <div id="diag-residuals" class="diagnostic-block"></div>
+            <div class="chart-card">
+              <h4>Residuals vs. Fitted</h4>
+              <div id="plot-residuals" class="chart-placeholder" role="img" aria-live="polite"
+                aria-label="Residuals versus fitted values."></div>
+              <p id="plot-residuals-caption" class="chart-note"></p>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p><a href="../../index.html">← Back to Analysis Selection</a></p>
+    <p class="page-timestamps">Created: November 30, 2025 | Last updated: November 30, 2025</p>
+    <p class="citation">
+      Cite as: Baker, A. (2025). <em>Multiple Regression with Interactions & Non-Linear Effects</em>. Marketing Bivariate Tools. 
+      Retrieved from https://andrewbaker13.github.io/mktg_bivariate_tools/apps/mlr_interactions/
+    </p>
+  </footer>
+
+  <script src="../../../shared/js/auth_tracking.js"></script>
+  <script src="../../../shared/js/auth_bar.js"></script>
+  <script src="../../../shared/js/csv_utils.js"></script>
+  <script src="../../../shared/js/stats_utils.js"></script>
+  <script src="../../../shared/js/ui_utils.js"></script>
+  <script src="mlr_interactions_app.js"></script>
+</body>
+
+</html>

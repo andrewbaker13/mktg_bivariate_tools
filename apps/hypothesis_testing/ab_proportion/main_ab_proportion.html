@@ -1,0 +1,304 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A/B Proportion Tool</title>
+
+  <!-- Global shared styles -->
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+
+  <!-- App-specific styles -->
+  <link rel="stylesheet" href="main_ab_proportion.css">
+
+  <!-- Plotly for visualization -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+  <!-- MathJax for LaTeX rendering (Statistical Equations) -->
+  <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</head>
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../login.html">Login</a>
+        <a href="../../register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+  <header class="intro hero-header">
+    <div class="hero-header__top">
+      <h1>StudyFlow A/B Testing Comparison Tool</h1>
+      <div class="hero-context">
+        <span class="badge">Proportion tool</span>
+      </div>
+    </div>
+    <p class="hero-header__lede">Compare two marketing variants with instant visual diagnostics, confidence intervals, and clear test guidance.</p>
+  </header>
+
+  <!-- ======== PRESERVED ORIGINAL INTRO SECTION (unchanged) ======== -->
+  <section class="test-overview" aria-labelledby="test-details-heading">
+    <h2 id="test-details-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
+    <div class="card">
+      <p>
+        Use this tool to compare two conversion rates (for example, Control vs Variant in an A/B test), estimate how large the difference is, and judge whether it is statistically reliable.
+      </p>
+      <p class="equation">
+        <strong>Core test (two-proportion z-test with hypothesized difference \(\Delta_0\)):</strong>
+        $$z = \frac{P_2 - P_1 - \Delta_0}{\sqrt{\dfrac{P_1(1-P_1)}{n_1} + \dfrac{P_2(1-P_2)}{n_2}}} \quad\text{(Wald / unpooled)}$$
+        <br />
+        <em>Null hypothesis: \(H_0:\ \Delta = \Delta_0\). By default \(\Delta_0 = 0\) (no difference).</em>
+      </p>
+      <p class="equation">
+        <strong>Confidence interval for the difference (\(\Delta = P_2 - P_1\)):</strong>
+        $$\Delta \pm z_{1-\alpha/2}\sqrt{\frac{P_1(1-P_1)}{n_1}+\frac{P_2(1-P_2)}{n_2}}$$
+      </p>
+      <details class="intro-notes" style="margin-top:12px;">
+        <summary>Additional notes</summary>
+        <p>The two-proportion z-test assumes independent groups, sufficiently large samples for the normal approximation, and a hypothesized difference \(\Delta_0\) you can set based on business risk (for example, \(\Delta_0 = 0\) for “no lift,” or \(\Delta_0 = 0.05\) for a 5 percentage point lift).</p>
+        <p>This implementation uses an unpooled (Wald) standard error, which keeps the calculation transparent while remaining reasonably conservative when sample sizes are moderate to large.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="scenario-section">
+    <h2>MARKETING SCENARIOS</h2>
+    <div class="card">
+      <div class="scenario-controls" style="margin-top:12px;">
+        <label for="scenario-select">Load a marketing use case:</label>
+        <div class="scenario-controls__input">
+          <select id="scenario-select">
+            <option value="">Manual inputs (no preset)</option>
+          </select>
+          <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
+        </div>
+      </div>
+      <div id="scenario-description">
+        <p>Select a preset marketing scenario to auto-fill the control/variant inputs (or upload instructions once supported), or leave this on "Manual inputs" to enter values yourself below.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="inputs-panel">
+    <h2>INPUTS &amp; SETTINGS</h2>
+    <div class="card data-entry-card">
+      <div class="input-header">
+        <h3>Select Data Entry / Upload Mode</h3>
+      </div>
+      <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
+        <button type="button" class="mode-button active" data-mode="manual">Manual entry</button>
+        <button type="button" class="mode-button" data-mode="summary-upload">Upload summary inputs</button>
+        <button type="button" class="mode-button" data-mode="raw-upload">Upload raw data</button>
+      </div>
+      <div class="mode-panels">
+        <div class="mode-panel active" data-mode="manual" id="manual-panel">
+          <article class="manual-card">
+            <h3>Group Inputs</h3>
+            <label>Group 1 name (default: Control)</label>
+            <div class="row single">
+              <input id="g1name" type="text" maxlength="40" placeholder="Control" value="Control">
+            </div>
+            <label><span id="g1label_p">Control</span> proportion \(p_1\)</label>
+            <div class="row">
+              <input id="p1" type="range" min="0" max="1" step="0.01" value="0.10">
+              <input id="p1num" type="number" min="0" max="1" step="0.01" value="0.10">
+            </div>
+            <label>Sample size \(n_1\) for <span id="g1label_n">Control</span></label>
+            <div class="row">
+              <input id="n1" type="range" min="10" max="2000" step="10" value="300">
+              <input id="n1num" type="number" min="1" step="1" value="300">
+            </div>
+            <div class="divider"></div>
+            <label>Group 2 name (default: Variant)</label>
+            <div class="row single">
+              <input id="g2name" type="text" maxlength="40" placeholder="Variant" value="Variant">
+            </div>
+            <label><span id="g2label_p">Variant</span> proportion \(p_2\)</label>
+            <div class="row">
+              <input id="p2" type="range" min="0" max="1" step="0.01" value="0.13">
+              <input id="p2num" type="number" min="0" max="1" step="0.01" value="0.13">
+            </div>
+            <label>Sample size \(n_2\) for <span id="g2label_n">Variant</span></label>
+            <div class="row">
+              <input id="n2" type="range" min="10" max="2000" step="10" value="300">
+              <input id="n2num" type="number" min="1" step="1" value="300">
+            </div>
+            <p class="hint">Slide \(n_1\)/\(n_2\) between 10 and 2,000, or type any value directly into the number box.</p>
+          </article>
+        </div>
+        <div class="mode-panel" data-mode="summary-upload" id="summary-panel">
+          <div class="data-import-block">
+            <h4>Upload summary inputs</h4>
+            <p>Provide a CSV/TSV with exactly two rows (Control and Variant) including <strong>group</strong>, <strong>conversions</strong>, and <strong>sample size</strong>. Presets download in this format.</p>
+            <div id="summary-dropzone" class="dropzone" role="button" tabindex="0">
+              <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+              <p class="dropzone-note">Two rows (control and variant) with headers like <code>group,conversions,n</code>. Optional alpha column to override 0.05.</p>
+              <button type="button" id="summary-upload-browse" class="secondary">Browse files</button>
+            </div>
+            <input type="file" id="summary-upload-input" accept=".csv,.tsv,.txt" hidden>
+            <div class="template-buttons">
+              <button type="button" id="summary-template-download">Download summary template</button>
+            </div>
+            <p id="summary-upload-status" class="upload-status">No summary file uploaded yet.</p>
+          </div>
+        </div>
+        <div class="mode-panel" data-mode="raw-upload" id="raw-panel">
+          <div class="data-import-block">
+            <h4>Upload raw data</h4>
+            <p>Use this mode for row-level observations. Required columns: <strong>group</strong> (two labels max) and <strong>conversion</strong> (0 or 1).</p>
+            <div id="raw-dropzone" class="dropzone" role="button" tabindex="0">
+              <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
+              <p class="dropzone-note">Two columns: <code>group</code> (two labels max) and <code>conversion</code> (0/1). Up to 2,000 rows.</p>
+              <button type="button" id="raw-upload-browse" class="secondary">Browse files</button>
+            </div>
+            <input type="file" id="raw-upload-input" accept=".csv,.tsv,.txt" hidden>
+            <div class="template-buttons">
+              <button type="button" id="raw-template-download">Download raw template</button>
+            </div>
+            <p id="raw-upload-status" class="upload-status">No raw file uploaded yet.</p>
+          </div>
+        </div>
+      </div>
+      <article class="manual-card reporting-card">
+        <h3>Confidence Level &amp; Reporting</h3>
+        <div class="toolbar">
+          <div><strong>Confidence level (higher = wider intervals, harder to declare a win):</strong></div>
+          <div class="confidence-buttons" id="ciLevelButtons" role="group" aria-label="Select confidence level">
+            <button type="button" class="confidence-button" data-level="0.90">90% CI</button>
+            <button type="button" class="confidence-button active" data-level="0.95">95% CI</button>
+            <button type="button" class="confidence-button" data-level="0.99">99% CI</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label>Hypothesized difference \( \Delta_0 \) (proportion points, default = 0)</label>
+          <div class="row">
+            <input id="delta" type="range" min="-1" max="1" step="0.01" value="0.00">
+            <input id="deltanum" type="number" min="-1" max="1" step="0.01" value="0.00">
+          </div>
+          <p class="hint">Set \( \Delta_0 \), the null hypothesis difference in proportion points (for example, 0.05 = 5 percentage points). Default is 0 (no difference).</p>
+        </div>
+      </article>
+      <details class="advanced-settings persistent-advanced">
+        <summary>Advanced settings</summary>
+        <div class="advanced-grid">
+          <div>
+            <label for="ci-method-select"><strong>Confidence interval method</strong></label>
+            <select id="ci-method-select">
+              <option value="wald">Wald (classic, matches z-test)</option>
+              <option value="wilson">Wilson score (bounded 0–100%)</option>
+            </select>
+            <p class="hint">Wilson score intervals stay within valid bounds for extreme rates; Wald matches the traditional textbook derivation.</p>
+          </div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- Removed old exploratory questions per request -->
+
+  <!-- ======== NEW: Charts & Titles ======== -->
+  <section class="visual-output" aria-labelledby="visual-output-heading">
+    <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+    <div class="card">
+      <div class="chart-grid">
+        <article class="chart-card">
+          <h3 id="propTitle">Proportions for Control and Variant (Fan Chart)</h3>
+          <div id="propChart" class="chart-placeholder" role="img" aria-label="Proportions fan chart showing estimated proportions for Control and Variant"></div>
+          <p id="propInterpret" class="chart-note" aria-live="polite"></p>
+        </article>
+        <article class="chart-card">
+          <h3 id="diffTitle">Difference (Variant &minus; Control) with Fan Chart</h3>
+          <div id="diffChart" class="chart-placeholder" role="img" aria-label="Difference fan chart showing the distribution of the proportion difference (Variant minus Control) in percentage points"></div>
+          <p id="diffInterpret" class="chart-note" aria-live="polite"></p>
+        </article>
+      </div>
+      <details class="visual-output-settings">
+        <summary>Visual Output Settings</summary>
+        <div class="settings-content">
+          <div class="row axis">
+            <label><input type="checkbox" id="lockPropAxis"> Lock proportions x-axis</label>
+            <span class="muted">Range (%):</span>
+            <input id="propMin" type="number" step="1" value="0">
+            <input id="propMax" type="number" step="1" value="60">
+          </div>
+          <p class="muted" style="margin-top:6px;">When locked, the Proportions chart uses the given percent range (for example, 0 to 60 shows 0%–60%).</p>
+          <div class="row axis" style="margin-top:16px;">
+            <label><input type="checkbox" id="lockDiffAxis"> Lock difference x-axis</label>
+            <span class="muted">Range:</span>
+            <input id="diffMin" type="number" step="1" value="-20">
+            <input id="diffMax" type="number" step="1" value="20">
+          </div>
+          <p class="muted" style="margin-top:6px;">When locked, the Difference chart uses the given bounds in percentage points (for example, −20 to 20).</p>
+          <div style="margin-top:12px;">
+            <button id="resetAxes" class="btn" type="button">Reset axes to auto</button>
+          </div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="test-results" aria-labelledby="test-results-heading">
+    <h2 id="test-results-heading">TEST RESULTS</h2>
+    <div class="dual-panels">
+      <article class="card dual-panel">
+        <h3>APA-Style Statistical Reporting</h3>
+        <p id="apaWriteup"></p>
+      </article>
+      <article class="card dual-panel">
+        <h3>Managerial Interpretation</h3>
+        <p id="mgrWriteup"></p>
+      </article>
+    </div>
+
+    <div class="card" id="statisticalResults">
+      <h3>Summary Table of Results</h3>
+      <div class="summary-wrap">
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Measure</th>
+              <th>Label</th>
+              <th >Proportion / I" (pct pts)</th>
+              <th id="ciLowerHeader">CI Lower</th>
+              <th id="ciUpperHeader">CI Upper</th>
+              <th >n</th>
+            </tr>
+          </thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+        <p id="summary-warning" class="summary-warning hidden"></p>
+      </div>
+    </div>
+  </section>
+  <section class="diagnostics-section">
+    <h2>DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+    <div class="card">
+      <details class="diagnostics-details">
+        <summary>Diagnostics &amp; Assumption Tests</summary>
+        <div id="diagnostics-content">
+          <p class="muted">Provide both group inputs to evaluate sample sizes, balance, and confidence interval precision.</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ======== SCRIPT: everything needed for the added features lives here; your app.js still loads if present ======== -->
+  <script src="../../../shared/js/ui_utils.js"></script>
+  <script src="../../../shared/js/csv_utils.js"></script>
+  <script src="../../../shared/js/fan_chart_utils.js"></script>
+  <script src="../../../shared/js/auth_tracking.js"></script>
+  <script src="../../../shared/js/auth_bar.js"></script>
+  <script src="main_ab_proportion.js"></script>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="ab-created-date">2025-11-01</span> &middot; Last updated: <span id="ab-last-updated">2025-11-15</span></p>
+    <p><a href="../../index.html">Back to Stat Analysis Selection</a></p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). A/B Proportion Tool. Marketing Bivariate Tools. https://github.com/andre/mktg_bivariate_tools/apps/ab_proportion/main_ab_proportion.html</p>
+  </footer>
+</body>
+</html>

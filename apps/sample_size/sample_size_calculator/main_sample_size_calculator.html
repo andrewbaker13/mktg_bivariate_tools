@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sample Size Planner &mdash; Single Mean or Proportion</title>
+  <!-- Shared design system -->
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+  <!-- App-specific overrides -->
+  <link rel="stylesheet" href="main_sample_size_calculator.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="../../../shared/js/stats_utils.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-290ZJ9RE04');
+    </script>
+</head><body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../login.html">Login</a>
+        <a href="../../register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Sample Size Planner</h1>
+        <div class="hero-context">
+          <span class="badge">Design tool</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Estimate the required sample size to measure a single mean or single proportion with your chosen confidence,
+        margin of error, and assumptions about variability. Explore how tightening precision or changing assumptions
+        drives the sample size up or down.
+      </p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="test-overview-heading">
+      <h2 id="test-overview-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
+      <div class="card">
+        <p>
+          This planner assumes you want a confidence interval around a single estimate (a mean or a proportion) with a
+          specified maximum margin of error. It uses large-sample normal approximations and your best guess about
+          variability from prior data or a pilot.
+        </p>
+        <p class="equation">
+          <strong>Single proportion:</strong><br>
+          $$ n \ge \frac{z_{1-\alpha/2}^2 \, p(1-p)}{E^2} $$
+          where \(p\) is the expected proportion, \(E\) is the acceptable margin of error (absolute difference), and
+          \(z_{1-\alpha/2}\) is the normal critical value for your confidence level.
+        </p>
+        <p class="equation">
+          <strong>Single mean:</strong><br>
+          $$ n \ge \left(\frac{z_{1-\alpha/2} \, \sigma}{E}\right)^2 $$
+          where \(\sigma\) is your estimate of the population standard deviation and \(E\) is the acceptable margin of
+          error measured in the outcome units.
+        </p>
+        <details class="intro-notes">
+          <summary>Additional notes &amp; assumptions</summary>
+          <p>
+            These formulas treat \(n\) as the number of independent observations needed for a two-sided confidence
+            interval with the specified width. They are most reliable when the eventual sample is moderate to large,
+            and when your guesses for \(p\) or \(\sigma\) are realistic. For very small samples or extreme proportions
+            (near 0 or 1), consider simulation or exact methods instead.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <section class="scenario-section" aria-labelledby="scenario-heading">
+      <h2 id="scenario-heading">PLANNING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Load a sample size scenario</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Manual inputs (no preset)</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario
+              notes</button>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>
+            Use presets to explore common marketing questions (for example, estimating an email open rate or average
+            order value). Each scenario sets reasonable defaults for the expected rate or standard deviation, margin of
+            error, and confidence so you can see how the design behaves.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="inputs-heading">
+      <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>Design the study</h3>
+        </div>
+
+        <div class="mode-toggle" role="tablist" aria-label="Outcome type">
+          <button type="button" class="mode-button active" data-mode="proportion">Single proportion</button>
+          <button type="button" class="mode-button" data-mode="mean">Single mean</button>
+        </div>
+
+        <div class="mode-panels">
+          <div class="mode-panel active" data-mode="proportion" id="panel-proportion">
+            <article class="group-controls">
+              <h4>Single proportion (e.g., open rate or conversion rate)</h4>
+              <div class="input-grid">
+                <div>
+                  <label for="prop-p-input">Expected proportion \(p\)</label>
+                  <div class="row">
+                    <input id="prop-p-range" type="range" min="0" max="1" step="0.01" value="0.20">
+                    <input id="prop-p-input" type="number" min="0" max="1" step="0.01" value="0.20">
+                  </div>
+                  <p class="hint">Use a prior campaign rate or pilot estimate.</p>
+                </div>
+                <div>
+                  <label for="prop-e-input">Acceptable margin of error \(E\)</label>
+                  <div class="row">
+                    <input id="prop-e-range" type="range" min="0.005" max="0.2" step="0.005" value="0.03">
+                    <input id="prop-e-input" type="number" min="0.001" max="0.5" step="0.001" value="0.03">
+                  </div>
+                  <p class="hint">Absolute difference in the proportion (for example, &plusmn;3 percentage points).</p>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="mode-panel" data-mode="mean" id="panel-mean">
+            <article class="group-controls">
+              <h4>Single mean (e.g., average order value)</h4>
+              <div class="input-grid">
+                <div>
+                  <label for="mean-sigma-input">Estimated standard deviation \(\sigma\)</label>
+                  <input id="mean-sigma-input" type="number" min="0" step="0.01" value="10">
+                  <p class="hint">Use prior data or a pilot to approximate variability.</p>
+                  <details class="advanced-details" style="margin-top:0.5rem;">
+                    <summary>Help me estimate \(\sigma\) from a range</summary>
+                    <p>
+                      If you only have a rough sense of the minimum and maximum values you expect, you can use the
+                      rule-of-thumb that, for approximately bell-shaped data, most observations fall within about
+                      \(\pm 2\sigma\) of the mean. That implies the total range is roughly \(4\sigma\), so
+                      \(\sigma \approx \frac{\text{max} - \text{min}}{4}\).
+                    </p>
+                    <div class="input-grid">
+                      <div>
+                        <label for="mean-range-min">Expected minimum value</label>
+                        <input id="mean-range-min" type="number" step="0.01" placeholder="e.g., 0">
+                      </div>
+                      <div>
+                        <label for="mean-range-max">Expected maximum value</label>
+                        <input id="mean-range-max" type="number" step="0.01" placeholder="e.g., 100">
+                      </div>
+                    </div>
+                    <button type="button" id="mean-range-estimate-btn" class="secondary" style="margin-top:0.5rem;">
+                      Estimate \(\sigma\) from range
+                    </button>
+                    <p class="hint">
+                      This will set \(\sigma\) to \((\text{max} - \text{min}) / 4\). Use it as a starting point and
+                      refine with pilot data when available. This is especially handy for bounded marketing survey scales
+                      (for example, a 1–7 satisfaction rating), where the minimum and maximum are known in advance.
+                    </p>
+                  </details>
+                </div>
+                <div>
+                  <label for="mean-e-input">Acceptable margin of error \(E\)</label>
+                  <input id="mean-e-input" type="number" min="0.0001" step="0.01" value="2">
+                  <p class="hint">Maximum distance between the sample mean and the true mean (in outcome units).</p>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="input-grid" style="margin-top:1rem;">
+          <div>
+            <label>Confidence level</label>
+            <div class="confidence-buttons" aria-label="Confidence level">
+              <button class="confidence-button" data-level="0.90">90% Conf.</button>
+              <button class="confidence-button active" data-level="0.95">95% Conf.</button>
+              <button class="confidence-button" data-level="0.99">99% Conf.</button>
+            </div>
+          </div>
+          <div>
+            <label for="alpha">Significance level (&alpha;)</label>
+            <input type="number" id="alpha" min="0.001" max="0.2" step="0.001" value="0.050">
+            <p class="hint">Alpha and confidence are linked: confidence = 1 - alpha.</p>
+          </div>
+          <div>
+            <label for="population-size">Finite population size (optional)</label>
+            <input type="number" id="population-size" min="1" step="1" placeholder="Leave blank if effectively infinite">
+            <p class="hint">Enter the number of eligible customers/accounts if you want finite-population correction.</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      <div class="card">
+        <div class="chart-grid">
+          <article class="chart-card">
+            <h3>Required sample size vs. margin of error</h3>
+            <div class="chart-placeholder" id="chart-margin"></div>
+            <p id="chart-margin-note" class="chart-note">
+              This chart shows how tightening the margin of error (moving left) requires a larger sample size. The
+              highlighted point marks your current design.
+            </p>
+          </article>
+          <article class="chart-card">
+            <h3>Required sample size vs. variability</h3>
+            <div class="chart-placeholder" id="chart-other"></div>
+            <p id="chart-other-note" class="chart-note">
+              This chart shows how changing your assumptions about variability affects the required sample size:
+              for proportions, the expected rate \(p\); for means, the standard deviation \(\sigma\).
+            </p>
+          </article>
+          <article class="chart-card">
+            <h3>Required sample size vs. confidence level</h3>
+            <div class="chart-placeholder" id="chart-confidence"></div>
+            <p id="chart-confidence-note" class="chart-note">
+              This chart shows how increasing the confidence level (lowering \(\alpha\)) raises the required sample
+              size for your current assumptions about variability and margin of error.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="test-results" aria-labelledby="test-results-heading">
+      <h2 id="test-results-heading">DESIGN SUMMARY</h2>
+      <div class="card metrics-panel">
+        <div class="metric-output">
+          <span>Required sample size (n):</span>
+          <span id="metric-n" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Finite-population adjusted n:</span>
+          <span id="metric-n-fpc" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Outcome type:</span>
+          <span id="metric-mode" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Confidence / &alpha;:</span>
+          <span id="metric-confidence" class="dynamic-value">&ndash;</span>
+        </div>
+        <div class="metric-output">
+          <span>Precision (margin of error):</span>
+          <span id="metric-precision" class="dynamic-value">&ndash;</span>
+        </div>
+      </div>
+
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>APA-Style Planning Statement</h3>
+          <p id="apa-report">
+            Provide assumptions above to generate an APA-style statement summarizing the required sample size.
+          </p>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="managerial-report">
+            This panel will translate the design into plain language, explaining what the chosen margin of error and
+            confidence mean for your campaign or KPI estimate.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="diagnostics-section" aria-labelledby="diagnostics-heading">
+      <h2 id="diagnostics-heading">DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+      <div class="card">
+        <details class="diagnostics-details">
+          <summary>Diagnostics &amp; Assumption Checks</summary>
+          <div id="diagnostics-content">
+            <p>
+              These calculations assume independent observations and large-sample normal approximations. Sample size
+              formulas for proportions work best away from the extremes (not too close to 0 or 1). For very small
+              samples, highly skewed metrics, or clustered designs, consult a more advanced reference or a statistician.
+            </p>
+            <p>
+              If the required sample size is infeasible, you can loosen the margin of error, accept a lower confidence
+              level, or collect a pilot sample to refine your assumptions about variability.
+            </p>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="created-date">2025-11-21</span> &middot; Last updated: <span
+        id="modified-date">2025-11-21</span></p>
+    <p><a href="../../index.html">Back to Stat Analysis Selection</a></p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). Sample Size Planner (Single Mean / Proportion). Marketing
+      Bivariate Tools.</p>
+  </footer>
+
+  <script src="../../../shared/js/ui_utils.js"></script>
+  <script src="../../../shared/js/auth_tracking.js"></script>
+  <script src="../../../shared/js/auth_bar.js"></script>
+  <script src="main_sample_size_calculator.js"></script>
+</body>
+
+</html>
