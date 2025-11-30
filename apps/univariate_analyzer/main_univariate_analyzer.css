@@ -194,16 +194,10 @@
 }
 
 .stats-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 2rem;
     margin-bottom: 2rem;
-}
-
-@media (max-width: 1024px) {
-    .stats-content {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* Statistics Table */
@@ -289,7 +283,7 @@
 }
 
 .chart-container {
-    min-height: 300px;
+    min-height: 500px;
     width: 100%;
 }
 

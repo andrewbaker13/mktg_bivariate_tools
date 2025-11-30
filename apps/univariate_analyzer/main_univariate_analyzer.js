@@ -583,18 +583,19 @@ function displayBoxPlot(variableName, values) {
     const max = getMax(values);
     
     const trace = {
-        y: values,
+        x: values,
         name: variableName,
         type: 'box',
         boxmean: 'sd',
-        marker: { color: 'rgba(54, 162, 235, 0.7)' }
+        marker: { color: 'rgba(54, 162, 235, 0.7)' },
+        orientation: 'h'
     };
     
     const layout = {
         title: `Box Plot: ${variableName}`,
-        yaxis: { title: variableName },
-        margin: { b: 60 },
-        height: 300
+        xaxis: { title: variableName },
+        margin: { l: 100, b: 80, t: 80, r: 60 },
+        height: 500
     };
     
     Plotly.newPlot('chart-container', [trace], layout, { responsive: true });
@@ -611,8 +612,8 @@ function displayHistogram(variableName, values) {
         title: `Histogram: ${variableName}`,
         xaxis: { title: variableName },
         yaxis: { title: 'Frequency' },
-        margin: { b: 60 },
-        height: 300
+        margin: { l: 80, b: 80, t: 80, r: 60 },
+        height: 500
     };
     
     Plotly.newPlot('chart-container', [trace], layout, { responsive: true });
@@ -622,19 +623,20 @@ function displayHistogram(variableName, values) {
 
 function displayViolinPlot(variableName, values) {
     const trace = {
-        y: values,
+        x: values,
         name: variableName,
         type: 'violin',
         box: { visible: true },
         meanline: { visible: true },
-        marker: { color: 'rgba(54, 162, 235, 0.7)' }
+        marker: { color: 'rgba(54, 162, 235, 0.7)' },
+        orientation: 'h'
     };
     
     const layout = {
         title: `Violin Plot: ${variableName}`,
-        yaxis: { title: variableName },
-        margin: { b: 60 },
-        height: 400
+        xaxis: { title: variableName },
+        margin: { l: 100, b: 80, t: 80, r: 60 },
+        height: 500
     };
     
     Plotly.newPlot('chart-container', [trace], layout, { responsive: true });
@@ -654,8 +656,8 @@ function displayDensityPlot(variableName, values) {
         title: `Density Plot: ${variableName}`,
         xaxis: { title: variableName },
         yaxis: { title: 'Density' },
-        margin: { b: 60 },
-        height: 400,
+        margin: { l: 80, b: 80, t: 80, r: 60 },
+        height: 500,
         showlegend: false
     };
     
@@ -687,8 +689,8 @@ function displayPieChart(variableName, frequencyTable) {
     
     const layout = {
         title: `Pie Chart: ${variableName}`,
-        height: 400,
-        margin: { t: 40, b: 40, l: 40, r: 40 }
+        height: 500,
+        margin: { t: 60, b: 60, l: 60, r: 60 }
     };
     
     Plotly.newPlot('chart-container', [trace], layout, { responsive: true });
@@ -1043,8 +1045,8 @@ function displayBarChart(variableName, frequencyTable) {
         title: `Bar Chart: ${variableName}`,
         xaxis: { title: 'Category' },
         yaxis: { title: 'Count' },
-        margin: { b: 100 },
-        height: 400
+        margin: { l: 80, b: 120, t: 80, r: 60 },
+        height: 500
     };
     
     Plotly.newPlot('chart-container', [trace], layout, { responsive: true });
