@@ -2,7 +2,7 @@
 const CREATED_DATE = '2025-11-30';
 
 // Configuration
-const API_BASE_URL = 'http://localhost:8001/api';
+const API_BASE_URL = 'https://drbaker-backend.onrender.com/api';
 const ARIMAX_UPLOAD_LIMIT = typeof window !== 'undefined' && typeof window.MAX_UPLOAD_ROWS === 'number'
   ? window.MAX_UPLOAD_ROWS
   : 2000;
