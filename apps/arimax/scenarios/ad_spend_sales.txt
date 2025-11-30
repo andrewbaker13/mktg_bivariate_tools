@@ -1,19 +1,61 @@
-<h4>Monthly Sales with Advertising Spend</h4>
-<p>
-  This scenario demonstrates ARIMAX modeling for a retail business with 36 months of sales data.
-  The dataset includes:
-</p>
-<ul>
-  <li><strong>Sales:</strong> Monthly revenue in dollars</li>
-  <li><strong>Ad Spend:</strong> Monthly advertising expenditure</li>
-  <li><strong>Promotion:</strong> Binary indicator (1 = promotional month, 0 = regular)</li>
-</ul>
-<p>
-  The data shows clear seasonal patterns (December peaks) and a positive relationship between
-  advertising spend and sales. Use this scenario to explore how exogenous variables improve
-  forecast accuracy compared to a pure ARIMA model.
-</p>
-<p class="hint">
-  <strong>Suggested settings:</strong> Start with ARIMA(1,1,1) and include both ad_spend and promotion
-  as exogenous predictors. The model should capture both the trend and the advertising effect.
-</p>
+<div class="scenario-description">
+  <div class="scenario-header">
+    <span class="scenario-icon">📊</span>
+    <h4>Monthly Sales with Advertising Spend</h4>
+    <span class="scenario-badge">36 Months</span>
+  </div>
+  
+  <p class="scenario-intro">
+    A classic marketing analytics scenario: understand how <strong>advertising investment</strong> 
+    drives <strong>monthly sales revenue</strong> for a retail business.
+  </p>
+
+  <div class="scenario-variables">
+    <h5>📁 Dataset Variables</h5>
+    <table class="scenario-var-table">
+      <tr>
+        <td><code>date</code></td>
+        <td>Month (YYYY-MM format)</td>
+      </tr>
+      <tr>
+        <td><code>sales</code></td>
+        <td>Monthly revenue in dollars <span class="var-tag outcome">Outcome</span></td>
+      </tr>
+      <tr>
+        <td><code>ad_spend</code></td>
+        <td>Monthly advertising expenditure ($) <span class="var-tag predictor">Predictor</span></td>
+      </tr>
+      <tr>
+        <td><code>promotion</code></td>
+        <td>Promotional month indicator (0/1) <span class="var-tag predictor">Predictor</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="scenario-insights">
+    <h5>🔍 What You'll Discover</h5>
+    <ul>
+      <li><strong>Seasonal patterns:</strong> Clear December peaks from holiday shopping</li>
+      <li><strong>Ad effectiveness:</strong> Positive ROI on advertising spend</li>
+      <li><strong>Promotion lift:</strong> Measurable impact of promotional months</li>
+    </ul>
+  </div>
+
+  <div class="scenario-tip">
+    <h5>💡 Suggested Settings</h5>
+    <p>
+      Start with <strong>ARIMA(1,1,1)</strong> and include both <code>ad_spend</code> and 
+      <code>promotion</code> as exogenous predictors. Compare AIC with a model that excludes 
+      predictors to see the improvement.
+    </p>
+  </div>
+
+  <div class="scenario-questions">
+    <h5>❓ Business Questions to Explore</h5>
+    <ul>
+      <li>What's the expected sales lift per $1,000 in ad spend?</li>
+      <li>How much do promotions boost monthly sales?</li>
+      <li>What would Q1 sales look like if we increase ad budget by 20%?</li>
+    </ul>
+  </div>
+</div>

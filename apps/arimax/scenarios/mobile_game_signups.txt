@@ -1,0 +1,87 @@
+<div class="scenario-description">
+  <div class="scenario-header">
+    <span class="scenario-icon">🎮</span>
+    <h4>Mobile Game Weekly Signups</h4>
+    <span class="scenario-badge">100 Weeks</span>
+  </div>
+  
+  <p class="scenario-intro">
+    A <strong>free-to-play mobile puzzle game</strong> in its second year of operation. 
+    The game relies on continuous new user acquisition to maintain revenue through 
+    in-app purchases and ads.
+  </p>
+
+  <div class="scenario-variables">
+    <h5>📁 Dataset Variables</h5>
+    <table class="scenario-var-table">
+      <tr>
+        <td><code>week</code></td>
+        <td>Week number (1-100)</td>
+      </tr>
+      <tr>
+        <td><code>weekly_signups</code></td>
+        <td>New user accounts created <span class="var-tag outcome">Outcome</span></td>
+      </tr>
+      <tr>
+        <td><code>new_feature</code></td>
+        <td>Major feature release that week <span class="var-tag binary">0/1</span></td>
+      </tr>
+      <tr>
+        <td><code>mobile_ad_spend</code></td>
+        <td>Weekly ad budget ($14K-$22K) <span class="var-tag predictor">Predictor</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="scenario-context">
+    <h5>📈 Data Characteristics</h5>
+    <div class="context-grid">
+      <div class="context-item">
+        <span class="context-label">Baseline Signups</span>
+        <span class="context-value">~12,000-13,000/week</span>
+      </div>
+      <div class="context-item">
+        <span class="context-label">Ad Spend Range</span>
+        <span class="context-value">$14K - $22K/week</span>
+      </div>
+      <div class="context-item">
+        <span class="context-label">Feature Releases</span>
+        <span class="context-value">~5-6 per year</span>
+      </div>
+      <div class="context-item">
+        <span class="context-label">Market Trend</span>
+        <span class="context-value">Slight saturation decay</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-insights">
+    <h5>🔍 Expected Findings</h5>
+    <ul>
+      <li><strong>Feature releases:</strong> +10-15% signup lift, decays over 3-4 weeks</li>
+      <li><strong>Ad spend elasticity:</strong> ~0.3-0.5 (10% more spend → 3-5% more signups)</li>
+      <li><strong>Diminishing returns:</strong> Ad effectiveness plateaus at high spend levels</li>
+      <li><strong>Word-of-mouth:</strong> Some autocorrelation from viral/social effects</li>
+    </ul>
+  </div>
+
+  <div class="scenario-tip">
+    <h5>💡 Suggested Settings</h5>
+    <p>
+      Try <strong>ARIMA(1,1,1)</strong> or <strong>ARIMA(2,1,1)</strong> — the slight downward 
+      trend suggests differencing (d=1). Include both <code>new_feature</code> and 
+      <code>mobile_ad_spend</code> as exogenous predictors. Forecast 4-8 weeks for budget planning.
+    </p>
+  </div>
+
+  <div class="scenario-questions">
+    <h5>❓ Business Questions to Explore</h5>
+    <ul>
+      <li>What's the ROI on mobile ad spend?</li>
+      <li>How much do new features boost signups?</li>
+      <li>How long does a feature release effect last?</li>
+      <li>Should we increase ad spend during feature releases?</li>
+      <li>What's the forecast if we maintain baseline spending with no new features?</li>
+    </ul>
+  </div>
+</div>

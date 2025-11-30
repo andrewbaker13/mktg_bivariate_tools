@@ -380,6 +380,153 @@ input[type="range"]::-moz-range-thumb {
   font-style: italic;
 }
 
+/* Hidden utility class */
+.hidden {
+  display: none !important;
+}
+
+/* Full width chart */
+.chart-full-width {
+  min-height: 350px;
+}
+
+/* Residuals diagnostics grid - 3 columns */
+.residuals-diagnostics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+.residuals-diagnostics-grid .chart-placeholder {
+  min-height: 220px;
+}
+
+@media (max-width: 1000px) {
+  .residuals-diagnostics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Forecast scenario controls */
+.forecast-scenario-controls {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
+  border: 1px solid #fbbf24;
+  border-radius: 12px;
+}
+
+.forecast-scenario-controls h4 {
+  margin: 0 0 0.5rem 0;
+  color: #92400e;
+  font-size: 1rem;
+}
+
+.forecast-scenario-controls .hint {
+  margin-bottom: 1rem;
+  color: #78350f;
+}
+
+/* Grid for exogenous predictor inputs */
+.forecast-exog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.forecast-exog-item {
+  background: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.forecast-exog-item label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.forecast-exog-item .exog-type-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+/* Toggle switch for binary predictors */
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.toggle-switch input[type="checkbox"] {
+  width: 44px;
+  height: 24px;
+  appearance: none;
+  background: #d1d5db;
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.toggle-switch input[type="checkbox"]:checked {
+  background: #059669;
+}
+
+.toggle-switch input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle-switch input[type="checkbox"]:checked::before {
+  transform: translateX(20px);
+}
+
+.toggle-switch .toggle-label {
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+/* Numeric input for continuous predictors */
+.forecast-exog-item input[type="number"] {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.forecast-exog-item input[type="number"]:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Apply button styling */
+#apply-forecast-scenario {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border-color: #d97706;
+  padding: 0.6rem 1.25rem;
+}
+
+#apply-forecast-scenario:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}
+
 /* Date format help card */
 .date-help-card {
   background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
@@ -557,4 +704,221 @@ input[type="range"]::-moz-range-thumb {
   position: absolute;
   left: 0;
   color: #7c3aed;
+}
+
+/* =============================================
+   SCENARIO DESCRIPTION STYLES
+   ============================================= */
+
+.scenario-description {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.scenario-description h4,
+.scenario-description h5 {
+  margin: 0;
+  color: #1e293b;
+}
+
+.scenario-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.scenario-icon {
+  font-size: 1.75rem;
+}
+
+.scenario-header h4 {
+  flex: 1;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.scenario-badge {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.scenario-intro {
+  font-size: 1rem;
+  color: #475569;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 4px solid #2563eb;
+}
+
+.scenario-variables,
+.scenario-context,
+.scenario-insights,
+.scenario-tip,
+.scenario-questions {
+  margin-bottom: 1.25rem;
+}
+
+.scenario-description h5 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Variable table */
+.scenario-var-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.scenario-var-table tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.scenario-var-table tr:last-child {
+  border-bottom: none;
+}
+
+.scenario-var-table td {
+  padding: 0.5rem 0.5rem 0.5rem 0;
+  vertical-align: middle;
+}
+
+.scenario-var-table td:first-child {
+  width: 140px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+}
+
+.scenario-var-table code {
+  background: #f1f5f9;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #0f172a;
+}
+
+/* Variable tags */
+.var-tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-left: 0.5rem;
+}
+
+.var-tag.outcome {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.var-tag.predictor {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.var-tag.binary {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Context grid */
+.context-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.context-item {
+  background: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.context-label {
+  display: block;
+  font-size: 0.72rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.2rem;
+}
+
+.context-value {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.88rem;
+}
+
+/* Insights list */
+.scenario-insights ul,
+.scenario-questions ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.scenario-insights li,
+.scenario-questions li {
+  margin-bottom: 0.4rem;
+}
+
+/* Tip box */
+.scenario-tip {
+  background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.scenario-tip h5 {
+  color: #92400e;
+}
+
+.scenario-tip p {
+  margin: 0;
+  color: #78350f;
+}
+
+.scenario-tip code {
+  background: #fef08a;
+  color: #713f12;
+}
+
+/* Questions section */
+.scenario-questions {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.scenario-questions h5 {
+  color: #166534;
+}
+
+.scenario-questions ul {
+  margin: 0;
+  color: #166534;
+}
+
+.scenario-questions li {
+  color: #15803d;
 }

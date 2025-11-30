@@ -236,121 +236,112 @@
 
     <section class="visual-output" aria-labelledby="visual-output-heading">
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      
+      <!-- Time Series with Forecasts - Full Width -->
       <div class="card">
-        <div class="chart-grid">
-          <article class="chart-card">
-            <h3>Time Series with Forecasts</h3>
-            <div class="chart-placeholder" id="chart-forecast"></div>
-            <p id="forecast-chart-note" class="chart-note">
-              Upload data and fit the model to see the time series plot with forecasts and confidence intervals.
+        <article class="chart-card">
+          <h3>Time Series with Forecasts</h3>
+          <div id="chart-forecast" class="chart-placeholder chart-full-width"></div>
+          <p id="forecast-chart-note" class="chart-note">
+            Upload data and fit the model to see the time series plot with forecasts and confidence intervals.
+          </p>
+          
+          <!-- Forecast Scenario Controls -->
+          <div id="forecast-exog-controls" class="forecast-scenario-controls hidden">
+            <h4>📊 Forecast Scenario: Set Exogenous Predictor Values</h4>
+            <p class="hint">Define what values the exogenous predictors will have during the forecast period. These settings affect the forecast values.</p>
+            <div id="forecast-exog-inputs" class="forecast-exog-grid">
+              <!-- Dynamically populated -->
+            </div>
+            <button type="button" id="apply-forecast-scenario" class="secondary">Apply &amp; Update Forecast</button>
+          </div>
+          
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p class="muted">
+              The solid blue line shows historical values, while the red dashed line shows forecasts.
+              The shaded area represents the confidence interval &mdash; wider bands indicate more uncertainty
+              in future predictions. Forecasts depend on the assumed values for exogenous predictors above.
             </p>
-            <details class="interpretation-aid">
-              <summary>Interpretation Aid</summary>
-              <p class="muted">
-                The solid line shows historical values, while the dashed line shows forecasts.
-                The shaded area represents the confidence interval &mdash; wider bands indicate more uncertainty
-                in future predictions. Sharp divergence from the historical pattern may indicate structural changes.
-              </p>
-            </details>
-          </article>
-          <article class="card chart-card">
-            <h3>Residuals Analysis</h3>
+          </details>
+        </article>
+      </div>
+      
+      <!-- Residuals Section - Residuals Chart + ACF/PACF -->
+      <div class="card">
+        <h3>Residuals Diagnostics</h3>
+        <div class="residuals-diagnostics-grid">
+          <article class="chart-card">
+            <h4>Residuals Over Time</h4>
             <div class="chart-placeholder" id="chart-residuals"></div>
             <p class="chart-note">
               Residuals should appear randomly scattered around zero with no obvious patterns.
             </p>
-            <details class="interpretation-aid">
-              <summary>Interpretation Aid</summary>
-              <p class="muted">
-                Good model fit produces residuals that look like white noise: randomly distributed around zero
-                with constant variance. Patterns or trends in residuals suggest the model is missing important
-                structure in the data.
-              </p>
-            </details>
+          </article>
+          <article class="chart-card">
+            <h4>ACF of Residuals</h4>
+            <div class="chart-placeholder" id="chart-acf"></div>
+          </article>
+          <article class="chart-card">
+            <h4>PACF of Residuals</h4>
+            <div class="chart-placeholder" id="chart-pacf"></div>
           </article>
         </div>
-      </div>
-      <div class="card">
-        <article class="chart-card">
-          <h3>ACF / PACF of Residuals</h3>
-          <div class="chart-grid acf-grid">
-            <div class="chart-placeholder" id="chart-acf"></div>
-            <div class="chart-placeholder" id="chart-pacf"></div>
-          </div>
-          <p class="chart-note">
-            ACF and PACF plots help diagnose remaining autocorrelation in residuals. Bars extending beyond the red dashed lines are statistically significant.
-          </p>
-          <details class="interpretation-aid" open>
-            <summary>Interpretation Aid: Understanding ACF &amp; PACF</summary>
-            <div class="acf-pacf-guide">
-              <div class="guide-section">
-                <h5>📊 What Are These Charts?</h5>
-                <p><strong>ACF (Autocorrelation Function):</strong> Measures how correlated today's value is with values from 1, 2, 3, ... periods ago. Lag 0 is always 1.0 (perfect correlation with itself).</p>
-                <p><strong>PACF (Partial Autocorrelation Function):</strong> Same as ACF, but removes the effects of intermediate lags. Shows the "direct" correlation at each lag.</p>
-              </div>
-              
-              <div class="guide-section">
-                <h5>📈 Reading the Charts</h5>
-                <ul>
-                  <li><strong>Bars:</strong> Height shows correlation strength (-1 to +1)</li>
-                  <li><strong>Red dashed lines:</strong> 95% confidence bounds. Bars outside these lines are statistically significant</li>
-                  <li><strong>Positive bars:</strong> High values tend to follow high values (at that lag)</li>
-                  <li><strong>Negative bars:</strong> High values tend to follow low values (alternating pattern)</li>
-                </ul>
-              </div>
-              
-              <div class="guide-section">
-                <h5>✅ Good Residuals (Model Fits Well)</h5>
-                <ul>
-                  <li>No bars (except lag 0 in ACF) extend beyond the red dashed lines</li>
-                  <li>Bars appear random with no clear pattern</li>
-                  <li>This suggests residuals are "white noise" &mdash; the model has captured all predictable patterns</li>
-                </ul>
-              </div>
-              
-              <div class="guide-section">
-                <h5>⚠️ Problem Patterns &amp; Solutions</h5>
-                <table class="guide-table">
-                  <thead>
-                    <tr><th>Pattern</th><th>Meaning</th><th>Try This</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Significant spikes in ACF at lags 1, 2, 3...</td>
-                      <td>MA terms needed</td>
-                      <td>Increase q (MA order)</td>
-                    </tr>
-                    <tr>
-                      <td>Significant spikes in PACF at lags 1, 2, 3...</td>
-                      <td>AR terms needed</td>
-                      <td>Increase p (AR order)</td>
-                    </tr>
-                    <tr>
-                      <td>Slow decay in ACF</td>
-                      <td>Series not stationary</td>
-                      <td>Increase d (differencing)</td>
-                    </tr>
-                    <tr>
-                      <td>Spikes at seasonal lags (e.g., 12, 24 for monthly)</td>
-                      <td>Seasonal pattern</td>
-                      <td>Add seasonal dummies as exogenous variables</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              
-              <div class="guide-section">
-                <h5>🎯 Quick Decision Guide</h5>
-                <p>Count significant spikes (outside red lines) excluding lag 0:</p>
-                <ul>
-                  <li><strong>PACF has 1-2 significant spikes, ACF decays gradually:</strong> Use p = number of PACF spikes</li>
-                  <li><strong>ACF has 1-2 significant spikes, PACF decays gradually:</strong> Use q = number of ACF spikes</li>
-                  <li><strong>Both have significant spikes:</strong> Try ARMA with both p and q > 0</li>
-                </ul>
-              </div>
+        <details class="interpretation-aid" open>
+          <summary>Interpretation Aid: Understanding Residual Diagnostics</summary>
+          <div class="acf-pacf-guide">
+            <div class="guide-section">
+              <h5>📊 Residuals Over Time</h5>
+              <p>Good model fit produces residuals that look like <strong>white noise</strong>: randomly distributed around zero with constant variance. Look for:</p>
+              <ul>
+                <li><strong>No trends:</strong> Residuals shouldn't drift up or down over time</li>
+                <li><strong>Constant spread:</strong> The "band" of residuals should be roughly the same width throughout</li>
+                <li><strong>No patterns:</strong> Cycles or repeating structures suggest missed seasonality</li>
+              </ul>
             </div>
-          </details>
-        </article>
+            
+            <div class="guide-section">
+              <h5>📈 ACF &amp; PACF Charts</h5>
+              <p><strong>ACF (Autocorrelation):</strong> Measures correlation with past values at each lag.</p>
+              <p><strong>PACF (Partial Autocorrelation):</strong> Direct correlation at each lag, removing intermediate effects.</p>
+              <ul>
+                <li><strong>Bars outside red lines:</strong> Statistically significant autocorrelation (potential problem)</li>
+                <li><strong>All bars inside red lines:</strong> Residuals are white noise (good!)</li>
+              </ul>
+            </div>
+            
+            <div class="guide-section">
+              <h5>⚠️ Problem Patterns &amp; Solutions</h5>
+              <table class="guide-table">
+                <thead>
+                  <tr><th>Pattern</th><th>Meaning</th><th>Try This</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Significant ACF spikes at lags 1, 2, 3...</td>
+                    <td>MA terms needed</td>
+                    <td>Increase q (MA order)</td>
+                  </tr>
+                  <tr>
+                    <td>Significant PACF spikes at lags 1, 2, 3...</td>
+                    <td>AR terms needed</td>
+                    <td>Increase p (AR order)</td>
+                  </tr>
+                  <tr>
+                    <td>Slow decay in ACF</td>
+                    <td>Series not stationary</td>
+                    <td>Increase d (differencing)</td>
+                  </tr>
+                  <tr>
+                    <td>Spikes at seasonal lags (12, 24...)</td>
+                    <td>Seasonal pattern</td>
+                    <td>Add seasonal dummies as exogenous</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
       </div>
     </section>
 

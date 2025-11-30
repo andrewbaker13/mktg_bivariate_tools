@@ -1,0 +1,88 @@
+<div class="scenario-description">
+  <div class="scenario-header">
+    <span class="scenario-icon">📸</span>
+    <h4>Instagram Health Supplement Shop</h4>
+    <span class="scenario-badge">300 Days</span>
+  </div>
+  
+  <p class="scenario-intro">
+    A <strong>direct-to-consumer health supplement brand</strong> sells exclusively through Instagram, 
+    partnering with three fitness/wellness influencers who create sponsored content.
+  </p>
+
+  <div class="scenario-variables">
+    <h5>📁 Dataset Variables</h5>
+    <table class="scenario-var-table">
+      <tr>
+        <td><code>date</code></td>
+        <td>Calendar date (YYYY-MM-DD)</td>
+      </tr>
+      <tr>
+        <td><code>daily_sales</code></td>
+        <td>Units sold that day <span class="var-tag outcome">Outcome</span></td>
+      </tr>
+      <tr>
+        <td><code>influencer_A</code></td>
+        <td>Fitness personality (850K followers) posted <span class="var-tag binary">0/1</span></td>
+      </tr>
+      <tr>
+        <td><code>influencer_B</code></td>
+        <td>Nutrition expert (1.2M followers) posted <span class="var-tag binary">0/1</span></td>
+      </tr>
+      <tr>
+        <td><code>influencer_C</code></td>
+        <td>Wellness lifestyle (600K followers) posted <span class="var-tag binary">0/1</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="scenario-context">
+    <h5>📈 Data Characteristics</h5>
+    <div class="context-grid">
+      <div class="context-item">
+        <span class="context-label">Baseline Sales</span>
+        <span class="context-value">~900-1,000 units/day</span>
+      </div>
+      <div class="context-item">
+        <span class="context-label">Weekend Effect</span>
+        <span class="context-value">+15-20% on Sat/Sun</span>
+      </div>
+      <div class="context-item">
+        <span class="context-label">Influencer Effect</span>
+        <span class="context-value">Persists ~3 days</span>
+      </div>
+      <div class="context-item">
+        <span class="context-label">Post Frequency</span>
+        <span class="context-value">~1-2× per month each</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-insights">
+    <h5>🔍 Expected Findings</h5>
+    <ul>
+      <li><strong>Influencer B</strong> (nutrition expert): Strongest effect (~300-400 unit lift)</li>
+      <li><strong>Influencer A</strong> (fitness): Moderate effect (~250-350 unit lift)</li>
+      <li><strong>Influencer C</strong> (lifestyle): Smaller but significant (~150-250 unit lift)</li>
+    </ul>
+  </div>
+
+  <div class="scenario-tip">
+    <h5>💡 Suggested Settings</h5>
+    <p>
+      Try <strong>ARIMA(1,0,1)</strong> or <strong>ARIMA(2,0,1)</strong> — daily sales data is 
+      likely stationary (no differencing needed). Include all three influencer dummies as predictors. 
+      Forecast 7-14 days ahead for inventory planning.
+    </p>
+  </div>
+
+  <div class="scenario-questions">
+    <h5>❓ Business Questions to Explore</h5>
+    <ul>
+      <li>Which influencer provides the best ROI?</li>
+      <li>How many days does each influencer's effect last?</li>
+      <li>What's expected sales next week with no influencer posts?</li>
+      <li>Should we coordinate posts or space them out?</li>
+    </ul>
+  </div>
+</div>

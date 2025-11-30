@@ -19,6 +19,13 @@ let arimaxExogColumns = [];
 let arimaxLastResult = null;
 let modifiedDate = new Date().toLocaleDateString();
 
+// Forecast scenario settings - stores user's chosen values for exog predictors during forecast
+let forecastExogSettings = {};
+
+// Track current scenario for analytics
+let currentScenarioName = null;
+let currentDataSource = 'manual'; // 'scenario', 'upload', or 'manual'
+
 // Scenario definitions
 const ARIMAX_SCENARIOS = [
   {
@@ -28,10 +35,16 @@ const ARIMAX_SCENARIOS = [
     datasetPath: 'scenarios/ad_spend_sales.csv'
   },
   {
-    id: 'scenario-seasonal',
-    label: 'Seasonal Sales Pattern (48 months)',
-    file: 'scenarios/seasonal_sales.txt',
-    datasetPath: 'scenarios/seasonal_sales.csv'
+    id: 'scenario-instagram',
+    label: 'Instagram Health Supplement Shop (300 days)',
+    file: 'scenarios/instagram_supplement_sales.txt',
+    datasetPath: 'scenarios/instagram_supplement_sales.csv'
+  },
+  {
+    id: 'scenario-mobile-game',
+    label: 'Mobile Game Weekly Signups (100 weeks)',
+    file: 'scenarios/mobile_game_signups.txt',
+    datasetPath: 'scenarios/mobile_game_signups.csv'
   }
 ];
 
@@ -66,7 +79,10 @@ function checkAndTrackUsage() {
       outcome: arimaxOutcomeColumn,
       exog_count: arimaxExogColumns.length,
       order: getModelOrder()
-    }, `ARIMAX time series forecasting completed`);
+    }, `ARIMAX time series forecasting completed`, {
+      scenario: currentScenarioName,
+      dataSource: currentDataSource
+    });
     localStorage.setItem(storageKey, 'true');
     console.log('Usage tracked for ARIMAX');
   }
@@ -291,8 +307,14 @@ function setupScenarioSelect() {
     const selected = ARIMAX_SCENARIOS.find(item => item.id === select.value);
     if (!selected) {
       updateScenarioDownload(null);
+      currentScenarioName = null;
+      currentDataSource = 'manual';
       return;
     }
+
+    // Track scenario selection
+    currentScenarioName = selected.label;
+    currentDataSource = 'scenario';
 
     // Load scenario description
     if (window.fetch && selected.file) {
@@ -382,6 +404,10 @@ function setupDataUpload() {
   const handleFile = file => {
     if (!file) return;
     setFeedback('Loading dataset…', '');
+    
+    // Track as file upload
+    currentScenarioName = null;
+    currentDataSource = 'upload';
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -824,9 +850,13 @@ async function updateForecast() {
     if (exog) {
       payload.exog = exog;
       payload.exog_names = exogNames;
-      // For forecasting, extend exog values
-      const lastExog = exog[exog.length - 1];
-      payload.exog_forecast = Array(forecastSteps).fill(lastExog);
+      // Use user-defined exog values if available, otherwise use last observed values
+      if (Object.keys(forecastExogSettings).length > 0) {
+        payload.exog_forecast = buildExogForecast(forecastSteps);
+      } else {
+        const lastExog = exog[exog.length - 1];
+        payload.exog_forecast = Array(forecastSteps).fill(lastExog);
+      }
     }
     
     if (statusEl) statusEl.textContent = 'Updating forecast...';
@@ -867,6 +897,257 @@ function setupDownloadButton() {
   const downloadButton = document.getElementById('arimax-download-results');
   if (downloadButton) {
     downloadButton.addEventListener('click', downloadForecasts);
+  }
+}
+
+/**
+ * Populate the forecast exogenous controls based on selected exog columns
+ * Detects if a variable is binary (0/1) or continuous and creates appropriate input
+ */
+function populateForecastExogControls() {
+  const controlsContainer = document.getElementById('forecast-exog-controls');
+  const inputsContainer = document.getElementById('forecast-exog-inputs');
+  
+  if (!controlsContainer || !inputsContainer) return;
+  
+  // Hide if no exogenous variables
+  if (arimaxExogColumns.length === 0) {
+    controlsContainer.classList.add('hidden');
+    return;
+  }
+  
+  // Show controls
+  controlsContainer.classList.remove('hidden');
+  
+  const { headers, rows } = arimaxDataset;
+  
+  // Build inputs for each exogenous variable
+  let inputsHtml = '';
+  
+  arimaxExogColumns.forEach(colName => {
+    const colIdx = headers.indexOf(colName);
+    const values = rows.map(row => parseFloat(row[colIdx])).filter(v => isFinite(v));
+    
+    // Detect if binary (only 0s and 1s)
+    const uniqueVals = [...new Set(values)];
+    const isBinary = uniqueVals.length <= 2 && uniqueVals.every(v => v === 0 || v === 1);
+    
+    // Calculate stats for continuous variables
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    
+    // Get current setting or default
+    const currentValue = forecastExogSettings[colName] ?? (isBinary ? 0 : mean);
+    
+    if (isBinary) {
+      // Create toggle switch for binary
+      const isOn = currentValue === 1;
+      inputsHtml += `
+        <div class="forecast-exog-item">
+          <label>${escapeHtml(colName)}</label>
+          <p class="exog-type-hint">Binary (0/1) - Toggle on/off for forecast period</p>
+          <div class="toggle-switch">
+            <input type="checkbox" 
+                   id="forecast-exog-${colName}" 
+                   data-exog="${escapeHtml(colName)}" 
+                   data-type="binary"
+                   ${isOn ? 'checked' : ''}>
+            <span class="toggle-label">${isOn ? 'ON (1)' : 'OFF (0)'}</span>
+          </div>
+        </div>
+      `;
+    } else {
+      // Create number input for continuous
+      inputsHtml += `
+        <div class="forecast-exog-item">
+          <label>${escapeHtml(colName)}</label>
+          <p class="exog-type-hint">Continuous (range: ${min.toFixed(0)} - ${max.toFixed(0)}, avg: ${mean.toFixed(0)})</p>
+          <input type="number" 
+                 id="forecast-exog-${colName}" 
+                 data-exog="${escapeHtml(colName)}" 
+                 data-type="continuous"
+                 value="${currentValue.toFixed(0)}"
+                 min="${min}"
+                 max="${max * 2}"
+                 step="${(max - min) > 100 ? 100 : 1}">
+        </div>
+      `;
+    }
+  });
+  
+  inputsContainer.innerHTML = inputsHtml;
+  
+  // Add event listeners for toggle switches to update label
+  inputsContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', (e) => {
+      const label = e.target.closest('.toggle-switch').querySelector('.toggle-label');
+      if (label) {
+        label.textContent = e.target.checked ? 'ON (1)' : 'OFF (0)';
+      }
+    });
+  });
+}
+
+/**
+ * Get the current forecast exogenous settings from the UI
+ */
+function getForecastExogValues() {
+  const values = {};
+  
+  document.querySelectorAll('#forecast-exog-inputs input[data-exog]').forEach(input => {
+    const colName = input.dataset.exog;
+    const type = input.dataset.type;
+    
+    if (type === 'binary') {
+      values[colName] = input.checked ? 1 : 0;
+    } else {
+      values[colName] = parseFloat(input.value) || 0;
+    }
+  });
+  
+  return values;
+}
+
+/**
+ * Build the exog_forecast array for the API based on user settings
+ */
+function buildExogForecast(forecastSteps) {
+  if (arimaxExogColumns.length === 0) return null;
+  
+  const exogValues = getForecastExogValues();
+  
+  // Build array of arrays for each forecast step
+  const exogForecast = [];
+  for (let i = 0; i < forecastSteps; i++) {
+    const row = arimaxExogColumns.map(col => exogValues[col] || 0);
+    exogForecast.push(row);
+  }
+  
+  return exogForecast;
+}
+
+/**
+ * Setup the apply forecast scenario button
+ */
+function setupForecastScenarioButton() {
+  const applyBtn = document.getElementById('apply-forecast-scenario');
+  if (applyBtn) {
+    applyBtn.addEventListener('click', applyForecastScenario);
+  }
+}
+
+/**
+ * Apply the forecast scenario with user-defined exog values
+ */
+async function applyForecastScenario() {
+  const statusEl = document.getElementById('arimax-run-status');
+  
+  if (!arimaxLastResult || !arimaxOutcomeColumn) {
+    if (statusEl) statusEl.textContent = 'Please fit the model first.';
+    return;
+  }
+  
+  // Save current settings
+  forecastExogSettings = getForecastExogValues();
+  
+  showLoading();
+  
+  try {
+    const { headers, rows } = arimaxDataset;
+    
+    // Get current settings
+    const forecastSteps = parseInt(document.getElementById('arimax-forecast-periods')?.value) || 0;
+    const confidenceLevel = getConfidenceLevel();
+    
+    if (forecastSteps === 0) {
+      if (statusEl) statusEl.textContent = 'Set forecast periods > 0 to generate forecasts.';
+      hideLoading();
+      return;
+    }
+    
+    // Prepare data (same as original fit)
+    const outcomeIdx = headers.indexOf(arimaxOutcomeColumn);
+    const dateIdx = arimaxDateColumn ? headers.indexOf(arimaxDateColumn) : -1;
+    
+    const endog = rows.map(row => {
+      const val = parseFloat(row[outcomeIdx]);
+      return isFinite(val) ? val : null;
+    });
+    
+    const dateLabels = dateIdx >= 0 
+      ? rows.map(row => String(row[dateIdx]))
+      : rows.map((_, i) => `t${i + 1}`);
+    
+    // Prepare exogenous variables from historical data
+    let exog = null;
+    let exogNames = [];
+    
+    if (arimaxExogColumns.length > 0) {
+      exog = rows.map(row => {
+        return arimaxExogColumns.map(col => {
+          const idx = headers.indexOf(col);
+          const val = parseFloat(row[idx]);
+          return isFinite(val) ? val : 0;
+        });
+      });
+      exogNames = arimaxExogColumns;
+    }
+    
+    const order = getModelOrder();
+    
+    // Build request payload
+    const payload = {
+      endog: endog,
+      order: order,
+      forecast_steps: forecastSteps,
+      confidence_level: confidenceLevel,
+      date_labels: dateLabels,
+      endog_name: arimaxOutcomeColumn
+    };
+    
+    if (exog) {
+      payload.exog = exog;
+      payload.exog_names = exogNames;
+      // Use user-defined exog values for forecast period
+      payload.exog_forecast = buildExogForecast(forecastSteps);
+    }
+    
+    if (statusEl) statusEl.textContent = 'Updating forecast with scenario values...';
+    
+    const response = await fetch(`${API_BASE_URL}/arimax/fit/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    const result = await response.json();
+    
+    if (!response.ok || !result.success) {
+      throw new Error(result.detail || 'Failed to update forecast');
+    }
+    
+    arimaxLastResult = result;
+    
+    // Update displays
+    updateModelResults(result);
+    renderForecastChart(result);
+    
+    // Show what exog values were used
+    const exogSummary = Object.entries(forecastExogSettings)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(', ');
+    
+    if (statusEl) {
+      const confPct = Math.round(confidenceLevel * 100);
+      statusEl.textContent = `Forecast updated: ${forecastSteps} periods, ${confPct}% CI. Scenario: ${exogSummary}`;
+    }
+    
+  } catch (error) {
+    console.error('Forecast scenario error:', error);
+    if (statusEl) statusEl.textContent = `Error: ${error.message}`;
+  } finally {
+    hideLoading();
   }
 }
 
@@ -1052,6 +1333,9 @@ async function runArimaxModel() {
     renderAcfPacfCharts(result);
     updateDiagnostics(result);
     updateSummaryStats();
+    
+    // Show and populate forecast exogenous controls if we have exog variables
+    populateForecastExogControls();
     
     hasSuccessfulRun = true;
     checkAndTrackUsage();
@@ -1526,4 +1810,5 @@ document.addEventListener('DOMContentLoaded', () => {
   setupForecastSlider();
   setupRunButton();
   setupDownloadButton();
+  setupForecastScenarioButton();
 });
