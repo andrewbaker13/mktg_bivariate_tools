@@ -1,0 +1,21 @@
+<h4>Water Bottle Brand Competitor Analysis</h4>
+
+<p>A consumer packaged goods company is launching a <strong>new premium reusable water bottle</strong> and wants to understand the competitive landscape. They surveyed 100 current users of three leading competitor brands asking each to provide a detailed review of their experience.</p>
+
+<p><strong>Dataset details:</strong></p>
+<ul>
+  <li><strong>Records:</strong> 100 customer reviews</li>
+  <li><strong>Text column:</strong> <code>review</code></li>
+  <li><strong>Grouping column:</strong> <code>brand</code> (HydroFlask, Yeti, Stanley)</li>
+</ul>
+
+<p><strong>Brands compared:</strong></p>
+<ul>
+  <li><strong>HydroFlask</strong> — Known for colorful designs and insulation</li>
+  <li><strong>Yeti</strong> — Premium pricing, rugged durability positioning</li>
+  <li><strong>Stanley</strong> — Classic brand with recent social media resurgence</li>
+</ul>
+
+<p><strong>Your task:</strong> Practice <em>grouped sentiment analysis</em> by enabling the grouping feature with the <code>brand</code> column. Identify which competitor has the strongest positive perception, which has the most concerns, and what themes drive sentiment for each brand.</p>
+
+<p><strong>Key themes to look for:</strong> insulation performance, build quality, price-value perception, design aesthetics, customer service.</p>

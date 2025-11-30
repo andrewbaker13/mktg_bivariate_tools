@@ -2,13 +2,23 @@
   {
     "id": "enrollment-reddit",
     "label": "Reddit posts about an online enrollment system",
-    "file": "scenarios/enrollment_reddit.txt",
-    "dataset": "scenarios/enrollment_reddit_posts.csv"
+    "file": "enrollment_reddit.txt",
+    "dataset": "enrollment_reddit_posts.csv",
+    "textColumn": "text"
   },
   {
     "id": "influencer-swimwear",
     "label": "Influencer swimwear brand: detailed guest reviews",
-    "file": "scenarios/influencer_swimwear.txt",
-    "dataset": "scenarios/influencer_swimwear_reviews.csv"
+    "file": "influencer_swimwear.txt",
+    "dataset": "influencer_swimwear_reviews.csv",
+    "textColumn": "text"
+  },
+  {
+    "id": "waterbottle-competitors",
+    "label": "Water bottle brands: competitor sentiment analysis (grouped)",
+    "file": "waterbottle_competitors.txt",
+    "dataset": "waterbottle_competitors.csv",
+    "textColumn": "review",
+    "groupColumn": "brand"
   }
 ]

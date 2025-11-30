@@ -1,0 +1,19 @@
+<h4>Monthly Sales with Advertising Spend</h4>
+<p>
+  This scenario demonstrates ARIMAX modeling for a retail business with 36 months of sales data.
+  The dataset includes:
+</p>
+<ul>
+  <li><strong>Sales:</strong> Monthly revenue in dollars</li>
+  <li><strong>Ad Spend:</strong> Monthly advertising expenditure</li>
+  <li><strong>Promotion:</strong> Binary indicator (1 = promotional month, 0 = regular)</li>
+</ul>
+<p>
+  The data shows clear seasonal patterns (December peaks) and a positive relationship between
+  advertising spend and sales. Use this scenario to explore how exogenous variables improve
+  forecast accuracy compared to a pure ARIMA model.
+</p>
+<p class="hint">
+  <strong>Suggested settings:</strong> Start with ARIMA(1,1,1) and include both ad_spend and promotion
+  as exogenous predictors. The model should capture both the trend and the advertising effect.
+</p>

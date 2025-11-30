@@ -1,5 +1,14 @@
-Influencer swimwear brand: detailed guest reviews
+<h4>Influencer Swimwear Brand: Customer Reviews</h4>
 
-Long-form, simulated reviews of a new swimwear brand launched by a popular online influencer. Overall sentiment is strongly positive about the look, colors, and design, but many reviews also raise nuanced concerns about fit and sizing for different body types.
+<p>Long-form, simulated reviews of a <strong>new swimwear brand</strong> launched by a popular online influencer. Overall sentiment is strongly positive about the look, colors, and design, but many reviews also raise nuanced concerns about fit and sizing for different body types.</p>
 
-Use this case to explore how sentiment can be positive in aggregate while still surfacing specific, actionable pain points. Imagine you are preparing a summary for the influencer's team, highlighting both strong brand love and recurring feedback about comfort and sizing consistency.
+<p><strong>Dataset details:</strong></p>
+<ul>
+  <li><strong>Records:</strong> 25 detailed customer reviews</li>
+  <li><strong>Text column:</strong> <code>review</code></li>
+  <li><strong>No grouping column</strong> (single brand)</li>
+</ul>
+
+<p><strong>Your task:</strong> Explore how sentiment can be <em>positive in aggregate</em> while still surfacing specific, actionable pain points. Prepare a summary for the influencer's team highlighting both strong brand love and recurring feedback about comfort and sizing consistency.</p>
+
+<p><strong>Key themes to look for:</strong> design aesthetics, color options, fit/sizing issues, fabric quality, value for price.</p>

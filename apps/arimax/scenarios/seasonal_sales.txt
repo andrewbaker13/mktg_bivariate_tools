@@ -1,0 +1,19 @@
+<h4>Seasonal Sales Pattern with Quarterly Dummies</h4>
+<p>
+  This scenario demonstrates modeling strong seasonal patterns using quarterly dummy variables.
+  The dataset includes 48 months (4 years) of sales data with:
+</p>
+<ul>
+  <li><strong>Sales:</strong> Monthly revenue showing clear seasonal cycles</li>
+  <li><strong>Q1-Q4:</strong> Quarterly dummy variables for seasonal adjustment</li>
+  <li><strong>Year Trend:</strong> Linear trend component (1-4)</li>
+</ul>
+<p>
+  The data shows a consistent pattern: Q1 is the slowest quarter, Q3 peaks in summer,
+  and December shows holiday spikes. There's also year-over-year growth.
+</p>
+<p class="hint">
+  <strong>Suggested settings:</strong> Try ARIMA(1,0,0) or ARIMA(2,0,0) with the quarterly dummies
+  as exogenous variables. Since the series has clear seasonal structure captured by the dummies,
+  differencing (d) may not be necessary. Include year_trend to capture the growth pattern.
+</p>
