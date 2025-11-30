@@ -16,5 +16,11 @@
     "label": "Likert Feedback vs. Brand Rating",
     "file": "scenarios/likert_brand_rating.txt",
     "dataset": "scenarios/likert_vs_brand_rating.csv"
+  },
+  {
+    "id": "character-level-vs-gold",
+    "label": "D&D: Character Level Predicts Gold Earned",
+    "file": "scenarios/character_level_vs_gold.txt",
+    "dataset": "scenarios/character_level_vs_gold.csv"
   }
 ]

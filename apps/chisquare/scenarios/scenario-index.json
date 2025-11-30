@@ -23,5 +23,11 @@
     "file": "scenarios/loyalty_nudge_raw.txt",
     "dataset": "scenarios/loyalty_nudge_raw_data.csv",
     "dataType": "raw"
+  },
+  {
+    "id": "class_survival_dungeon",
+    "label": "D&D: Character Class vs Survival Rate",
+    "file": "scenarios/class_survival_dungeon.txt",
+    "dataset": "scenarios/class_survival_dungeon_dataset.csv"
   }
 ]
