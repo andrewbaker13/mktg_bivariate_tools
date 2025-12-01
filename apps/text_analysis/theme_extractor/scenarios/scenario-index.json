@@ -1,0 +1,16 @@
+[
+  {
+    "id": "streaming-feedback",
+    "label": "Streaming Service: Subscriber Feedback (75 comments)",
+    "file": "streaming_feedback.txt",
+    "dataset": "streaming_feedback.csv",
+    "textColumn": "comment"
+  },
+  {
+    "id": "coffee-reviews",
+    "label": "Premium Coffee Brand: Product Reviews (80 reviews)",
+    "file": "coffee_reviews.txt",
+    "dataset": "coffee_reviews.csv",
+    "textColumn": "review"
+  }
+]

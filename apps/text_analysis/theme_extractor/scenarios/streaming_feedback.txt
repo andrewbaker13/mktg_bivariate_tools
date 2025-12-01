@@ -1,0 +1,16 @@
+<h4>Streaming Service: Subscriber Feedback Analysis</h4>
+
+<p>A major <strong>video streaming platform</strong> has collected open-ended feedback from subscribers after a recent app update and content expansion. The comments come from a mix of long-time subscribers and new trial users, gathered through in-app surveys and email follow-ups.</p>
+
+<p><strong>Dataset details:</strong></p>
+<ul>
+  <li><strong>Records:</strong> 75 subscriber comments</li>
+  <li><strong>Text column:</strong> <code>comment</code></li>
+  <li><strong>Content:</strong> Feedback about content library, user experience, pricing, technical issues, and content recommendations</li>
+</ul>
+
+<p><strong>Your task:</strong> Use theme extraction to identify the <em>major recurring topics</em> that subscribers discuss. The marketing team wants to understand what matters most to subscribers—is it content variety? App usability? Price-to-value ratio? Technical reliability?</p>
+
+<p><strong>Business context:</strong> The platform is planning its next quarter marketing messages and wants to emphasize features that resonate with subscribers while addressing pain points proactively.</p>
+
+<p><strong>Themes you might discover:</strong> content library satisfaction, app/interface experience, pricing perceptions, streaming quality, content discovery, family/sharing features.</p>

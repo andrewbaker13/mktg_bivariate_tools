@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Theme Extractor - Marketing Text Analysis</title>
+  <!-- Shared design system -->
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <!-- App-specific styles -->
+  <link rel="stylesheet" href="theme_extractor.css">
+  <!-- Chart.js for visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Auth tracking -->
+  <script src="../../../shared/js/auth_tracking.js"></script>
+  <script src="../../../shared/js/auth_bar.js"></script>
+</head>
+
+<body>
+  <div id="auth-bar"></div>
+  
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Theme Extractor</h1>
+        <div class="hero-context">
+          <span class="badge badge--text-analysis">Text Analysis</span>
+          <span class="badge badge--nlp">NLP</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">Automatically discover hidden themes and topics in customer reviews, survey responses, and open-ended feedback using machine learning.</p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="test-overview-heading">
+      <h2 id="test-overview-heading">HOW IT WORKS</h2>
+      <div class="card">
+        <p>This tool uses <strong>Non-negative Matrix Factorization (NMF)</strong> to identify latent themes in text data. Unlike manual coding, the algorithm automatically discovers patterns across hundreds of documents.</p>
+        
+        <div class="how-it-works-grid">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <h4>Text Preprocessing</h4>
+            <p>Documents are cleaned, tokenized, and lemmatized. Stop words and common filler terms are removed.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <h4>TF-IDF Vectorization</h4>
+            <p>Text is converted to numerical vectors based on term frequency and document importance.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <h4>Theme Discovery</h4>
+            <p>NMF decomposes the matrix into themes, each represented by its most characteristic words.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">4</div>
+            <h4>Document Assignment</h4>
+            <p>Each document is assigned to themes based on how strongly it matches each theme's pattern.</p>
+          </div>
+        </div>
+        
+        <details class="intro-notes">
+          <summary>When to Use This Tool</summary>
+          <ul>
+            <li><strong>Customer Reviews:</strong> Discover what aspects of your product customers discuss most</li>
+            <li><strong>Survey Responses:</strong> Find patterns in open-ended feedback without manual coding</li>
+            <li><strong>Social Media:</strong> Identify conversation themes around your brand</li>
+            <li><strong>Support Tickets:</strong> Categorize issues automatically for better triage</li>
+          </ul>
+        </details>
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="inputs-heading">
+      <h2 id="inputs-heading">UPLOAD YOUR TEXT DATA</h2>
+      
+      <!-- Case Study Selector -->
+      <article class="card scenario-card">
+        <h3>Case Studies</h3>
+        <p>Practice with curated marketing datasets, or upload your own data below.</p>
+        
+        <div class="scenario-controls">
+          <div class="scenario-select-wrapper">
+            <label for="scenario-select">Select a case study:</label>
+            <select id="scenario-select">
+              <option value="">-- Choose a case study --</option>
+            </select>
+          </div>
+          <button type="button" id="scenario-download" class="secondary hidden">Download Dataset (CSV)</button>
+        </div>
+        
+        <div id="scenario-description" class="scenario-description hidden">
+          <!-- Description loaded from .txt file -->
+        </div>
+      </article>
+      
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>Data Input</h3>
+          <p class="limits-info">
+            <span class="limit-badge">Max 500 documents</span>
+            <span class="limit-badge">Max 5,000 chars each</span>
+          </p>
+        </div>
+        
+        <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
+          <button type="button" class="mode-button active" data-mode="paste">Paste Text</button>
+          <button type="button" class="mode-button" data-mode="upload">Upload CSV</button>
+        </div>
+        
+        <div class="mode-panels">
+          <!-- Paste Mode -->
+          <div class="mode-panel active" data-mode="paste" id="paste-panel">
+            <div class="paste-instructions">
+              <p>Paste your text data below. Each line will be treated as a separate document (review, comment, etc.).</p>
+            </div>
+            <textarea id="text-input" class="text-input" rows="12" placeholder="Paste your reviews/comments here, one per line...
+
+Example:
+The battery life on this phone is amazing, lasts all day!
+Screen quality is great but the camera is disappointing.
+Fast shipping and the price was very reasonable.
+Love the design but wish it came in more colors."></textarea>
+            <div class="paste-stats">
+              <span id="line-count">0 documents</span>
+              <span id="char-count">0 characters</span>
+            </div>
+          </div>
+          
+          <!-- Upload Mode -->
+          <div class="mode-panel" data-mode="upload" id="upload-panel">
+            <div class="data-import-block">
+              <p>Upload a CSV file with a text column. The tool will auto-detect columns containing text.</p>
+              <div id="upload-dropzone" class="dropzone" role="button" tabindex="0">
+                <p class="dropzone-title">Drag & drop CSV file</p>
+                <p class="dropzone-note">or click to browse</p>
+                <button type="button" id="browse-btn" class="secondary">Browse files</button>
+              </div>
+              <input type="file" id="file-input" accept=".csv,.tsv,.txt" hidden>
+              <p id="upload-feedback" class="upload-status" aria-live="polite">No file uploaded.</p>
+              
+              <div id="column-selector" class="column-selector hidden">
+                <label for="text-column">Select text column:</label>
+                <select id="text-column"></select>
+                <p class="column-preview" id="column-preview"></p>
+                
+                <div class="grouping-option">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="use-grouping-checkbox" />
+                    <span>Enable grouping by column (compare themes across groups)</span>
+                  </label>
+                  <select id="group-column-select" title="Select grouping column" disabled>
+                    <option value="">(Select a grouping column)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="template-buttons">
+              <button type="button" id="download-template" class="secondary">Download sample CSV template</button>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card analysis-settings">
+        <h3>Analysis Settings</h3>
+        
+        <div class="settings-grid">
+          <div class="setting-group">
+            <label for="num-themes">Number of Themes</label>
+            <div class="theme-selector">
+              <select id="num-themes">
+                <option value="auto" selected>Auto-detect (recommended)</option>
+                <option value="2">2 themes</option>
+                <option value="3">3 themes</option>
+                <option value="4">4 themes</option>
+                <option value="5">5 themes</option>
+                <option value="6">6 themes</option>
+                <option value="7">7 themes</option>
+                <option value="8">8 themes</option>
+              </select>
+            </div>
+            <p class="hint">Auto-detect finds the optimal number based on your data.</p>
+          </div>
+          
+          <div class="setting-group">
+            <label for="words-per-theme">Words per Theme</label>
+            <select id="words-per-theme">
+              <option value="5">5 words</option>
+              <option value="8" selected>8 words</option>
+              <option value="10">10 words</option>
+              <option value="12">12 words</option>
+            </select>
+            <p class="hint">More words give richer theme descriptions.</p>
+          </div>
+        </div>
+        
+        <div class="run-analysis">
+          <button type="button" id="run-btn" class="primary-btn" disabled>
+            <span class="btn-text">Extract Themes</span>
+            <span class="btn-loading hidden">
+              <span class="spinner"></span> Analyzing...
+            </span>
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <!-- Results Section (hidden until analysis runs) -->
+    <section class="results-section hidden" id="results-section" aria-labelledby="results-heading">
+      <h2 id="results-heading">DISCOVERED THEMES</h2>
+      
+      <div class="card stats-summary">
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-value" id="stat-documents">--</span>
+            <span class="stat-label">Documents Analyzed</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="stat-themes">--</span>
+            <span class="stat-label">Themes Found</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="stat-vocab">--</span>
+            <span class="stat-label">Unique Terms</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="stat-tokens">--</span>
+            <span class="stat-label">Tokens Processed</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="stat-avg-length">--</span>
+            <span class="stat-label">Avg Doc Length</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="stat-avg-confidence">--</span>
+            <span class="stat-label">Avg Confidence</span>
+          </div>
+          <div class="stat-item auto-detected hidden" id="stat-auto">
+            <span class="stat-badge">✓ Auto-detected</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Theme Cards -->
+      <div class="themes-container" id="themes-container">
+        <!-- Theme cards will be inserted here by JS -->
+      </div>
+      
+      <!-- Visualizations -->
+      <div class="card visualizations">
+        <h3>Theme Distribution</h3>
+        <div class="chart-container">
+          <canvas id="theme-distribution-chart"></canvas>
+        </div>
+      </div>
+      
+      <!-- Sample Comments -->
+      <div class="card sample-comments" id="sample-comments-section">
+        <div class="section-header-row">
+          <h3>Sample Comments by Theme</h3>
+          <div class="sample-count-selector">
+            <label for="sample-count">Show top</label>
+            <select id="sample-count">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3" selected>3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+            <span>per theme</span>
+          </div>
+        </div>
+        <p class="section-info">Most representative documents for each theme (highest confidence scores).</p>
+        
+        <div class="samples-container" id="samples-container">
+          <!-- Sample cards will be inserted here by JS -->
+        </div>
+      </div>
+      
+      <!-- How Scoring Works -->
+      <div class="card scoring-examples" id="scoring-examples-section">
+        <h3>How Scoring Works</h3>
+        <p class="section-info">These examples show how the NMF algorithm processes text. Each word (token) is analyzed for its relevance to each theme. Words that strongly match a theme are highlighted in that theme's color. The final theme assignment is based on the combined weights of all tokens.</p>
+        
+        <div class="scoring-legend">
+          <span class="legend-title">Token Legend:</span>
+          <span class="legend-item"><span class="legend-color strong"></span> Strong theme match</span>
+          <span class="legend-item"><span class="legend-color medium"></span> Medium match</span>
+          <span class="legend-item"><span class="legend-color weak"></span> Weak/No match</span>
+          <span class="legend-item"><span class="legend-color stopword"></span> Filtered (stopword)</span>
+        </div>
+        
+        <div class="examples-container" id="examples-container">
+          <!-- Example cards will be inserted here by JS -->
+        </div>
+      </div>
+      
+      <!-- Export Options -->
+      <div class="card export-section">
+        <h3>Export Results</h3>
+        <div class="export-buttons">
+          <button type="button" id="export-themes" class="secondary">Download Themes Summary (CSV)</button>
+          <button type="button" id="export-assignments" class="secondary">Download Document Assignments (CSV)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Error Display -->
+    <div class="error-toast hidden" id="error-toast">
+      <span class="error-icon">⚠️</span>
+      <span class="error-message" id="error-message"></span>
+      <button type="button" class="error-close" id="error-close">×</button>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <p><a href="../../../index.html">← Back to Tool Selection</a></p>
+    <p class="citation">Baker, Andrew. (2025). Theme Extractor - Marketing Text Analysis Tool.</p>
+  </footer>
+
+  <script src="../../../shared/js/csv_utils.js"></script>
+  <script src="theme_extractor_app.js"></script>
+</body>
+
+</html>
