@@ -140,6 +140,7 @@
             
             <div class="tab-buttons">
                 <button type="button" class="tab-btn active" onclick="switchTab('login')">Login</button>
+                <button type="button" class="tab-btn" onclick="switchTab('request')">Forgot Password</button>
                 <button type="button" class="tab-btn" onclick="switchTab('reset')">Reset Password</button>
             </div>
             
@@ -165,12 +166,34 @@
                 </div>
                 
                 <button type="submit" class="btn" id="submit-btn">Login</button>
+                
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="#" onclick="switchTab('request'); return false;" style="color: #3b82f6; text-decoration: none; font-size: 0.9rem;">Forgot Password?</a>
+                </div>
                 </form>
+            </div>
+            
+            <!-- Forgot Password Tab -->
+            <div id="request-tab" class="tab-content">
+                <p style="color: #6b7280; margin-bottom: 1.5rem;">Enter your email address and we'll send you a reset code.</p>
+                
+                <form id="request-reset-form">
+                    <div class="form-group">
+                        <label for="request-email">Email Address</label>
+                        <input type="email" id="request-email" name="email" required autocomplete="email">
+                    </div>
+                    
+                    <button type="submit" class="btn" id="request-btn">Send Reset Code</button>
+                </form>
+                
+                <p style="text-align: center; margin-top: 1rem; font-size: 0.9rem; color: #6b7280;">
+                    Once you receive the code, go to the <a href="#" onclick="switchTab('reset'); return false;" style="color: #3b82f6;">Reset Password</a> tab.
+                </p>
             </div>
             
             <!-- Reset Password Tab -->
             <div id="reset-tab" class="tab-content">
-                <p style="color: #6b7280; margin-bottom: 1.5rem;">Enter the reset code from your email along with your username and new password.</p>
+                <p style="color: #6b7280; margin-bottom: 1.5rem;">Enter the reset code from your email along with your email address and new password.</p>
                 
                 <form id="reset-password-form">
                     <div class="form-group">
@@ -179,8 +202,8 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="reset-username">Username</label>
-                        <input type="text" id="reset-username" name="username" required autocomplete="username">
+                        <label for="reset-email">Email Address</label>
+                        <input type="email" id="reset-email" name="email" required autocomplete="email">
                     </div>
                     
                     <div class="form-group">
@@ -231,7 +254,9 @@
             // Update tab buttons
             document.querySelectorAll('.tab-btn').forEach((btn, index) => {
                 btn.classList.remove('active');
-                if ((tab === 'login' && index === 0) || (tab === 'reset' && index === 1)) {
+                if ((tab === 'login' && index === 0) || 
+                    (tab === 'request' && index === 1) || 
+                    (tab === 'reset' && index === 2)) {
                     btn.classList.add('active');
                 }
             });
@@ -241,6 +266,8 @@
             
             if (tab === 'login') {
                 document.getElementById('login-tab').classList.add('active');
+            } else if (tab === 'request') {
+                document.getElementById('request-tab').classList.add('active');
             } else {
                 document.getElementById('reset-tab').classList.add('active');
             }
@@ -320,6 +347,56 @@
             }
         });
         
+        // Request password reset form
+        const requestResetForm = document.getElementById('request-reset-form');
+        const requestBtn = document.getElementById('request-btn');
+        
+        requestResetForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+            requestBtn.disabled = true;
+            requestBtn.textContent = 'Sending...';
+            
+            const email = document.getElementById('request-email').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/request-reset/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to request password reset');
+                }
+                
+                successMsg.textContent = '✅ ' + data.message + ' Please check your email for the reset code.';
+                successMsg.style.display = 'block';
+                
+                // Clear form and suggest next step
+                requestResetForm.reset();
+                
+                // Automatically switch to reset tab after 3 seconds
+                setTimeout(() => {
+                    successMsg.textContent = '✅ Check your email for the reset code, then enter it in the Reset Password tab.';
+                    switchTab('reset');
+                }, 3000);
+                
+            } catch (error) {
+                errorMsg.textContent = '❌ ' + error.message;
+                errorMsg.style.display = 'block';
+            } finally {
+                requestBtn.disabled = false;
+                requestBtn.textContent = 'Send Reset Code';
+            }
+        });
+        
         // Reset password form
         const resetPasswordForm = document.getElementById('reset-password-form');
         const resetBtn = document.getElementById('reset-btn');
@@ -343,7 +420,7 @@
             resetBtn.disabled = true;
             resetBtn.textContent = 'Resetting...';
             
-            const username = document.getElementById('reset-username').value;
+            const email = document.getElementById('reset-email').value;
             const resetCode = document.getElementById('reset-code').value;
             
             try {
@@ -353,7 +430,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        username,
+                        email,
                         reset_code: resetCode,
                         new_password: newPassword
                     })
