@@ -380,7 +380,13 @@
   <script src="../../../shared/js/ui_utils.js"></script>
   <script src="../../../shared/js/auth_tracking.js"></script>
   <script src="../../../shared/js/auth_bar.js"></script>
+  <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="log_reg_app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      initQuizButton('ps_matching');
+    });
+  </script>
   <div id="logreg-loading-overlay" class="loading-overlay" aria-hidden="true">
     <div class="loading-content">
       <p><strong>Fitting logistic regression model…</strong></p>

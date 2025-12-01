@@ -526,10 +526,16 @@
 
   <script src="../../../shared/js/auth_tracking.js"></script>
   <script src="../../../shared/js/auth_bar.js"></script>
+  <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="../../../shared/js/csv_utils.js"></script>
   <script src="../../../shared/js/stats_utils.js"></script>
   <script src="../../../shared/js/ui_utils.js"></script>
   <script src="mlr_interactions_app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      initQuizButton('mlr_interactions');
+    });
+  </script>
 </body>
 
 </html>

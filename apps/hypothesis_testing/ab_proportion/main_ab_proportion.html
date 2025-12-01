@@ -293,7 +293,13 @@
   <script src="../../../shared/js/fan_chart_utils.js"></script>
   <script src="../../../shared/js/auth_tracking.js"></script>
   <script src="../../../shared/js/auth_bar.js"></script>
+  <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="main_ab_proportion.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      initQuizButton('ab_proportion');
+    });
+  </script>
 
   <footer class="app-footer">
     <p class="page-timestamps">Created: <span id="ab-created-date">2025-11-01</span> &middot; Last updated: <span id="ab-last-updated">2025-11-15</span></p>

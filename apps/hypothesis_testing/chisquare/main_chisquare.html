@@ -300,7 +300,13 @@
     <script src="../../../shared/js/stacked_bar_utils.js"></script>
     <script src="../../../shared/js/auth_tracking.js"></script>
     <script src="../../../shared/js/auth_bar.js"></script>
+    <script src="../../../shared/js/quiz_utils.js"></script>
     <script src="chisquare_app.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        initQuizButton('chisquare');
+      });
+    </script>
     <script>
       (function () {
         var created = document.getElementById('created-date');

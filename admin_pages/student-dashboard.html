@@ -160,6 +160,82 @@
                 grid-template-columns: 1fr;
             }
         }
+        /* Quiz Results Styles */
+        .quiz-result-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            border-left: 4px solid #3b82f6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .quiz-result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .quiz-result-card.passed {
+            border-left-color: #10b981;
+        }
+        .quiz-result-card.failed {
+            border-left-color: #f59e0b;
+        }
+        .quiz-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+        .quiz-result-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        .quiz-result-tool {
+            color: #6b7280;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+        .quiz-result-score {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .quiz-result-score.passed {
+            color: #10b981;
+        }
+        .quiz-result-score.failed {
+            color: #f59e0b;
+        }
+        .quiz-result-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 0.75rem;
+        }
+        .quiz-result-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .quiz-take-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-decoration: none;
+            margin-top: 0.75rem;
+            transition: all 0.2s;
+        }
+        .quiz-take-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -234,6 +310,12 @@
             <div class="chart-container" id="peer-comparison" style="display: none;">
                 <h3>📊 How You Compare to Classmates</h3>
                 <div id="percentile-details"></div>
+            </div>
+
+            <!-- Quiz Results Section -->
+            <div class="chart-container" id="quiz-results-section" style="display: none;">
+                <h3>📝 Skills Check Results</h3>
+                <div id="quiz-results-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
             </div>
 
             <!-- Untried Tools -->
@@ -358,6 +440,9 @@
                 // Display badges and percentile
                 displayBadges(badges);
                 displayPercentile(percentile);
+                
+                // Load quiz results
+                await loadQuizResults();
                 
                 // Show dashboard
                 document.getElementById('loading').style.display = 'none';
@@ -573,6 +658,55 @@
                     </div>
                 </div>
             `;
+        }
+
+        async function loadQuizResults() {
+            try {
+                const response = await fetch(`${API_BASE}/quiz/my-results/`, {
+                    headers: {
+                        'Authorization': `Token ${localStorage.getItem('auth_token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    console.log('Quiz results not available');
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (!data.results || data.results.length === 0) {
+                    document.getElementById('quiz-results-section').style.display = 'none';
+                    return;
+                }
+                
+                // Show section and render results
+                document.getElementById('quiz-results-section').style.display = 'block';
+                const grid = document.getElementById('quiz-results-grid');
+                
+                grid.innerHTML = data.results.map(result => {
+                    const scoreClass = result.passed ? 'quiz-pass' : 'quiz-fail';
+                    const scorePercent = Math.round(result.best_score);
+                    const attemptText = result.attempt_count === 1 ? '1 attempt' : `${result.attempt_count} attempts`;
+                    
+                    return `
+                        <div class="quiz-card">
+                            <div class="quiz-card-header">
+                                <span class="quiz-tool-name">${result.tool_name || result.quiz_title}</span>
+                                <span class="quiz-score ${scoreClass}">${scorePercent}%</span>
+                            </div>
+                            <div class="quiz-meta">
+                                <span class="quiz-attempt-count">${attemptText}</span>
+                                <a href="quiz.html?id=${result.quiz_id}" class="quiz-retake-btn">${result.passed ? 'Review' : 'Retry'}</a>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading quiz results:', error);
+                document.getElementById('quiz-results-section').style.display = 'none';
+            }
         }
 
         // Load dashboard on page load

@@ -547,7 +547,14 @@
   <script src="../../../shared/js/stacked_bar_utils.js"></script>
   <script src="../../../shared/js/auth_tracking.js"></script>
   <script src="../../../shared/js/auth_bar.js"></script>
+  <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="bivariate_app.js"></script>
+  <script>
+    // Initialize quiz button for this tool
+    document.addEventListener('DOMContentLoaded', () => {
+      initQuizButton('bivariate_regression');
+    });
+  </script>
 </body>
 
 </html>
