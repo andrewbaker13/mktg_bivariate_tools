@@ -255,8 +255,8 @@
     <div class="auth-bar__container">
       <div></div>
       <div id="auth-bar-content" class="auth-bar__links">
-        <a href="login.html">Login</a>
-        <a href="register.html">Create Account</a>
+        <a href="admin_pages/login.html">Login</a>
+        <a href="admin_pages/register.html">Create Account</a>
       </div>
     </div>
   </div>
@@ -1273,10 +1273,10 @@
         
         authBarContent.innerHTML = `
           <span class="auth-bar__status">✓ Logged in as <strong>${username}</strong></span>
-          <a href="student-dashboard.html">My Dashboard</a>
-          ${isStaff ? '<a href="instructor-analytics.html">Course Analytics</a>' : ''}
-          ${isStaff ? '<a href="instructor.html">Manage Courses</a>' : ''}
-          ${isStaff ? '<a href="admin-dashboard.html">System Dashboard</a>' : ''}
+          <a href="admin_pages/student-dashboard.html">My Dashboard</a>
+          ${isStaff ? '<a href="admin_pages/instructor-analytics.html">Course Analytics</a>' : ''}
+          ${isStaff ? '<a href="admin_pages/instructor.html">Manage Courses</a>' : ''}
+          ${isStaff ? '<a href="admin_pages/admin-dashboard.html">System Dashboard</a>' : ''}
           <button class="auth-bar__logout" onclick="handleLogout()">Logout</button>
         `;
       }
