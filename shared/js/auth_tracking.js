@@ -41,6 +41,36 @@ function getAuthToken() {
 }
 
 /**
+ * Check if current user is staff
+ * @returns {boolean} True if user has staff privileges
+ */
+function isStaff() {
+    return localStorage.getItem('is_staff') === 'true';
+}
+
+/**
+ * Check if current user is superuser
+ * @returns {boolean} True if user has superuser privileges
+ */
+function isSuperuser() {
+    return localStorage.getItem('is_superuser') === 'true';
+}
+
+/**
+ * Get the appropriate dashboard URL based on user role
+ * @returns {string} Dashboard URL path
+ */
+function getDashboardUrl() {
+    if (isSuperuser()) {
+        return 'admin-dashboard.html';
+    } else if (isStaff()) {
+        return 'instructor.html';
+    } else {
+        return 'student-dashboard.html';
+    }
+}
+
+/**
  * Login user and store credentials
  * @param {string} username 
  * @param {string} password 
@@ -66,6 +96,8 @@ async function login(username, password) {
     localStorage.setItem('auth_token', data.token);
     localStorage.setItem('username', data.username);
     localStorage.setItem('user_id', data.user_id);
+    localStorage.setItem('is_staff', data.is_staff || false);
+    localStorage.setItem('is_superuser', data.is_superuser || false);
     
     return data;
 }
@@ -115,6 +147,8 @@ async function register(username, email, password, registrationCode, firstName =
     localStorage.setItem('auth_token', data.token);
     localStorage.setItem('username', data.username);
     localStorage.setItem('user_id', data.user_id);
+    localStorage.setItem('is_staff', data.is_staff || false);
+    localStorage.setItem('is_superuser', data.is_superuser || false);
     
     return data;
 }
@@ -143,6 +177,8 @@ async function logout() {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('username');
     localStorage.removeItem('user_id');
+    localStorage.removeItem('is_staff');
+    localStorage.removeItem('is_superuser');
 }
 
 /**
@@ -414,6 +450,9 @@ if (typeof module !== 'undefined' && module.exports) {
         isAuthenticated,
         getCurrentUsername,
         getAuthToken,
+        isStaff,
+        isSuperuser,
+        getDashboardUrl,
         login,
         register,
         logout,

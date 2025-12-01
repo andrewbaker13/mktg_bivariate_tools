@@ -357,7 +357,7 @@
             successMsg.textContent = 'You are already logged in. Redirecting...';
             successMsg.style.display = 'block';
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = getDashboardUrl();
             }, 1500);
         }
         
@@ -404,9 +404,9 @@
                 successMsg.textContent = `Welcome, ${response.username}! Account created successfully. Redirecting...`;
                 successMsg.style.display = 'block';
                 
-                // Redirect to tools page
+                // Redirect to appropriate dashboard (new registrations are always students)
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = getDashboardUrl();
                 }, 2000);
                 
             } catch (error) {

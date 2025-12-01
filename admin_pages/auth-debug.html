@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Debug - Dr. Baker Marketing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #f5f5f5;
+        }
+        .debug-section {
+            background: white;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 0.5rem;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Authentication Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h2>1. LocalStorage Contents</h2>
+        <div id="localStorage-content"></div>
+        <button onclick="refreshLocalStorage()">Refresh</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2>2. API Base URL</h2>
+        <div id="api-base"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>3. Test API Call (My Stats)</h2>
+        <button onclick="testApiCall()">Test API Call</button>
+        <div id="api-test-result"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>4. Test Profile Endpoint</h2>
+        <button onclick="testProfile()">Test Profile</button>
+        <div id="profile-result"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>5. Raw Token Test</h2>
+        <button onclick="testRawToken()">Test Raw Token</button>
+        <div id="raw-token-result"></div>
+    </div>
+    
+    <div class="debug-section">
+        <button onclick="clearAndReload()">Clear LocalStorage & Reload</button>
+        <button onclick="window.location.href='login.html'">Go to Login</button>
+    </div>
+    
+    <script src="../shared/js/auth_tracking.js"></script>
+    <script>
+        function refreshLocalStorage() {
+            const container = document.getElementById('localStorage-content');
+            const keys = ['auth_token', 'username', 'user_id', 'is_staff', 'is_superuser'];
+            let html = '<pre>';
+            
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                html += `${key}: ${value || '(not set)'}\n`;
+            });
+            
+            html += '\nAll keys in localStorage:\n';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                html += `${key}: ${localStorage.getItem(key)}\n`;
+            }
+            
+            html += '</pre>';
+            container.innerHTML = html;
+        }
+        
+        function showApiBase() {
+            const container = document.getElementById('api-base');
+            container.innerHTML = `<pre>API_BASE: ${API_BASE}\nOrigin: ${window.location.origin}\nHostname: ${window.location.hostname}</pre>`;
+        }
+        
+        async function testApiCall() {
+            const resultDiv = document.getElementById('api-test-result');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/analytics/my-stats/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <span class="status success">✓ SUCCESS (${response.status})</span>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <span class="status error">✗ FAILED (${response.status})</span>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <span class="status error">✗ ERROR</span>
+                    <pre>${error.message}\n${error.stack}</pre>
+                `;
+            }
+        }
+        
+        async function testProfile() {
+            const resultDiv = document.getElementById('profile-result');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const profile = await getUserProfile();
+                resultDiv.innerHTML = `
+                    <span class="status success">✓ SUCCESS</span>
+                    <pre>${JSON.stringify(profile, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <span class="status error">✗ ERROR</span>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+        
+        async function testRawToken() {
+            const resultDiv = document.getElementById('raw-token-result');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            const token = localStorage.getItem('auth_token');
+            
+            if (!token) {
+                resultDiv.innerHTML = '<span class="status error">✗ No token found in localStorage</span>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/profile/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Token ${token}`
+                    }
+                });
+                
+                const headers = {};
+                response.headers.forEach((value, key) => {
+                    headers[key] = value;
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                    <p><strong>Token used:</strong> <code>${token}</code></p>
+                    <p><strong>Response Headers:</strong></p>
+                    <pre>${JSON.stringify(headers, null, 2)}</pre>
+                    <p><strong>Response Body:</strong></p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <span class="status error">✗ ERROR</span>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+        
+        function clearAndReload() {
+            localStorage.clear();
+            location.reload();
+        }
+        
+        // Initialize
+        refreshLocalStorage();
+        showApiBase();
+        
+        // Show authentication status
+        if (isAuthenticated()) {
+            document.body.insertAdjacentHTML('afterbegin', 
+                '<div class="debug-section"><span class="status success">✓ Authenticated as ' + getCurrentUsername() + '</span></div>'
+            );
+        } else {
+            document.body.insertAdjacentHTML('afterbegin', 
+                '<div class="debug-section"><span class="status error">✗ Not Authenticated</span></div>'
+            );
+        }
+    </script>
+</body>
+</html>

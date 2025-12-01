@@ -302,7 +302,7 @@
             successMsg.textContent = 'You are already logged in. Redirecting...';
             successMsg.style.display = 'block';
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = getDashboardUrl();
             }, 1500);
         }
         
@@ -323,9 +323,9 @@
                 successMsg.textContent = `Welcome back, ${response.username}!`;
                 successMsg.style.display = 'block';
                 
-                // Redirect to tools page
+                // Redirect to appropriate dashboard based on user role
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = getDashboardUrl();
                 }, 1500);
                 
             } catch (error) {
