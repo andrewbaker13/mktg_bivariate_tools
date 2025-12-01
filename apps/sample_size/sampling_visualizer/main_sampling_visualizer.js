@@ -759,9 +759,6 @@ function renderSamplingDistribution() {
 
   hasSuccessfulRun = true;
   checkAndTrackUsage();
-    Plotly.purge(container);
-    return;
-  }
 
   // Compute axis ranges based on the overall mean distribution so that
   // subgroup views share the same X/Y scales as the overall view.
