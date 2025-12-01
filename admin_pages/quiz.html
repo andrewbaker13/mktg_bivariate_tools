@@ -894,8 +894,8 @@
         </div>
     </div>
 
-    <script src="../shared/js/auth_bar.js"></script>
     <script src="../shared/js/auth_tracking.js"></script>
+    <script src="../shared/js/auth_bar.js"></script>
     <script>
         // Quiz State
         let quizData = null;
@@ -913,7 +913,7 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
-            initAuthBar();
+            // Auth bar initializes itself automatically
 
             if (!isAuthenticated()) {
                 window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
@@ -930,7 +930,7 @@
 
         async function loadQuizInfo() {
             try {
-                const response = await fetch(`${API_BASE}/quiz/tool/${quizId}/`, {
+                const response = await fetch(`${API_BASE}/quiz/${quizId}/`, {
                     headers: {
                         'Authorization': `Token ${getAuthToken()}`
                     }
