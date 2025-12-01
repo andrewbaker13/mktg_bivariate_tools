@@ -1,0 +1,19 @@
+<h4>📱 Instagram Influencer Comment Analysis</h4>
+<p>This dataset contains <strong>150 comments</strong> from a lifestyle influencer's Instagram page. Comments are categorized by the type of post they appeared on:</p>
+
+<ul>
+  <li><strong>Sponsored (30 comments)</strong> - Paid brand partnerships and product promotions</li>
+  <li><strong>Organic - Daily (50 comments)</strong> - Regular lifestyle content (routines, outfits, home decor)</li>
+  <li><strong>Organic - Ragebait (70 comments)</strong> - Controversial or provocative posts designed to drive engagement</li>
+</ul>
+
+<p><strong>Research Questions:</strong></p>
+<ul>
+  <li>What themes emerge in audience reactions to different content types?</li>
+  <li>How does comment sentiment and language differ between sponsored vs organic content?</li>
+  <li>What patterns characterize "ragebait" engagement vs genuine daily interaction?</li>
+</ul>
+
+<p><strong>Columns:</strong> <code>comment</code> (text to analyze), <code>post_type</code> (grouping variable)</p>
+
+<p><em>💡 Try enabling "Group by column" and selecting "post_type" to compare themes across content categories!</em></p>

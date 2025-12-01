@@ -68,6 +68,101 @@
             <li><strong>Support Tickets:</strong> Categorize issues automatically for better triage</li>
           </ul>
         </details>
+        
+        <details class="interpretation-aid">
+          <summary>Understanding NMF Topic Modeling</summary>
+          <div class="help-content">
+            <div class="guide-section">
+              <h5>📊 What is NMF?</h5>
+              <p><strong>Non-negative Matrix Factorization (NMF)</strong> is a dimensionality reduction technique that decomposes your document-term matrix into two smaller matrices:</p>
+              <ul>
+                <li><strong>W (Document-Theme matrix):</strong> Shows how much each document relates to each theme</li>
+                <li><strong>H (Theme-Term matrix):</strong> Shows which words define each theme</li>
+              </ul>
+              <p>The "non-negative" constraint means all values are ≥ 0, making results interpretable as additive parts that combine to form documents.</p>
+            </div>
+            
+            <div class="guide-section">
+              <h5>📈 NMF vs. Other Methods</h5>
+              <table class="guide-table">
+                <thead>
+                  <tr><th>Method</th><th>Strengths</th><th>Best For</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>NMF</strong></td>
+                    <td>Interpretable themes, fast, produces sparse topics</td>
+                    <td>Marketing text, customer reviews, product feedback</td>
+                  </tr>
+                  <tr>
+                    <td>LDA</td>
+                    <td>Probabilistic, handles document length well</td>
+                    <td>Large document collections, academic papers</td>
+                  </tr>
+                  <tr>
+                    <td>LSA/SVD</td>
+                    <td>Captures synonymy, mathematical foundations</td>
+                    <td>Information retrieval, search engines</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="guide-section">
+              <h5>⚠️ Limitations to Keep in Mind</h5>
+              <ul>
+                <li><strong>Bag of words:</strong> Word order is ignored; "not good" and "good" are treated similarly</li>
+                <li><strong>Pre-set theme count:</strong> You must specify (or auto-detect) the number of themes</li>
+                <li><strong>Static themes:</strong> Themes don't evolve over time or account for sequence</li>
+                <li><strong>Interpretability depends on data:</strong> Noisy or very diverse text may produce unclear themes</li>
+              </ul>
+            </div>
+            
+            <div class="guide-section">
+              <h5>💡 Tips for Better Results</h5>
+              <ul>
+                <li><strong>Homogeneous data:</strong> Analyze reviews of similar products together, not mixed categories</li>
+                <li><strong>Sufficient volume:</strong> 50+ documents recommended for meaningful themes</li>
+                <li><strong>Similar length:</strong> Very short tweets mixed with long reviews may skew results</li>
+                <li><strong>Domain-specific stop words:</strong> Common domain terms (e.g., "product," "service") may need filtering</li>
+              </ul>
+            </div>
+          </div>
+        </details>
+        
+        <details class="interpretation-aid">
+          <summary>Understanding TF-IDF Vectorization</summary>
+          <div class="help-content">
+            <div class="guide-section">
+              <h5>📊 What is TF-IDF?</h5>
+              <p><strong>Term Frequency-Inverse Document Frequency</strong> measures how important a word is to a document in a collection:</p>
+              <ul>
+                <li><strong>TF (Term Frequency):</strong> How often a word appears in a document (more = more important)</li>
+                <li><strong>IDF (Inverse Document Frequency):</strong> How rare a word is across all documents (rarer = more distinctive)</li>
+              </ul>
+              <p class="equation"><strong>Formula:</strong> TF-IDF = TF × log(Total Documents / Documents with Term)</p>
+            </div>
+            
+            <div class="guide-section">
+              <h5>📈 Why TF-IDF Matters</h5>
+              <p>Common words like "the," "is," "product" appear everywhere and don't help distinguish themes. TF-IDF automatically downweights these while highlighting distinctive vocabulary:</p>
+              <ul>
+                <li><strong>High TF-IDF:</strong> Words that are frequent in specific documents but rare overall → good theme indicators</li>
+                <li><strong>Low TF-IDF:</strong> Words that appear everywhere or rarely anywhere → less useful for themes</li>
+              </ul>
+            </div>
+            
+            <div class="guide-section">
+              <h5>💡 Example</h5>
+              <p>In electronics reviews:</p>
+              <ul>
+                <li>"battery" might have high TF-IDF in power-related reviews → strong theme signal</li>
+                <li>"product" appears in almost every review → low TF-IDF, filtered out</li>
+                <li>"phenomenal" rarely appears but is strong when it does → distinctive sentiment indicator</li>
+              </ul>
+            </div>
+          </div>
+        </details>
       </div>
     </section>
 
@@ -196,6 +291,103 @@ Love the design but wish it came in more colors."></textarea>
           </div>
         </div>
         
+        <details class="interpretation-aid">
+          <summary>Choosing the Right Number of Themes</summary>
+          <div class="help-content">
+            <div class="guide-section">
+              <h5>📊 Auto-Detection Method</h5>
+              <p>When set to "Auto-detect," the algorithm tests different theme counts (2-8) and selects the one with the best <strong>coherence score</strong>. Coherence measures how semantically similar the top words in each theme are to each other.</p>
+              <ul>
+                <li><strong>High coherence:</strong> Theme words relate to a single concept (e.g., "battery, charge, power, life")</li>
+                <li><strong>Low coherence:</strong> Theme words are scattered (e.g., "battery, shipping, color, return")</li>
+              </ul>
+            </div>
+            
+            <div class="guide-section">
+              <h5>📈 When to Override Auto-Detection</h5>
+              <table class="guide-table">
+                <thead>
+                  <tr><th>Situation</th><th>Recommended Action</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Themes seem too broad/general</td>
+                    <td>Increase theme count (more specific topics)</td>
+                  </tr>
+                  <tr>
+                    <td>Similar themes detected</td>
+                    <td>Decrease theme count (consolidate)</td>
+                  </tr>
+                  <tr>
+                    <td>You know the domain well</td>
+                    <td>Set count based on expected categories</td>
+                  </tr>
+                  <tr>
+                    <td>Very small dataset (&lt;100 docs)</td>
+                    <td>Use 2-4 themes to avoid overfitting</td>
+                  </tr>
+                  <tr>
+                    <td>Large, diverse dataset (&gt;500 docs)</td>
+                    <td>Try 5-8 themes for granularity</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="guide-section">
+              <h5>💡 Iterative Approach</h5>
+              <p>Topic modeling often benefits from experimentation:</p>
+              <ol>
+                <li>Start with auto-detect to get a baseline</li>
+                <li>Review the themes—do they make business sense?</li>
+                <li>If themes overlap, reduce count; if too broad, increase count</li>
+                <li>Compare sample comments across runs to validate</li>
+              </ol>
+            </div>
+          </div>
+        </details>
+        
+        <details class="interpretation-aid">
+          <summary>Words per Theme: Quality vs. Specificity</summary>
+          <div class="help-content">
+            <div class="guide-section">
+              <h5>📊 What This Controls</h5>
+              <p>This setting determines how many top-weighted words are shown for each discovered theme. The words are ranked by their importance to that theme (NMF weight).</p>
+            </div>
+            
+            <div class="guide-section">
+              <h5>📈 Trade-offs</h5>
+              <table class="guide-table">
+                <thead>
+                  <tr><th>Words</th><th>Pros</th><th>Cons</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>5 words</strong></td>
+                    <td>Clean, focused, easy to label</td>
+                    <td>May miss nuances</td>
+                  </tr>
+                  <tr>
+                    <td><strong>8 words</strong> (default)</td>
+                    <td>Good balance of clarity and detail</td>
+                    <td>—</td>
+                  </tr>
+                  <tr>
+                    <td><strong>10-12 words</strong></td>
+                    <td>Richer context, better for unfamiliar domains</td>
+                    <td>Can include lower-relevance terms</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="guide-section">
+              <h5>💡 Recommendation</h5>
+              <p>Start with <strong>8 words</strong> (default). Increase to 10-12 if you're exploring unfamiliar data and need more context to understand themes. Decrease to 5 for clean presentation in reports.</p>
+            </div>
+          </div>
+        </details>
+        
         <div class="run-analysis">
           <button type="button" id="run-btn" class="primary-btn" disabled>
             <span class="btn-text">Extract Themes</span>
@@ -241,6 +433,61 @@ Love the design but wish it came in more colors."></textarea>
             <span class="stat-badge">✓ Auto-detected</span>
           </div>
         </div>
+        
+        <details class="interpretation-aid">
+          <summary>Understanding These Statistics</summary>
+          <div class="help-content">
+            <div class="guide-section">
+              <h5>📊 Metric Explanations</h5>
+              <table class="guide-table">
+                <thead>
+                  <tr><th>Metric</th><th>What It Means</th><th>Good Values</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Documents Analyzed</strong></td>
+                    <td>Total number of text items processed</td>
+                    <td>50+ for reliable themes; 200+ for robust analysis</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Themes Found</strong></td>
+                    <td>Number of distinct topics discovered</td>
+                    <td>Typically 3-6; depends on data diversity</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Unique Terms</strong></td>
+                    <td>Vocabulary size after preprocessing</td>
+                    <td>100-1000 typical; varies by data</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Tokens Processed</strong></td>
+                    <td>Total words analyzed (after filtering)</td>
+                    <td>More is generally better for theme stability</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Avg Doc Length</strong></td>
+                    <td>Mean tokens per document</td>
+                    <td>5-50 tokens typical; very short docs may lack signal</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Avg Confidence</strong></td>
+                    <td>Mean theme assignment strength (0-100%)</td>
+                    <td>60%+ indicates clear theme assignments</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="guide-section">
+              <h5>⚠️ Warning Signs</h5>
+              <ul>
+                <li><strong>Very few unique terms (&lt;50):</strong> Data may be too short or repetitive</li>
+                <li><strong>Low avg confidence (&lt;40%):</strong> Themes may be overlapping or data is ambiguous</li>
+                <li><strong>Avg doc length &lt;5 tokens:</strong> Documents may be too short for reliable analysis</li>
+              </ul>
+            </div>
+          </div>
+        </details>
       </div>
 
       <!-- Theme Cards -->
@@ -248,12 +495,109 @@ Love the design but wish it came in more colors."></textarea>
         <!-- Theme cards will be inserted here by JS -->
       </div>
       
+      <details class="interpretation-aid card">
+        <summary>How to Interpret Theme Cards</summary>
+        <div class="help-content">
+          <div class="guide-section">
+            <h5>📊 Theme Card Elements</h5>
+            <ul>
+              <li><strong>Theme Label:</strong> Auto-generated label based on top words; rename mentally to match your domain</li>
+              <li><strong>Document Count:</strong> How many documents primarily belong to this theme</li>
+              <li><strong>Top Words:</strong> Most characteristic vocabulary for this theme, ordered by weight</li>
+              <li><strong>Weight Bar:</strong> Relative importance—wider bars = more defining for the theme</li>
+            </ul>
+          </div>
+          
+          <div class="guide-section">
+            <h5>📈 Reading the Word Weights</h5>
+            <p>Words are ranked by their <strong>NMF weight</strong> within the theme:</p>
+            <ul>
+              <li><strong>First 2-3 words:</strong> Core defining terms—these anchor the theme's meaning</li>
+              <li><strong>Middle words:</strong> Supporting context—help refine the theme's scope</li>
+              <li><strong>Last words:</strong> Peripheral—may overlap with other themes</li>
+            </ul>
+            <p class="hint">Focus on the first 3-4 words when labeling themes for business presentations.</p>
+          </div>
+          
+          <div class="guide-section">
+            <h5>💡 Naming Your Themes</h5>
+            <p>Auto-generated labels use top words, but you should create meaningful names:</p>
+            <ul>
+              <li><strong>Battery, charge, power, life</strong> → "Battery & Power"</li>
+              <li><strong>Ship, delivery, fast, arrive</strong> → "Shipping Experience"</li>
+              <li><strong>Price, expensive, worth, money</strong> → "Value for Money"</li>
+              <li><strong>Easy, simple, intuitive, learn</strong> → "Ease of Use"</li>
+            </ul>
+          </div>
+          
+          <div class="guide-section">
+            <h5>⚠️ Theme Quality Indicators</h5>
+            <table class="guide-table">
+              <thead>
+                <tr><th>Observation</th><th>What It Means</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Words don't relate to each other</td>
+                  <td>Low coherence; theme is "garbage"</td>
+                  <td>Try fewer themes or cleaner data</td>
+                </tr>
+                <tr>
+                  <td>Two themes have similar words</td>
+                  <td>Themes overlap</td>
+                  <td>Reduce theme count</td>
+                </tr>
+                <tr>
+                  <td>Theme has very few documents</td>
+                  <td>Outlier theme or over-segmentation</td>
+                  <td>Consider merging or reducing count</td>
+                </tr>
+                <tr>
+                  <td>One theme has 80%+ of documents</td>
+                  <td>Data lacks diversity</td>
+                  <td>May need more themes or different data</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+      
       <!-- Visualizations -->
       <div class="card visualizations">
         <h3>Theme Distribution</h3>
         <div class="chart-container">
           <canvas id="theme-distribution-chart"></canvas>
         </div>
+        
+        <details class="interpretation-aid">
+          <summary>Reading the Distribution Chart</summary>
+          <div class="help-content">
+            <div class="guide-section">
+              <h5>📊 What This Shows</h5>
+              <p>The bar chart displays the <strong>percentage of documents</strong> assigned to each theme. Documents are assigned to the theme with the highest confidence score.</p>
+            </div>
+            
+            <div class="guide-section">
+              <h5>📈 Interpreting the Distribution</h5>
+              <ul>
+                <li><strong>Even distribution:</strong> Themes are well-balanced; data covers diverse topics equally</li>
+                <li><strong>Skewed distribution:</strong> One or two dominant topics; consider if this reflects reality or a data issue</li>
+                <li><strong>Very small themes (&lt;5%):</strong> May be edge cases or noise; review sample comments to validate</li>
+              </ul>
+            </div>
+            
+            <div class="guide-section">
+              <h5>💡 Grouping Analysis</h5>
+              <p>When grouping is enabled (e.g., by product type or customer segment), the chart shows:</p>
+              <ul>
+                <li>Bars clustered by theme with colors representing different groups</li>
+                <li>Compare how themes distribute across groups</li>
+                <li>Identify themes that are dominant in specific segments</li>
+              </ul>
+            </div>
+          </div>
+        </details>
       </div>
       
       <!-- Sample Comments -->
@@ -282,6 +626,65 @@ Love the design but wish it came in more colors."></textarea>
         <div class="samples-container" id="samples-container">
           <!-- Sample cards will be inserted here by JS -->
         </div>
+        
+        <details class="interpretation-aid">
+          <summary>Understanding Sample Comments & Confidence Scores</summary>
+          <div class="help-content">
+            <div class="guide-section">
+              <h5>📊 What Are Sample Comments?</h5>
+              <p>These are the <strong>most representative documents</strong> for each theme—the ones the algorithm is most confident about assigning to that theme. They serve as concrete examples of what each theme "looks like" in your data.</p>
+            </div>
+            
+            <div class="guide-section">
+              <h5>📈 Understanding Confidence Scores</h5>
+              <p>The confidence percentage reflects how strongly a document matches its assigned theme:</p>
+              <table class="guide-table">
+                <thead>
+                  <tr><th>Confidence</th><th>Interpretation</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>80-100%</strong></td>
+                    <td>Very strong match; document clearly belongs to this theme</td>
+                  </tr>
+                  <tr>
+                    <td><strong>60-79%</strong></td>
+                    <td>Good match; may have some secondary theme presence</td>
+                  </tr>
+                  <tr>
+                    <td><strong>40-59%</strong></td>
+                    <td>Moderate match; document spans multiple themes</td>
+                  </tr>
+                  <tr>
+                    <td><strong>&lt;40%</strong></td>
+                    <td>Weak match; assignment is uncertain</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="guide-section">
+              <h5>💡 How to Use Samples</h5>
+              <ul>
+                <li><strong>Validate themes:</strong> Do the sample comments make sense for the theme words?</li>
+                <li><strong>Name themes:</strong> Reading samples helps you create meaningful labels</li>
+                <li><strong>Spot issues:</strong> If samples seem unrelated to theme words, the theme may be incoherent</li>
+                <li><strong>Understand edge cases:</strong> Lower-confidence samples show the theme's boundaries</li>
+              </ul>
+            </div>
+            
+            <div class="guide-section">
+              <h5>⚠️ When Samples Don't Match Expectations</h5>
+              <p>If sample comments seem wrong for a theme:</p>
+              <ul>
+                <li>The theme may be capturing something unexpected (look at all words, not just top 2-3)</li>
+                <li>Try increasing the number of themes to separate concepts</li>
+                <li>Check if common domain words need filtering</li>
+                <li>Very short documents may be assigned based on limited signal</li>
+              </ul>
+            </div>
+          </div>
+        </details>
       </div>
       
       <!-- How Scoring Works -->
@@ -300,6 +703,77 @@ Love the design but wish it came in more colors."></textarea>
         <div class="examples-container" id="examples-container">
           <!-- Example cards will be inserted here by JS -->
         </div>
+        
+        <details class="interpretation-aid">
+          <summary>Deep Dive: The NMF Scoring Process</summary>
+          <div class="help-content">
+            <div class="guide-section">
+              <h5>📊 Step-by-Step Scoring</h5>
+              <ol>
+                <li><strong>Tokenization:</strong> Text is split into individual words (tokens)</li>
+                <li><strong>Preprocessing:</strong> Stop words, punctuation, and very common terms are removed</li>
+                <li><strong>TF-IDF Lookup:</strong> Each remaining token gets its TF-IDF weight from the vocabulary</li>
+                <li><strong>Theme Weights:</strong> The token's TF-IDF vector is multiplied by each theme's word loadings</li>
+                <li><strong>Aggregation:</strong> All token weights are summed to get total theme scores for the document</li>
+                <li><strong>Normalization:</strong> Scores are converted to percentages (confidence) for assignment</li>
+              </ol>
+            </div>
+            
+            <div class="guide-section">
+              <h5>📈 Token Highlighting Explained</h5>
+              <table class="guide-table">
+                <thead>
+                  <tr><th>Highlight</th><th>Meaning</th><th>Example</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="legend-color legend-color--inline strong"></span> <strong>Strong</strong></td>
+                    <td>Token is a top word in the assigned theme</td>
+                    <td>"battery" in a Power theme</td>
+                  </tr>
+                  <tr>
+                    <td><span class="legend-color legend-color--inline medium"></span> <strong>Medium</strong></td>
+                    <td>Token contributes to a theme but isn't a top word</td>
+                    <td>"lasts" in a Power theme</td>
+                  </tr>
+                  <tr>
+                    <td><span class="legend-color legend-color--inline weak"></span> <strong>Weak</strong></td>
+                    <td>Token is in vocabulary but has low theme relevance</td>
+                    <td>"the" (common), "unique" (rare)</td>
+                  </tr>
+                  <tr>
+                    <td><span class="legend-color legend-color--inline stopword"></span> <strong>Filtered</strong></td>
+                    <td>Token was removed during preprocessing</td>
+                    <td>"a", "the", "is", "and"</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="guide-section">
+              <h5>💡 Why Some Words Are Filtered</h5>
+              <p>The algorithm removes words that don't help distinguish themes:</p>
+              <ul>
+                <li><strong>Stop words:</strong> "the", "is", "and", "a" appear in every document</li>
+                <li><strong>Too common:</strong> Words in 90%+ of documents don't differentiate</li>
+                <li><strong>Too rare:</strong> Words in only 1-2 documents may be noise</li>
+                <li><strong>Numbers/punctuation:</strong> Usually not meaningful for theme detection</li>
+              </ul>
+            </div>
+            
+            <div class="guide-section">
+              <h5>⚠️ Limitations of Token-Level View</h5>
+              <p>The highlighting shows simplified match indicators. The actual algorithm considers:</p>
+              <ul>
+                <li>Continuous weights (not just high/medium/low categories)</li>
+                <li>Interactions between words in context</li>
+                <li>Document length normalization</li>
+                <li>Relative importance across all themes simultaneously</li>
+              </ul>
+              <p>Use this view to build intuition, but trust the overall confidence score for assignments.</p>
+            </div>
+          </div>
+        </details>
       </div>
       
       <!-- Export Options -->
@@ -309,6 +783,46 @@ Love the design but wish it came in more colors."></textarea>
           <button type="button" id="export-themes" class="secondary">Download Themes Summary (CSV)</button>
           <button type="button" id="export-assignments" class="secondary">Download Document Assignments (CSV)</button>
         </div>
+        
+        <details class="interpretation-aid">
+          <summary>What's in Each Export File?</summary>
+          <div class="help-content">
+            <div class="guide-section">
+              <h5>📊 Themes Summary (CSV)</h5>
+              <p>Contains one row per theme with:</p>
+              <ul>
+                <li><strong>Theme ID:</strong> Numeric identifier (1, 2, 3...)</li>
+                <li><strong>Top Words:</strong> Comma-separated list of characteristic terms</li>
+                <li><strong>Document Count:</strong> Number of documents assigned to this theme</li>
+                <li><strong>Percentage:</strong> Share of total documents</li>
+              </ul>
+              <p><strong>Use for:</strong> Executive summaries, presentations, theme labeling reference</p>
+            </div>
+            
+            <div class="guide-section">
+              <h5>📈 Document Assignments (CSV)</h5>
+              <p>Contains one row per document with:</p>
+              <ul>
+                <li><strong>Document ID:</strong> Row number from your original data</li>
+                <li><strong>Original Text:</strong> The full text of the document</li>
+                <li><strong>Assigned Theme:</strong> Primary theme ID</li>
+                <li><strong>Confidence:</strong> Assignment confidence percentage</li>
+                <li><strong>Theme_1_Score, Theme_2_Score, ...:</strong> Raw scores for each theme</li>
+              </ul>
+              <p><strong>Use for:</strong> Further analysis in Excel/R/Python, filtering by theme, joining with other data</p>
+            </div>
+            
+            <div class="guide-section">
+              <h5>💡 Analysis Ideas</h5>
+              <ul>
+                <li>Join assignments with customer metadata (segment, region, NPS score)</li>
+                <li>Filter low-confidence assignments for manual review</li>
+                <li>Track theme distribution over time periods</li>
+                <li>Compare themes across product lines or customer segments</li>
+              </ul>
+            </div>
+          </div>
+        </details>
       </div>
     </section>
 

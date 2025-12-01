@@ -214,6 +214,19 @@ async function loadScenario(id) {
                     updateColumnPreview();
                     updateGroupColumnSelector();
                     
+                    // Auto-enable grouping if scenario defines a group column
+                    if (scenario.groupColumn && elements.useGroupingCheckbox) {
+                        const groupColIndex = headers.findIndex(h => h === scenario.groupColumn);
+                        if (groupColIndex >= 0) {
+                            elements.useGroupingCheckbox.checked = true;
+                            groupingEnabled = true;
+                            elements.groupColumnSelect.disabled = false;
+                            elements.groupColumnSelect.value = groupColIndex;
+                            groupColumn = groupColIndex;
+                            uniqueGroups = [...new Set(uploadedData.rows.map(row => row[groupColumn] || '(empty)'))];
+                        }
+                    }
+                    
                     elements.uploadFeedback.textContent = `✓ Loaded ${uploadedData.rows.length} documents from "${scenario.label}"`;
                     elements.uploadFeedback.style.color = 'green';
                     

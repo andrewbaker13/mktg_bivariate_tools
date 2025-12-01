@@ -1049,3 +1049,225 @@
     order: 3;
   }
 }
+
+/* =================================================================
+   Interpretation Aids & Help Content
+   ================================================================= */
+
+/* Standalone interpretation aid cards (outside of other cards) */
+details.interpretation-aid.card {
+  background: var(--surface, white);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 8px;
+  padding: 0;
+  margin-bottom: 1.5rem;
+}
+
+details.interpretation-aid.card > summary {
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+details.interpretation-aid.card > summary::before {
+  content: "ℹ️";
+}
+
+details.interpretation-aid.card[open] > summary {
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  margin-bottom: 0;
+}
+
+details.interpretation-aid.card > .help-content {
+  padding: 1rem 1.5rem;
+}
+
+/* Interpretation aids inside cards */
+details.interpretation-aid {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+  padding-top: 0.75rem;
+}
+
+details.interpretation-aid > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--primary, #4f46e5);
+  padding: 0.5rem 0;
+  -webkit-user-select: none;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+details.interpretation-aid > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.interpretation-aid > summary::before {
+  content: "▶";
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+}
+
+details.interpretation-aid[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+details.interpretation-aid > summary:hover {
+  color: var(--primary-dark, #3730a3);
+}
+
+/* Help content container */
+.help-content {
+  padding: 1rem 0;
+  color: var(--text-secondary, #666);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* Guide sections */
+.guide-section {
+  margin-bottom: 1.5rem;
+}
+
+.guide-section:last-child {
+  margin-bottom: 0;
+}
+
+.guide-section h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.guide-section p {
+  margin: 0.5rem 0;
+}
+
+.guide-section ul,
+.guide-section ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.guide-section li {
+  margin-bottom: 0.4rem;
+}
+
+.guide-section li:last-child {
+  margin-bottom: 0;
+}
+
+/* Guide tables */
+.guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 0.75rem 0;
+}
+
+.guide-table th,
+.guide-table td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border: 1px solid var(--border-color, #e0e0e0);
+}
+
+.guide-table th {
+  background: var(--surface-alt, #f8f9fa);
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+.guide-table td {
+  background: var(--surface, white);
+}
+
+.guide-table tbody tr:hover td {
+  background: var(--surface-alt, #f8f9fa);
+}
+
+/* Equation styling */
+.equation {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  background: var(--surface-alt, #f8f9fa);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  margin: 0.75rem 0;
+  display: inline-block;
+}
+
+/* Hint text in help content */
+.help-content .hint {
+  font-style: italic;
+  color: var(--text-muted, #888);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+/* Legend color swatches for inline table use */
+.legend-color--inline {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+/* Intro notes (for When to Use sections) */
+details.intro-notes {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+details.intro-notes > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+  padding: 0.5rem 0;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+details.intro-notes > summary:hover {
+  color: var(--primary, #4f46e5);
+}
+
+details.intro-notes ul {
+  margin-top: 0.75rem;
+  padding-left: 1.5rem;
+}
+
+details.intro-notes li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+/* Responsive for help content */
+@media (max-width: 768px) {
+  .guide-table {
+    font-size: 0.8rem;
+  }
+  
+  .guide-table th,
+  .guide-table td {
+    padding: 0.5rem;
+  }
+  
+  .help-content {
+    font-size: 0.85rem;
+  }
+}
