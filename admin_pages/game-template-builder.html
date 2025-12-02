@@ -553,7 +553,7 @@
             this.textContent = 'Saving...';
 
             try {
-                const response = await fetch(`${API_BASE}/game/templates/`, {
+                const response = await fetch(`${API_BASE}/game/templates/create/`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Token ${token}`,
