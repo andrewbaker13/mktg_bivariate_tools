@@ -646,8 +646,11 @@
         }
         
         function submitGuess() {
+            console.log('submitGuess() called');
             const guessMin = parseFloat(document.getElementById('guessMin').value);
             const guessMax = parseFloat(document.getElementById('guessMax').value);
+            
+            console.log('Parsed values:', guessMin, guessMax);
             
             if (isNaN(guessMin) || isNaN(guessMax)) {
                 alert('Please enter valid numbers');
@@ -659,9 +662,13 @@
                 return;
             }
             
-            if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
+            console.log('WebSocket state:', websocket ? websocket.readyState : 'null');
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                console.error('WebSocket not open!');
+                return;
+            }
             
-            websocket.send(JSON.stringify({
+            const message = {
                 action: 'submit_guess',
                 data: {
                     player_session_id: playerSession.id,
@@ -669,7 +676,10 @@
                     guess_max: guessMax,
                     timestamp: Date.now() / 1000
                 }
-            }));
+            };
+            
+            console.log('Sending WebSocket message:', message);
+            websocket.send(JSON.stringify(message));
             
             // Disable inputs
             document.getElementById('guessMin').disabled = true;
