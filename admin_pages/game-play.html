@@ -451,7 +451,32 @@
                     }
                 }));
                 
-                showWaitingState();
+                // Check game state instead of always showing waiting
+                fetch(`${API_BASE}/game/${roomCode}/`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'in_progress') {
+                            // Game is active - server will send game_started event
+                            console.log('Reconnected during active game, waiting for server update');
+                        } else if (data.status === 'paused') {
+                            // Between rounds in multi-round game
+                            console.log('Reconnected during pause between rounds');
+                            const roundMsg = `Round ${data.current_round || 1} of ${data.total_rounds || 1} Complete!`;
+                            document.getElementById('gameArea').innerHTML = `
+                                <div class="waiting-state">
+                                    <h2>⏸️ ${roundMsg}</h2>
+                                    <p style="color: #64748b; margin-top: 1rem;">Waiting for instructor to start next round...</p>
+                                </div>
+                            `;
+                        } else {
+                            // Waiting or completed
+                            showWaitingState();
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error fetching game state:', err);
+                        showWaitingState();
+                    });
             };
             
             websocket.onmessage = function(event) {
