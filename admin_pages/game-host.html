@@ -476,14 +476,7 @@
                 gameSession = await response.json();
                 document.getElementById('gameStatus').textContent = 'In Progress';
                 
-                // Send start message via WebSocket
-                if (websocket && websocket.readyState === WebSocket.OPEN) {
-                    websocket.send(JSON.stringify({
-                        action: 'start_game',
-                        data: {}
-                    }));
-                }
-                
+                // Game started successfully - WebSocket will receive broadcast from server
                 this.disabled = true;
             } catch (error) {
                 alert('Error starting game: ' + error.message);
