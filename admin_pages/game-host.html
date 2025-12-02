@@ -313,7 +313,7 @@
                 </div>
 
                 <div id="gameSection" style="display: none;">
-                    <div id="countdownOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                    <div id="countdownOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 9999; align-items: center; justify-content: center; flex-direction: column;">
                         <div id="countdownNumber" style="font-size: 120px; font-weight: bold; color: #3b82f6; text-shadow: 0 0 30px rgba(59, 130, 246, 0.8);"></div>
                         <div id="countdownRoundInfo" style="font-size: 24px; color: white; margin-top: 20px;"></div>
                     </div>
@@ -704,6 +704,21 @@
         // Start game
         document.getElementById('startGameBtn').addEventListener('click', async function() {
             if (!gameSession) return;
+            
+            // Get current player count
+            const playerCountBadge = document.getElementById('playerCountBadge');
+            const playerCount = parseInt(playerCountBadge.textContent) || 0;
+            
+            // Validate player count
+            if (playerCount === 0) {
+                alert('⚠️ Cannot start game with 0 players!\n\nPlease wait for at least one student to join before starting.');
+                return;
+            }
+            
+            if (playerCount === 1) {
+                const confirmed = confirm('⚠️ Only 1 player has joined\n\nStarting a game with only one player is allowed, but the competitive experience works best with multiple players.\n\nDo you want to start anyway?');
+                if (!confirmed) return;
+            }
             
             try {
                 const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/start/`, {
