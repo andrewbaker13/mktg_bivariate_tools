@@ -228,6 +228,18 @@
                 </div>
 
                 <div id="setupSection">
+                    <!-- Quick Start Button -->
+                    <div class="alert alert-info" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none;">
+                        <strong>🚀 Quick Start:</strong> Want to test the game system? Load 5 sample questions instantly!
+                        <button class="btn" id="quickStartBtn" style="background: white; color: #059669; font-weight: 600; margin-top: 0.5rem; width: 100%;">
+                            ⚡ Load Sample Questions
+                        </button>
+                    </div>
+
+                    <div style="text-align: center; margin: 1rem 0; color: #6b7280;">
+                        — OR use your own questions —
+                    </div>
+
                     <div class="form-group">
                         <label for="courseSelect">Select Course</label>
                         <select id="courseSelect" required>
@@ -327,6 +339,23 @@
                 console.error('Error loading courses:', error);
             }
         }
+
+        // Quick Start with Sample Questions
+        document.getElementById('quickStartBtn').addEventListener('click', async function() {
+            alert('🎮 Sample Questions Feature\n\n' +
+                  'To use sample questions:\n\n' +
+                  '1. The system includes 5 pre-made Speed Tap questions\n' +
+                  '2. The system includes 5 pre-made Closest Guess questions\n' +
+                  '3. These are available in any course you select\n\n' +
+                  'Simply:\n' +
+                  '✅ Select your course\n' +
+                  '✅ Choose Speed Tap or Closest Guess\n' +
+                  '✅ Look for sample questions in the dropdown\n\n' +
+                  'Sample questions cover general knowledge topics like:\n' +
+                  '- Geography (capitals, oceans)\n' +
+                  '- Science (planets, temperature, human body)\n' +
+                  '- Math (calculations, measurements)');
+        });
 
         // Load questions based on game type
         document.getElementById('gameTypeSelect').addEventListener('change', async function() {
