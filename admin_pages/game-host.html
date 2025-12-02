@@ -391,7 +391,8 @@
         });
 
         // Create game session
-        document.getElementById('createGameBtn').addEventListener('submit', async function(e) {
+        document.getElementById('createGameBtn').addEventListener('click', async function(e) {
+            e.preventDefault();
             const courseId = document.getElementById('courseSelect').value;
             const questionId = document.getElementById('questionSelect').value;
             const guestPassword = document.getElementById('guestPassword').value;
