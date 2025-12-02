@@ -498,6 +498,10 @@
                 case 'game_ended':
                     handleGameEnd(message);
                     break;
+                    
+                case 'error':
+                    handleError(message);
+                    break;
             }
         }
         
@@ -680,11 +684,21 @@
             
             console.log('Sending WebSocket message:', message);
             websocket.send(JSON.stringify(message));
+        }
+        
+        function handleError(message) {
+            const feedback = document.getElementById('feedback');
+            feedback.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>⚠️ Validation Error:</strong> ${message.message}
+                    <br><small>Please adjust your range and try again.</small>
+                </div>
+            `;
             
-            // Disable inputs
-            document.getElementById('guessMin').disabled = true;
-            document.getElementById('guessMax').disabled = true;
-            document.querySelector('.submit-guess-btn').disabled = true;
+            // Re-enable inputs so player can fix and resubmit
+            document.getElementById('guessMin').disabled = false;
+            document.getElementById('guessMax').disabled = false;
+            document.querySelector('.submit-guess-btn').disabled = false;
         }
         
         function handleRangeSubmitted(message) {
@@ -697,6 +711,11 @@
                         ✅ Range submitted! You were #${message.submission_order}
                     </div>
                 `;
+                
+                // Disable inputs after successful submission
+                document.getElementById('guessMin').disabled = true;
+                document.getElementById('guessMax').disabled = true;
+                document.querySelector('.submit-guess-btn').disabled = true;
             }
             
             // Add range box to number line
