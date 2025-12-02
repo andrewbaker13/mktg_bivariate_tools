@@ -785,18 +785,30 @@
         
         // Handle game ended event from WebSocket
         function handleGameEnded(message) {
-            const isMultiRound = gameSession && gameSession.total_rounds > 1;
-            const hasMoreRounds = isMultiRound && message.current_round < message.total_rounds;
+            console.log('Game ended event received:', message);
+            
+            // Use message data directly since it's most up-to-date
+            const totalRounds = message.total_rounds || (gameSession ? gameSession.total_rounds : 1);
+            const currentRound = message.current_round || (gameSession ? gameSession.current_round : 1);
+            const isMultiRound = totalRounds > 1;
+            const hasMoreRounds = isMultiRound && currentRound < totalRounds;
+            
+            console.log(`Multi-round check: total=${totalRounds}, current=${currentRound}, hasMore=${hasMoreRounds}`);
             
             if (hasMoreRounds) {
                 // Show Next Round button
+                console.log('Showing Next Round button');
                 document.getElementById('startGameBtn').style.display = 'none';
-                document.getElementById('nextRoundBtn').style.display = 'inline-block';
-                document.getElementById('gameStatus').textContent = 'Paused';
+                const nextBtn = document.getElementById('nextRoundBtn');
+                nextBtn.style.display = 'inline-block';
+                nextBtn.disabled = false; // Ensure it's enabled
+                document.getElementById('gameStatus').textContent = `Round ${currentRound} Complete - Ready for Next Round`;
             } else {
                 // Final round complete
+                console.log('Final round complete');
                 document.getElementById('gameStatus').textContent = 'Completed';
                 document.getElementById('startGameBtn').disabled = true;
+                document.getElementById('nextRoundBtn').style.display = 'none';
             }
         }
         
