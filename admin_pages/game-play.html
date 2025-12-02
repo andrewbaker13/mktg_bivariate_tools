@@ -840,13 +840,22 @@
         function handleGameEnd(message) {
             if (timerInterval) clearInterval(timerInterval);
             
+            const winnerText = message.winner 
+                ? `🏆 Winner: ${message.winner}` 
+                : (message.message || '⏱️ Time is up! No correct answers.');
+            
+            const detailsHTML = message.winner ? `
+                ${message.response_time_ms ? `<strong>Time:</strong> ${message.response_time_ms}ms<br>` : ''}
+                ${message.multiplier ? `<span class="multiplier-badge">${message.multiplier}x</span>` : ''}
+            ` : '';
+            
             document.getElementById('gameArea').innerHTML = `
                 <div class="results-display">
                     <h2>🎉 Game Over!</h2>
                     <div class="result-card">
-                        <strong>Winner:</strong> ${message.winner}<br>
-                        ${message.response_time_ms ? `<strong>Time:</strong> ${message.response_time_ms}ms` : ''}
-                        ${message.multiplier ? `<span class="multiplier-badge">${message.multiplier}x</span>` : ''}
+                        ${winnerText}<br>
+                        ${detailsHTML}
+                        <p style="margin-top: 15px; color: #64748b;">Check the leaderboard for final standings →</p>
                     </div>
                 </div>
             `;
@@ -935,6 +944,16 @@
                 
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
+                    
+                    // End Speed Tap game with no winner if time runs out
+                    if (websocket && websocket.readyState === WebSocket.OPEN) {
+                        websocket.send(JSON.stringify({
+                            action: 'speed_tap_timeout',
+                            data: {
+                                player_session_id: playerSession.id
+                            }
+                        }));
+                    }
                 }
             }, 1000);
         }
