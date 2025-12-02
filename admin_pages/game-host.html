@@ -228,6 +228,16 @@
                 </div>
 
                 <div id="setupSection">
+                    <!-- Mode Selector Tabs -->
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0;">
+                        <button class="mode-tab active" data-mode="single" onclick="switchMode('single')" style="flex: 1; padding: 1rem; background: none; border: none; border-bottom: 3px solid #3b82f6; font-weight: 600; color: #3b82f6; cursor: pointer; transition: all 0.2s;">
+                            📝 Single Question
+                        </button>
+                        <button class="mode-tab" data-mode="template" onclick="switchMode('template')" style="flex: 1; padding: 1rem; background: none; border: none; border-bottom: 3px solid transparent; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s;">
+                            🎯 Multi-Round Template
+                        </button>
+                    </div>
+
                     <!-- Quick Start Button -->
                     <div class="alert alert-info" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none;">
                         <strong>🚀 Quick Start:</strong> Want to test the game system? Load 5 sample questions instantly!
@@ -240,27 +250,52 @@
                         — OR use your own questions —
                     </div>
 
-                    <div class="form-group">
-                        <label for="courseSelect">Select Course</label>
-                        <select id="courseSelect" required>
-                            <option value="">Loading courses...</option>
-                        </select>
+                    <!-- Single Question Mode -->
+                    <div id="singleQuestionMode">
+                        <div class="form-group">
+                            <label for="courseSelect">Select Course</label>
+                            <select id="courseSelect" required>
+                                <option value="">Loading courses...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gameTypeSelect">Game Type</label>
+                            <select id="gameTypeSelect" required>
+                                <option value="">Select game type...</option>
+                                <option value="speed_tap">⚡ Speed Tap</option>
+                                <option value="closest_guess">🎯 Closest Guess</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="questionSelect">Select Question</label>
+                            <select id="questionSelect" required>
+                                <option value="">Select a game type first...</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="gameTypeSelect">Game Type</label>
-                        <select id="gameTypeSelect" required>
-                            <option value="">Select game type...</option>
-                            <option value="speed_tap">⚡ Speed Tap</option>
-                            <option value="closest_guess">🎯 Closest Guess</option>
-                        </select>
-                    </div>
+                    <!-- Template Mode -->
+                    <div id="templateMode" style="display: none;">
+                        <div class="alert alert-info">
+                            <strong>🎯 Multi-Round Templates:</strong> Select a pre-built template with multiple questions. Students play through all questions in order, with cumulative scoring!
+                            <a href="game-template-builder.html" style="color: white; font-weight: 700; text-decoration: underline; display: block; margin-top: 0.5rem;">
+                                ➕ Create New Template
+                            </a>
+                        </div>
 
-                    <div class="form-group">
-                        <label for="questionSelect">Select Question</label>
-                        <select id="questionSelect" required>
-                            <option value="">Select a game type first...</option>
-                        </select>
+                        <div class="form-group">
+                            <label for="templateSelect">Select Template</label>
+                            <select id="templateSelect" required>
+                                <option value="">Loading templates...</option>
+                            </select>
+                        </div>
+
+                        <div id="templatePreview" style="display: none; padding: 1rem; background: #f8fafc; border-radius: 8px; margin-top: 1rem;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #1e293b;">Template Details:</h4>
+                            <div id="templateDetails"></div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -340,6 +375,76 @@
             }
         }
 
+        // Load game templates
+        async function loadTemplates() {
+            try {
+                const response = await fetch(`${API_BASE}/game/templates/`, {
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                const templates = await response.json();
+                
+                const select = document.getElementById('templateSelect');
+                select.innerHTML = '<option value="">Select a template...</option>';
+                templates.forEach(template => {
+                    select.innerHTML += `<option value="${template.id}">${template.name} (${template.question_count} questions)</option>`;
+                });
+            } catch (error) {
+                console.error('Error loading templates:', error);
+                document.getElementById('templateSelect').innerHTML = '<option value="">Error loading templates</option>';
+            }
+        }
+
+        // Switch between single question and template mode
+        function switchMode(mode) {
+            // Update tab styles
+            document.querySelectorAll('.mode-tab').forEach(tab => {
+                if (tab.dataset.mode === mode) {
+                    tab.style.color = '#3b82f6';
+                    tab.style.borderBottom = '3px solid #3b82f6';
+                } else {
+                    tab.style.color = '#64748b';
+                    tab.style.borderBottom = '3px solid transparent';
+                }
+            });
+
+            // Show/hide modes
+            if (mode === 'single') {
+                document.getElementById('singleQuestionMode').style.display = 'block';
+                document.getElementById('templateMode').style.display = 'none';
+            } else {
+                document.getElementById('singleQuestionMode').style.display = 'none';
+                document.getElementById('templateMode').style.display = 'block';
+            }
+        }
+
+        // Show template preview
+        document.getElementById('templateSelect')?.addEventListener('change', async function() {
+            const templateId = this.value;
+            const preview = document.getElementById('templatePreview');
+            
+            if (!templateId) {
+                preview.style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/game/templates/${templateId}/`, {
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                const template = await response.json();
+                
+                document.getElementById('templateDetails').innerHTML = `
+                    <div style="margin-bottom: 0.5rem;"><strong>Name:</strong> ${template.name}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>Questions:</strong> ${template.question_count} rounds</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>Created by:</strong> ${template.created_by_username || 'Unknown'}</div>
+                    <div style="color: #6b7280; font-size: 0.875rem;">Students will play through all ${template.question_count} questions with cumulative scoring.</div>
+                `;
+                preview.style.display = 'block';
+            } catch (error) {
+                console.error('Error loading template details:', error);
+            }
+        });
+
         // Quick Start with Sample Questions
         document.getElementById('quickStartBtn').addEventListener('click', async function() {
             alert('🎮 Sample Questions Feature\n\n' +
@@ -393,13 +498,43 @@
         // Create game session
         document.getElementById('createGameBtn').addEventListener('click', async function(e) {
             e.preventDefault();
-            const courseId = document.getElementById('courseSelect').value;
-            const questionId = document.getElementById('questionSelect').value;
+            
+            // Check which mode is active
+            const isSingleMode = document.getElementById('singleQuestionMode').style.display !== 'none';
             const guestPassword = document.getElementById('guestPassword').value;
             
-            if (!courseId || !questionId) {
-                alert('Please select a course and question');
-                return;
+            let requestBody;
+            
+            if (isSingleMode) {
+                // Single question mode
+                const courseId = document.getElementById('courseSelect').value;
+                const questionId = document.getElementById('questionSelect').value;
+                
+                if (!courseId || !questionId) {
+                    alert('Please select a course and question');
+                    return;
+                }
+                
+                requestBody = {
+                    course_id: parseInt(courseId),
+                    question_id: parseInt(questionId),
+                    guest_password: guestPassword
+                };
+            } else {
+                // Template mode
+                const courseId = document.getElementById('courseSelect').value || 1; // Default course ID
+                const templateId = document.getElementById('templateSelect').value;
+                
+                if (!templateId) {
+                    alert('Please select a template');
+                    return;
+                }
+                
+                requestBody = {
+                    course_id: parseInt(courseId),
+                    game_template_id: parseInt(templateId),
+                    guest_password: guestPassword
+                };
             }
             
             try {
@@ -409,11 +544,7 @@
                         'Authorization': `Token ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        course_id: parseInt(courseId),
-                        question_id: parseInt(questionId),
-                        guest_password: guestPassword
-                    })
+                    body: JSON.stringify(requestBody)
                 });
                 
                 if (!response.ok) {
@@ -424,19 +555,31 @@
                 
                 // Update UI
                 document.getElementById('roomCodeDisplay').textContent = gameSession.room_code;
-                document.getElementById('gameType').textContent = gameSession.game_type;
+                document.getElementById('gameType').textContent = gameSession.game_type || 'Multi-Round';
                 document.getElementById('gameStatus').textContent = gameSession.status;
                 
                 document.getElementById('setupSection').style.display = 'none';
                 document.getElementById('gameSection').style.display = 'block';
                 
-                // Display question
-                document.getElementById('questionDisplay').innerHTML = `
-                    <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; margin-bottom: 1rem;">
-                        <strong>Question:</strong><br>
-                        ${gameSession.question_text}
-                    </div>
-                `;
+                // Display question or template info
+                if (gameSession.total_rounds > 1) {
+                    // Multi-round template
+                    document.getElementById('questionDisplay').innerHTML = `
+                        <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; margin-bottom: 1rem;">
+                            <strong>🎯 Multi-Round Game:</strong><br>
+                            ${gameSession.total_rounds} questions total<br>
+                            Click "Start Game" to begin Round 1!
+                        </div>
+                    `;
+                } else {
+                    // Single question
+                    document.getElementById('questionDisplay').innerHTML = `
+                        <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; margin-bottom: 1rem;">
+                            <strong>Question:</strong><br>
+                            ${gameSession.question_text}
+                        </div>
+                    `;
+                }
                 
                 // Display game config
                 if (gameSession.game_config) {
@@ -446,6 +589,9 @@
                     }
                     if (gameSession.game_config.max_range_width) {
                         configHTML += `📏 Max Range Width: ${gameSession.game_config.max_range_width}<br>`;
+                    }
+                    if (gameSession.total_rounds > 1) {
+                        configHTML += `🔄 Rounds: ${gameSession.current_round} / ${gameSession.total_rounds}<br>`;
                     }
                     document.getElementById('gameConfig').innerHTML = configHTML;
                 }
@@ -579,6 +725,7 @@
 
         // Initialize
         loadCourses();
+        loadTemplates();
     </script>
 </body>
 </html>

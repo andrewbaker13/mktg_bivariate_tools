@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Template Builder - Marketing Analytics Tools</title>
+    <link rel="stylesheet" href="../shared/css/main.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .builder-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .builder-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
+        }
+        .builder-header h1 {
+            margin: 0 0 0.5rem 0;
+            color: #1e293b;
+        }
+        .builder-header p {
+            margin: 0;
+            color: #64748b;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .back-btn:hover {
+            background: #2563eb;
+        }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        .panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            padding: 2rem;
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .panel-header h2 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 1.5rem;
+        }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            background: #3b82f6;
+            color: white;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .search-filter {
+            margin-bottom: 1.5rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .filter-row {
+            display: flex;
+            gap: 0.75rem;
+        }
+        .filter-row select {
+            flex: 1;
+            padding: 0.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+        }
+        .questions-list {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+        .question-card {
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .question-card:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .question-card.added {
+            background: #dcfce7;
+            border-color: #10b981;
+        }
+        .question-text {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+        .question-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        .selected-list {
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+        }
+        .selected-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .drag-handle {
+            cursor: grab;
+            color: #64748b;
+            font-size: 1.5rem;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        .order-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            background: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .item-content {
+            flex: 1;
+        }
+        .item-text {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+        .item-type {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        .remove-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .remove-btn:hover {
+            background: #dc2626;
+        }
+        .template-form {
+            padding-top: 1rem;
+            border-top: 2px solid #e2e8f0;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #334155;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .alert-info {
+            background: #eff6ff;
+            border: 2px solid #3b82f6;
+            color: #1e40af;
+        }
+        .alert-success {
+            background: #dcfce7;
+            border: 2px solid #10b981;
+            color: #065f46;
+        }
+        .alert-warning {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            color: #92400e;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="builder-container">
+        <a href="game-host.html" class="back-btn">← Back to Game Host</a>
+        
+        <div class="builder-header">
+            <h1>🎯 Game Template Builder</h1>
+            <p>Create multi-round game templates by selecting and ordering questions from your quiz bank.</p>
+        </div>
+
+        <div class="main-grid">
+            <!-- Available Questions Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Available Questions</h2>
+                    <span class="badge" id="availableCount">0</span>
+                </div>
+
+                <div class="alert alert-info">
+                    Click questions below to add them to your template. You can mix Speed Tap and Closest Guess questions!
+                </div>
+
+                <div class="search-filter">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="search-input" 
+                        placeholder="🔍 Search questions...">
+                    
+                    <div class="filter-row">
+                        <select id="gameTypeFilter">
+                            <option value="">All Game Types</option>
+                            <option value="speed_tap">Speed Tap</option>
+                            <option value="closest_guess">Closest Guess</option>
+                        </select>
+                        <select id="courseFilter">
+                            <option value="">All Courses</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="loadingQuestions" class="loading">Loading questions...</div>
+                <div id="questionsList" class="questions-list" style="display: none;"></div>
+            </div>
+
+            <!-- Template Builder Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Your Template</h2>
+                    <span class="badge" id="selectedCount">0</span>
+                </div>
+
+                <div id="emptyMessage" class="alert alert-warning">
+                    No questions selected yet. Click questions from the left panel to add them here.
+                </div>
+
+                <div id="selectedList" class="selected-list" style="display: none;"></div>
+
+                <div class="template-form" id="templateForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="templateName">Template Name *</label>
+                        <input 
+                            type="text" 
+                            id="templateName" 
+                            placeholder="e.g., Algebra Practice 1"
+                            required>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" id="saveTemplateBtn">
+                        💾 Save Template
+                    </button>
+                </div>
+
+                <div id="successMessage" class="alert alert-success" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://drbaker-backend.onrender.com/api';
+        let token = localStorage.getItem('auth_token');
+        
+        if (!token) {
+            alert('Please log in first');
+            window.location.href = 'login.html';
+        }
+
+        let allQuestions = [];
+        let selectedQuestions = [];
+
+        // Load courses for filter
+        async function loadCourses() {
+            try {
+                const response = await fetch(`${API_BASE}/courses/`, {
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                const courses = await response.json();
+                
+                const select = document.getElementById('courseFilter');
+                courses.forEach(course => {
+                    select.innerHTML += `<option value="${course.id}">${course.name}</option>`;
+                });
+            } catch (error) {
+                console.error('Error loading courses:', error);
+            }
+        }
+
+        // Load all questions
+        async function loadQuestions() {
+            try {
+                const response = await fetch(`${API_BASE}/game/questions/`, {
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                allQuestions = await response.json();
+                
+                document.getElementById('loadingQuestions').style.display = 'none';
+                document.getElementById('questionsList').style.display = 'block';
+                
+                renderQuestions();
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                document.getElementById('loadingQuestions').innerHTML = 
+                    '<div class="alert alert-warning">Error loading questions. Please try again.</div>';
+            }
+        }
+
+        // Render filtered questions
+        function renderQuestions() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const gameTypeFilter = document.getElementById('gameTypeFilter').value;
+            const courseFilter = document.getElementById('courseFilter').value;
+
+            const filtered = allQuestions.filter(q => {
+                // Check if already selected
+                if (selectedQuestions.some(sq => sq.id === q.id)) return false;
+                
+                // Search filter
+                if (searchTerm && !q.question_text.toLowerCase().includes(searchTerm)) return false;
+                
+                // Game type filter
+                if (gameTypeFilter && q.game_type !== gameTypeFilter) return false;
+                
+                // Course filter (if implemented in backend)
+                if (courseFilter && q.course_id && q.course_id !== parseInt(courseFilter)) return false;
+                
+                return true;
+            });
+
+            document.getElementById('availableCount').textContent = filtered.length;
+
+            const container = document.getElementById('questionsList');
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="alert alert-warning">No questions match your filters.</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(q => `
+                <div class="question-card" onclick="addQuestion(${q.id})">
+                    <div class="question-text">${q.question_text}</div>
+                    <div class="question-meta">
+                        <span>🎮 ${q.game_type === 'speed_tap' ? 'Speed Tap' : 'Closest Guess'}</span>
+                        <span>⏱️ ${q.game_time_limit_seconds || 30}s</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Add question to template
+        function addQuestion(questionId) {
+            const question = allQuestions.find(q => q.id === questionId);
+            if (!question || selectedQuestions.some(q => q.id === questionId)) return;
+
+            selectedQuestions.push(question);
+            renderSelected();
+            renderQuestions(); // Re-render to mark as added
+        }
+
+        // Remove question from template
+        function removeQuestion(index) {
+            selectedQuestions.splice(index, 1);
+            renderSelected();
+            renderQuestions();
+        }
+
+        // Move question up
+        function moveUp(index) {
+            if (index === 0) return;
+            [selectedQuestions[index], selectedQuestions[index - 1]] = 
+            [selectedQuestions[index - 1], selectedQuestions[index]];
+            renderSelected();
+        }
+
+        // Move question down
+        function moveDown(index) {
+            if (index === selectedQuestions.length - 1) return;
+            [selectedQuestions[index], selectedQuestions[index + 1]] = 
+            [selectedQuestions[index + 1], selectedQuestions[index]];
+            renderSelected();
+        }
+
+        // Render selected questions
+        function renderSelected() {
+            const count = selectedQuestions.length;
+            document.getElementById('selectedCount').textContent = count;
+
+            if (count === 0) {
+                document.getElementById('emptyMessage').style.display = 'block';
+                document.getElementById('selectedList').style.display = 'none';
+                document.getElementById('templateForm').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('emptyMessage').style.display = 'none';
+            document.getElementById('selectedList').style.display = 'block';
+            document.getElementById('templateForm').style.display = 'block';
+
+            const container = document.getElementById('selectedList');
+            container.innerHTML = selectedQuestions.map((q, index) => `
+                <div class="selected-item">
+                    <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+                    <div class="order-number">${index + 1}</div>
+                    <div class="item-content">
+                        <div class="item-text">${q.question_text.substring(0, 60)}${q.question_text.length > 60 ? '...' : ''}</div>
+                        <div class="item-type">🎮 ${q.game_type === 'speed_tap' ? 'Speed Tap' : 'Closest Guess'}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeQuestion(${index})">✕</button>
+                    <button onclick="moveUp(${index})" ${index === 0 ? 'disabled' : ''} 
+                            style="background: #3b82f6; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">
+                        ▲
+                    </button>
+                    <button onclick="moveDown(${index})" ${index === count - 1 ? 'disabled' : ''} 
+                            style="background: #3b82f6; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">
+                        ▼
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Save template
+        document.getElementById('saveTemplateBtn').addEventListener('click', async function() {
+            const name = document.getElementById('templateName').value.trim();
+            
+            if (!name) {
+                alert('Please enter a template name');
+                return;
+            }
+
+            if (selectedQuestions.length === 0) {
+                alert('Please add at least one question');
+                return;
+            }
+
+            this.disabled = true;
+            this.textContent = 'Saving...';
+
+            try {
+                const response = await fetch(`${API_BASE}/game/templates/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        question_ids: selectedQuestions.map(q => q.id)
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to save template');
+                }
+
+                const template = await response.json();
+                
+                const successMsg = document.getElementById('successMessage');
+                successMsg.textContent = `✅ Template "${template.name}" saved successfully! (${template.question_count} questions)`;
+                successMsg.style.display = 'block';
+
+                // Reset form
+                setTimeout(() => {
+                    selectedQuestions = [];
+                    document.getElementById('templateName').value = '';
+                    renderSelected();
+                    renderQuestions();
+                    successMsg.style.display = 'none';
+                }, 3000);
+
+            } catch (error) {
+                alert('Error saving template: ' + error.message);
+            } finally {
+                this.disabled = false;
+                this.textContent = '💾 Save Template';
+            }
+        });
+
+        // Event listeners for filters
+        document.getElementById('searchInput').addEventListener('input', renderQuestions);
+        document.getElementById('gameTypeFilter').addEventListener('change', renderQuestions);
+        document.getElementById('courseFilter').addEventListener('change', renderQuestions);
+
+        // Initialize
+        loadCourses();
+        loadQuestions();
+    </script>
+</body>
+</html>
