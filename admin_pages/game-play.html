@@ -413,6 +413,7 @@
         const gameSession = JSON.parse(sessionStorage.getItem('gameSession') || '{}');
         const playerSession = JSON.parse(sessionStorage.getItem('playerSession') || '{}');
         const isGuest = sessionStorage.getItem('isGuest') === 'true';
+        let isWaitingToEnter = sessionStorage.getItem('waitingToEnter') === 'true';
         
         // Update header
         document.getElementById('playerName').textContent = playerSession.display_name || 'Player';
@@ -525,18 +526,36 @@
         }
         
         function showWaitingState() {
-            document.getElementById('gameArea').innerHTML = `
-                <div class="waiting-state">
-                    <h2>⏳ Waiting for game to start...</h2>
-                    <div class="spinner"></div>
-                    <p style="color: #64748b;">Your instructor will start the game soon</p>
-                </div>
-            `;
+            // Check if player joined mid-round and is waiting
+            if (isWaitingToEnter) {
+                document.getElementById('gameArea').innerHTML = `
+                    <div class="waiting-state">
+                        <h2>⏸️ Waiting to Join...</h2>
+                        <div class="spinner"></div>
+                        <p style="color: #f59e0b; font-weight: 600;">You joined during an active round.</p>
+                        <p style="color: #64748b;">You'll be able to participate when the next round begins!</p>
+                    </div>
+                `;
+            } else {
+                document.getElementById('gameArea').innerHTML = `
+                    <div class="waiting-state">
+                        <h2>⏳ Waiting for game to start...</h2>
+                        <div class="spinner"></div>
+                        <p style="color: #64748b;">Your instructor will start the game soon</p>
+                    </div>
+                `;
+            }
         }
         
         function handleGameStart(message) {
             gameType = message.game_type;
             gameStartTime = Date.now();
+            
+            // If player is waiting to enter, show waiting state instead of game
+            if (isWaitingToEnter) {
+                showWaitingState();
+                return;
+            }
             
             const timeLimit = message.game_time_limit || 20;
             
@@ -550,8 +569,17 @@
         }
         
         function showSpeedTapGame(message) {
-            // For demo, create 4 answer options (A, B, C, D)
-            const options = ['A', 'B', 'C', 'D'];
+            // Use actual options from server if provided, otherwise fallback to A/B/C/D
+            let options = message.options || [];
+            if (!options.length) {
+                // Fallback for legacy/demo questions
+                options = [
+                    {id: 'A', text: 'A'},
+                    {id: 'B', text: 'B'},
+                    {id: 'C', text: 'C'},
+                    {id: 'D', text: 'D'}
+                ];
+            }
             
             const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
             
@@ -567,8 +595,8 @@
                     </div>
                     <div class="answer-options" id="answerOptions">
                         ${options.map(opt => `
-                            <button class="answer-btn" data-answer="${opt}" onclick="submitSpeedTap('${opt}')">
-                                ${opt}
+                            <button class="answer-btn" data-answer="${opt.text}" onclick="submitSpeedTap('${opt.text.replace(/'/g, "\\'")}')">
+                                ${opt.text}
                             </button>
                         `).join('')}
                     </div>
@@ -881,6 +909,13 @@
             // Clear any existing timers
             if (timerInterval) clearInterval(timerInterval);
             
+            // Clear waiting_to_enter flag - player can now participate
+            // This happens when the round changes (instructor advanced to next round)
+            if (isWaitingToEnter) {
+                sessionStorage.setItem('waitingToEnter', 'false');
+                isWaitingToEnter = false;
+            }
+            
             // Show transitioning message
             document.getElementById('gameArea').innerHTML = `
                 <div class="waiting-state">
@@ -924,11 +959,20 @@
                     </div>
                 ` : '';
                 
+                // Late-joiner indicator (asterisk)
+                const lateJoinerIndicator = player.joined_mid_game ? '<span style="color: #f59e0b; font-weight: bold;" title="Joined mid-game">*</span>' : '';
+                
+                // Disconnected indicator
+                const disconnectedStyle = player.is_connected === false ? 'opacity: 0.5; text-decoration: line-through;' : '';
+                
+                // Rank display - late joiners show "-" instead of a rank
+                const rankDisplay = player.joined_mid_game ? '-' : (player.rank || (idx + 1));
+                
                 return `
-                    <div class="leaderboard-item ${isOwn ? 'own' : ''}" style="flex-direction: column; align-items: stretch;">
+                    <div class="leaderboard-item ${isOwn ? 'own' : ''}" style="flex-direction: column; align-items: stretch; ${disconnectedStyle}">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <span class="rank ${rankClass}">${player.rank || (idx + 1)}</span>
-                            <span style="flex: 1; margin-left: 10px;">${player.player_name}</span>
+                            <span class="rank ${rankClass}">${rankDisplay}</span>
+                            <span style="flex: 1; margin-left: 10px;">${player.player_name}${lateJoinerIndicator}</span>
                             <span style="font-weight: 700; font-size: 1.1rem;">${player.score}</span>
                         </div>
                         ${roundBreakdown}

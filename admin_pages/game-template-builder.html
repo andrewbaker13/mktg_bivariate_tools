@@ -347,6 +347,19 @@
 
         let allQuestions = [];
         let selectedQuestions = [];
+        let prefillTemplateId = null; // If rebuilding an existing template
+
+        // Check URL for prefill parameters (when rebuilding a template)
+        function checkPrefillParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const prefillIds = urlParams.get('prefill');
+            prefillTemplateId = urlParams.get('template_id');
+            
+            if (prefillIds) {
+                return prefillIds.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+            }
+            return [];
+        }
 
         // Load courses for filter
         async function loadCourses() {
@@ -375,6 +388,32 @@
                 
                 document.getElementById('loadingQuestions').style.display = 'none';
                 document.getElementById('questionsList').style.display = 'block';
+                
+                // Check for prefill parameters (rebuilding from broken template)
+                const prefillIds = checkPrefillParams();
+                if (prefillIds.length > 0) {
+                    // Pre-select questions that match the prefill IDs (in order)
+                    prefillIds.forEach(id => {
+                        const question = allQuestions.find(q => q.id === id);
+                        if (question) {
+                            selectedQuestions.push(question);
+                        }
+                    });
+                    
+                    if (selectedQuestions.length > 0) {
+                        // Show a notification that we're rebuilding
+                        const alert = document.createElement('div');
+                        alert.className = 'alert alert-info';
+                        alert.style.cssText = 'margin-bottom: 1rem; padding: 1rem; background: #dbeafe; border: 1px solid #3b82f6; border-radius: 8px;';
+                        alert.innerHTML = `
+                            <strong>🔧 Rebuilding Template</strong><br>
+                            ${selectedQuestions.length} valid question(s) have been pre-loaded. You can add more questions or reorder them before saving.
+                        `;
+                        document.querySelector('.builder-header').appendChild(alert);
+                        
+                        renderSelected();
+                    }
+                }
                 
                 renderQuestions();
             } catch (error) {

@@ -200,7 +200,7 @@
     <div class="host-container">
         <div class="host-header">
             <div class="room-code-display">
-                <p>Students join at: drbakermarketing.com/admin_pages/game-join.html</p>
+                <p>Students join at: https://drbakermarketing.com/admin_pages/game-join.html</p>
                 <h1 id="roomCodeDisplay">------</h1>
                 <p>Room Code</p>
             </div>
@@ -358,6 +358,66 @@
         if (!token) {
             alert('Please log in first');
             window.location.href = 'login.html';
+        }
+
+        // Show template warning dialog when some questions are missing
+        function showTemplateWarningDialog(data) {
+            return new Promise((resolve) => {
+                // Create modal overlay
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = 'background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.3);';
+                modal.innerHTML = `
+                    <h2 style="margin: 0 0 1rem 0; color: #f59e0b; display: flex; align-items: center; gap: 0.5rem;">
+                        ⚠️ Template Issue Detected
+                    </h2>
+                    <p style="color: #1e293b; margin-bottom: 1rem;">${data.message}</p>
+                    <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <div style="margin-bottom: 0.5rem;"><strong>Template:</strong> ${data.template_name}</div>
+                        <div style="margin-bottom: 0.5rem;"><strong>Valid Questions:</strong> ${data.valid_count} of ${data.total_questions}</div>
+                        <div><strong>Missing Question IDs:</strong> ${data.missing_question_ids.join(', ')}</div>
+                    </div>
+                    <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                        ${data.can_proceed 
+                            ? 'You can proceed with the remaining questions, or rebuild the template with only the valid questions.' 
+                            : 'This template has no valid questions remaining. Please rebuild it.'}
+                    </p>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        ${data.can_proceed ? `
+                            <button id="proceedBtn" style="flex: 1; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                ✓ Proceed with ${data.valid_count} Questions
+                            </button>
+                        ` : ''}
+                        <button id="rebuildBtn" style="flex: 1; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            🔧 Rebuild Template
+                        </button>
+                        <button id="cancelBtn" style="padding: 0.75rem 1.5rem; background: #e2e8f0; color: #475569; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            Cancel
+                        </button>
+                    </div>
+                `;
+                
+                overlay.appendChild(modal);
+                document.body.appendChild(overlay);
+                
+                // Event listeners
+                if (data.can_proceed) {
+                    modal.querySelector('#proceedBtn').addEventListener('click', () => {
+                        document.body.removeChild(overlay);
+                        resolve('force');
+                    });
+                }
+                modal.querySelector('#rebuildBtn').addEventListener('click', () => {
+                    document.body.removeChild(overlay);
+                    resolve('rebuild');
+                });
+                modal.querySelector('#cancelBtn').addEventListener('click', () => {
+                    document.body.removeChild(overlay);
+                    resolve('cancel');
+                });
+            });
         }
 
         // Load courses
@@ -548,11 +608,40 @@
                     body: JSON.stringify(requestBody)
                 });
                 
-                if (!response.ok) {
-                    throw new Error('Failed to create game');
-                }
+                const responseData = await response.json();
                 
-                gameSession = await response.json();
+                // Handle template validation warning (some questions missing)
+                if (response.status === 409 && responseData.warning) {
+                    const proceed = await showTemplateWarningDialog(responseData);
+                    if (proceed === 'force') {
+                        // User wants to proceed with valid questions only
+                        requestBody.force = true;
+                        const retryResponse = await fetch(`${API_BASE}/game/create/`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Token ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(requestBody)
+                        });
+                        if (!retryResponse.ok) {
+                            throw new Error('Failed to create game');
+                        }
+                        gameSession = await retryResponse.json();
+                    } else if (proceed === 'rebuild') {
+                        // User wants to rebuild - redirect to template builder with valid questions
+                        const validIds = responseData.valid_question_ids.join(',');
+                        window.location.href = `game-template-builder.html?prefill=${validIds}&template_id=${responseData.template_id}`;
+                        return;
+                    } else {
+                        // User cancelled
+                        return;
+                    }
+                } else if (!response.ok) {
+                    throw new Error(responseData.error || 'Failed to create game');
+                } else {
+                    gameSession = responseData;
+                }
                 
                 // Update UI
                 document.getElementById('roomCodeDisplay').textContent = gameSession.room_code;

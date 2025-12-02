@@ -297,9 +297,13 @@
                 sessionStorage.setItem('gameSession', JSON.stringify(data.game_session));
                 sessionStorage.setItem('playerSession', JSON.stringify(data.player_session));
                 sessionStorage.setItem('isGuest', data.is_guest);
+                sessionStorage.setItem('waitingToEnter', data.waiting_to_enter || false);
                 
                 // Success!
-                showSuccess('Joined successfully! Redirecting...');
+                const waitingMsg = data.waiting_to_enter 
+                    ? 'Joined successfully! You\'ll participate starting next round...' 
+                    : 'Joined successfully! Redirecting...';
+                showSuccess(waitingMsg);
                 
                 // Redirect to game play page
                 setTimeout(() => {
