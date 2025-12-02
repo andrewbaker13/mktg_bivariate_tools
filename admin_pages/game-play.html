@@ -620,13 +620,26 @@
         }
         
         function showClosestGuessGame(message) {
-            // Determine number line range from game config
-            if (message.game_config && message.game_config.numberline_min !== undefined) {
-                numberlineMin = message.game_config.numberline_min;
-                numberlineMax = message.game_config.numberline_max;
+            // Parse game_config if it's a string
+            let gameConfig = message.game_config;
+            if (typeof gameConfig === 'string') {
+                try {
+                    gameConfig = JSON.parse(gameConfig);
+                } catch (e) {
+                    console.error('Failed to parse game_config:', e);
+                    gameConfig = {};
+                }
             }
             
-            const maxWidth = message.game_config?.max_range_width;
+            // Determine number line range from game config
+            if (gameConfig && gameConfig.numberline_min !== undefined) {
+                numberlineMin = gameConfig.numberline_min;
+                numberlineMax = gameConfig.numberline_max;
+            }
+            
+            console.log('Number line range:', numberlineMin, '-', numberlineMax);
+            
+            const maxWidth = gameConfig?.max_range_width;
             const rangeRequirementText = maxWidth ? `<div style="color: #64748b; font-size: 14px; margin-top: 8px;">📏 Guesses must be within ${maxWidth} units</div>` : '<div style="color: #64748b; font-size: 14px; margin-top: 8px;">📏 Any range allowed (max 8 digits per number)</div>';
             const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
             
@@ -727,6 +740,9 @@
             const feedback = document.getElementById('feedback');
             const numberline = document.getElementById('numberline');
             
+            console.log('handleRangeSubmitted called:', message);
+            console.log('Number line range for calculation:', numberlineMin, '-', numberlineMax);
+            
             if (message.player_id === playerSession.id) {
                 feedback.innerHTML = `
                     <div class="alert alert-success">
@@ -744,11 +760,20 @@
             const rangeWidth = ((message.guess_max - message.guess_min) / (numberlineMax - numberlineMin)) * 100;
             const rangeLeft = ((message.guess_min - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
             
+            console.log('Calculated range box:', {
+                rangeWidth,
+                rangeLeft,
+                guess_min: message.guess_min,
+                guess_max: message.guess_max
+            });
+            
             const rangeBox = document.createElement('div');
             rangeBox.className = 'range-box' + (message.player_id === playerSession.id ? ' own' : '');
             rangeBox.style.left = rangeLeft + '%';
             rangeBox.style.width = rangeWidth + '%';
             numberline.appendChild(rangeBox);
+            
+            console.log('Range box added to numberline');
         }
         
         function handleGuessResults(message) {
