@@ -502,6 +502,21 @@
                 case 'error':
                     handleError(message);
                     break;
+                    
+                case 'player_disconnected':
+                    console.log('Player disconnected:', message.player_id);
+                    // Could show notification here
+                    break;
+                    
+                case 'answer_result':
+                    // Handle wrong answer feedback for Speed Tap
+                    if (!message.is_correct) {
+                        const feedback = document.getElementById('feedback');
+                        if (feedback) {
+                            feedback.innerHTML = `<div class="alert alert-danger">${message.message}</div>`;
+                        }
+                    }
+                    break;
             }
         }
         
