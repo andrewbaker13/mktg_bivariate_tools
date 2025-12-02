@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host Game - Marketing Analytics Tools</title>
+    <link rel="stylesheet" href="../shared/css/main.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .host-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .host-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
+        }
+        .room-code-display {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 12px;
+            color: white;
+            margin: 1rem 0;
+        }
+        .room-code-display h1 {
+            font-size: 4rem;
+            letter-spacing: 0.2em;
+            margin: 0;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .room-code-display p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+        .game-status {
+            display: flex;
+            justify-content: space-around;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .status-card {
+            flex: 1;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .status-card h3 {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin: 0 0 0.5rem 0;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .status-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        .question-panel, .players-panel {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .panel-header h2 {
+            margin: 0;
+            color: #1e293b;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #334155;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .players-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: #f8fafc;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .player-item:hover {
+            background: #e2e8f0;
+        }
+        .player-name {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .player-status {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        .player-status.connected {
+            color: #10b981;
+        }
+        .player-status.disconnected {
+            color: #ef4444;
+        }
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .alert-info {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+        .alert-warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+        }
+        .control-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .control-buttons .btn {
+            flex: 1;
+        }
+        .game-config {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+        }
+        .game-config strong {
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+    <div class="host-container">
+        <div class="host-header">
+            <div class="room-code-display">
+                <p>Students join at: drbakermarketing.com/admin_pages/game-join.html</p>
+                <h1 id="roomCodeDisplay">------</h1>
+                <p>Room Code</p>
+            </div>
+            
+            <div class="game-status">
+                <div class="status-card">
+                    <h3>Status</h3>
+                    <div class="value" id="gameStatus">Waiting</div>
+                </div>
+                <div class="status-card">
+                    <h3>Players</h3>
+                    <div class="value" id="playerCount">0</div>
+                </div>
+                <div class="status-card">
+                    <h3>Game Type</h3>
+                    <div class="value" id="gameType">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="question-panel">
+                <div class="panel-header">
+                    <h2>Game Setup</h2>
+                </div>
+
+                <div id="setupSection">
+                    <div class="form-group">
+                        <label for="courseSelect">Select Course</label>
+                        <select id="courseSelect" required>
+                            <option value="">Loading courses...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="gameTypeSelect">Game Type</label>
+                        <select id="gameTypeSelect" required>
+                            <option value="">Select game type...</option>
+                            <option value="speed_tap">⚡ Speed Tap</option>
+                            <option value="closest_guess">🎯 Closest Guess</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="questionSelect">Select Question</label>
+                        <select id="questionSelect" required>
+                            <option value="">Select a game type first...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="guestPassword">Guest Password (optional)</label>
+                        <input type="password" id="guestPassword" placeholder="Leave empty to allow anyone">
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>📋 Instructions:</strong> Select a course and game type, then choose a question. Once students join, click "Start Game" to begin!
+                    </div>
+
+                    <button class="btn btn-primary" id="createGameBtn" style="width: 100%;">
+                        Create Game Session
+                    </button>
+                </div>
+
+                <div id="gameSection" style="display: none;">
+                    <div id="questionDisplay"></div>
+                    <div class="game-config" id="gameConfig"></div>
+                    
+                    <div class="control-buttons">
+                        <button class="btn btn-primary" id="startGameBtn">
+                            ▶️ Start Game
+                        </button>
+                        <button class="btn btn-danger" id="endGameBtn">
+                            ⏹️ End Game
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="players-panel">
+                <div class="panel-header">
+                    <h2>Players</h2>
+                    <span id="playerCountBadge" style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600;">0</span>
+                </div>
+
+                <div id="playersListContainer">
+                    <div class="alert alert-warning">
+                        No players yet. Share the room code with your students!
+                    </div>
+                </div>
+
+                <div class="players-list" id="playersList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://drbaker-backend.onrender.com/api';
+        const WS_BASE = 'wss://drbaker-backend.onrender.com';
+        
+        let gameSession = null;
+        let websocket = null;
+        let token = localStorage.getItem('token');
+        
+        if (!token) {
+            alert('Please log in first');
+            window.location.href = 'login.html';
+        }
+
+        // Load courses
+        async function loadCourses() {
+            try {
+                const response = await fetch(`${API_BASE}/courses/`, {
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                const courses = await response.json();
+                
+                const select = document.getElementById('courseSelect');
+                select.innerHTML = '<option value="">Select a course...</option>';
+                courses.forEach(course => {
+                    select.innerHTML += `<option value="${course.id}">${course.name}</option>`;
+                });
+            } catch (error) {
+                console.error('Error loading courses:', error);
+            }
+        }
+
+        // Load questions based on game type
+        document.getElementById('gameTypeSelect').addEventListener('change', async function() {
+            const gameType = this.value;
+            const courseId = document.getElementById('courseSelect').value;
+            const questionSelect = document.getElementById('questionSelect');
+            
+            if (!gameType) {
+                questionSelect.innerHTML = '<option value="">Select a game type first...</option>';
+                return;
+            }
+            
+            questionSelect.innerHTML = '<option value="">Loading questions...</option>';
+            
+            try {
+                let url = `${API_BASE}/game/questions/?game_type=${gameType}`;
+                if (courseId) url += `&course_id=${courseId}`;
+                
+                const response = await fetch(url, {
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                const questions = await response.json();
+                
+                questionSelect.innerHTML = '<option value="">Select a question...</option>';
+                questions.forEach(q => {
+                    const text = q.question_text.substring(0, 80) + (q.question_text.length > 80 ? '...' : '');
+                    questionSelect.innerHTML += `<option value="${q.id}">${text}</option>`;
+                });
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                questionSelect.innerHTML = '<option value="">Error loading questions</option>';
+            }
+        });
+
+        // Create game session
+        document.getElementById('createGameBtn').addEventListener('submit', async function(e) {
+            const courseId = document.getElementById('courseSelect').value;
+            const questionId = document.getElementById('questionSelect').value;
+            const guestPassword = document.getElementById('guestPassword').value;
+            
+            if (!courseId || !questionId) {
+                alert('Please select a course and question');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/game/create/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        course_id: parseInt(courseId),
+                        question_id: parseInt(questionId),
+                        guest_password: guestPassword
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to create game');
+                }
+                
+                gameSession = await response.json();
+                
+                // Update UI
+                document.getElementById('roomCodeDisplay').textContent = gameSession.room_code;
+                document.getElementById('gameType').textContent = gameSession.game_type;
+                document.getElementById('gameStatus').textContent = gameSession.status;
+                
+                document.getElementById('setupSection').style.display = 'none';
+                document.getElementById('gameSection').style.display = 'block';
+                
+                // Display question
+                document.getElementById('questionDisplay').innerHTML = `
+                    <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; margin-bottom: 1rem;">
+                        <strong>Question:</strong><br>
+                        ${gameSession.question_text}
+                    </div>
+                `;
+                
+                // Display game config
+                if (gameSession.game_config) {
+                    let configHTML = '<strong>Game Settings:</strong><br>';
+                    if (gameSession.game_time_limit) {
+                        configHTML += `⏱️ Time Limit: ${gameSession.game_time_limit}s<br>`;
+                    }
+                    if (gameSession.game_config.max_range_width) {
+                        configHTML += `📏 Max Range Width: ${gameSession.game_config.max_range_width}<br>`;
+                    }
+                    document.getElementById('gameConfig').innerHTML = configHTML;
+                }
+                
+                // Connect to WebSocket
+                connectWebSocket(gameSession.room_code);
+                
+                // Start polling for player updates
+                pollPlayers();
+                
+            } catch (error) {
+                alert('Error creating game: ' + error.message);
+            }
+        });
+
+        // Start game
+        document.getElementById('startGameBtn').addEventListener('click', async function() {
+            if (!gameSession) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/start/`, {
+                    method: 'POST',
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                
+                if (!response.ok) throw new Error('Failed to start game');
+                
+                gameSession = await response.json();
+                document.getElementById('gameStatus').textContent = 'In Progress';
+                
+                // Send start message via WebSocket
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify({
+                        action: 'start_game',
+                        data: {}
+                    }));
+                }
+                
+                this.disabled = true;
+            } catch (error) {
+                alert('Error starting game: ' + error.message);
+            }
+        });
+
+        // End game
+        document.getElementById('endGameBtn').addEventListener('click', async function() {
+            if (!gameSession) return;
+            
+            if (!confirm('Are you sure you want to end the game?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/end/`, {
+                    method: 'POST',
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                
+                if (!response.ok) throw new Error('Failed to end game');
+                
+                gameSession = await response.json();
+                document.getElementById('gameStatus').textContent = 'Completed';
+                
+                this.disabled = true;
+                document.getElementById('startGameBtn').disabled = true;
+            } catch (error) {
+                alert('Error ending game: ' + error.message);
+            }
+        });
+
+        // WebSocket connection
+        function connectWebSocket(roomCode) {
+            websocket = new WebSocket(`${WS_BASE}/ws/game/${roomCode}/`);
+            
+            websocket.onopen = function() {
+                console.log('WebSocket connected');
+            };
+            
+            websocket.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                console.log('WebSocket message:', message);
+                
+                if (message.type === 'player_list_update') {
+                    updatePlayersList(message.players);
+                }
+            };
+            
+            websocket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+            
+            websocket.onclose = function() {
+                console.log('WebSocket closed');
+            };
+        }
+
+        // Poll for player updates
+        async function pollPlayers() {
+            if (!gameSession) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/`);
+                const data = await response.json();
+                
+                document.getElementById('playerCount').textContent = data.player_count;
+                document.getElementById('playerCountBadge').textContent = data.player_count;
+                
+                updatePlayersList(data.players || []);
+                
+                // Poll again if game is active
+                if (data.status !== 'completed' && data.status !== 'cancelled') {
+                    setTimeout(pollPlayers, 3000);
+                }
+            } catch (error) {
+                console.error('Error polling players:', error);
+            }
+        }
+
+        // Update players list
+        function updatePlayersList(players) {
+            const container = document.getElementById('playersListContainer');
+            const list = document.getElementById('playersList');
+            
+            if (players.length === 0) {
+                container.style.display = 'block';
+                list.innerHTML = '';
+                return;
+            }
+            
+            container.style.display = 'none';
+            list.innerHTML = players.map(player => `
+                <div class="player-item">
+                    <span class="player-name">${player.display_name || player.name}</span>
+                    <span class="player-status ${player.is_connected ? 'connected' : 'disconnected'}">
+                        ${player.is_connected ? '🟢 Online' : '🔴 Offline'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // Initialize
+        loadCourses();
+    </script>
+</body>
+</html>

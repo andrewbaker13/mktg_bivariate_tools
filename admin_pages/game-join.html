@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Game - Marketing Analytics Tools</title>
+    <link rel="stylesheet" href="../shared/css/main.css">
+    <style>
+        .join-container {
+            max-width: 500px;
+            margin: 3rem auto;
+            padding: 2rem;
+        }
+        .join-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .join-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .join-header h1 {
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+        .join-header p {
+            color: #64748b;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #334155;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.875rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1.125rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        .room-code-input {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.5rem !important;
+        }
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1rem;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .guest-toggle {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .guest-toggle label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .guest-toggle input[type="checkbox"] {
+            margin-right: 0.5rem;
+            width: 20px;
+            height: 20px;
+        }
+        .error-message {
+            background: #fee;
+            color: #c00;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .success-message {
+            background: #efe;
+            color: #070;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border-radius: 4px;
+        }
+        .info-box p {
+            margin: 0;
+            color: #1e40af;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="join-container">
+        <div class="join-card">
+            <div class="join-header">
+                <h1>🎮 Join Game</h1>
+                <p>Enter the room code to play</p>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+
+            <form id="joinForm">
+                <div class="form-group">
+                    <label for="roomCode">Room Code</label>
+                    <input 
+                        type="text" 
+                        id="roomCode" 
+                        name="roomCode" 
+                        class="room-code-input"
+                        placeholder="ABC123" 
+                        maxlength="6"
+                        required
+                        autocomplete="off"
+                    >
+                </div>
+
+                <div class="guest-toggle">
+                    <label>
+                        <input type="checkbox" id="guestMode" name="guestMode">
+                        Join as Guest (no account needed)
+                    </label>
+                </div>
+
+                <div id="guestFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="guestName">Your Name</label>
+                        <input 
+                            type="text" 
+                            id="guestName" 
+                            name="guestName" 
+                            placeholder="Enter your display name"
+                            maxlength="50"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="guestPassword">Guest Password (if required)</label>
+                        <input 
+                            type="password" 
+                            id="guestPassword" 
+                            name="guestPassword" 
+                            placeholder="Optional"
+                        >
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" id="joinBtn">
+                    Join Game
+                </button>
+            </form>
+
+            <div class="info-box">
+                <p><strong>💡 Tip:</strong> The room code is shown on your instructor's screen. If joining as a guest, choose any display name you like!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://drbaker-backend.onrender.com/api';
+        
+        // Toggle guest fields
+        document.getElementById('guestMode').addEventListener('change', function() {
+            const guestFields = document.getElementById('guestFields');
+            const guestName = document.getElementById('guestName');
+            
+            if (this.checked) {
+                guestFields.style.display = 'block';
+                guestName.required = true;
+            } else {
+                guestFields.style.display = 'none';
+                guestName.required = false;
+            }
+        });
+
+        // Auto-uppercase room code
+        document.getElementById('roomCode').addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+
+        // Handle form submission
+        document.getElementById('joinForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
+            const isGuest = document.getElementById('guestMode').checked;
+            const guestName = document.getElementById('guestName').value.trim();
+            const guestPassword = document.getElementById('guestPassword').value.trim();
+            const joinBtn = document.getElementById('joinBtn');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            
+            // Clear messages
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            // Validate
+            if (!roomCode) {
+                showError('Please enter a room code');
+                return;
+            }
+            
+            if (isGuest && !guestName) {
+                showError('Please enter your name');
+                return;
+            }
+            
+            // Disable button
+            joinBtn.disabled = true;
+            joinBtn.textContent = 'Joining...';
+            
+            try {
+                // Prepare request data
+                const requestData = {
+                    room_code: roomCode
+                };
+                
+                if (isGuest) {
+                    requestData.guest_name = guestName;
+                    if (guestPassword) {
+                        requestData.guest_password = guestPassword;
+                    }
+                } else {
+                    requestData.guest_password = guestPassword;
+                }
+                
+                // Get auth token if not guest
+                let headers = {'Content-Type': 'application/json'};
+                if (!isGuest) {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        showError('Please log in first or join as a guest');
+                        joinBtn.disabled = false;
+                        joinBtn.textContent = 'Join Game';
+                        return;
+                    }
+                    headers['Authorization'] = `Token ${token}`;
+                }
+                
+                // Join game
+                const response = await fetch(`${API_BASE}/game/join/`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to join game');
+                }
+                
+                // Store player session info
+                sessionStorage.setItem('gameSession', JSON.stringify(data.game_session));
+                sessionStorage.setItem('playerSession', JSON.stringify(data.player_session));
+                sessionStorage.setItem('isGuest', data.is_guest);
+                
+                // Success!
+                showSuccess('Joined successfully! Redirecting...');
+                
+                // Redirect to game play page
+                setTimeout(() => {
+                    window.location.href = `game-play.html?room=${roomCode}`;
+                }, 1000);
+                
+            } catch (error) {
+                showError(error.message);
+                joinBtn.disabled = false;
+                joinBtn.textContent = 'Join Game';
+            }
+        });
+        
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+        
+        function showSuccess(message) {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

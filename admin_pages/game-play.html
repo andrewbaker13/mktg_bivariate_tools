@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Game - Marketing Analytics Tools</title>
+    <link rel="stylesheet" href="../shared/css/main.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .game-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+        .game-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .player-info h2 {
+            margin: 0;
+            color: #1e293b;
+        }
+        .player-info .room-code {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        .game-stats {
+            display: flex;
+            gap: 2rem;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-item .label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .stat-item .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .game-area {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            margin-bottom: 1.5rem;
+            min-height: 400px;
+        }
+        
+        /* Waiting state */
+        .waiting-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        .waiting-state h2 {
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Question display */
+        .question-display {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .question-text {
+            font-size: 1.5rem;
+            color: #1e293b;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .timer {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #ef4444;
+            margin: 1rem 0;
+        }
+        
+        /* Speed Tap Game */
+        .speed-tap-area {
+            text-align: center;
+        }
+        .answer-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .answer-btn {
+            padding: 2rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            border: 3px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .answer-btn:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            transform: scale(1.05);
+        }
+        .answer-btn:active {
+            transform: scale(0.95);
+        }
+        .answer-btn.correct {
+            border-color: #10b981;
+            background: #d1fae5;
+        }
+        .answer-btn.incorrect {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+        
+        /* Closest Guess Game */
+        .closest-guess-area {
+            padding: 1rem;
+        }
+        .range-inputs {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 1rem;
+            align-items: center;
+            margin: 2rem 0;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .range-input-group {
+            text-align: center;
+        }
+        .range-input-group label {
+            display: block;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .range-input-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            text-align: center;
+            font-weight: 600;
+        }
+        .range-separator {
+            font-size: 2rem;
+            color: #64748b;
+        }
+        .submit-guess-btn {
+            width: 100%;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1rem;
+        }
+        .submit-guess-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+        }
+        .submit-guess-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Number line visualization */
+        .numberline-container {
+            margin: 3rem 0;
+            padding: 2rem;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        .numberline-title {
+            text-align: center;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+        .numberline {
+            position: relative;
+            height: 80px;
+            margin: 2rem 0;
+        }
+        .numberline-axis {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #cbd5e1;
+        }
+        .numberline-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            color: #64748b;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .range-box {
+            position: absolute;
+            bottom: 5px;
+            height: 60px;
+            background: rgba(59, 130, 246, 0.15);
+            border: 2px solid rgba(59, 130, 246, 0.5);
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        .range-box.own {
+            background: rgba(16, 185, 129, 0.25);
+            border-color: rgba(16, 185, 129, 0.7);
+            z-index: 10;
+        }
+        .correct-answer-marker {
+            position: absolute;
+            bottom: 0;
+            width: 3px;
+            height: 70px;
+            background: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            z-index: 20;
+        }
+        .correct-answer-marker::before {
+            content: '✓';
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        
+        /* Leaderboard */
+        .leaderboard {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        .leaderboard h3 {
+            text-align: center;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+        }
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .leaderboard-item:hover {
+            background: #e2e8f0;
+        }
+        .leaderboard-item.own {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            font-weight: 600;
+        }
+        .rank {
+            font-size: 1.5rem;
+            font-weight: 700;
+            width: 40px;
+            text-align: center;
+        }
+        .rank.first { color: #fbbf24; }
+        .rank.second { color: #94a3b8; }
+        .rank.third { color: #cd7f32; }
+        
+        /* Results display */
+        .results-display {
+            text-align: center;
+            padding: 2rem;
+        }
+        .results-display h2 {
+            color: #1e293b;
+            margin-bottom: 2rem;
+        }
+        .result-card {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .result-card strong {
+            color: #1e293b;
+        }
+        .multiplier-badge {
+            display: inline-block;
+            background: #fbbf24;
+            color: #78350f;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+        }
+        
+        /* Alerts */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="player-info">
+                <h2 id="playerName">Player</h2>
+                <div class="room-code">Room: <strong id="roomCodeDisplay">------</strong></div>
+            </div>
+            <div class="game-stats">
+                <div class="stat-item">
+                    <div class="label">Score</div>
+                    <div class="value" id="playerScore">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">Rank</div>
+                    <div class="value" id="playerRank">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-area" id="gameArea">
+            <!-- Dynamic content will be inserted here -->
+        </div>
+
+        <div class="leaderboard" id="leaderboard">
+            <h3>🏆 Leaderboard</h3>
+            <div id="leaderboardList">
+                <div class="alert alert-info">Waiting for game to start...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://drbaker-backend.onrender.com/api';
+        const WS_BASE = 'wss://drbaker-backend.onrender.com';
+        
+        // Get session data
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room');
+        
+        if (!roomCode) {
+            alert('No room code provided');
+            window.location.href = 'game-join.html';
+        }
+        
+        const gameSession = JSON.parse(sessionStorage.getItem('gameSession') || '{}');
+        const playerSession = JSON.parse(sessionStorage.getItem('playerSession') || '{}');
+        const isGuest = sessionStorage.getItem('isGuest') === 'true';
+        
+        // Update header
+        document.getElementById('playerName').textContent = playerSession.display_name || 'Player';
+        document.getElementById('roomCodeDisplay').textContent = roomCode;
+        document.getElementById('playerScore').textContent = playerSession.score || 0;
+        
+        // WebSocket connection
+        let websocket = null;
+        let gameType = null;
+        let gameStartTime = null;
+        let timerInterval = null;
+        let numberlineMin = 0;
+        let numberlineMax = 100;
+        
+        function connectWebSocket() {
+            websocket = new WebSocket(`${WS_BASE}/ws/game/${roomCode}/`);
+            
+            websocket.onopen = function() {
+                console.log('Connected to game');
+                
+                // Identify ourselves
+                websocket.send(JSON.stringify({
+                    action: 'identify',
+                    data: {
+                        player_session_id: playerSession.id
+                    }
+                }));
+                
+                showWaitingState();
+            };
+            
+            websocket.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                console.log('Message received:', message);
+                
+                handleMessage(message);
+            };
+            
+            websocket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+            
+            websocket.onclose = function() {
+                console.log('Disconnected from game');
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+        
+        function handleMessage(message) {
+            switch(message.type) {
+                case 'connection_established':
+                    console.log('Connection confirmed');
+                    break;
+                    
+                case 'identified':
+                    console.log('Player identified');
+                    break;
+                    
+                case 'player_list_update':
+                    console.log('Players updated:', message.players);
+                    break;
+                    
+                case 'game_started':
+                    handleGameStart(message);
+                    break;
+                    
+                case 'speed_tap_answer':
+                    handleSpeedTapAnswer(message);
+                    break;
+                    
+                case 'range_submitted':
+                    handleRangeSubmitted(message);
+                    break;
+                    
+                case 'guess_results':
+                    handleGuessResults(message);
+                    break;
+                    
+                case 'leaderboard_update':
+                    updateLeaderboard(message.leaderboard);
+                    break;
+                    
+                case 'game_ended':
+                    handleGameEnd(message);
+                    break;
+            }
+        }
+        
+        function showWaitingState() {
+            document.getElementById('gameArea').innerHTML = `
+                <div class="waiting-state">
+                    <h2>⏳ Waiting for game to start...</h2>
+                    <div class="spinner"></div>
+                    <p style="color: #64748b;">Your instructor will start the game soon</p>
+                </div>
+            `;
+        }
+        
+        function handleGameStart(message) {
+            gameType = message.game_type;
+            gameStartTime = Date.now();
+            
+            const timeLimit = message.game_time_limit || 20;
+            
+            if (gameType === 'speed_tap') {
+                showSpeedTapGame(message);
+            } else if (gameType === 'closest_guess') {
+                showClosestGuessGame(message);
+            }
+            
+            // Start timer
+            startTimer(timeLimit);
+        }
+        
+        function showSpeedTapGame(message) {
+            // For demo, create 4 answer options (A, B, C, D)
+            const options = ['A', 'B', 'C', 'D'];
+            
+            document.getElementById('gameArea').innerHTML = `
+                <div class="speed-tap-area">
+                    <div class="question-display">
+                        <div class="question-text">${message.question_text}</div>
+                        <div class="timer" id="timer">20</div>
+                    </div>
+                    <div class="answer-options" id="answerOptions">
+                        ${options.map(opt => `
+                            <button class="answer-btn" data-answer="${opt}" onclick="submitSpeedTap('${opt}')">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <div id="feedback"></div>
+                </div>
+            `;
+        }
+        
+        function submitSpeedTap(answer) {
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
+            
+            websocket.send(JSON.stringify({
+                action: 'speed_tap',
+                data: {
+                    player_session_id: playerSession.id,
+                    answer: answer,
+                    timestamp: Date.now() / 1000
+                }
+            }));
+            
+            // Disable all buttons
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.disabled = true;
+                btn.style.cursor = 'not-allowed';
+            });
+        }
+        
+        function handleSpeedTapAnswer(message) {
+            const feedback = document.getElementById('feedback');
+            
+            if (message.player_id === playerSession.id) {
+                if (message.is_correct) {
+                    feedback.innerHTML = `
+                        <div class="alert alert-success">
+                            ✅ Correct! +${message.points} points
+                            <span class="multiplier-badge">${message.multiplier}x</span>
+                        </div>
+                    `;
+                    document.getElementById('playerScore').textContent = message.new_score;
+                } else {
+                    feedback.innerHTML = `
+                        <div class="alert alert-error">
+                            ❌ Incorrect, try again!
+                        </div>
+                    `;
+                }
+            } else {
+                // Show other player's answer
+                feedback.innerHTML = `
+                    <div class="alert alert-info">
+                        ${message.player_name} answered in ${message.response_time_ms}ms!
+                    </div>
+                `;
+            }
+        }
+        
+        function showClosestGuessGame(message) {
+            // Determine number line range from game config
+            if (message.game_config && message.game_config.numberline_min !== undefined) {
+                numberlineMin = message.game_config.numberline_min;
+                numberlineMax = message.game_config.numberline_max;
+            }
+            
+            const maxWidth = message.game_config?.max_range_width || (numberlineMax - numberlineMin);
+            
+            document.getElementById('gameArea').innerHTML = `
+                <div class="closest-guess-area">
+                    <div class="question-display">
+                        <div class="question-text">${message.question_text}</div>
+                        <div class="timer" id="timer">20</div>
+                    </div>
+                    
+                    <div class="range-inputs">
+                        <div class="range-input-group">
+                            <label>Minimum</label>
+                            <input type="number" id="guessMin" step="0.1">
+                        </div>
+                        <div class="range-separator">to</div>
+                        <div class="range-input-group">
+                            <label>Maximum</label>
+                            <input type="number" id="guessMax" step="0.1">
+                        </div>
+                    </div>
+                    
+                    <button class="submit-guess-btn" onclick="submitGuess()">
+                        Submit Range
+                    </button>
+                    
+                    <div id="feedback"></div>
+                    
+                    <div class="numberline-container">
+                        <div class="numberline-title">📊 All Player Ranges (Real-time)</div>
+                        <div class="numberline" id="numberline">
+                            <div class="numberline-axis"></div>
+                        </div>
+                        <div class="numberline-labels">
+                            <span>${numberlineMin}</span>
+                            <span>${numberlineMax}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function submitGuess() {
+            const guessMin = parseFloat(document.getElementById('guessMin').value);
+            const guessMax = parseFloat(document.getElementById('guessMax').value);
+            
+            if (isNaN(guessMin) || isNaN(guessMax)) {
+                alert('Please enter valid numbers');
+                return;
+            }
+            
+            if (guessMin >= guessMax) {
+                alert('Minimum must be less than maximum');
+                return;
+            }
+            
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
+            
+            websocket.send(JSON.stringify({
+                action: 'submit_guess',
+                data: {
+                    player_session_id: playerSession.id,
+                    guess_min: guessMin,
+                    guess_max: guessMax,
+                    timestamp: Date.now() / 1000
+                }
+            }));
+            
+            // Disable inputs
+            document.getElementById('guessMin').disabled = true;
+            document.getElementById('guessMax').disabled = true;
+            document.querySelector('.submit-guess-btn').disabled = true;
+        }
+        
+        function handleRangeSubmitted(message) {
+            const feedback = document.getElementById('feedback');
+            const numberline = document.getElementById('numberline');
+            
+            if (message.player_id === playerSession.id) {
+                feedback.innerHTML = `
+                    <div class="alert alert-success">
+                        ✅ Range submitted! You were #${message.submission_order}
+                    </div>
+                `;
+            }
+            
+            // Add range box to number line
+            const rangeWidth = ((message.guess_max - message.guess_min) / (numberlineMax - numberlineMin)) * 100;
+            const rangeLeft = ((message.guess_min - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
+            
+            const rangeBox = document.createElement('div');
+            rangeBox.className = 'range-box' + (message.player_id === playerSession.id ? ' own' : '');
+            rangeBox.style.left = rangeLeft + '%';
+            rangeBox.style.width = rangeWidth + '%';
+            numberline.appendChild(rangeBox);
+        }
+        
+        function handleGuessResults(message) {
+            const feedback = document.getElementById('feedback');
+            const numberline = document.getElementById('numberline');
+            
+            // Add correct answer marker
+            const correctPos = ((message.correct_answer - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
+            const marker = document.createElement('div');
+            marker.className = 'correct-answer-marker';
+            marker.style.left = correctPos + '%';
+            numberline.appendChild(marker);
+            
+            // Find my result
+            const myResult = message.results.find(r => r.player_id === playerSession.id);
+            
+            if (myResult) {
+                let resultHTML = `
+                    <div class="results-display">
+                        <h2>Results</h2>
+                        <div class="result-card">
+                            <strong>Your Range:</strong> ${myResult.guess_min} - ${myResult.guess_max}<br>
+                            <strong>Correct Answer:</strong> ${message.correct_answer}<br>
+                            <strong>Result:</strong> ${myResult.is_correct ? '✅ Correct!' : '❌ Incorrect'}<br>
+                `;
+                
+                if (myResult.is_correct) {
+                    resultHTML += `
+                            <strong>Time Rank:</strong> #${myResult.time_rank}
+                            <span class="multiplier-badge">${myResult.time_multiplier}x</span><br>
+                            <strong>Width Rank:</strong> #${myResult.width_rank}
+                            <span class="multiplier-badge">${myResult.width_multiplier}x</span><br>
+                            <strong>Points Earned:</strong> ${myResult.total_points}
+                            (Base: ${myResult.base_points} + Time: ${myResult.time_bonus} + Width: ${myResult.width_bonus})
+                    `;
+                }
+                
+                resultHTML += `
+                        </div>
+                    </div>
+                `;
+                
+                feedback.innerHTML = resultHTML;
+                document.getElementById('playerScore').textContent = myResult.total_points;
+            }
+        }
+        
+        function handleGameEnd(message) {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            document.getElementById('gameArea').innerHTML = `
+                <div class="results-display">
+                    <h2>🎉 Game Over!</h2>
+                    <div class="result-card">
+                        <strong>Winner:</strong> ${message.winner}<br>
+                        ${message.response_time_ms ? `<strong>Time:</strong> ${message.response_time_ms}ms` : ''}
+                        ${message.multiplier ? `<span class="multiplier-badge">${message.multiplier}x</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function updateLeaderboard(leaderboard) {
+            const list = document.getElementById('leaderboardList');
+            
+            if (!leaderboard || leaderboard.length === 0) return;
+            
+            list.innerHTML = leaderboard.map((player, idx) => {
+                const isOwn = player.player_id === playerSession.id || player.player_name === playerSession.display_name;
+                const rankClass = idx === 0 ? 'first' : idx === 1 ? 'second' : idx === 2 ? 'third' : '';
+                
+                return `
+                    <div class="leaderboard-item ${isOwn ? 'own' : ''}">
+                        <span class="rank ${rankClass}">${player.rank || (idx + 1)}</span>
+                        <span>${player.player_name}</span>
+                        <span style="font-weight: 700;">${player.score}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            // Update own rank
+            const myPosition = leaderboard.findIndex(p => 
+                p.player_id === playerSession.id || p.player_name === playerSession.display_name
+            );
+            if (myPosition !== -1) {
+                document.getElementById('playerRank').textContent = myPosition + 1;
+            }
+        }
+        
+        function startTimer(seconds) {
+            let remaining = seconds;
+            const timerEl = document.getElementById('timer');
+            
+            if (timerEl) {
+                timerEl.textContent = remaining;
+            }
+            
+            timerInterval = setInterval(() => {
+                remaining--;
+                if (timerEl) {
+                    timerEl.textContent = remaining;
+                    
+                    if (remaining <= 5) {
+                        timerEl.style.color = '#ef4444';
+                        timerEl.style.animation = 'pulse 0.5s infinite';
+                    }
+                }
+                
+                if (remaining <= 0) {
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
+        }
+        
+        // Initialize
+        connectWebSocket();
+    </script>
+</body>
+</html>
