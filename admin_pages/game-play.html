@@ -1020,18 +1020,59 @@
         function handleGameEnd(message) {
             if (timerInterval) clearInterval(timerInterval);
             
-            const winnerText = message.winner 
-                ? `🏆 Winner: ${message.winner}` 
-                : (message.message || '⏱️ Time is up! No correct answers.');
-            
-            const detailsHTML = message.winner ? `
-                ${message.response_time_ms ? `<strong>Time:</strong> ${message.response_time_ms}ms<br>` : ''}
-                ${message.multiplier ? `<span class="multiplier-badge">${message.multiplier}x</span>` : ''}
-            ` : '';
-            
             // Check if multi-round game and not at final round
             const isMultiRound = message.total_rounds && message.total_rounds > 1;
             const hasMoreRounds = isMultiRound && message.current_round < message.total_rounds;
+            
+            // For multi-round games, show round statistics instead of winner
+            let mainContent;
+            if (isMultiRound && message.round_stats) {
+                const myStats = message.round_stats.player_stats?.[playerSession.id] || {
+                    player_round_score: 0,
+                    player_total_score: 0
+                };
+                
+                mainContent = `
+                    <div class="result-card">
+                        <div style="font-size: 18px; margin-bottom: 20px;">
+                            <strong>📊 Round ${message.current_round} Results</strong>
+                        </div>
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                            <div style="margin: 10px 0;">
+                                <span style="color: #64748b;">Players who scored:</span>
+                                <strong style="color: #3b82f6; font-size: 20px; margin-left: 10px;">${message.round_stats.percent_scored}%</strong>
+                            </div>
+                            <div style="margin: 10px 0;">
+                                <span style="color: #64748b;">Your round score:</span>
+                                <strong style="color: #10b981; font-size: 24px; margin-left: 10px;">${myStats.player_round_score} pts</strong>
+                            </div>
+                            <div style="margin: 10px 0; padding-top: 10px; border-top: 2px solid #e2e8f0;">
+                                <span style="color: #64748b;">Your total score:</span>
+                                <strong style="color: #8b5cf6; font-size: 28px; margin-left: 10px;">${myStats.player_total_score} pts</strong>
+                            </div>
+                        </div>
+                        ${hasMoreRounds ? '<p style="margin-top: 15px; color: #64748b;">Check the leaderboard for cumulative standings →</p>' : '<p style="margin-top: 15px; color: #10b981; font-weight: 600;">Final game complete! Check the leaderboard for final standings →</p>'}
+                    </div>
+                `;
+            } else {
+                // Single-round game or final round: show winner
+                const winnerText = message.winner 
+                    ? `🏆 Winner: ${message.winner}` 
+                    : (message.message || '⏱️ Time is up! No correct answers.');
+                
+                const detailsHTML = message.winner ? `
+                    ${message.response_time_ms ? `<strong>Time:</strong> ${message.response_time_ms}ms<br>` : ''}
+                    ${message.multiplier ? `<span class="multiplier-badge">${message.multiplier}x</span>` : ''}
+                ` : '';
+                
+                mainContent = `
+                    <div class="result-card">
+                        ${winnerText}<br>
+                        ${detailsHTML}
+                        <p style="margin-top: 15px; color: #64748b;">Check the leaderboard for final standings →</p>
+                    </div>
+                `;
+            }
             
             const roundInfo = isMultiRound ? `
                 <div style="margin: 20px 0; padding: 15px; background: #eff6ff; border-radius: 8px; border: 2px solid #3b82f6;">
@@ -1044,11 +1085,7 @@
                 <div class="results-display">
                     <h2>🎉 ${hasMoreRounds ? 'Round Complete!' : 'Game Over!'}</h2>
                     ${roundInfo}
-                    <div class="result-card">
-                        ${winnerText}<br>
-                        ${detailsHTML}
-                        <p style="margin-top: 15px; color: #64748b;">Check the leaderboard for ${hasMoreRounds ? 'cumulative' : 'final'} standings →</p>
-                    </div>
+                    ${mainContent}
                 </div>
             `;
         }
@@ -1138,6 +1175,12 @@
         }
         
         function startSpeedTapTimer(seconds) {
+            // Clear any existing timer first to prevent double-counting
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
             let remaining = seconds;
             const timerEl = document.getElementById('timer');
             const pointsEl = document.getElementById('availablePoints');
@@ -1208,6 +1251,12 @@
         }
         
         function startTimer(seconds) {
+            // Clear any existing timer first
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
             let remaining = seconds;
             const timerEl = document.getElementById('timer');
             
