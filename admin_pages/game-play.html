@@ -733,45 +733,59 @@
             const feedback = document.getElementById('feedback');
             const numberline = document.getElementById('numberline');
             
-            // Add correct answer marker
+            // Add correct answer marker - bold vertical line in dark green
             const correctPos = ((message.correct_answer - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
             const marker = document.createElement('div');
             marker.className = 'correct-answer-marker';
+            marker.style.position = 'absolute';
             marker.style.left = correctPos + '%';
+            marker.style.top = '-10px';
+            marker.style.bottom = '-10px';
+            marker.style.width = '4px';
+            marker.style.backgroundColor = '#15803d';
+            marker.style.zIndex = '20';
+            marker.title = `Correct Answer: ${message.correct_answer}`;
             numberline.appendChild(marker);
             
-            // Find my result
+            // Find this player's result
             const myResult = message.results.find(r => r.player_id === playerSession.id);
             
             if (myResult) {
-                let resultHTML = `
-                    <div class="results-display">
-                        <h2>Results</h2>
-                        <div class="result-card">
-                            <strong>Your Range:</strong> ${myResult.guess_min} - ${myResult.guess_max}<br>
-                            <strong>Correct Answer:</strong> ${message.correct_answer}<br>
-                            <strong>Result:</strong> ${myResult.is_correct ? '✅ Correct!' : '❌ Incorrect'}<br>
+                const resultIcon = myResult.is_correct ? '✅' : '❌';
+                const resultText = myResult.is_correct ? 'CORRECT!' : 'INCORRECT';
+                const pointsText = myResult.is_correct 
+                    ? `+${myResult.total_points} points (Base: ${myResult.base_points}, Time Bonus: ${myResult.time_bonus}, Width Bonus: ${myResult.width_bonus})`
+                    : '0 points - Your range did not contain the correct answer';
+                
+                feedback.innerHTML = `
+                    <div class="alert alert-${myResult.is_correct ? 'success' : 'danger'}">
+                        <h3>${resultIcon} ${resultText}</h3>
+                        <p><strong>Correct Answer:</strong> ${message.correct_answer}</p>
+                        <p><strong>Your Range:</strong> ${myResult.guess_min} - ${myResult.guess_max}</p>
+                        <p><strong>Score:</strong> ${pointsText}</p>
+                    </div>
                 `;
-                
-                if (myResult.is_correct) {
-                    resultHTML += `
-                            <strong>Time Rank:</strong> #${myResult.time_rank}
-                            <span class="multiplier-badge">${myResult.time_multiplier}x</span><br>
-                            <strong>Width Rank:</strong> #${myResult.width_rank}
-                            <span class="multiplier-badge">${myResult.width_multiplier}x</span><br>
-                            <strong>Points Earned:</strong> ${myResult.total_points}
-                            (Base: ${myResult.base_points} + Time: ${myResult.time_bonus} + Width: ${myResult.width_bonus})
-                    `;
-                }
-                
-                resultHTML += `
+            }
+            
+            // Display aggregate statistics if available
+            if (message.statistics && Object.keys(message.statistics).length > 0) {
+                const stats = message.statistics;
+                const statsHTML = `
+                    <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <h4 style="margin: 0 0 10px 0; color: #1e293b;">📊 Overall Predictions</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
+                            <div><strong>Total Range:</strong> ${stats.overall_min?.toFixed(1)} - ${stats.overall_max?.toFixed(1)}</div>
+                            <div><strong>Average Guess:</strong> ${stats.average_midpoint?.toFixed(1)}</div>
+                            <div><strong>Median Guess:</strong> ${stats.median_midpoint?.toFixed(1)}</div>
+                            ${stats.iqr !== undefined ? `
+                                <div><strong>IQR:</strong> ${stats.q1?.toFixed(1)} - ${stats.q3?.toFixed(1)}</div>
+                            ` : ''}
                         </div>
                     </div>
                 `;
-                
-                feedback.innerHTML = resultHTML;
-                document.getElementById('playerScore').textContent = myResult.total_points;
+                feedback.innerHTML += statsHTML;
             }
+            
         }
         
         function handleGameEnd(message) {
@@ -837,6 +851,16 @@
                 
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
+                    
+                    // Trigger results calculation for closest_guess game
+                    if (gameType === 'closest_guess' && websocket && websocket.readyState === WebSocket.OPEN) {
+                        websocket.send(JSON.stringify({
+                            action: 'timer_expired',
+                            data: {
+                                player_session_id: playerSession.id
+                            }
+                        }));
+                    }
                 }
             }, 1000);
         }
