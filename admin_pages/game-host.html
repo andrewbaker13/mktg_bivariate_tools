@@ -320,6 +320,9 @@
                         <button class="btn btn-primary" id="startGameBtn">
                             ▶️ Start Game
                         </button>
+                        <button class="btn btn-primary" id="nextRoundBtn" style="display: none; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                            ⏭️ Next Round
+                        </button>
                         <button class="btn btn-danger" id="endGameBtn">
                             ⏹️ End Game
                         </button>
@@ -521,8 +524,7 @@
                     guest_password: guestPassword
                 };
             } else {
-                // Template mode
-                const courseId = document.getElementById('courseSelect').value || 1; // Default course ID
+                // Template mode - course is optional for templates
                 const templateId = document.getElementById('templateSelect').value;
                 
                 if (!templateId) {
@@ -531,7 +533,6 @@
                 }
                 
                 requestBody = {
-                    course_id: parseInt(courseId),
                     game_template_id: parseInt(templateId),
                     guest_password: guestPassword
                 };
@@ -648,10 +649,75 @@
                 
                 this.disabled = true;
                 document.getElementById('startGameBtn').disabled = true;
+                document.getElementById('nextRoundBtn').style.display = 'none';
             } catch (error) {
                 alert('Error ending game: ' + error.message);
             }
         });
+
+        // Next Round button
+        document.getElementById('nextRoundBtn').addEventListener('click', async function() {
+            if (!gameSession) return;
+            
+            this.disabled = true;
+            this.textContent = 'Advancing...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/advance-round/`, {
+                    method: 'POST',
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to advance round');
+                }
+                
+                gameSession = await response.json();
+                
+                // Update UI
+                document.getElementById('gameConfig').innerHTML = `
+                    <strong>Round ${gameSession.current_round} of ${gameSession.total_rounds}</strong><br>
+                    Status: Paused - Ready to start next round
+                `;
+                
+                // Hide Next Round button, show Start Game button
+                this.style.display = 'none';
+                document.getElementById('startGameBtn').style.display = 'inline-block';
+                document.getElementById('startGameBtn').disabled = false;
+                
+            } catch (error) {
+                alert('Error advancing round: ' + error.message);
+            } finally {
+                this.disabled = false;
+                this.textContent = '⏭️ Next Round';
+            }
+        });
+        
+        // Handle game ended event from WebSocket
+        function handleGameEnded(message) {
+            const isMultiRound = gameSession && gameSession.total_rounds > 1;
+            const hasMoreRounds = isMultiRound && message.current_round < message.total_rounds;
+            
+            if (hasMoreRounds) {
+                // Show Next Round button
+                document.getElementById('startGameBtn').style.display = 'none';
+                document.getElementById('nextRoundBtn').style.display = 'inline-block';
+                document.getElementById('gameStatus').textContent = 'Paused';
+            } else {
+                // Final round complete
+                document.getElementById('gameStatus').textContent = 'Completed';
+                document.getElementById('startGameBtn').disabled = true;
+            }
+        }
+        
+        // Handle round changed event from WebSocket
+        function handleRoundChanged(message) {
+            if (gameSession) {
+                gameSession.current_round = message.current_round;
+                gameSession.total_rounds = message.total_rounds;
+            }
+        }
 
         // WebSocket connection
         function connectWebSocket(roomCode) {
@@ -667,6 +733,10 @@
                 
                 if (message.type === 'player_list_update') {
                     updatePlayersList(message.players);
+                } else if (message.type === 'game_ended') {
+                    handleGameEnded(message);
+                } else if (message.type === 'round_changed') {
+                    handleRoundChanged(message);
                 }
             };
             

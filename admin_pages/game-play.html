@@ -499,6 +499,10 @@
                     handleGameEnd(message);
                     break;
                     
+                case 'round_changed':
+                    handleRoundChange(message);
+                    break;
+                    
                 case 'error':
                     handleError(message);
                     break;
@@ -849,16 +853,58 @@
                 ${message.multiplier ? `<span class="multiplier-badge">${message.multiplier}x</span>` : ''}
             ` : '';
             
+            // Check if multi-round game and not at final round
+            const isMultiRound = message.total_rounds && message.total_rounds > 1;
+            const hasMoreRounds = isMultiRound && message.current_round < message.total_rounds;
+            
+            const roundInfo = isMultiRound ? `
+                <div style="margin: 20px 0; padding: 15px; background: #eff6ff; border-radius: 8px; border: 2px solid #3b82f6;">
+                    <strong>Round ${message.current_round} of ${message.total_rounds} Complete!</strong>
+                    ${hasMoreRounds ? '<br><span style="color: #64748b;">Waiting for instructor to start next round...</span>' : '<br><span style="color: #10b981; font-weight: 600;">Final Round Complete! 🎉</span>'}
+                </div>
+            ` : '';
+            
             document.getElementById('gameArea').innerHTML = `
                 <div class="results-display">
-                    <h2>🎉 Game Over!</h2>
+                    <h2>🎉 ${hasMoreRounds ? 'Round Complete!' : 'Game Over!'}</h2>
+                    ${roundInfo}
                     <div class="result-card">
                         ${winnerText}<br>
                         ${detailsHTML}
-                        <p style="margin-top: 15px; color: #64748b;">Check the leaderboard for final standings →</p>
+                        <p style="margin-top: 15px; color: #64748b;">Check the leaderboard for ${hasMoreRounds ? 'cumulative' : 'final'} standings →</p>
                     </div>
                 </div>
             `;
+        }
+        
+        function handleRoundChange(message) {
+            // Clear any existing timers
+            if (timerInterval) clearInterval(timerInterval);
+            
+            // Show transitioning message
+            document.getElementById('gameArea').innerHTML = `
+                <div class="waiting-state">
+                    <h2>🔄 Round ${message.current_round} of ${message.total_rounds}</h2>
+                    <div class="spinner"></div>
+                    <p style="color: #64748b; margin-top: 1rem;">Loading next question...</p>
+                </div>
+            `;
+            
+            // Wait a moment, then start the new round
+            setTimeout(() => {
+                gameType = message.game_type;
+                gameStartTime = Date.now();
+                
+                const timeLimit = message.game_time_limit || 20;
+                
+                if (gameType === 'speed_tap') {
+                    showSpeedTapGame(message);
+                    startSpeedTapTimer(timeLimit);
+                } else if (gameType === 'closest_guess') {
+                    showClosestGuessGame(message);
+                    startTimer(timeLimit);
+                }
+            }, 1500); // Short delay for visual transition
         }
         
         function updateLeaderboard(leaderboard) {
@@ -870,11 +916,22 @@
                 const isOwn = player.player_id === playerSession.id || player.player_name === playerSession.display_name;
                 const rankClass = idx === 0 ? 'first' : idx === 1 ? 'second' : idx === 2 ? 'third' : '';
                 
+                // Show round breakdown if available (multi-round games)
+                const hasRoundScores = player.round_scores && Array.isArray(player.round_scores) && player.round_scores.length > 0;
+                const roundBreakdown = hasRoundScores ? `
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">
+                        ${player.round_scores.map(r => `R${r.round}: ${r.points}`).join(' | ')}
+                    </div>
+                ` : '';
+                
                 return `
-                    <div class="leaderboard-item ${isOwn ? 'own' : ''}">
-                        <span class="rank ${rankClass}">${player.rank || (idx + 1)}</span>
-                        <span>${player.player_name}</span>
-                        <span style="font-weight: 700;">${player.score}</span>
+                    <div class="leaderboard-item ${isOwn ? 'own' : ''}" style="flex-direction: column; align-items: stretch;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span class="rank ${rankClass}">${player.rank || (idx + 1)}</span>
+                            <span style="flex: 1; margin-left: 10px;">${player.player_name}</span>
+                            <span style="font-weight: 700; font-size: 1.1rem;">${player.score}</span>
+                        </div>
+                        ${roundBreakdown}
                     </div>
                 `;
             }).join('');
