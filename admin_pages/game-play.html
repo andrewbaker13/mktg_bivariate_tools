@@ -538,12 +538,11 @@
             
             if (gameType === 'speed_tap') {
                 showSpeedTapGame(message);
+                startSpeedTapTimer(timeLimit);
             } else if (gameType === 'closest_guess') {
                 showClosestGuessGame(message);
+                startTimer(timeLimit);
             }
-            
-            // Start timer
-            startTimer(timeLimit);
         }
         
         function showSpeedTapGame(message) {
@@ -557,7 +556,10 @@
                     <div class="question-display">
                         <div class="question-text">${message.question_text}</div>
                         ${imageHTML}
-                        <div class="timer" id="timer">20</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                            <div class="timer" id="timer">20</div>
+                            <div style="font-size: 24px; font-weight: 700; color: #10b981;" id="availablePoints">100 pts</div>
+                        </div>
                     </div>
                     <div class="answer-options" id="answerOptions">
                         ${options.map(opt => `
@@ -875,6 +877,66 @@
             if (myPosition !== -1) {
                 document.getElementById('playerRank').textContent = myPosition + 1;
             }
+        }
+        
+        function startSpeedTapTimer(seconds) {
+            let remaining = seconds;
+            const timerEl = document.getElementById('timer');
+            const pointsEl = document.getElementById('availablePoints');
+            
+            const maxPoints = 100;
+            const gracePeriod = 2; // First 2 seconds, full points
+            const decayPeriod = seconds - gracePeriod; // Remaining time for decay
+            const minPoints = 10; // Minimum points at the end
+            const pointsDecayPerSecond = (maxPoints - minPoints) / decayPeriod;
+            
+            function updatePoints() {
+                let availablePoints;
+                if (remaining > (seconds - gracePeriod)) {
+                    // Grace period - full points
+                    availablePoints = maxPoints;
+                } else {
+                    // Decay period
+                    const timeIntoDecay = (seconds - gracePeriod) - remaining;
+                    availablePoints = Math.max(minPoints, Math.round(maxPoints - (pointsDecayPerSecond * timeIntoDecay)));
+                }
+                
+                if (pointsEl) {
+                    pointsEl.textContent = `${availablePoints} pts`;
+                    
+                    // Color coding based on points remaining
+                    if (availablePoints >= 80) {
+                        pointsEl.style.color = '#10b981'; // Green
+                    } else if (availablePoints >= 50) {
+                        pointsEl.style.color = '#f59e0b'; // Orange
+                    } else {
+                        pointsEl.style.color = '#ef4444'; // Red
+                    }
+                }
+            }
+            
+            if (timerEl) {
+                timerEl.textContent = remaining;
+            }
+            updatePoints();
+            
+            timerInterval = setInterval(() => {
+                remaining--;
+                if (timerEl) {
+                    timerEl.textContent = remaining;
+                    
+                    if (remaining <= 5) {
+                        timerEl.style.color = '#ef4444';
+                        timerEl.style.animation = 'pulse 0.5s infinite';
+                    }
+                }
+                
+                updatePoints();
+                
+                if (remaining <= 0) {
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
         }
         
         function startTimer(seconds) {
