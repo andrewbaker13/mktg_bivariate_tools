@@ -535,10 +535,13 @@
             // For demo, create 4 answer options (A, B, C, D)
             const options = ['A', 'B', 'C', 'D'];
             
+            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
+            
             document.getElementById('gameArea').innerHTML = `
                 <div class="speed-tap-area">
                     <div class="question-display">
                         <div class="question-text">${message.question_text}</div>
+                        ${imageHTML}
                         <div class="timer" id="timer">20</div>
                     </div>
                     <div class="answer-options" id="answerOptions">
@@ -608,12 +611,16 @@
                 numberlineMax = message.game_config.numberline_max;
             }
             
-            const maxWidth = message.game_config?.max_range_width || (numberlineMax - numberlineMin);
+            const maxWidth = message.game_config?.max_range_width;
+            const rangeRequirementText = maxWidth ? `<div style="color: #64748b; font-size: 14px; margin-top: 8px;">📏 Guesses must be within ${maxWidth} units</div>` : '<div style="color: #64748b; font-size: 14px; margin-top: 8px;">📏 Any range allowed (max 8 digits per number)</div>';
+            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
             
             document.getElementById('gameArea').innerHTML = `
                 <div class="closest-guess-area">
                     <div class="question-display">
                         <div class="question-text">${message.question_text}</div>
+                        ${rangeRequirementText}
+                        ${imageHTML}
                         <div class="timer" id="timer">20</div>
                     </div>
                     
