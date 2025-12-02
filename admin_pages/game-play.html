@@ -367,6 +367,12 @@
     </style>
 </head>
 <body>
+    <!-- Countdown Overlay -->
+    <div id="countdownOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 10000; align-items: center; justify-content: center; flex-direction: column;">
+        <div id="countdownNumber" style="font-size: 180px; font-weight: bold; color: #3b82f6; text-shadow: 0 0 50px rgba(59, 130, 246, 0.9); animation: pulse 0.5s ease-in-out;"></div>
+        <div id="countdownRoundInfo" style="font-size: 32px; color: white; margin-top: 30px; font-weight: 600;"></div>
+    </div>
+    
     <div class="game-container">
         <div class="game-header">
             <div class="player-info">
@@ -427,6 +433,9 @@
         let timerInterval = null;
         let numberlineMin = 0;
         let numberlineMax = 100;
+        let submittedGuesses = []; // Track all submitted guesses for dynamic range
+        let initialNumberlineMin = 0; // Store initial config values
+        let initialNumberlineMax = 100;
         
         function connectWebSocket() {
             websocket = new WebSocket(`${WS_BASE}/ws/game/${roomCode}/`);
@@ -474,6 +483,10 @@
                     
                 case 'player_list_update':
                     console.log('Players updated:', message.players);
+                    break;
+                    
+                case 'countdown_start':
+                    handleCountdownStart(message);
                     break;
                     
                 case 'game_started':
@@ -544,6 +557,37 @@
                         <p style="color: #64748b;">Your instructor will start the game soon</p>
                     </div>
                 `;
+            }
+        }
+        
+        // Handle countdown event from WebSocket
+        async function handleCountdownStart(message) {
+            const overlay = document.getElementById('countdownOverlay');
+            const numberDiv = document.getElementById('countdownNumber');
+            const roundInfo = document.getElementById('countdownRoundInfo');
+            
+            // Show overlay
+            overlay.style.display = 'flex';
+            roundInfo.textContent = `Round ${message.current_round} of ${message.total_rounds}`;
+            
+            // Countdown: 3, 2, 1
+            for (let count = 3; count >= 1; count--) {
+                numberDiv.textContent = count;
+                numberDiv.style.color = '#3b82f6';
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            // Show GO!
+            numberDiv.textContent = 'GO!';
+            numberDiv.style.color = '#10b981';
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Hide overlay
+            overlay.style.display = 'none';
+            
+            // Now trigger the actual game start with embedded game data
+            if (message.game_data) {
+                handleGameStart(message.game_data);
             }
         }
         
@@ -654,6 +698,9 @@
         }
         
         function showClosestGuessGame(message) {
+            // Reset guess tracking for new game
+            submittedGuesses = [];
+            
             // Parse game_config if it's a string
             let gameConfig = message.game_config;
             if (typeof gameConfig === 'string') {
@@ -669,9 +716,17 @@
             if (gameConfig && gameConfig.numberline_min !== undefined) {
                 numberlineMin = gameConfig.numberline_min;
                 numberlineMax = gameConfig.numberline_max;
+                initialNumberlineMin = numberlineMin;
+                initialNumberlineMax = numberlineMax;
+            } else {
+                // Default range if not specified
+                numberlineMin = 0;
+                numberlineMax = 100;
+                initialNumberlineMin = 0;
+                initialNumberlineMax = 100;
             }
             
-            console.log('Number line range:', numberlineMin, '-', numberlineMax);
+            console.log('Initial number line range:', numberlineMin, '-', numberlineMax);
             
             const maxWidth = gameConfig?.max_range_width;
             const rangeRequirementText = maxWidth ? `<div style="color: #64748b; font-size: 14px; margin-top: 8px;">📏 Guesses must be within ${maxWidth} units</div>` : '<div style="color: #64748b; font-size: 14px; margin-top: 8px;">📏 Any range allowed (max 8 digits per number)</div>';
@@ -775,7 +830,18 @@
             const numberline = document.getElementById('numberline');
             
             console.log('handleRangeSubmitted called:', message);
-            console.log('Number line range for calculation:', numberlineMin, '-', numberlineMax);
+            
+            // Track this guess
+            submittedGuesses.push({
+                min: message.guess_min,
+                max: message.guess_max,
+                player_id: message.player_id
+            });
+            
+            // Calculate dynamic range with 25% padding
+            updateDynamicRange();
+            
+            console.log('Updated number line range:', numberlineMin, '-', numberlineMax);
             
             if (message.player_id === playerSession.id) {
                 feedback.innerHTML = `
@@ -790,29 +856,86 @@
                 document.querySelector('.submit-guess-btn').disabled = true;
             }
             
-            // Add range box to number line
-            const rangeWidth = ((message.guess_max - message.guess_min) / (numberlineMax - numberlineMin)) * 100;
-            const rangeLeft = ((message.guess_min - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
+            // Redraw all range boxes with new scale
+            redrawNumberline();
+        }
+        
+        function updateDynamicRange() {
+            if (submittedGuesses.length === 0) return;
             
-            console.log('Calculated range box:', {
-                rangeWidth,
-                rangeLeft,
-                guess_min: message.guess_min,
-                guess_max: message.guess_max
+            // Find min and max across all guesses
+            let dataMin = Math.min(...submittedGuesses.map(g => g.min));
+            let dataMax = Math.max(...submittedGuesses.map(g => g.max));
+            
+            // Add 25% padding
+            const range = dataMax - dataMin;
+            const padding = range * 0.25;
+            
+            numberlineMin = Math.floor(dataMin - padding);
+            numberlineMax = Math.ceil(dataMax + padding);
+            
+            // Update labels
+            const labels = document.querySelector('.numberline-labels');
+            if (labels) {
+                labels.innerHTML = `
+                    <span>${numberlineMin}</span>
+                    <span style="font-size: 12px; color: #64748b;">(Range: ${numberlineMin} to ${numberlineMax})</span>
+                    <span>${numberlineMax}</span>
+                `;
+            }
+        }
+        
+        function redrawNumberline() {
+            const numberline = document.getElementById('numberline');
+            if (!numberline) return;
+            
+            // Clear existing range boxes (keep axis)
+            const rangeBoxes = numberline.querySelectorAll('.range-box');
+            rangeBoxes.forEach(box => box.remove());
+            
+            // Redraw all submitted guesses with new scale
+            submittedGuesses.forEach(guess => {
+                const rangeWidth = ((guess.max - guess.min) / (numberlineMax - numberlineMin)) * 100;
+                const rangeLeft = ((guess.min - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
+                
+                const rangeBox = document.createElement('div');
+                rangeBox.className = 'range-box' + (guess.player_id === playerSession.id ? ' own' : '');
+                rangeBox.style.left = Math.max(0, Math.min(100, rangeLeft)) + '%';
+                rangeBox.style.width = Math.max(0, Math.min(100, rangeWidth)) + '%';
+                numberline.appendChild(rangeBox);
             });
-            
-            const rangeBox = document.createElement('div');
-            rangeBox.className = 'range-box' + (message.player_id === playerSession.id ? ' own' : '');
-            rangeBox.style.left = rangeLeft + '%';
-            rangeBox.style.width = rangeWidth + '%';
-            numberline.appendChild(rangeBox);
-            
-            console.log('Range box added to numberline');
         }
         
         function handleGuessResults(message) {
             const feedback = document.getElementById('feedback');
             const numberline = document.getElementById('numberline');
+            
+            // Check if correct answer is outside current range and expand if needed
+            if (message.correct_answer < numberlineMin || message.correct_answer > numberlineMax) {
+                console.log('Correct answer outside range, expanding...');
+                
+                if (message.correct_answer < numberlineMin) {
+                    const diff = numberlineMin - message.correct_answer;
+                    numberlineMin = Math.floor(message.correct_answer - (diff * 0.1));
+                }
+                if (message.correct_answer > numberlineMax) {
+                    const diff = message.correct_answer - numberlineMax;
+                    numberlineMax = Math.ceil(message.correct_answer + (diff * 0.1));
+                }
+                
+                // Update labels
+                const labels = document.querySelector('.numberline-labels');
+                if (labels) {
+                    labels.innerHTML = `
+                        <span>${numberlineMin}</span>
+                        <span style="font-size: 12px; color: #64748b;">(Range: ${numberlineMin} to ${numberlineMax})</span>
+                        <span>${numberlineMax}</span>
+                    `;
+                }
+                
+                // Redraw with new scale
+                redrawNumberline();
+            }
             
             // Add correct answer marker - bold vertical line in dark green
             const correctPos = ((message.correct_answer - numberlineMin) / (numberlineMax - numberlineMin)) * 100;

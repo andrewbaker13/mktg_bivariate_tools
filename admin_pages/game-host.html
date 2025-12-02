@@ -313,6 +313,10 @@
                 </div>
 
                 <div id="gameSection" style="display: none;">
+                    <div id="countdownOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                        <div id="countdownNumber" style="font-size: 120px; font-weight: bold; color: #3b82f6; text-shadow: 0 0 30px rgba(59, 130, 246, 0.8);"></div>
+                        <div id="countdownRoundInfo" style="font-size: 24px; color: white; margin-top: 20px;"></div>
+                    </div>
                     <div id="questionDisplay"></div>
                     <div class="game-config" id="gameConfig"></div>
                     
@@ -748,8 +752,10 @@
         document.getElementById('nextRoundBtn').addEventListener('click', async function() {
             if (!gameSession) return;
             
-            this.disabled = true;
-            this.textContent = 'Advancing...';
+            console.log('Next Round button clicked');
+            const nextBtn = this;
+            nextBtn.disabled = true;
+            nextBtn.textContent = 'Advancing...';
             
             try {
                 const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/advance-round/`, {
@@ -763,23 +769,28 @@
                 }
                 
                 gameSession = await response.json();
+                console.log('Round advanced, new gameSession:', gameSession);
                 
-                // Update UI
+                // Update UI with new round number
                 document.getElementById('gameConfig').innerHTML = `
                     <strong>Round ${gameSession.current_round} of ${gameSession.total_rounds}</strong><br>
-                    Status: Paused - Ready to start next round
+                    Status: Paused - Ready to start Round ${gameSession.current_round}
                 `;
                 
                 // Hide Next Round button, show Start Game button
-                this.style.display = 'none';
-                document.getElementById('startGameBtn').style.display = 'inline-block';
-                document.getElementById('startGameBtn').disabled = false;
+                nextBtn.style.display = 'none';
+                const startBtn = document.getElementById('startGameBtn');
+                startBtn.style.display = 'inline-block';
+                startBtn.disabled = false;
+                startBtn.textContent = '▶️ Start Round ' + gameSession.current_round;
+                
+                console.log('UI updated - Start Game button shown, Next Round button hidden');
                 
             } catch (error) {
+                console.error('Error advancing round:', error);
                 alert('Error advancing round: ' + error.message);
-            } finally {
-                this.disabled = false;
-                this.textContent = '⏭️ Next Round';
+                nextBtn.disabled = false;
+                nextBtn.textContent = '⏭️ Next Round';
             }
         });
         
@@ -819,6 +830,41 @@
                 gameSession.total_rounds = message.total_rounds;
             }
         }
+        
+        // Handle countdown event from WebSocket
+        async function handleCountdownStart(message) {
+            const overlay = document.getElementById('countdownOverlay');
+            const numberDiv = document.getElementById('countdownNumber');
+            const roundInfo = document.getElementById('countdownRoundInfo');
+            
+            // Show overlay
+            overlay.style.display = 'flex';
+            roundInfo.textContent = `Round ${message.current_round} of ${message.total_rounds}`;
+            
+            // Countdown: 3, 2, 1
+            for (let count = 3; count >= 1; count--) {
+                numberDiv.textContent = count;
+                numberDiv.style.color = '#3b82f6';
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            // Show GO!
+            numberDiv.textContent = 'GO!';
+            numberDiv.style.color = '#10b981';
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Hide overlay
+            overlay.style.display = 'none';
+            numberDiv.style.color = '#3b82f6';
+            
+            // Now trigger the actual game start
+            // The game_data is embedded in the countdown_start message
+            if (message.game_data) {
+                // This would normally be handled by game_started event
+                // but since we're doing countdown client-side, we handle it here
+                console.log('Game starting after countdown:', message.game_data);
+            }
+        }
 
         // WebSocket connection
         function connectWebSocket(roomCode) {
@@ -838,6 +884,8 @@
                     handleGameEnded(message);
                 } else if (message.type === 'round_changed') {
                     handleRoundChanged(message);
+                } else if (message.type === 'countdown_start') {
+                    handleCountdownStart(message);
                 }
             };
             
