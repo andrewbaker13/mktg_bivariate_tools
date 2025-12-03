@@ -961,7 +961,6 @@
         
         function submitSpeedTap(answer) {
             if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
-            
             websocket.send(JSON.stringify({
                 action: 'speed_tap',
                 data: {
@@ -970,52 +969,49 @@
                     timestamp: Date.now() / 1000
                 }
             }));
-            
             // Highlight selected answer and grey out others
             document.querySelectorAll('.answer-btn').forEach(btn => {
                 btn.disabled = true;
                 btn.style.cursor = 'not-allowed';
-                
                 if (btn.dataset.answer === answer) {
                     btn.classList.add('selected');
                 } else {
                     btn.classList.add('unselected');
                 }
             });
-            
-            // Show waiting message
+            // No feedback yet
             const feedback = document.getElementById('feedback');
             if (feedback) {
-                feedback.innerHTML = '⏳ Waiting for others to answer...';
+                feedback.innerHTML = '⏳ Waiting for round to end...';
             }
         }
         
         function handleSpeedTapAnswer(message) {
-            const feedback = document.getElementById('feedback');
-            
-            if (message.player_id === playerSession.id) {
-                if (message.is_correct) {
-                    feedback.innerHTML = `
-                        <div class="alert alert-success">
-                            ✅ Correct! +${message.points} points
-                            <span class="multiplier-badge">${message.multiplier}x</span>
-                        </div>
-                    `;
-                    document.getElementById('playerScore').textContent = message.new_score;
-                } else {
-                    feedback.innerHTML = `
-                        <div class="alert alert-error">
-                            ❌ Incorrect, try again!
-                        </div>
-                    `;
+            // At round end, reveal correctness for all
+            const correctAnswer = message.correct_answer;
+            const playerAnswer = message.player_answer;
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.classList.remove('selected', 'unselected', 'correct', 'incorrect');
+                btn.disabled = true;
+                btn.style.cursor = 'not-allowed';
+                if (btn.dataset.answer === correctAnswer) {
+                    btn.classList.add('correct');
+                    btn.style.borderWidth = '6px';
+                    btn.innerHTML = `<span style='font-size:2rem; color:#10b981;'>✔️</span> ` + btn.textContent;
                 }
-            } else {
-                // Show other player's answer
-                feedback.innerHTML = `
-                    <div class="alert alert-info">
-                        ${message.player_name} answered in ${message.response_time_ms}ms!
-                    </div>
-                `;
+                if (btn.dataset.answer === playerAnswer && playerAnswer !== correctAnswer) {
+                    btn.classList.add('incorrect');
+                    btn.innerHTML = `<span style='font-size:2rem; color:#ef4444;'>❌</span> ` + btn.textContent;
+                }
+            });
+            // Show feedback
+            const feedback = document.getElementById('feedback');
+            if (feedback) {
+                if (playerAnswer === correctAnswer) {
+                    feedback.innerHTML = `<div class='alert alert-success'>✅ Correct! +${message.points} points <span class='multiplier-badge'>${message.multiplier}x</span></div>`;
+                } else {
+                    feedback.innerHTML = `<div class='alert alert-error'>❌ Incorrect. The correct answer was <strong>${correctAnswer}</strong>.</div>`;
+                }
             }
         }
         
@@ -1379,7 +1375,7 @@
                             <div class="bracket-bottom">
                                 <div class="bracket-label">
                                     <span class="range-label">GUESS RANGE</span>
-                                    <span class="range-value" id="rangeWidthValue">100%</span>
+                                    <!-- No percentage in the middle -->
                                 </div>
                             </div>
                             <div class="bracket-right-edge" id="bracketRightEdge">
@@ -1390,11 +1386,11 @@
                     
                     <div class="push-range-teams">
                         <div class="team-panel left">
-                            <h4>🔴 RED TEAM →</h4>
+                            <h4>🔵 BLUE TEAM →</h4>
                             <div id="leftTeamRoster"></div>
                         </div>
                         <div class="team-panel right">
-                            <h4>← 🔵 BLUE TEAM</h4>
+                            <h4>← 🔴 RED TEAM</h4>
                             <div id="rightTeamRoster"></div>
                         </div>
                     </div>

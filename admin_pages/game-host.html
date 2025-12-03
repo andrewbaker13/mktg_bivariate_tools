@@ -824,18 +824,131 @@
             
             if (hasMoreRounds) {
                 // Show Next Round button
-                console.log('Showing Next Round button');
                 document.getElementById('startGameBtn').style.display = 'none';
                 const nextBtn = document.getElementById('nextRoundBtn');
                 nextBtn.style.display = 'inline-block';
-                nextBtn.disabled = false; // Ensure it's enabled
+                nextBtn.disabled = false;
                 document.getElementById('gameStatus').textContent = `Round ${currentRound} Complete - Ready for Next Round`;
             } else {
-                // Final round complete
-                console.log('Final round complete');
-                document.getElementById('gameStatus').textContent = 'Completed';
+                // Final round complete - show end-of-game UI
+                document.getElementById('gameStatus').textContent = 'Game Over!';
                 document.getElementById('startGameBtn').disabled = true;
                 document.getElementById('nextRoundBtn').style.display = 'none';
+
+                // Build Game Over overlay
+                const overlay = document.createElement('div');
+                overlay.id = 'gameOverOverlay';
+                overlay.style.position = 'fixed';
+                overlay.style.top = '0';
+                overlay.style.left = '0';
+                overlay.style.width = '100vw';
+                overlay.style.height = '100vh';
+                overlay.style.background = 'rgba(30,41,59,0.92)';
+                overlay.style.zIndex = '9999';
+                overlay.style.display = 'flex';
+                overlay.style.flexDirection = 'column';
+                overlay.style.justifyContent = 'center';
+                overlay.style.alignItems = 'center';
+
+                // Banner
+                const banner = document.createElement('h1');
+                banner.textContent = '🎉 Game Over!';
+                banner.style.color = '#10b981';
+                banner.style.fontSize = '3rem';
+                banner.style.marginBottom = '2rem';
+                overlay.appendChild(banner);
+
+                // Leaderboard
+                const leaderboard = document.createElement('div');
+                leaderboard.style.background = 'white';
+                leaderboard.style.borderRadius = '16px';
+                leaderboard.style.padding = '2rem';
+                leaderboard.style.boxShadow = '0 8px 32px rgba(0,0,0,0.15)';
+                leaderboard.style.marginBottom = '2rem';
+                leaderboard.style.minWidth = '350px';
+
+                leaderboard.innerHTML = `<h2 style="color:#3b82f6; text-align:center; margin-bottom:1rem;">🏆 Final Leaderboard</h2>`;
+                if (message.leaderboard && message.leaderboard.length > 0) {
+                    leaderboard.innerHTML += '<ol style="font-size:1.25rem;">' +
+                        message.leaderboard.map((player, idx) => {
+                            const isWinner = idx === 0;
+                            return `<li style="margin-bottom:0.5rem;${isWinner ? 'font-weight:800;color:#10b981;' : ''}">
+                                ${isWinner ? '🏆 ' : ''}${player.display_name || player.name} <span style="color:#64748b; font-size:1rem;">(${player.score} pts)</span>
+                            </li>`;
+                        }).join('') + '</ol>';
+                } else {
+                    leaderboard.innerHTML += '<p>No scores available.</p>';
+                }
+                overlay.appendChild(leaderboard);
+
+                // Summary stats
+                const stats = document.createElement('div');
+                stats.style.background = '#f8fafc';
+                stats.style.borderRadius = '12px';
+                stats.style.padding = '1.5rem';
+                stats.style.marginBottom = '2rem';
+                stats.style.textAlign = 'center';
+                stats.innerHTML = `<h3 style="color:#475569;">Summary Stats</h3>
+                    <div>Rounds Played: <strong>${totalRounds}</strong></div>
+                    <div>Players: <strong>${message.leaderboard ? message.leaderboard.length : 0}</strong></div>
+                    ${message.fastest_response ? `<div>Fastest Response: <strong>${message.fastest_response.display_name || message.fastest_response.name}</strong> (${message.fastest_response.time_ms} ms)</div>` : ''}
+                `;
+                overlay.appendChild(stats);
+
+                // Action buttons
+                const actions = document.createElement('div');
+                actions.style.display = 'flex';
+                actions.style.gap = '1rem';
+                actions.style.marginBottom = '2rem';
+
+                // Rematch button
+                const rematchBtn = document.createElement('button');
+                rematchBtn.className = 'btn btn-primary';
+                rematchBtn.textContent = '🔄 Rematch';
+                rematchBtn.onclick = () => window.location.reload();
+                actions.appendChild(rematchBtn);
+
+                // Export button
+                const exportBtn = document.createElement('button');
+                exportBtn.className = 'btn';
+                exportBtn.textContent = '📄 Export Results';
+                exportBtn.onclick = () => {
+                    // Simple CSV export
+                    if (message.leaderboard) {
+                        const csv = 'Rank,Name,Score\n' + message.leaderboard.map((p, i) => `${i+1},${p.display_name || p.name},${p.score}`).join('\n');
+                        const blob = new Blob([csv], {type: 'text/csv'});
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'game_results.csv';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    }
+                };
+                actions.appendChild(exportBtn);
+
+                // Share button
+                const shareBtn = document.createElement('button');
+                shareBtn.className = 'btn';
+                shareBtn.textContent = '🔗 Share Summary';
+                shareBtn.onclick = () => {
+                    const summary = `Game Over! Winner: ${message.leaderboard && message.leaderboard[0] ? message.leaderboard[0].display_name || message.leaderboard[0].name : 'N/A'} (${message.leaderboard && message.leaderboard[0] ? message.leaderboard[0].score : ''} pts)`;
+                    navigator.clipboard.writeText(summary);
+                    shareBtn.textContent = '✅ Copied!';
+                    setTimeout(() => shareBtn.textContent = '🔗 Share Summary', 2000);
+                };
+                actions.appendChild(shareBtn);
+
+                // Dashboard button
+                const dashBtn = document.createElement('button');
+                dashBtn.className = 'btn';
+                dashBtn.textContent = '🏠 Return to Dashboard';
+                dashBtn.onclick = () => window.location.href = '/admin_pages/instructor.html';
+                actions.appendChild(dashBtn);
+
+                overlay.appendChild(actions);
+
+                document.body.appendChild(overlay);
             }
         }
         
