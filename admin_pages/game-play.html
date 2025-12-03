@@ -1871,6 +1871,8 @@
         }
         
         function startTimer(seconds, startTime) {
+            console.log('startTimer called for gameType:', gameType, 'seconds:', seconds);
+            
             // Clear any existing timer first
             if (timerInterval) {
                 clearInterval(timerInterval);
@@ -1894,6 +1896,7 @@
                 
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
+                    console.log('Timer hit zero! gameType:', gameType, 'wsState:', websocket?.readyState);
                     
                     // Disable submit button to prevent late submissions
                     const submitBtn = document.querySelector('.submit-guess-btn');
@@ -1905,12 +1908,15 @@
                     
                     // Trigger results calculation for closest_guess game
                     if (gameType === 'closest_guess' && websocket && websocket.readyState === WebSocket.OPEN) {
+                        console.log('Closest Guess timer expired - sending timer_expired action');
                         websocket.send(JSON.stringify({
                             action: 'timer_expired',
                             data: {
                                 player_session_id: playerSession.id
                             }
                         }));
+                    } else {
+                        console.log('Timer expired but not sending:', { gameType, wsReady: websocket?.readyState });
                     }
                 }
             }
