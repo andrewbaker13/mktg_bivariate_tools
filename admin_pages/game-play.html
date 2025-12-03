@@ -115,6 +115,7 @@
             padding: 2rem;
             font-size: 1.25rem;
             font-weight: 600;
+            color: #1e293b;
             border: 3px solid #e2e8f0;
             border-radius: 12px;
             background: white;
@@ -128,6 +129,17 @@
         }
         .answer-btn:active {
             transform: scale(0.95);
+        }
+        .answer-btn.selected {
+            border-color: #10b981;
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .answer-btn.unselected {
+            border-color: #9ca3af;
+            background: #f3f4f6;
+            color: #6b7280;
+            opacity: 0.6;
         }
         .answer-btn.correct {
             border-color: #10b981;
@@ -620,6 +632,14 @@
             gameType = message.game_type;
             gameStartTime = Date.now();
             
+            // Re-enable submit button for new round
+            const submitBtn = document.querySelector('.submit-guess-btn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            }
+            
             // If player is waiting to enter, show waiting state instead of game
             if (isWaitingToEnter) {
                 showWaitingState();
@@ -670,7 +690,7 @@
                             </button>
                         `).join('')}
                     </div>
-                    <div id="feedback"></div>
+                    <div id="feedback" style="margin-top: 20px; font-size: 18px; color: #64748b; font-weight: 500; min-height: 30px;"></div>
                 </div>
             `;
         }
@@ -687,11 +707,23 @@
                 }
             }));
             
-            // Disable all buttons
+            // Highlight selected answer and grey out others
             document.querySelectorAll('.answer-btn').forEach(btn => {
                 btn.disabled = true;
                 btn.style.cursor = 'not-allowed';
+                
+                if (btn.dataset.answer === answer) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.add('unselected');
+                }
             });
+            
+            // Show waiting message
+            const feedback = document.getElementById('feedback');
+            if (feedback) {
+                feedback.innerHTML = '⏳ Waiting for others to answer...';
+            }
         }
         
         function handleSpeedTapAnswer(message) {
@@ -1025,6 +1057,45 @@
             const isMultiRound = message.total_rounds && message.total_rounds > 1;
             const hasMoreRounds = isMultiRound && message.current_round < message.total_rounds;
             
+            // For Speed Tap games, highlight the correct answer
+            if (gameType === 'speed_tap' && message.correct_answer) {
+                // Find all answer buttons
+                const answerButtons = document.querySelectorAll('.answer-btn');
+                answerButtons.forEach(btn => {
+                    const btnAnswer = btn.dataset.answer;
+                    
+                    // Check if this is the correct answer
+                    if (btnAnswer === message.correct_answer) {
+                        // Add green border and label
+                        btn.style.border = '4px solid #10b981';
+                        btn.style.background = '#d1fae5';
+                        btn.style.position = 'relative';
+                        btn.style.paddingTop = '2.5rem';
+                        
+                        // Add "Correct Answer" label
+                        const label = document.createElement('div');
+                        label.style.cssText = 'position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 700; color: #10b981; text-transform: uppercase;';
+                        label.textContent = '✓ Correct Answer';
+                        btn.style.position = 'relative';
+                        btn.insertBefore(label, btn.firstChild);
+                    }
+                    
+                    // If player selected this answer and it was wrong
+                    if (btn.classList.contains('selected') && btnAnswer !== message.correct_answer) {
+                        btn.classList.remove('selected');
+                        btn.style.border = '4px solid #ef4444';
+                        btn.style.background = '#fee2e2';
+                        btn.style.color = '#991b1b';
+                    }
+                });
+                
+                // Clear the waiting message
+                const feedback = document.getElementById('feedback');
+                if (feedback) {
+                    feedback.innerHTML = '';
+                }
+            }
+            
             // Remove any existing round complete banner
             const existingBanner = document.getElementById('roundCompleteBanner');
             if (existingBanner) {
@@ -1033,36 +1104,60 @@
             
             // For multi-round games, ADD a banner above the game area (don't replace)
             if (isMultiRound) {
+                console.log('Round stats received:', message.round_stats);
+                console.log('Player session ID:', playerSession.id);
+                
                 const myStats = message.round_stats?.player_stats?.[playerSession.id] || {
                     player_round_score: 0,
                     player_total_score: 0
                 };
                 
+                console.log('My stats:', myStats);
+                
+                // If stats are missing or all zeros, show a different message
+                const hasValidStats = message.round_stats && (myStats.player_round_score > 0 || myStats.player_total_score > 0 || message.round_stats.percent_scored > 0);
+                
                 const banner = document.createElement('div');
                 banner.id = 'roundCompleteBanner';
                 banner.style.cssText = 'margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: white;';
-                banner.innerHTML = `
-                    <div style="text-align: center;">
-                        <h2 style="color: white; margin: 0 0 15px 0; font-size: 24px;">
-                            🎉 Round ${message.current_round} of ${message.total_rounds} Complete!
-                        </h2>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px;">
-                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
-                                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Players Scored</div>
-                                <div style="font-size: 28px; font-weight: 700;">${message.round_stats?.percent_scored || 0}%</div>
+                
+                if (hasValidStats) {
+                    banner.innerHTML = `
+                        <div style="text-align: center;">
+                            <h2 style="color: white; margin: 0 0 15px 0; font-size: 24px;">
+                                🎉 Round ${message.current_round} of ${message.total_rounds} Complete!
+                            </h2>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px;">
+                                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Players Scored</div>
+                                    <div style="font-size: 28px; font-weight: 700;">${message.round_stats.percent_scored}%</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Your Round Score</div>
+                                    <div style="font-size: 28px; font-weight: 700;">${myStats.player_round_score} pts</div>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                                    <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Total Score</div>
+                                    <div style="font-size: 28px; font-weight: 700;">${myStats.player_total_score} pts</div>
+                                </div>
                             </div>
-                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
-                                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Your Round Score</div>
-                                <div style="font-size: 28px; font-weight: 700;">${myStats.player_round_score} pts</div>
-                            </div>
-                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
-                                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Total Score</div>
-                                <div style="font-size: 28px; font-weight: 700;">${myStats.player_total_score} pts</div>
-                            </div>
+                            ${hasMoreRounds ? '<div style="margin-top: 15px; font-size: 16px; opacity: 0.9;">⏳ Waiting for instructor to start next round...</div>' : '<div style="margin-top: 15px; font-size: 18px; font-weight: 600;">🏁 Final Round Complete!</div>'}
                         </div>
-                        ${hasMoreRounds ? '<div style="margin-top: 15px; font-size: 16px; opacity: 0.9;">⏳ Waiting for instructor to start next round...</div>' : '<div style="margin-top: 15px; font-size: 18px; font-weight: 600;">🏁 Final Round Complete!</div>'}
-                    </div>
-                `;
+                    `;
+                } else {
+                    // Fallback if stats aren't available yet
+                    banner.innerHTML = `
+                        <div style="text-align: center;">
+                            <h2 style="color: white; margin: 0 0 15px 0; font-size: 24px;">
+                                🎉 Round ${message.current_round} of ${message.total_rounds} Complete!
+                            </h2>
+                            <div style="font-size: 16px; opacity: 0.9; margin-top: 15px;">
+                                Check the leaderboard for your score →
+                            </div>
+                            ${hasMoreRounds ? '<div style="margin-top: 15px; font-size: 16px; opacity: 0.9;">⏳ Waiting for instructor to start next round...</div>' : '<div style="margin-top: 15px; font-size: 18px; font-weight: 600;">🏁 Final Round Complete!</div>'}
+                        </div>
+                    `;
+                }
                 
                 // Insert banner at the TOP of gameArea (before existing content)
                 const gameArea = document.getElementById('gameArea');
@@ -1235,6 +1330,14 @@
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
                     
+                    // Disable submit button to prevent late submissions
+                    const submitBtn = document.querySelector('.submit-guess-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.5';
+                        submitBtn.style.cursor = 'not-allowed';
+                    }
+                    
                     // End Speed Tap game with no winner if time runs out
                     if (websocket && websocket.readyState === WebSocket.OPEN) {
                         websocket.send(JSON.stringify({
@@ -1278,6 +1381,14 @@
                 
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
+                    
+                    // Disable submit button to prevent late submissions
+                    const submitBtn = document.querySelector('.submit-guess-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.5';
+                        submitBtn.style.cursor = 'not-allowed';
+                    }
                     
                     // Trigger results calculation for closest_guess game
                     if (gameType === 'closest_guess' && websocket && websocket.readyState === WebSocket.OPEN) {
