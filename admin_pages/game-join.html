@@ -130,6 +130,19 @@
             color: #1e40af;
             font-size: 0.875rem;
         }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 0.5rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -255,9 +268,9 @@
                 return;
             }
             
-            // Disable button
+            // Disable button and show loading spinner
             joinBtn.disabled = true;
-            joinBtn.textContent = 'Joining...';
+            joinBtn.innerHTML = '<span class="spinner"></span>Joining...';
             
             try {
                 // Prepare request data
@@ -320,7 +333,7 @@
             } catch (error) {
                 showError(error.message);
                 joinBtn.disabled = false;
-                joinBtn.textContent = 'Join Game';
+                joinBtn.innerHTML = 'Join Game';
             }
         });
         

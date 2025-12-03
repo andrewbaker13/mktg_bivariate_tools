@@ -552,6 +552,7 @@
         let hasShownConnectionToast = false;
         let isManualWebsocketClose = false;
         let currentRoomCode = '';
+        let currentLeaderboard = [];
         let token = localStorage.getItem('auth_token');
         
         const toastContainer = document.getElementById('toastContainer');
@@ -1196,13 +1197,17 @@
                 leaderboard.style.marginBottom = '2rem';
                 leaderboard.style.minWidth = '350px';
 
+                // Use stored leaderboard from separate leaderboard_update message
+                const finalLeaderboard = message.leaderboard || currentLeaderboard;
+                
                 leaderboard.innerHTML = `<h2 style="color:#3b82f6; text-align:center; margin-bottom:1rem;">🏆 Final Leaderboard</h2>`;
-                if (message.leaderboard && message.leaderboard.length > 0) {
+                if (finalLeaderboard && finalLeaderboard.length > 0) {
                     leaderboard.innerHTML += '<ol style="font-size:1.25rem;">' +
-                        message.leaderboard.map((player, idx) => {
+                        finalLeaderboard.map((player, idx) => {
                             const isWinner = idx === 0;
+                            const playerName = player.player_name || player.display_name || player.name || 'Unknown';
                             return `<li style="margin-bottom:0.5rem;${isWinner ? 'font-weight:800;color:#10b981;' : ''}">
-                                ${isWinner ? '🏆 ' : ''}${player.display_name || player.name} <span style="color:#64748b; font-size:1rem;">(${player.score} pts)</span>
+                                ${isWinner ? '🏆 ' : ''}${playerName} <span style="color:#64748b; font-size:1rem;">(${player.score} pts)</span>
                             </li>`;
                         }).join('') + '</ol>';
                 } else {
@@ -1219,8 +1224,8 @@
                 stats.style.textAlign = 'center';
                 stats.innerHTML = `<h3 style="color:#475569;">Summary Stats</h3>
                     <div>Rounds Played: <strong>${totalRounds}</strong></div>
-                    <div>Players: <strong>${message.leaderboard ? message.leaderboard.length : 0}</strong></div>
-                    ${message.fastest_response ? `<div>Fastest Response: <strong>${message.fastest_response.display_name || message.fastest_response.name}</strong> (${message.fastest_response.time_ms} ms)</div>` : ''}
+                    <div>Players: <strong>${finalLeaderboard ? finalLeaderboard.length : 0}</strong></div>
+                    ${message.fastest_response ? `<div>Fastest Response: <strong>${message.fastest_response.player_name || message.fastest_response.display_name || message.fastest_response.name}</strong> (${message.fastest_response.time_ms} ms)</div>` : ''}
                 `;
                 overlay.appendChild(stats);
 
@@ -1243,8 +1248,11 @@
                 exportBtn.textContent = '📄 Export Results';
                 exportBtn.onclick = () => {
                     // Simple CSV export
-                    if (message.leaderboard) {
-                        const csv = 'Rank,Name,Score\n' + message.leaderboard.map((p, i) => `${i+1},${p.display_name || p.name},${p.score}`).join('\n');
+                    if (finalLeaderboard && finalLeaderboard.length > 0) {
+                        const csv = 'Rank,Name,Score\n' + finalLeaderboard.map((p, i) => {
+                            const playerName = p.player_name || p.display_name || p.name || 'Unknown';
+                            return `${i+1},"${playerName}",${p.score}`;
+                        }).join('\n');
                         const blob = new Blob([csv], {type: 'text/csv'});
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
@@ -1252,6 +1260,9 @@
                         a.download = 'game_results.csv';
                         a.click();
                         URL.revokeObjectURL(url);
+                        showToast('Results exported', 'success');
+                    } else {
+                        showToast('No leaderboard data to export', 'warning');
                     }
                 };
                 actions.appendChild(exportBtn);
@@ -1261,10 +1272,16 @@
                 shareBtn.className = 'btn';
                 shareBtn.textContent = '🔗 Share Summary';
                 shareBtn.onclick = () => {
-                    const summary = `Game Over! Winner: ${message.leaderboard && message.leaderboard[0] ? message.leaderboard[0].display_name || message.leaderboard[0].name : 'N/A'} (${message.leaderboard && message.leaderboard[0] ? message.leaderboard[0].score : ''} pts)`;
-                    navigator.clipboard.writeText(summary);
-                    shareBtn.textContent = '✅ Copied!';
-                    setTimeout(() => shareBtn.textContent = '🔗 Share Summary', 2000);
+                    const winner = finalLeaderboard && finalLeaderboard[0];
+                    const winnerName = winner ? (winner.player_name || winner.display_name || winner.name || 'N/A') : 'N/A';
+                    const winnerScore = winner ? winner.score : '';
+                    const summary = `Game Over! Winner: ${winnerName}${winnerScore ? ` (${winnerScore} pts)` : ''}`;
+                    navigator.clipboard.writeText(summary).then(() => {
+                        shareBtn.textContent = '✅ Copied!';
+                        setTimeout(() => shareBtn.textContent = '🔗 Share Summary', 2000);
+                    }).catch(() => {
+                        showToast('Failed to copy to clipboard', 'error');
+                    });
                 };
                 actions.appendChild(shareBtn);
 
@@ -1361,6 +1378,9 @@
                 
                 if (message.type === 'player_list_update') {
                     updatePlayersList(message.players);
+                } else if (message.type === 'leaderboard_update') {
+                    currentLeaderboard = message.leaderboard || [];
+                    console.log('Leaderboard updated:', currentLeaderboard);
                 } else if (message.type === 'game_ended') {
                     handleGameEnded(message);
                 } else if (message.type === 'round_changed') {

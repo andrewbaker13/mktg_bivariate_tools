@@ -864,9 +864,43 @@
             const numberDiv = document.getElementById('countdownNumber');
             const roundInfo = document.getElementById('countdownRoundInfo');
             
+            // Get game type helper text
+            const gameType = message.game_data?.game_type;
+            const gameTypeHelpers = {
+                'speed_tap': {
+                    title: '⚡ Speed Tap',
+                    description: 'Faster answers get more points (or lose more points!)<br>Answer quickly but correctly to maximize your score!'
+                },
+                'closest_guess': {
+                    title: '🎯 Closest Guess',
+                    description: 'Submit a range that captures the correct answer!<br>Narrower ranges earn bonus points. Answer quickly for speed bonuses!'
+                },
+                'push_range': {
+                    title: '🔥 Push Range',
+                    description: 'Smash the button to help pick the range where the answer is!<br>Teamwork required! Riskier ranges earn more points.<br>Those who tap more earn more points if correct!'
+                },
+                'rpg_battle': {
+                    title: '⚔️ RPG Battle',
+                    description: 'Team up to defeat the boss!<br>Answer questions correctly to deal damage!'
+                }
+            };
+            
+            const helper = gameTypeHelpers[gameType] || {
+                title: '🎮 Get Ready',
+                description: 'Answer the question to earn points!'
+            };
+            
             // Show overlay
             overlay.style.display = 'flex';
             roundInfo.textContent = `Round ${message.current_round} of ${message.total_rounds}`;
+            
+            // Show game type helper for 2 seconds
+            numberDiv.innerHTML = `
+                <div style="font-size: 2rem; margin-bottom: 1rem;">${helper.title}</div>
+                <div style="font-size: 1.2rem; line-height: 1.5; max-width: 600px;">${helper.description}</div>
+            `;
+            numberDiv.style.color = '#3b82f6';
+            await new Promise(resolve => setTimeout(resolve, 2000));
             
             // Countdown: 3, 2, 1
             for (let count = 3; count >= 1; count--) {
@@ -1319,7 +1353,6 @@
         }
         
         // Push Range Game Functions
-        let pushRangeInterval = null;
         let pendingPresses = 0;
         let myTeam = null;
         let myPressCount = 0;
@@ -1405,61 +1438,33 @@
             // Render initial team rosters
             updateTeamRosters();
             
-            // Attach event handlers properly (prevents mobile double-firing)
+            // Attach event handlers for speed tapping (each click/tap counts once)
             const pushBtn = document.getElementById('pushButton');
             if (pushBtn) {
-                // Mouse events
+                // Prevent default to avoid unwanted behavior
                 pushBtn.addEventListener('mousedown', (e) => {
                     e.preventDefault();
-                    startPressing();
                 });
-                pushBtn.addEventListener('mouseup', stopPressing);
-                pushBtn.addEventListener('mouseleave', stopPressing);
                 
-                // Touch events
-                pushBtn.addEventListener('touchstart', (e) => {
+                // Mouse click - single press per click
+                pushBtn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    startPressing();
+                    registerPress();
                 });
-                pushBtn.addEventListener('touchend', stopPressing);
-                pushBtn.addEventListener('touchcancel', stopPressing);
                 
-                // Keyboard support (spacebar/Enter when focused)
+                // Touch tap - single press per tap
+                pushBtn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    registerPress();
+                });
+                
+                // Keyboard support (spacebar/Enter when focused) - prevent repeat
                 pushBtn.addEventListener('keydown', (e) => {
                     if ((e.code === 'Space' || e.code === 'Enter') && !e.repeat) {
                         e.preventDefault();
-                        startPressing();
+                        registerPress();
                     }
                 });
-                pushBtn.addEventListener('keyup', (e) => {
-                    if (e.code === 'Space' || e.code === 'Enter') {
-                        stopPressing();
-                    }
-                });
-            }
-        }
-        
-        function startPressing() {
-            if (pushRangeInterval) return; // Already pressing
-            
-            // Register a press immediately
-            registerPress();
-            
-            // Continue pressing every 100ms while held
-            pushRangeInterval = setInterval(() => {
-                registerPress();
-            }, 100);
-        }
-        
-        function stopPressing() {
-            if (pushRangeInterval) {
-                clearInterval(pushRangeInterval);
-                pushRangeInterval = null;
-            }
-            
-            // Send any pending presses
-            if (pendingPresses > 0) {
-                sendPresses();
             }
         }
         
@@ -1575,12 +1580,6 @@
         }
         
         function handlePushRangeResults(message) {
-            // Clear any intervals
-            if (pushRangeInterval) {
-                clearInterval(pushRangeInterval);
-                pushRangeInterval = null;
-            }
-            
             const resultClass = message.is_correct ? 'success' : 'failure';
             const resultIcon = message.is_correct ? '🎉' : '😞';
             const resultText = message.is_correct ? 'Success! The range captured the answer!' : 'The range missed the answer!';
@@ -1644,12 +1643,6 @@
                 
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
-                    
-                    // Stop any ongoing pressing
-                    if (pushRangeInterval) {
-                        clearInterval(pushRangeInterval);
-                        pushRangeInterval = null;
-                    }
                     
                     // Disable the button
                     const pushBtn = document.getElementById('pushButton');
