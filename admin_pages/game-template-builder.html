@@ -292,6 +292,7 @@
                             <option value="">All Game Types</option>
                             <option value="speed_tap">Speed Tap</option>
                             <option value="closest_guess">Closest Guess</option>
+                            <option value="push_range">Push Range</option>
                         </select>
                         <select id="courseFilter">
                             <option value="">All Courses</option>
@@ -457,7 +458,7 @@
                 <div class="question-card" onclick="addQuestion(${q.id})">
                     <div class="question-text">${q.question_text}</div>
                     <div class="question-meta">
-                        <span>🎮 ${q.game_type === 'speed_tap' ? 'Speed Tap' : 'Closest Guess'}</span>
+                        <span>🎮 ${q.game_type === 'speed_tap' ? 'Speed Tap' : q.game_type === 'push_range' ? 'Push Range' : 'Closest Guess'}</span>
                         <span>⏱️ ${q.game_time_limit_seconds || 30}s</span>
                     </div>
                 </div>
@@ -520,7 +521,7 @@
                     <div class="order-number">${index + 1}</div>
                     <div class="item-content">
                         <div class="item-text">${q.question_text.substring(0, 60)}${q.question_text.length > 60 ? '...' : ''}</div>
-                        <div class="item-type">🎮 ${q.game_type === 'speed_tap' ? 'Speed Tap' : 'Closest Guess'}</div>
+                        <div class="item-type">🎮 ${q.game_type === 'speed_tap' ? 'Speed Tap' : q.game_type === 'push_range' ? 'Push Range' : 'Closest Guess'}</div>
                     </div>
                     <button class="remove-btn" onclick="removeQuestion(${index})">✕</button>
                     <button onclick="moveUp(${index})" ${index === 0 ? 'disabled' : ''} 
