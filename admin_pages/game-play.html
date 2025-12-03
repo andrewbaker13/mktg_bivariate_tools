@@ -1348,8 +1348,8 @@
             // Left team pushes the left boundary RIGHT (closing from the left)
             // Right team pushes the right boundary LEFT (closing from the right)
             const buttonHTML = myTeam === 'left' 
-                ? '<button class="push-button left" id="pushButton">🔴 PUSH →</button>'
-                : '<button class="push-button right" id="pushButton">← PUSH 🔵</button>';
+                ? '<button class="push-button left" id="pushButton"><span style="font-size:2rem; vertical-align:middle; color:#3b82f6;">🔵</span> PUSH →</button>'
+                : '<button class="push-button right" id="pushButton">← PUSH <span style="font-size:2rem; vertical-align:middle; color:#ef4444;">🔴</span></button>';
             
             document.getElementById('gameArea').innerHTML = `
                 <div class="push-range-area">
