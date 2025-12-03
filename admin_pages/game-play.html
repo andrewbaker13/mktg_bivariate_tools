@@ -1252,8 +1252,8 @@
             }
             
             const buttonHTML = myTeam === 'left' 
-                ? '<button class="push-button left" id="pushButton" onmousedown="startPressing()" onmouseup="stopPressing()" ontouchstart="startPressing()" ontouchend="stopPressing()">⬅️ PUSH LEFT</button>'
-                : '<button class="push-button right" id="pushButton" onmousedown="startPressing()" onmouseup="stopPressing()" ontouchstart="startPressing()" ontouchend="stopPressing()">PUSH RIGHT ➡️</button>';
+                ? '<button class="push-button left" id="pushButton">⬅️ PUSH LEFT</button>'
+                : '<button class="push-button right" id="pushButton">PUSH RIGHT ➡️</button>';
             
             document.getElementById('gameArea').innerHTML = `
                 <div class="push-range-area">
@@ -1269,10 +1269,13 @@
                         <div class="push-range-bar">
                             <div class="push-range-left-fill" id="leftFill" style="width: 0%"></div>
                             <div class="push-range-right-fill" id="rightFill" style="width: 0%"></div>
+                            <div class="push-range-center-indicator" id="rangeIndicator" style="position: absolute; left: 0%; right: 0%; top: 50%; transform: translateY(-50%); text-align: center; font-weight: 700; color: #1e293b; font-size: 1.25rem; pointer-events: none;">
+                                Open: 100%
+                            </div>
                         </div>
                         <div class="push-range-labels">
                             <span id="leftLabel">0%</span>
-                            <span style="color: #1e293b; font-weight: 700;">Target Range</span>
+                            <span style="color: #1e293b; font-weight: 700;" id="rangeWidthLabel">Target Range: 100%</span>
                             <span id="rightLabel">100%</span>
                         </div>
                     </div>
@@ -1297,6 +1300,39 @@
             
             // Render initial team rosters
             updateTeamRosters();
+            
+            // Attach event handlers properly (prevents mobile double-firing)
+            const pushBtn = document.getElementById('pushButton');
+            if (pushBtn) {
+                // Mouse events
+                pushBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    startPressing();
+                });
+                pushBtn.addEventListener('mouseup', stopPressing);
+                pushBtn.addEventListener('mouseleave', stopPressing);
+                
+                // Touch events
+                pushBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    startPressing();
+                });
+                pushBtn.addEventListener('touchend', stopPressing);
+                pushBtn.addEventListener('touchcancel', stopPressing);
+                
+                // Keyboard support (spacebar/Enter when focused)
+                pushBtn.addEventListener('keydown', (e) => {
+                    if ((e.code === 'Space' || e.code === 'Enter') && !e.repeat) {
+                        e.preventDefault();
+                        startPressing();
+                    }
+                });
+                pushBtn.addEventListener('keyup', (e) => {
+                    if (e.code === 'Space' || e.code === 'Enter') {
+                        stopPressing();
+                    }
+                });
+            }
         }
         
         function startPressing() {
@@ -1358,11 +1394,33 @@
             const rightFill = document.getElementById('rightFill');
             const leftLabel = document.getElementById('leftLabel');
             const rightLabel = document.getElementById('rightLabel');
+            const rangeIndicator = document.getElementById('rangeIndicator');
+            const rangeWidthLabel = document.getElementById('rangeWidthLabel');
             
             if (leftFill) leftFill.style.width = message.left_boundary + '%';
             if (rightFill) rightFill.style.width = (100 - message.right_boundary) + '%';
             if (leftLabel) leftLabel.textContent = message.left_boundary + '%';
             if (rightLabel) rightLabel.textContent = message.right_boundary + '%';
+            
+            // Update the open range indicator
+            const openRange = Math.round(message.right_boundary - message.left_boundary);
+            if (rangeIndicator) {
+                rangeIndicator.style.left = message.left_boundary + '%';
+                rangeIndicator.style.right = (100 - message.right_boundary) + '%';
+                rangeIndicator.textContent = openRange > 0 ? `${openRange}%` : '⚠️';
+                
+                // Color code based on range width
+                if (openRange <= 20) {
+                    rangeIndicator.style.color = '#ef4444'; // Red - danger zone
+                } else if (openRange <= 40) {
+                    rangeIndicator.style.color = '#f59e0b'; // Orange - caution
+                } else {
+                    rangeIndicator.style.color = '#1e293b'; // Normal
+                }
+            }
+            if (rangeWidthLabel) {
+                rangeWidthLabel.textContent = `Target Range: ${openRange}%`;
+            }
             
             // Update team rosters with press counts
             if (message.player_presses) {
