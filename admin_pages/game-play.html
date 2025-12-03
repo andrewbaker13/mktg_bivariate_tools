@@ -1025,38 +1025,50 @@
             const isMultiRound = message.total_rounds && message.total_rounds > 1;
             const hasMoreRounds = isMultiRound && message.current_round < message.total_rounds;
             
-            // For multi-round games, show round statistics instead of winner
-            let mainContent;
-            if (isMultiRound && message.round_stats) {
-                const myStats = message.round_stats.player_stats?.[playerSession.id] || {
+            // Remove any existing round complete banner
+            const existingBanner = document.getElementById('roundCompleteBanner');
+            if (existingBanner) {
+                existingBanner.remove();
+            }
+            
+            // For multi-round games, ADD a banner above the game area (don't replace)
+            if (isMultiRound) {
+                const myStats = message.round_stats?.player_stats?.[playerSession.id] || {
                     player_round_score: 0,
                     player_total_score: 0
                 };
                 
-                mainContent = `
-                    <div class="result-card">
-                        <div style="font-size: 18px; margin-bottom: 20px;">
-                            <strong>📊 Round ${message.current_round} Results</strong>
+                const banner = document.createElement('div');
+                banner.id = 'roundCompleteBanner';
+                banner.style.cssText = 'margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: white;';
+                banner.innerHTML = `
+                    <div style="text-align: center;">
+                        <h2 style="color: white; margin: 0 0 15px 0; font-size: 24px;">
+                            🎉 Round ${message.current_round} of ${message.total_rounds} Complete!
+                        </h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px;">
+                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Players Scored</div>
+                                <div style="font-size: 28px; font-weight: 700;">${message.round_stats?.percent_scored || 0}%</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Your Round Score</div>
+                                <div style="font-size: 28px; font-weight: 700;">${myStats.player_round_score} pts</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
+                                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Total Score</div>
+                                <div style="font-size: 28px; font-weight: 700;">${myStats.player_total_score} pts</div>
+                            </div>
                         </div>
-                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                            <div style="margin: 10px 0;">
-                                <span style="color: #64748b;">Players who scored:</span>
-                                <strong style="color: #3b82f6; font-size: 20px; margin-left: 10px;">${message.round_stats.percent_scored}%</strong>
-                            </div>
-                            <div style="margin: 10px 0;">
-                                <span style="color: #64748b;">Your round score:</span>
-                                <strong style="color: #10b981; font-size: 24px; margin-left: 10px;">${myStats.player_round_score} pts</strong>
-                            </div>
-                            <div style="margin: 10px 0; padding-top: 10px; border-top: 2px solid #e2e8f0;">
-                                <span style="color: #64748b;">Your total score:</span>
-                                <strong style="color: #8b5cf6; font-size: 28px; margin-left: 10px;">${myStats.player_total_score} pts</strong>
-                            </div>
-                        </div>
-                        ${hasMoreRounds ? '<p style="margin-top: 15px; color: #64748b;">Check the leaderboard for cumulative standings →</p>' : '<p style="margin-top: 15px; color: #10b981; font-weight: 600;">Final game complete! Check the leaderboard for final standings →</p>'}
+                        ${hasMoreRounds ? '<div style="margin-top: 15px; font-size: 16px; opacity: 0.9;">⏳ Waiting for instructor to start next round...</div>' : '<div style="margin-top: 15px; font-size: 18px; font-weight: 600;">🏁 Final Round Complete!</div>'}
                     </div>
                 `;
+                
+                // Insert banner at the TOP of gameArea (before existing content)
+                const gameArea = document.getElementById('gameArea');
+                gameArea.insertBefore(banner, gameArea.firstChild);
             } else {
-                // Single-round game or final round: show winner
+                // Single-round game: replace with traditional game over screen
                 const winnerText = message.winner 
                     ? `🏆 Winner: ${message.winner}` 
                     : (message.message || '⏱️ Time is up! No correct answers.');
@@ -1066,29 +1078,17 @@
                     ${message.multiplier ? `<span class="multiplier-badge">${message.multiplier}x</span>` : ''}
                 ` : '';
                 
-                mainContent = `
-                    <div class="result-card">
-                        ${winnerText}<br>
-                        ${detailsHTML}
-                        <p style="margin-top: 15px; color: #64748b;">Check the leaderboard for final standings →</p>
+                document.getElementById('gameArea').innerHTML = `
+                    <div class="results-display">
+                        <h2>🎉 Game Over!</h2>
+                        <div class="result-card">
+                            ${winnerText}<br>
+                            ${detailsHTML}
+                            <p style="margin-top: 15px; color: #64748b;">Check the leaderboard for final standings →</p>
+                        </div>
                     </div>
                 `;
             }
-            
-            const roundInfo = isMultiRound ? `
-                <div style="margin: 20px 0; padding: 15px; background: #eff6ff; border-radius: 8px; border: 2px solid #3b82f6;">
-                    <strong>Round ${message.current_round} of ${message.total_rounds} Complete!</strong>
-                    ${hasMoreRounds ? '<br><span style="color: #64748b;">Waiting for instructor to start next round...</span>' : '<br><span style="color: #10b981; font-weight: 600;">Final Round Complete! 🎉</span>'}
-                </div>
-            ` : '';
-            
-            document.getElementById('gameArea').innerHTML = `
-                <div class="results-display">
-                    <h2>🎉 ${hasMoreRounds ? 'Round Complete!' : 'Game Over!'}</h2>
-                    ${roundInfo}
-                    ${mainContent}
-                </div>
-            `;
         }
         
         function handleRoundChange(message) {
