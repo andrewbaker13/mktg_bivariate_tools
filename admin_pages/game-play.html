@@ -376,6 +376,169 @@
             background: #dbeafe;
             color: #1e40af;
         }
+        
+        /* Push Range Game */
+        .push-range-area {
+            padding: 1rem;
+        }
+        .push-range-visualization {
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        .push-range-bar {
+            position: relative;
+            height: 60px;
+            background: linear-gradient(to right, #fef3c7 0%, #fef3c7 100%);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+        }
+        .push-range-left-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            transition: width 0.1s ease-out;
+        }
+        .push-range-right-fill {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            transition: width 0.1s ease-out;
+        }
+        .push-range-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+        .push-range-teams {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        .team-panel {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 3px solid #e2e8f0;
+        }
+        .team-panel.left {
+            border-color: #3b82f6;
+        }
+        .team-panel.right {
+            border-color: #ef4444;
+        }
+        .team-panel h4 {
+            margin: 0 0 1rem 0;
+            text-align: center;
+            font-size: 1.25rem;
+        }
+        .team-panel.left h4 {
+            color: #3b82f6;
+        }
+        .team-panel.right h4 {
+            color: #ef4444;
+        }
+        .team-member {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            margin-bottom: 0.25rem;
+            border-radius: 6px;
+            background: #f8fafc;
+        }
+        .team-member.own {
+            background: #dbeafe;
+            font-weight: 600;
+        }
+        .team-member.own.right-team {
+            background: #fee2e2;
+        }
+        .push-button-container {
+            text-align: center;
+            margin: 2rem 0;
+        }
+        .push-button {
+            padding: 2rem 4rem;
+            font-size: 2rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.1s;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .push-button:active {
+            transform: scale(0.95);
+        }
+        .push-button.left {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            box-shadow: 0 8px 0 #1e40af;
+        }
+        .push-button.left:active {
+            box-shadow: 0 4px 0 #1e40af;
+            transform: translateY(4px);
+        }
+        .push-button.right {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            color: white;
+            box-shadow: 0 8px 0 #991b1b;
+        }
+        .push-button.right:active {
+            box-shadow: 0 4px 0 #991b1b;
+            transform: translateY(4px);
+        }
+        .my-presses {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 1rem;
+            color: #1e293b;
+        }
+        .push-range-result {
+            text-align: center;
+            padding: 2rem;
+        }
+        .push-range-result.success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-radius: 12px;
+        }
+        .push-range-result.failure {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-radius: 12px;
+        }
+        .top-pressers {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        .top-pressers h4 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #64748b;
+        }
+        .top-presser-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            margin-bottom: 0.25rem;
+            border-radius: 6px;
+        }
+        .top-presser-item:nth-child(2) { background: #fef3c7; }
+        .top-presser-item:nth-child(3) { background: #e5e7eb; }
+        .top-presser-item:nth-child(4) { background: #fed7aa; }
     </style>
 </head>
 <body>
@@ -542,6 +705,14 @@
                     handleGuessResults(message);
                     break;
                     
+                case 'push_range_update':
+                    handlePushRangeUpdate(message);
+                    break;
+                    
+                case 'push_range_results':
+                    handlePushRangeResults(message);
+                    break;
+                    
                 case 'leaderboard_update':
                     updateLeaderboard(message.leaderboard);
                     break;
@@ -655,6 +826,9 @@
             } else if (gameType === 'closest_guess') {
                 showClosestGuessGame(message);
                 startTimer(timeLimit, startTime);
+            } else if (gameType === 'push_range') {
+                showPushRangeGame(message);
+                startPushRangeTimer(timeLimit, startTime);
             }
         }
         
@@ -1048,6 +1222,291 @@
                 feedback.innerHTML += statsHTML;
             }
             
+        }
+        
+        // Push Range Game Functions
+        let pushRangeInterval = null;
+        let pendingPresses = 0;
+        let myTeam = null;
+        let myPressCount = 0;
+        let teamRosters = {left: [], right: []};
+        
+        function showPushRangeGame(message) {
+            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
+            
+            // Get team assignment
+            myTeam = message.team_assignments?.[playerSession.id]?.team || 'left';
+            myPressCount = 0;
+            pendingPresses = 0;
+            
+            // Organize team rosters
+            teamRosters = {left: [], right: []};
+            if (message.team_assignments) {
+                Object.entries(message.team_assignments).forEach(([playerId, playerData]) => {
+                    teamRosters[playerData.team].push({
+                        id: parseInt(playerId),
+                        name: playerData.name,
+                        presses: 0
+                    });
+                });
+            }
+            
+            const buttonHTML = myTeam === 'left' 
+                ? '<button class="push-button left" id="pushButton" onmousedown="startPressing()" onmouseup="stopPressing()" ontouchstart="startPressing()" ontouchend="stopPressing()">⬅️ PUSH LEFT</button>'
+                : '<button class="push-button right" id="pushButton" onmousedown="startPressing()" onmouseup="stopPressing()" ontouchstart="startPressing()" ontouchend="stopPressing()">PUSH RIGHT ➡️</button>';
+            
+            document.getElementById('gameArea').innerHTML = `
+                <div class="push-range-area">
+                    <div class="question-display">
+                        <div class="question-text">${message.question_text}</div>
+                        ${imageHTML}
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                            <div class="timer" id="timer">20</div>
+                        </div>
+                    </div>
+                    
+                    <div class="push-range-visualization">
+                        <div class="push-range-bar">
+                            <div class="push-range-left-fill" id="leftFill" style="width: 0%"></div>
+                            <div class="push-range-right-fill" id="rightFill" style="width: 0%"></div>
+                        </div>
+                        <div class="push-range-labels">
+                            <span id="leftLabel">0%</span>
+                            <span style="color: #1e293b; font-weight: 700;">Target Range</span>
+                            <span id="rightLabel">100%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="push-range-teams">
+                        <div class="team-panel left">
+                            <h4>⬅️ LEFT TEAM</h4>
+                            <div id="leftTeamRoster"></div>
+                        </div>
+                        <div class="team-panel right">
+                            <h4>RIGHT TEAM ➡️</h4>
+                            <div id="rightTeamRoster"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="push-button-container">
+                        ${buttonHTML}
+                        <div class="my-presses">Your Presses: <span id="myPressCount">0</span></div>
+                    </div>
+                </div>
+            `;
+            
+            // Render initial team rosters
+            updateTeamRosters();
+        }
+        
+        function startPressing() {
+            if (pushRangeInterval) return; // Already pressing
+            
+            // Register a press immediately
+            registerPress();
+            
+            // Continue pressing every 100ms while held
+            pushRangeInterval = setInterval(() => {
+                registerPress();
+            }, 100);
+        }
+        
+        function stopPressing() {
+            if (pushRangeInterval) {
+                clearInterval(pushRangeInterval);
+                pushRangeInterval = null;
+            }
+            
+            // Send any pending presses
+            if (pendingPresses > 0) {
+                sendPresses();
+            }
+        }
+        
+        function registerPress() {
+            pendingPresses++;
+            myPressCount++;
+            
+            // Update local display
+            document.getElementById('myPressCount').textContent = myPressCount;
+            
+            // Send batches every 100ms (handled by the interval in sendPresses)
+            if (pendingPresses >= 1) {
+                sendPresses();
+            }
+        }
+        
+        function sendPresses() {
+            if (pendingPresses === 0) return;
+            
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    action: 'push_range_press',
+                    data: {
+                        player_session_id: playerSession.id,
+                        press_count: pendingPresses,
+                        team: myTeam
+                    }
+                }));
+                pendingPresses = 0;
+            }
+        }
+        
+        function handlePushRangeUpdate(message) {
+            // Update the visual bar
+            const leftFill = document.getElementById('leftFill');
+            const rightFill = document.getElementById('rightFill');
+            const leftLabel = document.getElementById('leftLabel');
+            const rightLabel = document.getElementById('rightLabel');
+            
+            if (leftFill) leftFill.style.width = message.left_boundary + '%';
+            if (rightFill) rightFill.style.width = (100 - message.right_boundary) + '%';
+            if (leftLabel) leftLabel.textContent = message.left_boundary + '%';
+            if (rightLabel) rightLabel.textContent = message.right_boundary + '%';
+            
+            // Update team rosters with press counts
+            if (message.player_presses) {
+                Object.entries(message.player_presses).forEach(([playerId, playerData]) => {
+                    const team = playerData.team;
+                    const roster = teamRosters[team];
+                    const player = roster.find(p => p.id === parseInt(playerId));
+                    if (player) {
+                        player.presses = playerData.presses;
+                    }
+                });
+                updateTeamRosters();
+            }
+        }
+        
+        function updateTeamRosters() {
+            const leftRoster = document.getElementById('leftTeamRoster');
+            const rightRoster = document.getElementById('rightTeamRoster');
+            
+            if (leftRoster) {
+                leftRoster.innerHTML = teamRosters.left.map(player => {
+                    const isOwn = player.id === playerSession.id;
+                    return `<div class="team-member ${isOwn ? 'own' : ''}">
+                        <span>${player.name}</span>
+                        <span>${player.presses}</span>
+                    </div>`;
+                }).join('');
+            }
+            
+            if (rightRoster) {
+                rightRoster.innerHTML = teamRosters.right.map(player => {
+                    const isOwn = player.id === playerSession.id;
+                    return `<div class="team-member ${isOwn ? 'own right-team' : ''}">
+                        <span>${player.name}</span>
+                        <span>${player.presses}</span>
+                    </div>`;
+                }).join('');
+            }
+        }
+        
+        function handlePushRangeResults(message) {
+            // Clear any intervals
+            if (pushRangeInterval) {
+                clearInterval(pushRangeInterval);
+                pushRangeInterval = null;
+            }
+            
+            const resultClass = message.is_correct ? 'success' : 'failure';
+            const resultIcon = message.is_correct ? '🎉' : '😞';
+            const resultText = message.is_correct ? 'Success! The range captured the answer!' : 'The range missed the answer!';
+            
+            const topPressersHTML = message.top_pressers && message.top_pressers.length > 0 ? `
+                <div class="top-pressers">
+                    <h4>🏆 Top Button Mashers</h4>
+                    ${message.top_pressers.map((presser, idx) => {
+                        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
+                        const teamColor = presser.team === 'left' ? '#3b82f6' : '#ef4444';
+                        return `<div class="top-presser-item">
+                            <span>${medal} ${presser.name}</span>
+                            <span style="color: ${teamColor}; font-weight: 700;">${presser.presses} presses</span>
+                        </div>`;
+                    }).join('')}
+                </div>
+            ` : '';
+            
+            document.getElementById('gameArea').innerHTML = `
+                <div class="push-range-result ${resultClass}">
+                    <h2>${resultIcon} ${resultText}</h2>
+                    <div style="font-size: 1.5rem; margin: 1rem 0;">
+                        <strong>Correct Answer:</strong> ${message.correct_answer}%
+                    </div>
+                    <div style="font-size: 1.25rem; margin: 1rem 0;">
+                        <strong>Final Range:</strong> ${message.left_boundary}% - ${message.right_boundary}%
+                    </div>
+                    ${message.is_correct ? `
+                        <div style="margin-top: 1rem;">
+                            <div><strong>Left Team Score:</strong> ${message.team_scores.left} pts</div>
+                            <div><strong>Right Team Score:</strong> ${message.team_scores.right} pts</div>
+                        </div>
+                    ` : ''}
+                    ${topPressersHTML}
+                    <p style="margin-top: 2rem; color: #64748b;">Check the leaderboard for updated standings →</p>
+                </div>
+            `;
+        }
+        
+        function startPushRangeTimer(seconds, startTime) {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            const timerEl = document.getElementById('timer');
+            const endTime = startTime + (seconds * 1000);
+            
+            function updateTimer() {
+                const now = Date.now();
+                const remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
+                
+                if (timerEl) {
+                    timerEl.textContent = remaining;
+                    
+                    if (remaining <= 5) {
+                        timerEl.style.color = '#ef4444';
+                        timerEl.style.animation = 'pulse 0.5s infinite';
+                    }
+                }
+                
+                if (remaining <= 0) {
+                    clearInterval(timerInterval);
+                    
+                    // Stop any ongoing pressing
+                    if (pushRangeInterval) {
+                        clearInterval(pushRangeInterval);
+                        pushRangeInterval = null;
+                    }
+                    
+                    // Disable the button
+                    const pushBtn = document.getElementById('pushButton');
+                    if (pushBtn) {
+                        pushBtn.disabled = true;
+                        pushBtn.style.opacity = '0.5';
+                        pushBtn.style.cursor = 'not-allowed';
+                    }
+                    
+                    // Send final presses
+                    if (pendingPresses > 0) {
+                        sendPresses();
+                    }
+                    
+                    // Notify server
+                    if (websocket && websocket.readyState === WebSocket.OPEN) {
+                        websocket.send(JSON.stringify({
+                            action: 'push_range_timeout',
+                            data: {
+                                player_session_id: playerSession.id
+                            }
+                        }));
+                    }
+                }
+            }
+            
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 100);
         }
         
         function handleGameEnd(message) {
