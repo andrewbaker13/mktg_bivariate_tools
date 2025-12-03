@@ -23,7 +23,6 @@
             margin-bottom: 2rem;
         }
         .room-code-display {
-            text-align: center;
             padding: 2rem;
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             border-radius: 12px;
@@ -37,8 +36,40 @@
             text-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         .room-code-display p {
-            margin: 0.5rem 0 0 0;
+            margin: 0;
             opacity: 0.9;
+        }
+        .room-code-display .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .room-code-display .code-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        .copy-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+        .copy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .copy-btn:hover:not(:disabled) {
+            background: rgba(255,255,255,0.35);
         }
         .game-status {
             display: flex;
@@ -194,21 +225,148 @@
         .game-config strong {
             color: #1e293b;
         }
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.35rem 1rem;
+            border-radius: 999px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .status-waiting {
+            background: rgba(147,197,253,0.2);
+            color: #1d4ed8;
+        }
+        .status-in_progress {
+            background: rgba(110,231,183,0.2);
+            color: #047857;
+        }
+        .status-paused {
+            background: rgba(253,224,71,0.2);
+            color: #b45309;
+        }
+        .status-completed, .status-cancelled {
+            background: rgba(248,113,113,0.2);
+            color: #b91c1c;
+        }
+        .connection-pill {
+            margin-top: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.9rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: rgba(148,163,184,0.2);
+            color: #334155;
+            border: 1px solid rgba(148,163,184,0.5);
+        }
+        .connection-pill.connected {
+            background: rgba(74,222,128,0.15);
+            color: #0f766e;
+            border-color: rgba(16,185,129,0.4);
+        }
+        .connection-pill.connecting {
+            background: rgba(253,224,71,0.15);
+            color: #b45309;
+            border-color: rgba(234,179,8,0.4);
+        }
+        .connection-pill.disconnected {
+            background: rgba(248,113,113,0.15);
+            color: #b91c1c;
+            border-color: rgba(248,113,113,0.4);
+        }
+        .player-meta {
+            display: flex;
+            flex-direction: column;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+        .player-badges {
+            display: flex;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+            margin-top: 0.25rem;
+        }
+        .player-badge {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            background: #e2e8f0;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .player-badge.waiting {
+            background: rgba(248,250,252,0.8);
+            color: #b45309;
+            border: 1px solid rgba(249,115,22,0.4);
+        }
+        .player-badge.late {
+            background: rgba(199,210,254,0.5);
+            color: #3730a3;
+        }
+        .player-score {
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 10000;
+        }
+        .toast {
+            min-width: 220px;
+            background: #0f172a;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(15,23,42,0.35);
+            animation: fadeIn 0.2s ease, fadeOut 0.2s ease 3.5s forwards;
+        }
+        .toast.success {
+            background: #047857;
+        }
+        .toast.error {
+            background: #b91c1c;
+        }
+        .toast.warning {
+            background: #b45309;
+        }
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(10px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        @keyframes fadeOut {
+            to {opacity: 0; transform: translateY(-10px);}
+        }
     </style>
 </head>
 <body>
     <div class="host-container">
         <div class="host-header">
             <div class="room-code-display">
-                <p>Students join at: https://drbakermarketing.com/admin_pages/game-join.html</p>
-                <h1 id="roomCodeDisplay">----</h1>
-                <p>Room Code</p>
+                <div class="info-row">
+                    <p style="margin: 0;">Students join at: <span id="joinLinkDisplay">https://drbakermarketing.com/admin_pages/game-join.html</span></p>
+                    <button class="copy-btn" id="copyJoinLinkBtn">Copy Link</button>
+                </div>
+                <div class="code-row">
+                    <h1 id="roomCodeDisplay">----</h1>
+                    <button class="copy-btn" id="copyRoomCodeBtn" disabled>Copy Code</button>
+                </div>
+                <p style="margin-top: 0.5rem;">Room Code</p>
             </div>
             
             <div class="game-status">
                 <div class="status-card">
                     <h3>Status</h3>
-                    <div class="value" id="gameStatus">Waiting</div>
+                    <div class="value"><span id="gameStatus" class="status-chip status-waiting">Waiting</span></div>
                 </div>
                 <div class="status-card">
                     <h3>Players</h3>
@@ -219,6 +377,7 @@
                     <div class="value" id="gameType">-</div>
                 </div>
             </div>
+            <div class="connection-pill" id="connectionStatus">WS: Idle</div>
         </div>
 
         <div class="main-content">
@@ -352,18 +511,105 @@
         </div>
     </div>
 
+    <div id="toastContainer" class="toast-container"></div>
+
     <script>
         const API_BASE = 'https://drbaker-backend.onrender.com/api';
         const WS_BASE = 'wss://drbaker-backend.onrender.com';
+        const JOIN_URL = 'https://drbakermarketing.com/admin_pages/game-join.html';
         
         let gameSession = null;
         let websocket = null;
+        let reconnectTimeout = null;
+        let hasShownConnectionToast = false;
+        let isManualWebsocketClose = false;
+        let currentRoomCode = '';
         let token = localStorage.getItem('auth_token');
+        
+        const toastContainer = document.getElementById('toastContainer');
+        const statusChipEl = document.getElementById('gameStatus');
+        const connectionStatusEl = document.getElementById('connectionStatus');
+        const copyRoomCodeBtn = document.getElementById('copyRoomCodeBtn');
         
         if (!token) {
             alert('Please log in first');
             window.location.href = 'login.html';
         }
+
+        const STATUS_LABELS = {
+            waiting: 'Waiting',
+            in_progress: 'In Progress',
+            paused: 'Paused',
+            completed: 'Completed',
+            cancelled: 'Cancelled'
+        };
+
+        function showToast(message, type = 'info') {
+            if (!toastContainer) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3800);
+        }
+
+        function copyTextToClipboard(text, successMessage) {
+            if (!navigator.clipboard) {
+                showToast('Clipboard not supported', 'error');
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                if (successMessage) showToast(successMessage, 'success');
+            }).catch(() => showToast('Copy failed', 'error'));
+        }
+
+        function updateRoomCodeDisplay(code) {
+            currentRoomCode = code || '';
+            document.getElementById('roomCodeDisplay').textContent = currentRoomCode || '----';
+            if (copyRoomCodeBtn) {
+                copyRoomCodeBtn.disabled = !currentRoomCode;
+            }
+        }
+
+        function setStatusIndicator(statusKey, labelOverride) {
+            if (!statusChipEl) return;
+            const classList = ['status-chip'];
+            if (statusKey && STATUS_LABELS[statusKey]) {
+                classList.push(`status-${statusKey}`);
+            }
+            statusChipEl.className = classList.join(' ');
+            statusChipEl.textContent = labelOverride || STATUS_LABELS[statusKey] || statusKey || 'Unknown';
+        }
+
+        function setConnectionStatus(state, labelOverride) {
+            if (!connectionStatusEl) return;
+            connectionStatusEl.className = `connection-pill ${state || ''}`;
+            const labels = {
+                connected: 'WS: Connected',
+                connecting: 'WS: Connecting…',
+                disconnected: 'WS: Disconnected'
+            };
+            connectionStatusEl.textContent = labelOverride || labels[state] || 'WS: Idle';
+        }
+
+        document.getElementById('joinLinkDisplay').textContent = JOIN_URL;
+        updateRoomCodeDisplay(null);
+        setStatusIndicator('waiting');
+        setConnectionStatus();
+
+        document.getElementById('copyJoinLinkBtn')?.addEventListener('click', () => {
+            copyTextToClipboard(JOIN_URL, 'Join link copied');
+        });
+
+        copyRoomCodeBtn?.addEventListener('click', () => {
+            if (!currentRoomCode) {
+                showToast('Create a game to generate a code', 'warning');
+                return;
+            }
+            copyTextToClipboard(currentRoomCode, 'Room code copied');
+        });
 
         // Show template warning dialog when some questions are missing
         function showTemplateWarningDialog(data) {
@@ -500,16 +746,31 @@
                     headers: {'Authorization': `Token ${token}`}
                 });
                 const template = await response.json();
+                const questionCount = template.question_count || 0;
+                const estimatedSeconds = questionCount * 30;
+                const estimatedMinutes = questionCount ? Math.max(1, Math.round(estimatedSeconds / 60)) : 0;
+                const estimateDisplay = estimatedMinutes ? `~${estimatedMinutes} minute${estimatedMinutes === 1 ? '' : 's'}` : 'N/A';
+                const sampleQuestionList = (template.question_ids || []).slice(0, 5).join(', ');
+                const descriptionBlock = template.description ? `
+                    <div style="margin-top: 0.5rem; color: #475569;">${template.description}</div>
+                ` : '';
                 
                 document.getElementById('templateDetails').innerHTML = `
-                    <div style="margin-bottom: 0.5rem;"><strong>Name:</strong> ${template.name}</div>
-                    <div style="margin-bottom: 0.5rem;"><strong>Questions:</strong> ${template.question_count} rounds</div>
-                    <div style="margin-bottom: 0.5rem;"><strong>Created by:</strong> ${template.created_by_username || 'Unknown'}</div>
-                    <div style="color: #6b7280; font-size: 0.875rem;">Students will play through all ${template.question_count} questions with cumulative scoring.</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.5rem;">
+                        <div><strong>Name:</strong> ${template.name}</div>
+                        <div><strong>Rounds:</strong> ${questionCount}</div>
+                        <div><strong>Created by:</strong> ${template.created_by_username || 'Unknown'}</div>
+                    </div>
+                    <div style="margin-bottom: 0.3rem;"><strong>Estimated Time:</strong> ${estimateDisplay}</div>
+                    <div style="margin-bottom: 0.3rem;"><strong>Question IDs:</strong> ${sampleQuestionList || 'Not available'}</div>
+                    <div style="color: #6b7280; font-size: 0.875rem;">Students will play through all ${questionCount} questions with cumulative scoring.</div>
+                    ${descriptionBlock}
                 `;
                 preview.style.display = 'block';
+                showToast(`Loaded template "${template.name}"`, 'success');
             } catch (error) {
                 console.error('Error loading template details:', error);
+                showToast('Failed to load template details', 'error');
             }
         });
 
@@ -649,9 +910,10 @@
                 }
                 
                 // Update UI
-                document.getElementById('roomCodeDisplay').textContent = gameSession.room_code;
-                document.getElementById('gameType').textContent = gameSession.game_type || 'Multi-Round';
-                document.getElementById('gameStatus').textContent = gameSession.status;
+                updateRoomCodeDisplay(gameSession.room_code);
+                document.getElementById('gameType').textContent = gameSession.game_type || (gameSession.total_rounds > 1 ? 'Multi-Round' : '-');
+                setStatusIndicator(gameSession.status);
+                showToast('Game session created', 'success');
                 
                 document.getElementById('setupSection').style.display = 'none';
                 document.getElementById('gameSection').style.display = 'block';
@@ -698,6 +960,7 @@
                 pollPlayers();
                 
             } catch (error) {
+                showToast(error.message || 'Error creating game', 'error');
                 alert('Error creating game: ' + error.message);
             }
         });
@@ -730,11 +993,13 @@
                 if (!response.ok) throw new Error('Failed to start game');
                 
                 gameSession = await response.json();
-                document.getElementById('gameStatus').textContent = 'In Progress';
+                setStatusIndicator('in_progress');
+                showToast('Game started', 'success');
                 
                 // Game started successfully - WebSocket will receive broadcast from server
                 this.disabled = true;
             } catch (error) {
+                showToast(error.message || 'Error starting game', 'error');
                 alert('Error starting game: ' + error.message);
             }
         });
@@ -754,12 +1019,14 @@
                 if (!response.ok) throw new Error('Failed to end game');
                 
                 gameSession = await response.json();
-                document.getElementById('gameStatus').textContent = 'Completed';
+                setStatusIndicator('completed');
+                showToast('Game ended', 'warning');
                 
                 this.disabled = true;
                 document.getElementById('startGameBtn').disabled = true;
                 document.getElementById('nextRoundBtn').style.display = 'none';
             } catch (error) {
+                showToast(error.message || 'Error ending game', 'error');
                 alert('Error ending game: ' + error.message);
             }
         });
@@ -787,6 +1054,8 @@
                 gameSession = await response.json();
                 console.log('Round advanced, new gameSession:', gameSession);
                 
+                showToast(`Advanced to Round ${gameSession.current_round}`, 'success');
+                setStatusIndicator('paused', `Round ${gameSession.current_round} Ready`);
                 // Update UI with new round number
                 document.getElementById('gameConfig').innerHTML = `
                     <strong>Round ${gameSession.current_round} of ${gameSession.total_rounds}</strong><br>
@@ -804,6 +1073,7 @@
                 
             } catch (error) {
                 console.error('Error advancing round:', error);
+                showToast(error.message || 'Error advancing round', 'error');
                 alert('Error advancing round: ' + error.message);
                 nextBtn.disabled = false;
                 nextBtn.textContent = '⏭️ Next Round';
@@ -828,10 +1098,12 @@
                 const nextBtn = document.getElementById('nextRoundBtn');
                 nextBtn.style.display = 'inline-block';
                 nextBtn.disabled = false;
-                document.getElementById('gameStatus').textContent = `Round ${currentRound} Complete - Ready for Next Round`;
+                setStatusIndicator('paused', `Round ${currentRound} Complete - Ready for Next Round`);
+                showToast(`Round ${currentRound} complete`, 'info');
             } else {
                 // Final round complete - show end-of-game UI
-                document.getElementById('gameStatus').textContent = 'Game Over!';
+                setStatusIndicator('completed', 'Game Over!');
+                showToast('Game over! 🎉', 'success');
                 document.getElementById('startGameBtn').disabled = true;
                 document.getElementById('nextRoundBtn').style.display = 'none';
 
@@ -958,6 +1230,8 @@
                 gameSession.current_round = message.current_round;
                 gameSession.total_rounds = message.total_rounds;
             }
+            setStatusIndicator('paused', `Round ${message.current_round} Ready`);
+            showToast(`Round ${message.current_round} is ready`, 'info');
         }
         
         // Handle countdown event from WebSocket
@@ -966,6 +1240,7 @@
             const numberDiv = document.getElementById('countdownNumber');
             const roundInfo = document.getElementById('countdownRoundInfo');
             
+             setStatusIndicator('in_progress', `Starting Round ${message.current_round}...`);
             // Show overlay
             overlay.style.display = 'flex';
             roundInfo.textContent = `Round ${message.current_round} of ${message.total_rounds}`;
@@ -997,10 +1272,30 @@
 
         // WebSocket connection
         function connectWebSocket(roomCode) {
+            if (!roomCode) return;
+            if (reconnectTimeout) {
+                clearTimeout(reconnectTimeout);
+                reconnectTimeout = null;
+            }
+            setConnectionStatus('connecting');
+            if (websocket) {
+                try {
+                    isManualWebsocketClose = true;
+                    websocket.close();
+                } catch (e) {
+                    console.warn('Error closing existing websocket', e);
+                }
+            }
             websocket = new WebSocket(`${WS_BASE}/ws/game/${roomCode}/`);
+            isManualWebsocketClose = false;
             
             websocket.onopen = function() {
                 console.log('WebSocket connected');
+                setConnectionStatus('connected');
+                if (!hasShownConnectionToast) {
+                    showToast('Live updates connected', 'success');
+                    hasShownConnectionToast = true;
+                }
             };
             
             websocket.onmessage = function(event) {
@@ -1020,10 +1315,20 @@
             
             websocket.onerror = function(error) {
                 console.error('WebSocket error:', error);
+                showToast('Live connection error', 'error');
             };
             
             websocket.onclose = function() {
                 console.log('WebSocket closed');
+                setConnectionStatus('disconnected');
+                websocket = null;
+                const shouldReconnect = !isManualWebsocketClose && gameSession && !['completed', 'cancelled'].includes(gameSession.status || '');
+                isManualWebsocketClose = false;
+                if (shouldReconnect) {
+                    showToast('Connection lost, retrying...', 'warning');
+                    reconnectTimeout = setTimeout(() => connectWebSocket(roomCode), 3000);
+                    setConnectionStatus('connecting', 'WS: Reconnecting…');
+                }
             };
         }
 
@@ -1050,25 +1355,41 @@
         }
 
         // Update players list
-        function updatePlayersList(players) {
+        function updatePlayersList(players = []) {
             const container = document.getElementById('playersListContainer');
             const list = document.getElementById('playersList');
             
-            if (players.length === 0) {
+            if (!Array.isArray(players) || players.length === 0) {
                 container.style.display = 'block';
                 list.innerHTML = '';
                 return;
             }
             
             container.style.display = 'none';
-            list.innerHTML = players.map(player => `
+            list.innerHTML = players.map(player => {
+                const badges = [];
+                if (player.joined_mid_game) badges.push('<span class="player-badge late">Late Join</span>');
+                if (player.waiting_to_enter) badges.push('<span class="player-badge waiting">Waiting</span>');
+                const badgeRow = badges.length ? `<div class="player-badges">${badges.join('')}</div>` : '';
+                const score = typeof player.score === 'number' ? player.score : 0;
+                const rank = player.rank || '—';
+                const extraInfo = player.joined_at_round ? `First round: ${player.joined_at_round}` : '';
+                return `
                 <div class="player-item">
-                    <span class="player-name">${player.display_name || player.name}</span>
+                    <div>
+                        <span class="player-name">${player.display_name || player.name}</span>
+                        <div class="player-meta">
+                            <span class="player-score">Score: ${score}</span>
+                            <span>Rank: ${rank}${extraInfo ? ' • ' + extraInfo : ''}</span>
+                        </div>
+                        ${badgeRow}
+                    </div>
                     <span class="player-status ${player.is_connected ? 'connected' : 'disconnected'}">
                         ${player.is_connected ? '🟢 Online' : '🔴 Offline'}
                     </span>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // Initialize
