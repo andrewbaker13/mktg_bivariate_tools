@@ -1197,30 +1197,18 @@
                 isWaitingToEnter = false;
             }
             
-            // Show transitioning message
+            // Show waiting state - DON'T show the question until host starts the round
             document.getElementById('gameArea').innerHTML = `
                 <div class="waiting-state">
-                    <h2>🔄 Round ${message.current_round} of ${message.total_rounds}</h2>
+                    <h2>⏳ Round ${message.current_round} of ${message.total_rounds}</h2>
                     <div class="spinner"></div>
-                    <p style="color: #64748b; margin-top: 1rem;">Loading next question...</p>
+                    <p style="color: #64748b; margin-top: 1rem;">Waiting for instructor to start round...</p>
                 </div>
             `;
             
-            // Wait a moment, then start the new round
-            setTimeout(() => {
-                gameType = message.game_type;
-                gameStartTime = Date.now();
-                
-                const timeLimit = message.game_time_limit || 20;
-                
-                if (gameType === 'speed_tap') {
-                    showSpeedTapGame(message);
-                    startSpeedTapTimer(timeLimit);
-                } else if (gameType === 'closest_guess') {
-                    showClosestGuessGame(message);
-                    startTimer(timeLimit);
-                }
-            }, 1500); // Short delay for visual transition
+            // Store the round data but DON'T display it yet
+            // It will be shown when countdown_start is received
+            window.pendingRoundData = message;
         }
         
         function updateLeaderboard(leaderboard) {
