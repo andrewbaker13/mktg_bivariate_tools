@@ -202,6 +202,13 @@
     <script>
         const API_BASE = 'https://drbaker-backend.onrender.com/api';
         
+        // Check for room code in URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCodeFromUrl = urlParams.get('room');
+        if (roomCodeFromUrl) {
+            document.getElementById('roomCode').value = roomCodeFromUrl.toUpperCase();
+        }
+        
         // Toggle guest fields
         document.getElementById('guestMode').addEventListener('change', function() {
             const guestFields = document.getElementById('guestFields');

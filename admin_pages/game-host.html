@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Host Game - Marketing Analytics Tools</title>
     <link rel="stylesheet" href="../shared/css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -70,6 +71,27 @@
         }
         .copy-btn:hover:not(:disabled) {
             background: rgba(255,255,255,0.35);
+        }
+        .qr-code-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        .qr-code-container #qrcode {
+            padding: 0.5rem;
+            background: white;
+            border-radius: 4px;
+        }
+        .qr-code-container p {
+            color: #1e293b;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin: 0;
         }
         .game-status {
             display: flex;
@@ -361,6 +383,12 @@
                     <button class="copy-btn" id="copyRoomCodeBtn" disabled>Copy Code</button>
                 </div>
                 <p style="margin-top: 0.5rem;">Room Code</p>
+                
+                <!-- QR Code -->
+                <div class="qr-code-container" id="qrCodeContainer" style="display: none;">
+                    <div id="qrcode"></div>
+                    <p>📱 Scan to join game</p>
+                </div>
             </div>
             
             <div class="game-status">
@@ -570,6 +598,35 @@
             document.getElementById('roomCodeDisplay').textContent = currentRoomCode || '----';
             if (copyRoomCodeBtn) {
                 copyRoomCodeBtn.disabled = !currentRoomCode;
+            }
+            
+            // Generate QR code for the game join link
+            const qrContainer = document.getElementById('qrCodeContainer');
+            const qrCodeDiv = document.getElementById('qrcode');
+            
+            if (currentRoomCode) {
+                // Clear any existing QR code
+                qrCodeDiv.innerHTML = '';
+                
+                // Generate join URL with room code pre-filled
+                const joinUrl = `https://drbakermarketing.com/admin_pages/game-join.html?room=${currentRoomCode}`;
+                
+                // Create QR code
+                new QRCode(qrCodeDiv, {
+                    text: joinUrl,
+                    width: 180,
+                    height: 180,
+                    colorDark: "#1e293b",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+                
+                // Show QR container
+                qrContainer.style.display = 'flex';
+            } else {
+                // Hide QR container when no room code
+                qrContainer.style.display = 'none';
+                qrCodeDiv.innerHTML = '';
             }
         }
 
