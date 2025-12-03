@@ -1044,17 +1044,25 @@
         
         function handleError(message) {
             const feedback = document.getElementById('feedback');
-            feedback.innerHTML = `
-                <div class="alert alert-danger">
-                    <strong>⚠️ Validation Error:</strong> ${message.message}
-                    <br><small>Please adjust your range and try again.</small>
-                </div>
-            `;
+            if (feedback) {
+                feedback.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>⚠️ Error:</strong> ${message.message}
+                    </div>
+                `;
+            } else {
+                // No feedback element - show alert
+                alert(`Error: ${message.message}`);
+            }
             
-            // Re-enable inputs so player can fix and resubmit
-            document.getElementById('guessMin').disabled = false;
-            document.getElementById('guessMax').disabled = false;
-            document.querySelector('.submit-guess-btn').disabled = false;
+            // Re-enable inputs so player can fix and resubmit (only for Closest Guess)
+            const guessMin = document.getElementById('guessMin');
+            const guessMax = document.getElementById('guessMax');
+            const submitBtn = document.querySelector('.submit-guess-btn');
+            
+            if (guessMin) guessMin.disabled = false;
+            if (guessMax) guessMax.disabled = false;
+            if (submitBtn) submitBtn.disabled = false;
         }
         
         function handleRangeSubmitted(message) {
