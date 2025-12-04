@@ -1183,8 +1183,14 @@
                 return;
             }
             
-            const timeLimit = message.game_time_limit || 20;
+            // Use custom time limit if provided, otherwise default to 20 seconds
+            // Important: check for null/undefined explicitly to allow 0 or small values
+            const timeLimit = (message.game_time_limit !== null && message.game_time_limit !== undefined) 
+                ? message.game_time_limit 
+                : 20;
             const startTime = message.start_time ? new Date(message.start_time).getTime() : Date.now();
+            
+            console.log('Game starting with time limit:', timeLimit, 'seconds (from message:', message.game_time_limit, ')');
             
             if (gameType === 'speed_tap') {
                 showSpeedTapGame(message);
@@ -1929,20 +1935,20 @@
                 answerButtons.forEach(btn => {
                     const btnAnswer = btn.dataset.answer;
                     
+                    // Disable all buttons
+                    btn.disabled = true;
+                    btn.style.cursor = 'not-allowed';
+                    
                     // Check if this is the correct answer
                     if (btnAnswer === message.correct_answer) {
-                        // Add green border and label
+                        // Add green border and checkmark
                         btn.style.border = '4px solid #10b981';
                         btn.style.background = '#d1fae5';
-                        btn.style.position = 'relative';
-                        btn.style.paddingTop = '2.5rem';
-                        
-                        // Add "Correct Answer" label
-                        const label = document.createElement('div');
-                        label.style.cssText = 'position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 700; color: #10b981; text-transform: uppercase;';
-                        label.textContent = '✓ Correct Answer';
-                        btn.style.position = 'relative';
-                        btn.insertBefore(label, btn.firstChild);
+                        btn.style.borderWidth = '6px';
+                        // Add checkmark if not already present
+                        if (!btn.innerHTML.includes('✔️')) {
+                            btn.innerHTML = `<span style='font-size:2rem; color:#10b981;'>✔️</span> ` + btn.textContent;
+                        }
                     }
                     
                     // If player selected this answer and it was wrong
@@ -1951,13 +1957,29 @@
                         btn.style.border = '4px solid #ef4444';
                         btn.style.background = '#fee2e2';
                         btn.style.color = '#991b1b';
+                        btn.style.borderWidth = '6px';
+                        // Add X mark if not already present
+                        if (!btn.innerHTML.includes('❌')) {
+                            btn.innerHTML = `<span style='font-size:2rem; color:#ef4444;'>❌</span> ` + btn.textContent;
+                        }
                     }
                 });
                 
-                // Clear the waiting message
+                // Update or clear the feedback message
                 const feedback = document.getElementById('feedback');
                 if (feedback) {
-                    feedback.innerHTML = '';
+                    // Show if player answered
+                    const hasSelection = document.querySelector('.answer-btn.selected');
+                    if (hasSelection) {
+                        const playerAnswer = hasSelection.dataset.answer;
+                        if (playerAnswer === message.correct_answer) {
+                            feedback.innerHTML = `<div class='alert alert-success'>✅ Correct!</div>`;
+                        } else {
+                            feedback.innerHTML = `<div class='alert alert-error'>❌ Incorrect. The correct answer was <strong>${message.correct_answer}</strong>.</div>`;
+                        }
+                    } else {
+                        feedback.innerHTML = `<div class='alert alert-info'>⏱️ Time's up! The correct answer was <strong>${message.correct_answer}</strong>.</div>`;
+                    }
                 }
             }
             
@@ -2028,6 +2050,14 @@
                 const gameArea = document.getElementById('gameArea');
                 gameArea.insertBefore(banner, gameArea.firstChild);
                 
+                // If this is the final round, automatically transition to final standings after 3 seconds
+                if (isFinalRound) {
+                    console.log('Final round detected, will show final standings in 3 seconds...');
+                    setTimeout(() => {
+                        showFinalStandings(message, leaderboardVisibility);
+                    }, 3000);
+                }
+                
                 // If final round and leaderboard visibility allows, show full final leaderboard
                 if (isFinalRound && shouldShowFinalLeaderboard && message.leaderboard) {
                     const finalLeaderboardDiv = document.createElement('div');
@@ -2076,6 +2106,70 @@
                     </div>
                 `;
             }
+        }
+        
+        function showFinalStandings(message, leaderboardVisibility) {
+            const gameArea = document.getElementById('gameArea');
+            const shouldShowLeaderboard = leaderboardVisibility === 'always_show' && message.leaderboard && message.leaderboard.length > 0;
+            
+            // Find player's position and stats
+            const myPosition = message.leaderboard ? message.leaderboard.findIndex(p => 
+                p.player_id === playerSession.id || p.player_name === playerSession.display_name
+            ) : -1;
+            
+            const myStats = message.round_stats?.player_stats?.[playerSession.id] || {
+                player_total_score: playerSession.score || 0
+            };
+            
+            let standingsHTML = '';
+            
+            if (shouldShowLeaderboard) {
+                // Show full leaderboard
+                const leaderboardHTML = message.leaderboard.map((player, idx) => {
+                    const isOwn = player.player_id === playerSession.id || player.player_name === playerSession.display_name;
+                    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '';
+                    
+                    return `
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; margin-bottom: 10px; background: ${isOwn ? '#fef3c7' : '#f8fafc'}; border-radius: 8px; border: 2px solid ${isOwn ? '#f59e0b' : '#e2e8f0'};">
+                            <span style="font-size: 24px; font-weight: 700; color: #64748b; min-width: 50px;">${medal || (idx + 1)}</span>
+                            <span style="flex: 1; margin-left: 15px; font-weight: ${isOwn ? '700' : '600'}; font-size: 18px;">${player.player_name}</span>
+                            <span style="font-weight: 700; font-size: 24px; color: #1e293b;">${player.score} pts</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                standingsHTML = `
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #1e293b; font-size: 32px; margin-bottom: 10px;">🎉 Game Complete!</h2>
+                        ${myPosition >= 0 ? `<p style="font-size: 20px; color: #64748b; margin-bottom: 20px;">You finished in <strong style="color: #3b82f6;">#${myPosition + 1}</strong> place!</p>` : ''}
+                    </div>
+                    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto;">
+                        <h3 style="text-align: center; color: #1e293b; margin: 0 0 20px 0;">🏆 Final Standings</h3>
+                        ${leaderboardHTML}
+                    </div>
+                `;
+            } else {
+                // Leaderboard hidden - just show player's final score
+                standingsHTML = `
+                    <div style="text-align: center;">
+                        <h2 style="color: #1e293b; font-size: 32px; margin-bottom: 20px;">🎉 Game Complete!</h2>
+                        <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto;">
+                            <div style="font-size: 18px; color: #64748b; margin-bottom: 10px;">Your Final Score</div>
+                            <div style="font-size: 48px; font-weight: 700; color: #3b82f6; margin-bottom: 20px;">${myStats.player_total_score} pts</div>
+                            <p style="color: #64748b; font-size: 16px;">Great job! 🎊</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            gameArea.innerHTML = `
+                <div style="padding: 2rem;">
+                    ${standingsHTML}
+                    <div style="text-align: center; margin-top: 30px;">
+                        <p style="color: #94a3b8; font-size: 14px;">Thanks for playing! The instructor will close the game when ready.</p>
+                    </div>
+                </div>
+            `;
         }
         
         function handleRoundChange(message) {
