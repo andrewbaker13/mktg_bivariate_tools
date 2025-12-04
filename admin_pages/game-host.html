@@ -547,7 +547,7 @@
                                     </select>
                                     <small style="color: #6b7280; font-size: 0.75rem;">Multiply all points by this factor</small>
                                 </div>
-                                <div class="form-group" style="margin-bottom: 0;">
+                                <div class="form-group" style="margin-bottom: 1rem;">
                                     <label for="leaderboardVisibility" style="font-size: 0.875rem; font-weight: 600; color: #475569;">📊 Leaderboard Visibility</label>
                                     <select id="leaderboardVisibility" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
                                         <option value="always_show" selected>Always Show</option>
@@ -555,6 +555,22 @@
                                         <option value="always_hide">Always Hide</option>
                                     </select>
                                     <small style="color: #6b7280; font-size: 0.75rem;">Control when students see the leaderboard</small>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-size: 0.875rem; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 0.5rem;">
+                                        <input type="checkbox" id="autoAdvance" style="width: auto; cursor: pointer;">
+                                        <span>⏩ Auto-Advance Between Rounds</span>
+                                    </label>
+                                    <div id="autoAdvanceOptions" style="margin-top: 0.5rem; margin-left: 1.5rem; display: none;">
+                                        <label for="autoAdvanceDelay" style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 0.25rem;">Delay after round ends:</label>
+                                        <select id="autoAdvanceDelay" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;">
+                                            <option value="5">5 seconds</option>
+                                            <option value="10" selected>10 seconds (default)</option>
+                                            <option value="20">20 seconds</option>
+                                            <option value="30">30 seconds</option>
+                                        </select>
+                                    </div>
+                                    <small style="color: #6b7280; font-size: 0.75rem; display: block; margin-top: 0.5rem;">Automatically start next round after delay (multi-round games only)</small>
                                 </div>
                             </div>
                         </div>
@@ -890,6 +906,22 @@
             }
         }
 
+        // Toggle auto-advance options visibility
+        document.addEventListener('DOMContentLoaded', function() {
+            const autoAdvanceCheckbox = document.getElementById('autoAdvance');
+            const autoAdvanceOptions = document.getElementById('autoAdvanceOptions');
+            
+            if (autoAdvanceCheckbox) {
+                autoAdvanceCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        autoAdvanceOptions.style.display = 'block';
+                    } else {
+                        autoAdvanceOptions.style.display = 'none';
+                    }
+                });
+            }
+        });
+        
         // Toggle advanced settings panel
         function toggleAdvancedSettings() {
             const content = document.getElementById('advancedSettingsContent');
@@ -1073,6 +1105,12 @@
             const leaderboardVisibility = document.getElementById('leaderboardVisibility').value;
             if (leaderboardVisibility !== 'always_show') {
                 gameSettings.leaderboard_visibility = leaderboardVisibility;
+            }
+            
+            const autoAdvance = document.getElementById('autoAdvance').checked;
+            if (autoAdvance) {
+                gameSettings.auto_advance = true;
+                gameSettings.auto_advance_delay = parseInt(document.getElementById('autoAdvanceDelay').value);
             }
             
             const requestBody = {
@@ -1298,6 +1336,8 @@
         });
         
         // Handle game ended event from WebSocket
+        let autoAdvanceTimeout = null; // Track timeout for cancellation
+        
         function handleGameEnded(message) {
             console.log('Game ended event received:', message);
             
@@ -1317,6 +1357,44 @@
                 nextBtn.disabled = false;
                 setStatusIndicator('paused', `Round ${currentRound} Complete - Ready for Next Round`);
                 showToast(`Round ${currentRound} complete`, 'info');
+                
+                // Check if auto-advance is enabled
+                const autoAdvance = document.getElementById('autoAdvance').checked;
+                if (autoAdvance) {
+                    const delay = parseInt(document.getElementById('autoAdvanceDelay').value) * 1000;
+                    console.log(`Auto-advance enabled: will advance in ${delay}ms`);
+                    
+                    // Update button text to show countdown
+                    let secondsRemaining = delay / 1000;
+                    nextBtn.textContent = `⏩ Auto-advancing in ${secondsRemaining}s (click to advance now)`;
+                    
+                    const countdownInterval = setInterval(() => {
+                        secondsRemaining--;
+                        if (secondsRemaining > 0) {
+                            nextBtn.textContent = `⏩ Auto-advancing in ${secondsRemaining}s (click to advance now)`;
+                        }
+                    }, 1000);
+                    
+                    // Set timeout to auto-advance
+                    autoAdvanceTimeout = setTimeout(async () => {
+                        clearInterval(countdownInterval);
+                        console.log('Auto-advancing to next round...');
+                        nextBtn.click(); // Trigger the existing next round logic
+                    }, delay);
+                    
+                    // If user clicks button manually, cancel auto-advance
+                    const originalClickHandler = nextBtn.onclick;
+                    nextBtn.onclick = function(e) {
+                        if (autoAdvanceTimeout) {
+                            clearTimeout(autoAdvanceTimeout);
+                            clearInterval(countdownInterval);
+                            autoAdvanceTimeout = null;
+                            nextBtn.textContent = '⏭️ Next Round';
+                            console.log('Auto-advance cancelled by manual click');
+                        }
+                        // Don't prevent the default click behavior
+                    };
+                }
             } else {
                 // Final round complete - show end-of-game UI
                 setStatusIndicator('completed', 'Game Over!');

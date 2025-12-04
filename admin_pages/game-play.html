@@ -1193,18 +1193,18 @@
             console.log('Game starting with time limit:', timeLimit, 'seconds (from message:', message.game_time_limit, ')');
             
             if (gameType === 'speed_tap') {
-                showSpeedTapGame(message);
+                showSpeedTapGame(message, timeLimit);
                 startSpeedTapTimer(timeLimit, startTime);
             } else if (gameType === 'closest_guess') {
-                showClosestGuessGame(message);
+                showClosestGuessGame(message, timeLimit);
                 startTimer(timeLimit, startTime);
             } else if (gameType === 'push_range') {
-                showPushRangeGame(message);
+                showPushRangeGame(message, timeLimit);
                 startPushRangeTimer(timeLimit, startTime);
             }
         }
         
-        function showSpeedTapGame(message) {
+        function showSpeedTapGame(message, timeLimit) {
             // Use actual options from server if provided, otherwise fallback to A/B/C/D
             let options = message.options || [];
             if (!options.length) {
@@ -1225,7 +1225,7 @@
                         <div class="question-text">${message.question_text}</div>
                         ${imageHTML}
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                            <div class="timer" id="timer">20</div>
+                            <div class="timer" id="timer">${timeLimit}</div>
                             <div style="font-size: 24px; font-weight: 700; color: #10b981;" id="availablePoints">100 pts</div>
                         </div>
                     </div>
@@ -1297,7 +1297,7 @@
             }
         }
         
-        function showClosestGuessGame(message) {
+        function showClosestGuessGame(message, timeLimit) {
             // Reset guess tracking for new game
             submittedGuesses = [];
             
@@ -1338,7 +1338,7 @@
                         <div class="question-text">${message.question_text}</div>
                         ${rangeRequirementText}
                         ${imageHTML}
-                        <div class="timer" id="timer">20</div>
+                        <div class="timer" id="timer">${timeLimit}</div>
                     </div>
                     
                     <div class="range-inputs">
@@ -1606,7 +1606,7 @@
         let myPressCount = 0;
         let teamRosters = {left: [], right: []};
         
-        function showPushRangeGame(message) {
+        function showPushRangeGame(message, timeLimit) {
             const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
             
             // Get team assignment
@@ -1638,7 +1638,7 @@
                         <div class="question-text">${message.question_text}</div>
                         ${imageHTML}
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                            <div class="timer" id="timer">20</div>
+                            <div class="timer" id="timer">${timeLimit}</div>
                         </div>
                     </div>
                     
@@ -2058,32 +2058,8 @@
                     }, 3000);
                 }
                 
-                // If final round and leaderboard visibility allows, show full final leaderboard
-                if (isFinalRound && shouldShowFinalLeaderboard && message.leaderboard) {
-                    const finalLeaderboardDiv = document.createElement('div');
-                    finalLeaderboardDiv.style.cssText = 'margin-top: 20px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
-                    
-                    const leaderboardHTML = message.leaderboard.map((player, idx) => {
-                        const isOwn = player.player_id === playerSession.id || player.player_name === playerSession.display_name;
-                        const rankClass = idx === 0 ? 'first' : idx === 1 ? 'second' : idx === 2 ? 'third' : '';
-                        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '';
-                        
-                        return `
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; margin-bottom: 10px; background: ${isOwn ? '#fef3c7' : '#f8fafc'}; border-radius: 8px; border: 2px solid ${isOwn ? '#f59e0b' : '#e2e8f0'};">
-                                <span style="font-size: 24px; font-weight: 700; color: #64748b; min-width: 40px;">${medal || (idx + 1)}</span>
-                                <span style="flex: 1; margin-left: 15px; font-weight: ${isOwn ? '700' : '600'}; font-size: 18px;">${player.player_name}</span>
-                                <span style="font-weight: 700; font-size: 24px; color: #1e293b;">${player.score}</span>
-                            </div>
-                        `;
-                    }).join('');
-                    
-                    finalLeaderboardDiv.innerHTML = `
-                        <h2 style="text-align: center; color: #1e293b; margin: 0 0 20px 0;">🏆 Final Leaderboard</h2>
-                        ${leaderboardHTML}
-                    `;
-                    
-                    gameArea.appendChild(finalLeaderboardDiv);
-                }
+                // Note: We removed the duplicate final leaderboard display here since
+                // showFinalStandings() will handle it after the 3-second delay
             } else {
                 // Single-round game: replace with traditional game over screen
                 const winnerText = message.winner 
