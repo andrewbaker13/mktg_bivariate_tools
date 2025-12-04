@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistical Test Selector - Marketing Analytics Tools</title>
+    <link rel="stylesheet" href="shared/css/main.css">
+    <style>
+      body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .picker-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 2rem;
+      }
+      .back-btn {
+        display: inline-block;
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+        background: white;
+        color: #667eea;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .back-btn:hover {
+        background: #f8fafc;
+      }
+      .picker-header {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        margin-bottom: 2rem;
+      }
+      .picker-header h1 {
+        margin: 0 0 0.5rem 0;
+        color: #1e293b;
+      }
+      .picker-header p {
+        margin: 0.5rem 0;
+        color: #64748b;
+        line-height: 1.6;
+      }
+      .picker-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        padding: 2rem;
+      }
+      .decision-node {
+        background: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        opacity: 0.4;
+        pointer-events: none;
+        transition: all 0.3s ease;
+        display: none;
+      }
+      .decision-node.active {
+        opacity: 1;
+        pointer-events: auto;
+        border-color: #3b82f6;
+        box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+        display: block;
+      }
+      .node-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .step-number {
+        background: #3b82f6;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      .node-title {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #1e293b;
+      }
+      .node-help {
+        margin-bottom: 1.25rem;
+      }
+      .node-help details {
+        background: #eff6ff;
+        border-left: 3px solid #3b82f6;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .node-help summary {
+        font-weight: 600;
+        color: #1e40af;
+        list-style: none;
+        cursor: pointer;
+      }
+      .node-help summary::-webkit-details-marker {
+        display: none;
+      }
+      .node-help details[open] summary {
+        margin-bottom: 0.75rem;
+      }
+      .node-help p, .node-help ul {
+        color: #475569;
+        line-height: 1.6;
+      }
+      .node-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+      .decision-btn {
+        background: white;
+        border: 2px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .decision-btn:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+        transform: translateY(-2px);
+      }
+      .decision-btn .btn-icon {
+        font-size: 2rem;
+        display: block;
+      }
+      .decision-btn .btn-label {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 1rem;
+        display: block;
+      }
+      .decision-btn .btn-example {
+        font-size: 0.85rem;
+        color: #64748b;
+        display: block;
+        line-height: 1.4;
+      }
+      .path-connector {
+        height: 30px;
+        width: 3px;
+        background: linear-gradient(to bottom, #3b82f6, #e5e7eb);
+        margin: 0 auto;
+        border-radius: 2px;
+      }
+      .decision-result {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 3px solid #3b82f6;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-top: 2rem;
+      }
+      .result-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+      .result-icon {
+        font-size: 2rem;
+      }
+      .result-header h3 {
+        margin: 0;
+        color: #1e40af;
+        font-size: 1.5rem;
+      }
+      .result-recommendation {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #10b981;
+      }
+      .result-recommendation h4 {
+        margin: 0 0 0.75rem 0;
+        color: #059669;
+        font-size: 1.15rem;
+      }
+      .result-recommendation p {
+        margin: 0.5rem 0;
+        line-height: 1.6;
+      }
+      .result-alternative {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border-left: 4px solid #f59e0b;
+      }
+      .result-alternative h4 {
+        margin: 0 0 0.75rem 0;
+        color: #d97706;
+        font-size: 1.05rem;
+      }
+      .btn-secondary {
+        background: #64748b;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 1rem;
+      }
+      .btn-secondary:hover {
+        background: #475569;
+      }
+      .print-btn {
+        padding: 0.75rem 1.5rem;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.2s;
+        margin-bottom: 1.5rem;
+        display: inline-block;
+      }
+      .print-btn:hover {
+        background: #2563eb;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      }
+      .print-help {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 0.5rem;
+        display: block;
+      }
+    </style>
+</head>
+<body>
+    <div class="picker-container">
+        <a href="index.html" class="back-btn">← Back to Home</a>
+        
+        <div class="picker-header">
+            <h1>💡 Interactive Statistical Test Selector</h1>
+            <p><strong>Not sure which test to use?</strong> Follow this guided path to find the right statistical tool for your marketing question.</p>
+            <p>Each question narrows down your options based on your data structure and research goal.</p>
+        </div>
+
+        <div class="picker-content">
+            <div style="text-align:center; margin-bottom: 2rem;">
+                <button id="print-selector-tree" class="print-btn">
+                    📄 Print Test Selector Guide (PDF)
+                </button>
+                <span class="print-help">Download a complete flowchart of all test selection paths as a study guide</span>
+            </div>
+
+            <div id="test-helper-tree" style="max-width:900px; margin:0 auto;">
+                <!-- Question 1: Outcome Type -->
+                <div class="decision-node active" id="node-outcome" data-step="1">
+                    <div class="node-header">
+                        <span class="step-number">Step 1</span>
+                        <h3 class="node-title">What are you measuring? (Your Outcome Variable)</h3>
+                    </div>
+                    <div class="node-help">
+                        <details>
+                            <summary>💡 Help me understand "outcome variable"</summary>
+                            <p>The <strong>outcome</strong> (also called dependent variable or Y) is what you're trying to predict, explain, or measure. In marketing:</p>
+                            <ul style="margin:0.5rem 0 0 1.5rem; font-size:0.9rem;">
+                                <li><strong>Numeric:</strong> Revenue, conversion rate (%), time on site, order value, satisfaction score</li>
+                                <li><strong>Binary:</strong> Did convert (yes/no), clicked ad (yes/no), churned (yes/no)</li>
+                                <li><strong>Categorical:</strong> Product chosen (A/B/C/D), segment membership (high/med/low)</li>
+                            </ul>
+                        </details>
+                    </div>
+                    <div class="node-options">
+                        <button class="decision-btn" data-choice="numeric" data-next="data-structure">
+                            <span class="btn-icon">📊</span>
+                            <span class="btn-label">Numeric / Continuous</span>
+                            <span class="btn-example">Revenue, ratings, time, percentages</span>
+                        </button>
+                        <button class="decision-btn" data-choice="binary" data-next="predictor-count">
+                            <span class="btn-icon">✓✗</span>
+                            <span class="btn-label">Binary / Yes-No</span>
+                            <span class="btn-example">Converted, clicked, purchased (0 or 1)</span>
+                        </button>
+                        <button class="decision-btn" data-choice="categorical" data-next="predictor-count">
+                            <span class="btn-icon">🏷️</span>
+                            <span class="btn-label">Categorical (3+ levels)</span>
+                            <span class="btn-example">Product choice, segment, brand selected</span>
+                        </button>
+                    </div>
+                    <div class="path-connector"></div>
+                </div>
+
+                <!-- Question 1B: Data Structure (only for numeric outcomes) -->
+                <div class="decision-node" id="node-data-structure" data-step="1b">
+                    <div class="node-header">
+                        <span class="step-number">Step 1b</span>
+                        <h3 class="node-title">Is your data time-ordered (sequential)?</h3>
+                    </div>
+                    <div class="node-help">
+                        <details>
+                            <summary>💡 Time Series vs. Cross-Sectional Data</summary>
+                            <p>This determines whether you need time series methods or standard regression/comparison:</p>
+                            <ul style="margin:0.5rem 0 0 1.5rem; font-size:0.9rem;">
+                                <li><strong>Time Series:</strong> Observations recorded in sequence over time (daily sales, weekly revenue, monthly KPIs). Past values may influence future values.</li>
+                                <li><strong>Cross-Sectional:</strong> Observations from different units at same time (customers, campaigns, products). Order doesn't matter.</li>
+                            </ul>
+                            <p style="margin-top:0.5rem; font-size:0.9rem;"><em>Key question: Does the ORDER of your observations matter? Would rearranging rows change your analysis?</em></p>
+                        </details>
+                    </div>
+                    <div class="node-options">
+                        <button class="decision-btn" data-choice="timeseries" data-next="result">
+                            <span class="btn-icon">📈</span>
+                            <span class="btn-label">Yes - Time Series Data</span>
+                            <span class="btn-example">Daily/weekly/monthly data in sequence</span>
+                        </button>
+                        <button class="decision-btn" data-choice="crosssectional" data-next="predictor-count">
+                            <span class="btn-icon">📋</span>
+                            <span class="btn-label">No - Cross-Sectional Data</span>
+                            <span class="btn-example">Different customers/units, order doesn't matter</span>
+                        </button>
+                    </div>
+                    <div class="path-connector"></div>
+                </div>
+
+                <!-- Question 2: Number of Predictors -->
+                <div class="decision-node" id="node-predictor-count" data-step="2">
+                    <div class="node-header">
+                        <span class="step-number">Step 2</span>
+                        <h3 class="node-title">How many predictors are you analyzing?</h3>
+                    </div>
+                    <div class="node-help">
+                        <details>
+                            <summary>💡 Help me understand "predictors"</summary>
+                            <p>A <strong>predictor</strong> (also called independent variable or X) is what you think influences or explains the outcome. Examples:</p>
+                            <ul style="margin:0.5rem 0 0 1.5rem; font-size:0.9rem;">
+                                <li><strong>One predictor:</strong> "Does ad spend affect revenue?" (X = spend, Y = revenue)</li>
+                                <li><strong>Multiple predictors:</strong> "What drives revenue: spend, seasonality, AND campaign type?" (X₁ = spend, X₂ = season, X₃ = campaign)</li>
+                            </ul>
+                            <p style="margin-top:0.5rem; font-size:0.9rem;"><em>Tip: Start with one predictor to understand the basic relationship, then add more for modeling.</em></p>
+                        </details>
+                    </div>
+                    <div class="node-options">
+                        <button class="decision-btn" data-choice="one" data-next="predictor-type">
+                            <span class="btn-icon">1️⃣</span>
+                            <span class="btn-label">One Main Predictor</span>
+                            <span class="btn-example">Testing one factor (e.g., Control vs. Treatment)</span>
+                        </button>
+                        <button class="decision-btn" data-choice="multiple" data-next="result">
+                            <span class="btn-icon">📈</span>
+                            <span class="btn-label">Multiple Predictors</span>
+                            <span class="btn-example">Building a model with several factors</span>
+                        </button>
+                    </div>
+                    <div class="path-connector"></div>
+                </div>
+
+                <!-- Question 3: Predictor Type (only shows if "one predictor") -->
+                <div class="decision-node" id="node-predictor-type" data-step="3">
+                    <div class="node-header">
+                        <span class="step-number">Step 3</span>
+                        <h3 class="node-title">What type of predictor do you have?</h3>
+                    </div>
+                    <div class="node-help">
+                        <details>
+                            <summary>💡 Help me choose predictor type</summary>
+                            <p>Your predictor's type determines which test you'll use:</p>
+                            <ul style="margin:0.5rem 0 0 1.5rem; font-size:0.9rem;">
+                                <li><strong>Numeric:</strong> Ad spend ($), days since last purchase, customer age, discount %</li>
+                                <li><strong>Binary groups:</strong> Control vs. Treatment, Email A vs. Email B, Before vs. After</li>
+                                <li><strong>3+ groups:</strong> Four email designs, three price points, five geographic regions</li>
+                            </ul>
+                        </details>
+                    </div>
+                    <div class="node-options">
+                        <button class="decision-btn" data-choice="numeric" data-next="result">
+                            <span class="btn-icon">📊</span>
+                            <span class="btn-label">Numeric Predictor</span>
+                            <span class="btn-example">Spend, time, age, distance, price</span>
+                        </button>
+                        <button class="decision-btn" data-choice="binary_group" data-next="group-structure">
+                            <span class="btn-icon">🔀</span>
+                            <span class="btn-label">Two Groups</span>
+                            <span class="btn-example">Control vs. Treatment, A vs. B</span>
+                        </button>
+                        <button class="decision-btn" data-choice="categorical3" data-next="result">
+                            <span class="btn-icon">🏷️</span>
+                            <span class="btn-label">3+ Groups/Categories</span>
+                            <span class="btn-example">Four versions, three segments, five regions</span>
+                        </button>
+                    </div>
+                    <div class="path-connector"></div>
+                </div>
+
+                <!-- Question 4: Group Structure (only for binary groups) -->
+                <div class="decision-node" id="node-group-structure" data-step="4">
+                    <div class="node-header">
+                        <span class="step-number">Step 4</span>
+                        <h3 class="node-title">How is your data structured?</h3>
+                    </div>
+                    <div class="node-help">
+                        <details>
+                            <summary>💡 Independent vs. Paired data</summary>
+                            <p>This is about whether the same people/accounts appear in both groups:</p>
+                            <ul style="margin:0.5rem 0 0 1.5rem; font-size:0.9rem;">
+                                <li><strong>Independent:</strong> Different customers in each group. Example: Group A gets Email 1, Group B gets Email 2 (different people)</li>
+                                <li><strong>Paired/Matched:</strong> Same customers measured twice. Example: Same customers see Offer A then Offer B, or before/after campaign</li>
+                            </ul>
+                            <p style="margin-top:0.5rem; font-size:0.9rem;"><em>Key question: Can you draw a line connecting each observation in Group 1 to a specific paired observation in Group 2?</em></p>
+                        </details>
+                    </div>
+                    <div class="node-options">
+                        <button class="decision-btn" data-choice="two_ind" data-next="result">
+                            <span class="btn-icon">👥</span>
+                            <span class="btn-label">Independent Groups</span>
+                            <span class="btn-example">Different customers in each group</span>
+                        </button>
+                        <button class="decision-btn" data-choice="two_paired" data-next="result">
+                            <span class="btn-icon">🔗</span>
+                            <span class="btn-label">Paired/Matched Groups</span>
+                            <span class="btn-example">Same customers measured twice (before/after)</span>
+                        </button>
+                    </div>
+                    <div class="path-connector"></div>
+                </div>
+
+                <!-- Result Area -->
+                <div class="decision-result" id="decision-result" style="display:none;">
+                    <div class="result-header">
+                        <span class="result-icon">✨</span>
+                        <h3>Recommended Statistical Test</h3>
+                    </div>
+                    <div id="result-content"></div>
+                    <button type="button" class="btn-secondary" id="reset-helper">↺ Start Over</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="shared/js/auth_tracking.js"></script>
+    <script>
+        // Decision Tree Logic
+        (function () {
+            const decisionState = {
+                outcome: null,
+                dataStructure: null,
+                predictorCount: null,
+                predictorType: null,
+                groupStructure: null
+            };
+
+            // Add event listeners to all decision buttons
+            document.querySelectorAll('.decision-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const choice = this.dataset.choice;
+                    const nextNode = this.dataset.next;
+                    const currentNode = this.closest('.decision-node');
+                    
+                    // Store the choice based on current step
+                    const step = currentNode.dataset.step;
+                    if (step === '1') {
+                        decisionState.outcome = choice;
+                    } else if (step === '1b') {
+                        decisionState.dataStructure = choice;
+                    } else if (step === '2') {
+                        decisionState.predictorCount = choice;
+                    } else if (step === '3') {
+                        decisionState.predictorType = choice;
+                    } else if (step === '4') {
+                        decisionState.groupStructure = choice;
+                    }
+
+                    // Deactivate current node
+                    currentNode.classList.remove('active');
+
+                    // Show result or next node
+                    if (nextNode === 'result') {
+                        showResult();
+                    } else {
+                        const nextElement = document.getElementById('node-' + nextNode);
+                        if (nextElement) {
+                            nextElement.classList.add('active');
+                            nextElement.style.display = 'block';
+                            nextElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    }
+                });
+            });
+
+            // Reset button
+            document.getElementById('reset-helper')?.addEventListener('click', function() {
+                decisionState.outcome = null;
+                decisionState.dataStructure = null;
+                decisionState.predictorCount = null;
+                decisionState.predictorType = null;
+                decisionState.groupStructure = null;
+                
+                document.querySelectorAll('.decision-node').forEach(node => {
+                    node.classList.remove('active');
+                    if (node.id !== 'node-outcome') {
+                        node.style.display = 'none';
+                    }
+                });
+                document.getElementById('node-outcome').classList.add('active');
+                document.getElementById('decision-result').style.display = 'none';
+                document.getElementById('node-outcome').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+
+            function showResult() {
+                const resultDiv = document.getElementById('decision-result');
+                const contentDiv = document.getElementById('result-content');
+                
+                let recommendation = getRecommendation();
+                contentDiv.innerHTML = recommendation;
+                resultDiv.style.display = 'block';
+                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            function getRecommendation() {
+                const { outcome, dataStructure, predictorCount, predictorType, groupStructure } = decisionState;
+                let html = '';
+
+                // TIME SERIES PATH (for numeric outcomes)
+                if (outcome === 'numeric' && dataStructure === 'timeseries') {
+                    html = `
+                        <div class="result-recommendation">
+                            <h4>✅ Recommended: ARIMAX Time Series Forecasting</h4>
+                            <p><strong>Marketing Context:</strong> Use when analyzing sequential data over time with potential external factors. Perfect for forecasting sales with ad spend, predicting demand with promotional indicators, or any time-ordered metric.</p>
+                            <p><a href="apps/time_series/arimax/main_arimax.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open ARIMAX Tool →</a></p>
+                        </div>
+                        <div class="result-alternative">
+                            <h4>📈 What ARIMAX Does</h4>
+                            <p>ARIMAX (AutoRegressive Integrated Moving Average with eXogenous variables) captures patterns in sequential data—trends, seasonality, and autocorrelation—while accounting for external predictors like ad spend or promotions. Includes diagnostic tools (ACF/PACF) and customizable confidence intervals for forecasts.</p>
+                        </div>`;
+                    return html;
+                }
+
+                // NUMERIC OUTCOME (cross-sectional)
+                if (outcome === 'numeric') {
+                    if (predictorCount === 'one') {
+                        if (predictorType === 'numeric') {
+                            html = `
+                                <div class="result-recommendation">
+                                    <h4>✅ Recommended: Pearson Correlation</h4>
+                                    <p><strong>Marketing Context:</strong> Use this when exploring whether two numeric metrics move together (e.g., "As ad spend increases, does revenue increase?").</p>
+                                    <p><a href="apps/descriptive/pearson_correlation/main_pearson.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Pearson Correlation Tool →</a></p>
+                                </div>
+                                <div class="result-alternative">
+                                    <h4>📊 Alternative: Bivariate Linear Regression</h4>
+                                    <p>Fits a line through your data points and gives you a slope (how much Y changes per unit of X). Same relationship as correlation, but with a prediction equation.</p>
+                                    <p><a href="apps/regression/bivariate_regression/main_bivariate_regression.html">Open Bivariate Regression Tool →</a></p>
+                                </div>`;
+                        } else if (predictorType === 'binary_group') {
+                            if (groupStructure === 'two_paired') {
+                                html = `
+                                    <div class="result-recommendation">
+                                        <h4>✅ Recommended: Paired Sample t-test</h4>
+                                        <p><strong>Marketing Context:</strong> Use when the same customers/accounts are measured twice (e.g., "Did customer satisfaction improve after our website redesign?" measured on the same customers before and after).</p>
+                                        <p><a href="apps/hypothesis_testing/paired_ttest/main_paired_ttest.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Paired t-test Tool →</a></p>
+                                    </div>
+                                    <div class="result-alternative">
+                                        <h4>📊 Note on Design</h4>
+                                        <p>Paired designs are powerful because they control for individual differences—each person serves as their own control. Common in before/after campaign analysis and A/B tests where same users see both versions.</p>
+                                    </div>`;
+                            } else {
+                                html = `
+                                    <div class="result-recommendation">
+                                        <h4>✅ Recommended: Welch's t-test (Independent Means)</h4>
+                                        <p><strong>Marketing Context:</strong> Use when comparing averages between two independent groups (e.g., "Did Email A generate higher revenue per customer than Email B?" where different customers got each email).</p>
+                                        <p><a href="apps/hypothesis_testing/ind_ttest/main_ind_ttest.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Welch's t-test Tool →</a></p>
+                                    </div>
+                                    <div class="result-alternative">
+                                        <h4>📊 Alternative: Bivariate Linear Regression</h4>
+                                        <p>Using a binary predictor (0/1) in regression gives the same result as a t-test, but frames it as a predictive model. The slope equals the mean difference.</p>
+                                        <p><a href="apps/regression/bivariate_regression/main_bivariate_regression.html">Open Bivariate Regression Tool →</a></p>
+                                    </div>`;
+                            }
+                        } else if (predictorType === 'categorical3') {
+                            html = `
+                                <div class="result-recommendation">
+                                    <h4>✅ Recommended: One-Way ANOVA</h4>
+                                    <p><strong>Marketing Context:</strong> Use when comparing means across three or more groups (e.g., "Which of our four landing page designs generates highest revenue per visitor?").</p>
+                                    <p><a href="apps/hypothesis_testing/onewayanova/main_onewayanova.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open One-Way ANOVA Tool →</a></p>
+                                </div>
+                                <div class="result-alternative">
+                                    <h4>📊 After ANOVA</h4>
+                                    <p>ANOVA tells you if <em>any</em> groups differ. Follow up with post-hoc pairwise comparisons to see which specific pairs differ (e.g., "Is Design A better than Design B?"). The tool includes these comparisons.</p>
+                                </div>`;
+                        }
+                    } else if (predictorCount === 'multiple') {
+                        html = `
+                            <div class="result-recommendation">
+                                <h4>✅ Recommended: Multiple Linear Regression</h4>
+                                <p><strong>Marketing Context:</strong> Use when modeling a numeric outcome with multiple predictors simultaneously (e.g., "Customer lifetime value based on recency, frequency, monetary value, AND customer segment").</p>
+                                <p><a href="apps/regression/ml_regression/ml_regression.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Multiple Regression Tool →</a></p>
+                            </div>
+                            <div class="result-alternative">
+                                <h4>📊 Why Multiple Regression?</h4>
+                                <p>Multiple regression lets you control for confounding variables and see the <em>unique</em> effect of each predictor while holding others constant. Essential for marketing attribution and predictive modeling.</p>
+                            </div>`;
+                    }
+                }
+
+                // BINARY OUTCOME
+                else if (outcome === 'binary') {
+                    if (predictorCount === 'one') {
+                        if (groupStructure === 'two_paired') {
+                            html = `
+                                <div class="result-recommendation">
+                                    <h4>✅ Recommended: McNemar Test</h4>
+                                    <p><strong>Marketing Context:</strong> Use for paired yes/no data (e.g., "Did customers change their subscription status after seeing our new offer?" measured on same customers before and after).</p>
+                                    <p><a href="apps/hypothesis_testing/mcnemar/main_mcnemar.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open McNemar Test Tool →</a></p>
+                                </div>
+                                <div class="result-alternative">
+                                    <h4>📊 What McNemar Does</h4>
+                                    <p>Focuses on "switchers"—people who changed from yes to no or no to yes. Ignores people who stayed the same in both periods, which makes it powerful for detecting change.</p>
+                                </div>`;
+                        } else {
+                            html = `
+                                <div class="result-recommendation">
+                                    <h4>✅ Recommended: A/B Proportion Test</h4>
+                                    <p><strong>Marketing Context:</strong> Use when comparing conversion rates between two independent groups (e.g., "Did landing page A have a higher conversion rate than landing page B?").</p>
+                                    <p><a href="apps/hypothesis_testing/ab_proportion/main_ab_proportion.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open A/B Proportion Tool →</a></p>
+                                </div>
+                                <div class="result-alternative">
+                                    <h4>📊 Alternative: Logistic Regression</h4>
+                                    <p>For a single binary predictor, logistic regression gives similar results but frames it as an odds ratio. Use the Logistic Regression tool with one predictor.</p>
+                                    <p><a href="apps/regression/log_regression/log_regression.html">Open Logistic Regression Tool →</a></p>
+                                </div>`;
+                        }
+                    } else if (predictorCount === 'multiple') {
+                        html = `
+                            <div class="result-recommendation">
+                                <h4>✅ Recommended: Logistic Regression</h4>
+                                <p><strong>Marketing Context:</strong> Use when predicting a yes/no outcome with multiple predictors (e.g., "What predicts conversion: traffic source, device type, AND time of day?").</p>
+                                <p><a href="apps/regression/log_regression/log_regression.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Logistic Regression Tool →</a></p>
+                            </div>
+                            <div class="result-alternative">
+                                <h4>📊 Understanding Logistic Regression</h4>
+                                <p>Estimates odds ratios for each predictor. An odds ratio of 2.0 means that factor doubles the odds of conversion. Critical for marketing attribution, lead scoring, and churn prediction.</p>
+                            </div>`;
+                    }
+                }
+
+                // CATEGORICAL OUTCOME (3+ levels)
+                else if (outcome === 'categorical') {
+                    if (predictorCount === 'one') {
+                        html = `
+                            <div class="result-recommendation">
+                                <h4>✅ Recommended: Chi-square Test of Association</h4>
+                                <p><strong>Marketing Context:</strong> Use when exploring whether two categorical variables are related (e.g., "Does product choice vary by customer segment?" or "Is device type related to purchase category?").</p>
+                                <p><a href="apps/hypothesis_testing/chisquare/main_chisquare.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Chi-square Test Tool →</a></p>
+                            </div>
+                            <div class="result-alternative">
+                                <h4>📊 When to Use</h4>
+                                <p>Chi-square tests whether the distribution of one categorical variable differs across levels of another. Perfect for cross-tabulation analysis in market research and customer segmentation.</p>
+                            </div>`;
+                    } else if (predictorCount === 'multiple') {
+                        html = `
+                            <div class="result-recommendation">
+                                <h4>✅ Recommended: Multinomial Logistic Regression</h4>
+                                <p><strong>Marketing Context:</strong> Use when predicting a categorical outcome with 3+ levels using multiple predictors (e.g., "What predicts which product a customer chooses: price sensitivity, brand loyalty, AND demographics?").</p>
+                                <p><a href="apps/regression/mn_log_regression/main_mn_log_regression.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Multinomial Logistic Regression Tool →</a></p>
+                            </div>
+                            <div class="result-alternative">
+                                <h4>📊 Choice Modeling</h4>
+                                <p>Multinomial logistic regression is the foundation of choice modeling in marketing. Estimates relative risk ratios comparing each outcome to a reference category. Essential for product preference analysis.</p>
+                            </div>`;
+                    }
+                }
+
+                return html || '<p>Unable to determine recommendation. Please try again.</p>';
+            }
+        }());
+        
+        // PDF Generation
+        document.addEventListener('DOMContentLoaded', function() {
+            const pdfButton = document.getElementById('print-selector-tree');
+            if (pdfButton) {
+                pdfButton.addEventListener('click', function() {
+                    const printWindow = window.open('', '_blank');
+                    if (!printWindow) {
+                        alert('Please allow pop-ups for this site to generate the PDF.');
+                        return;
+                    }
+                    const htmlContent = generatePDFContent();
+                    printWindow.document.write(htmlContent);
+                    printWindow.document.close();
+                });
+            }
+        });
+        
+        function generatePDFContent() {
+            return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Statistical Test Selection Decision Tree</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; color: #1f2937; max-width: 1000px; margin: 0 auto; padding: 2rem; background: white; }
+    .flowchart-title { text-align: center; color: #1e40af; margin-bottom: 0.5rem; font-size: 2rem; font-weight: 700; }
+    .flowchart-subtitle { text-align: center; color: #6b7280; margin-bottom: 2rem; font-size: 1rem; }
+    .flow-level { margin-bottom: 3rem; page-break-inside: avoid; }
+    .flow-level-title { background: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; }
+    .flow-branches { margin-left: 2rem; }
+    .flow-branch { border-left: 3px solid #3b82f6; padding-left: 1.5rem; margin-bottom: 2rem; page-break-inside: avoid; }
+    .branch-choice { background: #eff6ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .branch-choice-title { font-weight: 600; color: #1e40af; margin-bottom: 0.25rem; font-size: 1.05rem; }
+    .branch-choice-desc { font-size: 0.9rem; color: #4b5563; }
+    .flow-result { background: #d1fae5; border: 2px solid #10b981; border-radius: 8px; padding: 1rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+    .flow-result-title { font-weight: 700; color: #065f46; margin-bottom: 0.5rem; font-size: 1.05rem; }
+    .flow-result-desc { font-size: 0.9rem; color: #047857; margin-bottom: 0.5rem; }
+    .flow-result-tool { font-size: 0.85rem; color: #065f46; font-weight: 600; }
+    .nested-branch { margin-left: 1.5rem; margin-top: 1rem; border-left: 3px solid #8b5cf6; padding-left: 1rem; }
+    .nested-choice { background: #f5f3ff; border: 2px solid #8b5cf6; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.75rem; }
+    .nested-choice-title { font-weight: 600; color: #5b21b6; margin-bottom: 0.25rem; }
+    .sub-result { background: #fef3c7; border: 2px solid #f59e0b; border-radius: 6px; padding: 0.75rem; margin: 0.5rem 0 0.5rem 1rem; }
+    .sub-result-title { font-weight: 600; color: #92400e; }
+    .sub-result-desc { font-size: 0.85rem; color: #78350f; margin-top: 0.25rem; }
+    .sub-result-tool { font-size: 0.8rem; font-weight: 600; color: #92400e; margin-top: 0.25rem; }
+    @media print { body { padding: 1rem; } .flow-level, .flow-branch { page-break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  <h1 class="flowchart-title">📊 Statistical Test Selection Guide</h1>
+  <p class="flowchart-subtitle">Complete Decision Tree for Marketing Analytics</p>
+  <div class="flow-level">
+    <div class="flow-level-title">Step 1: Outcome Variable Type</div>
+    <div class="flow-branches">
+      <div class="flow-branch">
+        <div class="branch-choice"><div class="branch-choice-title">📊 Numeric/Continuous Outcome</div><div class="branch-choice-desc">Examples: Revenue, conversion rate (%), satisfaction score, time on site</div></div>
+        <div class="flow-level-title" style="background:#10b981; font-size:1rem;">Step 1b: Data Structure</div>
+        <div class="nested-branch" style="border-left-color:#10b981;">
+          <div class="nested-choice" style="background:#d1fae5; border-color:#10b981;"><div class="nested-choice-title" style="color:#065f46;">📈 Time Series Data (Sequential)</div><div style="font-size:0.85rem; color:#047857;">Daily/weekly/monthly data where ORDER matters</div></div>
+          <div class="flow-result"><div class="flow-result-title">✅ ARIMAX Time Series Forecasting</div><div class="flow-result-desc">Use when: Analyzing sequential data over time with potential external factors (e.g., "Forecast sales with ad spend" or "Predict demand with promotion indicators")</div><div class="flow-result-tool">Tool: ARIMAX Time Series Forecasting</div></div>
+        </div>
+        <div class="nested-branch" style="margin-top:1.5rem; border-left-color:#10b981;">
+          <div class="nested-choice" style="background:#d1fae5; border-color:#10b981;"><div class="nested-choice-title" style="color:#065f46;">📋 Cross-Sectional Data</div><div style="font-size:0.85rem; color:#047857;">Different customers/units, order doesn't matter</div></div>
+          <div class="flow-level-title" style="background:#8b5cf6; font-size:1rem;">Step 2: Number of Predictors</div>
+          <div class="nested-branch">
+            <div class="nested-choice"><div class="nested-choice-title">One Predictor</div></div>
+            <div style="margin-left:1rem;">
+              <div class="flow-level-title" style="background:#ec4899; font-size:0.95rem;">Step 3: Predictor Type</div>
+              <div class="flow-result"><div class="flow-result-title">✅ Numeric Predictor → Pearson Correlation</div><div class="flow-result-desc">Use when: Both outcome and predictor are numeric (e.g., "As ad spend ↑, does revenue ↑?")</div><div class="flow-result-tool">Tool: Pearson Correlation / Bivariate Regression</div></div>
+              <div class="flow-result"><div class="flow-result-title">✅ Binary Group Predictor</div><div class="sub-result"><div class="sub-result-title">Independent Groups → Welch's t-test</div><div class="sub-result-desc">Different people in each group (e.g., Email A recipients vs. Email B recipients)</div><div class="sub-result-tool">Tool: Independent t-test</div></div><div class="sub-result"><div class="sub-result-title">Paired Groups → Paired t-test</div><div class="sub-result-desc">Same people measured twice (e.g., before/after campaign on same customers)</div><div class="sub-result-tool">Tool: Paired t-test</div></div></div>
+              <div class="flow-result"><div class="flow-result-title">✅ Categorical Predictor (3+ levels) → One-Way ANOVA</div><div class="flow-result-desc">Use when: Comparing means across 3+ groups (e.g., "Which of 4 landing pages generates most revenue?")</div><div class="flow-result-tool">Tool: One-Way ANOVA</div></div>
+            </div>
+          </div>
+          <div class="nested-branch" style="margin-top:1.5rem;">
+            <div class="nested-choice"><div class="nested-choice-title">Multiple Predictors</div></div>
+            <div class="flow-result"><div class="flow-result-title">✅ Multiple Linear Regression</div><div class="flow-result-desc">Use when: Modeling numeric outcome with multiple predictors simultaneously (e.g., "CLV based on recency, frequency, monetary value, AND segment")</div><div class="flow-result-tool">Tool: Multiple Linear Regression</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="flow-branch">
+        <div class="branch-choice"><div class="branch-choice-title">✓ Binary Outcome</div><div class="branch-choice-desc">Examples: Converted (yes/no), clicked ad (yes/no), churned (yes/no)</div></div>
+        <div class="flow-level-title" style="background:#8b5cf6; font-size:1rem;">Step 2: Number of Predictors</div>
+        <div class="nested-branch">
+          <div class="nested-choice"><div class="nested-choice-title">One Predictor</div></div>
+          <div style="margin-left:1rem;">
+            <div class="sub-result"><div class="sub-result-title">Independent Groups → A/B Proportion Test</div><div class="sub-result-desc">Different people in each group (e.g., Version A vs. Version B conversion rates)</div><div class="sub-result-tool">Tool: A/B Proportion Test</div></div>
+            <div class="sub-result"><div class="sub-result-title">Paired Groups → McNemar Test</div><div class="sub-result-desc">Same people measured twice (e.g., subscription status before/after offer)</div><div class="sub-result-tool">Tool: McNemar Test</div></div>
+          </div>
+        </div>
+        <div class="nested-branch" style="margin-top:1.5rem;">
+          <div class="nested-choice"><div class="nested-choice-title">Multiple Predictors</div></div>
+          <div class="flow-result"><div class="flow-result-title">✅ Logistic Regression</div><div class="flow-result-desc">Use when: Predicting yes/no outcome with multiple factors (e.g., "What predicts conversion: traffic source, device type, AND time of day?")</div><div class="flow-result-tool">Tool: Logistic Regression</div></div>
+        </div>
+      </div>
+      <div class="flow-branch">
+        <div class="branch-choice"><div class="branch-choice-title">🏷️ Categorical Outcome (3+ levels)</div><div class="branch-choice-desc">Examples: Product chosen (A/B/C/D), customer segment (high/med/low)</div></div>
+        <div class="flow-level-title" style="background:#8b5cf6; font-size:1rem;">Step 2: Number of Predictors</div>
+        <div class="nested-branch">
+          <div class="nested-choice"><div class="nested-choice-title">One Predictor (Association Question)</div></div>
+          <div class="flow-result"><div class="flow-result-title">✅ Chi-square Test of Association</div><div class="flow-result-desc">Use when: Testing if two categorical variables are related (e.g., "Does product choice vary by customer segment?")</div><div class="flow-result-tool">Tool: Chi-square Test</div></div>
+        </div>
+        <div class="nested-branch" style="margin-top:1rem;">
+          <div class="nested-choice"><div class="nested-choice-title">Multiple Predictors</div></div>
+          <div class="flow-result"><div class="flow-result-title">✅ Multinomial Logistic Regression</div><div class="flow-result-desc">Use when: Predicting categorical outcome with 3+ levels using multiple predictors (e.g., "What predicts product choice: price sensitivity, brand loyalty, AND demographics?")</div><div class="flow-result-tool">Tool: Multinomial Logistic Regression</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:3rem; padding:1.5rem; background:#f3f4f6; border-radius:8px; border-left:4px solid #3b82f6;">
+    <h3 style="color:#1e40af; margin-top:0;">💡 Quick Reference Tips</h3>
+    <ul style="color:#4b5563; line-height:1.8;">
+      <li><strong>Time Series vs. Cross-Sectional:</strong> Does the ORDER of observations matter? If rows represent different time points in sequence → Time Series (use ARIMAX). If rows represent different people/units → Cross-Sectional.</li>
+      <li><strong>Independent vs. Paired:</strong> Can you draw a line connecting each observation in Group 1 to a specific paired observation in Group 2? If yes → Paired. If no → Independent.</li>
+      <li><strong>Predictor = Independent Variable (X):</strong> What you think influences the outcome (e.g., ad spend, email version, customer segment).</li>
+      <li><strong>Outcome = Dependent Variable (Y):</strong> What you're measuring or predicting (e.g., revenue, conversion, satisfaction).</li>
+      <li><strong>Start with One Predictor:</strong> Build understanding with simple bivariate relationships before adding complexity with multiple predictors.</li>
+      <li><strong>Always Explore First:</strong> Use the Univariate Analyzer to understand distributions, outliers, and data quality before hypothesis testing.</li>
+    </ul>
+  </div>
+  <div style="text-align:center; margin-top:2rem; color:#9ca3af; font-size:0.85rem;">
+    <p>Statistical Test Selection Guide • Marketing Analytics Tools</p>
+    <p>Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+  </div>
+  <scr` + `ipt>window.onload = function() { setTimeout(function() { window.print(); }, 500); };</scr` + `ipt>
+</body>
+</html>`;
+        }
+    </script>
+</body>
+</html>

@@ -930,17 +930,16 @@ function updateSummaryTable(stats, predictorType, extra = {}) {
     }
   }
   if (predictorType !== 'categorical' || !extra.xGroups) {
-    const z = StatsUtils.normInv(1 - stats.alpha / 2);
     body.innerHTML = `
       <tr>
         <td>Intercept</td>
         <td></td>
         <td>${formatNumber(stats.intercept, 3)}</td>
-        <td>—</td>
-        <td>—</td>
-        <td>—</td>
-        <td>—</td>
-        <td>—</td>
+        <td>${Number.isFinite(stats.seIntercept) ? formatNumber(stats.seIntercept, 3) : '—'}</td>
+        <td>${Number.isFinite(stats.tIntercept) ? formatNumber(stats.tIntercept, 3) : '—'}</td>
+        <td>${Number.isFinite(stats.pIntercept) ? formatP(stats.pIntercept) : '—'}</td>
+        <td>${Number.isFinite(stats.interceptCiLower) ? formatNumber(stats.interceptCiLower, 3) : '—'}</td>
+        <td>${Number.isFinite(stats.interceptCiUpper) ? formatNumber(stats.interceptCiUpper, 3) : '—'}</td>
       </tr>
       <tr>
         <td>${escapeHtml(labels.x || 'Predictor')}</td>
@@ -949,11 +948,12 @@ function updateSummaryTable(stats, predictorType, extra = {}) {
         <td>${formatNumber(stats.seSlope, 3)}</td>
         <td>${formatNumber(stats.t, 3)}</td>
         <td>${formatP(stats.p)}</td>
-        <td>${formatNumber(stats.slope - z * stats.seSlope, 3)}</td>
-        <td>${formatNumber(stats.slope + z * stats.seSlope, 3)}</td>
+        <td>${Number.isFinite(stats.slopeCiLower) ? formatNumber(stats.slopeCiLower, 3) : '—'}</td>
+        <td>${Number.isFinite(stats.slopeCiUpper) ? formatNumber(stats.slopeCiUpper, 3) : '—'}</td>
       </tr>
     `;
     return;
+  }
   }
 
   // Categorical predictor: one row for reference mean, then one row per non-reference contrast
@@ -1866,9 +1866,11 @@ function updateResults() {
   let slope = NaN;
   let intercept = NaN;
   let seSlope = NaN;
+  let seIntercept = NaN;
   let t = NaN;
   let p = NaN;
-  let seRef = NaN;
+  let tIntercept = NaN;
+  let pIntercept = NaN;
   let stdSlope = NaN;
 
   if (predictorType === 'continuous') {
@@ -1882,9 +1884,16 @@ function updateResults() {
     fittedValues = xNumeric.map(xv => intercept + slope * xv);
     residuals = yValues.map((yv, i) => yv - fittedValues[i]);
     sse = residuals.reduce((acc, r) => acc + r * r, 0);
-    const s2 = StatsUtils.variance(residuals);
-    seSlope = Math.sqrt(s2 / ((xNumeric.length - 1) * StatsUtils.variance(xNumeric) / (xNumeric.length - 1)));
-    t = slope / seSlope;
+    const Sxx = xNumeric.reduce((acc, xv) => acc + Math.pow(xv - meanX, 2), 0);
+    const mse = df > 0 ? sse / df : NaN;
+    if (Number.isFinite(mse) && Sxx > 0) {
+      seSlope = Math.sqrt(mse / Sxx);
+      seIntercept = Math.sqrt(mse * (1 / xNumeric.length + (meanX * meanX) / Sxx));
+    } else {
+      seSlope = NaN;
+      seIntercept = NaN;
+    }
+    t = Number.isFinite(seSlope) && seSlope > 0 ? slope / seSlope : NaN;
     if (Number.isFinite(t)) {
       if (hypothesisTail === 'greater') {
         p = 1 - StatsUtils.normCdf(t);
@@ -1896,6 +1905,10 @@ function updateResults() {
     } else {
       p = NaN;
     }
+    tIntercept = Number.isFinite(seIntercept) && seIntercept > 0 ? intercept / seIntercept : NaN;
+    pIntercept = Number.isFinite(tIntercept)
+      ? 2 * (1 - StatsUtils.normCdf(Math.abs(tIntercept)))
+      : NaN;
     if (Number.isFinite(sdX) && sdX > 0 && Number.isFinite(sdY) && sdY > 0 && Number.isFinite(slope)) {
       stdSlope = (slope * sdX) / sdY;
     }
@@ -1939,8 +1952,10 @@ function updateResults() {
   }
 
   const critical = StatsUtils.normInv(1 - alpha / 2);
-  const ciLower = slope - critical * seSlope;
-  const ciUpper = slope + critical * seSlope;
+  const ciLower = Number.isFinite(seSlope) ? slope - critical * seSlope : NaN;
+  const ciUpper = Number.isFinite(seSlope) ? slope + critical * seSlope : NaN;
+  const interceptCiLower = Number.isFinite(seIntercept) ? intercept - critical * seIntercept : NaN;
+  const interceptCiUpper = Number.isFinite(seIntercept) ? intercept + critical * seIntercept : NaN;
 
   const n = yValues.length;
   const rmse = Math.sqrt(Math.max(sse / n, 0));
@@ -1963,7 +1978,14 @@ function updateResults() {
     residualSE,
     modelP,
     stdSlope,
-    totalPairs
+    totalPairs,
+    seIntercept,
+    tIntercept,
+    pIntercept,
+    slopeCiLower: ciLower,
+    slopeCiUpper: ciUpper,
+    interceptCiLower,
+    interceptCiUpper
   };
 
   // Summary statistics for quick descriptive context
