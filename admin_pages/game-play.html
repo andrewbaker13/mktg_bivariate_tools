@@ -758,6 +758,44 @@
         let connectionAttemptStart = Date.now();
         let progressMessageInterval = null;
         
+        // Timing instrumentation for diagnostics
+        const timingData = {
+            pageLoadStart: Date.now(),
+            dnsLookup: null,
+            tcpConnection: null,
+            sslHandshake: null,
+            firstByteTime: null,
+            wsConnectionStart: null,
+            wsConnectionComplete: null,
+            apiRequestStart: null,
+            apiResponseComplete: null
+        };
+        
+        function logTiming(label, value) {
+            console.log(`[TIMING] ${label}: ${value}ms`);
+        }
+        
+        function displayTimingData() {
+            const timingDisplay = document.createElement('div');
+            timingDisplay.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: #0f0; padding: 10px; font-family: monospace; font-size: 11px; border-radius: 4px; max-width: 300px; z-index: 9999;';
+            
+            let html = '<strong>Connection Timing:</strong><br>';
+            if (timingData.dnsLookup) html += `DNS: ${timingData.dnsLookup}ms<br>`;
+            if (timingData.tcpConnection) html += `TCP: ${timingData.tcpConnection}ms<br>`;
+            if (timingData.sslHandshake) html += `SSL: ${timingData.sslHandshake}ms<br>`;
+            if (timingData.firstByteTime) html += `First Byte: ${timingData.firstByteTime}ms<br>`;
+            if (timingData.apiRequestStart && timingData.apiResponseComplete) {
+                html += `API Call: ${timingData.apiResponseComplete - timingData.apiRequestStart}ms<br>`;
+            }
+            if (timingData.wsConnectionStart && timingData.wsConnectionComplete) {
+                html += `WebSocket: ${timingData.wsConnectionComplete - timingData.wsConnectionStart}ms<br>`;
+            }
+            html += `<br>Total: ${Date.now() - timingData.pageLoadStart}ms`;
+            
+            timingDisplay.innerHTML = html;
+            document.body.appendChild(timingDisplay);
+        }
+        
         function updateConnectionProgress() {
             const elapsed = Math.floor((Date.now() - connectionAttemptStart) / 1000);
             const gameArea = document.getElementById('gameArea');
@@ -820,6 +858,7 @@
         function connectWebSocket() {
             console.log('Attempting WebSocket connection...');
             connectionAttemptStart = Date.now();
+            timingData.wsConnectionStart = Date.now();
             
             // Update progress message every 2 seconds
             updateConnectionProgress();
@@ -828,7 +867,10 @@
             websocket = new WebSocket(`${WS_BASE}/ws/game/${roomCode}/`);
             
             websocket.onopen = function() {
+                timingData.wsConnectionComplete = Date.now();
+                const wsTime = timingData.wsConnectionComplete - timingData.wsConnectionStart;
                 console.log('WebSocket connected');
+                logTiming('WebSocket Connection', wsTime);
                 clearInterval(progressMessageInterval);
                 
                 // Identify ourselves
@@ -840,8 +882,32 @@
                 }));
                 
                 // Check game state (no timeout - let it take as long as needed)
+                timingData.apiRequestStart = Date.now();
                 fetchWithTimeout(`${API_BASE}/game/${roomCode}/`)
                     .then(res => {
+                        timingData.apiResponseComplete = Date.now();
+                        const apiTime = timingData.apiResponseComplete - timingData.apiRequestStart;
+                        logTiming('API Fetch', apiTime);
+                        
+                        // Capture resource timing for detailed breakdown
+                        if (window.performance && window.performance.getEntriesByType) {
+                            const resources = window.performance.getEntriesByType('resource');
+                            const apiResource = resources.find(r => r.name.includes('drbaker-backend'));
+                            if (apiResource) {
+                                timingData.dnsLookup = Math.round(apiResource.domainLookupEnd - apiResource.domainLookupStart);
+                                timingData.tcpConnection = Math.round(apiResource.connectEnd - apiResource.connectStart);
+                                timingData.sslHandshake = Math.round(apiResource.connectEnd - apiResource.secureConnectionStart);
+                                timingData.firstByteTime = Math.round(apiResource.responseStart - apiResource.requestStart);
+                                
+                                logTiming('DNS Lookup', timingData.dnsLookup);
+                                logTiming('TCP Connection', timingData.tcpConnection);
+                                logTiming('SSL Handshake', timingData.sslHandshake);
+                                logTiming('Time to First Byte', timingData.firstByteTime);
+                            }
+                        }
+                        
+                        displayTimingData();
+                        
                         if (!res.ok) throw new Error('Failed to fetch game state');
                         return res.json();
                     })

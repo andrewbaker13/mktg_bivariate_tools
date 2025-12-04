@@ -220,6 +220,39 @@
     <script>
         const API_BASE = 'https://drbaker-backend.onrender.com/api';
         
+        // Timing instrumentation
+        const timingData = {
+            pageLoadStart: Date.now(),
+            joinRequestStart: null,
+            joinResponseComplete: null,
+            dnsLookup: null,
+            tcpConnection: null,
+            sslHandshake: null,
+            firstByteTime: null
+        };
+        
+        function logTiming(label, value) {
+            console.log(`[TIMING] ${label}: ${value}ms`);
+        }
+        
+        function displayTimingData() {
+            const timingDisplay = document.createElement('div');
+            timingDisplay.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: #0f0; padding: 10px; font-family: monospace; font-size: 11px; border-radius: 4px; max-width: 300px; z-index: 9999;';
+            
+            let html = '<strong>Join Request Timing:</strong><br>';
+            if (timingData.dnsLookup) html += `DNS: ${timingData.dnsLookup}ms<br>`;
+            if (timingData.tcpConnection) html += `TCP: ${timingData.tcpConnection}ms<br>`;
+            if (timingData.sslHandshake) html += `SSL: ${timingData.sslHandshake}ms<br>`;
+            if (timingData.firstByteTime) html += `First Byte: ${timingData.firstByteTime}ms<br>`;
+            if (timingData.joinRequestStart && timingData.joinResponseComplete) {
+                html += `Total Request: ${timingData.joinResponseComplete - timingData.joinRequestStart}ms<br>`;
+            }
+            html += `<br>Total Page Time: ${Date.now() - timingData.pageLoadStart}ms`;
+            
+            timingDisplay.innerHTML = html;
+            document.body.appendChild(timingDisplay);
+        }
+        
         // Check for room code in URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const roomCodeFromUrl = urlParams.get('room');
@@ -308,11 +341,35 @@
                 // Join game
                 joinBtn.innerHTML = 'Joining... <span style="font-size: 0.75rem;">(may take 1-2 min on first load)</span>';
                 
+                timingData.joinRequestStart = Date.now();
                 const response = await fetch(`${API_BASE}/game/join/`, {
                     method: 'POST',
                     headers: headers,
                     body: JSON.stringify(requestData)
                 });
+                
+                timingData.joinResponseComplete = Date.now();
+                const requestTime = timingData.joinResponseComplete - timingData.joinRequestStart;
+                logTiming('Join Request', requestTime);
+                
+                // Capture resource timing
+                if (window.performance && window.performance.getEntriesByType) {
+                    const resources = window.performance.getEntriesByType('resource');
+                    const apiResource = resources.find(r => r.name.includes('/game/join/'));
+                    if (apiResource) {
+                        timingData.dnsLookup = Math.round(apiResource.domainLookupEnd - apiResource.domainLookupStart);
+                        timingData.tcpConnection = Math.round(apiResource.connectEnd - apiResource.connectStart);
+                        timingData.sslHandshake = Math.round(apiResource.connectEnd - apiResource.secureConnectionStart);
+                        timingData.firstByteTime = Math.round(apiResource.responseStart - apiResource.requestStart);
+                        
+                        logTiming('DNS Lookup', timingData.dnsLookup);
+                        logTiming('TCP Connection', timingData.tcpConnection);
+                        logTiming('SSL Handshake', timingData.sslHandshake);
+                        logTiming('Time to First Byte', timingData.firstByteTime);
+                    }
+                }
+                
+                displayTimingData();
                 
                 const data = await response.json();
                 
