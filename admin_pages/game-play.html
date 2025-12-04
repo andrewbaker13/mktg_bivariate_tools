@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Play Game - Marketing Analytics Tools</title>
     <link rel="stylesheet" href="../shared/css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -78,6 +79,31 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 2rem auto;
+        }
+        .qr-code-box {
+            background: white;
+            border: 3px solid #3b82f6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem auto;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+        .qr-code-box h3 {
+            color: #1e293b;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        .qr-code-box #qrcode {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+        .qr-code-box p {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            line-height: 1.4;
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
@@ -845,6 +871,11 @@
                         <div class="spinner"></div>
                         <p style="color: #f59e0b; font-weight: 600;">You joined during an active round.</p>
                         <p style="color: #64748b;">You'll be able to participate when the next round begins!</p>
+                        <div class="qr-code-box">
+                            <h3>📱 Share with Classmates</h3>
+                            <div id="qrcode"></div>
+                            <p>Scan this QR code to join the game!</p>
+                        </div>
                     </div>
                 `;
             } else {
@@ -853,9 +884,31 @@
                         <h2>⏳ Waiting for game to start...</h2>
                         <div class="spinner"></div>
                         <p style="color: #64748b;">Your instructor will start the game soon</p>
+                        <div class="qr-code-box">
+                            <h3>📱 Share with Classmates</h3>
+                            <div id="qrcode"></div>
+                            <p>Scan this QR code to join the game!</p>
+                        </div>
                     </div>
                 `;
             }
+            
+            // Generate QR code after DOM is updated
+            setTimeout(() => {
+                const qrCodeDiv = document.getElementById('qrcode');
+                if (qrCodeDiv && roomCode) {
+                    qrCodeDiv.innerHTML = ''; // Clear any existing
+                    const joinUrl = `https://drbakermarketing.com/admin_pages/game-join.html?room=${roomCode}`;
+                    new QRCode(qrCodeDiv, {
+                        text: joinUrl,
+                        width: 180,
+                        height: 180,
+                        colorDark: "#1e293b",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                }
+            }, 100);
         }
         
         // Handle countdown event from WebSocket
@@ -864,43 +917,9 @@
             const numberDiv = document.getElementById('countdownNumber');
             const roundInfo = document.getElementById('countdownRoundInfo');
             
-            // Get game type helper text
-            const gameType = message.game_data?.game_type;
-            const gameTypeHelpers = {
-                'speed_tap': {
-                    title: '⚡ Speed Tap',
-                    description: 'Faster answers get more points (or lose more points!)<br>Answer quickly but correctly to maximize your score!'
-                },
-                'closest_guess': {
-                    title: '🎯 Closest Guess',
-                    description: 'Submit a range that captures the correct answer!<br>Narrower ranges earn bonus points. Answer quickly for speed bonuses!'
-                },
-                'push_range': {
-                    title: '🔥 Push Range',
-                    description: 'Smash the button to help pick the range where the answer is!<br>Teamwork required! Riskier ranges earn more points.<br>Those who tap more earn more points if correct!'
-                },
-                'rpg_battle': {
-                    title: '⚔️ RPG Battle',
-                    description: 'Team up to defeat the boss!<br>Answer questions correctly to deal damage!'
-                }
-            };
-            
-            const helper = gameTypeHelpers[gameType] || {
-                title: '🎮 Get Ready',
-                description: 'Answer the question to earn points!'
-            };
-            
             // Show overlay
             overlay.style.display = 'flex';
             roundInfo.textContent = `Round ${message.current_round} of ${message.total_rounds}`;
-            
-            // Show game type helper for 2 seconds
-            numberDiv.innerHTML = `
-                <div style="font-size: 2rem; margin-bottom: 1rem;">${helper.title}</div>
-                <div style="font-size: 1.2rem; line-height: 1.5; max-width: 600px;">${helper.description}</div>
-            `;
-            numberDiv.style.color = '#3b82f6';
-            await new Promise(resolve => setTimeout(resolve, 2000));
             
             // Countdown: 3, 2, 1
             for (let count = 3; count >= 1; count--) {
@@ -1820,12 +1839,42 @@
                 isWaitingToEnter = false;
             }
             
-            // Show waiting state - DON'T show the question until host starts the round
+            // Get game type helper text for next round
+            const gameType = message.next_game_type || message.game_type;
+            const gameTypeHelpers = {
+                'speed_tap': {
+                    title: '⚡ Speed Tap',
+                    description: 'Faster answers get more points (or lose more points!)<br>Answer quickly but correctly to maximize your score!'
+                },
+                'closest_guess': {
+                    title: '🎯 Closest Guess',
+                    description: 'Submit a range that captures the correct answer!<br>Narrower ranges earn bonus points. Answer quickly for speed bonuses!'
+                },
+                'push_range': {
+                    title: '🔥 Push Range',
+                    description: 'Smash the button to help pick the range where the answer is!<br>Teamwork required! Riskier ranges earn more points.<br>Those who tap more earn more points if correct!'
+                },
+                'rpg_battle': {
+                    title: '⚔️ RPG Battle',
+                    description: 'Team up to defeat the boss!<br>Answer questions correctly to deal damage!'
+                }
+            };
+            
+            const helper = gameTypeHelpers[gameType] || {
+                title: '🎮 Get Ready',
+                description: 'Answer the question to earn points!'
+            };
+            
+            // Show waiting state with game explanation
             document.getElementById('gameArea').innerHTML = `
                 <div class="waiting-state">
                     <h2>⏳ Round ${message.current_round} of ${message.total_rounds}</h2>
                     <div class="spinner"></div>
                     <p style="color: #64748b; margin-top: 1rem;">Waiting for instructor to start round...</p>
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin: 2rem auto; max-width: 500px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">${helper.title}</div>
+                        <div style="font-size: 1.1rem; line-height: 1.6;">${helper.description}</div>
+                    </div>
                 </div>
             `;
             
