@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Join Game - Marketing Analytics Tools</title>
+    
+    <!-- DNS prefetch and preconnect for faster loading -->
+    <link rel="dns-prefetch" href="https://drbaker-backend.onrender.com">
+    <link rel="preconnect" href="https://drbaker-backend.onrender.com">
+    
     <link rel="stylesheet" href="../shared/css/main.css">
     <style>
         .join-container {
@@ -301,6 +306,8 @@
                 }
                 
                 // Join game
+                joinBtn.innerHTML = 'Joining... <span style="font-size: 0.75rem;">(may take 1-2 min on first load)</span>';
+                
                 const response = await fetch(`${API_BASE}/game/join/`, {
                     method: 'POST',
                     headers: headers,

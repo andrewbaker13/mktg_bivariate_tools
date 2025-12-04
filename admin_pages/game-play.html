@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Play Game - Marketing Analytics Tools</title>
+    
+    <!-- DNS prefetch and preconnect for faster loading -->
+    <link rel="dns-prefetch" href="https://drbaker-backend.onrender.com">
+    <link rel="preconnect" href="https://drbaker-backend.onrender.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
     <link rel="stylesheet" href="../shared/css/main.css">
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -683,7 +689,15 @@
         </div>
 
         <div class="game-area" id="gameArea">
-            <!-- Dynamic content will be inserted here -->
+            <!-- Show loading state immediately -->
+            <div class="waiting-state" style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 1rem;">⏳</div>
+                <h2>Connecting to Game...</h2>
+                <p style="color: #64748b;">Please wait while we establish connection</p>
+                <div style="margin-top: 1.5rem;">
+                    <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                </div>
+            </div>
         </div>
 
         <div class="leaderboard" id="leaderboard">
@@ -728,11 +742,94 @@
         let initialNumberlineMin = 0; // Store initial config values
         let initialNumberlineMax = 100;
         
+        // Fetch with timeout helper (optional timeout)
+        function fetchWithTimeout(url, options = {}, timeout = null) {
+            if (!timeout) {
+                return fetch(url, options);
+            }
+            return Promise.race([
+                fetch(url, options),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Request timeout')), timeout)
+                )
+            ]);
+        }
+        
+        let connectionAttemptStart = Date.now();
+        let progressMessageInterval = null;
+        
+        function updateConnectionProgress() {
+            const elapsed = Math.floor((Date.now() - connectionAttemptStart) / 1000);
+            const gameArea = document.getElementById('gameArea');
+            
+            if (elapsed < 5) {
+                // First 5 seconds - just connecting
+                gameArea.innerHTML = `
+                    <div class="waiting-state" style="text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 1rem;">⏳</div>
+                        <h2>Connecting to Game...</h2>
+                        <p style="color: #64748b;">Establishing secure connection</p>
+                        <div style="margin-top: 1.5rem;">
+                            <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        </div>
+                    </div>
+                `;
+            } else if (elapsed < 60) {
+                // 5-60 seconds - show it may take time
+                gameArea.innerHTML = `
+                    <div class="waiting-state" style="text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 1rem;">⏳</div>
+                        <h2>Still Connecting...</h2>
+                        <p style="color: #64748b; margin-bottom: 0.5rem;">This may take 1-2 minutes on first load</p>
+                        <p style="color: #94a3b8; font-size: 0.875rem;">Time elapsed: ${elapsed}s</p>
+                        <div style="margin-top: 1.5rem;">
+                            <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        </div>
+                        <button onclick="location.reload()" style="background: #ef4444; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 1.5rem;">
+                            ❌ Cancel & Retry
+                        </button>
+                    </div>
+                `;
+            } else {
+                // After 60 seconds - something may be wrong
+                gameArea.innerHTML = `
+                    <div class="waiting-state" style="text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 1rem;">⚠️</div>
+                        <h2>Connection Taking Longer Than Expected</h2>
+                        <p style="color: #f59e0b; margin-bottom: 0.5rem;">Still attempting to connect...</p>
+                        <p style="color: #94a3b8; font-size: 0.875rem;">Time elapsed: ${elapsed}s</p>
+                        <div style="margin-top: 1rem; text-align: left; max-width: 400px; margin-left: auto; margin-right: auto;">
+                            <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 0.5rem;">Possible causes:</p>
+                            <ul style="font-size: 0.875rem; color: #64748b;">
+                                <li>Slow mobile connection</li>
+                                <li>Server warming up (first load)</li>
+                                <li>Network firewall blocking WebSocket</li>
+                            </ul>
+                        </div>
+                        <div style="margin-top: 1.5rem;">
+                            <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #f59e0b; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        </div>
+                        <button onclick="location.reload()" style="background: #ef4444; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 1.5rem;">
+                            ❌ Cancel & Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
         function connectWebSocket() {
+            console.log('Attempting WebSocket connection...');
+            connectionAttemptStart = Date.now();
+            
+            // Update progress message every 2 seconds
+            updateConnectionProgress();
+            progressMessageInterval = setInterval(updateConnectionProgress, 2000);
+            
             websocket = new WebSocket(`${WS_BASE}/ws/game/${roomCode}/`);
             
             websocket.onopen = function() {
-                console.log('Connected to game');
+                console.log('WebSocket connected');
+                clearInterval(progressMessageInterval);
                 
                 // Identify ourselves
                 websocket.send(JSON.stringify({
@@ -742,9 +839,12 @@
                     }
                 }));
                 
-                // Check game state instead of always showing waiting
-                fetch(`${API_BASE}/game/${roomCode}/`)
-                    .then(res => res.json())
+                // Check game state (no timeout - let it take as long as needed)
+                fetchWithTimeout(`${API_BASE}/game/${roomCode}/`)
+                    .then(res => {
+                        if (!res.ok) throw new Error('Failed to fetch game state');
+                        return res.json();
+                    })
                     .then(data => {
                         if (data.status === 'in_progress') {
                             // Game is active - server will send game_started event
@@ -779,12 +879,33 @@
             
             websocket.onerror = function(error) {
                 console.error('WebSocket error:', error);
+                clearInterval(progressMessageInterval);
+                showConnectionError();
             };
             
             websocket.onclose = function() {
-                console.log('Disconnected from game');
+                console.log('WebSocket disconnected, reconnecting in 3s...');
+                clearInterval(progressMessageInterval);
                 setTimeout(connectWebSocket, 3000);
             };
+        }
+        
+        function showConnectionError() {
+            document.getElementById('gameArea').innerHTML = `
+                <div class="waiting-state" style="text-align: center;">
+                    <h2>⚠️ Connection Issue</h2>
+                    <p style="color: #ef4444; margin: 1rem 0;">Unable to connect to game server</p>
+                    <p style="color: #64748b; font-size: 0.875rem;">This might be due to:</p>
+                    <ul style="text-align: left; max-width: 400px; margin: 1rem auto; color: #64748b; font-size: 0.875rem;">
+                        <li>Slow internet connection</li>
+                        <li>Server is temporarily down</li>
+                        <li>Firewall blocking WebSocket connections</li>
+                    </ul>
+                    <button onclick="location.reload()" style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 1rem;">
+                        🔄 Try Again
+                    </button>
+                </div>
+            `;
         }
         
         function handleMessage(message) {
@@ -1663,13 +1784,8 @@
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
                     
-                    // Disable the button
-                    const pushBtn = document.getElementById('pushButton');
-                    if (pushBtn) {
-                        pushBtn.disabled = true;
-                        pushBtn.style.opacity = '0.5';
-                        pushBtn.style.cursor = 'not-allowed';
-                    }
+                    // Disable all inputs universally
+                    disableAllInputs();
                     
                     // Send final presses
                     if (pendingPresses > 0) {
@@ -1885,8 +2001,21 @@
         
         function updateLeaderboard(leaderboard) {
             const list = document.getElementById('leaderboardList');
+            const leaderboardContainer = document.getElementById('leaderboard');
             
-            if (!leaderboard || leaderboard.length === 0) return;
+            // Check if leaderboard is empty (hidden by backend due to visibility settings)
+            if (!leaderboard || leaderboard.length === 0) {
+                // Hide leaderboard container
+                if (leaderboardContainer) {
+                    leaderboardContainer.style.display = 'none';
+                }
+                return;
+            }
+            
+            // Show leaderboard container if it was hidden
+            if (leaderboardContainer) {
+                leaderboardContainer.style.display = 'block';
+            }
             
             list.innerHTML = leaderboard.map((player, idx) => {
                 const isOwn = player.player_id === playerSession.id || player.player_name === playerSession.display_name;
@@ -1928,6 +2057,45 @@
             if (myPosition !== -1) {
                 document.getElementById('playerRank').textContent = myPosition + 1;
             }
+        }
+        
+        // Universal input lockout function - called when timer expires (with 1-second grace period)
+        function disableAllInputs() {
+            // Speed Tap buttons
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                btn.style.cursor = 'not-allowed';
+            });
+            
+            // Closest Guess inputs and button
+            const guessMin = document.getElementById('guessMin');
+            const guessMax = document.getElementById('guessMax');
+            const guessSubmitBtn = document.querySelector('.submit-guess-btn');
+            
+            if (guessMin) {
+                guessMin.disabled = true;
+                guessMin.style.opacity = '0.5';
+            }
+            if (guessMax) {
+                guessMax.disabled = true;
+                guessMax.style.opacity = '0.5';
+            }
+            if (guessSubmitBtn) {
+                guessSubmitBtn.disabled = true;
+                guessSubmitBtn.style.opacity = '0.5';
+                guessSubmitBtn.style.cursor = 'not-allowed';
+            }
+            
+            // Push Range button
+            const pushBtn = document.getElementById('pushButton');
+            if (pushBtn) {
+                pushBtn.disabled = true;
+                pushBtn.style.opacity = '0.5';
+                pushBtn.style.cursor = 'not-allowed';
+            }
+            
+            console.log('All inputs disabled due to timer expiration');
         }
         
         function startSpeedTapTimer(seconds, startTime) {
@@ -1990,13 +2158,8 @@
                 if (remaining <= 0) {
                     clearInterval(timerInterval);
                     
-                    // Disable submit button to prevent late submissions
-                    const submitBtn = document.querySelector('.submit-guess-btn');
-                    if (submitBtn) {
-                        submitBtn.disabled = true;
-                        submitBtn.style.opacity = '0.5';
-                        submitBtn.style.cursor = 'not-allowed';
-                    }
+                    // Disable all inputs universally
+                    disableAllInputs();
                     
                     // End Speed Tap game with no winner if time runs out
                     if (websocket && websocket.readyState === WebSocket.OPEN) {
@@ -2045,13 +2208,8 @@
                     clearInterval(timerInterval);
                     console.log('Timer hit zero! gameType:', gameType, 'wsState:', websocket?.readyState);
                     
-                    // Disable submit button to prevent late submissions
-                    const submitBtn = document.querySelector('.submit-guess-btn');
-                    if (submitBtn) {
-                        submitBtn.disabled = true;
-                        submitBtn.style.opacity = '0.5';
-                        submitBtn.style.cursor = 'not-allowed';
-                    }
+                    // Disable all inputs universally
+                    disableAllInputs();
                     
                     // Trigger results calculation for closest_guess game
                     if (gameType === 'closest_guess' && websocket && websocket.readyState === WebSocket.OPEN) {

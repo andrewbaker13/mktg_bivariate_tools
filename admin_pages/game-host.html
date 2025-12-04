@@ -469,14 +469,10 @@
                 </div>
 
                 <div id="setupSection">
-                    <!-- Mode Selector Tabs -->
-                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0;">
-                        <button class="mode-tab active" data-mode="single" onclick="switchMode('single')" style="flex: 1; padding: 1rem; background: none; border: none; border-bottom: 3px solid #3b82f6; font-weight: 600; color: #3b82f6; cursor: pointer; transition: all 0.2s;">
-                            📝 Single Question
-                        </button>
-                        <button class="mode-tab" data-mode="template" onclick="switchMode('template')" style="flex: 1; padding: 1rem; background: none; border: none; border-bottom: 3px solid transparent; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s;">
-                            🎯 Multi-Round Template
-                        </button>
+                    <!-- Header -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="margin: 0 0 0.5rem 0; color: #1e293b;">🎯 Multi-Round Game Setup</h3>
+                        <p style="margin: 0; color: #64748b; font-size: 0.875rem;">Select a pre-built template with multiple questions for cumulative scoring</p>
                     </div>
 
                     <!-- Quick Start Button -->
@@ -488,38 +484,20 @@
                     </div>
 
                     <div style="text-align: center; margin: 1rem 0; color: #6b7280;">
-                        — OR use your own questions —
+                        — OR —
                     </div>
 
-                    <!-- Single Question Mode -->
-                    <div id="singleQuestionMode">
-                        <div class="form-group">
-                            <label for="courseSelect">Select Course</label>
-                            <select id="courseSelect" required>
-                                <option value="">Loading courses...</option>
-                            </select>
-                        </div>
+                    <!-- Quick 1-Round Template -->
+                    <button class="btn" id="quickOneRoundBtn" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; width: 100%; margin-bottom: 1.5rem; font-weight: 600;">
+                        ⚡ Quick 1-Round Template
+                    </button>
 
-                        <div class="form-group">
-                            <label for="gameTypeSelect">Game Type</label>
-                            <select id="gameTypeSelect" required>
-                                <option value="">Select game type...</option>
-                                <option value="speed_tap">⚡ Speed Tap</option>
-                                <option value="closest_guess">🎯 Closest Guess</option>
-                                <option value="push_range">🎯 Push Range</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="questionSelect">Select Question</label>
-                            <select id="questionSelect" required>
-                                <option value="">Select a game type first...</option>
-                            </select>
-                        </div>
+                    <div style="text-align: center; margin: 1rem 0; color: #6b7280;">
+                        — OR create multi-round games —
                     </div>
 
                     <!-- Template Mode -->
-                    <div id="templateMode" style="display: none;">
+                    <div id="templateMode">
                         <div class="alert alert-info">
                             <strong>🎯 Multi-Round Templates:</strong> Select a pre-built template with multiple questions. Students play through all questions in order, with cumulative scoring!
                             <a href="game-template-builder.html" style="color: white; font-weight: 700; text-decoration: underline; display: block; margin-top: 0.5rem;">
@@ -537,6 +515,41 @@
                         <div id="templatePreview" style="display: none; padding: 1rem; background: #f8fafc; border-radius: 8px; margin-top: 1rem;">
                             <h4 style="margin: 0 0 0.5rem 0; color: #1e293b;">Template Details:</h4>
                             <div id="templateDetails"></div>
+                        </div>
+
+                        <!-- Advanced Settings Panel -->
+                        <div id="advancedSettings" style="margin-top: 1.5rem; border: 2px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                            <button id="advancedToggle" onclick="toggleAdvancedSettings()" style="width: 100%; padding: 0.75rem; background: #f8fafc; border: none; text-align: left; font-weight: 600; color: #475569; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                                <span>⚙️ Advanced Settings (Optional)</span>
+                                <span id="advancedToggleIcon">▼</span>
+                            </button>
+                            <div id="advancedSettingsContent" style="display: none; padding: 1rem; background: white;">
+                                <div class="form-group" style="margin-bottom: 1rem;">
+                                    <label for="timeOverride" style="font-size: 0.875rem; font-weight: 600; color: #475569;">⏱️ Time Limit Override (seconds)</label>
+                                    <input type="number" id="timeOverride" placeholder="Leave empty to use question default" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;" min="5" max="600">
+                                    <small style="color: #6b7280; font-size: 0.75rem;">Override the default time limit for all questions</small>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 1rem;">
+                                    <label for="scoringMultiplier" style="font-size: 0.875rem; font-weight: 600; color: #475569;">🎯 Scoring Multiplier</label>
+                                    <select id="scoringMultiplier" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                                        <option value="0.5">0.5x (Half Points)</option>
+                                        <option value="1" selected>1x (Normal)</option>
+                                        <option value="1.5">1.5x (Bonus)</option>
+                                        <option value="2">2x (Double Points)</option>
+                                        <option value="3">3x (Triple Points)</option>
+                                    </select>
+                                    <small style="color: #6b7280; font-size: 0.75rem;">Multiply all points by this factor</small>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="leaderboardVisibility" style="font-size: 0.875rem; font-weight: 600; color: #475569;">📊 Leaderboard Visibility</label>
+                                    <select id="leaderboardVisibility" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                                        <option value="always_show" selected>Always Show</option>
+                                        <option value="hide_during_show_end">Hide During Round, Show at End</option>
+                                        <option value="always_hide">Always Hide</option>
+                                    </select>
+                                    <small style="color: #6b7280; font-size: 0.75rem;">Control when students see the leaderboard</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -812,7 +825,9 @@
                 const select = document.getElementById('templateSelect');
                 select.innerHTML = '<option value="">Select a template...</option>';
                 templates.forEach(template => {
-                    select.innerHTML += `<option value="${template.id}">${template.name} (${template.question_count} questions)</option>`;
+                    const universalBadge = template.is_universal ? ' 🌐' : '';
+                    const cloneAttr = template.is_universal ? ` data-is-universal="true"` : '';
+                    select.innerHTML += `<option value="${template.id}"${cloneAttr}>${template.name}${universalBadge} (${template.question_count} questions)</option>`;
                 });
             } catch (error) {
                 console.error('Error loading templates:', error);
@@ -820,26 +835,47 @@
             }
         }
 
-        // Switch between single question and template mode
-        function switchMode(mode) {
-            // Update tab styles
-            document.querySelectorAll('.mode-tab').forEach(tab => {
-                if (tab.dataset.mode === mode) {
-                    tab.style.color = '#3b82f6';
-                    tab.style.borderBottom = '3px solid #3b82f6';
-                } else {
-                    tab.style.color = '#64748b';
-                    tab.style.borderBottom = '3px solid transparent';
-                }
-            });
+        // Clone template function
+        async function cloneTemplate(templateId, templateName) {
+            const newName = prompt(`Clone "${templateName}"\n\nEnter a name for your copy:`, `${templateName} (My Copy)`);
+            if (!newName) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/game/templates/${templateId}/clone/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: newName })
+                });
+                
+                if (!response.ok) throw new Error('Clone failed');
+                
+                const data = await response.json();
+                showToast(`Template cloned: ${newName}`, 'success');
+                await loadTemplates();
+                
+                // Select the newly cloned template
+                document.getElementById('templateSelect').value = data.template.id;
+                document.getElementById('templateSelect').dispatchEvent(new Event('change'));
+            } catch (error) {
+                console.error('Error cloning template:', error);
+                showToast('Failed to clone template', 'error');
+            }
+        }
 
-            // Show/hide modes
-            if (mode === 'single') {
-                document.getElementById('singleQuestionMode').style.display = 'block';
-                document.getElementById('templateMode').style.display = 'none';
+        // Toggle advanced settings panel
+        function toggleAdvancedSettings() {
+            const content = document.getElementById('advancedSettingsContent');
+            const icon = document.getElementById('advancedToggleIcon');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.textContent = '▲';
             } else {
-                document.getElementById('singleQuestionMode').style.display = 'none';
-                document.getElementById('templateMode').style.display = 'block';
+                content.style.display = 'none';
+                icon.textContent = '▼';
             }
         }
 
@@ -867,9 +903,12 @@
                     <div style="margin-top: 0.5rem; color: #475569;">${template.description}</div>
                 ` : '';
                 
+                const universalBadge = template.is_universal ? '<span style="background: #3b82f6; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">🌐 Universal</span>' : '';
+                const cloneButton = template.is_universal ? `<button onclick="cloneTemplate(${template.id}, '${template.name.replace(/'/g, "\\'")}')"; style="background: #8b5cf6; color: white; padding: 0.5rem 1rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 0.75rem;">📋 Clone to Customize</button>` : '';
+                
                 document.getElementById('templateDetails').innerHTML = `
-                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.5rem;">
-                        <div><strong>Name:</strong> ${template.name}</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.5rem; align-items: center;">
+                        <div><strong>Name:</strong> ${template.name}${universalBadge}</div>
                         <div><strong>Rounds:</strong> ${questionCount}</div>
                         <div><strong>Created by:</strong> ${template.created_by_username || 'Unknown'}</div>
                     </div>
@@ -877,6 +916,7 @@
                     <div style="margin-bottom: 0.3rem;"><strong>Question IDs:</strong> ${sampleQuestionList || 'Not available'}</div>
                     <div style="color: #6b7280; font-size: 0.875rem;">Students will play through all ${questionCount} questions with cumulative scoring.</div>
                     ${descriptionBlock}
+                    ${cloneButton}
                 `;
                 preview.style.display = 'block';
                 showToast(`Loaded template "${template.name}"`, 'success');
@@ -903,36 +943,80 @@
                   '- Math (calculations, measurements)');
         });
 
-        // Load questions based on game type
-        document.getElementById('gameTypeSelect').addEventListener('change', async function() {
-            const gameType = this.value;
-            const courseId = document.getElementById('courseSelect').value;
-            const questionSelect = document.getElementById('questionSelect');
+        // Quick 1-Round Template - auto-creates template from selected question
+        document.getElementById('quickOneRoundBtn').addEventListener('click', async function() {
+            // Show modal to select question
+            const gameType = prompt('Quick 1-Round Template\n\nSelect game type:\n1 = Speed Tap\n2 = Closest Guess\n3 = Push Range', '1');
+            if (!gameType) return;
             
-            if (!gameType) {
-                questionSelect.innerHTML = '<option value="">Select a game type first...</option>';
-                return;
+            let gameTypeStr;
+            switch(gameType) {
+                case '1': gameTypeStr = 'speed_tap'; break;
+                case '2': gameTypeStr = 'closest_guess'; break;
+                case '3': gameTypeStr = 'push_range'; break;
+                default:
+                    alert('Invalid game type');
+                    return;
             }
             
-            questionSelect.innerHTML = '<option value="">Loading questions...</option>';
-            
             try {
-                let url = `${API_BASE}/game/questions/?game_type=${gameType}`;
-                if (courseId) url += `&course_id=${courseId}`;
-                
-                const response = await fetch(url, {
+                // Fetch questions for this game type
+                const response = await fetch(`${API_BASE}/game/questions/?game_type=${gameTypeStr}`, {
                     headers: {'Authorization': `Token ${token}`}
                 });
                 const questions = await response.json();
                 
-                questionSelect.innerHTML = '<option value="">Select a question...</option>';
-                questions.forEach(q => {
-                    const text = q.question_text.substring(0, 80) + (q.question_text.length > 80 ? '...' : '');
-                    questionSelect.innerHTML += `<option value="${q.id}">${text}</option>`;
+                if (questions.length === 0) {
+                    alert('No questions found for this game type. Please create questions first.');
+                    return;
+                }
+                
+                // Show question selection
+                let questionList = 'Select a question (enter number):\n\n';
+                questions.slice(0, 10).forEach((q, i) => {
+                    const preview = q.question_text.substring(0, 60) + (q.question_text.length > 60 ? '...' : '');
+                    questionList += `${i + 1}. ${preview}\n`;
                 });
+                
+                const selection = prompt(questionList, '1');
+                if (!selection) return;
+                
+                const selectedIndex = parseInt(selection) - 1;
+                if (selectedIndex < 0 || selectedIndex >= questions.length) {
+                    alert('Invalid selection');
+                    return;
+                }
+                
+                const selectedQuestion = questions[selectedIndex];
+                
+                // Create template with single question
+                const templateName = `Quick: ${selectedQuestion.question_text.substring(0, 40)}...`;
+                const createResponse = await fetch(`${API_BASE}/game/templates/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: templateName,
+                        description: 'Quick 1-round game',
+                        question_ids: [selectedQuestion.id]
+                    })
+                });
+                
+                if (!createResponse.ok) throw new Error('Failed to create template');
+                
+                const newTemplate = await createResponse.json();
+                showToast('Quick template created!', 'success');
+                
+                // Reload templates and select the new one
+                await loadTemplates();
+                document.getElementById('templateSelect').value = newTemplate.id;
+                document.getElementById('templateSelect').dispatchEvent(new Event('change'));
+                
             } catch (error) {
-                console.error('Error loading questions:', error);
-                questionSelect.innerHTML = '<option value="">Error loading questions</option>';
+                console.error('Error creating quick template:', error);
+                showToast('Failed to create quick template', 'error');
             }
         });
 
@@ -940,41 +1024,37 @@
         document.getElementById('createGameBtn').addEventListener('click', async function(e) {
             e.preventDefault();
             
-            // Check which mode is active
-            const isSingleMode = document.getElementById('singleQuestionMode').style.display !== 'none';
             const guestPassword = document.getElementById('guestPassword').value;
+            const templateId = document.getElementById('templateSelect').value;
             
-            let requestBody;
-            
-            if (isSingleMode) {
-                // Single question mode
-                const courseId = document.getElementById('courseSelect').value;
-                const questionId = document.getElementById('questionSelect').value;
-                
-                if (!courseId || !questionId) {
-                    alert('Please select a course and question');
-                    return;
-                }
-                
-                requestBody = {
-                    course_id: parseInt(courseId),
-                    question_id: parseInt(questionId),
-                    guest_password: guestPassword
-                };
-            } else {
-                // Template mode - course is optional for templates
-                const templateId = document.getElementById('templateSelect').value;
-                
-                if (!templateId) {
-                    alert('Please select a template');
-                    return;
-                }
-                
-                requestBody = {
-                    game_template_id: parseInt(templateId),
-                    guest_password: guestPassword
-                };
+            if (!templateId) {
+                alert('Please select a template');
+                return;
             }
+            
+            // Build game_settings object from advanced settings
+            const gameSettings = {};
+            
+            const timeOverride = document.getElementById('timeOverride').value;
+            if (timeOverride) {
+                gameSettings.time_limit_override = parseInt(timeOverride);
+            }
+            
+            const scoringMultiplier = parseFloat(document.getElementById('scoringMultiplier').value);
+            if (scoringMultiplier !== 1.0) {
+                gameSettings.scoring_multiplier = scoringMultiplier;
+            }
+            
+            const leaderboardVisibility = document.getElementById('leaderboardVisibility').value;
+            if (leaderboardVisibility !== 'always_show') {
+                gameSettings.leaderboard_visibility = leaderboardVisibility;
+            }
+            
+            const requestBody = {
+                game_template_id: parseInt(templateId),
+                guest_password: guestPassword,
+                game_settings: Object.keys(gameSettings).length > 0 ? gameSettings : null
+            };
             
             try {
                 const response = await fetch(`${API_BASE}/game/create/`, {
