@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Manager - Dr. Baker Marketing</title>
+    <link rel="stylesheet" href="../shared/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: var(--gray-900);
+            font-size: 1.75rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-700);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .tabs {
+            background: white;
+            border-radius: 12px;
+            padding: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray-700);
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: var(--gray-100);
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .quiz-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .quiz-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .quiz-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .quiz-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .quiz-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin: 0 0 0.5rem 0;
+        }
+
+        .quiz-tool {
+            font-size: 0.875rem;
+            color: var(--gray-700);
+            background: var(--gray-100);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+        }
+
+        .quiz-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-private { background: #fef3c7; color: #92400e; }
+        .badge-shared { background: #dbeafe; color: #1e40af; }
+        .badge-course { background: #d1fae5; color: #065f46; }
+        .badge-public { background: #e9d5ff; color: #6b21a8; }
+        .badge-active { background: #d1fae5; color: #065f46; }
+        .badge-inactive { background: #fee2e2; color: #991b1b; }
+
+        .quiz-stats {
+            display: flex;
+            gap: 1.5rem;
+            margin: 1rem 0;
+            padding: 1rem 0;
+            border-top: 1px solid var(--gray-200);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--gray-700);
+            text-transform: uppercase;
+        }
+
+        .quiz-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: var(--gray-900);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-700);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input {
+            width: auto;
+        }
+
+        .empty-state {
+            background: white;
+            border-radius: 12px;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--gray-200);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: var(--gray-700);
+            margin-bottom: 2rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-700);
+        }
+
+        .loading i {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .multi-select {
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .multi-select-option {
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .multi-select-option:hover {
+            background: var(--gray-100);
+        }
+
+        .multi-select-option input {
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1><i class="fas fa-clipboard-list"></i> Quiz Manager</h1>
+            </div>
+            <div class="header-actions">
+                <a href="instructor.html" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+                <button class="btn btn-primary" onclick="showCreateModal()">
+                    <i class="fas fa-plus"></i> Create Quiz
+                </button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="my-quizzes">
+                <i class="fas fa-folder"></i> My Quizzes
+            </button>
+            <button class="tab" data-tab="shared">
+                <i class="fas fa-share-nodes"></i> Shared with Me
+            </button>
+        </div>
+
+        <div id="my-quizzes" class="content-section active">
+            <div id="my-quizzes-content" class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>Loading your quizzes...</p>
+            </div>
+        </div>
+
+        <div id="shared" class="content-section">
+            <div id="shared-content" class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>Loading shared quizzes...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Quiz Modal -->
+    <div id="quiz-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Create New Quiz</h2>
+                <button class="close-modal" onclick="closeModal('quiz-modal')">&times;</button>
+            </div>
+            <form id="quiz-form">
+                <input type="hidden" id="quiz-id">
+                
+                <div class="form-group">
+                    <label>Quiz Title *</label>
+                    <input type="text" id="quiz-title" required placeholder="Enter quiz title">
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="quiz-description" placeholder="What does this quiz cover?"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Tool *</label>
+                    <select id="quiz-tool" required>
+                        <option value="">Select a tool...</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Time Limit (minutes)</label>
+                        <input type="number" id="time-limit" value="30" min="0">
+                        <small>0 = unlimited</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Max Attempts</label>
+                        <input type="number" id="max-attempts" value="1" min="0">
+                        <small>0 = unlimited</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Passing Score (%)</label>
+                        <input type="number" id="passing-score" value="70" min="0" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Questions to Show</label>
+                        <input type="number" id="question-count" value="0" min="0">
+                        <small>0 = all questions</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Show Feedback</label>
+                    <select id="show-feedback">
+                        <option value="never">Never</option>
+                        <option value="after_submit" selected>After submission</option>
+                        <option value="after_each">After each question</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="randomize-questions" checked>
+                        <label for="randomize-questions">Randomize question order</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="randomize-options" checked>
+                        <label for="randomize-options">Randomize answer options</label>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <i class="fas fa-save"></i> Save Quiz
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('quiz-modal')">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Deploy Modal -->
+    <div id="deploy-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Deploy Quiz</h2>
+                <button class="close-modal" onclick="closeModal('deploy-modal')">&times;</button>
+            </div>
+            <div>
+                <input type="hidden" id="deploy-quiz-id">
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="deploy-active" checked>
+                        <label for="deploy-active">Make active (available to students)</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Deploy to Courses</label>
+                    <div id="course-list" class="multi-select"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Available From (optional)</label>
+                        <input type="datetime-local" id="available-from">
+                    </div>
+                    <div class="form-group">
+                        <label>Available Until (optional)</label>
+                        <input type="datetime-local" id="available-until">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn btn-success" style="flex: 1;" onclick="deployQuiz()">
+                        <i class="fas fa-rocket"></i> Deploy Quiz
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeModal('deploy-modal')">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let currentTab = 'my-quizzes';
+        let availableTools = [];
+        let availableCourses = [];
+
+        // Authentication
+        function getAuthToken() {
+            return localStorage.getItem('authToken');
+        }
+
+        function checkAuth() {
+            const token = getAuthToken();
+            if (!token) {
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!checkAuth()) return;
+
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.dataset.tab;
+                    switchTab(tabName);
+                });
+            });
+
+            await loadTools();
+            await loadCourses();
+            await loadMyQuizzes();
+
+            // Quiz form submission
+            document.getElementById('quiz-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await saveQuiz();
+            });
+        });
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            
+            // Load content
+            if (tabName === 'my-quizzes') {
+                loadMyQuizzes();
+            } else if (tabName === 'shared') {
+                loadSharedQuizzes();
+            }
+        }
+
+        async function loadTools() {
+            // Load available tools for quiz creation
+            try {
+                const response = await fetch(`${API_BASE}/tool-run/`, {
+                    headers: {'Authorization': `Token ${getAuthToken()}`}
+                });
+                
+                // For now, use hardcoded tools
+                availableTools = [
+                    {id: 1, slug: 'pearson-correlation', name: 'Pearson Correlation'},
+                    {id: 2, slug: 'linear-regression', name: 'Linear Regression'},
+                    {id: 3, slug: 't-test', name: 'T-Test'},
+                ];
+                
+                const select = document.getElementById('quiz-tool');
+                select.innerHTML = '<option value="">Select a tool...</option>';
+                availableTools.forEach(tool => {
+                    select.innerHTML += `<option value="${tool.id}">${tool.name}</option>`;
+                });
+            } catch (error) {
+                console.error('Error loading tools:', error);
+            }
+        }
+
+        async function loadCourses() {
+            try {
+                const response = await fetch(`${API_BASE}/quiz/manage/courses/`, {
+                    headers: {'Authorization': `Token ${getAuthToken()}`}
+                });
+                const data = await response.json();
+                availableCourses = data.courses || [];
+            } catch (error) {
+                console.error('Error loading courses:', error);
+                availableCourses = [];
+            }
+        }
+
+        async function loadMyQuizzes() {
+            const container = document.getElementById('my-quizzes-content');
+            container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i><p>Loading...</p></div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz/manage/my-quizzes/`, {
+                    headers: {'Authorization': `Token ${getAuthToken()}`}
+                });
+                const data = await response.json();
+                
+                if (data.quizzes && data.quizzes.length > 0) {
+                    container.innerHTML = '<div class="quiz-grid"></div>';
+                    const grid = container.querySelector('.quiz-grid');
+                    data.quizzes.forEach(quiz => {
+                        grid.appendChild(createQuizCard(quiz));
+                    });
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h3>No Quizzes Yet</h3>
+                            <p>Create your first quiz to get started!</p>
+                            <button class="btn btn-primary" onclick="showCreateModal()">
+                                <i class="fas fa-plus"></i> Create Quiz
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading quizzes:', error);
+                showToast('Failed to load quizzes', 'error');
+            }
+        }
+
+        async function loadSharedQuizzes() {
+            const container = document.getElementById('shared-content');
+            container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i><p>Loading...</p></div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz/manage/shared/`, {
+                    headers: {'Authorization': `Token ${getAuthToken()}`}
+                });
+                const data = await response.json();
+                
+                if (data.quizzes && data.quizzes.length > 0) {
+                    container.innerHTML = '<div class="quiz-grid"></div>';
+                    const grid = container.querySelector('.quiz-grid');
+                    data.quizzes.forEach(quiz => {
+                        grid.appendChild(createQuizCard(quiz, true));
+                    });
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-share-nodes"></i>
+                            <h3>No Shared Quizzes</h3>
+                            <p>Quizzes shared with you will appear here.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading shared quizzes:', error);
+                showToast('Failed to load shared quizzes', 'error');
+            }
+        }
+
+        function createQuizCard(quiz, isShared = false) {
+            const card = document.createElement('div');
+            card.className = 'quiz-card';
+            
+            const visibilityBadge = getVisibilityBadge(quiz.visibility);
+            const statusBadge = quiz.is_active 
+                ? '<span class="quiz-badge badge-active">Active</span>'
+                : '<span class="quiz-badge badge-inactive">Inactive</span>';
+            
+            card.innerHTML = `
+                <div class="quiz-card-header">
+                    <div>
+                        <h3 class="quiz-title">${quiz.title}</h3>
+                        <div class="quiz-tool"><i class="fas fa-tools"></i> ${quiz.tool_name}</div>
+                    </div>
+                    <div>
+                        ${visibilityBadge}
+                        ${statusBadge}
+                    </div>
+                </div>
+                
+                <div class="quiz-stats">
+                    <div class="stat">
+                        <div class="stat-value">${quiz.question_count}</div>
+                        <div class="stat-label">Questions</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">${quiz.course_count || 0}</div>
+                        <div class="stat-label">Courses</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">${quiz.attempt_count || 0}</div>
+                        <div class="stat-label">Attempts</div>
+                    </div>
+                </div>
+                
+                <div class="quiz-actions">
+                    ${!isShared ? `
+                        <button class="btn btn-primary btn-small" onclick="editQuiz(${quiz.id})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-success btn-small" onclick="showDeployModal(${quiz.id})">
+                            <i class="fas fa-rocket"></i> Deploy
+                        </button>
+                        <button class="btn btn-secondary btn-small" onclick="manageQuestions(${quiz.id})">
+                            <i class="fas fa-list"></i> Questions
+                        </button>
+                    ` : ''}
+                    <button class="btn btn-secondary btn-small" onclick="copyQuiz(${quiz.id})">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    ${!isShared ? `
+                        <button class="btn btn-danger btn-small" onclick="deleteQuiz(${quiz.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function getVisibilityBadge(visibility) {
+            const badges = {
+                'private': '<span class="quiz-badge badge-private">Private</span>',
+                'shared_readonly': '<span class="quiz-badge badge-shared">Shared (View)</span>',
+                'shared_editable': '<span class="quiz-badge badge-shared">Shared (Edit)</span>',
+                'course_only': '<span class="quiz-badge badge-course">Course Only</span>',
+                'public': '<span class="quiz-badge badge-public">Public</span>'
+            };
+            return badges[visibility] || badges['private'];
+        }
+
+        function showCreateModal() {
+            document.getElementById('modal-title').textContent = 'Create New Quiz';
+            document.getElementById('quiz-form').reset();
+            document.getElementById('quiz-id').value = '';
+            document.getElementById('quiz-modal').classList.add('show');
+        }
+
+        async function editQuiz(quizId) {
+            // Load quiz data and show edit modal
+            try {
+                const response = await fetch(`${API_BASE}/quiz/manage/${quizId}/`, {
+                    headers: {'Authorization': `Token ${getAuthToken()}`}
+                });
+                const data = await response.json();
+                const quiz = data.quiz;
+                
+                document.getElementById('modal-title').textContent = 'Edit Quiz';
+                document.getElementById('quiz-id').value = quiz.id;
+                document.getElementById('quiz-title').value = quiz.title;
+                document.getElementById('quiz-description').value = quiz.description;
+                document.getElementById('quiz-tool').value = quiz.tool_id;
+                document.getElementById('time-limit').value = quiz.time_limit_minutes;
+                document.getElementById('max-attempts').value = quiz.max_attempts;
+                document.getElementById('passing-score').value = quiz.passing_score;
+                document.getElementById('question-count').value = quiz.question_count;
+                document.getElementById('show-feedback').value = quiz.show_feedback;
+                document.getElementById('randomize-questions').checked = quiz.randomize_questions;
+                document.getElementById('randomize-options').checked = quiz.randomize_options;
+                
+                document.getElementById('quiz-modal').classList.add('show');
+            } catch (error) {
+                console.error('Error loading quiz:', error);
+                showToast('Failed to load quiz', 'error');
+            }
+        }
+
+        async function saveQuiz() {
+            const quizId = document.getElementById('quiz-id').value;
+            const isEdit = !!quizId;
+            
+            const data = {
+                title: document.getElementById('quiz-title').value,
+                description: document.getElementById('quiz-description').value,
+                tool_id: parseInt(document.getElementById('quiz-tool').value),
+                time_limit_minutes: parseInt(document.getElementById('time-limit').value),
+                max_attempts: parseInt(document.getElementById('max-attempts').value),
+                passing_score: parseInt(document.getElementById('passing-score').value),
+                question_count: parseInt(document.getElementById('question-count').value),
+                show_feedback: document.getElementById('show-feedback').value,
+                randomize_questions: document.getElementById('randomize-questions').checked,
+                randomize_options: document.getElementById('randomize-options').checked,
+            };
+            
+            try {
+                const url = isEdit 
+                    ? `${API_BASE}/quiz/manage/${quizId}/update/`
+                    : `${API_BASE}/quiz/manage/create/`;
+                const method = isEdit ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Token ${getAuthToken()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) throw new Error('Failed to save quiz');
+                
+                showToast(isEdit ? 'Quiz updated successfully' : 'Quiz created successfully', 'success');
+                closeModal('quiz-modal');
+                loadMyQuizzes();
+            } catch (error) {
+                console.error('Error saving quiz:', error);
+                showToast('Failed to save quiz', 'error');
+            }
+        }
+
+        function showDeployModal(quizId) {
+            document.getElementById('deploy-quiz-id').value = quizId;
+            
+            // Populate course list
+            const courseList = document.getElementById('course-list');
+            courseList.innerHTML = '';
+            availableCourses.forEach(course => {
+                const option = document.createElement('div');
+                option.className = 'multi-select-option';
+                option.innerHTML = `
+                    <input type="checkbox" id="course-${course.id}" value="${course.id}">
+                    <label for="course-${course.id}">${course.name} (${course.student_count} students)</label>
+                `;
+                courseList.appendChild(option);
+            });
+            
+            document.getElementById('deploy-modal').classList.add('show');
+        }
+
+        async function deployQuiz() {
+            const quizId = document.getElementById('deploy-quiz-id').value;
+            const isActive = document.getElementById('deploy-active').checked;
+            const selectedCourses = Array.from(document.querySelectorAll('#course-list input:checked'))
+                .map(cb => parseInt(cb.value));
+            
+            const data = {
+                is_active: isActive,
+                course_ids: selectedCourses,
+                available_from: document.getElementById('available-from').value || null,
+                available_until: document.getElementById('available-until').value || null,
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz/manage/${quizId}/deploy/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${getAuthToken()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) throw new Error('Failed to deploy quiz');
+                
+                const result = await response.json();
+                showToast(`Quiz deployed to ${result.deployed_to_courses} course(s)`, 'success');
+                closeModal('deploy-modal');
+                loadMyQuizzes();
+            } catch (error) {
+                console.error('Error deploying quiz:', error);
+                showToast('Failed to deploy quiz', 'error');
+            }
+        }
+
+        async function copyQuiz(quizId) {
+            if (!confirm('Create a copy of this quiz?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz/manage/${quizId}/copy/`, {
+                    method: 'POST',
+                    headers: {'Authorization': `Token ${getAuthToken()}`}
+                });
+                
+                if (!response.ok) throw new Error('Failed to copy quiz');
+                
+                showToast('Quiz copied successfully', 'success');
+                loadMyQuizzes();
+            } catch (error) {
+                console.error('Error copying quiz:', error);
+                showToast('Failed to copy quiz', 'error');
+            }
+        }
+
+        async function deleteQuiz(quizId) {
+            if (!confirm('Are you sure you want to delete this quiz?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz/manage/${quizId}/delete/`, {
+                    method: 'DELETE',
+                    headers: {'Authorization': `Token ${getAuthToken()}`}
+                });
+                
+                if (!response.ok) throw new Error('Failed to delete quiz');
+                
+                showToast('Quiz deleted successfully', 'success');
+                loadMyQuizzes();
+            } catch (error) {
+                console.error('Error deleting quiz:', error);
+                showToast('Failed to delete quiz', 'error');
+            }
+        }
+
+        function manageQuestions(quizId) {
+            // Navigate to question management page
+            window.location.href = `quiz-questions.html?quiz_id=${quizId}`;
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
