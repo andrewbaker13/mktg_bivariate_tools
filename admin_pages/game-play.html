@@ -1880,6 +1880,11 @@
             // Check if multi-round game and not at final round
             const isMultiRound = message.total_rounds && message.total_rounds > 1;
             const hasMoreRounds = isMultiRound && message.current_round < message.total_rounds;
+            const isFinalRound = message.is_final_round || false;
+            
+            // Check leaderboard visibility settings
+            const leaderboardVisibility = message.leaderboard_visibility || 'always_show';
+            const shouldShowFinalLeaderboard = isFinalRound && leaderboardVisibility === 'always_show';
             
             // For Speed Tap games, highlight the correct answer
             if (gameType === 'speed_tap' && message.correct_answer) {
@@ -1986,6 +1991,33 @@
                 // Insert banner at the TOP of gameArea (before existing content)
                 const gameArea = document.getElementById('gameArea');
                 gameArea.insertBefore(banner, gameArea.firstChild);
+                
+                // If final round and leaderboard visibility allows, show full final leaderboard
+                if (isFinalRound && shouldShowFinalLeaderboard && message.leaderboard) {
+                    const finalLeaderboardDiv = document.createElement('div');
+                    finalLeaderboardDiv.style.cssText = 'margin-top: 20px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
+                    
+                    const leaderboardHTML = message.leaderboard.map((player, idx) => {
+                        const isOwn = player.player_id === playerSession.id || player.player_name === playerSession.display_name;
+                        const rankClass = idx === 0 ? 'first' : idx === 1 ? 'second' : idx === 2 ? 'third' : '';
+                        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '';
+                        
+                        return `
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; margin-bottom: 10px; background: ${isOwn ? '#fef3c7' : '#f8fafc'}; border-radius: 8px; border: 2px solid ${isOwn ? '#f59e0b' : '#e2e8f0'};">
+                                <span style="font-size: 24px; font-weight: 700; color: #64748b; min-width: 40px;">${medal || (idx + 1)}</span>
+                                <span style="flex: 1; margin-left: 15px; font-weight: ${isOwn ? '700' : '600'}; font-size: 18px;">${player.player_name}</span>
+                                <span style="font-weight: 700; font-size: 24px; color: #1e293b;">${player.score}</span>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    finalLeaderboardDiv.innerHTML = `
+                        <h2 style="text-align: center; color: #1e293b; margin: 0 0 20px 0;">🏆 Final Leaderboard</h2>
+                        ${leaderboardHTML}
+                    `;
+                    
+                    gameArea.appendChild(finalLeaderboardDiv);
+                }
             } else {
                 // Single-round game: replace with traditional game over screen
                 const winnerText = message.winner 
