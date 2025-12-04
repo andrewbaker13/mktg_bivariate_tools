@@ -794,7 +794,7 @@
                     <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
                         <div style="margin-bottom: 0.5rem;"><strong>Template:</strong> ${data.template_name}</div>
                         <div style="margin-bottom: 0.5rem;"><strong>Valid Questions:</strong> ${data.valid_count} of ${data.total_questions}</div>
-                        <div><strong>Missing Question IDs:</strong> ${data.missing_question_ids.join(', ')}</div>
+                        <div><strong>Missing Question IDs:</strong> ${data.missing_game_question_ids.join(', ')}</div>
                     </div>
                     <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem;">
                         ${data.can_proceed 
@@ -955,7 +955,7 @@
                 const estimatedSeconds = questionCount * 30;
                 const estimatedMinutes = questionCount ? Math.max(1, Math.round(estimatedSeconds / 60)) : 0;
                 const estimateDisplay = estimatedMinutes ? `~${estimatedMinutes} minute${estimatedMinutes === 1 ? '' : 's'}` : 'N/A';
-                const sampleQuestionList = (template.question_ids || []).slice(0, 5).join(', ');
+                const sampleQuestionList = (template.game_question_ids || []).slice(0, 5).join(', ');
                 const descriptionBlock = template.description ? `
                     <div style="margin-top: 0.5rem; color: #475569;">${template.description}</div>
                 ` : '';
@@ -1057,7 +1057,7 @@
                     body: JSON.stringify({
                         name: templateName,
                         description: 'Quick 1-round game',
-                        question_ids: [selectedQuestion.id]
+                        game_question_ids: [selectedQuestion.id]
                     })
                 });
                 
@@ -1151,7 +1151,7 @@
                         gameSession = await retryResponse.json();
                     } else if (proceed === 'rebuild') {
                         // User wants to rebuild - redirect to template builder with valid questions
-                        const validIds = responseData.valid_question_ids.join(',');
+                        const validIds = responseData.valid_game_question_ids.join(',');
                         window.location.href = `game-template-builder.html?prefill=${validIds}&template_id=${responseData.template_id}`;
                         return;
                     } else {
