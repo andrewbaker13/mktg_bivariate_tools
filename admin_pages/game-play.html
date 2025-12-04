@@ -1169,6 +1169,12 @@
             gameType = message.game_type;
             gameStartTime = Date.now();
             
+            // DEBUGGING: Log the entire message to see what we're receiving
+            console.log('=== handleGameStart called ===');
+            console.log('Full message object:', JSON.stringify(message, null, 2));
+            console.log('message.game_time_limit value:', message.game_time_limit);
+            console.log('message.game_time_limit type:', typeof message.game_time_limit);
+            
             // Re-enable submit button for new round
             const submitBtn = document.querySelector('.submit-guess-btn');
             if (submitBtn) {
@@ -1190,7 +1196,8 @@
                 : 20;
             const startTime = message.start_time ? new Date(message.start_time).getTime() : Date.now();
             
-            console.log('Game starting with time limit:', timeLimit, 'seconds (from message:', message.game_time_limit, ')');
+            console.log('Calculated timeLimit:', timeLimit, 'seconds');
+            console.log('Will display as:', timeLimit, 'in timer div');
             
             if (gameType === 'speed_tap') {
                 showSpeedTapGame(message, timeLimit);

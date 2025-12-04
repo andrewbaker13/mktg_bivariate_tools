@@ -1362,38 +1362,88 @@
                 const autoAdvance = document.getElementById('autoAdvance').checked;
                 if (autoAdvance) {
                     const delay = parseInt(document.getElementById('autoAdvanceDelay').value) * 1000;
-                    console.log(`Auto-advance enabled: will advance in ${delay}ms`);
+                    console.log(`Auto-advance enabled: will fully auto-start next round in ${delay}ms`);
                     
                     // Update button text to show countdown
                     let secondsRemaining = delay / 1000;
-                    nextBtn.textContent = `⏩ Auto-advancing in ${secondsRemaining}s (click to advance now)`;
+                    nextBtn.textContent = `⏩ Auto-starting Round ${currentRound + 1} in ${secondsRemaining}s (click to start now)`;
                     
                     const countdownInterval = setInterval(() => {
                         secondsRemaining--;
                         if (secondsRemaining > 0) {
-                            nextBtn.textContent = `⏩ Auto-advancing in ${secondsRemaining}s (click to advance now)`;
+                            nextBtn.textContent = `⏩ Auto-starting Round ${currentRound + 1} in ${secondsRemaining}s (click to start now)`;
                         }
                     }, 1000);
                     
-                    // Set timeout to auto-advance
+                    // Set timeout to auto-advance AND auto-start
                     autoAdvanceTimeout = setTimeout(async () => {
                         clearInterval(countdownInterval);
-                        console.log('Auto-advancing to next round...');
-                        nextBtn.click(); // Trigger the existing next round logic
+                        console.log('Auto-advancing and starting next round...');
+                        
+                        // First, advance to next round
+                        try {
+                            nextBtn.textContent = 'Auto-advancing...';
+                            const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/advance-round/`, {
+                                method: 'POST',
+                                headers: {'Authorization': `Token ${token}`}
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error('Failed to advance round');
+                            }
+                            
+                            gameSession = await response.json();
+                            console.log('Auto-advanced to round', gameSession.current_round);
+                            
+                            // Hide next round button
+                            nextBtn.style.display = 'none';
+                            
+                            // Show brief "Auto-starting..." message
+                            showToast(`Auto-starting Round ${gameSession.current_round}...`, 'info');
+                            
+                            // Wait 2 seconds, then auto-start the round
+                            setTimeout(async () => {
+                                console.log('Auto-starting round', gameSession.current_round);
+                                const startBtn = document.getElementById('startGameBtn');
+                                
+                                // Trigger start game
+                                const startResponse = await fetch(`${API_BASE}/game/${gameSession.room_code}/start/`, {
+                                    method: 'POST',
+                                    headers: {'Authorization': `Token ${token}`}
+                                });
+                                
+                                if (!startResponse.ok) {
+                                    throw new Error('Failed to auto-start game');
+                                }
+                                
+                                gameSession = await startResponse.json();
+                                setStatusIndicator('in_progress');
+                                showToast(`Round ${gameSession.current_round} started automatically`, 'success');
+                                startBtn.disabled = true;
+                            }, 2000);
+                            
+                        } catch (error) {
+                            console.error('Auto-advance error:', error);
+                            showToast('Auto-advance failed: ' + error.message, 'error');
+                            nextBtn.textContent = '⏭️ Next Round';
+                            nextBtn.disabled = false;
+                            nextBtn.style.display = 'inline-block';
+                        }
                     }, delay);
                     
-                    // If user clicks button manually, cancel auto-advance
-                    const originalClickHandler = nextBtn.onclick;
-                    nextBtn.onclick = function(e) {
+                    // If user clicks button manually, cancel auto-advance and just do manual advance
+                    const manualClickHandler = async function(e) {
                         if (autoAdvanceTimeout) {
                             clearTimeout(autoAdvanceTimeout);
                             clearInterval(countdownInterval);
                             autoAdvanceTimeout = null;
-                            nextBtn.textContent = '⏭️ Next Round';
-                            console.log('Auto-advance cancelled by manual click');
+                            console.log('Auto-advance cancelled by manual click - doing manual advance');
                         }
-                        // Don't prevent the default click behavior
+                        // The default event listener will handle the manual advance
                     };
+                    
+                    // Store original click and add manual handler
+                    nextBtn.addEventListener('click', manualClickHandler, { once: true });
                 }
             } else {
                 // Final round complete - show end-of-game UI
