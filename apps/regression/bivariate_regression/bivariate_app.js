@@ -954,7 +954,6 @@ function updateSummaryTable(stats, predictorType, extra = {}) {
     `;
     return;
   }
-  }
 
   // Categorical predictor: one row for reference mean, then one row per non-reference contrast
   const { xGroups, reference } = extra;
@@ -1755,6 +1754,12 @@ function updateResults() {
   let sse = NaN;
   let xStats = null;
   let totalPairs = NaN;
+  let meanX = NaN;
+  let meanY = NaN;
+  let sdX = NaN;
+  let sdY = NaN;
+  let covXY = NaN;
+  let sampleVarX = NaN;
 
   if (predictorType === 'continuous') {
     const initialPairs = [];
@@ -1800,14 +1805,15 @@ function updateResults() {
       return;
     }
 
-    const meanX = StatsUtils.mean(xNumeric);
-    const meanY = StatsUtils.mean(yValues);
-    const sdX = StatsUtils.standardDeviation(xNumeric);
-    const sdY = StatsUtils.standardDeviation(yValues);
+    meanX = StatsUtils.mean(xNumeric);
+    meanY = StatsUtils.mean(yValues);
+    sdX = StatsUtils.standardDeviation(xNumeric);
+    sdY = StatsUtils.standardDeviation(yValues);
+    sampleVarX = StatsUtils.variance(xNumeric);
     xStats = { mean: meanX, sd: sdX, min: Math.min(...xNumeric), max: Math.max(...xNumeric) };
-    const covXY = xNumeric.reduce((acc, xv, i) => acc + (xv - meanX) * (yValues[i] - meanY), 0) / (xNumeric.length - 1);
-    const r = covXY / (sdX * sdY);
-    rSquared = r * r;
+    covXY = xNumeric.reduce((acc, xv, i) => acc + (xv - meanX) * (yValues[i] - meanY), 0) / (xNumeric.length - 1);
+    const r = sdX > 0 && sdY > 0 ? covXY / (sdX * sdY) : NaN;
+    rSquared = Number.isFinite(r) ? r * r : NaN;
   } else {
     const levelMap = new Map();
     xRaw.forEach((v, idx) => {
@@ -1874,24 +1880,20 @@ function updateResults() {
   let stdSlope = NaN;
 
   if (predictorType === 'continuous') {
-    const meanX = StatsUtils.mean(xNumeric);
-    const meanY = StatsUtils.mean(yValues);
-    const sdX = StatsUtils.standardDeviation(xNumeric);
-    const sdY = StatsUtils.standardDeviation(yValues);
-    const covXY = xNumeric.reduce((acc, xv, i) => acc + (xv - meanX) * (yValues[i] - meanY), 0) / (xNumeric.length - 1);
-    slope = covXY / StatsUtils.variance(xNumeric);
-    intercept = meanY - slope * meanX;
+    const n = xNumeric.length;
+    const Sxx = Number.isFinite(sampleVarX) ? sampleVarX * (n - 1) : NaN;
+    const Sxy = Number.isFinite(covXY) ? covXY * (n - 1) : NaN;
+    slope = Sxx > 0 ? Sxy / Sxx : NaN;
+    intercept = Number.isFinite(meanY) && Number.isFinite(meanX) && Number.isFinite(slope)
+      ? meanY - slope * meanX
+      : NaN;
     fittedValues = xNumeric.map(xv => intercept + slope * xv);
     residuals = yValues.map((yv, i) => yv - fittedValues[i]);
     sse = residuals.reduce((acc, r) => acc + r * r, 0);
-    const Sxx = xNumeric.reduce((acc, xv) => acc + Math.pow(xv - meanX, 2), 0);
     const mse = df > 0 ? sse / df : NaN;
-    if (Number.isFinite(mse) && Sxx > 0) {
+    if (Number.isFinite(mse) && Sxx > 0 && n > 0) {
       seSlope = Math.sqrt(mse / Sxx);
-      seIntercept = Math.sqrt(mse * (1 / xNumeric.length + (meanX * meanX) / Sxx));
-    } else {
-      seSlope = NaN;
-      seIntercept = NaN;
+      seIntercept = Math.sqrt(mse * (1 / n + (meanX * meanX) / Sxx));
     }
     t = Number.isFinite(seSlope) && seSlope > 0 ? slope / seSlope : NaN;
     if (Number.isFinite(t)) {

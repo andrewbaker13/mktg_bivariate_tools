@@ -871,7 +871,12 @@
                 const wsTime = timingData.wsConnectionComplete - timingData.wsConnectionStart;
                 console.log('WebSocket connected');
                 logTiming('WebSocket Connection', wsTime);
-                clearInterval(progressMessageInterval);
+                
+                // CRITICAL: Clear the progress interval IMMEDIATELY to prevent it from overwriting game content
+                if (progressMessageInterval) {
+                    clearInterval(progressMessageInterval);
+                    progressMessageInterval = null;
+                }
                 
                 // Identify ourselves
                 websocket.send(JSON.stringify({
