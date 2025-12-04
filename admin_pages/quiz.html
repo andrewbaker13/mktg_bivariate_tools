@@ -924,8 +924,8 @@
                 // No quiz ID - check if user is instructor/staff and redirect to appropriate page
                 const userProfile = getUserProfile();
                 if (userProfile && (userProfile.is_instructor || userProfile.is_staff)) {
-                    // Instructor accessing quiz editor - redirect to instructor dashboard
-                    window.location.href = 'instructor.html';
+                    // Instructor accessing quiz page without ID - redirect to template builder (where they can create/manage game questions)
+                    window.location.href = 'game-template-builder.html';
                 } else {
                     // Student accessing without quiz ID - redirect to student dashboard
                     window.location.href = 'student-dashboard.html';

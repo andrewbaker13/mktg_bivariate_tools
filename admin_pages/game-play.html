@@ -1194,6 +1194,8 @@
             const timeLimit = (message.game_time_limit !== null && message.game_time_limit !== undefined) 
                 ? message.game_time_limit 
                 : 20;
+            // CRITICAL: Always use start_time from backend for precise synchronization
+            // This accounts for the countdown animation time (3.5s) plus buffer (0.5s)
             const startTime = message.start_time ? new Date(message.start_time).getTime() : Date.now();
             
             console.log('Calculated timeLimit:', timeLimit, 'seconds');
