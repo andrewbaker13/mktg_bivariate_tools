@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Qualitative Analyzer - Focus Group Analysis</title>
+  <!-- Shared design system -->
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+  <!-- App-specific styles -->
+  <link rel="stylesheet" href="qualitative_analyzer.css">
+  <!-- MathJax for equations -->
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Auth tracking -->
+  <script src="../../../shared/js/auth_tracking.js"></script>
+  <script src="../../../shared/js/auth_bar.js"></script>
+</head>
+
+<body>
+  <div id="auth-bar"></div>
+  
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Qualitative Analyzer</h1>
+        <div class="hero-context">
+          <span class="badge badge--text-analysis">Text Analysis</span>
+          <span class="badge badge--qualitative">Qualitative Research</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">Explore and analyze large transcripts from online focus groups, interviews, and open-ended feedback with powerful search, coding, and theme extraction tools.</p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="test-overview-heading">
+      <h2 id="test-overview-heading">HOW IT WORKS</h2>
+      <div class="card">
+        <p>This tool provides a structured workflow for analyzing qualitative data from focus groups, in-depth interviews, and customer feedback sessions. Unlike automated theme extraction, this tool facilitates <strong>manual coding and exploration</strong> while providing computational support for large transcript volumes.</p>
+        
+        <div class="how-it-works-grid">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <h4>Upload Transcript</h4>
+            <p>Import formatted transcripts with speaker labels, timestamps, or raw text blocks.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <h4>Search & Filter</h4>
+            <p>Find keywords, phrases, or patterns across thousands of lines instantly.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <h4>Code & Tag</h4>
+            <p>Assign themes, categories, or sentiment labels to passages as you read.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">4</div>
+            <h4>Extract Insights</h4>
+            <p>Export coded segments, generate reports, and visualize theme distributions.</p>
+          </div>
+        </div>
+        
+        <details class="intro-notes">
+          <summary>When to Use This Tool</summary>
+          <ul>
+            <li><strong>Focus Group Analysis:</strong> Analyze moderated discussions with multiple participants</li>
+            <li><strong>In-Depth Interviews:</strong> Code and explore one-on-one interview transcripts</li>
+            <li><strong>Customer Feedback:</strong> Examine long-form survey responses or support interactions</li>
+            <li><strong>Usability Studies:</strong> Review think-aloud protocols and user testing sessions</li>
+            <li><strong>Social Listening:</strong> Explore extended comment threads or forum discussions</li>
+          </ul>
+        </details>
+        
+        <details class="interpretation-aid">
+          <summary>Understanding Qualitative Analysis</summary>
+          <div class="help-content">
+            <div class="guide-section">
+              <h5>📊 What is Qualitative Analysis?</h5>
+              <p><strong>Qualitative analysis</strong> focuses on understanding the meaning, context, and nuance in text data rather than counting frequencies. Key approaches include:</p>
+              <ul>
+                <li><strong>Thematic Analysis:</strong> Identifying recurring themes and patterns across responses</li>
+                <li><strong>Content Analysis:</strong> Systematically categorizing and coding text segments</li>
+                <li><strong>Grounded Theory:</strong> Building theories from the data itself rather than testing hypotheses</li>
+                <li><strong>Narrative Analysis:</strong> Understanding how stories and experiences are constructed</li>
+              </ul>
+            </div>
+            
+            <div class="guide-section">
+              <h5>📈 Manual vs. Automated Coding</h5>
+              <table class="guide-table">
+                <thead>
+                  <tr><th>Approach</th><th>Strengths</th><th>Best For</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Manual Coding</strong></td>
+                    <td>Captures context, nuance, implicit meaning</td>
+                    <td>Complex narratives, strategic decisions, novel domains</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Automated Coding</strong></td>
+                    <td>Fast, consistent, handles large volumes</td>
+                    <td>Known categories, high-volume data, initial exploration</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Hybrid Approach</strong></td>
+                    <td>Speed + human judgment</td>
+                    <td>Large datasets requiring nuanced interpretation</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="guide-section">
+              <h5>⚠️ Key Considerations</h5>
+              <ul>
+                <li><strong>Sample Size:</strong> Qualitative research values depth over breadth (10-30 participants often sufficient)</li>
+                <li><strong>Saturation:</strong> Stop collecting data when new themes stop emerging</li>
+                <li><strong>Inter-coder Reliability:</strong> Multiple coders should agree on theme assignments</li>
+                <li><strong>Context Matters:</strong> A phrase can mean different things in different contexts</li>
+                <li><strong>Reflexivity:</strong> Acknowledge how your perspective influences interpretation</li>
+              </ul>
+            </div>
+            
+            <div class="guide-section">
+              <h5>💡 Best Practices</h5>
+              <ul>
+                <li><strong>Read first:</strong> Review full transcripts before coding to understand context</li>
+                <li><strong>Develop codebook:</strong> Define clear criteria for each theme or category</li>
+                <li><strong>Quote liberally:</strong> Support conclusions with verbatim examples</li>
+                <li><strong>Look for patterns:</strong> Note both common themes and surprising outliers</li>
+                <li><strong>Document decisions:</strong> Keep notes on why you coded passages certain ways</li>
+              </ul>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="inputs-heading">
+      <h2 id="inputs-heading">UPLOAD TRANSCRIPT DATA</h2>
+      
+      <!-- Case Study Selector -->
+      <article class="card scenario-card">
+        <h3>Sample Transcripts</h3>
+        <p>Practice with example focus group transcripts, or upload your own data below.</p>
+        
+        <div class="scenario-controls">
+          <div class="scenario-select-wrapper">
+            <label for="scenario-select">Select a sample transcript:</label>
+            <select id="scenario-select">
+              <option value="">-- Choose a sample --</option>
+            </select>
+          </div>
+          <button type="button" id="scenario-download" class="secondary hidden">Download Transcript</button>
+        </div>
+        
+        <div id="scenario-description" class="scenario-description hidden">
+          <!-- Description loaded from .txt file -->
+        </div>
+      </article>
+      
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>Transcript Upload</h3>
+          <p class="limits-info">
+            <span class="limit-badge">Max 10,000 lines</span>
+            <span class="limit-badge">Multiple formats supported</span>
+          </p>
+        </div>
+        
+        <div class="mode-toggle" role="tablist" aria-label="Data entry mode">
+          <button type="button" class="mode-button active" data-mode="structured">Structured (Speaker labels)</button>
+          <button type="button" class="mode-button" data-mode="plain">Plain text</button>
+          <button type="button" class="mode-button" data-mode="manual">Manual entry</button>
+        </div>
+
+        <div class="mode-panels">
+          <!-- Structured Upload -->
+          <div class="mode-panel active" data-mode="structured" id="structured-panel">
+            <div class="data-import-block">
+              <h4>Upload Structured Transcript</h4>
+              <p>CSV/TSV format with columns: <code>speaker,timestamp,text</code> or <code>speaker,text</code>. Each row represents one utterance or exchange.</p>
+              <div id="structured-dropzone" class="dropzone" role="button" tabindex="0">
+                <p class="dropzone-title">Drag &amp; drop transcript file</p>
+                <p class="dropzone-note">Supports .csv, .tsv, .txt with speaker:text format</p>
+                <button type="button" id="structured-browse" class="secondary">Browse files</button>
+              </div>
+              <input type="file" id="structured-input" accept=".csv,.tsv,.txt" hidden>
+              <div class="template-buttons">
+                <button type="button" id="structured-download">Download structured template</button>
+              </div>
+              <p id="structured-feedback" class="upload-status" aria-live="polite">No file uploaded.</p>
+            </div>
+          </div>
+
+          <!-- Plain Text Upload -->
+          <div class="mode-panel" data-mode="plain" id="plain-panel">
+            <div class="data-import-block">
+              <h4>Upload Plain Text</h4>
+              <p>Upload any text file (.txt, .doc export). The tool will parse it line-by-line and attempt to detect speaker labels (e.g., "John:", "Moderator:", etc.).</p>
+              <div id="plain-dropzone" class="dropzone" role="button" tabindex="0">
+                <p class="dropzone-title">Drag &amp; drop text file</p>
+                <p class="dropzone-note">Supports .txt format</p>
+                <button type="button" id="plain-browse" class="secondary">Browse files</button>
+              </div>
+              <input type="file" id="plain-input" accept=".txt" hidden>
+              <p id="plain-feedback" class="upload-status" aria-live="polite">No file uploaded.</p>
+            </div>
+          </div>
+
+          <!-- Manual Entry -->
+          <div class="mode-panel" data-mode="manual" id="manual-panel">
+            <div class="manual-entry-block">
+              <h4>Paste Transcript Text</h4>
+              <p>Paste your transcript directly. Use "Speaker: Text" format or plain paragraphs.</p>
+              <textarea id="manual-text-input" rows="15" placeholder="Paste transcript here...&#10;&#10;Example:&#10;Moderator: Thanks for joining today. Let's start with...&#10;Participant 1: I think the product is...&#10;Participant 2: I agree, but also..."></textarea>
+              <button type="button" id="manual-load" class="btn-primary">Load Transcript</button>
+              <p id="manual-feedback" class="upload-status" aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card analysis-settings">
+        <h3>Analysis Settings</h3>
+        
+        <div class="input-group">
+          <label for="highlight-mode">Search highlight mode</label>
+          <select id="highlight-mode">
+            <option value="exact">Exact match</option>
+            <option value="case-insensitive" selected>Case-insensitive</option>
+            <option value="regex">Regular expression</option>
+          </select>
+        </div>
+
+        <details class="advanced-details">
+          <summary>Advanced Settings</summary>
+          <div class="advanced-settings-grid">
+            <label class="switch-option">
+              <input type="checkbox" id="auto-detect-speakers" checked>
+              <span>Auto-detect speakers from text</span>
+            </label>
+            <label class="switch-option">
+              <input type="checkbox" id="show-line-numbers" checked>
+              <span>Show line numbers</span>
+            </label>
+            <label class="switch-option">
+              <input type="checkbox" id="enable-timestamps">
+              <span>Parse timestamps</span>
+            </label>
+          </div>
+        </details>
+      </article>
+    </section>
+
+    <section class="transcript-viewer" aria-labelledby="viewer-heading">
+      <h2 id="viewer-heading">TRANSCRIPT VIEWER</h2>
+      
+      <div class="viewer-controls card">
+        <div class="search-bar">
+          <input type="text" id="search-input" placeholder="Search transcript..." aria-label="Search transcript">
+          <button type="button" id="search-btn" class="btn-primary">
+            <span class="search-icon">🔍</span> Search
+          </button>
+          <button type="button" id="clear-search" class="secondary">Clear</button>
+        </div>
+        
+        <div class="filter-controls">
+          <label>
+            Filter by speaker:
+            <select id="speaker-filter">
+              <option value="">All speakers</option>
+            </select>
+          </label>
+          <label>
+            Filter by code:
+            <select id="code-filter">
+              <option value="">All codes</option>
+            </select>
+          </label>
+          <span id="match-count" class="match-counter"></span>
+        </div>
+      </div>
+
+      <div class="card transcript-display">
+        <div id="transcript-content" class="transcript-lines">
+          <div class="empty-state">
+            <p>Upload or paste a transcript to begin analysis</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="coding-panel" aria-labelledby="coding-heading">
+      <h2 id="coding-heading">CODING & THEMES</h2>
+      
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>Code Management</h3>
+          <div class="code-manager">
+            <div class="code-input-group">
+              <input type="text" id="new-code-name" placeholder="New code name..." aria-label="New code name">
+              <input type="color" id="new-code-color" value="#3b82f6" aria-label="Code color">
+              <button type="button" id="add-code" class="btn-primary">Add Code</button>
+            </div>
+            <div id="code-list" class="code-list">
+              <p class="hint">Add codes to categorize transcript segments</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="card dual-panel">
+          <h3>Coded Segments</h3>
+          <div id="coded-segments" class="coded-segments-list">
+            <p class="hint">Select text in the transcript and assign codes</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">VISUAL ANALYSIS</h2>
+      <div class="card">
+        <div class="chart-grid">
+          <article class="chart-card">
+            <h3>Theme Distribution</h3>
+            <div class="chart-placeholder" id="theme-chart">
+              <p class="chart-note">Code some segments to see theme distribution</p>
+            </div>
+          </article>
+          <article class="chart-card">
+            <h3>Speaker Participation</h3>
+            <div class="chart-placeholder" id="speaker-chart">
+              <p class="chart-note">Upload transcript to see speaker breakdown</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="export-section" aria-labelledby="export-heading">
+      <h2 id="export-heading">EXPORT & REPORTING</h2>
+      <div class="card">
+        <div class="export-options">
+          <button type="button" id="export-coded" class="btn-primary">
+            Export Coded Segments (CSV)
+          </button>
+          <button type="button" id="export-codebook" class="secondary">
+            Export Codebook
+          </button>
+          <button type="button" id="export-report" class="secondary">
+            Generate Summary Report
+          </button>
+        </div>
+        
+        <details class="export-details">
+          <summary>Export Options</summary>
+          <div class="export-settings">
+            <label class="switch-option">
+              <input type="checkbox" id="include-context" checked>
+              <span>Include surrounding context (±2 lines)</span>
+            </label>
+            <label class="switch-option">
+              <input type="checkbox" id="include-timestamps">
+              <span>Include timestamps</span>
+            </label>
+            <label class="switch-option">
+              <input type="checkbox" id="include-speaker">
+              <span>Include speaker labels</span>
+            </label>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="created-date">2025-12-04</span> &middot; Last updated: <span id="modified-date">2025-12-04</span></p>
+    <p><a href="../../../index.html">Back to Tools</a></p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). Qualitative Analyzer. Marketing Bivariate Tools.</p>
+  </footer>
+
+  <script src="../../../shared/js/csv_utils.js"></script>
+  <script src="../../../shared/js/ui_utils.js"></script>
+  <script src="qualitative_analyzer_app.js"></script>
+</body>
+
+</html>
