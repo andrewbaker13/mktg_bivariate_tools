@@ -582,6 +582,8 @@
           authBarContent.innerHTML = `
             <span class="auth-bar__status">✓ Logged in as <strong>${username}</strong></span>
             <a href="admin_pages/student-dashboard.html">My Dashboard</a>
+            ${isStaff ? '<a href="admin_pages/game-template-builder.html">Quiz Editor</a>' : ''}
+            ${isStaff ? '<a href="admin_pages/game-host.html">Game Host</a>' : ''}
             ${isStaff ? '<a href="admin_pages/instructor-analytics.html">Course Analytics</a>' : ''}
             ${isStaff ? '<a href="admin_pages/instructor.html">Manage Courses</a>' : ''}
             ${isStaff ? '<a href="admin_pages/admin-dashboard.html">System Dashboard</a>' : ''}

@@ -424,7 +424,7 @@
             <a href="admin-dashboard.html">📊 System Dashboard</a>
             <a href="instructor.html">👨‍🏫 Course Management</a>
             <a href="instructor-analytics.html">📈 Course Analytics</a>
-            <a href="quiz.html">📝 Quiz Editor</a>
+            <a href="game-template-builder.html">📝 Quiz Editor</a>
             <a href="game-host.html" class="active">🎮 Game Host</a>
             <a href="game-template-builder.html">🎯 Template Builder</a>
             <a href="recreate-samples.html">⚡ Recreate Samples</a>
@@ -1533,23 +1533,40 @@
                 const exportBtn = document.createElement('button');
                 exportBtn.className = 'btn';
                 exportBtn.textContent = '📄 Export Results';
-                exportBtn.onclick = () => {
-                    // Simple CSV export
-                    if (finalLeaderboard && finalLeaderboard.length > 0) {
-                        const csv = 'Rank,Name,Score\n' + finalLeaderboard.map((p, i) => {
-                            const playerName = p.player_name || p.display_name || p.name || 'Unknown';
-                            return `${i+1},"${playerName}",${p.score}`;
-                        }).join('\n');
-                        const blob = new Blob([csv], {type: 'text/csv'});
+                exportBtn.onclick = async () => {
+                    try {
+                        exportBtn.disabled = true;
+                        exportBtn.textContent = '⏳ Exporting...';
+                        
+                        // Call the detailed export API endpoint
+                        const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/export/`, {
+                            headers: {'Authorization': `Token ${token}`}
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Failed to export results');
+                        }
+                        
+                        // Get the CSV blob
+                        const blob = await response.blob();
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = 'game_results.csv';
+                        a.download = `game_results_${gameSession.room_code}_${new Date().toISOString().slice(0,10)}.csv`;
                         a.click();
                         URL.revokeObjectURL(url);
-                        showToast('Results exported', 'success');
-                    } else {
-                        showToast('No leaderboard data to export', 'warning');
+                        
+                        exportBtn.textContent = '✅ Exported!';
+                        showToast('Detailed results exported successfully', 'success');
+                        setTimeout(() => {
+                            exportBtn.textContent = '📄 Export Results';
+                            exportBtn.disabled = false;
+                        }, 2000);
+                    } catch (error) {
+                        console.error('Export error:', error);
+                        exportBtn.textContent = '📄 Export Results';
+                        exportBtn.disabled = false;
+                        showToast('Failed to export results: ' + error.message, 'error');
                     }
                 };
                 actions.appendChild(exportBtn);

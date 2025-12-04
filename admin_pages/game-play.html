@@ -726,6 +726,9 @@
         const isGuest = sessionStorage.getItem('isGuest') === 'true';
         let isWaitingToEnter = sessionStorage.getItem('waitingToEnter') === 'true';
         
+        // Store the latest leaderboard globally so we can use it in final standings
+        let latestLeaderboard = [];
+        
         // Update header
         document.getElementById('playerName').textContent = playerSession.display_name || 'Player';
         document.getElementById('roomCodeDisplay').textContent = roomCode;
@@ -1926,6 +1929,12 @@
         }
         
         function handleGameEnd(message) {
+            console.log('=== handleGameEnd called ===');
+            console.log('Full message:', message);
+            console.log('is_final_round:', message.is_final_round);
+            console.log('current_round:', message.current_round);
+            console.log('total_rounds:', message.total_rounds);
+            
             if (timerInterval) clearInterval(timerInterval);
             
             // Check if multi-round game and not at final round
@@ -2061,10 +2070,15 @@
                 
                 // If this is the final round, automatically transition to final standings after 3 seconds
                 if (isFinalRound) {
-                    console.log('Final round detected, will show final standings in 3 seconds...');
+                    console.log('Final round detected! Will show final standings in 3 seconds...');
+                    console.log('Leaderboard visibility:', leaderboardVisibility);
+                    console.log('Current leaderboard:', latestLeaderboard);
                     setTimeout(() => {
+                        console.log('Timeout fired - calling showFinalStandings now');
                         showFinalStandings(message, leaderboardVisibility);
                     }, 3000);
+                } else {
+                    console.log('Not final round:', { isFinalRound, current: message.current_round, total: message.total_rounds });
                 }
                 
                 // Note: We removed the duplicate final leaderboard display here since
@@ -2094,11 +2108,16 @@
         }
         
         function showFinalStandings(message, leaderboardVisibility) {
+            console.log('showFinalStandings called with:', { message, leaderboardVisibility, latestLeaderboard });
+            
             const gameArea = document.getElementById('gameArea');
-            const shouldShowLeaderboard = leaderboardVisibility === 'always_show' && message.leaderboard && message.leaderboard.length > 0;
+            
+            // Use the stored leaderboard instead of message.leaderboard
+            const leaderboard = latestLeaderboard || [];
+            const shouldShowLeaderboard = leaderboardVisibility === 'always_show' && leaderboard.length > 0;
             
             // Find player's position and stats
-            const myPosition = message.leaderboard ? message.leaderboard.findIndex(p => 
+            const myPosition = leaderboard.length > 0 ? leaderboard.findIndex(p => 
                 p.player_id === playerSession.id || p.player_name === playerSession.display_name
             ) : -1;
             
@@ -2110,7 +2129,7 @@
             
             if (shouldShowLeaderboard) {
                 // Show full leaderboard
-                const leaderboardHTML = message.leaderboard.map((player, idx) => {
+                const leaderboardHTML = leaderboard.map((player, idx) => {
                     const isOwn = player.player_id === playerSession.id || player.player_name === playerSession.display_name;
                     const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '';
                     
@@ -2213,6 +2232,9 @@
         }
         
         function updateLeaderboard(leaderboard) {
+            // Store the latest leaderboard globally
+            latestLeaderboard = leaderboard || [];
+            
             const list = document.getElementById('leaderboardList');
             const leaderboardContainer = document.getElementById('leaderboard');
             
