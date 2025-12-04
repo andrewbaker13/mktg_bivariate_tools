@@ -213,6 +213,11 @@
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
         }
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+        }
         .btn-danger {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: white;
@@ -557,7 +562,12 @@
 
                     <div class="form-group">
                         <label for="guestPassword">Guest Password (optional)</label>
-                        <input type="password" id="guestPassword" placeholder="Leave empty to allow anyone">
+                        <div style="position: relative;">
+                            <input type="password" id="guestPassword" placeholder="Leave empty to allow anyone" value="">
+                            <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #64748b;">
+                                👁️
+                            </button>
+                        </div>
                     </div>
 
                     <div class="alert alert-info">
@@ -651,6 +661,19 @@
             setTimeout(() => {
                 toast.remove();
             }, 3800);
+        }
+        
+        function togglePasswordVisibility() {
+            const passwordField = document.getElementById('guestPassword');
+            const toggleBtn = document.getElementById('togglePasswordBtn');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordField.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
         }
 
         function copyTextToClipboard(text, successMessage) {
