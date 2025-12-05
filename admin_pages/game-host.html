@@ -259,6 +259,9 @@
         .player-status.connected {
             color: #10b981;
         }
+        .player-status.entering {
+            color: #f59e0b;
+        }
         .player-status.disconnected {
             color: #ef4444;
         }
@@ -1755,6 +1758,20 @@
                 const score = typeof player.score === 'number' ? player.score : 0;
                 const rank = player.rank || '—';
                 const extraInfo = player.joined_at_round ? `First round: ${player.joined_at_round}` : '';
+                
+                // Connection status: ws_connected=true → Online, is_connected but not ws → Entering, neither → Offline
+                let statusClass, statusText;
+                if (player.ws_connected) {
+                    statusClass = 'connected';
+                    statusText = '🟢 Online';
+                } else if (player.is_connected) {
+                    statusClass = 'entering';
+                    statusText = '🟡 Entering';
+                } else {
+                    statusClass = 'disconnected';
+                    statusText = '🔴 Offline';
+                }
+                
                 return `
                 <div class="player-item">
                     <div>
@@ -1765,8 +1782,8 @@
                         </div>
                         ${badgeRow}
                     </div>
-                    <span class="player-status ${player.is_connected ? 'connected' : 'disconnected'}">
-                        ${player.is_connected ? '🟢 Online' : '🔴 Offline'}
+                    <span class="player-status ${statusClass}">
+                        ${statusText}
                     </span>
                 </div>
                 `;
