@@ -1218,8 +1218,21 @@
         
         function showSpeedTapGame(message, timeLimit) {
             // Use actual options from server if provided, otherwise fallback to A/B/C/D
+            console.log('=== showSpeedTapGame DEBUG ===');
+            console.log('message object:', message);
+            console.log('message.options:', message.options);
+            console.log('message.game_config:', message.game_config);
+            
             let options = message.options || [];
+            
+            // If options not at top level, try game_config
+            if (!options.length && message.game_config && message.game_config.options) {
+                console.log('Options found in game_config');
+                options = message.game_config.options;
+            }
+            
             if (!options.length) {
+                console.warn('WARNING: No options found in message, using fallback A/B/C/D');
                 // Fallback for legacy/demo questions
                 options = [
                     {id: 'A', text: 'A'},
@@ -1228,6 +1241,8 @@
                     {id: 'D', text: 'D'}
                 ];
             }
+            
+            console.log('Final options array:', options);
             
             const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
             
