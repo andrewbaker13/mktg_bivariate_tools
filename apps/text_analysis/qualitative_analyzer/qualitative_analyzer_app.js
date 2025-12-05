@@ -9,7 +9,7 @@ const state = {
   codes: [], // Array of { name, color }
   currentMode: 'structured',
   selectedLines: new Set(),
-  searchResults: [], // Array of { lineIdx, matches: [{start, end}] }
+  searchResults: [], // Array of { lineIdx, lineNumber, matches: [{start, end}] }
   currentMatchIndex: 0,
   currentFilters: {
     speaker: '',
@@ -107,6 +107,10 @@ function setupEventListeners() {
   });
   document.getElementById('save-stopwords')?.addEventListener('click', saveCustomStopWords);
   document.getElementById('reset-stopwords')?.addEventListener('click', resetStopWords);
+  document.getElementById('select-all-words')?.addEventListener('click', selectAllWords);
+  document.getElementById('deselect-all-words')?.addEventListener('click', deselectAllWords);
+  document.getElementById('frequency-select-all')?.addEventListener('change', toggleAllWordCheckboxes);
+  document.getElementById('create-codes-from-words')?.addEventListener('click', createCodesFromSelectedWords);
   
   // Export
   document.getElementById('export-coded')?.addEventListener('click', exportCodedSegments);
@@ -189,7 +193,7 @@ function parseTranscript(content, mode) {
           speaker: row[speakerIdx] || 'Unknown',
           timestamp: row[timestampIdx] || '',
           text: row[textIdx].trim(),
-          codes: [],
+          codes: {},
           lineType: 'dialogue',
           sectionId: null
         });
@@ -200,10 +204,13 @@ function parseTranscript(content, mode) {
     const lines = content.split('\n');
     const autoDetect = document.getElementById('auto-detect-speakers')?.checked;
     let currentSectionId = null;
+    let lineCounter = 0; // Track actual transcript line numbers (excluding blank lines)
     
     lines.forEach((line, idx) => {
       const trimmed = line.trim();
-      if (!trimmed) return;
+      if (!trimmed) return; // Skip blank lines but don't increment lineCounter
+      
+      lineCounter++; // Increment for each non-blank line
       
       let lineType = 'dialogue';
       let speaker = 'Unknown';
@@ -219,8 +226,8 @@ function parseTranscript(content, mode) {
         state.sections.push({
           id: currentSectionId,
           title: text,
-          startLine: idx + 1,
-          endLine: idx + 1,
+          startLine: lineCounter,
+          endLine: lineCounter,
           type: 'section'
         });
       }
@@ -237,8 +244,8 @@ function parseTranscript(content, mode) {
         state.sections.push({
           id: currentSectionId,
           title: trimmed,
-          startLine: idx + 1,
-          endLine: idx + 1,
+          startLine: lineCounter,
+          endLine: lineCounter,
           type: 'activity'
         });
       }
@@ -259,15 +266,15 @@ function parseTranscript(content, mode) {
       
       // Update section end line
       if (currentSectionId && state.sections.length > 0) {
-        state.sections[state.sections.length - 1].endLine = idx + 1;
+        state.sections[state.sections.length - 1].endLine = lineCounter;
       }
       
       state.transcript.push({
-        lineNumber: idx + 1,
+        lineNumber: lineCounter,
         speaker,
         timestamp,
         text,
-        codes: [],
+        codes: {},
         lineType,
         sectionId: currentSectionId
       });
@@ -412,7 +419,7 @@ function renderTranscript() {
   
   const html = filteredTranscript.map((item, filteredIdx) => {
     const isSelected = state.selectedLines.has(item.lineNumber);
-    const searchResult = state.searchResults.find(r => r.lineIdx === filteredIdx);
+    const searchResult = state.searchResults.find(r => r.lineNumber === item.lineNumber);
     
     // Check which codes are applied (value = 1)
     const appliedCodes = item.codes ? Object.keys(item.codes).filter(codeName => item.codes[codeName] === 1) : [];
@@ -504,11 +511,23 @@ function applyHighlightingToText(text, searchResult, codes) {
       return code ? code.color : '#3b82f6';
     });
     
+    // Convert hex to rgba for gradient (hex + alpha like #ff000010 isn't well-supported)
+    const hexToRgba = (hex, alpha) => {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+    
     // For now, add a subtle background to coded lines
     // In a full implementation, you'd track exact positions of coded segments
-    const colorStyle = codeColors.length === 1 
-      ? `border-left: 3px solid ${codeColors[0]};` 
-      : `border-left: 3px solid ${codeColors[0]}; background: linear-gradient(90deg, ${codeColors.map(c => `${c}10`).join(', ')});`;
+    let colorStyle;
+    if (codeColors.length === 1) {
+      colorStyle = `border-left: 3px solid ${codeColors[0]};`;
+    } else {
+      const gradientColors = codeColors.map(c => hexToRgba(c, 0.1)).join(', ');
+      colorStyle = `border-left: 3px solid ${codeColors[0]}; background: linear-gradient(90deg, ${gradientColors});`;
+    }
     
     result = `<span style="${colorStyle} padding-left: 8px; display: inline-block; width: 100%;">${result}</span>`;
   }
@@ -524,8 +543,10 @@ function applyCurrentFilters() {
     if (state.currentFilters.speaker && state.currentFilters.speaker !== '' && item.speaker !== state.currentFilters.speaker) {
       return false;
     }
-    if (state.currentFilters.code && state.currentFilters.code !== '' && !item.codes.includes(state.currentFilters.code)) {
-      return false;
+    // Check if item has the filtered code applied (codes is an object with codeName: 0 or 1)
+    if (state.currentFilters.code && state.currentFilters.code !== '') {
+      const hasCode = item.codes && item.codes[state.currentFilters.code] === 1;
+      if (!hasCode) return false;
     }
     if (state.currentFilters.section && state.currentFilters.section !== 'all' && item.sectionId !== state.currentFilters.section) {
       return false;
@@ -816,6 +837,7 @@ function performSimpleSearch(query, mode) {
     if (matches.length > 0) {
       state.searchResults.push({
         lineIdx: idx,
+        lineNumber: line.lineNumber,
         matches: matches.map(m => ({ start: m.index, end: m.index + m[0].length, text: m[0] }))
       });
     }
@@ -864,7 +886,7 @@ function performBooleanSearch(query, hasAND, hasOR, mode) {
     }
     
     if (results.length > 0) {
-      state.searchResults.push({ lineIdx: idx, matches: results });
+      state.searchResults.push({ lineIdx: idx, lineNumber: line.lineNumber, matches: results });
     }
   });
 }
@@ -1264,6 +1286,7 @@ function analyzeWordFrequency() {
     const percentage = ((count / total) * 100).toFixed(1);
     html += `
       <tr>
+        <td><input type="checkbox" class="word-checkbox" data-word="${escapeHtml(word)}" onchange="updateWordSelectionCount()"></td>
         <td>${idx + 1}</td>
         <td><strong>${escapeHtml(word)}</strong></td>
         <td>${count}</td>
@@ -1274,6 +1297,114 @@ function analyzeWordFrequency() {
   
   tbody.innerHTML = html;
   document.getElementById('frequency-results').classList.remove('hidden');
+  updateWordSelectionCount();
+}
+
+/**
+ * Update word selection count and button state
+ */
+function updateWordSelectionCount() {
+  const checkboxes = document.querySelectorAll('.word-checkbox:checked');
+  const count = checkboxes.length;
+  const countDisplay = document.getElementById('words-selected-count');
+  const createBtn = document.getElementById('create-codes-from-words');
+  
+  if (countDisplay) {
+    countDisplay.textContent = count > 0 ? `${count} word${count === 1 ? '' : 's'} selected` : '';
+  }
+  
+  if (createBtn) {
+    createBtn.disabled = count === 0;
+  }
+}
+
+/**
+ * Select all words in frequency table
+ */
+function selectAllWords() {
+  document.querySelectorAll('.word-checkbox').forEach(cb => cb.checked = true);
+  const headerCb = document.getElementById('frequency-select-all');
+  if (headerCb) headerCb.checked = true;
+  updateWordSelectionCount();
+}
+
+/**
+ * Deselect all words in frequency table
+ */
+function deselectAllWords() {
+  document.querySelectorAll('.word-checkbox').forEach(cb => cb.checked = false);
+  const headerCb = document.getElementById('frequency-select-all');
+  if (headerCb) headerCb.checked = false;
+  updateWordSelectionCount();
+}
+
+/**
+ * Toggle all word checkboxes via header checkbox
+ */
+function toggleAllWordCheckboxes(e) {
+  const checked = e.target.checked;
+  document.querySelectorAll('.word-checkbox').forEach(cb => cb.checked = checked);
+  updateWordSelectionCount();
+}
+
+/**
+ * Create codes from selected words in frequency table
+ */
+function createCodesFromSelectedWords() {
+  const selectedCheckboxes = document.querySelectorAll('.word-checkbox:checked');
+  if (selectedCheckboxes.length === 0) {
+    alert('Please select at least one word.');
+    return;
+  }
+  
+  // Color palette for auto-generated codes
+  const colors = [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+    '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
+  ];
+  
+  let codesCreated = 0;
+  let codesSkipped = 0;
+  
+  selectedCheckboxes.forEach((cb, idx) => {
+    const word = cb.dataset.word;
+    
+    // Check if code already exists
+    if (state.codes.find(c => c.name.toLowerCase() === word.toLowerCase())) {
+      codesSkipped++;
+      return;
+    }
+    
+    // Create new code
+    const color = colors[(state.codes.length + idx) % colors.length];
+    state.codes.push({
+      name: word,
+      color: color
+    });
+    
+    // Initialize this code for all transcript lines
+    state.transcript.forEach(line => {
+      if (!line.codes) line.codes = {};
+      line.codes[word] = 0;
+    });
+    
+    codesCreated++;
+  });
+  
+  // Update UI
+  renderCodeList();
+  updateCodeFilter();
+  updateActiveCodeDropdown();
+  
+  // Deselect all words
+  deselectAllWords();
+  
+  // Show feedback
+  let message = `Created ${codesCreated} new code${codesCreated === 1 ? '' : 's'}`;
+  if (codesSkipped > 0) {
+    message += ` (${codesSkipped} already existed)`;
+  }
+  alert(message);
 }
 
 /**
@@ -1587,9 +1718,9 @@ function selectAllMatches() {
   // Clear existing selections
   state.selectedLines.clear();
   
-  // Add all lines with search matches
+  // Add all lines with search matches (using lineNumber)
   state.searchResults.forEach(result => {
-    state.selectedLines.add(result.lineIdx);
+    state.selectedLines.add(result.lineNumber);
   });
   
   // Update UI

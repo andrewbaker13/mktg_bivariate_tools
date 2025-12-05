@@ -305,11 +305,11 @@
       </div>
 
       <div class="transcript-layout">
-        <!-- Navigation Sidebar -->
+        <!-- Navigation & Statistics Bar (above transcript) -->
         <aside class="transcript-nav card">
-          <h3>Navigation</h3>
+          <h3>📍 Navigation & Stats</h3>
           <div id="section-nav" class="section-nav-list">
-            <p class="hint">Sections will appear here</p>
+            <p class="hint">Sections will appear here when transcript is loaded</p>
           </div>
           
           <details class="nav-details" open>
@@ -335,9 +335,9 @@
           </details>
         </aside>
 
-        <!-- Main Transcript Display -->
+        <!-- Main Transcript Display (full width) -->
         <div class="card transcript-display">
-          <!-- Coding Mode Controls -->
+          <!-- Coding Mode Controls - Sticky -->
           <div class="coding-mode-bar" id="coding-mode-bar">
             <label class="coding-toggle">
               <input type="checkbox" id="coding-mode-toggle">
@@ -414,10 +414,17 @@
         
         <div id="frequency-results" class="frequency-results hidden">
           <h3>Word Frequency Table</h3>
+          <div class="frequency-actions">
+            <button type="button" id="select-all-words" class="secondary">Select All</button>
+            <button type="button" id="deselect-all-words" class="secondary">Deselect All</button>
+            <button type="button" id="create-codes-from-words" class="btn-primary" disabled>Create Codes from Selected Words</button>
+            <span id="words-selected-count" class="selection-count"></span>
+          </div>
           <div class="table-wrapper">
             <table id="frequency-table" class="frequency-table">
               <thead>
                 <tr>
+                  <th><input type="checkbox" id="frequency-select-all" title="Select all"></th>
                   <th>Rank</th>
                   <th>Word</th>
                   <th>Frequency</th>
