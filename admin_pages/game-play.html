@@ -2090,6 +2090,13 @@
             console.log('Statistics:', message.statistics);
             console.log('Game-Specific Details:', message.game_specific);
             
+            // For closest_guess, skip this handler - the guess_results handler already
+            // showed results while preserving the numberline chart
+            if (message.game_type === 'closest_guess') {
+                console.log('Skipping unified results for closest_guess - numberline chart preserved');
+                return;
+            }
+            
             const gameArea = document.getElementById('gameArea');
             
             // Build the results display
