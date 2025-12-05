@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Question Builder - Dr. Baker Marketing</title>
+    <link rel="stylesheet" href="../shared/css/styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        .form-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 2px solid #e2e8f0;
+        }
+
+        .form-section h2 {
+            color: #1e293b;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            color: #475569;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .game-type-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .game-type-card {
+            background: white;
+            border: 3px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .game-type-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .game-type-card.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .game-type-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .game-type-card .title {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .game-type-card .description {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .game-specific-config {
+            display: none;
+        }
+
+        .game-specific-config.active {
+            display: block;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .option-row input[type="text"] {
+            flex: 1;
+        }
+
+        .option-row input[type="radio"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .option-row button {
+            padding: 0.5rem;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.25rem;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .option-row button:hover {
+            background: #dc2626;
+        }
+
+        .add-option-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .add-option-btn:hover {
+            background: #059669;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+
+        .questions-list {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .questions-list h2 {
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+
+        .question-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .question-card .content {
+            flex: 1;
+        }
+
+        .question-card .type-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .type-badge.speed-tap {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .type-badge.closest-guess {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .type-badge.push-range {
+            background: #fce7f3;
+            color: #9f1239;
+        }
+
+        .question-card .question-text {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .question-card .meta {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .question-card .actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .question-card .actions button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .btn-edit {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #2563eb;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+
+        .help-text {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #3b82f6;
+            text-decoration: none;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="instructor.html" class="back-link">← Back to Instructor Dashboard</a>
+        
+        <h1>🎮 Game Question Builder</h1>
+        <p class="subtitle">Create questions for Speed Tap, Closest Guess, and Push Range games</p>
+
+        <div id="alertContainer"></div>
+
+        <form id="questionForm">
+            <!-- Game Type Selection -->
+            <div class="form-section">
+                <h2>1️⃣ Select Game Type</h2>
+                <div class="game-type-selector">
+                    <div class="game-type-card" data-type="speed_tap">
+                        <div class="icon">⚡</div>
+                        <div class="title">Speed Tap</div>
+                        <div class="description">Multiple choice with time pressure</div>
+                    </div>
+                    <div class="game-type-card" data-type="closest_guess">
+                        <div class="icon">🎯</div>
+                        <div class="title">Closest Guess</div>
+                        <div class="description">Range estimation game</div>
+                    </div>
+                    <div class="game-type-card" data-type="push_range">
+                        <div class="icon">🔥</div>
+                        <div class="title">Push Range</div>
+                        <div class="description">Team button mashing</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h2>2️⃣ Question Details</h2>
+                <div class="form-group">
+                    <label for="questionText">Question Text *</label>
+                    <textarea id="questionText" required placeholder="Enter your question here..."></textarea>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="timeLimit">Time Limit (seconds) *</label>
+                        <input type="number" id="timeLimit" value="20" min="5" max="300" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="difficulty">Difficulty</label>
+                        <select id="difficulty">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="tags">Tags (comma-separated)</label>
+                    <input type="text" id="tags" placeholder="e.g., marketing, statistics, finance">
+                    <div class="help-text">Add tags to organize and filter questions</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="imageUrl">Image URL (optional)</label>
+                    <input type="text" id="imageUrl" placeholder="https://example.com/image.jpg">
+                </div>
+            </div>
+
+            <!-- Speed Tap Config -->
+            <div class="form-section game-specific-config" id="speedTapConfig">
+                <h2>3️⃣ Speed Tap Options</h2>
+                <div class="form-group">
+                    <label>Answer Options (select correct answer) *</label>
+                    <div class="options-container" id="optionsContainer">
+                        <div class="option-row">
+                            <input type="text" class="option-text" placeholder="Option A" required>
+                            <input type="radio" name="correctOption" value="0" required>
+                            <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                        </div>
+                        <div class="option-row">
+                            <input type="text" class="option-text" placeholder="Option B" required>
+                            <input type="radio" name="correctOption" value="1">
+                            <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                        </div>
+                        <div class="option-row">
+                            <input type="text" class="option-text" placeholder="Option C" required>
+                            <input type="radio" name="correctOption" value="2">
+                            <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                        </div>
+                        <div class="option-row">
+                            <input type="text" class="option-text" placeholder="Option D" required>
+                            <input type="radio" name="correctOption" value="3">
+                            <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                        </div>
+                    </div>
+                    <button type="button" class="add-option-btn" onclick="addOption()">+ Add Option</button>
+                    <div class="help-text">At least 2 options required, one must be marked correct</div>
+                </div>
+            </div>
+
+            <!-- Closest Guess Config -->
+            <div class="form-section game-specific-config" id="closestGuessConfig">
+                <h2>3️⃣ Closest Guess Configuration</h2>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="minValue">Minimum Value *</label>
+                        <input type="number" id="minValue" step="0.1" placeholder="e.g., 0">
+                    </div>
+                    <div class="form-group">
+                        <label for="maxValue">Maximum Value *</label>
+                        <input type="number" id="maxValue" step="0.1" placeholder="e.g., 100">
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="correctValue">Correct Answer *</label>
+                        <input type="number" id="correctValue" step="0.1" placeholder="e.g., 50">
+                    </div>
+                    <div class="form-group">
+                        <label for="maxRangeWidth">Max Range Width (optional)</label>
+                        <input type="number" id="maxRangeWidth" step="0.1" placeholder="e.g., 10">
+                        <div class="help-text">Maximum width of player's guess range</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Push Range Config -->
+            <div class="form-section game-specific-config" id="pushRangeConfig">
+                <h2>3️⃣ Push Range Configuration</h2>
+                <div class="form-group">
+                    <label for="pushCorrectValue">Correct Answer (percentage) *</label>
+                    <input type="number" id="pushCorrectValue" min="0" max="100" placeholder="e.g., 78">
+                    <div class="help-text">The target percentage value (0-100)</div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="targetZoneStart">Target Zone Start (optional)</label>
+                        <input type="number" id="targetZoneStart" min="0" max="100" placeholder="e.g., 73">
+                        <div class="help-text">Visual hint zone start</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="targetZoneEnd">Target Zone End (optional)</label>
+                        <input type="number" id="targetZoneEnd" min="0" max="100" placeholder="e.g., 83">
+                        <div class="help-text">Visual hint zone end</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="button-group">
+                <button type="button" class="btn btn-secondary" onclick="resetForm()">Clear Form</button>
+                <button type="submit" class="btn btn-primary">💾 Save Question</button>
+            </div>
+        </form>
+
+        <!-- Saved Questions List -->
+        <div class="questions-list">
+            <h2>📚 Your Saved Questions</h2>
+            <div id="questionsList">
+                <p style="color: #64748b; text-align: center; padding: 2rem;">No questions yet. Create your first one above!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://drbaker-backend.onrender.com/api';
+        let selectedGameType = null;
+        let editingQuestionId = null;
+
+        // Get auth token
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+            alert('Please log in first');
+            window.location.href = 'login.html';
+        }
+
+        // Game type selection
+        document.querySelectorAll('.game-type-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.game-type-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedGameType = this.dataset.type;
+                
+                // Show/hide game-specific configs
+                document.querySelectorAll('.game-specific-config').forEach(config => {
+                    config.classList.remove('active');
+                });
+                
+                if (selectedGameType === 'speed_tap') {
+                    document.getElementById('speedTapConfig').classList.add('active');
+                } else if (selectedGameType === 'closest_guess') {
+                    document.getElementById('closestGuessConfig').classList.add('active');
+                } else if (selectedGameType === 'push_range') {
+                    document.getElementById('pushRangeConfig').classList.add('active');
+                }
+            });
+        });
+
+        // Add option for Speed Tap
+        function addOption() {
+            const container = document.getElementById('optionsContainer');
+            const index = container.children.length;
+            const optionRow = document.createElement('div');
+            optionRow.className = 'option-row';
+            optionRow.innerHTML = `
+                <input type="text" class="option-text" placeholder="Option ${String.fromCharCode(65 + index)}" required>
+                <input type="radio" name="correctOption" value="${index}">
+                <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                <button type="button" onclick="removeOption(this)">×</button>
+            `;
+            container.appendChild(optionRow);
+        }
+
+        function removeOption(btn) {
+            const container = document.getElementById('optionsContainer');
+            if (container.children.length > 2) {
+                btn.parentElement.remove();
+                // Update radio button values
+                Array.from(container.children).forEach((row, index) => {
+                    row.querySelector('input[type="radio"]').value = index;
+                });
+            } else {
+                alert('Must have at least 2 options');
+            }
+        }
+
+        // Form submission
+        document.getElementById('questionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!selectedGameType) {
+                showAlert('Please select a game type', 'error');
+                return;
+            }
+
+            const questionData = {
+                question_text: document.getElementById('questionText').value,
+                game_type: selectedGameType,
+                time_limit_seconds: parseInt(document.getElementById('timeLimit').value),
+                difficulty: document.getElementById('difficulty').value,
+                tags: document.getElementById('tags').value,
+                image_url: document.getElementById('imageUrl').value || null,
+                game_config: {}
+            };
+
+            // Build game_config based on type
+            if (selectedGameType === 'speed_tap') {
+                const options = [];
+                const optionTexts = document.querySelectorAll('.option-text');
+                const correctIndex = parseInt(document.querySelector('input[name="correctOption"]:checked')?.value);
+                
+                if (isNaN(correctIndex)) {
+                    showAlert('Please select the correct answer', 'error');
+                    return;
+                }
+
+                optionTexts.forEach((input, index) => {
+                    if (input.value.trim()) {
+                        options.push({
+                            text: input.value.trim(),
+                            is_correct: index === correctIndex,
+                            order: index + 1
+                        });
+                    }
+                });
+
+                if (options.length < 2) {
+                    showAlert('Please provide at least 2 options', 'error');
+                    return;
+                }
+
+                questionData.game_config = {
+                    options: options,
+                    correct_value: options[correctIndex].text,
+                    points_base: 100
+                };
+
+            } else if (selectedGameType === 'closest_guess') {
+                const minValue = parseFloat(document.getElementById('minValue').value);
+                const maxValue = parseFloat(document.getElementById('maxValue').value);
+                const correctValue = parseFloat(document.getElementById('correctValue').value);
+                const maxRangeWidth = document.getElementById('maxRangeWidth').value;
+
+                if (isNaN(minValue) || isNaN(maxValue) || isNaN(correctValue)) {
+                    showAlert('Please fill in all required fields', 'error');
+                    return;
+                }
+
+                if (correctValue < minValue || correctValue > maxValue) {
+                    showAlert('Correct answer must be between min and max values', 'error');
+                    return;
+                }
+
+                questionData.game_config = {
+                    min_value: minValue,
+                    max_value: maxValue,
+                    correct_value: correctValue,
+                    points_base: 100
+                };
+
+                if (maxRangeWidth) {
+                    questionData.game_config.max_range_width = parseFloat(maxRangeWidth);
+                }
+
+            } else if (selectedGameType === 'push_range') {
+                const correctValue = parseInt(document.getElementById('pushCorrectValue').value);
+                
+                if (isNaN(correctValue) || correctValue < 0 || correctValue > 100) {
+                    showAlert('Correct answer must be between 0 and 100', 'error');
+                    return;
+                }
+
+                questionData.game_config = {
+                    correct_value: correctValue,
+                    points_base: 100
+                };
+
+                const zoneStart = document.getElementById('targetZoneStart').value;
+                const zoneEnd = document.getElementById('targetZoneEnd').value;
+                
+                if (zoneStart) questionData.game_config.target_zone_start = parseInt(zoneStart);
+                if (zoneEnd) questionData.game_config.target_zone_end = parseInt(zoneEnd);
+            }
+
+            // Save question
+            try {
+                const url = editingQuestionId 
+                    ? `${API_BASE}/game-questions/${editingQuestionId}/`
+                    : `${API_BASE}/game-questions/`;
+                    
+                const method = editingQuestionId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(questionData)
+                });
+
+                if (response.ok) {
+                    showAlert(editingQuestionId ? 'Question updated successfully!' : 'Question created successfully!', 'success');
+                    resetForm();
+                    loadQuestions();
+                } else {
+                    const error = await response.json();
+                    showAlert('Error: ' + (error.detail || 'Failed to save question'), 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        });
+
+        // Load questions
+        async function loadQuestions() {
+            try {
+                const response = await fetch(`${API_BASE}/game-questions/`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const questions = await response.json();
+                    displayQuestions(questions);
+                }
+            } catch (error) {
+                console.error('Error loading questions:', error);
+            }
+        }
+
+        function displayQuestions(questions) {
+            const container = document.getElementById('questionsList');
+            
+            if (questions.length === 0) {
+                container.innerHTML = '<p style="color: #64748b; text-align: center; padding: 2rem;">No questions yet. Create your first one above!</p>';
+                return;
+            }
+
+            container.innerHTML = questions.map(q => {
+                const typeBadge = q.game_type === 'speed_tap' ? 'speed-tap' : 
+                                q.game_type === 'closest_guess' ? 'closest-guess' : 'push-range';
+                const typeLabel = q.game_type === 'speed_tap' ? '⚡ Speed Tap' :
+                                q.game_type === 'closest_guess' ? '🎯 Closest Guess' : '🔥 Push Range';
+                
+                return `
+                    <div class="question-card">
+                        <div class="content">
+                            <span class="type-badge ${typeBadge}">${typeLabel}</span>
+                            <div class="question-text">${q.question_text}</div>
+                            <div class="meta">
+                                Time: ${q.time_limit_seconds}s | Difficulty: ${q.difficulty} | 
+                                ${q.tags ? 'Tags: ' + q.tags : 'No tags'}
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <button class="btn-edit" onclick="editQuestion(${q.id})">Edit</button>
+                            <button class="btn-delete" onclick="deleteQuestion(${q.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function deleteQuestion(id) {
+            if (!confirm('Are you sure you want to delete this question?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/game-questions/${id}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    showAlert('Question deleted successfully', 'success');
+                    loadQuestions();
+                } else {
+                    showAlert('Error deleting question', 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function editQuestion(id) {
+            try {
+                const response = await fetch(`${API_BASE}/game-questions/${id}/`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const question = await response.json();
+                    populateForm(question);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } catch (error) {
+                showAlert('Error loading question: ' + error.message, 'error');
+            }
+        }
+
+        function populateForm(question) {
+            editingQuestionId = question.id;
+            
+            // Select game type
+            document.querySelector(`.game-type-card[data-type="${question.game_type}"]`).click();
+            
+            // Fill basic fields
+            document.getElementById('questionText').value = question.question_text;
+            document.getElementById('timeLimit').value = question.time_limit_seconds;
+            document.getElementById('difficulty').value = question.difficulty;
+            document.getElementById('tags').value = question.tags || '';
+            document.getElementById('imageUrl').value = question.image_url || '';
+
+            // Fill game-specific fields
+            if (question.game_type === 'speed_tap' && question.game_config.options) {
+                const container = document.getElementById('optionsContainer');
+                container.innerHTML = '';
+                question.game_config.options.forEach((opt, index) => {
+                    const optionRow = document.createElement('div');
+                    optionRow.className = 'option-row';
+                    optionRow.innerHTML = `
+                        <input type="text" class="option-text" value="${opt.text}" required>
+                        <input type="radio" name="correctOption" value="${index}" ${opt.is_correct ? 'checked' : ''}>
+                        <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                        ${index >= 2 ? '<button type="button" onclick="removeOption(this)">×</button>' : ''}
+                    `;
+                    container.appendChild(optionRow);
+                });
+            } else if (question.game_type === 'closest_guess') {
+                document.getElementById('minValue').value = question.game_config.min_value;
+                document.getElementById('maxValue').value = question.game_config.max_value;
+                document.getElementById('correctValue').value = question.game_config.correct_value;
+                document.getElementById('maxRangeWidth').value = question.game_config.max_range_width || '';
+            } else if (question.game_type === 'push_range') {
+                document.getElementById('pushCorrectValue').value = question.game_config.correct_value;
+                document.getElementById('targetZoneStart').value = question.game_config.target_zone_start || '';
+                document.getElementById('targetZoneEnd').value = question.game_config.target_zone_end || '';
+            }
+
+            showAlert('Editing question. Make changes and save.', 'success');
+        }
+
+        function resetForm() {
+            document.getElementById('questionForm').reset();
+            document.querySelectorAll('.game-type-card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('.game-specific-config').forEach(c => c.classList.remove('active'));
+            selectedGameType = null;
+            editingQuestionId = null;
+            
+            // Reset Speed Tap options to default 4
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = `
+                <div class="option-row">
+                    <input type="text" class="option-text" placeholder="Option A" required>
+                    <input type="radio" name="correctOption" value="0" required>
+                    <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                </div>
+                <div class="option-row">
+                    <input type="text" class="option-text" placeholder="Option B" required>
+                    <input type="radio" name="correctOption" value="1">
+                    <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                </div>
+                <div class="option-row">
+                    <input type="text" class="option-text" placeholder="Option C" required>
+                    <input type="radio" name="correctOption" value="2">
+                    <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                </div>
+                <div class="option-row">
+                    <input type="text" class="option-text" placeholder="Option D" required>
+                    <input type="radio" name="correctOption" value="3">
+                    <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                </div>
+            `;
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Load questions on page load
+        loadQuestions();
+    </script>
+</body>
+</html>

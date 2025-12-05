@@ -271,10 +271,12 @@
       
       <div class="viewer-controls card">
         <div class="search-bar">
-          <input type="text" id="search-input" placeholder="Search transcript..." aria-label="Search transcript">
+          <input type="text" id="search-input" placeholder="Search transcript (supports wildcards: term*, Boolean: term1 AND term2)..." aria-label="Search transcript">
           <button type="button" id="search-btn" class="btn-primary">
             <span class="search-icon">🔍</span> Search
           </button>
+          <button type="button" id="prev-match" class="secondary" disabled>◀ Prev</button>
+          <button type="button" id="next-match" class="secondary" disabled>Next ▶</button>
           <button type="button" id="clear-search" class="secondary">Clear</button>
         </div>
         
@@ -334,6 +336,22 @@
 
         <!-- Main Transcript Display -->
         <div class="card transcript-display">
+          <!-- Coding Mode Controls -->
+          <div class="coding-mode-bar" id="coding-mode-bar">
+            <label class="coding-toggle">
+              <input type="checkbox" id="coding-mode-toggle">
+              <span class="toggle-label">Enable Coding Mode</span>
+            </label>
+            <div class="coding-controls" id="coding-controls" style="display: none;">
+              <label for="active-code-select">Active Code:</label>
+              <select id="active-code-select" class="active-code-select">
+                <option value="">-- Create codes first! --</option>
+              </select>
+              <button type="button" id="apply-code-btn" class="btn-primary" disabled>Apply Code to Selected Lines</button>
+              <button type="button" id="clear-selections-btn" class="secondary">Clear Selections</button>
+              <span id="selection-count" class="selection-count"></span>
+            </div>
+          </div>
           <div id="transcript-content" class="transcript-lines">
             <div class="empty-state">
               <p>Upload or paste a transcript to begin analysis</p>
@@ -346,17 +364,30 @@
     <section class="coding-panel" aria-labelledby="coding-heading">
       <h2 id="coding-heading">CODING & THEMES</h2>
       
+      <div class="card" style="background: #eff6ff; border-left: 4px solid #3b82f6; margin-bottom: 1rem; padding: 1rem;">
+        <h4 style="margin-top: 0; color: #1e40af;">💡 How to Apply Codes</h4>
+        <ol style="margin: 0.5rem 0; padding-left: 1.5rem; color: #1e3a8a;">
+          <li><strong>Create codes</strong> below (give them names and colors)</li>
+          <li>Go to the <strong>Transcript Viewer</strong> and toggle <strong>"Enable Coding Mode"</strong></li>
+          <li><strong>Select a code</strong> from the dropdown</li>
+          <li><strong>Check the boxes</strong> next to transcript lines you want to code</li>
+          <li>Click <strong>"Apply Code to Selected Lines"</strong></li>
+          <li>Repeat for other codes. Your work appears in "Coded Segments" below</li>
+          <li><strong>Export your work</strong> as CSV to save progress and re-import later!</li>
+        </ol>
+      </div>
+      
       <div class="dual-panels">
         <article class="card dual-panel">
           <h3>Code Management</h3>
           <div class="code-manager">
             <div class="code-input-group">
-              <input type="text" id="new-code-name" placeholder="New code name..." aria-label="New code name">
+              <input type="text" id="new-code-name" placeholder="New code name (e.g., 'Price Concern')..." aria-label="New code name">
               <input type="color" id="new-code-color" value="#3b82f6" aria-label="Code color">
               <button type="button" id="add-code" class="btn-primary">Add Code</button>
             </div>
             <div id="code-list" class="code-list">
-              <p class="hint">Add codes to categorize transcript segments</p>
+              <p class="hint">👆 Create your first code above to get started</p>
             </div>
           </div>
         </article>
@@ -364,9 +395,52 @@
         <article class="card dual-panel">
           <h3>Coded Segments</h3>
           <div id="coded-segments" class="coded-segments-list">
-            <p class="hint">Select text in the transcript and assign codes</p>
+            <p class="hint">📝 After creating codes, highlight text in the transcript above to assign them</p>
           </div>
         </article>
+      </div>
+    </section>
+
+    <section class="word-frequency" aria-labelledby="word-frequency-heading">
+      <h2 id="word-frequency-heading">WORD FREQUENCY ANALYSIS</h2>
+      <div class="card">
+        <p>Analyze the most common words in your transcript, excluding stop-words (articles, conjunctions, filler words).</p>
+        
+        <div class="frequency-controls">
+          <button type="button" id="analyze-frequency" class="btn-primary">Show Top 20 Most Common Words</button>
+          <button type="button" id="customize-stopwords" class="secondary">Customize Stop-Words</button>
+        </div>
+        
+        <div id="frequency-results" class="frequency-results hidden">
+          <h3>Word Frequency Table</h3>
+          <div class="table-wrapper">
+            <table id="frequency-table" class="frequency-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Word</th>
+                  <th>Frequency</th>
+                  <th>Percentage</th>
+                </tr>
+              </thead>
+              <tbody id="frequency-tbody">
+                <!-- Populated by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <details id="stopwords-panel" class="stopwords-details">
+          <summary>Stop-Word List (Excluded from Analysis)</summary>
+          <div class="stopwords-content">
+            <p class="hint">These words will be excluded from frequency analysis. You can add custom words to exclude.</p>
+            <textarea id="stopwords-textarea" rows="10" class="stopwords-textarea" placeholder="Loading stop-words..."></textarea>
+            <div class="stopwords-actions">
+              <button type="button" id="save-stopwords" class="btn-primary">Save Custom Stop-Words</button>
+              <button type="button" id="reset-stopwords" class="secondary">Reset to Defaults</button>
+            </div>
+          </div>
+        </details>
       </div>
     </section>
 
@@ -393,15 +467,19 @@
     <section class="export-section" aria-labelledby="export-heading">
       <h2 id="export-heading">EXPORT & REPORTING</h2>
       <div class="card">
+        <p class="export-hint" style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 0.75rem; margin-bottom: 1rem;">
+          <strong>💾 Save Your Work:</strong> Export creates a CSV with your transcript and binary code columns (0/1). 
+          You can re-import this file later to continue coding!
+        </p>
         <div class="export-options">
           <button type="button" id="export-coded" class="btn-primary">
-            Export Coded Segments (CSV)
+            📊 Export Full Transcript with Codes (CSV)
           </button>
           <button type="button" id="export-codebook" class="secondary">
-            Export Codebook
+            📋 Export Codebook Only
           </button>
-          <button type="button" id="export-report" class="secondary">
-            Generate Summary Report
+          <button type="button" id="export-summary" class="secondary">
+            📈 Generate Code Summary Report
           </button>
         </div>
         
@@ -431,6 +509,24 @@
     <p><a href="../../../index.html">Back to Tools</a></p>
     <p class="citation">Cite as: Baker, Andrew. (2025). Qualitative Analyzer. Marketing Bivariate Tools.</p>
   </footer>
+
+  <!-- Floating code assignment popup -->
+  <div id="code-assignment-popup" class="code-popup hidden">
+    <div class="code-popup-header">
+      <h4>Assign Codes</h4>
+      <button type="button" id="close-code-popup" class="close-btn">✕</button>
+    </div>
+    <div class="code-popup-body">
+      <p class="popup-hint">Select one or more codes for this segment:</p>
+      <div id="code-checkboxes" class="code-checkboxes">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+    <div class="code-popup-footer">
+      <button type="button" id="save-codes" class="btn-primary">Save</button>
+      <button type="button" id="cancel-codes" class="secondary">Cancel</button>
+    </div>
+  </div>
 
   <script src="../../../shared/js/csv_utils.js"></script>
   <script src="../../../shared/js/ui_utils.js"></script>

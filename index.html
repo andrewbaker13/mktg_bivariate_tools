@@ -165,30 +165,6 @@
       </div>
     </section>
 
-    <section class="test-overview" aria-labelledby="how-to-choose-heading">
-      <h2 id="how-to-choose-heading">How to Choose a Tool</h2>
-      <div class="card">
-        <p>Match your research question to the right tool based on your data structure:</p>
-        <ul>
-          <li><strong>Single variable exploration</strong> &rarr; Univariate Analyzer (start here!).</li>
-          <li><strong>Two numeric metrics</strong> on the same people &rarr; <em>association</em> question &rarr; Pearson Correlation.</li>
-          <li><strong>One numeric metric</strong> for <em>two independent groups</em> &rarr; mean comparison &rarr; Welch's t-test.</li>
-          <li><strong>One numeric metric</strong> measured <em>twice on the same people</em> (before/after, A vs. B) &rarr; Paired t-test.</li>
-          <li><strong>One numeric metric</strong> for <em>three or more groups</em> &rarr; One-Way ANOVA.</li>
-          <li><strong>Binary outcome</strong> (convert vs. not, click vs. no click) for <em>two independent groups</em> &rarr; A/B Proportion tool.</li>
-          <li><strong>Binary outcome measured twice on the same people</strong> (pre/post, control vs. treatment on the same accounts) &rarr; McNemar test.</li>
-          <li><strong>Two categorical variables</strong> (e.g., device type by response, segment by offer) &rarr; Chi-square test of association.</li>
-          <li><strong>One numeric outcome with multiple predictors</strong> &rarr; Multiple Linear Regression.</li>
-          <li><strong>Binary outcome with multiple predictors</strong> &rarr; Logistic Regression.</li>
-          <li><strong>Time-ordered data</strong> (sequential observations) with or without external factors &rarr; ARIMAX Time Series Forecasting.</li>
-          <li><strong>Repeated independent events</strong> (dice rolls, conversion attempts) &rarr; Compound Event Probability Calculator.</li>
-        </ul>
-        <p class="muted">
-          Unsure where to start? Use the Test Picker helper below or read the "TEST OVERVIEW &amp; EQUATIONS" section inside each app for assumptions,
-          notations, and links to references.
-        </p>
-      </div>
-    </section>
 
     <section class="scenario-section" aria-labelledby="helper-heading">
       <h2 id="helper-heading" style="scroll-margin-top:2rem;">💡 Interactive Statistical Test Selector</h2>
@@ -210,14 +186,16 @@
       </div>
     </section>
 
-    <section class="scenario-section" aria-labelledby="directory-heading">
-      <h2 id="directory-heading">Browse Tools by Category</h2>
-      <div class="card">
-        <p class="muted">
-          Tools are organized by analysis type. Each card shows the tool's purpose, complexity level, and data requirements.
-        </p>
-
-        <div class="tool-directory" style="margin-top:1.5rem;">
+    <!-- Browse Tools by Category -->
+    <h2 id="directory-heading" style="scroll-margin-top:2rem; text-align:center; margin-bottom:1rem; font-size:2rem;">Browse Tools by Category</h2>
+    <p class="muted" style="text-align:center; margin-bottom:2rem;">
+      Tools are organized by analysis type. Each card shows the tool's purpose, complexity level, and data requirements.
+    </p>
+    
+    <!-- Descriptive & Exploratory Analysis -->
+    <section class="scenario-section" style="margin-top:2rem;">
+      <div class="card" style="padding:2rem;">
+        <div class="tool-directory">
           <h3 id="exploratory" style="scroll-margin-top:2rem;">📈 Descriptive &amp; Exploratory Analysis</h3>
           <article class="tool-card">
             <h4>
@@ -244,8 +222,13 @@
             <p class="muted">Data: pairs of numeric values for each case.</p>
           </article>
         </div>
+      </div>
+    </section>
 
-        <div class="tool-directory" style="margin-top:1.5rem;">
+    <!-- Comparing Groups (Hypothesis Testing) -->
+    <section class="scenario-section" style="margin-top:2rem;">
+      <div class="card" style="padding:2rem;">
+        <div class="tool-directory">
           <h3 id="comparing-groups" style="scroll-margin-top:2rem;">📉 Comparing Groups (Hypothesis Testing)</h3>
           <article class="tool-card">
             <h4>
@@ -303,8 +286,13 @@
             <p class="muted">Data: 2 &times; 2 matched table or raw paired outcomes.</p>
           </article>
         </div>
+      </div>
+    </section>
 
-        <div class="tool-directory" style="margin-top:1.5rem;">
+    <!-- Categorical Analysis -->
+    <section class="scenario-section" style="margin-top:2rem;">
+      <div class="card" style="padding:2rem;">
+        <div class="tool-directory">
           <h3 id="categorical" style="scroll-margin-top:2rem;">📊 Categorical Analysis</h3>
           <article class="tool-card">
             <h4>
@@ -319,9 +307,14 @@
             <p class="muted">Data: contingency table counts or raw categorical outcomes.</p>
           </article>
         </div>
+      </div>
+    </section>
 
-        <div class="tool-directory" style="margin-top:1.5rem;">
-          <h3 id="modeling" style="scroll-margin-top:2rem;">🔮 Predictive Modeling &amp; Regression</h3>
+    <!-- Predictive Modeling -->
+    <section class="scenario-section" style="margin-top:2rem;">
+      <div class="card" style="padding:2rem;">
+        <div class="tool-directory">
+          <h3 id="modeling" style="scroll-margin-top:2rem;">🔮 Predictive Modeling</h3>
           <article class="tool-card">
             <h4>
               <a href="apps/regression/bivariate_regression/main_bivariate_regression.html">Bivariate Linear Regression</a>
@@ -371,9 +364,19 @@
             <p class="muted">Data: raw rows with one categorical outcome and multiple predictors.</p>
           </article>
         </div>
+      </div>
+    </section>
 
-        <div class="tool-directory" style="margin-top:1.5rem;">
-          <h3 id="timeseries" style="scroll-margin-top:2rem;">📈 Time Series Analysis</h3>
+    <!-- Text Analysis -->
+    <section class="scenario-section" style="margin-top:2rem;">
+      <div class="card" style="padding:2rem;">
+        <div class="tool-directory">
+          <h3 id="text-analysis" style="scroll-margin-top:2rem;">📝 Text Analysis</h3>
+    <!-- Time Series -->
+    <section class="scenario-section" style="margin-top:2rem;">
+      <div class="card" style="padding:2rem;">
+        <div class="tool-directory">
+          <h3 id="time-series" style="scroll-margin-top:2rem;">📈 Time Series</h3>
           <article class="tool-card">
             <h4>
               <a href="apps/time_series/arimax/main_arimax.html">ARIMAX Time Series Forecasting</a>
@@ -388,8 +391,13 @@
             <p class="muted">Data: time-ordered observations with optional predictor columns (ad spend, promotions, etc.).</p>
           </article>
         </div>
+      </div>
+    </section>
 
-        <div class="tool-directory" style="margin-top:1.5rem;">
+    <!-- Segmentation & Clustering -->
+    <section class="scenario-section" style="margin-top:2rem;">
+      <div class="card" style="padding:2rem;">
+        <div class="tool-directory">
           <h3 id="clustering" style="scroll-margin-top:2rem;">🎯 Segmentation &amp; Clustering</h3>
           <article class="tool-card">
             <h4>
@@ -404,9 +412,14 @@
             <p class="muted">Data: raw rows with two or more numeric predictors for clustering.</p>
           </article>
         </div>
+      </div>
+    </section>
 
-        <div class="tool-directory" style="margin-top:1.5rem;">
-          <h3 id="probability" style="scroll-margin-top:2rem;">🎲 Probability &amp; Simulation</h3>
+    <!-- Probability & Distributions -->
+    <section class="scenario-section" style="margin-top:2rem;">
+      <div class="card" style="padding:2rem;">
+        <div class="tool-directory">
+          <h3 id="probability" style="scroll-margin-top:2rem;">🎲 Probability &amp; Distributions</h3>
           <article class="tool-card">
             <h4>
               <a href="apps/probability/compound_event_probability/main_compound_event_probability.html">Compound Event Probability Calculator</a>
@@ -447,8 +460,13 @@
             <p class="muted">Data: text strings (reviews, comments, survey responses). Max 500 documents.</p>
           </article>
         </div>
+      </div>
+    </section>
 
-        <div class="tool-directory" style="margin-top:1.5rem;">
+    <!-- Study Design & Planning -->
+    <section class="scenario-section" style="margin-top:2rem;">
+      <div class="card" style="padding:2rem;">
+        <div class="tool-directory">
           <h3 id="planning" style="scroll-margin-top:2rem;">📐 Study Design &amp; Planning</h3>
           <article class="tool-card">
             <h4>
@@ -526,35 +544,6 @@
       </div>
     </section>
 
-    <section class="diagnostics-section" aria-labelledby="study-tips-heading">
-      <h2 id="study-tips-heading">📚 Tips for Students</h2>
-      <div class="card">
-        <h3>General Study Advice</h3>
-        <ul>
-          <li><strong>Start with exploration:</strong> Use the Univariate Analyzer to understand your data <em>before</em> choosing a test.</li>
-          <li><strong>Sketch your question:</strong> Write out your research question in plain language before picking a tool.</li>
-          <li><strong>Match data structure:</strong> Choose tools based on your data type (numeric vs. categorical) and study design (independent vs. paired).</li>
-          <li><strong>Try scenarios first:</strong> Experiment with built-in sample scenarios before uploading your own data.</li>
-          <li><strong>Learn from narratives:</strong> Use the APA-style writeups as templates, then rewrite them in your own words for assignments.</li>
-        </ul>
-        <h3 style="margin-top:1.5rem;">Complexity Guide</h3>
-        <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
-          <div style="padding:0.5rem 1rem; background:#dbeafe; border-radius:6px; border-left:4px solid #3b82f6;">
-            <strong>🟢 Beginner:</strong> Start here if you're new to statistics. Clear inputs, straightforward interpretation.
-          </div>
-          <div style="padding:0.5rem 1rem; background:#fef3c7; border-radius:6px; border-left:4px solid #f59e0b;">
-            <strong>🟡 Intermediate:</strong> Requires understanding of multiple concepts or more complex data structures.
-          </div>
-          <div style="padding:0.5rem 1rem; background:#fee2e2; border-radius:6px; border-left:4px solid #ef4444;">
-            <strong>🔴 Advanced:</strong> Assumes solid statistical foundation. Best used after mastering beginner/intermediate tools.
-          </div>
-        </div>
-        <p class="muted" style="margin-top:1rem;">
-          These apps are designed as teaching tools: they show equations, diagnostics, and APA-style
-          reporting so you can see how the math connects to marketing decisions.
-        </p>
-      </div>
-    </section>
   </main>
   
   <script src="shared/js/auth_tracking.js" defer></script>

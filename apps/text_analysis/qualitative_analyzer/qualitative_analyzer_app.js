@@ -5,12 +5,12 @@
 
 // Global state
 const state = {
-  transcript: [], // Array of { lineNumber, speaker, timestamp, text, coded: [], lineType: 'dialogue'|'section-header'|'activity-marker'|'stage-direction', sectionId: null }
-  codes: [], // Array of { id, name, color }
-  codedSegments: [], // Array of { lineNumber, speaker, text, codes: [] }
+  transcript: [], // Array of { lineNumber, speaker, timestamp, text, codes: {}, lineType: 'dialogue'|'section-header'|'activity-marker'|'stage-direction', sectionId: null }
+  codes: [], // Array of { name, color }
   currentMode: 'structured',
   selectedLines: new Set(),
-  searchResults: [],
+  searchResults: [], // Array of { lineIdx, matches: [{start, end}] }
+  currentMatchIndex: 0,
   currentFilters: {
     speaker: '',
     code: '',
@@ -22,7 +22,11 @@ const state = {
     speakers: 0,
     sections: 0,
     activities: 0
-  }
+  },
+  stopWords: [], // Loaded from stop_words.json
+  defaultStopWords: [], // Backup of defaults
+  codingMode: false,
+  activeCode: null
 };
 
 // Initialize application
@@ -30,6 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeApp();
   loadScenarios();
   setupEventListeners();
+  loadStopWords();
 });
 
 /**
@@ -42,25 +47,7 @@ function initializeApp() {
   document.getElementById('created-date').textContent = '2025-12-04';
   document.getElementById('modified-date').textContent = new Date().toISOString().split('T')[0];
   
-  // Initialize default codes
-  addDefaultCodes();
-}
-
-/**
- * Add some default codes to get started
- */
-function addDefaultCodes() {
-  const defaultCodes = [
-    { name: 'Positive Sentiment', color: '#10b981' },
-    { name: 'Negative Sentiment', color: '#ef4444' },
-    { name: 'Product Feature', color: '#3b82f6' },
-    { name: 'Price Concern', color: '#f59e0b' },
-    { name: 'Competitor Mention', color: '#8b5cf6' }
-  ];
-  
-  defaultCodes.forEach(code => {
-    addCode(code.name, code.color, false);
-  });
+  // No default codes - users add their own
 }
 
 /**
@@ -85,6 +72,8 @@ function setupEventListeners() {
     if (e.key === 'Enter') performSearch();
   });
   document.getElementById('clear-search')?.addEventListener('click', clearSearch);
+  document.getElementById('prev-match')?.addEventListener('click', () => navigateMatches(-1));
+  document.getElementById('next-match')?.addEventListener('click', () => navigateMatches(1));
   
   // Filters
   document.getElementById('speaker-filter')?.addEventListener('change', applyFilters);
@@ -100,6 +89,23 @@ function setupEventListeners() {
       document.getElementById('new-code-name').value = '';
     }
   });
+  
+  // Coding mode toggle
+  document.getElementById('coding-mode-toggle')?.addEventListener('change', toggleCodingMode);
+  document.getElementById('active-code-select')?.addEventListener('change', (e) => {
+    state.activeCode = e.target.value;
+    updateApplyButtonState();
+  });
+  document.getElementById('apply-code-btn')?.addEventListener('click', applyCodeToSelectedLines);
+  document.getElementById('clear-selections-btn')?.addEventListener('click', clearLineSelections);
+  
+  // Word frequency
+  document.getElementById('analyze-frequency')?.addEventListener('click', analyzeWordFrequency);
+  document.getElementById('customize-stopwords')?.addEventListener('click', () => {
+    document.getElementById('stopwords-panel').open = true;
+  });
+  document.getElementById('save-stopwords')?.addEventListener('click', saveCustomStopWords);
+  document.getElementById('reset-stopwords')?.addEventListener('click', resetStopWords);
   
   // Export
   document.getElementById('export-coded')?.addEventListener('click', exportCodedSegments);
@@ -403,18 +409,28 @@ function renderTranscript() {
   
   const filteredTranscript = applyCurrentFilters();
   
-  const html = filteredTranscript.map(item => {
+  const html = filteredTranscript.map((item, filteredIdx) => {
     const isSelected = state.selectedLines.has(item.lineNumber);
-    const isHighlighted = state.searchResults.includes(item.lineNumber);
-    const hasCodes = item.codes && item.codes.length > 0;
+    const searchResult = state.searchResults.find(r => r.lineIdx === filteredIdx);
+    
+    // Check which codes are applied (value = 1)
+    const appliedCodes = item.codes ? Object.keys(item.codes).filter(codeName => item.codes[codeName] === 1) : [];
+    const hasCodes = appliedCodes.length > 0;
     
     const classes = ['transcript-line'];
     classes.push(item.lineType);
     if (isSelected) classes.push('selected');
-    if (isHighlighted) classes.push('highlighted');
+    if (searchResult) classes.push('has-search-match');
     if (hasCodes) classes.push('coded');
+    if (state.codingMode) classes.push('coding-mode');
     
-    let lineHtml = `<div class="${classes.join(' ')}" data-line="${item.lineNumber}" data-section="${item.sectionId || ''}" id="line-${item.lineNumber}">`;
+    let lineHtml = `<div class="${classes.join(' ')}" data-index="${filteredIdx}" data-line="${item.lineNumber}" data-section="${item.sectionId || ''}" id="line-${item.lineNumber}">`;
+    
+    // Add checkbox if in coding mode
+    if (state.codingMode) {
+      lineHtml += `<input type="checkbox" class="line-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleLineSelection(${item.lineNumber})" />`;
+      lineHtml += '<div class="line-content">';
+    }
     
     if (showLineNumbers) {
       lineHtml += `<span class="line-number">${item.lineNumber}</span>`;
@@ -428,8 +444,9 @@ function renderTranscript() {
       lineHtml += `<span class="timestamp">${escapeHtml(item.timestamp)}</span>`;
     }
     
-    // Process text for inline stage directions
-    let displayText = escapeHtml(item.text);
+    // Apply highlighting to text
+    let displayText = applyHighlightingToText(item.text, searchResult, appliedCodes);
+    
     if (showStageDirections && item.lineType === 'dialogue') {
       // Highlight inline parentheticals like (laughs), (points at herself)
       displayText = displayText.replace(/\(([^)]+)\)/g, '<span class="inline-direction">($1)</span>');
@@ -438,11 +455,15 @@ function renderTranscript() {
     lineHtml += `<span class="line-text">${displayText}</span>`;
     
     if (hasCodes) {
-      const codeLabels = item.codes.map(codeId => {
-        const code = state.codes.find(c => c.id === codeId);
+      const codeLabels = appliedCodes.map(codeName => {
+        const code = state.codes.find(c => c.name === codeName);
         return code ? `<span class="code-label" style="background-color: ${code.color}20; color: ${code.color};">${escapeHtml(code.name)}</span>` : '';
       }).join('');
       lineHtml += `<div class="line-codes">${codeLabels}</div>`;
+    }
+    
+    if (state.codingMode) {
+      lineHtml += '</div>'; // Close line-content
     }
     
     lineHtml += '</div>';
@@ -450,15 +471,48 @@ function renderTranscript() {
   }).join('');
   
   container.innerHTML = html;
+}
+
+/**
+ * Apply search and code highlighting to text
+ */
+function applyHighlightingToText(text, searchResult, codes) {
+  let result = escapeHtml(text);
   
-  // Add event listeners
-  container.querySelectorAll('.transcript-line').forEach(line => {
-    line.addEventListener('click', () => selectLine(parseInt(line.dataset.line)));
-    line.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      showContextMenu(e, parseInt(line.dataset.line));
+  // Apply search highlighting
+  if (searchResult && searchResult.matches) {
+    // Sort matches by position (descending) to apply from end to start
+    const sortedMatches = [...searchResult.matches].sort((a, b) => b.start - a.start);
+    
+    sortedMatches.forEach((match, idx) => {
+      const before = result.substring(0, match.start);
+      const matchText = result.substring(match.start, match.end);
+      const after = result.substring(match.end);
+      
+      const isCurrentMatch = idx === state.currentMatchIndex;
+      const highlightClass = isCurrentMatch ? 'search-highlight current' : 'search-highlight';
+      
+      result = `${before}<span class="${highlightClass}">${matchText}</span>${after}`;
     });
-  });
+  }
+  
+  // Apply code highlighting (would be more sophisticated with actual position tracking)
+  if (codes && codes.length > 0) {
+    const codeColors = codes.map(codeName => {
+      const code = state.codes.find(c => c.name === codeName);
+      return code ? code.color : '#3b82f6';
+    });
+    
+    // For now, add a subtle background to coded lines
+    // In a full implementation, you'd track exact positions of coded segments
+    const colorStyle = codeColors.length === 1 
+      ? `border-left: 3px solid ${codeColors[0]};` 
+      : `border-left: 3px solid ${codeColors[0]}; background: linear-gradient(90deg, ${codeColors.map(c => `${c}10`).join(', ')});`;
+    
+    result = `<span style="${colorStyle} padding-left: 8px; display: inline-block; width: 100%;">${result}</span>`;
+  }
+  
+  return result;
 }
 
 /**
@@ -570,14 +624,22 @@ function assignCode(lineNumber, codeId) {
  */
 function addCode(name, color, updateUI = true) {
   if (state.codes.some(c => c.name === name)) {
-    return; // Code already exists
+    alert('Code with this name already exists!');
+    return;
   }
   
-  state.codes.push({ name, color, count: 0 });
+  state.codes.push({ name, color });
+  
+  // Add this code as a binary column to all transcript lines
+  state.transcript.forEach(line => {
+    if (!line.codes) line.codes = {};
+    line.codes[name] = 0; // Default to not coded (0)
+  });
   
   if (updateUI) {
     renderCodeList();
     updateCodeFilter();
+    updateActiveCodeDropdown();
   }
 }
 
@@ -638,32 +700,51 @@ function deleteCode(idx) {
 /**
  * Render coded segments
  */
+/**
+ * Render coded segments summary
+ */
 function renderCodedSegments() {
   const container = document.getElementById('coded-segments');
   if (!container) return;
   
-  if (state.codedSegments.length === 0) {
-    container.innerHTML = '<p class="hint">Select text in the transcript and assign codes</p>';
+  // Generate summary by code
+  const summaryByCode = {};
+  state.transcript.forEach(line => {
+    if (!line.codes) return;
+    Object.keys(line.codes).forEach(codeName => {
+      if (line.codes[codeName] === 1) {
+        if (!summaryByCode[codeName]) {
+          summaryByCode[codeName] = [];
+        }
+        summaryByCode[codeName].push(line);
+      }
+    });
+  });
+  
+  if (Object.keys(summaryByCode).length === 0) {
+    container.innerHTML = '<p class="hint">📝 After creating codes, enable Coding Mode in the transcript to assign them</p>';
     return;
   }
   
   let html = '';
-  state.codedSegments.forEach((segment, idx) => {
-    const code = state.codes.find(c => c.name === segment.code);
-    const color = code?.color || '#999';
+  Object.keys(summaryByCode).forEach(codeName => {
+    const code = state.codes.find(c => c.name === codeName);
+    const color = code?.color || '#3b82f6';
+    const lines = summaryByCode[codeName];
     
     html += `
-      <div class="coded-segment" style="border-left-color: ${color}">
-        <div class="segment-header">
-          <span class="segment-code">${escapeHtml(segment.code)}</span>
-          <span class="segment-location">Line ${segment.lineIdx + 1}</span>
+      <div class="coded-segment-group" style="border-left: 4px solid ${color}; margin-bottom: 1rem; padding-left: 0.75rem;">
+        <div class="segment-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <span class="segment-code" style="font-weight: 600; color: ${color};">${escapeHtml(codeName)}</span>
+          <span class="segment-count" style="background: ${color}20; color: ${color}; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${lines.length} line${lines.length === 1 ? '' : 's'}</span>
         </div>
-        <div class="segment-text">
-          <span class="segment-speaker">${escapeHtml(segment.speaker)}:</span>
-          "${escapeHtml(segment.text)}"
-        </div>
-        <div class="segment-actions">
-          <button onclick="removeSegmentCode(${idx})">Remove Code</button>
+        <div class="segment-lines" style="font-size: 0.9rem; color: #6b7280;">
+          ${lines.slice(0, 3).map(line => `
+            <div style="margin-bottom: 0.25rem;">
+              <strong>Line ${line.lineNumber}:</strong> ${escapeHtml(line.speaker || '')}: ${escapeHtml(line.text.substring(0, 80))}${line.text.length > 80 ? '...' : ''}
+            </div>
+          `).join('')}
+          ${lines.length > 3 ? `<div style="font-style: italic;">...and ${lines.length - 3} more</div>` : ''}
         </div>
       </div>
     `;
@@ -671,21 +752,6 @@ function renderCodedSegments() {
   
   container.innerHTML = html;
 }
-
-/**
- * Remove code from segment
- */
-function removeSegmentCode(segmentIdx) {
-  const segment = state.codedSegments[segmentIdx];
-  if (!segment) return;
-  
-  // Remove from transcript
-  const line = state.transcript[segment.lineIdx];
-  if (line) {
-    line.codes = line.codes.filter(c => c !== segment.code);
-  }
-  
-  // Remove segment
   state.codedSegments.splice(segmentIdx, 1);
   
   renderCodedSegments();
@@ -705,53 +771,125 @@ function updateCodeCounts() {
 }
 
 /**
- * Perform search
+ * Perform search with wildcards and Boolean operators
  */
 function performSearch() {
   const query = document.getElementById('search-input')?.value.trim();
-  if (!query) return;
+  if (!query) {
+    clearSearch();
+    return;
+  }
   
   const mode = document.getElementById('highlight-mode')?.value || 'case-insensitive';
   state.searchResults = [];
+  state.currentMatchIndex = 0;
   
-  state.transcript.forEach((line, idx) => {
-    let matches = false;
-    
-    if (mode === 'exact') {
-      matches = line.text.includes(query);
-    } else if (mode === 'case-insensitive') {
-      matches = line.text.toLowerCase().includes(query.toLowerCase());
-    } else if (mode === 'regex') {
-      try {
-        const regex = new RegExp(query, 'i');
-        matches = regex.test(line.text);
-      } catch (e) {
-        console.error('Invalid regex:', e);
-      }
-    }
-    
-    if (matches) {
-      state.searchResults.push(idx);
-    }
-  });
+  // Check for Boolean operators
+  const hasAND = query.toUpperCase().includes(' AND ');
+  const hasOR = query.toUpperCase().includes(' OR ');
+  
+  if (hasAND || hasOR) {
+    performBooleanSearch(query, hasAND, hasOR, mode);
+  } else {
+    performSimpleSearch(query, mode);
+  }
   
   highlightSearchResults();
   updateMatchCount();
+  updateNavigationButtons();
 }
 
 /**
- * Highlight search results
+ * Perform simple search with wildcard support
  */
-function highlightSearchResults() {
-  const lines = document.querySelectorAll('.transcript-line');
-  lines.forEach(line => {
-    const idx = parseInt(line.dataset.index);
-    if (state.searchResults.includes(idx)) {
-      line.classList.add('highlighted');
+function performSimpleSearch(query, mode) {
+  // Convert wildcards to regex
+  let pattern = query;
+  if (query.includes('*')) {
+    pattern = query.replace(/\*/g, '\\w*');
+  } else {
+    pattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape special chars
+  }
+  
+  const flags = mode === 'exact' ? '' : 'gi';
+  let regex;
+  
+  try {
+    if (mode === 'regex') {
+      regex = new RegExp(query, 'i');
     } else {
-      line.classList.remove('highlighted');
+      regex = new RegExp(`\\b${pattern}\\b`, flags);
+    }
+  } catch (e) {
+    console.error('Invalid search pattern:', e);
+    alert('Invalid search pattern');
+    return;
+  }
+  
+  state.transcript.forEach((line, idx) => {
+    const matches = [...line.text.matchAll(regex)];
+    if (matches.length > 0) {
+      state.searchResults.push({
+        lineIdx: idx,
+        matches: matches.map(m => ({ start: m.index, end: m.index + m[0].length, text: m[0] }))
+      });
     }
   });
+}
+
+/**
+ * Perform Boolean search (AND / OR)
+ */
+function performBooleanSearch(query, hasAND, hasOR, mode) {
+  const operator = hasAND ? ' AND ' : ' OR ';
+  const terms = query.split(new RegExp(operator, 'i')).map(t => t.trim());
+  
+  state.transcript.forEach((line, idx) => {
+    const lineText = mode === 'exact' ? line.text : line.text.toLowerCase();
+    const results = [];
+    
+    if (hasAND) {
+      // All terms must match
+      const allMatch = terms.every(term => {
+        const searchTerm = mode === 'exact' ? term : term.toLowerCase();
+        return lineText.includes(searchTerm);
+      });
+      
+      if (allMatch) {
+        // Find positions of all terms
+        terms.forEach(term => {
+          const searchTerm = mode === 'exact' ? term : term.toLowerCase();
+          let pos = 0;
+          while ((pos = lineText.indexOf(searchTerm, pos)) !== -1) {
+            results.push({ start: pos, end: pos + term.length, text: line.text.substring(pos, pos + term.length) });
+            pos += term.length;
+          }
+        });
+      }
+    } else {
+      // Any term can match (OR)
+      terms.forEach(term => {
+        const searchTerm = mode === 'exact' ? term : term.toLowerCase();
+        let pos = 0;
+        while ((pos = lineText.indexOf(searchTerm, pos)) !== -1) {
+          results.push({ start: pos, end: pos + term.length, text: line.text.substring(pos, pos + term.length) });
+          pos += term.length;
+        }
+      });
+    }
+    
+    if (results.length > 0) {
+      state.searchResults.push({ lineIdx: idx, matches: results });
+    }
+  });
+}
+
+/**
+ * Highlight search results in transcript text
+ */
+function highlightSearchResults() {
+  // Re-render transcript to apply highlighting
+  renderTranscript();
 }
 
 /**
@@ -760,10 +898,10 @@ function highlightSearchResults() {
 function clearSearch() {
   document.getElementById('search-input').value = '';
   state.searchResults = [];
-  document.querySelectorAll('.transcript-line').forEach(line => {
-    line.classList.remove('highlighted');
-  });
+  state.currentMatchIndex = 0;
+  renderTranscript();
   updateMatchCount();
+  updateNavigationButtons();
 }
 
 /**
@@ -773,11 +911,29 @@ function updateMatchCount() {
   const counter = document.getElementById('match-count');
   if (!counter) return;
   
-  if (state.searchResults.length > 0) {
-    counter.textContent = `${state.searchResults.length} matches`;
+  const totalMatches = state.searchResults.reduce((sum, r) => sum + r.matches.length, 0);
+  
+  if (totalMatches === 0 && document.getElementById('search-input')?.value.trim()) {
+    counter.textContent = '0 matches found';
+    counter.style.color = '#ef4444'; // Red for no matches
+  } else if (totalMatches > 0) {
+    counter.textContent = `${totalMatches} match${totalMatches === 1 ? '' : 'es'} found`;
+    counter.style.color = '#10b981'; // Green for matches
   } else {
     counter.textContent = '';
   }
+}
+
+/**
+ * Update navigation button states
+ */
+function updateNavigationButtons() {
+  const prevBtn = document.getElementById('prev-match');
+  const nextBtn = document.getElementById('next-match');
+  const hasMatches = state.searchResults.length > 0;
+  
+  if (prevBtn) prevBtn.disabled = !hasMatches;
+  if (nextBtn) nextBtn.disabled = !hasMatches;
 }
 
 /**
@@ -879,31 +1035,37 @@ function updateCharts() {
 }
 
 /**
- * Export coded segments
+ * Export full transcript with binary code columns
  */
 function exportCodedSegments() {
-  if (state.codedSegments.length === 0) {
-    alert('No coded segments to export');
+  if (state.transcript.length === 0) {
+    alert('No transcript to export');
     return;
   }
   
-  const includeContext = document.getElementById('include-context')?.checked;
-  const includeTimestamps = document.getElementById('include-timestamps')?.checked;
-  const includeSpeaker = document.getElementById('include-speaker')?.checked;
+  // Build CSV header: speaker, timestamp, text, then all code columns
+  let csv = 'LineNumber,Speaker,Timestamp,Text';
+  state.codes.forEach(code => {
+    csv += `,${code.name.replace(/,/g, '_')}`;
+  });
+  csv += '\n';
   
-  let csv = 'Code,Line,';
-  if (includeSpeaker) csv += 'Speaker,';
-  if (includeTimestamps) csv += 'Timestamp,';
-  csv += 'Text\n';
-  
-  state.codedSegments.forEach(segment => {
-    csv += `"${segment.code}",${segment.lineIdx + 1},`;
-    if (includeSpeaker) csv += `"${segment.speaker}",`;
-    if (includeTimestamps) csv += `"${segment.timestamp}",`;
-    csv += `"${segment.text}"\n`;
+  // Add each transcript line
+  state.transcript.forEach(line => {
+    csv += `${line.lineNumber},"${(line.speaker || '').replace(/"/g, '""')}","${(line.timestamp || '').replace(/"/g, '""')}","${line.text.replace(/"/g, '""')}"`;
+    
+    // Add 0 or 1 for each code
+    state.codes.forEach(code => {
+      const value = line.codes && line.codes[code.name] ? line.codes[code.name] : 0;
+      csv += `,${value}`;
+    });
+    csv += '\n';
   });
   
-  downloadCSV(csv, 'coded_segments.csv');
+  const filename = `coded_transcript_${new Date().toISOString().split('T')[0]}.csv`;
+  downloadCSV(csv, filename);
+  
+  alert(`Exported ${state.transcript.length} lines with ${state.codes.length} code column(s). You can re-import this file to continue coding later!`);
 }
 
 /**
@@ -915,19 +1077,50 @@ function exportCodebook() {
     return;
   }
   
-  let csv = 'Code Name,Color,Count\n';
+  let csv = 'Code Name,Color,Line Count\n';
   state.codes.forEach(code => {
-    csv += `"${code.name}","${code.color}",${code.count}\n`;
+    const count = state.transcript.filter(line => line.codes && line.codes[code.name] === 1).length;
+    csv += `"${code.name}","${code.color}",${count}\n`;
   });
   
   downloadCSV(csv, 'codebook.csv');
 }
 
 /**
- * Export report (placeholder)
+ * Export summary report
  */
 function exportReport() {
-  alert('Report generation coming soon!');
+  if (state.codes.length === 0) {
+    alert('Create and apply codes first!');
+    return;
+  }
+  
+  let report = '=== CODE SUMMARY REPORT ===\n\n';
+  report += `Total Lines: ${state.transcript.length}\n`;
+  report += `Total Codes: ${state.codes.length}\n\n`;
+  
+  state.codes.forEach(code => {
+    const codedLines = state.transcript.filter(line => line.codes && line.codes[code.name] === 1);
+    const percentage = ((codedLines.length / state.transcript.length) * 100).toFixed(1);
+    
+    report += `\n--- ${code.name} ---\n`;
+    report += `Lines Coded: ${codedLines.length} (${percentage}%)\n`;
+    report += `Sample excerpts:\n`;
+    
+    codedLines.slice(0, 5).forEach(line => {
+      report += `  Line ${line.lineNumber}: ${line.text.substring(0, 100)}${line.text.length > 100 ? '...' : ''}\n`;
+    });
+    
+    if (codedLines.length > 5) {
+      report += `  ...and ${codedLines.length - 5} more\n`;
+    }
+  });
+  
+  const blob = new Blob([report], { type: 'text/plain' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `code_summary_${new Date().toISOString().split('T')[0]}.txt`;
+  link.click();
 }
 
 /**
@@ -992,6 +1185,397 @@ function loadScenarios() {
       console.error('Error loading scenario:', error);
     }
   });
+}
+
+/**
+ * Load stop words from JSON file
+ */
+async function loadStopWords() {
+  try {
+    const response = await fetch('stop_words.json');
+    const data = await response.json();
+    state.stopWords = data.stop_words || [];
+    state.defaultStopWords = [...state.stopWords];
+    
+    // Populate textarea
+    const textarea = document.getElementById('stopwords-textarea');
+    if (textarea) {
+      textarea.value = state.stopWords.join(', ');
+    }
+  } catch (error) {
+    console.error('Error loading stop words:', error);
+    // Fallback stop words
+    state.stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'is', 'was', 'are', 'were', 'been', 'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'this', 'that', 'these', 'those', 'what', 'which', 'who', 'when', 'where', 'why', 'how', 'uh', 'um', 'like', 'yeah', 'okay', 'ok'];
+    state.defaultStopWords = [...state.stopWords];
+  }
+}
+
+/**
+ * Save custom stop words
+ */
+function saveCustomStopWords() {
+  const textarea = document.getElementById('stopwords-textarea');
+  if (!textarea) return;
+  
+  const text = textarea.value.trim();
+  state.stopWords = text.split(',').map(w => w.trim().toLowerCase()).filter(w => w.length > 0);
+  
+  alert('Custom stop-words saved. Re-run word frequency analysis to see changes.');
+}
+
+/**
+ * Reset stop words to defaults
+ */
+function resetStopWords() {
+  state.stopWords = [...state.defaultStopWords];
+  const textarea = document.getElementById('stopwords-textarea');
+  if (textarea) {
+    textarea.value = state.stopWords.join(', ');
+  }
+  alert('Stop-words reset to defaults.');
+}
+
+/**
+ * Analyze word frequency
+ */
+function analyzeWordFrequency() {
+  if (state.transcript.length === 0) {
+    alert('Please upload a transcript first.');
+    return;
+  }
+  
+  // Combine all text
+  const allText = state.transcript
+    .map(line => line.text)
+    .join(' ')
+    .toLowerCase();
+  
+  // Tokenize (simple word extraction)
+  const words = allText.match(/\b[a-z]+\b/g) || [];
+  
+  // Count frequencies, excluding stop words
+  const frequency = {};
+  words.forEach(word => {
+    if (!state.stopWords.includes(word) && word.length > 2) {
+      frequency[word] = (frequency[word] || 0) + 1;
+    }
+  });
+  
+  // Sort by frequency
+  const sorted = Object.entries(frequency)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20);
+  
+  // Calculate total for percentages
+  const total = sorted.reduce((sum, [, count]) => sum + count, 0);
+  
+  // Render table
+  const tbody = document.getElementById('frequency-tbody');
+  if (!tbody) return;
+  
+  let html = '';
+  sorted.forEach(([word, count], idx) => {
+    const percentage = ((count / total) * 100).toFixed(1);
+    html += `
+      <tr>
+        <td>${idx + 1}</td>
+        <td><strong>${escapeHtml(word)}</strong></td>
+        <td>${count}</td>
+        <td>${percentage}%</td>
+      </tr>
+    `;
+  });
+  
+  tbody.innerHTML = html;
+  document.getElementById('frequency-results').classList.remove('hidden');
+}
+
+/**
+ * Handle text selection in transcript
+ */
+function handleTextSelection(e) {
+  const selection = window.getSelection();
+  const selectedText = selection.toString().trim();
+  
+  if (!selectedText || selectedText.length < 3) {
+    return;
+  }
+  
+  // Check if selection is within transcript
+  const transcriptContainer = document.getElementById('transcript-content');
+  if (!transcriptContainer || !transcriptContainer.contains(selection.anchorNode)) {
+    return;
+  }
+  
+  // Find which line was selected
+  let lineElement = selection.anchorNode;
+  while (lineElement && !lineElement.classList?.contains('transcript-line')) {
+    lineElement = lineElement.parentElement;
+  }
+  
+  if (!lineElement) return;
+  
+  const lineIdx = parseInt(lineElement.dataset.index);
+  if (isNaN(lineIdx)) return;
+  
+  // Store selection state
+  state.selectionState = {
+    active: true,
+    lineIdx,
+    text: selectedText
+  };
+  
+  // Show code assignment popup
+  showCodePopup(e.pageX, e.pageY);
+}
+
+/**
+ * Show code assignment popup
+ */
+function showCodePopup(x, y) {
+  if (state.codes.length === 0) {
+    alert('Please add at least one code first.');
+    return;
+  }
+  
+  const popup = document.getElementById('code-assignment-popup');
+  if (!popup) return;
+  
+  // Position popup
+  popup.style.left = `${x + 10}px`;
+  popup.style.top = `${y + 10}px`;
+  
+  // Populate checkboxes
+  const checkboxContainer = document.getElementById('code-checkboxes');
+  if (!checkboxContainer) return;
+  
+  let html = '';
+  state.codes.forEach((code, idx) => {
+    html += `
+      <label class="code-checkbox-item">
+        <input type="checkbox" data-code-idx="${idx}" value="${escapeHtml(code.name)}">
+        <div class="code-checkbox-color" style="background-color: ${code.color}"></div>
+        <span class="code-checkbox-label">${escapeHtml(code.name)}</span>
+      </label>
+    `;
+  });
+  
+  checkboxContainer.innerHTML = html;
+  popup.classList.remove('hidden');
+}
+
+/**
+ * Close code assignment popup
+ */
+function closeCodePopup() {
+  const popup = document.getElementById('code-assignment-popup');
+  if (popup) {
+    popup.classList.add('hidden');
+  }
+  state.selectionState = {
+    active: false,
+    lineIdx: null,
+    text: ''
+  };
+}
+
+/**
+ * Save code assignment
+ */
+function saveCodeAssignment() {
+  if (!state.selectionState.active) return;
+  
+  const checkboxes = document.querySelectorAll('#code-checkboxes input[type="checkbox"]:checked');
+  if (checkboxes.length === 0) {
+    alert('Please select at least one code.');
+    return;
+  }
+  
+  const selectedCodes = Array.from(checkboxes).map(cb => cb.value);
+  const lineIdx = state.selectionState.lineIdx;
+  const line = state.transcript[lineIdx];
+  
+  if (!line) return;
+  
+  // Add codes to the line
+  if (!line.codes) line.codes = [];
+  
+  selectedCodes.forEach(codeName => {
+    if (!line.codes.includes(codeName)) {
+      line.codes.push(codeName);
+      
+      // Add to coded segments
+      state.codedSegments.push({
+        lineIdx,
+        speaker: line.speaker,
+        text: state.selectionState.text,
+        code: codeName
+      });
+    }
+  });
+  
+  // Update UI
+  closeCodePopup();
+  renderCodedSegments();
+  renderTranscript();
+  updateCodeCounts();
+  updateCharts();
+}
+
+/**
+ * Navigate search matches (prev/next)
+ */
+function navigateMatches(direction) {
+  if (state.searchResults.length === 0) return;
+  
+  state.currentMatchIndex += direction;
+  
+  // Wrap around
+  if (state.currentMatchIndex < 0) {
+    state.currentMatchIndex = state.searchResults.length - 1;
+  } else if (state.currentMatchIndex >= state.searchResults.length) {
+    state.currentMatchIndex = 0;
+  }
+  
+  highlightSearchResults();
+  scrollToCurrentMatch();
+  updateMatchCount();
+}
+
+/**
+ * Scroll to current search match
+ */
+function scrollToCurrentMatch() {
+  const highlights = document.querySelectorAll('.search-highlight');
+  if (highlights.length === 0) return;
+  
+  // Remove 'current' class from all
+  highlights.forEach(h => h.classList.remove('current'));
+  
+  // Add to current match
+  if (highlights[state.currentMatchIndex]) {
+    highlights[state.currentMatchIndex].classList.add('current');
+    highlights[state.currentMatchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+/**
+ * Toggle coding mode
+ */
+function toggleCodingMode(e) {
+  state.codingMode = e.target.checked;
+  const codingControls = document.getElementById('coding-controls');
+  
+  if (codingControls) {
+    codingControls.style.display = state.codingMode ? 'flex' : 'none';
+  }
+  
+  // Re-render transcript to show/hide checkboxes
+  renderTranscript();
+  
+  if (state.codingMode) {
+    updateActiveCodeDropdown();
+  }
+}
+
+/**
+ * Update active code dropdown
+ */
+function updateActiveCodeDropdown() {
+  const select = document.getElementById('active-code-select');
+  if (!select) return;
+  
+  if (state.codes.length === 0) {
+    select.innerHTML = '<option value="">-- Create codes first! --</option>';
+    select.disabled = true;
+  } else {
+    let html = '<option value="">-- Select a code --</option>';
+    state.codes.forEach(code => {
+      html += `<option value="${escapeHtml(code.name)}">${escapeHtml(code.name)}</option>`;
+    });
+    select.innerHTML = html;
+    select.disabled = false;
+  }
+}
+
+/**
+ * Update apply button state
+ */
+function updateApplyButtonState() {
+  const btn = document.getElementById('apply-code-btn');
+  if (!btn) return;
+  
+  const hasSelection = state.selectedLines.size > 0;
+  const hasActiveCode = state.activeCode && state.activeCode !== '';
+  
+  btn.disabled = !(hasSelection && hasActiveCode);
+}
+
+/**
+ * Apply code to selected lines
+ */
+function applyCodeToSelectedLines() {
+  if (!state.activeCode || state.selectedLines.size === 0) return;
+  
+  const codeName = state.activeCode;
+  
+  // Apply code (set to 1) for all selected lines
+  state.selectedLines.forEach(lineNumber => {
+    const line = state.transcript.find(l => l.lineNumber === lineNumber);
+    if (line) {
+      if (!line.codes) line.codes = {};
+      line.codes[codeName] = 1;
+    }
+  });
+  
+  // Clear selections
+  clearLineSelections();
+  
+  // Update UI
+  renderTranscript();
+  renderCodedSegments();
+  updateCodeCounts();
+  updateCharts();
+  
+  alert(`Applied "${codeName}" to ${state.selectedLines.size} line(s)`);
+}
+
+/**
+ * Clear line selections
+ */
+function clearLineSelections() {
+  state.selectedLines.clear();
+  updateSelectionCount();
+  updateApplyButtonState();
+  renderTranscript();
+}
+
+/**
+ * Toggle line selection
+ */
+function toggleLineSelection(lineNumber) {
+  if (state.selectedLines.has(lineNumber)) {
+    state.selectedLines.delete(lineNumber);
+  } else {
+    state.selectedLines.add(lineNumber);
+  }
+  updateSelectionCount();
+  updateApplyButtonState();
+}
+
+/**
+ * Update selection count display
+ */
+function updateSelectionCount() {
+  const counter = document.getElementById('selection-count');
+  if (!counter) return;
+  
+  const count = state.selectedLines.size;
+  if (count > 0) {
+    counter.textContent = `${count} line${count === 1 ? '' : 's'} selected`;
+  } else {
+    counter.textContent = '';
+  }
 }
 
 /**
