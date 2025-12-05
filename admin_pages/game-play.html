@@ -2338,6 +2338,69 @@
                 // If stats are missing or all zeros, show a different message
                 const hasValidStats = message.round_stats && (myStats.player_round_score > 0 || myStats.player_total_score > 0 || message.round_stats.percent_scored > 0);
                 
+                // Build game-specific details HTML
+                let gameSpecificHTML = '';
+                if (message.game_specific) {
+                    const gs = message.game_specific;
+                    
+                    if (message.game_type === 'speed_tap') {
+                        // Speed Tap: Show fastest correct player and answer stats
+                        if (gs.fastest_correct) {
+                            gameSpecificHTML += `
+                                <div style="background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 8px; margin-bottom: 15px;">
+                                    <div style="font-size: 14px; opacity: 0.9;">⚡ Fastest Correct</div>
+                                    <div style="font-size: 20px; font-weight: 700;">${gs.fastest_correct.player_name} <span style="opacity: 0.8; font-size: 14px;">(${gs.fastest_correct.response_time?.toFixed(2) || '?'}s)</span></div>
+                                </div>
+                            `;
+                        }
+                        if (gs.correct_count !== undefined) {
+                            gameSpecificHTML += `
+                                <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;">
+                                    <span style="background: rgba(16,185,129,0.3); padding: 8px 16px; border-radius: 20px;">✅ ${gs.correct_count} correct</span>
+                                    <span style="background: rgba(239,68,68,0.3); padding: 8px 16px; border-radius: 20px;">❌ ${gs.incorrect_count} incorrect</span>
+                                </div>
+                            `;
+                        }
+                    } else if (message.game_type === 'closest_guess') {
+                        // Closest Guess: Show top scorer with their range
+                        if (gs.top_scorer) {
+                            gameSpecificHTML += `
+                                <div style="background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 8px; margin-bottom: 15px;">
+                                    <div style="font-size: 14px; opacity: 0.9;">🎯 Top Scorer</div>
+                                    <div style="font-size: 20px; font-weight: 700;">${gs.top_scorer.name} <span style="opacity: 0.8; font-size: 14px;">(${gs.top_scorer.points} pts, range: ${gs.top_scorer.range})</span></div>
+                                </div>
+                            `;
+                        }
+                        if (gs.correct_count !== undefined) {
+                            gameSpecificHTML += `
+                                <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;">
+                                    <span style="background: rgba(16,185,129,0.3); padding: 8px 16px; border-radius: 20px;">✅ ${gs.correct_count}/${gs.total_guesses} captured answer</span>
+                                    ${gs.average_range_width ? `<span style="background: rgba(99,102,241,0.3); padding: 8px 16px; border-radius: 20px;">📊 Avg range: ${gs.average_range_width.toFixed(1)}</span>` : ''}
+                                </div>
+                            `;
+                        }
+                    } else if (message.game_type === 'push_range') {
+                        // Push Range: Show final range and whether it captured the answer
+                        const rangeColor = gs.is_correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+                        const rangeIcon = gs.is_correct ? '✅' : '❌';
+                        gameSpecificHTML += `
+                            <div style="background: ${rangeColor}; padding: 12px 20px; border-radius: 8px; margin-bottom: 15px;">
+                                <div style="font-size: 14px; opacity: 0.9;">${rangeIcon} Final Range</div>
+                                <div style="font-size: 20px; font-weight: 700;">${gs.final_range} <span style="opacity: 0.8; font-size: 14px;">(Answer: ${message.correct_answer}%)</span></div>
+                            </div>
+                        `;
+                        if (gs.top_pressers && gs.top_pressers.length > 0) {
+                            const topPresser = gs.top_pressers[0];
+                            const teamEmoji = topPresser.team === 'left' ? '🔵' : '🔴';
+                            gameSpecificHTML += `
+                                <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;">
+                                    <span style="background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px;">🏆 Top Presser: ${teamEmoji} ${topPresser.player_name} (${topPresser.presses} presses)</span>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+                
                 const banner = document.createElement('div');
                 banner.id = 'roundCompleteBanner';
                 banner.style.cssText = 'margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: white;';
@@ -2348,6 +2411,7 @@
                             <h2 style="color: white; margin: 0 0 15px 0; font-size: 24px;">
                                 🎉 Round ${message.current_round} of ${message.total_rounds} Complete!
                             </h2>
+                            ${gameSpecificHTML}
                             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px;">
                                 <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
                                     <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Players Scored</div>
@@ -2372,6 +2436,7 @@
                             <h2 style="color: white; margin: 0 0 15px 0; font-size: 24px;">
                                 🎉 Round ${message.current_round} of ${message.total_rounds} Complete!
                             </h2>
+                            ${gameSpecificHTML}
                             <div style="font-size: 16px; opacity: 0.9; margin-top: 15px;">
                                 Check the leaderboard for your score →
                             </div>
