@@ -1636,6 +1636,13 @@
         let myTeam = null;
         let myPressCount = 0;
         let teamRosters = {left: [], right: []};
+        let localLeftBoundary = 0;
+        let localRightBoundary = 100;
+        let totalPlayers = 0;
+        let rapidPressCount = 0;
+        let rapidPressWindow = null;
+        let cooldownActive = false;
+        let cooldownTimeout = null;
         
         function showPushRangeGame(message, timeLimit) {
             const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
@@ -1644,6 +1651,11 @@
             myTeam = message.team_assignments?.[playerSession.id]?.team || 'left';
             myPressCount = 0;
             pendingPresses = 0;
+            localLeftBoundary = 0;
+            localRightBoundary = 100;
+            
+            // Count total players for calculating press impact
+            totalPlayers = Object.keys(message.team_assignments || {}).length || 10;
             
             // Organize team rosters
             teamRosters = {left: [], right: []};
@@ -1748,15 +1760,134 @@
         }
         
         function registerPress() {
+            // Check if cooldown is active
+            if (cooldownActive) {
+                return; // Ignore press during cooldown
+            }
+            
+            // Track rapid pressing (5 presses in 1 second = cooldown)
+            rapidPressCount++;
+            
+            // Start window timer on first press
+            if (!rapidPressWindow) {
+                rapidPressWindow = setTimeout(() => {
+                    rapidPressCount = 0;
+                    rapidPressWindow = null;
+                }, 1000);
+            }
+            
+            // Check if exceeded limit
+            if (rapidPressCount >= 5) {
+                activateCooldown();
+                return;
+            }
+            
             pendingPresses++;
             myPressCount++;
             
             // Update local display
             document.getElementById('myPressCount').textContent = myPressCount;
             
+            // OPTIMISTIC UPDATE: Move bar locally for instant feedback
+            // Estimate: each press moves boundary ~0.1-0.5% depending on team size
+            const moveAmount = Math.min(0.5, 5 / totalPlayers);
+            
+            if (myTeam === 'left') {
+                localLeftBoundary = Math.min(localRightBoundary - 1, localLeftBoundary + moveAmount);
+            } else {
+                localRightBoundary = Math.max(localLeftBoundary + 1, localRightBoundary - moveAmount);
+            }
+            
+            updateBarsLocally();
+            
             // Send batches every 100ms (handled by the interval in sendPresses)
             if (pendingPresses >= 1) {
                 sendPresses();
+            }
+        }
+        
+        function activateCooldown() {
+            cooldownActive = true;
+            rapidPressCount = 0;
+            
+            if (rapidPressWindow) {
+                clearTimeout(rapidPressWindow);
+                rapidPressWindow = null;
+            }
+            
+            const pushBtn = document.getElementById('pushButton');
+            if (pushBtn) {
+                pushBtn.disabled = true;
+                pushBtn.style.opacity = '0.5';
+                pushBtn.style.cursor = 'not-allowed';
+                pushBtn.innerHTML = myTeam === 'left' ? '⚠️ COOL DOWN!' : '⚠️ COOL DOWN!';
+            }
+            
+            // Countdown display
+            let secondsLeft = 2;
+            const countdownInterval = setInterval(() => {
+                const pushBtn = document.getElementById('pushButton');
+                if (pushBtn && secondsLeft > 0) {
+                    pushBtn.innerHTML = myTeam === 'left' 
+                        ? `⏱️ Cool down (${secondsLeft}s)` 
+                        : `⏱️ Cool down (${secondsLeft}s)`;
+                }
+                secondsLeft--;
+            }, 1000);
+            
+            // Reset after 2 seconds
+            cooldownTimeout = setTimeout(() => {
+                clearInterval(countdownInterval);
+                deactivateCooldown();
+            }, 2000);
+        }
+        
+        function deactivateCooldown() {
+            cooldownActive = false;
+            const pushBtn = document.getElementById('pushButton');
+            if (pushBtn) {
+                pushBtn.disabled = false;
+                pushBtn.style.opacity = '1';
+                pushBtn.style.cursor = 'pointer';
+                pushBtn.innerHTML = myTeam === 'left' ? 'PUSH →' : '← PUSH';
+            }
+        }
+        
+        function updateBarsLocally() {
+            const leftFill = document.getElementById('leftFill');
+            const rightFill = document.getElementById('rightFill');
+            
+            if (leftFill) leftFill.style.width = localLeftBoundary + '%';
+            if (rightFill) rightFill.style.width = (100 - localRightBoundary) + '%';
+            
+            // Update bracket positions too
+            const bracketLeftEdge = document.getElementById('bracketLeftEdge');
+            const bracketRightEdge = document.getElementById('bracketRightEdge');
+            const bracketBottom = document.querySelector('.bracket-bottom');
+            const leftEdgeValue = document.getElementById('leftEdgeValue');
+            const rightEdgeValue = document.getElementById('rightEdgeValue');
+            const rangeWidthValue = document.getElementById('rangeWidthValue');
+            
+            const openRange = Math.round(localRightBoundary - localLeftBoundary);
+            
+            if (bracketLeftEdge) bracketLeftEdge.style.left = localLeftBoundary + '%';
+            if (bracketRightEdge) bracketRightEdge.style.right = (100 - localRightBoundary) + '%';
+            if (bracketBottom) {
+                bracketBottom.style.left = localLeftBoundary + '%';
+                bracketBottom.style.right = (100 - localRightBoundary) + '%';
+            }
+            
+            if (leftEdgeValue) leftEdgeValue.textContent = Math.round(localLeftBoundary) + '%';
+            if (rightEdgeValue) rightEdgeValue.textContent = Math.round(localRightBoundary) + '%';
+            
+            if (rangeWidthValue) {
+                rangeWidthValue.textContent = openRange > 0 ? openRange + '%' : '⚠️';
+                rangeWidthValue.classList.remove('danger', 'caution');
+                if (openRange <= 20) {
+                    rangeWidthValue.classList.add('danger');
+                } else if (openRange <= 40) {
+                    rangeWidthValue.classList.add('caution');
+                }
             }
         }
         
@@ -1777,12 +1908,16 @@
         }
         
         function handlePushRangeUpdate(message) {
+            // Sync with authoritative server state
+            localLeftBoundary = message.left_boundary;
+            localRightBoundary = message.right_boundary;
+            
             // Update the visual bar fills
             const leftFill = document.getElementById('leftFill');
             const rightFill = document.getElementById('rightFill');
             
-            if (leftFill) leftFill.style.width = message.left_boundary + '%';
-            if (rightFill) rightFill.style.width = (100 - message.right_boundary) + '%';
+            if (leftFill) leftFill.style.width = localLeftBoundary + '%';
+            if (rightFill) rightFill.style.width = (100 - localRightBoundary) + '%';
             
             // Update the bracket-style guess range indicator
             const bracketLeftEdge = document.getElementById('bracketLeftEdge');
@@ -2380,7 +2515,7 @@
                     description: 'Submit a range that captures the correct answer!<br>Narrower ranges earn bonus points. Answer quickly for speed bonuses!'
                 },
                 'push_range': {
-                    title: '🔥 Push Range',
+                    title: '🤜🟦🟥🤛 Push Range',
                     description: 'Smash the button to help pick the range where the answer is!<br>Teamwork required! Riskier ranges earn more points.<br>Those who tap more earn more points if correct!'
                 },
                 'rpg_battle': {
