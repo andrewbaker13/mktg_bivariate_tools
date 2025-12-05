@@ -1024,6 +1024,10 @@
                     handlePushRangeResults(message);
                     break;
                     
+                case 'game_results':
+                    handleUnifiedGameResults(message);
+                    break;
+                    
                 case 'leaderboard_update':
                     updateLeaderboard(message.leaderboard);
                     break;
@@ -1069,7 +1073,7 @@
                     description: 'Submit a range that captures the correct answer!<br>Narrower ranges earn bonus points. Answer quickly for speed bonuses!'
                 },
                 'push_range': {
-                    title: '🔥 Push Range',
+                    title: '🤜🟦🟥🤛 Push Range',
                     description: 'Smash the button to help pick the range where the answer is!<br>Teamwork required! Riskier ranges earn more points.<br>Those who tap more earn more points if correct!'
                 },
                 'rpg_battle': {
@@ -1943,6 +1947,164 @@
             timerInterval = setInterval(updateTimer, 100);
         }
         
+        function handleUnifiedGameResults(message) {
+            console.log('=== Unified Game Results ===');
+            console.log('Game Type:', message.game_type);
+            console.log('Status:', message.status);
+            console.log('Correct Answer:', message.correct_answer);
+            console.log('Statistics:', message.statistics);
+            console.log('Game-Specific Details:', message.game_specific);
+            
+            const gameArea = document.getElementById('gameArea');
+            
+            // Build the results display
+            let html = `
+                <div class="results-display" style="padding: 30px; text-align: center;">
+                    <h2 style="font-size: 32px; margin-bottom: 20px;">
+                        ${message.status === 'all_correct' ? '🎉 Everyone Got It!' : 
+                          message.status === 'some_correct' ? '✅ Round Complete!' : 
+                          message.status === 'none_correct' ? '❌ No Correct Answers' : 
+                          '⏱️ Time\'s Up!'}
+                    </h2>
+                    
+                    <div style="font-size: 24px; margin: 20px 0; padding: 20px; background: #f1f5f9; border-radius: 12px;">
+                        <strong>Correct Answer:</strong> ${message.correct_answer}
+                    </div>
+                    
+                    <div style="display: grid; gap: 15px; margin: 30px 0; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
+            `;
+            
+            // Statistics
+            if (message.statistics) {
+                const stats = message.statistics;
+                if (stats.correct_count !== undefined) {
+                    html += `
+                        <div style="padding: 15px; background: #ecfdf5; border-radius: 8px; border-left: 4px solid #10b981;">
+                            ✅ <strong>${stats.correct_count}</strong> players answered correctly
+                        </div>
+                    `;
+                }
+                if (stats.incorrect_count !== undefined) {
+                    html += `
+                        <div style="padding: 15px; background: #fef2f2; border-radius: 8px; border-left: 4px solid #ef4444;">
+                            ❌ <strong>${stats.incorrect_count}</strong> players answered incorrectly
+                        </div>
+                    `;
+                }
+            }
+            
+            // Game-specific details
+            if (message.game_specific) {
+                const details = message.game_specific;
+                
+                // Speed Tap specific
+                if (message.game_type === 'speed_tap') {
+                    if (details.fastest_correct) {
+                        html += `
+                            <div style="padding: 15px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                                🏆 <strong>Fastest Correct:</strong> ${details.fastest_correct.player_name} (${details.fastest_correct.response_time.toFixed(2)}s)
+                            </div>
+                        `;
+                    }
+                    
+                    if (details.most_common_answer) {
+                        const pct = details.most_common_answer.percentage.toFixed(0);
+                        html += `
+                            <div style="padding: 15px; background: #e0e7ff; border-radius: 8px; border-left: 4px solid #6366f1;">
+                                📊 <strong>Most Common Answer:</strong> ${details.most_common_answer.answer} (${pct}%)
+                            </div>
+                        `;
+                    }
+                    
+                    // Top performers
+                    if (details.top_performers && details.top_performers.length > 0) {
+                        html += `
+                            <div style="padding: 15px; background: #fff; border-radius: 8px; border: 2px solid #e2e8f0; margin-top: 10px;">
+                                <div style="font-weight: 700; margin-bottom: 10px; color: #1e293b;">⚡ Top Performers:</div>
+                        `;
+                        
+                        const medals = ['🥇', '🥈', '🥉'];
+                        details.top_performers.forEach((performer, idx) => {
+                            const medal = idx < 3 ? medals[idx] : `${idx + 1}.`;
+                            html += `
+                                <div style="padding: 8px; margin: 5px 0; background: #f8fafc; border-radius: 6px; display: flex; justify-content: space-between;">
+                                    <span>${medal} ${performer.player_name}</span>
+                                    <span style="color: #64748b;">${performer.response_time.toFixed(2)}s</span>
+                                </div>
+                            `;
+                        });
+                        
+                        html += `</div>`;
+                    }
+                }
+                
+                // Closest Guess specific
+                if (message.game_type === 'closest_guess') {
+                    if (details.narrowest_correct_range) {
+                        const range = details.narrowest_correct_range;
+                        const width = (range.max - range.min).toFixed(1);
+                        html += `
+                            <div style="padding: 15px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                                🎯 <strong>Narrowest Correct Range:</strong> ${range.player_name} (${range.min} - ${range.max}, width: ${width})
+                            </div>
+                        `;
+                    }
+                    
+                    if (details.average_range_width !== undefined) {
+                        html += `
+                            <div style="padding: 15px; background: #e0e7ff; border-radius: 8px; border-left: 4px solid #6366f1;">
+                                📊 <strong>Average Range Width:</strong> ${details.average_range_width.toFixed(1)}
+                            </div>
+                        `;
+                    }
+                }
+                
+                // Push Range specific
+                if (message.game_type === 'push_range') {
+                    if (details.final_range) {
+                        const range = details.final_range;
+                        html += `
+                            <div style="padding: 15px; background: #e0e7ff; border-radius: 8px; border-left: 4px solid #6366f1;">
+                                📊 <strong>Final Range:</strong> ${range.left_boundary}% - ${range.right_boundary}% (width: ${range.width}%)
+                            </div>
+                        `;
+                    }
+                    
+                    if (details.top_pressers && details.top_pressers.length > 0) {
+                        html += `
+                            <div style="padding: 15px; background: #fff; border-radius: 8px; border: 2px solid #e2e8f0; margin-top: 10px;">
+                                <div style="font-weight: 700; margin-bottom: 10px; color: #1e293b;">🏆 Top Button Mashers:</div>
+                        `;
+                        
+                        const medals = ['🥇', '🥈', '🥉'];
+                        details.top_pressers.forEach((presser, idx) => {
+                            const medal = idx < 3 ? medals[idx] : `${idx + 1}.`;
+                            const teamEmoji = presser.team === 'left' ? '🔵' : '🔴';
+                            html += `
+                                <div style="padding: 8px; margin: 5px 0; background: #f8fafc; border-radius: 6px; display: flex; justify-content: space-between;">
+                                    <span>${medal} ${teamEmoji} ${presser.player_name}</span>
+                                    <span style="color: #64748b;">${presser.presses} presses</span>
+                                </div>
+                            `;
+                        });
+                        
+                        html += `</div>`;
+                    }
+                }
+            }
+            
+            html += `
+                    </div>
+                    
+                    <div style="color: #64748b; margin-top: 30px; font-size: 16px;">
+                        ${message.is_final_round ? 'Game complete! Check final standings below.' : 'Get ready for the next round...'}
+                    </div>
+                </div>
+            `;
+            
+            gameArea.innerHTML = html;
+        }
+        
         function handleGameEnd(message) {
             console.log('=== handleGameEnd called ===');
             console.log('Full message:', message);
@@ -1961,8 +2123,12 @@
             const leaderboardVisibility = message.leaderboard_visibility || 'always_show';
             const shouldShowFinalLeaderboard = isFinalRound && leaderboardVisibility === 'always_show';
             
-            // For Speed Tap games, highlight the correct answer
-            if (gameType === 'speed_tap' && message.correct_answer) {
+            // For Speed Tap games, skip answer highlighting if unified results are already showing
+            // (unified results provide a better display with statistics)
+            const hasUnifiedResults = document.querySelector('.results-display');
+            
+            // For Speed Tap games, highlight the correct answer (only if unified results not shown)
+            if (gameType === 'speed_tap' && message.correct_answer && !hasUnifiedResults) {
                 // Find all answer buttons
                 const answerButtons = document.querySelectorAll('.answer-btn');
                 answerButtons.forEach(btn => {
