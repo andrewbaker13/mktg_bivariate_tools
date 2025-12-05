@@ -252,8 +252,6 @@
                 statusDiv.className = 'status success';
                 statusDiv.innerHTML = `
                     <div style="font-size: 1.2rem; margin-bottom: 1rem;">✅ ${data.message}</div>
-                    <div style="margin-bottom: 0.5rem;"><strong>Course:</strong> ${data.course.name} (ID: ${data.course.id})</div>
-                    <div style="margin-bottom: 1rem;"><strong>Quiz:</strong> ${data.quiz.title} (ID: ${data.quiz.id})</div>
                     ${data.deleted_count > 0 ? `<div style="margin-bottom: 0.5rem; color: #f59e0b;">🗑️ Deleted ${data.deleted_count} old questions</div>` : ''}
                     
                     <div class="template-box">
