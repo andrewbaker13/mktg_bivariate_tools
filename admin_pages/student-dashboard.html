@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Analytics Dashboard | Dr. Baker Marketing</title>
     <link rel="stylesheet" href="../shared/css/main.css">
+    <link rel="stylesheet" href="../shared/css/admin-nav.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         .dashboard-container {
@@ -239,6 +240,7 @@
     </style>
 </head>
 <body>
+    <div id="admin-nav-container"></div>
     <div class="dashboard-container">
         <header class="intro hero-header">
             <div class="hero-header__top">
@@ -712,5 +714,6 @@
         // Load dashboard on page load
         loadDashboard();
     </script>
+    <script src="../shared/js/admin-nav.js"></script>
 </body>
 </html>

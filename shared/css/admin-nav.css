@@ -1,0 +1,86 @@
+/**
+ * Admin Navigation Styles
+ * Shared styles for the admin navigation bar across all admin pages.
+ */
+
+.admin-nav {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    padding: 1rem 2rem;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.admin-nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-nav-links a {
+    color: #e2e8f0;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.admin-nav-links a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.admin-nav-links a.active {
+    background: rgba(59, 130, 246, 0.8);
+    color: white;
+    font-weight: 600;
+}
+
+.logout-btn {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background 0.2s ease;
+    margin-left: 0.5rem;
+}
+
+.logout-btn:hover {
+    background: #b91c1c;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .admin-nav-links {
+        gap: 0.25rem;
+    }
+    
+    .admin-nav-links a {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-nav {
+        padding: 0.75rem 1rem;
+    }
+    
+    .admin-nav-links a {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+    }
+    
+    .logout-btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.8rem;
+    }
+}
