@@ -14,8 +14,6 @@
     "ok","okay","alright","right","like","kinda","sorta","mm","mmm","uhh","umm",
     "uhm","ya","yo","hey","hi","oh","ah","uh-oh","hahaha","haha","lol","really",
     "just","literally","basically","actually",
-
-    /* --- NEWLY ADDED COMMON TRANSCRIPT FILLER --- */
     "you know",
     "you know?",
     "you know what i mean",
@@ -36,8 +34,6 @@
     "okay?",
     "you’re saying",
     "like you said",
-
-    /* --- AGREEMENT / DISAGREEMENT PARTICLES --- */
     "mhmm",
     "mhm",
     "uhhuh",
@@ -53,8 +49,6 @@
     "true",
     "yeah yeah",
     "mmmhm",
-
-    /* --- MODERATOR / PROCEDURAL PHRASES --- */
     "thank you",
     "thanks",
     "okay great",
@@ -79,8 +73,6 @@
     "follow-up",
     "follow up",
     "okay so",
-
-    /* --- FOCUS GROUP INTERACTION ARTIFACTS --- */
     "laughs",
     "laughing",
     "laughter",
@@ -99,8 +91,6 @@
     "participant",
     "moderator",
     "group",
-
-    /* --- NON-MEANINGFUL DISCOURSE TAGS --- */
     "basically",
     "essentially",
     "honestly",

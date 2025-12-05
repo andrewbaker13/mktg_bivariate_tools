@@ -26,7 +26,8 @@ const state = {
   stopWords: [], // Loaded from stop_words.json
   defaultStopWords: [], // Backup of defaults
   codingMode: false,
-  activeCode: null
+  activeCode: null,
+  speakerRoles: {} // { speakerName: 'speaker' | 'marker' }
 };
 
 // Initialize application
@@ -1014,32 +1015,95 @@ function updateCharts() {
     themeChart.innerHTML = html;
   }
   
-  // Speaker participation
+  // Speaker participation - horizontal bar chart
   const speakerChart = document.getElementById('speaker-chart');
   if (speakerChart && state.transcript.length > 0) {
     const speakerCounts = {};
     state.transcript.forEach(line => {
-      speakerCounts[line.speaker] = (speakerCounts[line.speaker] || 0) + 1;
+      if (line.speaker) {
+        speakerCounts[line.speaker] = (speakerCounts[line.speaker] || 0) + 1;
+      }
     });
     
-    let html = '<div style="padding: 1rem;">';
-    Object.entries(speakerCounts).sort((a, b) => b[1] - a[1]).forEach(([speaker, count]) => {
-      const percentage = Math.round((count / state.transcript.length) * 100);
-      html += `
-        <div style="margin-bottom: 0.5rem;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-            <span>${escapeHtml(speaker)}</span>
-            <span>${count} (${percentage}%)</span>
-          </div>
-          <div style="background: #e5e7eb; height: 20px; border-radius: 4px; overflow: hidden;">
-            <div style="background: #3b82f6; height: 100%; width: ${percentage}%;"></div>
-          </div>
-        </div>
-      `;
+    // Initialize speaker roles if not set
+    Object.keys(speakerCounts).forEach(speaker => {
+      if (!(speaker in state.speakerRoles)) {
+        // Auto-detect: if it looks like a marker (all caps, contains numbers, etc.)
+        const isLikelyMarker = /^(ITEM|ACTIVITY|PART|SECTION|Setting|Recorder|WARM|FOCUS|MAIN|SEGUE|CLOSING|MODERATOR)/i.test(speaker) ||
+                              /^\d/.test(speaker) ||
+                              /^[A-Z\s\-–]+$/.test(speaker);
+        state.speakerRoles[speaker] = isLikelyMarker ? 'marker' : 'speaker';
+      }
     });
-    html += '</div>';
-    speakerChart.innerHTML = html;
+    
+    // Render speaker role manager
+    renderSpeakerRoleManager(speakerCounts);
+    
+    // Filter to only speakers (not markers)
+    const speakersOnly = Object.entries(speakerCounts)
+      .filter(([speaker]) => state.speakerRoles[speaker] === 'speaker')
+      .sort((a, b) => b[1] - a[1]);
+    
+    if (speakersOnly.length === 0) {
+      speakerChart.innerHTML = '<p class="chart-note">No speakers found. Check speaker role assignments above.</p>';
+    } else {
+      const maxCount = Math.max(...speakersOnly.map(([, count]) => count));
+      const totalSpeakerLines = speakersOnly.reduce((sum, [, count]) => sum + count, 0);
+      
+      let html = '<div class="speaker-bar-chart">';
+      speakersOnly.forEach(([speaker, count]) => {
+        const percentage = Math.round((count / totalSpeakerLines) * 100);
+        const barWidth = Math.round((count / maxCount) * 100);
+        html += `
+          <div class="speaker-bar-row">
+            <div class="speaker-bar-label">${escapeHtml(speaker)}</div>
+            <div class="speaker-bar-container">
+              <div class="speaker-bar" style="width: ${barWidth}%;"></div>
+              <span class="speaker-bar-value">${count} (${percentage}%)</span>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      speakerChart.innerHTML = html;
+    }
   }
+}
+
+/**
+ * Render speaker role manager UI
+ */
+function renderSpeakerRoleManager(speakerCounts) {
+  const container = document.getElementById('speaker-role-list');
+  if (!container) return;
+  
+  const sorted = Object.entries(speakerCounts).sort((a, b) => b[1] - a[1]);
+  
+  let html = '<div class="speaker-roles-grid">';
+  sorted.forEach(([speaker, count]) => {
+    const role = state.speakerRoles[speaker] || 'speaker';
+    html += `
+      <div class="speaker-role-item">
+        <span class="speaker-role-name">${escapeHtml(speaker)} (${count})</span>
+        <select class="speaker-role-select" data-speaker="${escapeHtml(speaker)}" onchange="updateSpeakerRole(this)">
+          <option value="speaker" ${role === 'speaker' ? 'selected' : ''}>👤 Speaker</option>
+          <option value="marker" ${role === 'marker' ? 'selected' : ''}>📍 Marker</option>
+        </select>
+      </div>
+    `;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+/**
+ * Update speaker role and refresh chart
+ */
+function updateSpeakerRole(selectElement) {
+  const speaker = selectElement.dataset.speaker;
+  const role = selectElement.value;
+  state.speakerRoles[speaker] = role;
+  updateCharts();
 }
 
 /**
