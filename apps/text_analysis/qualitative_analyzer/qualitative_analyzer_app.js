@@ -74,6 +74,7 @@ function setupEventListeners() {
   document.getElementById('clear-search')?.addEventListener('click', clearSearch);
   document.getElementById('prev-match')?.addEventListener('click', () => navigateMatches(-1));
   document.getElementById('next-match')?.addEventListener('click', () => navigateMatches(1));
+  document.getElementById('select-all-matches')?.addEventListener('click', selectAllMatches);
   
   // Filters
   document.getElementById('speaker-filter')?.addEventListener('change', applyFilters);
@@ -752,23 +753,6 @@ function renderCodedSegments() {
   
   container.innerHTML = html;
 }
-  state.codedSegments.splice(segmentIdx, 1);
-  
-  renderCodedSegments();
-  renderTranscript();
-  updateCodeCounts();
-  updateCharts();
-}
-
-/**
- * Update code counts
- */
-function updateCodeCounts() {
-  state.codes.forEach(code => {
-    code.count = state.codedSegments.filter(s => s.code === code.name).length;
-  });
-  renderCodeList();
-}
 
 /**
  * Perform search with wildcards and Boolean operators
@@ -797,6 +781,7 @@ function performSearch() {
   highlightSearchResults();
   updateMatchCount();
   updateNavigationButtons();
+  updateSelectAllMatchesButton();
 }
 
 /**
@@ -902,6 +887,7 @@ function clearSearch() {
   renderTranscript();
   updateMatchCount();
   updateNavigationButtons();
+  updateSelectAllMatchesButton();
 }
 
 /**
@@ -1476,6 +1462,8 @@ function toggleCodingMode(e) {
   if (state.codingMode) {
     updateActiveCodeDropdown();
   }
+  
+  updateSelectAllMatchesButton();
 }
 
 /**
@@ -1576,6 +1564,37 @@ function updateSelectionCount() {
   } else {
     counter.textContent = '';
   }
+}
+
+/**
+ * Update Select All Matches button visibility
+ */
+function updateSelectAllMatchesButton() {
+  const button = document.getElementById('select-all-matches');
+  if (!button) return;
+  
+  // Show button only when coding mode is active AND there are search results
+  const hasMatches = state.searchResults.length > 0;
+  button.style.display = (state.codingMode && hasMatches) ? 'inline-block' : 'none';
+}
+
+/**
+ * Select all lines that match the current search
+ */
+function selectAllMatches() {
+  if (!state.codingMode || state.searchResults.length === 0) return;
+  
+  // Clear existing selections
+  state.selectedLines.clear();
+  
+  // Add all lines with search matches
+  state.searchResults.forEach(result => {
+    state.selectedLines.add(result.lineIdx);
+  });
+  
+  // Update UI
+  renderTranscript();
+  updateSelectionCount();
 }
 
 /**
