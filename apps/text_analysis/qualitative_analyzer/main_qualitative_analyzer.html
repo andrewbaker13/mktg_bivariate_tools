@@ -249,6 +249,18 @@
               <input type="checkbox" id="enable-timestamps">
               <span>Parse timestamps</span>
             </label>
+            <label class="switch-option">
+              <input type="checkbox" id="detect-sections" checked>
+              <span>Auto-detect section headers [BRACKETS]</span>
+            </label>
+            <label class="switch-option">
+              <input type="checkbox" id="detect-activities" checked>
+              <span>Highlight activity markers</span>
+            </label>
+            <label class="switch-option">
+              <input type="checkbox" id="show-stage-directions" checked>
+              <span>Style stage directions (parentheses)</span>
+            </label>
           </div>
         </details>
       </article>
@@ -279,14 +291,53 @@
               <option value="">All codes</option>
             </select>
           </label>
+          <label>
+            Jump to section:
+            <select id="section-filter">
+              <option value="">All sections</option>
+            </select>
+          </label>
           <span id="match-count" class="match-counter"></span>
         </div>
       </div>
 
-      <div class="card transcript-display">
-        <div id="transcript-content" class="transcript-lines">
-          <div class="empty-state">
-            <p>Upload or paste a transcript to begin analysis</p>
+      <div class="transcript-layout">
+        <!-- Navigation Sidebar -->
+        <aside class="transcript-nav card">
+          <h3>Navigation</h3>
+          <div id="section-nav" class="section-nav-list">
+            <p class="hint">Sections will appear here</p>
+          </div>
+          
+          <details class="nav-details" open>
+            <summary>Statistics</summary>
+            <div class="nav-stats">
+              <div class="stat-item">
+                <span class="stat-label">Total Lines:</span>
+                <span id="stat-lines" class="stat-value">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Speakers:</span>
+                <span id="stat-speakers" class="stat-value">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Sections:</span>
+                <span id="stat-sections" class="stat-value">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Activities:</span>
+                <span id="stat-activities" class="stat-value">0</span>
+              </div>
+            </div>
+          </details>
+        </aside>
+
+        <!-- Main Transcript Display -->
+        <div class="card transcript-display">
+          <div id="transcript-content" class="transcript-lines">
+            <div class="empty-state">
+              <p>Upload or paste a transcript to begin analysis</p>
+            </div>
           </div>
         </div>
       </div>

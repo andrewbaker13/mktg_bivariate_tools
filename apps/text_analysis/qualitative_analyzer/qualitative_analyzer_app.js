@@ -5,15 +5,23 @@
 
 // Global state
 const state = {
-  transcript: [],
-  codes: [],
-  codedSegments: [],
+  transcript: [], // Array of { lineNumber, speaker, timestamp, text, coded: [], lineType: 'dialogue'|'section-header'|'activity-marker'|'stage-direction', sectionId: null }
+  codes: [], // Array of { id, name, color }
+  codedSegments: [], // Array of { lineNumber, speaker, text, codes: [] }
   currentMode: 'structured',
   selectedLines: new Set(),
   searchResults: [],
   currentFilters: {
     speaker: '',
-    code: ''
+    code: '',
+    section: 'all'
+  },
+  sections: [], // Array of { id, title, startLine, endLine, type: 'section'|'activity' }
+  statistics: {
+    totalLines: 0,
+    speakers: 0,
+    sections: 0,
+    activities: 0
   }
 };
 
@@ -81,6 +89,7 @@ function setupEventListeners() {
   // Filters
   document.getElementById('speaker-filter')?.addEventListener('change', applyFilters);
   document.getElementById('code-filter')?.addEventListener('change', applyFilters);
+  document.getElementById('section-filter')?.addEventListener('change', applyFilters);
   
   // Coding
   document.getElementById('add-code')?.addEventListener('click', () => {
@@ -150,6 +159,11 @@ function handleFileUpload(file, mode) {
  */
 function parseTranscript(content, mode) {
   state.transcript = [];
+  state.sections = [];
+  
+  const detectSections = document.getElementById('detect-sections')?.checked;
+  const detectActivities = document.getElementById('detect-activities')?.checked;
+  const showStageDirections = document.getElementById('show-stage-directions')?.checked;
   
   if (mode === 'structured') {
     // Parse CSV/TSV with speaker,timestamp,text or speaker,text
@@ -164,28 +178,71 @@ function parseTranscript(content, mode) {
       const row = rows[i];
       if (row[textIdx]?.trim()) {
         state.transcript.push({
-          line: i,
+          lineNumber: i,
           speaker: row[speakerIdx] || 'Unknown',
           timestamp: row[timestampIdx] || '',
           text: row[textIdx].trim(),
-          codes: []
+          codes: [],
+          lineType: 'dialogue',
+          sectionId: null
         });
       }
     }
   } else if (mode === 'plain') {
-    // Parse plain text, try to detect speakers
+    // Parse plain text with format detection
     const lines = content.split('\n');
     const autoDetect = document.getElementById('auto-detect-speakers')?.checked;
+    let currentSectionId = null;
     
     lines.forEach((line, idx) => {
       const trimmed = line.trim();
       if (!trimmed) return;
       
+      let lineType = 'dialogue';
       let speaker = 'Unknown';
       let text = trimmed;
+      let timestamp = '';
       
-      if (autoDetect) {
-        // Try to match "Speaker: text" pattern
+      // Detect section headers [LIKE THIS]
+      if (detectSections && /^\[.+\]$/.test(trimmed)) {
+        lineType = 'section-header';
+        text = trimmed.slice(1, -1); // Remove brackets
+        speaker = '';
+        currentSectionId = `section-${state.sections.length}`;
+        state.sections.push({
+          id: currentSectionId,
+          title: text,
+          startLine: idx + 1,
+          endLine: idx + 1,
+          type: 'section'
+        });
+      }
+      // Detect activity markers
+      else if (detectActivities && /^ACTIVITY\s+\d+/i.test(trimmed)) {
+        lineType = 'activity-marker';
+        speaker = '';
+        // Extract timestamp if present
+        const timeMatch = trimmed.match(/\(~Minutes\s+(\d+)[-–](\d+)\)/);
+        if (timeMatch) {
+          timestamp = `${timeMatch[1]}-${timeMatch[2]} min`;
+        }
+        currentSectionId = `activity-${state.sections.length}`;
+        state.sections.push({
+          id: currentSectionId,
+          title: trimmed,
+          startLine: idx + 1,
+          endLine: idx + 1,
+          type: 'activity'
+        });
+      }
+      // Detect stage directions (entire line in parentheses)
+      else if (showStageDirections && /^\(.+\)$/.test(trimmed)) {
+        lineType = 'stage-direction';
+        text = trimmed.slice(1, -1); // Remove parentheses
+        speaker = '';
+      }
+      // Regular dialogue with speaker detection
+      else if (autoDetect) {
         const match = trimmed.match(/^([^:]+):\s*(.+)$/);
         if (match) {
           speaker = match[1].trim();
@@ -193,16 +250,25 @@ function parseTranscript(content, mode) {
         }
       }
       
+      // Update section end line
+      if (currentSectionId && state.sections.length > 0) {
+        state.sections[state.sections.length - 1].endLine = idx + 1;
+      }
+      
       state.transcript.push({
-        line: idx + 1,
+        lineNumber: idx + 1,
         speaker,
-        timestamp: '',
+        timestamp,
         text,
-        codes: []
+        codes: [],
+        lineType,
+        sectionId: currentSectionId
       });
     });
   }
   
+  calculateStatistics();
+  renderSectionNav();
   renderTranscript();
   updateSpeakerFilter();
   updateCharts();
@@ -225,6 +291,101 @@ function loadManualText() {
 }
 
 /**
+ * Calculate statistics for the transcript
+ */
+function calculateStatistics() {
+  state.statistics.totalLines = state.transcript.length;
+  
+  const uniqueSpeakers = new Set();
+  state.transcript.forEach(item => {
+    if (item.speaker && item.speaker !== 'Unknown') {
+      uniqueSpeakers.add(item.speaker);
+    }
+  });
+  state.statistics.speakers = uniqueSpeakers.size;
+  
+  state.statistics.sections = state.sections.filter(s => s.type === 'section').length;
+  state.statistics.activities = state.sections.filter(s => s.type === 'activity').length;
+  
+  // Update UI
+  document.getElementById('stat-lines').textContent = state.statistics.totalLines;
+  document.getElementById('stat-speakers').textContent = state.statistics.speakers;
+  document.getElementById('stat-sections').textContent = state.statistics.sections;
+  document.getElementById('stat-activities').textContent = state.statistics.activities;
+}
+
+/**
+ * Render section navigation sidebar
+ */
+function renderSectionNav() {
+  const navList = document.getElementById('section-nav-list');
+  const sectionFilter = document.getElementById('section-filter');
+  
+  if (!navList) return;
+  
+  if (state.sections.length === 0) {
+    navList.innerHTML = '<div style="padding: 1rem; color: #9ca3af; font-size: 0.875rem;">No sections detected</div>';
+    if (sectionFilter) {
+      sectionFilter.innerHTML = '<option value="all">All sections</option>';
+    }
+    return;
+  }
+  
+  const navHtml = state.sections.map(section => {
+    const className = section.type === 'activity' ? 'section-nav-item activity' : 'section-nav-item';
+    const icon = section.type === 'activity' ? '⚡' : '📑';
+    return `
+      <div class="${className}" data-section="${section.id}">
+        <span>${icon} ${escapeHtml(section.title)}</span>
+        <span style="font-size: 0.75rem; color: #9ca3af;">${section.endLine - section.startLine + 1} lines</span>
+      </div>
+    `;
+  }).join('');
+  
+  navList.innerHTML = navHtml;
+  
+  // Add click handlers to navigate to sections
+  navList.querySelectorAll('.section-nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const sectionId = item.dataset.section;
+      jumpToSection(sectionId);
+    });
+  });
+  
+  // Update section filter dropdown
+  if (sectionFilter) {
+    const filterHtml = '<option value="all">All sections</option>' + 
+      state.sections.map(section => {
+        return `<option value="${section.id}">${escapeHtml(section.title)}</option>`;
+      }).join('');
+    sectionFilter.innerHTML = filterHtml;
+  }
+}
+
+/**
+ * Jump to a specific section in the transcript
+ */
+function jumpToSection(sectionId) {
+  const section = state.sections.find(s => s.id === sectionId);
+  if (!section) return;
+  
+  const lineElement = document.getElementById(`line-${section.startLine}`);
+  if (lineElement) {
+    lineElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // Briefly highlight the section
+    const sectionLines = document.querySelectorAll(`[data-section="${sectionId}"]`);
+    sectionLines.forEach(line => {
+      line.style.backgroundColor = '#fef3c7';
+      setTimeout(() => {
+        line.style.backgroundColor = '';
+      }, 2000);
+    });
+  }
+}
+
+
+/**
  * Render transcript to viewer
  */
 function renderTranscript() {
@@ -238,59 +399,102 @@ function renderTranscript() {
   
   const showLineNumbers = document.getElementById('show-line-numbers')?.checked;
   const showTimestamps = document.getElementById('enable-timestamps')?.checked;
+  const showStageDirections = document.getElementById('show-stage-directions')?.checked;
   
-  let html = '';
-  state.transcript.forEach((item, idx) => {
-    // Apply filters
-    if (state.currentFilters.speaker && item.speaker !== state.currentFilters.speaker) return;
-    if (state.currentFilters.code && !item.codes.includes(state.currentFilters.code)) return;
+  const filteredTranscript = applyCurrentFilters();
+  
+  const html = filteredTranscript.map(item => {
+    const isSelected = state.selectedLines.has(item.lineNumber);
+    const isHighlighted = state.searchResults.includes(item.lineNumber);
+    const hasCodes = item.codes && item.codes.length > 0;
     
-    const codeColors = item.codes.map(c => state.codes.find(code => code.name === c)?.color || '#999');
-    const borderColor = codeColors[0] || 'transparent';
+    const classes = ['transcript-line'];
+    classes.push(item.lineType);
+    if (isSelected) classes.push('selected');
+    if (isHighlighted) classes.push('highlighted');
+    if (hasCodes) classes.push('coded');
     
-    html += `<div class="transcript-line" data-index="${idx}" style="border-left-color: ${borderColor}">`;
+    let lineHtml = `<div class="${classes.join(' ')}" data-line="${item.lineNumber}" data-section="${item.sectionId || ''}" id="line-${item.lineNumber}">`;
     
     if (showLineNumbers) {
-      html += `<span class="line-number">${item.line}</span>`;
+      lineHtml += `<span class="line-number">${item.lineNumber}</span>`;
+    }
+    
+    if (item.speaker && item.lineType === 'dialogue') {
+      lineHtml += `<span class="speaker-label">${escapeHtml(item.speaker)}:</span>`;
     }
     
     if (showTimestamps && item.timestamp) {
-      html += `<span class="timestamp">${item.timestamp}</span>`;
+      lineHtml += `<span class="timestamp">${escapeHtml(item.timestamp)}</span>`;
     }
     
-    html += `<span class="speaker-label">${escapeHtml(item.speaker)}:</span>`;
-    html += `<span class="line-text">${escapeHtml(item.text)}</span>`;
-    html += `</div>`;
-  });
+    // Process text for inline stage directions
+    let displayText = escapeHtml(item.text);
+    if (showStageDirections && item.lineType === 'dialogue') {
+      // Highlight inline parentheticals like (laughs), (points at herself)
+      displayText = displayText.replace(/\(([^)]+)\)/g, '<span class="inline-direction">($1)</span>');
+    }
+    
+    lineHtml += `<span class="line-text">${displayText}</span>`;
+    
+    if (hasCodes) {
+      const codeLabels = item.codes.map(codeId => {
+        const code = state.codes.find(c => c.id === codeId);
+        return code ? `<span class="code-label" style="background-color: ${code.color}20; color: ${code.color};">${escapeHtml(code.name)}</span>` : '';
+      }).join('');
+      lineHtml += `<div class="line-codes">${codeLabels}</div>`;
+    }
+    
+    lineHtml += '</div>';
+    return lineHtml;
+  }).join('');
   
   container.innerHTML = html;
   
-  // Add click handlers
+  // Add event listeners
   container.querySelectorAll('.transcript-line').forEach(line => {
-    line.addEventListener('click', () => selectLine(line));
-    line.addEventListener('contextmenu', (e) => showContextMenu(e, line));
+    line.addEventListener('click', () => selectLine(parseInt(line.dataset.line)));
+    line.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      showContextMenu(e, parseInt(line.dataset.line));
+    });
+  });
+}
+
+/**
+ * Apply current filters and return filtered transcript
+ */
+function applyCurrentFilters() {
+  return state.transcript.filter(item => {
+    if (state.currentFilters.speaker && state.currentFilters.speaker !== '' && item.speaker !== state.currentFilters.speaker) {
+      return false;
+    }
+    if (state.currentFilters.code && state.currentFilters.code !== '' && !item.codes.includes(state.currentFilters.code)) {
+      return false;
+    }
+    if (state.currentFilters.section && state.currentFilters.section !== 'all' && item.sectionId !== state.currentFilters.section) {
+      return false;
+    }
+    return true;
   });
 }
 
 /**
  * Select a line for coding
  */
-function selectLine(lineElement) {
-  const idx = parseInt(lineElement.dataset.index);
-  
-  if (lineElement.classList.contains('selected')) {
-    lineElement.classList.remove('selected');
-    state.selectedLines.delete(idx);
+function selectLine(lineNumber) {
+  if (state.selectedLines.has(lineNumber)) {
+    state.selectedLines.delete(lineNumber);
   } else {
-    lineElement.classList.add('selected');
-    state.selectedLines.add(idx);
+    state.selectedLines.add(lineNumber);
   }
+  renderTranscript();
 }
 
 /**
  * Show context menu for coding
  */
-function showContextMenu(event, lineElement) {
+function showContextMenu(event, lineNumber) {
   event.preventDefault();
   
   // Remove any existing context menu
@@ -305,7 +509,7 @@ function showContextMenu(event, lineElement) {
   
   state.codes.forEach(code => {
     html += `
-      <div class="context-menu-item" data-code="${escapeHtml(code.name)}">
+      <div class="context-menu-item" data-code-id="${code.id}">
         <div class="context-menu-color" style="background-color: ${code.color}"></div>
         <span>${escapeHtml(code.name)}</span>
       </div>
@@ -318,9 +522,8 @@ function showContextMenu(event, lineElement) {
   // Add click handlers
   menu.querySelectorAll('.context-menu-item').forEach(item => {
     item.addEventListener('click', () => {
-      const codeName = item.dataset.code;
-      const idx = parseInt(lineElement.dataset.index);
-      assignCode(idx, codeName);
+      const codeId = item.dataset.codeId;
+      assignCode(lineNumber, codeId);
       menu.remove();
     });
   });
@@ -337,17 +540,19 @@ function showContextMenu(event, lineElement) {
 /**
  * Assign code to line(s)
  */
-function assignCode(lineIdx, codeName) {
-  const line = state.transcript[lineIdx];
+function assignCode(lineNumber, codeId) {
+  const line = state.transcript.find(l => l.lineNumber === lineNumber);
   if (!line) return;
   
-  if (!line.codes.includes(codeName)) {
-    line.codes.push(codeName);
+  if (!line.codes.includes(codeId)) {
+    line.codes.push(codeId);
     
     // Add to coded segments
+    const code = state.codes.find(c => c.id === codeId);
     state.codedSegments.push({
-      lineIdx,
-      code: codeName,
+      lineNumber,
+      code: code.name,
+      codeColor: code.color,
       speaker: line.speaker,
       text: line.text,
       timestamp: line.timestamp
@@ -581,6 +786,7 @@ function updateMatchCount() {
 function applyFilters() {
   state.currentFilters.speaker = document.getElementById('speaker-filter')?.value || '';
   state.currentFilters.code = document.getElementById('code-filter')?.value || '';
+  state.currentFilters.section = document.getElementById('section-filter')?.value || 'all';
   renderTranscript();
 }
 
@@ -753,8 +959,39 @@ function switchMode(mode) {
  * Load scenarios
  */
 function loadScenarios() {
-  // Placeholder - would load from scenarios/ folder
-  console.log('Scenarios loading (to be implemented)');
+  const scenarios = [
+    {
+      id: 'sdsu-sustainability',
+      name: 'SDSU Sustainability Focus Group',
+      description: 'Focus group discussion about sustainability items with SDSU students',
+      file: 'scenarios/sdsu_sustainability_focus_group.txt'
+    }
+  ];
+  
+  const select = document.getElementById('scenario-select');
+  if (!select) return;
+  
+  let html = '<option value="">Choose a sample transcript...</option>';
+  scenarios.forEach(scenario => {
+    html += `<option value="${scenario.file}">${scenario.name}</option>`;
+  });
+  
+  select.innerHTML = html;
+  
+  select.addEventListener('change', async (e) => {
+    const file = e.target.value;
+    if (!file) return;
+    
+    try {
+      const response = await fetch(file);
+      const content = await response.text();
+      parseTranscript(content, 'plain');
+      document.getElementById('scenario-feedback').textContent = `Loaded: ${scenarios.find(s => s.file === file)?.name}`;
+    } catch (error) {
+      document.getElementById('scenario-feedback').textContent = 'Error loading scenario';
+      console.error('Error loading scenario:', error);
+    }
+  });
 }
 
 /**
