@@ -427,17 +427,15 @@
 
                 <div class="grid-2">
                     <div class="form-group">
-                        <label for="timeLimit">Time Limit (seconds) *</label>
-                        <input type="number" id="timeLimit" value="20" min="5" max="300" required>
-                    </div>
-
-                    <div class="form-group">
                         <label for="difficulty">Difficulty</label>
                         <select id="difficulty">
                             <option value="easy">Easy</option>
                             <option value="medium" selected>Medium</option>
                             <option value="hard">Hard</option>
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <!-- Time per round is set by the game host, not per question -->
                     </div>
                 </div>
 
@@ -626,7 +624,6 @@
             const questionData = {
                 question_text: document.getElementById('questionText').value,
                 game_type: selectedGameType,
-                time_limit_seconds: parseInt(document.getElementById('timeLimit').value),
                 difficulty: document.getElementById('difficulty').value,
                 tags: document.getElementById('tags').value,
                 image_url: document.getElementById('imageUrl').value || null,
@@ -843,7 +840,6 @@
             
             // Fill basic fields
             document.getElementById('questionText').value = question.question_text;
-            document.getElementById('timeLimit').value = question.time_limit_seconds;
             document.getElementById('difficulty').value = question.difficulty;
             document.getElementById('tags').value = question.tags || '';
             document.getElementById('imageUrl').value = question.image_url || '';

@@ -481,9 +481,31 @@
                             </button>
                             <div id="advancedSettingsContent" style="display: none; padding: 1rem; background: white;">
                                 <div class="form-group" style="margin-bottom: 1rem;">
-                                    <label for="timeOverride" style="font-size: 0.875rem; font-weight: 600; color: #475569;">⏱️ Time Limit Override (seconds)</label>
-                                    <input type="number" id="timeOverride" placeholder="Leave empty to use question default" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;" min="5" max="600">
-                                    <small style="color: #6b7280; font-size: 0.75rem;">Override the default time limit for all questions</small>
+                                    <label for="timeOverride" style="font-size: 0.875rem; font-weight: 600; color: #475569;">⏱️ Time Per Round (seconds)</label>
+                                    <input type="number" id="timeOverride" value="20" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;" min="5" max="600">
+                                    <small style="color: #6b7280; font-size: 0.75rem;">Default is 20 seconds. Applies to all rounds.</small>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1;">
+                                    <label style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.5rem;">🎮 Per-Game-Type Time (optional)</label>
+                                    <small style="color: #6b7280; font-size: 0.7rem; display: block; margin-bottom: 0.5rem;">Leave blank to use the default above</small>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                        <div>
+                                            <label style="font-size: 0.7rem; color: #64748b;">⚡ Speed Tap</label>
+                                            <input type="number" id="timeSpeedTap" placeholder="—" style="width: 100%; padding: 0.4rem; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.8rem;" min="5" max="600">
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.7rem; color: #64748b;">🧠 Crowd Wisdom</label>
+                                            <input type="number" id="timeCrowdWisdom" placeholder="—" style="width: 100%; padding: 0.4rem; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.8rem;" min="5" max="600">
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.7rem; color: #64748b;">🎯 Closest Guess</label>
+                                            <input type="number" id="timeClosestGuess" placeholder="—" style="width: 100%; padding: 0.4rem; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.8rem;" min="5" max="600">
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.7rem; color: #64748b;">🔥 Push Range</label>
+                                            <input type="number" id="timePushRange" placeholder="—" style="width: 100%; padding: 0.4rem; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.8rem;" min="5" max="600">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 1rem;">
                                     <label for="scoringMultiplier" style="font-size: 0.875rem; font-weight: 600; color: #475569;">🎯 Scoring Multiplier</label>
@@ -1041,9 +1063,22 @@
             // Build game_settings object from advanced settings
             const gameSettings = {};
             
+            // Global time per round (always send, default is 20)
             const timeOverride = document.getElementById('timeOverride').value;
-            if (timeOverride) {
-                gameSettings.time_limit_override = parseInt(timeOverride);
+            gameSettings.time_limit_override = parseInt(timeOverride) || 20;
+            
+            // Per-game-type time overrides (optional)
+            const timeSpeedTap = document.getElementById('timeSpeedTap').value;
+            const timeCrowdWisdom = document.getElementById('timeCrowdWisdom').value;
+            const timeClosestGuess = document.getElementById('timeClosestGuess').value;
+            const timePushRange = document.getElementById('timePushRange').value;
+            
+            if (timeSpeedTap || timeCrowdWisdom || timeClosestGuess || timePushRange) {
+                gameSettings.time_per_type = {};
+                if (timeSpeedTap) gameSettings.time_per_type.speed_tap = parseInt(timeSpeedTap);
+                if (timeCrowdWisdom) gameSettings.time_per_type.crowd_wisdom = parseInt(timeCrowdWisdom);
+                if (timeClosestGuess) gameSettings.time_per_type.closest_guess = parseInt(timeClosestGuess);
+                if (timePushRange) gameSettings.time_per_type.push_range = parseInt(timePushRange);
             }
             
             const scoringMultiplier = parseFloat(document.getElementById('scoringMultiplier').value);
