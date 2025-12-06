@@ -545,20 +545,18 @@
         <span id="toast-message">Success!</span>
     </div>
 
+    <script src="../shared/js/auth_tracking.js"></script>
     <script>
-        const API_BASE = 'http://localhost:8000/api';
+        // API_BASE is defined in auth_tracking.js
         let quizId = null;
         let canEdit = false;
         let questions = [];
 
-        // Authentication
-        function getAuthToken() {
-            return localStorage.getItem('authToken');
-        }
+        // Authentication - use shared auth module
+        // getAuthToken() is provided by auth_tracking.js
 
         function checkAuth() {
-            const token = getAuthToken();
-            if (!token) {
+            if (!isAuthenticated()) {
                 window.location.href = 'login.html';
                 return false;
             }

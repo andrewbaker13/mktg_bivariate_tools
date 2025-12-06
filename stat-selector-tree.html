@@ -197,6 +197,143 @@
         margin: 0.5rem 0;
         line-height: 1.6;
       }
+      .result-recommendation .tool-link {
+        display: inline-block;
+        margin-top: 0.75rem;
+        padding: 0.6rem 1.2rem;
+        background: #10b981;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+      .result-recommendation .tool-link:hover {
+        background: #059669;
+        transform: translateY(-1px);
+      }
+      /* Collapsible info sections */
+      .info-section {
+        margin-top: 1rem;
+      }
+      .info-section details {
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+      }
+      .info-section summary {
+        padding: 0.6rem 1rem;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-radius: 6px;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .info-section summary::-webkit-details-marker {
+        display: none;
+      }
+      .info-section summary::before {
+        content: "▶";
+        font-size: 0.7rem;
+        transition: transform 0.2s;
+      }
+      .info-section details[open] summary::before {
+        transform: rotate(90deg);
+      }
+      .info-section .info-content {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        border-top: 1px solid rgba(0,0,0,0.1);
+      }
+      .info-section .info-content ul {
+        margin: 0.5rem 0 0 1.25rem;
+        padding: 0;
+      }
+      .info-section .info-content li {
+        margin-bottom: 0.35rem;
+      }
+      /* Assumptions - blue theme */
+      .assumptions-section details {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+      }
+      .assumptions-section summary {
+        color: #1e40af;
+        background: #dbeafe;
+      }
+      .assumptions-section .info-content {
+        color: #1e3a8a;
+      }
+      /* Common mistakes - amber/orange theme */
+      .mistakes-section details {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+      }
+      .mistakes-section summary {
+        color: #92400e;
+        background: #fef3c7;
+      }
+      .mistakes-section .info-content {
+        color: #78350f;
+      }
+      /* Alternative approaches section */
+      .alternatives-section {
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+        border-top: 2px dashed #e5e7eb;
+      }
+      .alternatives-section h5 {
+        margin: 0 0 0.75rem 0;
+        color: #6b7280;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .alt-test {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+      }
+      .alt-test-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+      .alt-test-name {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.95rem;
+      }
+      .alt-test-link {
+        font-size: 0.8rem;
+        color: #3b82f6;
+        text-decoration: none;
+        padding: 0.25rem 0.5rem;
+        background: #eff6ff;
+        border-radius: 4px;
+      }
+      .alt-test-link:hover {
+        background: #dbeafe;
+      }
+      .alt-test-link.not-available {
+        color: #9ca3af;
+        background: #f3f4f6;
+        cursor: default;
+        font-style: italic;
+      }
+      .alt-test-desc {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 0.35rem;
+        line-height: 1.5;
+      }
       .result-alternative {
         background: white;
         border-radius: 8px;
@@ -466,7 +603,7 @@
             document.querySelectorAll('.decision-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const choice = this.dataset.choice;
-                    const nextNode = this.dataset.next;
+                    let nextNode = this.dataset.next;
                     const currentNode = this.closest('.decision-node');
                     
                     // Store the choice based on current step
@@ -477,6 +614,16 @@
                         decisionState.dataStructure = choice;
                     } else if (step === '2') {
                         decisionState.predictorCount = choice;
+                        // Smart routing based on outcome type
+                        if (choice === 'one') {
+                            if (decisionState.outcome === 'numeric') {
+                                nextNode = 'predictor-type'; // Numeric outcomes need predictor type
+                            } else if (decisionState.outcome === 'binary') {
+                                nextNode = 'group-structure'; // Binary outcomes go to paired vs independent
+                            } else if (decisionState.outcome === 'categorical') {
+                                nextNode = 'result'; // Categorical with one predictor = chi-square
+                            }
+                        }
                     } else if (step === '3') {
                         decisionState.predictorType = choice;
                     } else if (step === '4') {
@@ -533,156 +680,356 @@
                 const { outcome, dataStructure, predictorCount, predictorType, groupStructure } = decisionState;
                 let html = '';
 
-                // TIME SERIES PATH (for numeric outcomes)
-                if (outcome === 'numeric' && dataStructure === 'timeseries') {
-                    html = `
+                // Helper function to build recommendation HTML
+                function buildRecommendation(config) {
+                    let result = `
                         <div class="result-recommendation">
-                            <h4>✅ Recommended: ARIMAX Time Series Forecasting</h4>
-                            <p><strong>Marketing Context:</strong> Use when analyzing sequential data over time with potential external factors. Perfect for forecasting sales with ad spend, predicting demand with promotional indicators, or any time-ordered metric.</p>
-                            <p><a href="apps/time_series/arimax/main_arimax.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open ARIMAX Tool →</a></p>
-                        </div>
-                        <div class="result-alternative">
-                            <h4>📈 What ARIMAX Does</h4>
-                            <p>ARIMAX (AutoRegressive Integrated Moving Average with eXogenous variables) captures patterns in sequential data—trends, seasonality, and autocorrelation—while accounting for external predictors like ad spend or promotions. Includes diagnostic tools (ACF/PACF) and customizable confidence intervals for forecasts.</p>
-                        </div>`;
-                    return html;
-                }
-
-                // NUMERIC OUTCOME (cross-sectional)
-                if (outcome === 'numeric') {
-                    if (predictorCount === 'one') {
-                        if (predictorType === 'numeric') {
-                            html = `
-                                <div class="result-recommendation">
-                                    <h4>✅ Recommended: Pearson Correlation</h4>
-                                    <p><strong>Marketing Context:</strong> Use this when exploring whether two numeric metrics move together (e.g., "As ad spend increases, does revenue increase?").</p>
-                                    <p><a href="apps/descriptive/pearson_correlation/main_pearson.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Pearson Correlation Tool →</a></p>
-                                </div>
-                                <div class="result-alternative">
-                                    <h4>📊 Alternative: Bivariate Linear Regression</h4>
-                                    <p>Fits a line through your data points and gives you a slope (how much Y changes per unit of X). Same relationship as correlation, but with a prediction equation.</p>
-                                    <p><a href="apps/regression/bivariate_regression/main_bivariate_regression.html">Open Bivariate Regression Tool →</a></p>
-                                </div>`;
-                        } else if (predictorType === 'binary_group') {
-                            if (groupStructure === 'two_paired') {
-                                html = `
-                                    <div class="result-recommendation">
-                                        <h4>✅ Recommended: Paired Sample t-test</h4>
-                                        <p><strong>Marketing Context:</strong> Use when the same customers/accounts are measured twice (e.g., "Did customer satisfaction improve after our website redesign?" measured on the same customers before and after).</p>
-                                        <p><a href="apps/hypothesis_testing/paired_ttest/main_paired_ttest.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Paired t-test Tool →</a></p>
-                                    </div>
-                                    <div class="result-alternative">
-                                        <h4>📊 Note on Design</h4>
-                                        <p>Paired designs are powerful because they control for individual differences—each person serves as their own control. Common in before/after campaign analysis and A/B tests where same users see both versions.</p>
-                                    </div>`;
-                            } else {
-                                html = `
-                                    <div class="result-recommendation">
-                                        <h4>✅ Recommended: Welch's t-test (Independent Means)</h4>
-                                        <p><strong>Marketing Context:</strong> Use when comparing averages between two independent groups (e.g., "Did Email A generate higher revenue per customer than Email B?" where different customers got each email).</p>
-                                        <p><a href="apps/hypothesis_testing/ind_ttest/main_ind_ttest.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Welch's t-test Tool →</a></p>
-                                    </div>
-                                    <div class="result-alternative">
-                                        <h4>📊 Alternative: Bivariate Linear Regression</h4>
-                                        <p>Using a binary predictor (0/1) in regression gives the same result as a t-test, but frames it as a predictive model. The slope equals the mean difference.</p>
-                                        <p><a href="apps/regression/bivariate_regression/main_bivariate_regression.html">Open Bivariate Regression Tool →</a></p>
-                                    </div>`;
+                            <h4>✅ Recommended: ${config.testName}</h4>
+                            <p><strong>Marketing Context:</strong> ${config.context}</p>
+                            ${config.toolUrl ? 
+                                `<a href="${config.toolUrl}" class="tool-link">Open ${config.testName} Tool →</a>` : 
+                                `<span style="display:inline-block; margin-top:0.75rem; padding:0.6rem 1.2rem; background:#9ca3af; color:white; border-radius:6px; font-weight:600;">Tool Coming Soon</span>`
                             }
-                        } else if (predictorType === 'categorical3') {
-                            html = `
-                                <div class="result-recommendation">
-                                    <h4>✅ Recommended: One-Way ANOVA</h4>
-                                    <p><strong>Marketing Context:</strong> Use when comparing means across three or more groups (e.g., "Which of our four landing page designs generates highest revenue per visitor?").</p>
-                                    <p><a href="apps/hypothesis_testing/onewayanova/main_onewayanova.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open One-Way ANOVA Tool →</a></p>
-                                </div>
-                                <div class="result-alternative">
-                                    <h4>📊 After ANOVA</h4>
-                                    <p>ANOVA tells you if <em>any</em> groups differ. Follow up with post-hoc pairwise comparisons to see which specific pairs differ (e.g., "Is Design A better than Design B?"). The tool includes these comparisons.</p>
-                                </div>`;
-                        }
-                    } else if (predictorCount === 'multiple') {
-                        html = `
-                            <div class="result-recommendation">
-                                <h4>✅ Recommended: Multiple Linear Regression</h4>
-                                <p><strong>Marketing Context:</strong> Use when modeling a numeric outcome with multiple predictors simultaneously (e.g., "Customer lifetime value based on recency, frequency, monetary value, AND customer segment").</p>
-                                <p><a href="apps/regression/ml_regression/ml_regression.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Multiple Regression Tool →</a></p>
+                            
+                            <div class="info-section assumptions-section">
+                                <details>
+                                    <summary>📋 Assumptions to Check</summary>
+                                    <div class="info-content">
+                                        <ul>${config.assumptions.map(a => `<li>${a}</li>`).join('')}</ul>
+                                    </div>
+                                </details>
                             </div>
-                            <div class="result-alternative">
-                                <h4>📊 Why Multiple Regression?</h4>
-                                <p>Multiple regression lets you control for confounding variables and see the <em>unique</em> effect of each predictor while holding others constant. Essential for marketing attribution and predictive modeling.</p>
-                            </div>`;
+                            
+                            ${config.mistakes && config.mistakes.length > 0 ? `
+                            <div class="info-section mistakes-section">
+                                <details>
+                                    <summary>⚠️ Common Mistakes to Avoid</summary>
+                                    <div class="info-content">
+                                        <ul>${config.mistakes.map(m => `<li>${m}</li>`).join('')}</ul>
+                                    </div>
+                                </details>
+                            </div>` : ''}
+                        </div>`;
+                    
+                    // Add alternatives section if provided
+                    if (config.alternatives && config.alternatives.length > 0) {
+                        result += `
+                        <div class="alternatives-section">
+                            <h5>📊 Alternative Approaches</h5>
+                            ${config.alternatives.map(alt => `
+                                <div class="alt-test">
+                                    <div class="alt-test-header">
+                                        <span class="alt-test-name">${alt.name}</span>
+                                        ${alt.url ? 
+                                            `<a href="${alt.url}" class="alt-test-link">Open Tool →</a>` :
+                                            `<span class="alt-test-link not-available">Not yet available</span>`
+                                        }
+                                    </div>
+                                    <div class="alt-test-desc">${alt.reason}</div>
+                                </div>
+                            `).join('')}
+                        </div>`;
+                    }
+                    
+                    return result;
+                }
+
+                // ============================================
+                // TIME SERIES PATH (for numeric outcomes)
+                // ============================================
+                if (outcome === 'numeric' && dataStructure === 'timeseries') {
+                    return buildRecommendation({
+                        testName: 'ARIMAX Time Series Forecasting',
+                        context: 'Analyzing sequential data over time with potential external factors. Perfect for forecasting sales with ad spend, predicting demand with promotional indicators, or any time-ordered metric.',
+                        toolUrl: 'apps/time_series/arimax/main_arimax.html',
+                        assumptions: [
+                            '<strong>Stationarity:</strong> The data should be stationary (constant mean and variance over time). Use differencing if needed.',
+                            '<strong>No autocorrelation in residuals:</strong> Check with ACF/PACF plots after fitting the model.',
+                            '<strong>Normally distributed residuals:</strong> Residuals should be roughly normally distributed.',
+                            '<strong>Sufficient data points:</strong> Generally need 50+ observations for reliable time series analysis.'
+                        ],
+                        mistakes: [
+                            'Using cross-sectional methods (like t-tests or regression) on time series data—this ignores autocorrelation.',
+                            'Forecasting too far ahead without acknowledging increasing uncertainty.',
+                            'Ignoring seasonality patterns in the data.'
+                        ]
+                    });
+                }
+
+                // ============================================
+                // NUMERIC OUTCOME (cross-sectional)
+                // ============================================
+                if (outcome === 'numeric') {
+                    // One predictor - Numeric predictor
+                    if (predictorCount === 'one' && predictorType === 'numeric') {
+                        return buildRecommendation({
+                            testName: 'Pearson Correlation',
+                            context: 'Exploring whether two numeric metrics move together (e.g., "As ad spend increases, does revenue increase?").',
+                            toolUrl: 'apps/descriptive/pearson_correlation/main_pearson.html',
+                            assumptions: [
+                                '<strong>Linear relationship:</strong> The relationship between variables should be roughly linear (check a scatterplot).',
+                                '<strong>Both variables continuous:</strong> Pearson works best with truly continuous numeric data.',
+                                '<strong>No extreme outliers:</strong> Outliers can heavily distort correlation coefficients.',
+                                '<strong>Bivariate normality:</strong> For hypothesis testing, both variables should be approximately normally distributed.'
+                            ],
+                            mistakes: [
+                                'Assuming correlation means causation—it only measures association, not cause-and-effect.',
+                                'Ignoring outliers that can artificially inflate or deflate the correlation.',
+                                'Using Pearson on clearly non-linear relationships (use Spearman instead for ranked/monotonic relationships).'
+                            ],
+                            alternatives: [
+                                {
+                                    name: 'Bivariate Linear Regression',
+                                    url: 'apps/regression/bivariate_regression/main_bivariate_regression.html',
+                                    reason: 'Same underlying relationship, but gives you a prediction equation (Y = a + bX) and allows you to predict Y for new values of X.'
+                                }
+                            ]
+                        });
+                    }
+                    
+                    // One predictor - Two groups, Paired
+                    if (predictorCount === 'one' && predictorType === 'binary_group' && groupStructure === 'two_paired') {
+                        return buildRecommendation({
+                            testName: 'Paired Sample t-test',
+                            context: 'The same customers/accounts are measured twice (e.g., "Did customer satisfaction improve after our website redesign?" measured on the same customers before and after).',
+                            toolUrl: 'apps/hypothesis_testing/paired_ttest/main_paired_ttest.html',
+                            assumptions: [
+                                '<strong>Paired observations:</strong> Each observation in one group has a matched pair in the other group (same person, same account, etc.).',
+                                '<strong>Differences are approximately normal:</strong> The differences between pairs should be roughly normally distributed (less critical with n > 30).',
+                                '<strong>Continuous outcome:</strong> The dependent variable should be measured on an interval or ratio scale.',
+                                '<strong>No extreme outlier differences:</strong> Extreme differences between pairs can skew results.'
+                            ],
+                            mistakes: [
+                                'Using an independent t-test when you actually have paired data—this throws away the power of the paired design.',
+                                'Forgetting to calculate and analyze the DIFFERENCES between pairs (the test is based on differences, not raw scores).',
+                                'Having unpaired observations mixed in with paired data.'
+                            ],
+                            alternatives: [
+                                {
+                                    name: 'Wilcoxon Signed-Rank Test',
+                                    url: null,
+                                    reason: 'Non-parametric alternative when the differences are not normally distributed. Uses ranks instead of raw values.'
+                                }
+                            ]
+                        });
+                    }
+                    
+                    // One predictor - Two groups, Independent
+                    if (predictorCount === 'one' && predictorType === 'binary_group' && groupStructure === 'two_ind') {
+                        return buildRecommendation({
+                            testName: "Welch's t-test (Independent Samples)",
+                            context: 'Comparing averages between two independent groups (e.g., "Did Email A generate higher revenue per customer than Email B?" where different customers received each email).',
+                            toolUrl: 'apps/hypothesis_testing/ind_ttest/main_ind_ttest.html',
+                            assumptions: [
+                                '<strong>Independence:</strong> Observations in each group are independent of each other (different people/accounts).',
+                                '<strong>Approximately normal distributions:</strong> Each group should be roughly normally distributed (less critical with n > 30 per group).',
+                                '<strong>Continuous outcome:</strong> The dependent variable should be measured on an interval or ratio scale.',
+                                '<strong>No extreme outliers:</strong> Outliers can distort the group means and inflate variance.'
+                            ],
+                            mistakes: [
+                                'Using an independent t-test when you have paired/matched data—you should use a paired t-test instead.',
+                                'Comparing more than 2 groups with multiple t-tests instead of using ANOVA (inflates Type I error).',
+                                'Ignoring highly skewed distributions or outliers that violate assumptions.'
+                            ],
+                            alternatives: [
+                                {
+                                    name: 'Mann-Whitney U Test',
+                                    url: null,
+                                    reason: 'Non-parametric alternative when data is heavily skewed or ordinal. Compares medians/ranks rather than means.'
+                                }
+                            ]
+                        });
+                    }
+                    
+                    // One predictor - 3+ groups
+                    if (predictorCount === 'one' && predictorType === 'categorical3') {
+                        return buildRecommendation({
+                            testName: 'One-Way ANOVA',
+                            context: 'Comparing means across three or more groups (e.g., "Which of our four landing page designs generates highest revenue per visitor?").',
+                            toolUrl: 'apps/hypothesis_testing/onewayanova/main_onewayanova.html',
+                            assumptions: [
+                                '<strong>Independence:</strong> Observations are independent within and across groups.',
+                                '<strong>Normality:</strong> Each group should be approximately normally distributed (less critical with larger samples).',
+                                '<strong>Homogeneity of variance:</strong> Variances should be roughly equal across groups (check with Levene\'s test).',
+                                '<strong>Continuous outcome:</strong> The dependent variable should be measured on an interval or ratio scale.'
+                            ],
+                            mistakes: [
+                                'Running multiple t-tests instead of ANOVA—this inflates your false positive rate.',
+                                'Stopping at the overall F-test. ANOVA tells you IF groups differ, but you need post-hoc tests to see WHICH pairs differ.',
+                                'Ignoring unequal group sizes, which can affect the robustness of the test.'
+                            ],
+                            alternatives: [
+                                {
+                                    name: 'Kruskal-Wallis Test',
+                                    url: null,
+                                    reason: 'Non-parametric alternative when normality assumption is violated. Compares medians across groups using ranks.'
+                                }
+                            ]
+                        });
+                    }
+                    
+                    // Multiple predictors - Numeric outcome
+                    if (predictorCount === 'multiple') {
+                        return buildRecommendation({
+                            testName: 'Multiple Linear Regression',
+                            context: 'Modeling a numeric outcome with multiple predictors simultaneously (e.g., "Customer lifetime value based on recency, frequency, monetary value, AND customer segment").',
+                            toolUrl: 'apps/regression/ml_regression/ml_regression.html',
+                            assumptions: [
+                                '<strong>Linearity:</strong> The relationship between each predictor and the outcome is linear.',
+                                '<strong>Independence of errors:</strong> Residuals are independent of each other.',
+                                '<strong>Homoscedasticity:</strong> Residuals have constant variance across all levels of predictors.',
+                                '<strong>Normality of residuals:</strong> Residuals are approximately normally distributed.',
+                                '<strong>No multicollinearity:</strong> Predictors should not be too highly correlated with each other (check VIF).'
+                            ],
+                            mistakes: [
+                                'Including highly correlated predictors (multicollinearity) which makes individual coefficients unreliable.',
+                                'Assuming the model is causal when it may only show correlations.',
+                                'Overfitting by including too many predictors relative to sample size (rule of thumb: ~15-20 observations per predictor).'
+                            ],
+                            alternatives: [
+                                {
+                                    name: 'Multiple Regression with Interactions',
+                                    url: 'apps/regression/mlr_interactions/main_mlr_interactions.html',
+                                    reason: 'When you believe the effect of one predictor depends on the level of another predictor (e.g., "ad spend effect differs by channel").'
+                                }
+                            ]
+                        });
                     }
                 }
 
+                // ============================================
                 // BINARY OUTCOME
-                else if (outcome === 'binary') {
+                // ============================================
+                if (outcome === 'binary') {
+                    // One predictor - need to check group structure
                     if (predictorCount === 'one') {
+                        // Paired binary data
                         if (groupStructure === 'two_paired') {
-                            html = `
-                                <div class="result-recommendation">
-                                    <h4>✅ Recommended: McNemar Test</h4>
-                                    <p><strong>Marketing Context:</strong> Use for paired yes/no data (e.g., "Did customers change their subscription status after seeing our new offer?" measured on same customers before and after).</p>
-                                    <p><a href="apps/hypothesis_testing/mcnemar/main_mcnemar.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open McNemar Test Tool →</a></p>
-                                </div>
-                                <div class="result-alternative">
-                                    <h4>📊 What McNemar Does</h4>
-                                    <p>Focuses on "switchers"—people who changed from yes to no or no to yes. Ignores people who stayed the same in both periods, which makes it powerful for detecting change.</p>
-                                </div>`;
-                        } else {
-                            html = `
-                                <div class="result-recommendation">
-                                    <h4>✅ Recommended: A/B Proportion Test</h4>
-                                    <p><strong>Marketing Context:</strong> Use when comparing conversion rates between two independent groups (e.g., "Did landing page A have a higher conversion rate than landing page B?").</p>
-                                    <p><a href="apps/hypothesis_testing/ab_proportion/main_ab_proportion.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open A/B Proportion Tool →</a></p>
-                                </div>
-                                <div class="result-alternative">
-                                    <h4>📊 Alternative: Logistic Regression</h4>
-                                    <p>For a single binary predictor, logistic regression gives similar results but frames it as an odds ratio. Use the Logistic Regression tool with one predictor.</p>
-                                    <p><a href="apps/regression/log_regression/log_regression.html">Open Logistic Regression Tool →</a></p>
-                                </div>`;
+                            return buildRecommendation({
+                                testName: 'McNemar Test',
+                                context: 'Paired yes/no data (e.g., "Did customers change their subscription status after seeing our new offer?" measured on same customers before and after).',
+                                toolUrl: 'apps/hypothesis_testing/mcnemar/main_mcnemar.html',
+                                assumptions: [
+                                    '<strong>Paired/matched data:</strong> Each subject is measured twice (before/after) or subjects are matched in pairs.',
+                                    '<strong>Binary outcome:</strong> The outcome at each time point must be dichotomous (yes/no, 0/1).',
+                                    '<strong>Independence of pairs:</strong> Each pair is independent of other pairs.',
+                                    '<strong>Sufficient discordant pairs:</strong> Need enough "switchers" (yes→no or no→yes) for reliable results.'
+                                ],
+                                mistakes: [
+                                    'Using a chi-square test when you have paired data—chi-square assumes independence.',
+                                    'Focusing on concordant pairs (stayed yes or stayed no) when McNemar is really about the changers.',
+                                    'Having very few discordant pairs, which makes the test unreliable.'
+                                ]
+                            });
                         }
-                    } else if (predictorCount === 'multiple') {
-                        html = `
-                            <div class="result-recommendation">
-                                <h4>✅ Recommended: Logistic Regression</h4>
-                                <p><strong>Marketing Context:</strong> Use when predicting a yes/no outcome with multiple predictors (e.g., "What predicts conversion: traffic source, device type, AND time of day?").</p>
-                                <p><a href="apps/regression/log_regression/log_regression.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Logistic Regression Tool →</a></p>
-                            </div>
-                            <div class="result-alternative">
-                                <h4>📊 Understanding Logistic Regression</h4>
-                                <p>Estimates odds ratios for each predictor. An odds ratio of 2.0 means that factor doubles the odds of conversion. Critical for marketing attribution, lead scoring, and churn prediction.</p>
-                            </div>`;
+                        
+                        // Independent binary data (A/B test)
+                        return buildRecommendation({
+                            testName: 'A/B Proportion Test (Two-Sample z-test for Proportions)',
+                            context: 'Comparing conversion rates between two independent groups (e.g., "Did landing page A have a higher conversion rate than landing page B?").',
+                            toolUrl: 'apps/hypothesis_testing/ab_proportion/main_ab_proportion.html',
+                            assumptions: [
+                                '<strong>Independence:</strong> Observations in each group are independent (different people).',
+                                '<strong>Random sampling:</strong> Subjects are randomly assigned to each group.',
+                                '<strong>Binary outcome:</strong> The outcome is dichotomous (converted/not converted, clicked/not clicked).',
+                                '<strong>Sufficient sample size:</strong> Each group should have at least 10 successes and 10 failures (np ≥ 10 and n(1-p) ≥ 10).'
+                            ],
+                            mistakes: [
+                                'Stopping the test too early ("peeking") which inflates false positive rates.',
+                                'Not accounting for multiple testing if comparing many variants.',
+                                'Ignoring the practical significance—a statistically significant difference may be too small to matter.'
+                            ],
+                            alternatives: [
+                                {
+                                    name: 'Chi-Square Test of Independence',
+                                    url: 'apps/hypothesis_testing/chisquare/main_chisquare.html',
+                                    reason: 'Mathematically equivalent for 2×2 tables. Chi-square is more general and extends to comparing 3+ groups or multi-level outcomes.'
+                                },
+                                {
+                                    name: 'Logistic Regression (single predictor)',
+                                    url: 'apps/regression/log_regression/log_regression.html',
+                                    reason: 'Gives you an odds ratio and a model framework. Useful if you plan to add more predictors later.'
+                                }
+                            ]
+                        });
+                    }
+                    
+                    // Multiple predictors - Binary outcome
+                    if (predictorCount === 'multiple') {
+                        return buildRecommendation({
+                            testName: 'Logistic Regression',
+                            context: 'Predicting a yes/no outcome with multiple predictors (e.g., "What predicts conversion: traffic source, device type, AND time of day?").',
+                            toolUrl: 'apps/regression/log_regression/log_regression.html',
+                            assumptions: [
+                                '<strong>Binary outcome:</strong> The dependent variable must be dichotomous.',
+                                '<strong>Independence of observations:</strong> Each observation is independent.',
+                                '<strong>No multicollinearity:</strong> Predictors should not be highly correlated with each other.',
+                                '<strong>Linearity in the logit:</strong> Continuous predictors have a linear relationship with the log-odds of the outcome.',
+                                '<strong>Sufficient sample size:</strong> Rule of thumb: at least 10 events per predictor variable.'
+                            ],
+                            mistakes: [
+                                'Interpreting coefficients as probabilities—they are log-odds. Convert to odds ratios with exp(coefficient).',
+                                'Having too few events (conversions) relative to the number of predictors.',
+                                'Ignoring class imbalance when one outcome is much rarer than the other.'
+                            ]
+                        });
                     }
                 }
 
+                // ============================================
                 // CATEGORICAL OUTCOME (3+ levels)
-                else if (outcome === 'categorical') {
+                // ============================================
+                if (outcome === 'categorical') {
+                    // One predictor
                     if (predictorCount === 'one') {
-                        html = `
-                            <div class="result-recommendation">
-                                <h4>✅ Recommended: Chi-square Test of Association</h4>
-                                <p><strong>Marketing Context:</strong> Use when exploring whether two categorical variables are related (e.g., "Does product choice vary by customer segment?" or "Is device type related to purchase category?").</p>
-                                <p><a href="apps/hypothesis_testing/chisquare/main_chisquare.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Chi-square Test Tool →</a></p>
-                            </div>
-                            <div class="result-alternative">
-                                <h4>📊 When to Use</h4>
-                                <p>Chi-square tests whether the distribution of one categorical variable differs across levels of another. Perfect for cross-tabulation analysis in market research and customer segmentation.</p>
-                            </div>`;
-                    } else if (predictorCount === 'multiple') {
-                        html = `
-                            <div class="result-recommendation">
-                                <h4>✅ Recommended: Multinomial Logistic Regression</h4>
-                                <p><strong>Marketing Context:</strong> Use when predicting a categorical outcome with 3+ levels using multiple predictors (e.g., "What predicts which product a customer chooses: price sensitivity, brand loyalty, AND demographics?").</p>
-                                <p><a href="apps/regression/mn_log_regression/main_mn_log_regression.html" class="primary" style="display:inline-block; margin-top:0.5rem; padding:0.5rem 1rem; text-decoration:none;">Open Multinomial Logistic Regression Tool →</a></p>
-                            </div>
-                            <div class="result-alternative">
-                                <h4>📊 Choice Modeling</h4>
-                                <p>Multinomial logistic regression is the foundation of choice modeling in marketing. Estimates relative risk ratios comparing each outcome to a reference category. Essential for product preference analysis.</p>
-                            </div>`;
+                        return buildRecommendation({
+                            testName: 'Chi-Square Test of Association',
+                            context: 'Exploring whether two categorical variables are related (e.g., "Does product choice vary by customer segment?" or "Is device type related to purchase category?").',
+                            toolUrl: 'apps/hypothesis_testing/chisquare/main_chisquare.html',
+                            assumptions: [
+                                '<strong>Independence:</strong> Each observation belongs to only one cell in the contingency table.',
+                                '<strong>Random sampling:</strong> Data comes from a random sample.',
+                                '<strong>Expected frequencies ≥ 5:</strong> At least 80% of cells should have expected counts of 5 or more.',
+                                '<strong>Sufficient sample size:</strong> Very small samples can make the test unreliable.'
+                            ],
+                            mistakes: [
+                                'Using chi-square on paired/matched data—use McNemar test instead.',
+                                'Having too many cells with small expected frequencies (combine categories or collect more data).',
+                                'Confusing chi-square test of independence with chi-square goodness-of-fit test (different purposes).'
+                            ],
+                            alternatives: [
+                                {
+                                    name: "Fisher's Exact Test",
+                                    url: null,
+                                    reason: 'Use when sample sizes are very small or expected cell counts fall below 5. Gives exact p-values rather than approximations.'
+                                }
+                            ]
+                        });
+                    }
+                    
+                    // Multiple predictors
+                    if (predictorCount === 'multiple') {
+                        return buildRecommendation({
+                            testName: 'Multinomial Logistic Regression',
+                            context: 'Predicting a categorical outcome with 3+ levels using multiple predictors (e.g., "What predicts which product a customer chooses: price sensitivity, brand loyalty, AND demographics?").',
+                            toolUrl: 'apps/regression/mn_log_regression/main_mn_log_regression.html',
+                            assumptions: [
+                                '<strong>Nominal outcome:</strong> The outcome categories have no inherent order (use ordinal regression if ordered).',
+                                '<strong>Independence of observations:</strong> Each observation is independent.',
+                                '<strong>No multicollinearity:</strong> Predictors should not be highly correlated.',
+                                '<strong>Independence of Irrelevant Alternatives (IIA):</strong> The odds of choosing A over B shouldn\'t change if option C is added or removed.',
+                                '<strong>Sufficient sample size:</strong> Need adequate observations for each outcome category.'
+                            ],
+                            mistakes: [
+                                'Running separate binary logistic regressions for each category instead of multinomial (loses efficiency and violates assumptions).',
+                                'Ignoring the reference category—all results are interpreted RELATIVE to one baseline category.',
+                                'Using multinomial for ordinal outcomes when ordinal logistic regression would be more appropriate.'
+                            ]
+                        });
                     }
                 }
 
-                return html || '<p>Unable to determine recommendation. Please try again.</p>';
+                return '<p>Unable to determine recommendation. Please try again by clicking "Start Over" below.</p>';
             }
         }());
         
@@ -724,6 +1071,7 @@
     .flow-result-title { font-weight: 700; color: #065f46; margin-bottom: 0.5rem; font-size: 1.05rem; }
     .flow-result-desc { font-size: 0.9rem; color: #047857; margin-bottom: 0.5rem; }
     .flow-result-tool { font-size: 0.85rem; color: #065f46; font-weight: 600; }
+    .flow-result-alt { font-size: 0.8rem; color: #6b7280; margin-top: 0.5rem; font-style: italic; }
     .nested-branch { margin-left: 1.5rem; margin-top: 1rem; border-left: 3px solid #8b5cf6; padding-left: 1rem; }
     .nested-choice { background: #f5f3ff; border: 2px solid #8b5cf6; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.75rem; }
     .nested-choice-title { font-weight: 600; color: #5b21b6; margin-bottom: 0.25rem; }
@@ -731,12 +1079,18 @@
     .sub-result-title { font-weight: 600; color: #92400e; }
     .sub-result-desc { font-size: 0.85rem; color: #78350f; margin-top: 0.25rem; }
     .sub-result-tool { font-size: 0.8rem; font-weight: 600; color: #92400e; margin-top: 0.25rem; }
+    .assumptions-table { width: 100%; border-collapse: collapse; margin-top: 2rem; font-size: 0.85rem; }
+    .assumptions-table th { background: #1e40af; color: white; padding: 0.75rem; text-align: left; }
+    .assumptions-table td { padding: 0.6rem; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    .assumptions-table tr:nth-child(even) { background: #f9fafb; }
+    .assumptions-table .test-name { font-weight: 600; color: #1e40af; }
     @media print { body { padding: 1rem; } .flow-level, .flow-branch { page-break-inside: avoid; } }
   </style>
 </head>
 <body>
   <h1 class="flowchart-title">📊 Statistical Test Selection Guide</h1>
   <p class="flowchart-subtitle">Complete Decision Tree for Marketing Analytics</p>
+  
   <div class="flow-level">
     <div class="flow-level-title">Step 1: Outcome Variable Type</div>
     <div class="flow-branches">
@@ -745,7 +1099,7 @@
         <div class="flow-level-title" style="background:#10b981; font-size:1rem;">Step 1b: Data Structure</div>
         <div class="nested-branch" style="border-left-color:#10b981;">
           <div class="nested-choice" style="background:#d1fae5; border-color:#10b981;"><div class="nested-choice-title" style="color:#065f46;">📈 Time Series Data (Sequential)</div><div style="font-size:0.85rem; color:#047857;">Daily/weekly/monthly data where ORDER matters</div></div>
-          <div class="flow-result"><div class="flow-result-title">✅ ARIMAX Time Series Forecasting</div><div class="flow-result-desc">Use when: Analyzing sequential data over time with potential external factors (e.g., "Forecast sales with ad spend" or "Predict demand with promotion indicators")</div><div class="flow-result-tool">Tool: ARIMAX Time Series Forecasting</div></div>
+          <div class="flow-result"><div class="flow-result-title">✅ ARIMAX Time Series Forecasting</div><div class="flow-result-desc">Analyzing sequential data over time with external factors</div><div class="flow-result-tool">Tool: ARIMAX</div></div>
         </div>
         <div class="nested-branch" style="margin-top:1.5rem; border-left-color:#10b981;">
           <div class="nested-choice" style="background:#d1fae5; border-color:#10b981;"><div class="nested-choice-title" style="color:#065f46;">📋 Cross-Sectional Data</div><div style="font-size:0.85rem; color:#047857;">Different customers/units, order doesn't matter</div></div>
@@ -754,59 +1108,82 @@
             <div class="nested-choice"><div class="nested-choice-title">One Predictor</div></div>
             <div style="margin-left:1rem;">
               <div class="flow-level-title" style="background:#ec4899; font-size:0.95rem;">Step 3: Predictor Type</div>
-              <div class="flow-result"><div class="flow-result-title">✅ Numeric Predictor → Pearson Correlation</div><div class="flow-result-desc">Use when: Both outcome and predictor are numeric (e.g., "As ad spend ↑, does revenue ↑?")</div><div class="flow-result-tool">Tool: Pearson Correlation / Bivariate Regression</div></div>
-              <div class="flow-result"><div class="flow-result-title">✅ Binary Group Predictor</div><div class="sub-result"><div class="sub-result-title">Independent Groups → Welch's t-test</div><div class="sub-result-desc">Different people in each group (e.g., Email A recipients vs. Email B recipients)</div><div class="sub-result-tool">Tool: Independent t-test</div></div><div class="sub-result"><div class="sub-result-title">Paired Groups → Paired t-test</div><div class="sub-result-desc">Same people measured twice (e.g., before/after campaign on same customers)</div><div class="sub-result-tool">Tool: Paired t-test</div></div></div>
-              <div class="flow-result"><div class="flow-result-title">✅ Categorical Predictor (3+ levels) → One-Way ANOVA</div><div class="flow-result-desc">Use when: Comparing means across 3+ groups (e.g., "Which of 4 landing pages generates most revenue?")</div><div class="flow-result-tool">Tool: One-Way ANOVA</div></div>
+              <div class="flow-result"><div class="flow-result-title">Numeric Predictor → Pearson Correlation</div><div class="flow-result-desc">Both outcome and predictor are numeric</div><div class="flow-result-alt">Alt: Bivariate Regression (for prediction equation)</div></div>
+              <div class="flow-result"><div class="flow-result-title">Binary Group Predictor</div>
+                <div class="sub-result"><div class="sub-result-title">Independent Groups → Welch's t-test</div><div class="sub-result-desc">Different people in each group</div></div>
+                <div class="sub-result"><div class="sub-result-title">Paired Groups → Paired t-test</div><div class="sub-result-desc">Same people measured twice</div></div>
+              </div>
+              <div class="flow-result"><div class="flow-result-title">Categorical Predictor (3+ levels) → One-Way ANOVA</div><div class="flow-result-desc">Comparing means across 3+ groups</div></div>
             </div>
           </div>
           <div class="nested-branch" style="margin-top:1.5rem;">
             <div class="nested-choice"><div class="nested-choice-title">Multiple Predictors</div></div>
-            <div class="flow-result"><div class="flow-result-title">✅ Multiple Linear Regression</div><div class="flow-result-desc">Use when: Modeling numeric outcome with multiple predictors simultaneously (e.g., "CLV based on recency, frequency, monetary value, AND segment")</div><div class="flow-result-tool">Tool: Multiple Linear Regression</div></div>
+            <div class="flow-result"><div class="flow-result-title">✅ Multiple Linear Regression</div><div class="flow-result-desc">Modeling numeric outcome with multiple predictors</div><div class="flow-result-alt">Alt: MLR with Interactions (if effects depend on each other)</div></div>
           </div>
         </div>
       </div>
+      
       <div class="flow-branch">
-        <div class="branch-choice"><div class="branch-choice-title">✓ Binary Outcome</div><div class="branch-choice-desc">Examples: Converted (yes/no), clicked ad (yes/no), churned (yes/no)</div></div>
+        <div class="branch-choice"><div class="branch-choice-title">✓✗ Binary Outcome</div><div class="branch-choice-desc">Examples: Converted (yes/no), clicked ad (yes/no), churned (yes/no)</div></div>
         <div class="flow-level-title" style="background:#8b5cf6; font-size:1rem;">Step 2: Number of Predictors</div>
         <div class="nested-branch">
           <div class="nested-choice"><div class="nested-choice-title">One Predictor</div></div>
           <div style="margin-left:1rem;">
-            <div class="sub-result"><div class="sub-result-title">Independent Groups → A/B Proportion Test</div><div class="sub-result-desc">Different people in each group (e.g., Version A vs. Version B conversion rates)</div><div class="sub-result-tool">Tool: A/B Proportion Test</div></div>
-            <div class="sub-result"><div class="sub-result-title">Paired Groups → McNemar Test</div><div class="sub-result-desc">Same people measured twice (e.g., subscription status before/after offer)</div><div class="sub-result-tool">Tool: McNemar Test</div></div>
+            <div class="sub-result"><div class="sub-result-title">Independent Groups → A/B Proportion Test</div><div class="sub-result-desc">Comparing conversion rates between groups</div><div style="font-size:0.75rem; color:#6b7280; margin-top:0.25rem;">Alt: Chi-Square, Logistic Regression</div></div>
+            <div class="sub-result"><div class="sub-result-title">Paired Groups → McNemar Test</div><div class="sub-result-desc">Same people measured twice (before/after)</div></div>
           </div>
         </div>
         <div class="nested-branch" style="margin-top:1.5rem;">
           <div class="nested-choice"><div class="nested-choice-title">Multiple Predictors</div></div>
-          <div class="flow-result"><div class="flow-result-title">✅ Logistic Regression</div><div class="flow-result-desc">Use when: Predicting yes/no outcome with multiple factors (e.g., "What predicts conversion: traffic source, device type, AND time of day?")</div><div class="flow-result-tool">Tool: Logistic Regression</div></div>
+          <div class="flow-result"><div class="flow-result-title">✅ Logistic Regression</div><div class="flow-result-desc">Predicting yes/no outcome with multiple factors</div></div>
         </div>
       </div>
+      
       <div class="flow-branch">
         <div class="branch-choice"><div class="branch-choice-title">🏷️ Categorical Outcome (3+ levels)</div><div class="branch-choice-desc">Examples: Product chosen (A/B/C/D), customer segment (high/med/low)</div></div>
         <div class="flow-level-title" style="background:#8b5cf6; font-size:1rem;">Step 2: Number of Predictors</div>
         <div class="nested-branch">
-          <div class="nested-choice"><div class="nested-choice-title">One Predictor (Association Question)</div></div>
-          <div class="flow-result"><div class="flow-result-title">✅ Chi-square Test of Association</div><div class="flow-result-desc">Use when: Testing if two categorical variables are related (e.g., "Does product choice vary by customer segment?")</div><div class="flow-result-tool">Tool: Chi-square Test</div></div>
+          <div class="nested-choice"><div class="nested-choice-title">One Predictor</div></div>
+          <div class="flow-result"><div class="flow-result-title">✅ Chi-square Test of Association</div><div class="flow-result-desc">Testing if two categorical variables are related</div></div>
         </div>
         <div class="nested-branch" style="margin-top:1rem;">
           <div class="nested-choice"><div class="nested-choice-title">Multiple Predictors</div></div>
-          <div class="flow-result"><div class="flow-result-title">✅ Multinomial Logistic Regression</div><div class="flow-result-desc">Use when: Predicting categorical outcome with 3+ levels using multiple predictors (e.g., "What predicts product choice: price sensitivity, brand loyalty, AND demographics?")</div><div class="flow-result-tool">Tool: Multinomial Logistic Regression</div></div>
+          <div class="flow-result"><div class="flow-result-title">✅ Multinomial Logistic Regression</div><div class="flow-result-desc">Predicting categorical outcome with 3+ levels</div></div>
         </div>
       </div>
     </div>
   </div>
+
+  <div style="page-break-before: always;"></div>
+  
+  <h2 style="color:#1e40af; margin-top:2rem;">📋 Key Assumptions Quick Reference</h2>
+  <table class="assumptions-table">
+    <tr><th>Test</th><th>Key Assumptions</th><th>Common Mistake</th></tr>
+    <tr><td class="test-name">Pearson Correlation</td><td>Linear relationship, continuous variables, no extreme outliers</td><td>Assuming correlation = causation</td></tr>
+    <tr><td class="test-name">Independent t-test</td><td>Independence, approximately normal distributions, continuous outcome</td><td>Using when data is actually paired</td></tr>
+    <tr><td class="test-name">Paired t-test</td><td>Matched pairs, differences are ~normal, continuous outcome</td><td>Using independent t-test instead</td></tr>
+    <tr><td class="test-name">One-Way ANOVA</td><td>Independence, normality, homogeneity of variance</td><td>Running multiple t-tests instead</td></tr>
+    <tr><td class="test-name">A/B Proportion Test</td><td>Independence, random assignment, sufficient sample (np ≥ 10)</td><td>Stopping the test too early ("peeking")</td></tr>
+    <tr><td class="test-name">McNemar Test</td><td>Paired/matched data, binary outcome, independent pairs</td><td>Using chi-square on paired data</td></tr>
+    <tr><td class="test-name">Chi-Square Test</td><td>Independence, expected frequencies ≥ 5 in most cells</td><td>Too many cells with small expected counts</td></tr>
+    <tr><td class="test-name">Multiple Regression</td><td>Linearity, independence of errors, homoscedasticity, no multicollinearity</td><td>Including highly correlated predictors</td></tr>
+    <tr><td class="test-name">Logistic Regression</td><td>Binary outcome, independence, no multicollinearity</td><td>Interpreting coefficients as probabilities</td></tr>
+    <tr><td class="test-name">Multinomial Logistic</td><td>Nominal outcome, independence, no multicollinearity</td><td>Ignoring the reference category</td></tr>
+  </table>
+
   <div style="margin-top:3rem; padding:1.5rem; background:#f3f4f6; border-radius:8px; border-left:4px solid #3b82f6;">
     <h3 style="color:#1e40af; margin-top:0;">💡 Quick Reference Tips</h3>
     <ul style="color:#4b5563; line-height:1.8;">
-      <li><strong>Time Series vs. Cross-Sectional:</strong> Does the ORDER of observations matter? If rows represent different time points in sequence → Time Series (use ARIMAX). If rows represent different people/units → Cross-Sectional.</li>
-      <li><strong>Independent vs. Paired:</strong> Can you draw a line connecting each observation in Group 1 to a specific paired observation in Group 2? If yes → Paired. If no → Independent.</li>
-      <li><strong>Predictor = Independent Variable (X):</strong> What you think influences the outcome (e.g., ad spend, email version, customer segment).</li>
-      <li><strong>Outcome = Dependent Variable (Y):</strong> What you're measuring or predicting (e.g., revenue, conversion, satisfaction).</li>
-      <li><strong>Start with One Predictor:</strong> Build understanding with simple bivariate relationships before adding complexity with multiple predictors.</li>
-      <li><strong>Always Explore First:</strong> Use the Univariate Analyzer to understand distributions, outliers, and data quality before hypothesis testing.</li>
+      <li><strong>Time Series vs. Cross-Sectional:</strong> Does the ORDER matter? Time points in sequence → Time Series. Different people/units → Cross-Sectional.</li>
+      <li><strong>Independent vs. Paired:</strong> Can you connect each observation in Group 1 to a specific match in Group 2? Yes → Paired. No → Independent.</li>
+      <li><strong>Predictor = X (Independent Variable):</strong> What influences the outcome (ad spend, email version, segment).</li>
+      <li><strong>Outcome = Y (Dependent Variable):</strong> What you're measuring (revenue, conversion, satisfaction).</li>
+      <li><strong>Always Check Assumptions:</strong> Each test has requirements. Violating them can lead to misleading conclusions.</li>
     </ul>
   </div>
+  
   <div style="text-align:center; margin-top:2rem; color:#9ca3af; font-size:0.85rem;">
-    <p>Statistical Test Selection Guide • Marketing Analytics Tools</p>
+    <p>Statistical Test Selection Guide • Dr. Baker's Marketing Analytics Tools</p>
     <p>Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
   </div>
   <scr` + `ipt>window.onload = function() { setTimeout(function() { window.print(); }, 500); };</scr` + `ipt>

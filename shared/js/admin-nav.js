@@ -38,10 +38,10 @@
  * Logout handler - should be available globally
  */
 function handleLogout() {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('auth_token');
     localStorage.removeItem('username');
-    localStorage.removeItem('isStaff');
-    localStorage.removeItem('isSuperuser');
+    localStorage.removeItem('is_staff');
+    localStorage.removeItem('is_superuser');
     sessionStorage.clear();
     window.location.href = 'login.html';
 }
