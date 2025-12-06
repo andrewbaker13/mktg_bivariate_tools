@@ -407,7 +407,9 @@ function populateVariableSelector() {
 }
 
 function updateDataSummary() {
-    const summaryText = document.getElementById('data-summary-text');
+    const summaryText = document.getElementById('data-summary');
+    if (!summaryText) return; // Guard against null element
+    
     const getEffectiveType = (varName) => manualOverrides.has(varName) ? manualOverrides.get(varName) : dataTypes.get(varName);
     
     const continuousCount = Array.from(selectedVariables).filter(v => getEffectiveType(v) === DataType.CONTINUOUS).length;

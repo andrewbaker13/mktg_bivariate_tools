@@ -298,6 +298,11 @@
             color: #1e40af;
         }
 
+        .type-badge.crowd-wisdom {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
         .type-badge.closest-guess {
             background: #fef3c7;
             color: #92400e;
@@ -393,6 +398,11 @@
                         <div class="icon">⚡</div>
                         <div class="title">Speed Tap</div>
                         <div class="description">Multiple choice with time pressure</div>
+                    </div>
+                    <div class="game-type-card" data-type="crowd_wisdom">
+                        <div class="icon">🧠</div>
+                        <div class="title">Crowd Wisdom</div>
+                        <div class="description">MC with live answer distribution</div>
                     </div>
                     <div class="game-type-card" data-type="closest_guess">
                         <div class="icon">🎯</div>
@@ -566,7 +576,7 @@
                     config.classList.remove('active');
                 });
                 
-                if (selectedGameType === 'speed_tap') {
+                if (selectedGameType === 'speed_tap' || selectedGameType === 'crowd_wisdom') {
                     document.getElementById('speedTapConfig').classList.add('active');
                 } else if (selectedGameType === 'closest_guess') {
                     document.getElementById('closestGuessConfig').classList.add('active');
@@ -624,7 +634,7 @@
             };
 
             // Build game_config based on type
-            if (selectedGameType === 'speed_tap') {
+            if (selectedGameType === 'speed_tap' || selectedGameType === 'crowd_wisdom') {
                 const options = [];
                 const optionTexts = document.querySelectorAll('.option-text');
                 const correctIndex = parseInt(document.querySelector('input[name="correctOption"]:checked')?.value);
@@ -760,8 +770,10 @@
 
             container.innerHTML = questions.map(q => {
                 const typeBadge = q.game_type === 'speed_tap' ? 'speed-tap' : 
+                                q.game_type === 'crowd_wisdom' ? 'crowd-wisdom' :
                                 q.game_type === 'closest_guess' ? 'closest-guess' : 'push-range';
                 const typeLabel = q.game_type === 'speed_tap' ? '⚡ Speed Tap' :
+                                q.game_type === 'crowd_wisdom' ? '🧠 Crowd Wisdom' :
                                 q.game_type === 'closest_guess' ? '🎯 Closest Guess' : '🔥 Push Range';
                 
                 return `
@@ -837,7 +849,7 @@
             document.getElementById('imageUrl').value = question.image_url || '';
 
             // Fill game-specific fields
-            if (question.game_type === 'speed_tap' && question.game_config.options) {
+            if ((question.game_type === 'speed_tap' || question.game_type === 'crowd_wisdom') && question.game_config.options) {
                 const container = document.getElementById('optionsContainer');
                 container.innerHTML = '';
                 question.game_config.options.forEach((opt, index) => {
