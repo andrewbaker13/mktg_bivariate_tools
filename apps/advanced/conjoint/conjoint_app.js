@@ -422,6 +422,8 @@ function setupEstimationControls() {
 async function runEstimation() {
   const statusEl = document.getElementById('conjoint-estimation-status');
   const estimateBtn = document.getElementById('conjoint-estimate-model');
+  const loadingOverlay = document.getElementById('conjoint-loading-overlay');
+  const loadingProgressText = document.getElementById('loading-progress-text');
   
   try {
     // Capture special alternatives
@@ -430,12 +432,23 @@ async function runEstimation() {
     
     statusEl.textContent = 'Preparing data for estimation...';
     estimateBtn.disabled = true;
-    showLoading();
+    
+    // Show enhanced loading modal
+    loadingOverlay.setAttribute('aria-hidden', 'false');
+    loadingOverlay.style.display = 'flex'; // Ensure visibility
+    loadingProgressText.textContent = 'Building estimation payload...';
     
     // Build request payload
     const payload = buildEstimationPayload();
     
-    statusEl.textContent = 'Estimating individual-level utilities (this may take 30-60 seconds)...';
+    // Update loading modal with dataset info
+    const uniqueRespondents = new Set(payload.data.map(d => d.respondent_id)).size;
+    const uniqueTasks = new Set(payload.data.map(d => d.task_id)).size;
+    document.getElementById('loading-respondents').innerHTML = `Respondents: <strong>${uniqueRespondents}</strong>`;
+    document.getElementById('loading-tasks').innerHTML = `Tasks: <strong>${uniqueTasks}</strong>`;
+    
+    statusEl.textContent = 'Estimating individual-level utilities...';
+    loadingProgressText.textContent = `Estimating utilities for ${uniqueRespondents} respondents...`;
     
     const response = await fetch(`${API_BASE_URL}/conjoint/estimate/`, {
       method: 'POST',
@@ -446,11 +459,26 @@ async function runEstimation() {
     const result = await response.json();
     
     if (!response.ok || !result.success) {
-      throw new Error(result.detail || 'Estimation failed');
+      // Show detailed error including failed respondents
+      let errorMsg = result.detail || 'Estimation failed';
+      if (result.failed_respondents && result.failed_respondents.length > 0) {
+        errorMsg += `\n\nFailed respondents (${result.failed_respondents.length}):\n`;
+        result.failed_respondents.slice(0, 5).forEach(f => {
+          errorMsg += `- ${f.respondent_id}: ${f.error}\n`;
+        });
+        if (result.failed_respondents.length > 5) {
+          errorMsg += `... and ${result.failed_respondents.length - 5} more`;
+        }
+      }
+      throw new Error(errorMsg);
     }
     
     estimationResult = result;
     hasSuccessfulRun = true;
+    
+    // Hide loading modal
+    loadingOverlay.setAttribute('aria-hidden', 'true');
+    loadingOverlay.style.display = 'none';
     
     statusEl.textContent = `✓ Estimated utilities for ${result.respondents.length} respondents in ${result.estimation_time_seconds?.toFixed(1) || '?'} seconds.`;
     
@@ -468,8 +496,11 @@ async function runEstimation() {
   } catch (error) {
     console.error('Estimation error:', error);
     statusEl.textContent = `Error: ${error.message}`;
+    
+    // Hide loading modal
+    loadingOverlay.setAttribute('aria-hidden', 'true');
+    loadingOverlay.style.display = 'none';
   } finally {
-    hideLoading();
     estimateBtn.disabled = false;
   }
 }

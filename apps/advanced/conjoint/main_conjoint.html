@@ -559,9 +559,15 @@
   </footer>
 
   <div id="conjoint-loading-overlay" class="loading-overlay" aria-hidden="true">
-    <div class="loading-content">
-      <p><strong>Estimating individual utilities…</strong></p>
-      <p class="muted">For larger datasets (200+ respondents, 15+ tasks each) this may take 30–60 seconds. Please wait.</p>
+    <div class="loading-modal">
+      <div class="loading-spinner"></div>
+      <h3>Estimating Individual Utilities</h3>
+      <p id="loading-progress-text">Preparing data for estimation...</p>
+      <p class="loading-detail">Processing your conjoint data. This typically takes 10-60 seconds depending on dataset size.</p>
+      <div class="loading-stats">
+        <span id="loading-respondents">Respondents: <strong>--</strong></span>
+        <span id="loading-tasks">Tasks: <strong>--</strong></span>
+      </div>
     </div>
   </div>
 

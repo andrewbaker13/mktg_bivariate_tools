@@ -1,0 +1,292 @@
+{
+  "success": true,
+  "respondents": [
+    {
+      "respondent_id": "R006",
+      "coefficients": {
+        "brand_BrandY": 10.729426263371037,
+        "brand_BrandZ": 45.202482623645636,
+        "brand_Samsung": 27.536937975965827,
+        "brand_iPhone": 60.879124149426964,
+        "screen_size": 18.879974525084087,
+        "storage_256": -0.6545241801075079,
+        "storage_64": 24.828621377060127,
+        "battery_life": -4.451065347546285,
+        "camera_Professional": 67.90727134413648,
+        "camera_Standard": -10.440973818525972,
+        "price": -0.06878857922342897,
+        "ASC_None": 5.076578046831445,
+        "ASC_Competitor_iPhone": 60.87912414942689,
+        "ASC_Competitor_Samsung": 27.53693797596587
+      },
+      "attribute_importance": {
+        "brand": 32.36351764320806,
+        "screen_size": 10.036648805034245,
+        "storage": 13.5469135334398,
+        "battery_life": 2.366199151499162,
+        "camera": 41.6501526600902,
+        "price": 0.036568206728539374
+      },
+      "fit": {
+        "log_likelihood": -8.909932989560435e-07,
+        "null_log_likelihood": -16.15423469757419,
+        "pseudo_r2": 0.9999999448445986,
+        "n_tasks": 12,
+        "n_observations": 47
+      }
+    },
+    {
+      "respondent_id": "R041",
+      "coefficients": {
+        "brand_BrandY": -1.0480755896178504,
+        "brand_BrandZ": -4.165914101486736,
+        "brand_Samsung": -13.369493825575969,
+        "brand_iPhone": -21.676605936430136,
+        "screen_size": 5.736482191395705,
+        "storage_256": -0.2789740019610383,
+        "storage_64": -1.6620540602371707,
+        "battery_life": 0.1400996966230073,
+        "camera_Professional": 7.847505858961929,
+        "camera_Standard": 0.3284795505580011,
+        "price": -0.01285994775480139,
+        "ASC_None": 6.490857752751373,
+        "ASC_Competitor_iPhone": -21.676605936430217,
+        "ASC_Competitor_Samsung": -13.369493825576015
+      },
+      "attribute_importance": {
+        "brand": 58.46594914061679,
+        "screen_size": 15.47238885237721,
+        "storage": 4.4828774596797105,
+        "battery_life": 0.37787565827409014,
+        "camera": 21.16622315210667,
+        "price": 0.0346857369455428
+      },
+      "fit": {
+        "log_likelihood": -5.519817066772076,
+        "null_log_likelihood": -16.729598842477753,
+        "pseudo_r2": 0.6700568185319047,
+        "n_tasks": 12,
+        "n_observations": 49
+      }
+    },
+    {
+      "respondent_id": "R045",
+      "coefficients": {
+        "brand_BrandY": 0.44790181602943546,
+        "brand_BrandZ": -0.38919601279060534,
+        "brand_Samsung": -1.6619665642867059,
+        "brand_iPhone": 0.4604443872203632,
+        "screen_size": 0.5032648165352689,
+        "storage_256": -0.4089279495377023,
+        "storage_64": -0.24650069420534182,
+        "battery_life": 0.06143296755806932,
+        "camera_Professional": 0.4961618622245325,
+        "camera_Standard": -0.5450102368678023,
+        "price": 0.00025796889445209325,
+        "ASC_None": 0.35221614897450015,
+        "ASC_Competitor_iPhone": 1.1411369094297181,
+        "ASC_Competitor_Samsung": -0.46309785542547943
+      },
+      "attribute_importance": {
+        "brand": 51.297353625961584,
+        "screen_size": 12.163597838101516,
+        "storage": 9.883534392846832,
+        "battery_life": 1.4847966454756636,
+        "camera": 25.16448254976238,
+        "price": 0.006234947852022196
+      },
+      "fit": {
+        "log_likelihood": -13.078472423819058,
+        "null_log_likelihood": -16.95274239379196,
+        "pseudo_r2": 0.22853352454595477,
+        "n_tasks": 12,
+        "n_observations": 50
+      }
+    },
+    {
+      "respondent_id": "R049",
+      "coefficients": {
+        "brand_BrandY": -0.545129828750702,
+        "brand_BrandZ": 1.4727104664956157,
+        "brand_Samsung": 0.6392355225291007,
+        "brand_iPhone": 0.005822418699670033,
+        "screen_size": 0.5584702457113049,
+        "storage_256": 0.11929588153743953,
+        "storage_64": -0.808076118987529,
+        "battery_life": 0.3550588447476204,
+        "camera_Professional": -2.1070704378473373,
+        "camera_Standard": -2.45888042584454,
+        "price": -0.011225122141751323,
+        "ASC_None": -1.0289356287730396,
+        "ASC_Competitor_iPhone": 0.16136632844041632,
+        "ASC_Competitor_Samsung": 0.24435056857081638
+      },
+      "attribute_importance": {
+        "brand": 31.88322163926883,
+        "screen_size": 8.824202125855999,
+        "storage": 14.65309574025549,
+        "battery_life": 5.610166408481419,
+        "camera": 38.8519496742884,
+        "price": 0.17736441184986518
+      },
+      "fit": {
+        "log_likelihood": -10.313446321611751,
+        "null_log_likelihood": -17.017280914929533,
+        "pseudo_r2": 0.39394275894196473,
+        "n_tasks": 12,
+        "n_observations": 50
+      }
+    },
+    {
+      "respondent_id": "R116",
+      "coefficients": {
+        "brand_BrandY": -69.45604374606233,
+        "brand_BrandZ": -90.71874982683732,
+        "brand_Samsung": -86.57239769488851,
+        "screen_size": 21.99909758747635,
+        "storage_256": 146.9029455812073,
+        "storage_64": 39.8213176038935,
+        "battery_life": 8.425232079209113,
+        "camera_Professional": -48.116885175090886,
+        "camera_Standard": -106.7646310888164,
+        "price": -0.27981756242016104,
+        "ASC_None": -30.60303988423466,
+        "ASC_Competitor_iPhone": 0.0,
+        "ASC_Competitor_Samsung": -86.57239769488785
+      },
+      "attribute_importance": {
+        "brand": 24.185831467720657,
+        "screen_size": 5.865011011596215,
+        "storage": 39.16466982537434,
+        "battery_life": 2.246186632125564,
+        "camera": 28.463701044782187,
+        "price": 0.07460001840105115
+      },
+      "fit": {
+        "log_likelihood": 1.187317799574753e-09,
+        "null_log_likelihood": -15.355727001356419,
+        "pseudo_r2": 1.0000000000773208,
+        "n_tasks": 12,
+        "n_observations": 44
+      }
+    }
+  ],
+  "failed_respondents": [],
+  "aggregate_summaries": {
+    "mean_attribute_importance": {
+      "brand": 39.63917470335518,
+      "screen_size": 10.472369726593037,
+      "storage": 16.346218190319235,
+      "battery_life": 2.41704489917118,
+      "camera": 31.05930181620597,
+      "price": 0.06589066435540414
+    },
+    "mean_utilities": {
+      "brand": {
+        "BrandY": {
+          "mean": -11.974384217006083,
+          "std": 29.065200700914378,
+          "min": -69.45604374606233,
+          "max": 10.729426263371037
+        },
+        "BrandZ": {
+          "mean": -9.719733370194684,
+          "std": 44.318089109306975,
+          "min": -90.71874982683732,
+          "max": 45.202482623645636
+        },
+        "Samsung": {
+          "mean": -14.68553691725125,
+          "std": 38.35792523862719,
+          "min": -86.57239769488851,
+          "max": 27.536937975965827
+        },
+        "iPhone": {
+          "mean": 9.917196254729216,
+          "std": 30.752853196246853,
+          "min": -21.676605936430136,
+          "max": 60.879124149426964
+        }
+      },
+      "screen": {
+        "size": {
+          "mean": 9.535457873240542,
+          "std": 9.157088411635149,
+          "min": 0.5032648165352689,
+          "max": 21.99909758747635
+        }
+      },
+      "storage": {
+        "256": {
+          "mean": 29.135963066227696,
+          "std": 58.88402395119343,
+          "min": -0.6545241801075079,
+          "max": 146.9029455812073
+        },
+        "64": {
+          "mean": 12.386661621504718,
+          "std": 16.961880897310582,
+          "min": -1.6620540602371707,
+          "max": 39.8213176038935
+        }
+      },
+      "battery": {
+        "life": {
+          "mean": 0.9061516481183052,
+          "std": 4.167503640969121,
+          "min": -4.451065347546285,
+          "max": 8.425232079209113
+        }
+      },
+      "camera": {
+        "Professional": {
+          "mean": 5.205396690476943,
+          "std": 37.033554075899694,
+          "min": -48.116885175090886,
+          "max": 67.90727134413648
+        },
+        "Standard": {
+          "mean": -23.976203203899342,
+          "std": 41.568882143639286,
+          "min": -106.7646310888164,
+          "max": 0.3284795505580011
+        }
+      },
+      "price": {
+        "_value": {
+          "mean": -0.07448664852913812,
+          "std": 0.10543232995255855,
+          "min": -0.27981756242016104,
+          "max": 0.00025796889445209325
+        }
+      },
+      "ASC_None": {
+        "_value": {
+          "mean": -3.9424647128900765,
+          "std": 13.622896563285805,
+          "min": -30.60303988423466,
+          "max": 6.490857752751373
+        }
+      },
+      "ASC_Competitor_iPhone": {
+        "_value": {
+          "mean": 8.101004290173362,
+          "std": 27.746494849315994,
+          "min": -21.676605936430217,
+          "max": 60.87912414942689
+        }
+      },
+      "ASC_Competitor_Samsung": {
+        "_value": {
+          "mean": -14.524740166270533,
+          "std": 38.411561132611695,
+          "min": -86.57239769488785,
+          "max": 27.53693797596587
+        }
+      }
+    }
+  },
+  "mean_pseudo_r2": 0.6585066093883487,
+  "mean_tasks_per_respondent": 12.0,
+  "estimation_time_seconds": 4.511121034622192
+}
