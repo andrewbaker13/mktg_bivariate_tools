@@ -303,6 +303,11 @@
             color: #3730a3;
         }
 
+        .type-badge.word-guess {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
         .type-badge.closest-guess {
             background: #fef3c7;
             color: #92400e;
@@ -403,6 +408,11 @@
                         <div class="icon">🧠</div>
                         <div class="title">Crowd Wisdom</div>
                         <div class="description">MC with live answer distribution</div>
+                    </div>
+                    <div class="game-type-card" data-type="word_guess">
+                        <div class="icon">🔤</div>
+                        <div class="title">Word Guess</div>
+                        <div class="description">Hangman-style letter reveal</div>
                     </div>
                     <div class="game-type-card" data-type="closest_guess">
                         <div class="icon">🎯</div>
@@ -531,6 +541,21 @@
                 </div>
             </div>
 
+            <!-- Word Guess Config -->
+            <div class="form-section game-specific-config" id="wordGuessConfig">
+                <h2>3️⃣ Word Guess Configuration</h2>
+                <div class="form-group">
+                    <label for="wordGuessAnswer">Answer (letters only, spaces allowed) *</label>
+                    <input type="text" id="wordGuessAnswer" placeholder="e.g., REGRESSION MODEL" style="text-transform: uppercase;">
+                    <div class="help-text" id="wordGuessCharCount">Minimum 7 characters required (excluding spaces)</div>
+                </div>
+                <div class="form-group">
+                    <label for="wordGuessHint">Hint/Category (optional)</label>
+                    <input type="text" id="wordGuessHint" placeholder="e.g., Statistical Technique">
+                    <div class="help-text">Displayed to help players guess</div>
+                </div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="button-group">
                 <button type="button" class="btn btn-secondary" onclick="resetForm()">Clear Form</button>
@@ -580,8 +605,28 @@
                     document.getElementById('closestGuessConfig').classList.add('active');
                 } else if (selectedGameType === 'push_range') {
                     document.getElementById('pushRangeConfig').classList.add('active');
+                } else if (selectedGameType === 'word_guess') {
+                    document.getElementById('wordGuessConfig').classList.add('active');
                 }
             });
+        });
+
+        // Word Guess answer character counter
+        const wordGuessAnswerInput = document.getElementById('wordGuessAnswer');
+        const wordGuessCharCount = document.getElementById('wordGuessCharCount');
+        
+        wordGuessAnswerInput.addEventListener('input', function() {
+            const text = this.value.toUpperCase();
+            this.value = text.replace(/[^A-Z\s]/g, ''); // Only allow letters and spaces
+            
+            const charCount = this.value.replace(/\s/g, '').length;
+            if (charCount < 7) {
+                wordGuessCharCount.textContent = `${charCount}/7 characters (minimum 7 required)`;
+                wordGuessCharCount.style.color = '#ef4444';
+            } else {
+                wordGuessCharCount.textContent = `${charCount} characters ✓`;
+                wordGuessCharCount.style.color = '#22c55e';
+            }
         });
 
         // Add option for Speed Tap
@@ -707,6 +752,29 @@
                 
                 if (zoneStart) questionData.game_config.target_zone_start = parseInt(zoneStart);
                 if (zoneEnd) questionData.game_config.target_zone_end = parseInt(zoneEnd);
+            
+            } else if (selectedGameType === 'word_guess') {
+                const answer = document.getElementById('wordGuessAnswer').value.trim().toUpperCase();
+                const hint = document.getElementById('wordGuessHint').value.trim();
+                
+                // Validate answer: only letters and spaces
+                if (!/^[A-Z\s]+$/.test(answer)) {
+                    showAlert('Answer can only contain letters and spaces', 'error');
+                    return;
+                }
+                
+                // Check minimum character count (excluding spaces)
+                const charCount = answer.replace(/\s/g, '').length;
+                if (charCount < 7) {
+                    showAlert(`Answer must have at least 7 letters (currently ${charCount})`, 'error');
+                    return;
+                }
+                
+                questionData.game_config = {
+                    answer: answer,
+                    hint: hint || null,
+                    points_base: 100
+                };
             }
 
             // Save question
@@ -768,9 +836,11 @@
             container.innerHTML = questions.map(q => {
                 const typeBadge = q.game_type === 'speed_tap' ? 'speed-tap' : 
                                 q.game_type === 'crowd_wisdom' ? 'crowd-wisdom' :
+                                q.game_type === 'word_guess' ? 'word-guess' :
                                 q.game_type === 'closest_guess' ? 'closest-guess' : 'push-range';
                 const typeLabel = q.game_type === 'speed_tap' ? '⚡ Speed Tap' :
                                 q.game_type === 'crowd_wisdom' ? '🧠 Crowd Wisdom' :
+                                q.game_type === 'word_guess' ? '🔤 Word Guess' :
                                 q.game_type === 'closest_guess' ? '🎯 Closest Guess' : '🔥 Push Range';
                 
                 return `
@@ -868,6 +938,11 @@
                 document.getElementById('pushCorrectValue').value = question.game_config.correct_value;
                 document.getElementById('targetZoneStart').value = question.game_config.target_zone_start || '';
                 document.getElementById('targetZoneEnd').value = question.game_config.target_zone_end || '';
+            } else if (question.game_type === 'word_guess') {
+                document.getElementById('wordGuessAnswer').value = question.game_config.answer || '';
+                document.getElementById('wordGuessHint').value = question.game_config.hint || '';
+                // Trigger input event to update character counter
+                document.getElementById('wordGuessAnswer').dispatchEvent(new Event('input'));
             }
 
             showAlert('Editing question. Make changes and save.', 'success');
