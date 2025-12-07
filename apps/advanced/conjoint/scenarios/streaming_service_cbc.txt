@@ -1,0 +1,36 @@
+This scenario presents a CBC study for subscription streaming services. The study includes 200 respondents completing 10 choice tasks each.
+
+Context:
+A media company is planning to launch a new streaming platform and wants to understand what features, content offerings, and price points will drive subscriptions in a competitive market.
+
+Study Design:
+- Respondents: 200 streaming service users (mixed current subscribers to various platforms)
+- Tasks: Each respondent viewed 10 choice scenarios
+- Alternatives per task: 3-4 service options + "None/Keep current service"
+- Competitor services: Netflix and Disney+ appeared as fixed alternatives in some tasks
+
+Attributes tested:
+1. Content library size: Small (5K titles), Medium (15K titles), Large (30K titles)
+2. Original content: None, Moderate (5 originals/month), Extensive (15 originals/month)
+3. Ad-free experience: With ads, Ad-free
+4. Simultaneous streams: 1 device, 2 devices, 4 devices
+5. Video quality: HD, 4K Ultra HD
+6. Monthly price: $5.99, $9.99, $14.99, $19.99
+
+Special features:
+- "None" means the respondent would not subscribe (keeping their current service or going without)
+- Competitor platforms (Netflix, Disney+) serve as benchmarks
+
+Research questions:
+- What drives streaming service choice: content quantity, quality, or price?
+- How much are customers willing to pay for ad-free experience?
+- Can a new entrant compete on value or must they focus on exclusive originals?
+- Which customer segments prioritize different bundles (e.g., families needing 4 streams vs. individuals)?
+- What pricing tier maximizes revenue vs. subscriber count?
+
+Use cases:
+✓ Launch strategy: Choose optimal feature bundle for market entry
+✓ Pricing optimization: Find profit-maximizing price point
+✓ Competitive positioning: Understand where new service can differentiate
+✓ Segmentation: Identify distinct customer groups (binge-watchers, casual viewers, families)
+✓ Feature prioritization: Invest in originals vs. library size vs. technical quality

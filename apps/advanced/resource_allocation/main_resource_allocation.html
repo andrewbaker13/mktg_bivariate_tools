@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketing Resource Allocation Optimizer</title>
+
+  <!-- Global shared styles -->
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+
+  <!-- App-specific styles -->
+  <link rel="stylesheet" href="main_resource_allocation.css">
+
+  <!-- Plotly for visualization -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+  <!-- MathJax for LaTeX rendering (Statistical Equations) -->
+  <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-290ZJ9RE04');
+  </script>
+</head>
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../../admin_pages/login.html">Login</a>
+        <a href="../../../admin_pages/register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="intro hero-header">
+    <div class="hero-header__top">
+      <h1>Marketing Resource Allocation Optimizer</h1>
+      <div class="hero-context">
+        <span class="badge">Advanced</span>
+      </div>
+    </div>
+    <p class="hero-header__lede">
+      Optimize budget allocation across resources using fitted response models, constraints, and scenario war-gaming to maximize marketing outcomes.
+    </p>
+  </header>
+
+  <main class="app-main">
+    <!-- ======== QUICK START GUIDE ======== -->
+    <section class="quick-start-section" aria-labelledby="quick-start-heading">
+      <details class="quick-start-details" open>
+        <summary class="quick-start-summary">
+          <span class="quick-start-icon">🚀</span>
+          <h2 id="quick-start-heading" style="display: inline; margin: 0;">Quick Start Guide</h2>
+          <span class="quick-start-toggle">(click to collapse)</span>
+        </summary>
+        <div class="quick-start-content">
+          <div class="quick-start-grid">
+            <div class="quick-start-step">
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <h3>Upload Your Data</h3>
+                <p>Provide a CSV with 3 columns: <code>resource_id</code>, <code>input</code> (spending/allocation), and <code>output</code> (results). Each row is one historical observation.</p>
+                <p class="step-example"><strong>Example:</strong> Sales rep data with monthly spending and revenue, or ad channel data with impressions and conversions.</p>
+              </div>
+            </div>
+            
+            <div class="quick-start-step">
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <h3>Fit Response Models</h3>
+                <p>Choose how to model each resource's response curve. <strong>Recommended:</strong> "Auto-select BEST model for EACH resource" to let the tool pick optimal models.</p>
+                <p class="step-example"><strong>What it does:</strong> Fits mathematical functions (linear, logarithmic, power, etc.) that predict output from input for each resource.</p>
+              </div>
+            </div>
+            
+            <div class="quick-start-step">
+              <div class="step-number">3</div>
+              <div class="step-content">
+                <h3>Set Constraints</h3>
+                <p>Define business rules: total budget, min/max per resource, equity requirements, etc. Start simple (just budget), then add advanced constraints as needed.</p>
+                <p class="step-example"><strong>Pro tip:</strong> Use "Reset All" button to quickly return to defaults when experimenting.</p>
+              </div>
+            </div>
+            
+            <div class="quick-start-step">
+              <div class="step-number">4</div>
+              <div class="step-content">
+                <h3>Optimize & Analyze</h3>
+                <p>Click "Run optimization" to find the best allocation. Review results in tables and charts, compare scenarios, and export recommendations as CSV.</p>
+                <p class="step-example"><strong>Key output:</strong> Optimal allocation per resource, predicted total output, ROI, and marginal returns analysis.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="quick-start-footer">
+            <p><strong>💡 New to optimization?</strong> Try loading a preset scenario below to see example data and explore the tool risk-free.</p>
+          </div>
+        </div>
+      </details>
+    </section>
+    
+    <!-- ======== TEST OVERVIEW & EQUATIONS ======== -->
+    <section class="test-overview" aria-labelledby="overview-heading">
+      <h2 id="overview-heading">OPTIMIZATION OVERVIEW &amp; METHODOLOGY</h2>
+      <div class="card">
+        <p>
+          This tool helps marketers allocate limited budgets across multiple resources (sales reps, ad channels, regions, etc.) 
+          to maximize total output (revenue, conversions, leads). The optimization finds the best way to distribute your budget 
+          based on each resource's individual response curve—the relationship between spending and results.
+        </p>
+        
+        <p><strong>The Four-Step Process:</strong></p>
+        <ol>
+          <li><strong>Model Fitting:</strong> For each resource \(i\), fit a response function \(Y_i = f_i(X_i)\) where:
+            <ul>
+              <li>\(X_i\) = input allocation (dollars, hours, impressions) for resource \(i\)</li>
+              <li>\(Y_i\) = predicted output (sales, conversions, leads) from resource \(i\)</li>
+              <li>\(f_i(\cdot)\) = the model type (linear, log, power, quadratic, sqrt, logistic, or bounded log)</li>
+            </ul>
+          </li>
+          <li><strong>Constraint Definition:</strong> Set business rules like total budget \(B\), minimum/maximum per resource, 
+              equity requirements, or output ceilings.</li>
+          <li><strong>Optimization:</strong> Find allocations \(x_1, x_2, \ldots, x_n\) that maximize total predicted output 
+              while respecting all constraints.</li>
+          <li><strong>Scenario Comparison:</strong> Save multiple allocations and compare outcomes, ROI, and marginal returns 
+              to support decision-making.</li>
+        </ol>
+
+        <p class="equation">
+          <strong>Objective function (maximize total output):</strong>
+          $$\text{Maximize } Z = \sum_{i=1}^{n} f_i(x_i)$$
+          where:
+        </p>
+        <ul style="margin-left: 2rem; margin-top: -0.5rem;">
+          <li>\(Z\) = total predicted output across all resources (the objective we're maximizing)</li>
+          <li>\(n\) = number of resources (reps, channels, regions, etc.)</li>
+          <li>\(f_i(x_i)\) = predicted output from resource \(i\) given allocation \(x_i\)</li>
+          <li>\(x_i\) = decision variable (how much to allocate to resource \(i\))</li>
+        </ul>
+
+        <p class="equation">
+          <strong>Subject to constraints:</strong>
+          $$\sum_{i=1}^{n} x_i \leq B$$
+          $$L_i \leq x_i \leq U_i \quad \forall i$$
+          where:
+        </p>
+        <ul style="margin-left: 2rem; margin-top: -0.5rem;">
+          <li>\(B\) = total budget available for allocation</li>
+          <li>\(L_i\) = minimum required allocation for resource \(i\) (can be 0)</li>
+          <li>\(U_i\) = maximum allowed allocation for resource \(i\)</li>
+        </ul>
+
+        <details class="intro-notes" style="margin-top:12px;">
+          <summary>Optimization method: Greedy marginal returns allocator</summary>
+          <p>
+            This tool uses a <strong>greedy marginal returns algorithm</strong>: it repeatedly allocates small budget increments 
+            ($100 at a time) to whichever resource currently offers the highest marginal return—the additional output per 
+            additional dollar spent at that resource's current allocation.
+          </p>
+          <p>
+            <strong>Why this method?</strong> It's transparent, respects all constraints naturally, and guarantees feasible 
+            solutions. For smooth response curves with diminishing returns (most marketing scenarios), it often finds the 
+            optimal or near-optimal allocation. The diagnostics section reports iterations, convergence, and constraint 
+            satisfaction for your specific allocation.
+          </p>
+          <p>
+            <strong>Marginal returns intuition:</strong> In an optimal allocation, marginal returns are roughly equal across 
+            all funded resources. If one resource had much higher marginal returns than another, you could improve total output 
+            by shifting budget from the low-return resource to the high-return one.
+          </p>
+        </details>
+
+        <details class="interpretation-aid">
+          <summary>Model types and when to use them</summary>
+          <div class="help-content">
+            <p><strong>Linear:</strong> \(Y = a + bX\) — Constant returns. Use when each additional dollar produces roughly the same output increase.</p>
+            <p><strong>Logarithmic:</strong> \(Y = a + b \cdot \ln(X)\) — Strong diminishing returns. Output increases quickly at first, then plateaus.</p>
+            <p><strong>Power:</strong> \(Y = a \cdot X^b\) — Flexible growth/decay. \(b > 1\) = accelerating returns, \(b < 1\) = diminishing returns.</p>
+            <p><strong>Quadratic:</strong> \(Y = a + bX + cX^2\) — Non-monotonic. Can capture peak performance at mid-range spending.</p>
+            <p><strong>Square Root:</strong> \(Y = a + b\sqrt{X}\) — Moderate diminishing returns. Less aggressive than logarithmic.</p>
+            <p><strong>Logistic (S-curve):</strong> \(Y = L/(1 + e^{-k(X-X_0)})\) — Slow start, rapid growth, then saturation at ceiling \(L\). Perfect for market saturation scenarios.</p>
+            <p><strong>Bounded Logarithmic:</strong> \(Y = \text{ceiling} - (\text{ceiling} - a) \cdot e^{-bX}\) — Exponential approach to a known ceiling. Use when you can specify maximum achievable output (e.g., total market size).</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ======== MARKETING SCENARIOS ======== -->
+    <section class="scenario-section" aria-labelledby="scenarios-heading">
+      <h2 id="scenarios-heading">MARKETING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Load a preset marketing use case:</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Upload your own data (no preset)</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>
+              Download scenario dataset
+            </button>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>
+            Select a preset to auto-populate historical data for common resource allocation problems (sales team budgets, 
+            channel spend, regional marketing). Each scenario includes fitted models and suggested constraints.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======== INPUTS & SETTINGS ======== -->
+    <section class="inputs-panel" aria-labelledby="inputs-heading">
+      <h2 id="inputs-heading">DATA UPLOAD &amp; MODEL FITTING</h2>
+      
+      <!-- Upload Card -->
+      <div class="card data-entry-card">
+        <div class="input-header">
+          <h3>Upload Historical Data</h3>
+          <p>
+            Provide a CSV file with columns: <code>resource_id</code> (name/label for each resource), 
+            <code>input</code> (historical budget/hours), and <code>output</code> (historical sales/conversions/leads).
+          </p>
+        </div>
+        
+        <div id="raw-dropzone" class="dropzone" role="button" tabindex="0">
+          <p class="dropzone-title">Drag &amp; Drop historical data file (.csv, .tsv, .txt)</p>
+          <p class="dropzone-note">
+            Three columns: <code>resource_id</code>, <code>input</code>, <code>output</code>. 
+            Each row represents one resource's historical performance. Up to 500 resources supported.
+          </p>
+          <button type="button" id="raw-browse" class="secondary">Browse files</button>
+        </div>
+        <input type="file" id="raw-input" accept=".csv,.tsv,.txt" hidden>
+        
+        <div class="template-buttons">
+          <button type="button" id="template-download">Download data template</button>
+        </div>
+        
+        <p id="upload-status" class="upload-status">No file uploaded yet.</p>
+      </div>
+
+      <!-- Model Fitting Card -->
+      <div class="card model-fitting-card hidden" id="model-fitting-card">
+        <h3>Model Fitting Options</h3>
+        <p>Choose how to fit response models to your data. Each model predicts output \(Y\) from input \(X\).</p>
+        
+        <div class="model-selection">
+          <label>
+            <input type="radio" name="model-strategy" value="auto-unified" checked>
+            <strong>Auto-select ONE model for ALL resources</strong> — Fit all 5 models to combined data, pick the one with lowest AIC (assumes all resources follow same response pattern)
+          </label>
+          <label>
+            <input type="radio" name="model-strategy" value="auto-individual">
+            <strong>Auto-select BEST model for EACH resource individually</strong> — Fit all 5 models to each resource separately, pick best for each (allows different response patterns per resource)
+          </label>
+          <label>
+            <input type="radio" name="model-strategy" value="manual">
+            <strong>Manual selection</strong> — You choose one model type to apply to all resources
+          </label>
+        </div>
+
+        <div id="manual-model-select" class="manual-model-select hidden">
+          <label for="model-type-select">Select model type:</label>
+          <select id="model-type-select">
+            <option value="linear">Linear: Y = a + bX</option>
+            <option value="log">Logarithmic: Y = a + b·ln(X) (diminishing returns)</option>
+            <option value="power">Power: Y = a·X^b (exponential growth/decay)</option>
+            <option value="quadratic">Quadratic: Y = a + bX + cX² (non-monotonic)</option>
+            <option value="sqrt">Square root: Y = a + b·√X (moderate diminishing returns)</option>
+            <option value="logistic">Logistic: Y = L/(1+e^(-k(X-X₀))) (S-curve with saturation)</option>
+            <option value="bounded_log">Bounded Logarithmic: Y = ceiling - (ceiling-a)·e^(-bX) (known ceiling)</option>
+          </select>
+          
+          <div id="bounded-log-ceiling" class="hidden" style="margin-top: 1rem; padding: 1rem; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 4px;">
+            <label for="output-ceiling" style="font-weight: 600; color: #e65100;">
+              ⚠️ Known ceiling required for Bounded Logarithmic:
+            </label>
+            <input type="number" id="output-ceiling" min="0" step="1000" placeholder="e.g., 500000" required style="margin-top: 0.5rem;">
+            <p class="help-text" style="margin-top: 0.5rem; color: #e65100;">
+              Enter the maximum achievable output (e.g., total market size, capacity limit). This model approaches this ceiling asymptotically.
+            </p>
+          </div>
+        </div>
+
+        <button type="button" id="fit-models-btn" class="primary">Fit models to data</button>
+        <p id="model-fit-status" class="upload-status">Models not yet fitted.</p>
+      </div>
+
+      <!-- Model Fit Results -->
+      <div class="card model-results-card hidden" id="model-results-card">
+        <h3>Model Fit Results</h3>
+        <p class="section-explanation">
+          <strong>Why this matters:</strong> Before optimizing, we need mathematical models that predict each resource's output 
+          based on input. The R² value shows how well each model fits the historical data (1.0 = perfect fit, 0.0 = no relationship). 
+          Better fits lead to more reliable optimization. The model type (Linear, Log, Power, etc.) determines the shape of 
+          diminishing returns.
+        </p>
+        <div id="model-fit-table-container"></div>
+        <details class="model-details">
+          <summary>Model fit diagnostics</summary>
+          <div id="model-diagnostics-content"></div>
+        </details>
+      </div>
+
+      <!-- Constraints Card -->
+      <div class="card constraints-card hidden" id="constraints-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h3 style="margin: 0;">Optimization Constraints</h3>
+          <button type="button" id="reset-all-btn" class="secondary" style="padding: 0.5rem 1rem;">🔄 Reset All</button>
+        </div>
+        <p class="section-explanation">
+          <strong>Set the rules:</strong> Constraints define the business rules and practical limits for your allocation. 
+          The optimizer will find the best allocation that respects all these constraints. Start with basic constraints 
+          (total budget, min/max per resource), then explore advanced options for more realistic scenarios.
+        </p>
+        
+        <div class="constraint-grid">
+          <div class="constraint-item">
+            <label for="total-budget">Total budget available <span class="help-text">(total $ to allocate across all resources)</span></label>
+            <input type="number" id="total-budget" min="0" step="1" value="100000">
+          </div>
+          
+          <div class="constraint-item">
+            <label for="min-per-resource">Minimum per resource <span class="help-text">(ensure every resource gets at least this much)</span></label>
+            <input type="number" id="min-per-resource" min="0" step="1" value="0">
+          </div>
+          
+          <div class="constraint-item">
+            <label for="max-per-resource">Maximum per resource <span class="help-text">(leave blank for no maximum)</span></label>
+            <input type="number" id="max-per-resource" min="0" step="1" placeholder="No limit">
+          </div>
+
+          <div class="constraint-item">
+            <label>
+              <input type="checkbox" id="integer-constraint">
+              Force integer allocations <span class="help-text">(round to whole dollars, no cents)</span>
+            </label>
+          </div>
+          
+          <div class="constraint-item">
+            <label>
+              <input type="checkbox" id="allow-extrapolation" checked>
+              <strong>Allow extrapolation beyond historical range</strong>
+            </label>
+            <p class="help-text" style="margin: 0.5rem 0 0 1.5rem; font-style: italic; color: #666;">
+              <strong>⚠️ OVERRIDES min/max per resource:</strong> When unchecked, all allocations are strictly capped at each resource's historical range (min to max observed input), regardless of the "Maximum per resource" and "Minimum per resource" settings above. This ensures predictions stay within reliable data ranges but may conflict with budget requirements.
+            </p>
+          </div>
+        </div>
+        
+        <details class="cost-structure-details" style="margin-top: 1.5rem;">
+          <summary><strong>Cost Structure (Variable & Fixed Costs)</strong></summary>
+          <div class="cost-structure-panel" style="padding: 1rem; background: #f8f9fa; border-radius: 4px; margin-top: 0.5rem;">
+            <p class="help-text" style="margin-bottom: 1rem;">
+              <strong>Variable costs:</strong> If your input units are NOT dollars (e.g., hours, impressions, people), specify the cost per unit. 
+              This converts input units to actual budget dollars (e.g., $50/hour means 100 hours = $5,000 budget).<br>
+              <strong>Fixed costs:</strong> One-time or baseline costs incurred for activating each resource (e.g., salary, platform fees). 
+              These are added to the total budget calculation when a resource receives any allocation above the minimum.
+            </p>
+            
+            <div class="constraint-item">
+              <label for="variable-cost-per-unit">Variable cost per input unit <span class="help-text">(leave 1.0 if inputs are already in dollars)</span></label>
+              <input type="number" id="variable-cost-per-unit" min="0" step="0.01" value="1.0">
+            </div>
+            
+            <div class="constraint-item">
+              <label for="fixed-cost-per-resource">Fixed cost per active resource <span class="help-text">(e.g., $30,000 salary per rep; leave 0 if no fixed costs)</span></label>
+              <input type="number" id="fixed-cost-per-resource" min="0" step="1" value="0">
+            </div>
+            
+            <div id="cost-summary" class="info-text" style="margin-top: 1rem; display: none;">
+              <!-- Will show calculated costs after optimization -->
+            </div>
+          </div>
+        </details>
+
+        <details class="advanced-constraints">
+          <summary>Advanced constraints</summary>
+          <div class="constraint-grid">
+            <div class="constraint-item">
+              <label>
+                <input type="checkbox" id="cardinality-constraint">
+                Limit number of resources funded <span class="help-text">(focus budget on top performers)</span>
+              </label>
+              <p class="help-text" style="margin: 0.5rem 0 0 1.5rem; font-style: italic; color: #666;">
+                <strong>What it does:</strong> Forces the optimizer to allocate $0 to some resources. For example, max=5 means only the 5 most productive resources receive funding, all others get $0.
+              </p>
+              <div id="cardinality-inputs" class="hidden">
+                <label for="min-resources">Min resources to fund: <span class="help-text">(ensure diversity)</span></label>
+                <input type="number" id="min-resources" min="0" step="1" value="0">
+                <label for="max-resources">Max resources to fund: <span class="help-text">(concentrate spending)</span></label>
+                <input type="number" id="max-resources" min="1" step="1" value="999">
+              </div>
+            </div>
+
+            <div class="constraint-item">
+              <label>
+                <input type="checkbox" id="equity-constraint">
+                Apply equity constraint <span class="help-text">(prevent extreme inequality in allocations)</span>
+              </label>
+              <p class="help-text" style="margin: 0.5rem 0 0 1.5rem; font-style: italic; color: #666;">
+                <strong>What it does:</strong> Enforces max_allocation ≤ ratio × min_allocation. For example, ratio=10 means if the smallest funded resource gets $1,000, the largest can't exceed $10,000. Resources with $0 are excluded from this comparison.
+              </p>
+              <div id="equity-inputs" class="hidden">
+                <label for="equity-ratio">Max allocation ratio (max/min): <span class="help-text">(e.g., 10 means largest can't exceed 10× smallest)</span></label>
+                <input type="number" id="equity-ratio" min="1" max="100" step="0.5" value="10">
+              </div>
+            </div>
+
+            <div class="constraint-item">
+              <label>
+                <input type="checkbox" id="baseline-constraint">
+                Limit deviation from baseline <span class="help-text">(avoid drastic changes from historical spending)</span>
+              </label>
+              <p class="help-text" style="margin: 0.5rem 0 0 1.5rem; font-style: italic; color: #666;">
+                <strong>What it does:</strong> Constrains each resource's allocation to stay within ±X% of its maximum historical input. For example, 50% means if a resource's max observed input was $10,000, allocation must be between $5,000-$15,000.
+              </p>
+              <div id="baseline-inputs" class="hidden">
+                <label for="baseline-deviation">Max % deviation from max historical input: <span class="help-text">(e.g., 50% means ±50% of max historical)</span></label>
+                <input type="number" id="baseline-deviation" min="0" max="100" step="5" value="50">
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <button type="button" id="optimize-btn" class="primary">Run optimization</button>
+      </div>
+    </section>
+
+    <!-- ======== OPTIMIZATION RESULTS ======== -->
+    <section class="results-section hidden" id="results-section" aria-labelledby="results-heading">
+      <h2 id="results-heading">OPTIMIZATION RESULTS</h2>
+      
+      <!-- Summary Card -->
+      <div class="card results-summary-card">
+        <h3>Allocation Summary</h3>
+        <p class="section-explanation">
+          <strong>The optimal solution:</strong> Based on your models and constraints, this is the best way to allocate 
+          your budget. The optimizer found allocations that maximize total predicted output while respecting all constraints. 
+          Compare the optimal allocations to historical spending to identify opportunities.
+        </p>
+        <div id="results-summary" class="results-summary"></div>
+        
+        <div class="scenario-actions">
+          <button type="button" id="save-scenario-btn" class="secondary">Save this scenario</button>
+          <button type="button" id="export-allocation-btn" class="secondary">Export allocation as CSV</button>
+        </div>
+      </div>
+
+      <!-- Allocation Table -->
+      <div class="card allocation-table-card">
+        <h3>Resource Allocation Details</h3>
+        <div class="table-controls">
+          <p class="info-text">💡 <strong>Marginal Return:</strong> Shows the additional output you get per additional dollar spent at the current allocation. 
+          In an optimal solution, marginal returns are roughly equal across all funded resources (you can't improve by shifting money between them).</p>
+        </div>
+        <div id="allocation-table-container" class="allocation-table-container"></div>
+      </div>
+    </section>
+
+    <!-- ======== VISUAL OUTPUT ======== -->
+    <section class="visual-output hidden" id="visual-section" aria-labelledby="visual-heading">
+      <h2 id="visual-heading">VISUAL OUTPUT</h2>
+      
+      <div class="card">
+        <article class="chart-card">
+          <h3>Response Curves with Optimal Allocations</h3>
+          <div class="chart-controls" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+            <label for="response-curve-filter">View:</label>
+            <select id="response-curve-filter" style="flex: 0 0 250px;">
+              <option value="all">All resources</option>
+            </select>
+          </div>
+          <div id="response-curves-chart" class="chart-placeholder"></div>
+          <p class="chart-note">
+            Each curve shows a resource's predicted output for different input levels. 
+            <strong>Red diamonds</strong> indicate the optimal allocation from the current solution. 
+            <strong>Grey circles</strong> show historical data points used to fit each model.
+          </p>
+          <div id="extrapolation-warning" class="info-text" style="display: none; margin-top: 1rem; background: #fff3cd; border-left: 4px solid #ffc107;">
+            ⚠️ <strong>Extrapolation Warning:</strong> One or more resources are allocated beyond their historical maximum. 
+            Predictions outside the observed range may be less reliable. Consider enabling "Allow extrapolation" constraint or reviewing model fit.
+          </div>
+        </article>
+      </div>
+
+      <div class="card">
+        <article class="chart-card">
+          <h3>Allocation Comparison</h3>
+          <div id="allocation-bar-chart" class="chart-placeholder"></div>
+          <p class="chart-note">
+            Compare allocated budgets across resources. Longer bars indicate higher allocations.
+          </p>
+        </article>
+      </div>
+
+      <div class="card">
+        <article class="chart-card">
+          <h3>Marginal Returns Analysis</h3>
+          <div id="marginal-returns-chart" class="chart-placeholder"></div>
+          <p class="chart-note">
+            Shows the marginal return (additional output per additional dollar) at the optimal allocation point. 
+            In an efficient allocation, marginal returns should be equalized across funded resources.
+          </p>
+        </article>
+      </div>
+      
+      <div class="chart-container">
+        <article class="chart-article">
+          <h3>Scenario Comparison</h3>
+          <div id="scenario-comparison-chart" class="chart-placeholder"></div>
+          <p class="chart-note">
+            Compares predicted total output under different allocation strategies: (1) Historical averages, 
+            (2) Current levels (most recent data), (3) Budget-only optimization (no other constraints), 
+            and (4) Your constrained optimization (with all active constraints).
+          </p>
+          <details class="info-section" style="margin-top: 15px;">
+            <summary style="cursor: pointer; color: #1976d2; font-weight: 500;">▸ Additional Info: What Each Strategy Represents</summary>
+            <div style="padding: 15px; background: #f5f5f5; border-radius: 4px; margin-top: 10px;">
+              <p><strong>Historical Averages:</strong> Allocates the average spending level from your historical data to each resource. Represents the "typical" allocation pattern based on past behavior. This baseline shows what output you'd expect if you maintained average historical spending.</p>
+              
+              <p><strong>Current Levels:</strong> Uses the most recent allocation (last row of your data) for each resource. Shows the output from your current/latest spending pattern. Useful for comparing "where we are now" versus optimized strategies.</p>
+              
+              <p><strong>Budget-Only Optimization:</strong> Runs optimization with <em>only</em> the total budget constraint active—no min/max per resource, no cardinality limits, no equity requirements, no baseline maintenance, and extrapolation enabled. This represents the theoretical maximum output achievable if you had complete flexibility. The gap between this and constrained optimization shows the "cost" of your constraints.</p>
+              
+              <p><strong>Constrained Optimization:</strong> Your actual optimization result with all active constraints applied. Active constraints include:</p>
+              <ul id="active-constraints-list" style="margin: 5px 0 0 20px; padding: 0;">
+                <li>Total Budget constraint</li>
+              </ul>
+              <p style="margin-top: 8px; font-size: 0.9em; color: #666;">This scenario represents the realistic optimized allocation given your business rules and operational constraints.</p>
+            </div>
+          </details>
+        </article>
+      </div>
+
+      <details class="visual-settings">
+        <summary>Visual output settings</summary>
+        <div class="settings-grid">
+          <label>
+            <input type="checkbox" id="show-historical" checked>
+            Show historical data points on response curves
+          </label>
+          <label for="chart-resources-limit">Max resources to display in charts:</label>
+          <input type="number" id="chart-resources-limit" min="5" max="100" value="20">
+          <p class="help-text">
+            These settings update charts immediately when changed. Use the dropdown on each chart to view individual resources.
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ======== DIAGNOSTICS ======== -->
+    <section class="diagnostics-section hidden" id="diagnostics-section" aria-labelledby="diagnostics-heading">
+      <h2 id="diagnostics-heading">OPTIMIZATION DIAGNOSTICS</h2>
+      <div class="card">
+        <details class="diagnostics-details">
+          <summary>Technical details &amp; practical considerations (click to expand)</summary>
+          
+          <div id="diagnostics-content">
+            <!-- Will be dynamically populated with:
+                 - Optimization method used (SLSQP vs Greedy)
+                 - Convergence status
+                 - Constraint satisfaction summary
+                 - Model fit quality warnings
+                 - Practical considerations for managers
+            -->
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ======== SCENARIO COMPARISON ======== -->
+    <section class="scenario-comparison-section hidden" id="comparison-section" aria-labelledby="comparison-heading">
+      <h2 id="comparison-heading">SCENARIO COMPARISON &amp; WAR GAMING</h2>
+      
+      <div class="card">
+        <h3>Saved Scenarios</h3>
+        <div id="saved-scenarios-list" class="scenarios-list"></div>
+        <button type="button" id="compare-scenarios-btn" class="secondary" disabled>Compare selected scenarios</button>
+      </div>
+
+      <div class="card comparison-results-card hidden" id="comparison-results-card">
+        <h3>Scenario Comparison Results</h3>
+        <div id="scenario-comparison-table"></div>
+        <div id="scenario-comparison-charts"></div>
+      </div>
+
+      <div class="card sensitivity-card">
+        <h3>Sensitivity Analysis</h3>
+        <p>Test how total output changes as you vary the total budget.</p>
+        <div class="sensitivity-controls">
+          <label for="sensitivity-min">Budget range min (%):</label>
+          <input type="number" id="sensitivity-min" min="0" max="100" value="50">
+          <label for="sensitivity-max">Budget range max (%):</label>
+          <input type="number" id="sensitivity-max" min="100" max="500" value="200">
+          <button type="button" id="run-sensitivity-btn" class="secondary">Run sensitivity analysis</button>
+        </div>
+        <div id="sensitivity-chart-container" class="hidden">
+          <div id="sensitivity-chart" class="chart-placeholder"></div>
+          <p class="chart-note">
+            Shows how total output scales with budget. Helps identify diminishing returns thresholds 
+            and evaluate the value of securing additional budget.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======== FOOTER ======== -->
+  <footer class="app-footer">
+    <p class="citation">
+      <strong>Created:</strong> <span id="created-date">2025-12-07</span> | 
+      <strong>Last updated:</strong> <span id="last-updated">2025-12-07</span>
+    </p>
+    <p class="citation">
+      Baker, A. (2025). <em>Marketing Resource Allocation Optimizer</em>. 
+      Retrieved from <a href="../../../index.html">Statistical Analysis Tool Suite</a>
+    </p>
+    <p><a href="../../../index.html">← Back to Stat Analysis Selection</a></p>
+  </footer>
+
+  <!-- Shared JavaScript utilities -->
+  <script src="../../../shared/js/auth_bar.js"></script>
+  <script src="../../../shared/js/auth_tracking.js"></script>
+  <script src="../../../shared/js/csv_utils.js"></script>
+  <script src="../../../shared/js/ui_utils.js"></script>
+  <script src="../../../shared/js/stats_utils.js"></script>
+
+  <!-- Scenario data -->
+  <script src="scenarios/scenario_manifest.js"></script>
+
+  <!-- App-specific JavaScript -->
+  <script src="resource_allocation_app.js"></script>
+</body>
+</html>

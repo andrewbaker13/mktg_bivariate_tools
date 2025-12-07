@@ -131,7 +131,8 @@
           <a href="#categorical" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📊 Categorical Analysis</a>
           <a href="#modeling" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">🔮 Predictive Modeling</a>
           <a href="#timeseries" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📈 Time Series</a>
-          <a href="#clustering" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">🎯 Clustering</a>
+          <a href="#optimization" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">🎯 Optimization</a>
+          <a href="#clustering" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📊 Clustering</a>
           <a href="#probability" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">🎲 Probability & Simulation</a>
           <a href="#planning" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📐 Study Design</a>
           <a href="#test-picker" style="padding:0.4rem 0.8rem; background:#fef3c7; border-radius:4px; text-decoration:none; color:#92400e; font-size:0.9rem;">💡 Test Selector</a>
@@ -437,11 +438,38 @@
       </div>
     </section>
 
+    <!-- Advanced Optimization -->
+    <section class="scenario-section" style="margin-top:2rem;">
+      <div class="card" style="padding:2rem;">
+        <div class="tool-directory">
+          <h3 id="optimization" style="scroll-margin-top:2rem;">🎯 Advanced Optimization</h3>
+          <article class="tool-card">
+            <h4>
+              <a href="apps/advanced/resource_allocation/main_resource_allocation.html">Marketing Resource Allocation Optimizer</a>
+              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">NEW</span>
+              <span class="badge" style="background:#fbbf24; color:#78350f; font-size:0.75rem; margin-left:0.25rem;">Advanced</span>
+            </h4>
+            <p>
+              Optimize budget allocation across multiple resources (sales reps, ad channels, regions, etc.) to maximize total output using fitted response models and constraints.
+              Perfect for <em>marketing budget optimization</em>, <em>sales territory allocation</em>, or <em>channel mix planning</em>.
+              Includes 7 response curve models (linear, logarithmic, power, quadratic, sqrt, logistic, bounded log), multi-start numerical optimization with gradient descent,
+              comprehensive constraint system (budget, min/max, cardinality, equity, baseline, extrapolation control), and scenario comparison tools.
+            </p>
+            <p class="muted">Data: historical observations with resource_id, input (spending/allocation), and output (results/revenue). Minimum 2 observations per resource recommended.</p>
+            <p style="margin-top:0.75rem; padding:0.75rem; background:#f0f9ff; border-left:4px solid #0284c7; border-radius:4px; font-size:0.9rem;">
+              <strong>🚀 Quick Start:</strong> Upload CSV → Auto-fit models → Set budget constraint → Run optimization → Export recommendations. 
+              Includes 4 preset scenarios (Sales Team, Ad Channels, Regional Marketing, Product Portfolio) with sample data.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <!-- Segmentation & Clustering -->
     <section class="scenario-section" style="margin-top:2rem;">
       <div class="card" style="padding:2rem;">
         <div class="tool-directory">
-          <h3 id="clustering" style="scroll-margin-top:2rem;">🎯 Segmentation &amp; Clustering</h3>
+          <h3 id="clustering" style="scroll-margin-top:2rem;">📊 Segmentation &amp; Clustering</h3>
           <article class="tool-card">
             <h4>
               <a href="apps/clustering/kmeans/main_kmeans.html">K-Means Clustering</a>

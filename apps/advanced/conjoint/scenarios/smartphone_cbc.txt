@@ -1,0 +1,35 @@
+This scenario simulates a choice-based conjoint (CBC) study for smartphone purchase decisions. The study was designed for 150 respondents who each completed 12 choice tasks.
+
+Context:
+A smartphone manufacturer wants to understand which product attributes drive purchase intent. They're considering launching a new model and need data on customer preferences to optimize the design and pricing strategy.
+
+Study Design:
+- Respondents: 150 consumers recruited from a panel, representative of the target market (ages 18-55, smartphone owners)
+- Tasks: Each respondent viewed 12 choice scenarios
+- Alternatives per task: 3 smartphone options (labeled A, B, C) + "None" option
+- Competitor products: Two leading competitor smartphones (iPhone, Samsung) appeared in some tasks alongside experimental alternatives
+
+Attributes tested:
+1. Brand: BrandX (new brand), BrandY (established mid-tier), BrandZ (budget)
+2. Screen size: 5.5", 6.0", 6.5"
+3. Storage: 64GB, 128GB, 256GB
+4. Battery life: 12 hours, 18 hours, 24 hours
+5. Camera quality: Standard (12MP), Enhanced (24MP), Professional (48MP with AI)
+6. Price: $499, $599, $699, $799, $899
+
+Special features:
+- The "None" alternative represents "I would not purchase any of these"
+- Competitor alternatives (iPhone, Samsung) were fixed profiles shown in some tasks to anchor preferences
+
+Research questions:
+- Which attributes matter most to customers when choosing a smartphone?
+- How price-sensitive are different customer segments?
+- What's the willingness-to-pay for premium features like larger storage or better cameras?
+- Can the new brand (BrandX) compete with established players?
+- Should we launch a value-tier product or focus on premium features?
+
+This dataset allows you to:
+✓ Estimate individual-level part-worth utilities
+✓ Segment customers based on preferences (e.g., feature-focused vs. price-sensitive)
+✓ Simulate market share for different product configurations
+✓ Optimize product design for maximum profit or market penetration

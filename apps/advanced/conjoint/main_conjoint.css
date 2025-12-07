@@ -1,0 +1,192 @@
+/* Conjoint Analysis Tool - Specific Styles */
+
+/* Attribute Configuration */
+.attribute-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.attribute-config-item {
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4px;
+  padding: 1rem;
+  background: var(--card-bg, #fff);
+}
+
+.attribute-config-header {
+  margin-bottom: 0.5rem;
+}
+
+.attribute-config-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.attr-type-select {
+  flex: 1;
+  max-width: 300px;
+}
+
+/* Competitor checkboxes */
+.competitor-checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.comp-checkbox {
+  cursor: pointer;
+}
+
+/* Product simulation config */
+.products-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.product-config-card {
+  border: 2px solid var(--border-color, #ddd);
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: var(--card-bg, #f9f9f9);
+}
+
+.product-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color, #ddd);
+}
+
+.prod-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: 1px solid var(--border-color, #ddd);
+  padding: 0.5rem;
+  border-radius: 4px;
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.remove-prod {
+  background: var(--error-color, #e74c3c);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.remove-prod:hover {
+  background: var(--error-hover, #c0392b);
+}
+
+.product-config-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.product-config-body label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.prod-attr, .prod-price, .prod-cost {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 4px;
+}
+
+.simulation-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Optimization */
+.optimize-attribute-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Chart grid for simulation */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+/* Residuals diagnostics grid for multiple charts */
+.residuals-diagnostics-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 900px) {
+  .residuals-diagnostics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1400px) {
+  .residuals-diagnostics-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Diagnostic status indicators */
+.diagnostic-section .success {
+  color: var(--success-color, #27ae60);
+}
+
+.diagnostic-section .warning {
+  color: var(--warning-color, #f39c12);
+}
+
+.diagnostic-section .info {
+  color: var(--info-color, #3498db);
+}
+
+.diagnostic-section ul {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 0.5rem;
+}
+
+.diagnostic-section li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-light, #f0f0f0);
+}
+
+.diagnostic-section li:last-child {
+  border-bottom: none;
+}

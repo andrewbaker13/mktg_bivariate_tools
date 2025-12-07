@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conjoint Analysis & Simulation Tool</title>
+  <!-- Shared design system -->
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+  <!-- App-specific overrides -->
+  <link rel="stylesheet" href="main_conjoint.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-290ZJ9RE04');
+  </script>
+</head>
+
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../../admin_pages/login.html">Login</a>
+        <a href="../../../admin_pages/register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Conjoint Analysis & Simulation Tool</h1>
+        <div class="hero-context">
+          <span class="badge">New</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Analyze choice-based conjoint (CBC) data to understand how customers value product attributes. Upload experiment data, estimate individual-level preferences (part-worth utilities), simulate market shares, and optimize product configurations for maximum profit.
+      </p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="test-overview-heading">
+      <h2 id="test-overview-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
+      <div class="card">
+        <p>
+          <strong>Choice-based conjoint (CBC)</strong> analysis reveals how customers trade off product attributes when making purchase decisions. Each respondent completes multiple choice tasks where they select their preferred alternative from a set of products with varying attribute levels (brand, features, price, etc.).
+        </p>
+        <p>
+          The tool estimates <strong>individual-level part-worth utilities</strong> using multinomial logit (MNL) regression. For each respondent \(i\), the utility of alternative \(j\) in task \(t\) is:
+        </p>
+        <p class="equation">
+          $$
+          U_{ijt} = \alpha_{j,i} + \sum_{a \in \text{cat}} \sum_{\ell} \beta_{a,\ell,i} \cdot I(\text{level}(a) = \ell) + \sum_{b \in \text{numeric}} \beta_{b,i} \cdot x_b + \beta_{\text{price},i} \cdot p_j
+          $$
+        </p>
+        <p>
+          where \(\alpha_{j,i}\) are alternative-specific constants (for competitor and "None" alternatives), \(\beta\) coefficients represent part-worth utilities for each attribute level, and \(\beta_{\text{price},i}\) captures price sensitivity.
+        </p>
+        <p>
+          The probability respondent \(i\) chooses alternative \(j\) follows the multinomial logit:
+        </p>
+        <p class="equation">
+          $$
+          P(y_{it} = j) = \frac{\exp(U_{ijt})}{\sum_{k \in C_{it}} \exp(U_{ikt})}
+          $$
+        </p>
+        <details class="intro-notes" open>
+          <summary>Key Concepts</summary>
+          <ul>
+            <li><strong>Part-worth utilities:</strong> The value (in utility units) a customer assigns to each attribute level. Higher values = stronger preference.</li>
+            <li><strong>Attribute importance:</strong> The range of utilities within an attribute divided by the sum of all ranges. Shows which attributes drive choice most.</li>
+            <li><strong>Price coefficient:</strong> Usually negative; larger magnitude = more price-sensitive. Used for willingness-to-pay calculations.</li>
+            <li><strong>Individual-level estimation:</strong> Each respondent gets their own coefficients, enabling segmentation and personalized simulations.</li>
+            <li><strong>None alternative:</strong> Models the "no purchase" option with its own constant term per respondent.</li>
+            <li><strong>Competitor alternatives:</strong> Real products with known attribute profiles, modeled via alternative-specific constants.</li>
+          </ul>
+        </details>
+        <details class="intro-notes">
+          <summary>When to Use Conjoint Analysis</summary>
+          <p>
+            Use conjoint when you need to understand customer preferences for multi-attribute products or services. Common marketing applications:
+          </p>
+          <ul>
+            <li>Product design: Which features drive purchase intent? What's the optimal feature set?</li>
+            <li>Pricing strategy: How much can we charge for premium features? What's willingness-to-pay?</li>
+            <li>Market simulation: If we launch Product A vs Product B, what market share will each capture?</li>
+            <li>Competitive positioning: How do customers value our brand vs competitors?</li>
+            <li>Segmentation: Do different customer segments value attributes differently?</li>
+          </ul>
+        </details>
+      </div>
+    </section>
+
+    <section class="scenario-section" aria-labelledby="scenario-heading">
+      <h2 id="scenario-heading">MARKETING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Practical scenario</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Manual upload (no preset)</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>Use presets to auto-load realistic CBC study data. The download button exposes the exact dataset so you can modify it in Excel before re-uploading.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="inputs-heading">
+      <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>Upload CBC Data</h3>
+        </div>
+
+        <div class="mode-panel active" id="conjoint-upload-panel">
+          <div class="data-import-block">
+            <p>
+              Upload long-format CBC data where each row represents one alternative in one choice task for one respondent.
+              Required columns: <code>respondent_id</code>, <code>task_id</code>, <code>alternative_id</code>, <code>chosen</code> (0/1), plus attribute columns.
+            </p>
+            <div id="conjoint-dropzone" class="dropzone" role="button" tabindex="0">
+              <p class="dropzone-title">Drag &amp; drop CBC file</p>
+              <p class="dropzone-note">CSV with respondent_id, task_id, alternative_id, chosen, and attribute columns</p>
+              <button type="button" id="conjoint-browse" class="secondary">Browse files</button>
+            </div>
+            <input type="file" id="conjoint-input" accept=".csv,.tsv,.txt" hidden>
+            <div class="template-buttons">
+              <button type="button" id="conjoint-template-download">Download template</button>
+            </div>
+            <p id="conjoint-upload-feedback" class="upload-status" aria-live="polite">No file uploaded.</p>
+          </div>
+        </div>
+
+        <div class="input-group" id="conjoint-column-mapping" style="display:none;">
+          <h3>Column Mapping</h3>
+          <p class="hint">Map your CSV columns to the required CBC structure fields.</p>
+          
+          <div class="input-grid">
+            <div>
+              <label for="conjoint-respondent-col">Respondent ID Column</label>
+              <select id="conjoint-respondent-col"></select>
+            </div>
+            <div>
+              <label for="conjoint-task-col">Task ID Column</label>
+              <select id="conjoint-task-col"></select>
+            </div>
+            <div>
+              <label for="conjoint-alternative-col">Alternative ID Column</label>
+              <select id="conjoint-alternative-col"></select>
+            </div>
+            <div>
+              <label for="conjoint-chosen-col">Chosen (0/1) Column</label>
+              <select id="conjoint-chosen-col"></select>
+            </div>
+          </div>
+          <button type="button" id="conjoint-confirm-mapping" class="primary">Confirm Mapping</button>
+        </div>
+
+        <div class="input-group" id="conjoint-attribute-config" style="display:none;">
+          <h3>Attribute Configuration</h3>
+          <p class="hint">
+            Configure each attribute's type and identify special alternatives (None, Competitors). 
+            The tool will automatically dummy-code categorical attributes and create appropriate model terms.
+          </p>
+          
+          <div id="conjoint-attribute-list" class="attribute-config-list">
+            <!-- Populated dynamically -->
+          </div>
+
+          <h4>Special Alternatives</h4>
+          <div class="input-grid">
+            <div>
+              <label for="conjoint-none-alternative">None/No-purchase alternative ID (optional)</label>
+              <select id="conjoint-none-alternative">
+                <option value="">-- No "None" option --</option>
+              </select>
+              <p class="hint">Select if your study includes a "no purchase" or "none of these" alternative.</p>
+            </div>
+          </div>
+
+          <div>
+            <label>Competitor alternative IDs (optional)</label>
+            <div id="conjoint-competitor-list" class="competitor-checkbox-list">
+              <!-- Populated with checkboxes for each unique alternative_id -->
+            </div>
+            <p class="hint">
+              Check the boxes for real competitor products (e.g., "iPhone", "SamsungS20") that appeared in choice tasks. 
+              These will be modeled with alternative-specific constants rather than decomposed attributes.
+            </p>
+          </div>
+        </div>
+
+        <div class="input-group" id="conjoint-estimation-controls" style="display:none;">
+          <h3>Model Estimation Settings</h3>
+          <div class="input-grid">
+            <div>
+              <label for="conjoint-regularization">Regularization strength (L2)</label>
+              <input type="number" id="conjoint-regularization" min="0" max="10" step="0.1" value="1.0">
+              <p class="hint">Higher values reduce overfitting but may bias coefficients toward zero. Default 1.0 is suitable for most studies.</p>
+            </div>
+          </div>
+          
+          <button type="button" id="conjoint-estimate-model" class="primary">Estimate Individual Utilities</button>
+          <p id="conjoint-estimation-status" class="upload-status" aria-live="polite"></p>
+        </div>
+      </article>
+
+      <article class="card analysis-settings test-options">
+        <h3>Analysis Settings</h3>
+        <div class="input-group">
+          <label for="conjoint-alpha">Significance level (&alpha;) for coefficient tests</label>
+          <input type="number" id="conjoint-alpha" min="0.001" max="0.2" step="0.001" value="0.050">
+          <p class="hint">Used for highlighting significant coefficients in the results table.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading" style="display:none;" id="conjoint-results-section">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      
+      <div class="card">
+        <div class="chart-grid">
+          <article class="chart-card">
+            <h3>Attribute Importance (Aggregated)</h3>
+            <div class="chart-placeholder" id="chart-importance"></div>
+            <p class="chart-note">
+              Shows which attributes drive choice decisions most. Importance = (utility range within attribute) / (sum of all ranges). Higher bars = more influential attributes in purchase decisions.
+            </p>
+            <details class="interpretation-aid">
+              <summary>Interpretation Aid</summary>
+              <p class="muted">
+                If price has 40% importance and brand has 20%, customers are trading off price twice as much as brand when making choices. Use this to prioritize product development: focus on attributes with high importance and where you have competitive advantages.
+              </p>
+            </details>
+          </article>
+
+          <article class="chart-card">
+            <h3>Part-Worth Utilities (Mean Across Respondents)</h3>
+            <div class="chart-placeholder" id="chart-partworths"></div>
+            <p class="chart-note">
+              Average utility for each attribute level. Higher bars = more preferred. Use this to identify winning feature combinations.
+            </p>
+            <details class="interpretation-aid">
+              <summary>Interpretation Aid</summary>
+              <p class="muted">
+                Positive utilities indicate preference above the baseline; negative values indicate dispreference. The magnitude matters more than statistical significance here—a feature with +2.5 utility adds 2.5 units to total product utility compared to the baseline level.
+              </p>
+            </details>
+          </article>
+        </div>
+      </div>
+
+      <div class="card">
+        <article class="chart-card">
+          <h3>Price Sensitivity Distribution</h3>
+          <div class="chart-placeholder" id="chart-price-dist"></div>
+          <p class="chart-note">
+            Histogram of price coefficients across respondents. More negative = more price-sensitive. Use this to understand heterogeneity in willingness-to-pay.
+          </p>
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p class="muted">
+              A wide distribution suggests different customer segments with varying price sensitivity. This justifies segmentation analysis and potentially tiered pricing strategies.
+            </p>
+          </details>
+        </article>
+      </div>
+    </section>
+
+    <section class="test-results" aria-labelledby="test-results-heading" style="display:none;" id="conjoint-test-results">
+      <h2 id="test-results-heading">MODEL RESULTS</h2>
+      
+      <div class="card metrics-panel">
+        <div class="metric-output">Total respondents estimated: <span id="conjoint-n-respondents">&ndash;</span></div>
+        <div class="metric-output">Mean tasks per respondent: <span id="conjoint-mean-tasks">&ndash;</span></div>
+        <div class="metric-output">Mean pseudo-R² (McFadden): <span id="conjoint-mean-r2">&ndash;</span></div>
+        <div class="metric-output">Estimation time: <span id="conjoint-estimation-time">&ndash;</span></div>
+        <details class="interpretation-aid">
+          <summary>Interpretation Aid</summary>
+          <p class="muted"><strong>Pseudo-R²:</strong> Measure of model fit per respondent. Values 0.2–0.4 are typical for CBC studies; higher values indicate stronger predictive power.</p>
+          <p class="muted"><strong>Tasks per respondent:</strong> More tasks (12–20) produce more stable coefficient estimates. Fewer than 8 tasks may yield unreliable utilities.</p>
+        </details>
+      </div>
+
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>APA-Style Report</h3>
+          <p id="conjoint-apa-report">Estimate the model to see the APA-style statistical report.</p>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="conjoint-managerial-report">Business-focused interpretation will appear here after estimation.</p>
+        </article>
+      </div>
+
+      <div class="card summary-table-card">
+        <h3>Aggregated Part-Worth Utilities</h3>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Attribute</th>
+              <th>Level</th>
+              <th>Mean Utility</th>
+              <th>Std. Dev.</th>
+              <th>Min</th>
+              <th>Max</th>
+            </tr>
+          </thead>
+          <tbody id="conjoint-utilities-table-body">
+            <tr>
+              <td colspan="6">Estimate the model to view aggregated part-worth utilities.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="template-download">
+          <button type="button" id="conjoint-download-utilities" class="secondary">
+            Download individual utilities (CSV)
+          </button>
+        </p>
+      </div>
+    </section>
+
+    <section class="segmentation-section" aria-labelledby="segmentation-heading" style="display:none;" id="conjoint-segmentation">
+      <h2 id="segmentation-heading">SEGMENTATION ANALYSIS</h2>
+      <div class="card">
+        <h3>K-Means Clustering on Utilities</h3>
+        <p>
+          Segment respondents based on their estimated part-worth utilities. Different segments may value attributes differently, enabling targeted product positioning and pricing strategies.
+        </p>
+        
+        <div class="input-group">
+          <label for="conjoint-n-clusters">Number of segments (k)</label>
+          <input type="number" id="conjoint-n-clusters" min="2" max="6" step="1" value="3">
+          <button type="button" id="conjoint-run-segmentation" class="primary">Run Segmentation</button>
+          <p id="conjoint-segmentation-status" class="upload-status" aria-live="polite"></p>
+        </div>
+
+        <div id="conjoint-segment-results" style="display:none;">
+          <h4>Segment Sizes</h4>
+          <div class="chart-placeholder" id="chart-segment-sizes"></div>
+
+          <h4>Segment Profiles: Attribute Importance</h4>
+          <div class="chart-placeholder" id="chart-segment-importance"></div>
+          <p class="chart-note">
+            Compare which attributes drive choice for each segment. Use this to create segment-specific marketing messages and product bundles.
+          </p>
+
+          <h4>Segment-Level Mean Utilities</h4>
+          <table class="summary-table" id="conjoint-segment-table">
+            <thead>
+              <tr>
+                <th>Segment</th>
+                <th>Size</th>
+                <th>Mean Price Coefficient</th>
+                <th>Top Valued Attribute</th>
+              </tr>
+            </thead>
+            <tbody id="conjoint-segment-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="simulation-section" aria-labelledby="simulation-heading" style="display:none;" id="conjoint-simulation">
+      <h2 id="simulation-heading">MARKET SIMULATION</h2>
+      <div class="card">
+        <h3>Scenario Builder</h3>
+        <p>
+          Define a competitive scenario with multiple product alternatives. The tool will compute predicted market shares using the estimated individual utilities. Add prices and costs to calculate profitability.
+        </p>
+
+        <div class="simulation-controls">
+          <button type="button" id="conjoint-add-product" class="secondary">+ Add Product Alternative</button>
+          <button type="button" id="conjoint-clear-scenario" class="secondary">Clear Scenario</button>
+        </div>
+
+        <div id="conjoint-products-list" class="products-config-list">
+          <!-- Product configuration cards populated here -->
+        </div>
+
+        <div class="input-group">
+          <label for="conjoint-market-size">Total market size (customers)</label>
+          <input type="number" id="conjoint-market-size" min="1" max="1000000000" step="1000" value="10000">
+          <p class="hint">Used to convert share percentages into customer counts and total profit dollars.</p>
+        </div>
+
+        <button type="button" id="conjoint-run-simulation" class="primary">Run Market Simulation</button>
+        <p id="conjoint-simulation-status" class="upload-status" aria-live="polite"></p>
+
+        <div id="conjoint-simulation-results" style="display:none;">
+          <h3>Simulation Results</h3>
+          
+          <div class="chart-grid">
+            <article class="chart-card">
+              <h3>Market Share by Alternative</h3>
+              <div class="chart-placeholder" id="chart-sim-share"></div>
+              <p class="chart-note">
+                Predicted preference share based on individual-level utilities averaged across all respondents.
+              </p>
+            </article>
+
+            <article class="chart-card">
+              <h3>Total Profit by Alternative</h3>
+              <div class="chart-placeholder" id="chart-sim-profit"></div>
+              <p class="chart-note">
+                Profit = Share × Market Size × (Price - Cost). Identifies which products maximize revenue.
+              </p>
+            </article>
+          </div>
+
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Market Share (%)</th>
+                <th>Customer Count</th>
+                <th>Price</th>
+                <th>Cost</th>
+                <th>Margin</th>
+                <th>Total Profit</th>
+              </tr>
+            </thead>
+            <tbody id="conjoint-simulation-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+
+          <p class="template-download">
+            <button type="button" id="conjoint-download-simulation" class="secondary">
+              Download simulation results (CSV)
+            </button>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="optimization-section" aria-labelledby="optimization-heading" style="display:none;" id="conjoint-optimization">
+      <h2 id="optimization-heading">PRODUCT OPTIMIZATION</h2>
+      <div class="card">
+        <h3>Brute-Force Configuration Search</h3>
+        <p>
+          Explore all possible combinations of attribute levels to find the product configuration that maximizes market share or profit. Useful for new product design decisions.
+        </p>
+
+        <div class="input-group">
+          <h4>Select attributes to vary</h4>
+          <div id="conjoint-optimize-attributes" class="optimize-attribute-list">
+            <!-- Checkboxes for each attribute -->
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="conjoint-optimize-metric">Optimization goal</label>
+          <select id="conjoint-optimize-metric">
+            <option value="share">Maximize Market Share</option>
+            <option value="profit">Maximize Profit</option>
+          </select>
+        </div>
+
+        <div class="input-group" id="conjoint-optimize-price-range" style="display:none;">
+          <h4>Price range to test</h4>
+          <div class="input-grid">
+            <div>
+              <label for="conjoint-price-min">Min price</label>
+              <input type="number" id="conjoint-price-min" step="0.01" value="0">
+            </div>
+            <div>
+              <label for="conjoint-price-max">Max price</label>
+              <input type="number" id="conjoint-price-max" step="0.01" value="100">
+            </div>
+            <div>
+              <label for="conjoint-price-step">Price increment</label>
+              <input type="number" id="conjoint-price-step" step="0.01" value="10">
+            </div>
+            <div>
+              <label for="conjoint-optimize-cost">Fixed unit cost</label>
+              <input type="number" id="conjoint-optimize-cost" step="0.01" value="30">
+            </div>
+          </div>
+        </div>
+
+        <button type="button" id="conjoint-run-optimization" class="primary">Run Optimization</button>
+        <p id="conjoint-optimization-status" class="upload-status" aria-live="polite"></p>
+
+        <div id="conjoint-optimization-results" style="display:none;">
+          <h3>Top 10 Configurations</h3>
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Configuration</th>
+                <th>Market Share (%)</th>
+                <th>Profit</th>
+              </tr>
+            </thead>
+            <tbody id="conjoint-optimization-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="diagnostics-section" aria-labelledby="diagnostics-heading" style="display:none;" id="conjoint-diagnostics">
+      <h2 id="diagnostics-heading">DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+      <div class="card">
+        <details class="diagnostics-details" open>
+          <summary>Model Assumptions &amp; Data Quality Checks</summary>
+          <div id="conjoint-diagnostics-content">
+            <p class="muted">Estimate the model to see diagnostic information.</p>
+            
+            <div class="diagnostic-section">
+              <h4>CBC Study Design Requirements</h4>
+              <ul>
+                <li><strong>Sample size:</strong> Minimum 100–200 respondents for stable aggregate estimates; 200–500+ recommended for segmentation.</li>
+                <li><strong>Tasks per respondent:</strong> 8–20 choice tasks provide reliable individual-level estimates. Fewer than 8 may yield unstable coefficients.</li>
+                <li><strong>Alternatives per task:</strong> 3–5 alternatives per task is typical. Too few (2) limits information; too many (6+) increases cognitive burden.</li>
+                <li><strong>Attribute levels:</strong> Use 3–5 levels per categorical attribute. Binary attributes provide limited information.</li>
+                <li><strong>Orthogonality:</strong> Experimental design should minimize correlation between attributes. Check design quality in your CBC software.</li>
+              </ul>
+            </div>
+
+            <div class="diagnostic-section">
+              <h4>Model Assumptions</h4>
+              <ul>
+                <li><strong>IIA (Independence of Irrelevant Alternatives):</strong> MNL assumes adding/removing an alternative affects all others proportionally. Violated when alternatives are perceived as close substitutes.</li>
+                <li><strong>Linear utility:</strong> Utilities are linear combinations of part-worths. May not hold for complex interactions or threshold effects.</li>
+                <li><strong>Homogeneous preferences (at individual level):</strong> Each respondent has stable preferences across tasks. Violated if respondents use different decision rules in different tasks.</li>
+                <li><strong>No outside information:</strong> Respondents base choices only on information presented in the task. Violated if they apply external knowledge about brands or features.</li>
+              </ul>
+            </div>
+
+            <div class="diagnostic-section" id="conjoint-data-quality">
+              <!-- Populated after estimation -->
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p class="page-timestamps">Created: <span id="created-date">2025-12-07</span> &middot; Last updated: <span id="modified-date">2025-12-07</span></p>
+    <p><a href="../../../index.html">Back to Stat Analysis Selection</a></p>
+    <p class="citation">Cite as: Baker, Andrew. (2025). Conjoint Analysis & Simulation Tool. Marketing Bivariate Tools.</p>
+  </footer>
+
+  <div id="conjoint-loading-overlay" class="loading-overlay" aria-hidden="true">
+    <div class="loading-content">
+      <p><strong>Estimating individual utilities…</strong></p>
+      <p class="muted">For larger datasets (200+ respondents, 15+ tasks each) this may take 30–60 seconds. Please wait.</p>
+    </div>
+  </div>
+
+  <script src="../../../shared/js/csv_utils.js"></script>
+  <script src="../../../shared/js/ui_utils.js"></script>
+  <script src="../../../shared/js/auth_tracking.js"></script>
+  <script src="../../../shared/js/auth_bar.js"></script>
+  <script src="../../../shared/js/quiz_utils.js"></script>
+  <script src="conjoint_app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      initQuizButton('conjoint');
+    });
+  </script>
+</body>
+
+</html>
