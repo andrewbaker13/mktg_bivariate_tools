@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conjoint Study Design Generator</title>
+  <!-- Shared design system -->
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+  <!-- App-specific overrides -->
+  <link rel="stylesheet" href="main_conjoint.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-290ZJ9RE04');
+  </script>
+</head>
+
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../../admin_pages/login.html">Login</a>
+        <a href="../../../admin_pages/register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Conjoint Study Design Generator</h1>
+        <div class="hero-context">
+          <span class="badge">Design Tool</span>
+          <a href="main_conjoint.html" class="badge badge-secondary">Analysis Tool →</a>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Create optimized fractional factorial designs for choice-based conjoint (CBC) studies. Define attributes and levels, specify constraints, and generate balanced experimental designs ready for data collection. Uses Latin Hypercube Sampling and D-efficiency optimization for commercial-grade study designs.
+      </p>
+    </header>
+
+    <section class="test-overview card" aria-labelledby="overview-heading">
+      <h2 id="overview-heading">DESIGN METHODOLOGY</h2>
+      
+      <div class="equation-note">
+        <h3>What is Fractional Factorial Design?</h3>
+        <p>
+          A <strong>fractional factorial design</strong> strategically selects a subset of all possible product configurations to test. 
+          Instead of showing respondents every combination (which could be thousands of scenarios), we use statistical design 
+          principles to create an efficient set that still allows us to estimate all attribute effects.
+        </p>
+        <p style="margin-top: 1rem;">
+          <strong>Key principles:</strong> Orthogonality (attributes vary independently), balance (each level appears equally often), 
+          and minimal overlap (reduce repeated alternatives within tasks).
+        </p>
+      </div>
+
+      <div class="dual-panels" style="margin-top: 1.5rem;">
+        <div class="dual-panel">
+          <h3>Design Quality Metrics</h3>
+          <ul style="line-height: 1.8; margin-left: 1.5rem;">
+            <li><strong>D-Efficiency:</strong> 0-100% score measuring design optimality (85%+ = commercial-grade)</li>
+            <li><strong>Level Balance:</strong> Each attribute level appears proportionally across profiles</li>
+            <li><strong>Orthogonality:</strong> Attributes vary independently to prevent confounding</li>
+            <li><strong>Space Coverage:</strong> Latin Hypercube ensures profiles span attribute space</li>
+          </ul>
+        </div>
+        
+        <div class="dual-panel">
+          <h3>Typical Parameters</h3>
+          <p><strong>Tasks per Respondent:</strong> 8-15 scenarios (balance data quality vs. fatigue)</p>
+          <p><strong>Alternatives per Task:</strong> 3-5 products (cognitive load constraint)</p>
+          <p><strong>Attributes:</strong> 3-8 features (more attributes = larger sample needed)</p>
+          <p><strong>Levels per Attribute:</strong> 2-6 values (avoid single-level attributes)</p>
+          <p><strong>None Option:</strong> Recommended for realistic choice modeling</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 1: Define Attributes -->
+    <section class="card" id="section-define-attributes">
+      <h2>STEP 1: DEFINE ATTRIBUTES & LEVELS</h2>
+      
+      <!-- Sample Case Studies Dropdown -->
+      <div class="input-group" style="margin-bottom: 1.5rem;">
+        <label for="case-study-select">Sample Case Studies (Optional)</label>
+        <select id="case-study-select" onchange="handleCaseStudySelection(this.value)">
+          <option value="">-- Select a case study to auto-populate --</option>
+          <option value="hotel">🏨 Hotel Room Selection (5 attributes)</option>
+          <option value="software">💻 SaaS Subscription Plans (6 attributes)</option>
+        </select>
+        <small style="color: var(--app-muted); display: block; margin-top: 0.25rem;">
+          Choose a pre-configured example to see how the design generator works, or start from scratch below.
+        </small>
+      </div>
+      
+      <div class="input-group" style="margin-bottom: 1.5rem;">
+        <label for="product-category">Product Category (for labeling)</label>
+        <input type="text" id="product-category" placeholder="e.g., Smartphone, Streaming Service, Hotel Room">
+      </div>
+
+      <div class="input-group">
+        <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Product Attributes</label>
+        <p style="color: var(--app-muted); margin: 0 0 1rem;">Add 3-8 attributes. Each attribute should have 2-6 levels.</p>
+        
+        <div id="attributes-container" style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Attribute rows will be added here -->
+        </div>
+        
+        <button class="secondary" id="add-attribute-btn" style="margin-top: 1rem;">+ Add Attribute</button>
+      </div>
+
+      <div class="input-group" style="margin-top: 2rem;">
+        <button id="validate-attributes-btn">Validate Attributes →</button>
+        <div id="attribute-validation-feedback" style="margin-top: 1rem;"></div>
+      </div>
+    </section>
+
+    <!-- Step 2: Design Configuration -->
+    <section class="card hidden" id="section-design-config">
+      <h2>STEP 2: DESIGN CONFIGURATION</h2>
+      
+      <div class="dual-panels">
+        <div class="input-group">
+          <label for="num-tasks">Tasks per Respondent</label>
+          <input type="number" id="num-tasks" min="5" max="30" value="12">
+          <small style="color: var(--app-muted);">Typical: 8-15 tasks. More tasks = more data but higher respondent fatigue.</small>
+        </div>
+        
+        <div class="input-group">
+          <label for="num-alternatives">Alternatives per Task</label>
+          <input type="number" id="num-alternatives" min="2" max="6" value="3">
+          <small style="color: var(--app-muted);">Typical: 3-4 alternatives. More = harder cognitive task.</small>
+        </div>
+      </div>
+
+      <div class="input-group" style="margin-top: 1.5rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+          <input type="checkbox" id="include-none" style="width: auto;">
+          <span>Include "None" option (no-choice alternative)</span>
+        </label>
+        <small style="color: var(--app-muted); display: block; margin-top: 0.25rem;">Recommended for realistic choice modeling. Respondents can opt out.</small>
+      </div>
+
+      <div class="input-group" style="margin-top: 1rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+          <input type="checkbox" id="create-full-factorial" style="width: auto;">
+          <span>Create Full Factorial (all combinations)</span>
+        </label>
+        <small style="color: var(--app-muted); display: block; margin-top: 0.25rem;">Use all possible attribute combinations instead of fractional design. Only feasible for small designs (typically &lt;100 profiles).</small>
+      </div>
+
+      <div class="input-group" style="margin-top: 1rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+          <input type="checkbox" id="populate-synthetic-data" style="width: auto;">
+          <span>Populate cards with synthetic respondent data</span>
+        </label>
+        <small style="color: var(--app-muted); display: block; margin-top: 0.25rem;">Generate realistic choice data for testing analysis. Specify number of respondents below when enabled.</small>
+        
+        <div id="synthetic-data-options" class="hidden" style="margin-top: 1rem; padding: 1rem; background: var(--app-bg); border-radius: 8px; border: 1px solid var(--app-border);">
+          <label for="num-respondents">Number of Respondents</label>
+          <input type="number" id="num-respondents" min="10" max="500" value="50" style="margin-top: 0.5rem;">
+          <small style="color: var(--app-muted); display: block; margin-top: 0.25rem;">Synthetic data will simulate realistic choices based on heterogeneous preference patterns.</small>
+        </div>
+      </div>
+
+      <details class="visualization-options" style="margin-top: 2rem;">
+        <summary>Fixed Competitors (Optional)</summary>
+        <div class="visualization-options__body">
+          <p style="color: var(--app-muted); margin-bottom: 1rem;">Add real competitor products to appear in some tasks as benchmarks.</p>
+          
+          <div id="competitors-container" style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Competitor rows will be added here -->
+          </div>
+          
+          <button class="secondary" id="add-competitor-btn" style="margin-top: 1rem;">+ Add Competitor</button>
+        </div>
+      </details>
+
+      <div class="input-group" style="margin-top: 2rem;">
+        <button id="generate-design-btn">Generate Design</button>
+        <div id="design-generation-feedback" style="margin-top: 1rem;"></div>
+      </div>
+    </section>
+
+    <!-- Step 3: Review & Download -->
+    <section class="card hidden" id="section-review-design">
+      <h2>STEP 3: REVIEW & DOWNLOAD DESIGN</h2>
+      
+      <div id="design-summary" class="equation-note">
+        <!-- Design summary stats will appear here -->
+      </div>
+
+      <div class="input-group" style="margin-top: 2rem;">
+        <h3>Preview Tasks (First 3 shown)</h3>
+        <div id="design-preview" style="margin-top: 1rem;">
+          <!-- Preview will appear here -->
+        </div>
+      </div>
+
+      <details class="visualization-options" style="margin-top: 2rem;">
+        <summary>Design Diagnostics & Quality Metrics</summary>
+        <div class="visualization-options__body">
+          <div id="design-diagnostics">
+            <!-- Balance, orthogonality, efficiency checks -->
+          </div>
+        </div>
+      </details>
+
+      <div class="input-group" style="margin-top: 2rem;">
+        <h3>Download Design Files</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
+          <button id="download-design-csv">Download CBC Template (CSV)</button>
+          <button class="secondary" id="download-design-json">Design Specification (JSON)</button>
+          <button class="secondary" id="download-design-guide">Study Guide (TXT)</button>
+        </div>
+      </div>
+
+      <div class="input-group" style="margin-top: 2rem;">
+        <button class="secondary" id="start-over-btn">← Start Over (New Design)</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>
+      <strong>Citation:</strong> Baker, A. (2025). <em>Conjoint Study Design Generator</em>. 
+      Retrieved from <a href="https://andrewbaker.netlify.app" style="color: #60a5fa;">andrewbaker.netlify.app</a>
+    </p>
+    <p style="margin-top: 0.5rem;">
+      Created: <span id="created-date">2025-12-07</span> | 
+      Last modified: <span id="modified-date">2025-12-07</span> | 
+      <a href="../../../index.html" style="color: #60a5fa;">Back to Stat Analysis Selection</a> | 
+      <a href="main_conjoint.html" style="color: #60a5fa;">Analysis Tool</a>
+    </p>
+  </footer>
+
+  <!-- Core app logic -->
+  <script src="../../../shared/js/auth_check.js"></script>
+  <script src="../../../shared/js/csv_utils.js"></script>
+  <script src="conjoint_creator_app.js"></script>
+</body>
+
+</html>

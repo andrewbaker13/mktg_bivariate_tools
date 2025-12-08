@@ -1,0 +1,71 @@
+<div style="line-height: 1.6;">
+  <p>This scenario presents a CBC study for Marketing Research course design preferences. The study includes <strong>50 students</strong> completing <strong>30 choice tasks</strong> each.</p>
+
+  <div style="background: #f0f7ff; padding: 1rem; border-left: 4px solid #2a7de1; margin: 1rem 0;">
+    <p style="margin: 0 0 0.5rem 0;"><strong>📚 Context:</strong></p>
+    <p style="margin: 0;">A business school is redesigning its Marketing Research course and wants to understand student preferences for different course formats, workload levels, and assessment methods. The goal is to design a course that maximizes student satisfaction while maintaining academic rigor.</p>
+  </div>
+
+  <p><strong>Study Design:</strong></p>
+  <ul style="margin-left: 1.5rem; line-height: 1.8;">
+    <li><strong>Respondents:</strong> 50 graduate business students with diverse backgrounds</li>
+    <li><strong>Tasks:</strong> Each student evaluated 30 course design scenarios</li>
+    <li><strong>Alternatives per task:</strong> 4 course options (including 3 alternative formats) + "No formal MR course" option</li>
+    <li><strong>Competitor formats:</strong> Flipped Classroom, Project-Based, and Hybrid Online formats</li>
+  </ul>
+
+  <p><strong>🎓 Attributes Tested:</strong></p>
+  <ul style="margin-left: 1.5rem; line-height: 1.8;">
+    <li><strong>Course Format:</strong> Traditional Lecture, Flipped Classroom, Project-Based Learning, Hybrid Online</li>
+    <li><strong>Weekly Hours:</strong> <span style="color: #2a7de1; font-weight: bold;">2.5, 3.5, 4.5, 5.5, 6.5, 8.0 hours</span> (linear time commitment)</li>
+    <li><strong>Assessment Style:</strong> Exams, Projects, Mixed (exams + projects), Case Studies</li>
+  </ul>
+
+  <p><strong>✨ Special Features:</strong></p>
+  <ul style="margin-left: 1.5rem;">
+    <li>The <strong>"None"</strong> option represents students opting out of a formal Marketing Research course</li>
+    <li>Multiple competing pedagogical approaches reflect current debates in business education</li>
+    <li>Linear hours variable captures <strong>time commitment trade-offs</strong></li>
+  </ul>
+
+  <div style="background: #fff3e0; padding: 1rem; border-left: 4px solid #ff9800; margin: 1rem 0;">
+    <p style="margin: 0 0 0.5rem 0;"><strong>🤔 Research Questions:</strong></p>
+    <ul style="margin: 0.5rem 0 0 1.5rem; line-height: 1.6;">
+      <li>Which course format do students prefer: traditional lectures vs. active learning?</li>
+      <li>How time-sensitive are students? What's the acceptable workload threshold?</li>
+      <li>Do students prefer exam-based assessment or project-based evaluation?</li>
+      <li>Are there distinct student segments (e.g., working professionals who prefer hybrid, full-time students who want in-person)?</li>
+      <li>Can project-based formats compete with traditional lectures despite higher time requirements?</li>
+    </ul>
+  </div>
+
+  <div style="background: #e8f5e9; padding: 1rem; border-left: 4px solid #4caf50; margin: 1rem 0;">
+    <p style="margin: 0 0 0.5rem 0;"><strong>🎯 Pedagogical Value:</strong></p>
+    <p style="margin: 0;">This dataset is <strong>especially powerful for teaching</strong> because:</p>
+    <ul style="margin: 0.5rem 0 0 1.5rem; line-height: 1.6;">
+      <li>✓ Students analyze <em>their own</em> preferences, making results personally relevant</li>
+      <li>✓ Demonstrates conjoint analysis in an educational context (not just products/services)</li>
+      <li>✓ Reveals heterogeneity: different students want very different course designs</li>
+      <li>✓ Shows trade-offs between learning effectiveness and convenience</li>
+      <li>✓ Provides actionable insights for course design decisions</li>
+    </ul>
+  </div>
+
+  <p><strong>👥 Segmentation Insights:</strong></p>
+  <p>The data contains <strong>four distinct preference segments:</strong></p>
+  <ul style="margin-left: 1.5rem; line-height: 1.8;">
+    <li>📖 <strong>Traditional Learners:</strong> Prefer lectures, less time commitment, exam-based assessment</li>
+    <li>🛠️ <strong>Project-Based Learners:</strong> Value hands-on work, willing to invest more time, prefer project assessment</li>
+    <li>💻 <strong>Flexible/Online Preference:</strong> Prioritize hybrid formats, moderate time, mixed assessment</li>
+    <li>⏱️ <strong>Time-Constrained:</strong> Very sensitive to workload, prefer efficient formats</li>
+  </ul>
+
+  <p><strong>🎯 Analysis Opportunities:</strong></p>
+  <ul style="margin-left: 1.5rem; line-height: 1.8;">
+    <li>✓ Estimate utility functions revealing what drives course choice</li>
+    <li>✓ Segment students by learning preferences</li>
+    <li>✓ Simulate enrollment for different course designs</li>
+    <li>✓ Optimize course format to maximize satisfaction or enrollment</li>
+    <li>✓ Calculate willingness-to-invest-time for preferred pedagogical approaches</li>
+  </ul>
+</div>

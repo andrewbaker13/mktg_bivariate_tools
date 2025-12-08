@@ -1,35 +1,51 @@
-This scenario simulates a choice-based conjoint (CBC) study for smartphone purchase decisions. The study was designed for 150 respondents who each completed 12 choice tasks.
+<div style="line-height: 1.6;">
+  <p>This scenario simulates a choice-based conjoint (CBC) study for smartphone purchase decisions. The study was designed for <strong>150 respondents</strong> who each completed <strong>12 choice tasks</strong>.</p>
 
-Context:
-A smartphone manufacturer wants to understand which product attributes drive purchase intent. They're considering launching a new model and need data on customer preferences to optimize the design and pricing strategy.
+  <div style="background: #f0f7ff; padding: 1rem; border-left: 4px solid #2a7de1; margin: 1rem 0;">
+    <p style="margin: 0 0 0.5rem 0;"><strong>📱 Context:</strong></p>
+    <p style="margin: 0;">A smartphone manufacturer wants to understand which product attributes drive purchase intent. They're considering launching a new model and need data on customer preferences to optimize the design and pricing strategy.</p>
+  </div>
 
-Study Design:
-- Respondents: 150 consumers recruited from a panel, representative of the target market (ages 18-55, smartphone owners)
-- Tasks: Each respondent viewed 12 choice scenarios
-- Alternatives per task: 3 smartphone options (labeled A, B, C) + "None" option
-- Competitor products: Two leading competitor smartphones (iPhone, Samsung) appeared in some tasks alongside experimental alternatives
+  <p><strong>Study Design:</strong></p>
+  <ul style="margin-left: 1.5rem; line-height: 1.8;">
+    <li><strong>Respondents:</strong> 150 consumers recruited from a panel, representative of the target market (ages 18-55, smartphone owners)</li>
+    <li><strong>Tasks:</strong> Each respondent viewed 12 choice scenarios</li>
+    <li><strong>Alternatives per task:</strong> 3 smartphone options (labeled A, B, C) + "None" option</li>
+    <li><strong>Competitor products:</strong> Two leading competitor smartphones (iPhone, Samsung) appeared in some tasks alongside experimental alternatives</li>
+  </ul>
 
-Attributes tested:
-1. Brand: BrandX (new brand), BrandY (established mid-tier), BrandZ (budget)
-2. Screen size: 5.5", 6.0", 6.5"
-3. Storage: 64GB, 128GB, 256GB
-4. Battery life: 12 hours, 18 hours, 24 hours
-5. Camera quality: Standard (12MP), Enhanced (24MP), Professional (48MP with AI)
-6. Price: $499, $599, $699, $799, $899
+  <p><strong>⚙️ Attributes Tested:</strong></p>
+  <ul style="margin-left: 1.5rem; line-height: 1.8;">
+    <li><strong>Brand:</strong> BrandX (new brand), BrandY (established mid-tier), BrandZ (budget)</li>
+    <li><strong>Screen size:</strong> 5.5", 6.0", 6.5"</li>
+    <li><strong>Storage:</strong> 64GB, 128GB, 256GB</li>
+    <li><strong>Battery life:</strong> 12 hours, 18 hours, 24 hours</li>
+    <li><strong>Camera quality:</strong> Standard (12MP), Enhanced (24MP), Professional (48MP with AI)</li>
+    <li><strong>Price:</strong> <span style="color: #2a7de1; font-weight: bold;">$499, $599, $699, $799, $899</span></li>
+  </ul>
 
-Special features:
-- The "None" alternative represents "I would not purchase any of these"
-- Competitor alternatives (iPhone, Samsung) were fixed profiles shown in some tasks to anchor preferences
+  <p><strong>✨ Special Features:</strong></p>
+  <ul style="margin-left: 1.5rem;">
+    <li>The <strong>"None"</strong> alternative represents "I would not purchase any of these"</li>
+    <li>Competitor alternatives (iPhone, Samsung) were fixed profiles shown in some tasks to anchor preferences</li>
+  </ul>
 
-Research questions:
-- Which attributes matter most to customers when choosing a smartphone?
-- How price-sensitive are different customer segments?
-- What's the willingness-to-pay for premium features like larger storage or better cameras?
-- Can the new brand (BrandX) compete with established players?
-- Should we launch a value-tier product or focus on premium features?
+  <div style="background: #fff3e0; padding: 1rem; border-left: 4px solid #ff9800; margin: 1rem 0;">
+    <p style="margin: 0 0 0.5rem 0;"><strong>🤔 Research Questions:</strong></p>
+    <ul style="margin: 0.5rem 0 0 1.5rem; line-height: 1.6;">
+      <li>Which attributes matter most to customers when choosing a smartphone?</li>
+      <li>How price-sensitive are different customer segments?</li>
+      <li>What's the willingness-to-pay for premium features like larger storage or better cameras?</li>
+      <li>Can the new brand (BrandX) compete with established players?</li>
+      <li>Should we launch a value-tier product or focus on premium features?</li>
+    </ul>
+  </div>
 
-This dataset allows you to:
-✓ Estimate individual-level part-worth utilities
-✓ Segment customers based on preferences (e.g., feature-focused vs. price-sensitive)
-✓ Simulate market share for different product configurations
-✓ Optimize product design for maximum profit or market penetration
+  <p><strong>🎯 This Dataset Allows You To:</strong></p>
+  <ul style="margin-left: 1.5rem; line-height: 1.8;">
+    <li>✓ Estimate individual-level part-worth utilities</li>
+    <li>✓ Segment customers based on preferences (e.g., feature-focused vs. price-sensitive)</li>
+    <li>✓ Simulate market share for different product configurations</li>
+    <li>✓ Optimize product design for maximum profit or market penetration</li>
+  </ul>
+</div>

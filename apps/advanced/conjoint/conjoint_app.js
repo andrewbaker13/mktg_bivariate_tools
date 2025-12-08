@@ -44,6 +44,12 @@ const CONJOINT_SCENARIOS = [
     label: 'Streaming Service',
     file: 'scenarios/streaming_service_cbc.txt',
     datasetPath: 'scenarios/streaming_service_cbc.csv'
+  },
+  {
+    id: 'scenario-course-design',
+    label: 'Marketing Research Course Design',
+    file: 'scenarios/course_design_cbc.txt',
+    datasetPath: 'scenarios/course_design_cbc.csv'
   }
 ];
 
@@ -1599,10 +1605,10 @@ async function loadScenario() {
   if (!scenario) return;
   
   try {
-    // Load description
+    // Load description (HTML formatted)
     const descResp = await fetch(scenario.file);
     const descText = await descResp.text();
-    descEl.innerHTML = `<div class="scenario-text">${escapeHtml(descText)}</div>`;
+    descEl.innerHTML = `<div class="scenario-text">${descText}</div>`;
     
     // Load dataset
     const dataResp = await fetch(scenario.datasetPath);

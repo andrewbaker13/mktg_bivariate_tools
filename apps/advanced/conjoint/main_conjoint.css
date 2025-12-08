@@ -264,3 +264,277 @@
   color: #3498db;
   font-size: 1.1rem;
 }
+
+/* ========================================
+   Conjoint Creator Specific Styles
+   ======================================== */
+
+/* Case Study Cards */
+.case-study-card {
+  padding: 1.5rem;
+  border: 1px solid var(--app-border, #d6dfea);
+  border-radius: 8px;
+  background: var(--app-card-bg, #fff);
+  transition: all 0.2s ease;
+}
+
+.case-study-card:hover {
+  border-color: var(--app-accent, #0066cc);
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
+  transform: translateY(-2px);
+}
+
+.case-study-card h3 {
+  margin: 0 0 0.75rem 0;
+  color: var(--app-accent, #0066cc);
+  font-size: 1.15rem;
+}
+
+.case-study-card p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.case-study-card ul {
+  line-height: 1.8;
+  margin: 0.5rem 0 0 1.5rem;
+  font-size: 0.9rem;
+  color: var(--app-text, #1f2a37);
+}
+
+.case-study-card ul li {
+  margin-bottom: 0.4rem;
+}
+
+.case-study-card button {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+/* Attribute and Competitor Rows */
+.attribute-row, .competitor-row {
+  background: var(--app-card-bg, #fff);
+  border: 1px solid var(--app-border, #d6dfea);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.attribute-row .grid-3-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.attribute-row label,
+.competitor-row label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--app-text, #1f2a37);
+}
+
+.attribute-row small {
+  color: var(--app-muted, #5f6b7a);
+  font-size: 0.85rem;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.attribute-row .remove-attr-btn,
+.competitor-row .remove-comp-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: var(--app-danger, #d64747);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.competitor-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.competitor-inputs label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--app-text, #1f2a37);
+}
+
+.task-preview {
+  background: var(--app-card-bg, #fff);
+  border: 2px solid var(--app-border, #d6dfea);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.task-preview h4 {
+  margin: 0 0 0.5rem;
+  color: var(--app-accent, #2a7de1);
+}
+
+.task-preview > p {
+  font-style: italic;
+  color: var(--app-muted, #5f6b7a);
+  margin: 0.5rem 0 1rem;
+}
+
+.alternatives-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.alternative-card {
+  background: white;
+  border: 1px solid var(--app-border, #d6dfea);
+  border-radius: 6px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.alternative-card strong {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--app-accent, #2a7de1);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--app-border, #e4e9f0);
+}
+
+.alternative-card > div {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.alternative-card .attr-label {
+  font-weight: 600;
+  color: #666;
+  margin-right: 0.25rem;
+}
+
+.badge-secondary {
+  background: var(--app-muted, #5f6b7a) !important;
+  color: white !important;
+  text-decoration: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  display: inline-block;
+}
+
+.badge-secondary:hover {
+  background: #4a5568 !important;
+}
+
+.input-group {
+  margin-bottom: 1.5rem;
+}
+
+.input-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--app-text, #1f2a37);
+}
+
+.input-group small {
+  display: block;
+  color: var(--app-muted, #5f6b7a);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.success-message {
+  background: #d4edda;
+  color: #155724;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #28a745;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #dc3545;
+}
+
+.info-message {
+  background: #d1ecf1;
+  color: #0c5460;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #17a2b8;
+}
+
+.diagnostic-metric {
+  background: var(--app-card-bg, #fff);
+  border: 1px solid var(--app-border, #d6dfea);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.diagnostic-metric h4 {
+  margin: 0 0 0.75rem;
+  color: var(--app-accent, #2a7de1);
+}
+
+.diagnostic-metric ul {
+  margin: 0.5rem 0 0 1.5rem;
+  line-height: 1.8;
+}
+
+.diagnostic-metric p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.metric-score {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--app-accent, #2a7de1);
+  margin: 0.5rem 0;
+}
+
+.metric-rating {
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  display: inline-block;
+  margin: 0.5rem 0;
+}
+
+.metric-rating.excellent {
+  background: #d4edda;
+  color: #155724;
+}
+
+.metric-rating.good {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.metric-rating.acceptable {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.metric-rating.poor {
+  background: #f8d7da;
+  color: #721c24;
+}
+

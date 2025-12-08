@@ -1,36 +1,52 @@
-This scenario presents a CBC study for subscription streaming services. The study includes 200 respondents completing 10 choice tasks each.
+<div style="line-height: 1.6;">
+  <p>This scenario presents a CBC study for subscription streaming services. The study includes <strong>200 respondents</strong> completing <strong>10 choice tasks</strong> each.</p>
 
-Context:
-A media company is planning to launch a new streaming platform and wants to understand what features, content offerings, and price points will drive subscriptions in a competitive market.
+  <div style="background: #f0f7ff; padding: 1rem; border-left: 4px solid #2a7de1; margin: 1rem 0;">
+    <p style="margin: 0 0 0.5rem 0;"><strong>📺 Context:</strong></p>
+    <p style="margin: 0;">A media company is planning to launch a new streaming platform and wants to understand what features, content offerings, and price points will drive subscriptions in a competitive market.</p>
+  </div>
 
-Study Design:
-- Respondents: 200 streaming service users (mixed current subscribers to various platforms)
-- Tasks: Each respondent viewed 10 choice scenarios
-- Alternatives per task: 3-4 service options + "None/Keep current service"
-- Competitor services: Netflix and Disney+ appeared as fixed alternatives in some tasks
+  <p><strong>Study Design:</strong></p>
+  <ul style="margin-left: 1.5rem; line-height: 1.8;">
+    <li><strong>Respondents:</strong> 200 streaming service users (mixed current subscribers to various platforms)</li>
+    <li><strong>Tasks:</strong> Each respondent viewed 10 choice scenarios</li>
+    <li><strong>Alternatives per task:</strong> 3-4 service options + "None/Keep current service"</li>
+    <li><strong>Competitor services:</strong> Netflix and Disney+ appeared as fixed alternatives in some tasks</li>
+  </ul>
 
-Attributes tested:
-1. Content library size: Small (5K titles), Medium (15K titles), Large (30K titles)
-2. Original content: None, Moderate (5 originals/month), Extensive (15 originals/month)
-3. Ad-free experience: With ads, Ad-free
-4. Simultaneous streams: 1 device, 2 devices, 4 devices
-5. Video quality: HD, 4K Ultra HD
-6. Monthly price: $5.99, $9.99, $14.99, $19.99
+  <p><strong>🎬 Attributes Tested:</strong></p>
+  <ul style="margin-left: 1.5rem; line-height: 1.8;">
+    <li><strong>Content library size:</strong> Small (5K titles), Medium (15K titles), Large (30K titles)</li>
+    <li><strong>Original content:</strong> None, Moderate (5 originals/month), Extensive (15 originals/month)</li>
+    <li><strong>Ad-free experience:</strong> With ads, Ad-free</li>
+    <li><strong>Simultaneous streams:</strong> 1 device, 2 devices, 4 devices</li>
+    <li><strong>Video quality:</strong> HD, 4K Ultra HD</li>
+    <li><strong>Monthly price:</strong> <span style="color: #2a7de1; font-weight: bold;">$5.99, $9.99, $14.99, $19.99</span></li>
+  </ul>
 
-Special features:
-- "None" means the respondent would not subscribe (keeping their current service or going without)
-- Competitor platforms (Netflix, Disney+) serve as benchmarks
+  <p><strong>✨ Special Features:</strong></p>
+  <ul style="margin-left: 1.5rem;">
+    <li><strong>"None"</strong> means the respondent would not subscribe (keeping their current service or going without)</li>
+    <li>Competitor platforms (Netflix, Disney+) serve as benchmarks</li>
+  </ul>
 
-Research questions:
-- What drives streaming service choice: content quantity, quality, or price?
-- How much are customers willing to pay for ad-free experience?
-- Can a new entrant compete on value or must they focus on exclusive originals?
-- Which customer segments prioritize different bundles (e.g., families needing 4 streams vs. individuals)?
-- What pricing tier maximizes revenue vs. subscriber count?
+  <div style="background: #fff3e0; padding: 1rem; border-left: 4px solid #ff9800; margin: 1rem 0;">
+    <p style="margin: 0 0 0.5rem 0;"><strong>🤔 Research Questions:</strong></p>
+    <ul style="margin: 0.5rem 0 0 1.5rem; line-height: 1.6;">
+      <li>What drives streaming service choice: content quantity, quality, or price?</li>
+      <li>How much are customers willing to pay for ad-free experience?</li>
+      <li>Can a new entrant compete on value or must they focus on exclusive originals?</li>
+      <li>Which customer segments prioritize different bundles (e.g., families needing 4 streams vs. individuals)?</li>
+      <li>What pricing tier maximizes revenue vs. subscriber count?</li>
+    </ul>
+  </div>
 
-Use cases:
-✓ Launch strategy: Choose optimal feature bundle for market entry
-✓ Pricing optimization: Find profit-maximizing price point
-✓ Competitive positioning: Understand where new service can differentiate
-✓ Segmentation: Identify distinct customer groups (binge-watchers, casual viewers, families)
-✓ Feature prioritization: Invest in originals vs. library size vs. technical quality
+  <p><strong>🎯 Use Cases:</strong></p>
+  <ul style="margin-left: 1.5rem; line-height: 1.8;">
+    <li>✓ <strong>Launch strategy:</strong> Choose optimal feature bundle for market entry</li>
+    <li>✓ <strong>Pricing optimization:</strong> Find profit-maximizing price point</li>
+    <li>✓ <strong>Competitive positioning:</strong> Understand where new service can differentiate</li>
+    <li>✓ <strong>Segmentation:</strong> Identify distinct customer groups (binge-watchers, casual viewers, families)</li>
+    <li>✓ <strong>Feature prioritization:</strong> Invest in originals vs. library size vs. technical quality</li>
+  </ul>
+</div>
