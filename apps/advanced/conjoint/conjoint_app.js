@@ -832,6 +832,7 @@ function populateDiagnostics(result) {
     result.respondents.filter(r => r.convergence?.iterations != null).length;
   
   html += '<h4>Optimization Convergence</h4><ul>';
+  html += `<li><strong>Total estimation time:</strong> ${result.estimation_time_seconds?.toFixed(1) || '?'} seconds</li>`;
   html += `<li><strong>Convergence rate:</strong> ${converged}/${totalResp} (${convergenceRate}%) respondents converged successfully</li>`;
   html += `<li><strong>Mean iterations:</strong> ${meanIterations.toFixed(1)} (max: 200)</li>`;
   html += `<li><strong>Methods used:</strong> `;
