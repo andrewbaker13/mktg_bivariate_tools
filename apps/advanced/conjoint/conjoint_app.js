@@ -123,6 +123,50 @@ function setupFileUpload() {
 
   const templateBtn = document.getElementById('conjoint-template-download');
   templateBtn?.addEventListener('click', downloadTemplate);
+  
+  const demoSmallBtn = document.getElementById('conjoint-load-demo-small');
+  demoSmallBtn?.addEventListener('click', () => loadDemoDataset('small'));
+  
+  const demoFullBtn = document.getElementById('conjoint-load-demo-full');
+  demoFullBtn?.addEventListener('click', () => loadDemoDataset('full'));
+}
+
+/**
+ * Load demo dataset
+ */
+async function loadDemoDataset(size) {
+  const feedbackEl = document.getElementById('conjoint-upload-feedback');
+  try {
+    feedbackEl.textContent = 'Loading demo dataset...';
+    
+    const filename = size === 'small' ? 'smartphone_cbc_small.csv' : 'smartphone_cbc.csv';
+    const response = await fetch(`scenarios/${filename}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to load demo dataset: ${response.statusText}`);
+    }
+    
+    const text = await response.text();
+    const parsed = typeof csvUtils !== 'undefined'
+      ? csvUtils.parseDelimitedText(text)
+      : parseCSV(text);
+    
+    if (!parsed.headers || parsed.headers.length === 0) {
+      throw new Error('No headers found in demo dataset');
+    }
+    
+    rawData = parsed.data;
+    csvHeaders = parsed.headers;
+    
+    feedbackEl.textContent = `✓ Loaded demo dataset (${size === 'small' ? '20' : '150'} respondents, ${rawData.length} rows)`;
+    
+    document.getElementById('conjoint-column-mapping').style.display = 'block';
+    populateColumnMappingSelects();
+    
+  } catch (error) {
+    console.error('Demo load error:', error);
+    feedbackEl.textContent = `Error: ${error.message}`;
+  }
 }
 
 /**
