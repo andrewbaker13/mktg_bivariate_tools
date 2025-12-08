@@ -45,7 +45,20 @@ function loadCaseStudy(caseId) {
   const container = document.getElementById('attributes-container');
   container.innerHTML = '';
 
-  if (caseId === 'hotel') {
+  if (caseId === 'coffee') {
+    // Coffee Shop Selection (Simple Example)
+    addAttributeWithData('Location', ['Downtown', 'Suburb'], 'categorical');
+    addAttributeWithData('Seating', ['Indoor Only', 'Indoor + Outdoor'], 'categorical');
+    addAttributeWithData('Price Level', ['Budget', 'Mid-Range', 'Premium'], 'categorical');
+
+    // Set configuration
+    document.getElementById('num-tasks').value = 8;
+    document.getElementById('num-alternatives').value = 3;
+    document.getElementById('include-none').checked = true;
+    document.getElementById('create-full-factorial').checked = false;
+    document.getElementById('populate-synthetic').checked = false;
+
+  } else if (caseId === 'hotel') {
     // Hotel Room Selection
     addAttributeWithData('Room Type', ['Standard', 'Deluxe', 'Suite'], 'categorical');
     addAttributeWithData('View', ['City', 'Garden', 'Ocean'], 'categorical');
@@ -83,7 +96,12 @@ function loadCaseStudy(caseId) {
   // Show success message
   const feedbackDiv = document.getElementById('attribute-validation-feedback');
   feedbackDiv.className = 'success-message';
-  feedbackDiv.textContent = `✓ Loaded ${caseId === 'hotel' ? 'Hotel Room Selection' : 'SaaS Subscription Plans'} case study. Review attributes and generate design.`;
+  const caseNames = {
+    'coffee': 'Coffee Shop Selection',
+    'hotel': 'Hotel Room Selection',
+    'software': 'SaaS Subscription Plans'
+  };
+  feedbackDiv.textContent = `✓ Loaded ${caseNames[caseId]} case study. Review attributes and generate design.`;
   
   setTimeout(() => {
     feedbackDiv.textContent = '';
@@ -275,8 +293,10 @@ function updateFullFactorialWarning() {
   const fullSize = attributes.reduce((prod, attr) => prod * attr.levels.length, 1);
   const feedback = document.getElementById('design-generation-feedback');
   
-  if (fullSize > 500) {
-    feedback.innerHTML = `<div class="error-message">⚠ Full factorial would create ${fullSize.toLocaleString()} profiles. This is too large for practical use. Consider using fractional design instead.</div>`;
+  if (fullSize > 2000) {
+    feedback.innerHTML = `<div class="error-message">⚠ Full factorial would create ${fullSize.toLocaleString()} profiles. This exceeds the 2,000 profile limit. Please use fractional design or reduce attribute levels.</div>`;
+  } else if (fullSize > 500) {
+    feedback.innerHTML = `<div class="info-message">⚠ Full factorial will create ${fullSize.toLocaleString()} profiles. This is large but will be generated. Consider fractional design for more efficient data collection.</div>`;
   } else if (fullSize > 100) {
     feedback.innerHTML = `<div class="info-message">ℹ Full factorial will create ${fullSize.toLocaleString()} profiles. This may result in long surveys. Consider fractional design for more efficient data collection.</div>`;
   } else {
@@ -354,12 +374,14 @@ function generateDesign() {
     
     feedback.innerHTML = '<div class="info-message">Generating design... This may take a moment.</div>';
     
-    // Check full factorial size
+    // Check full factorial size (hard limit at 2000 profiles)
     if (designConfig.fullFactorial) {
       const fullSize = attributes.reduce((prod, attr) => prod * attr.levels.length, 1);
-      if (fullSize > 1000) {
-        feedback.innerHTML = '<div class="error-message">Error: Full factorial would create ' + fullSize.toLocaleString() + ' profiles. This is too large. Please use fractional design or reduce attribute levels.</div>';
+      if (fullSize > 2000) {
+        feedback.innerHTML = '<div class="error-message">Error: Full factorial would create ' + fullSize.toLocaleString() + ' profiles. This exceeds the 2,000 profile limit. Please use fractional design or reduce attribute levels.</div>';
         return;
+      } else if (fullSize > 500) {
+        feedback.innerHTML = '<div class="info-message">⚠ Generating large full factorial (' + fullSize.toLocaleString() + ' profiles)... This may take a moment.</div>';
       }
     }
     
@@ -972,6 +994,28 @@ function setupDownloads() {
 function downloadCSV() {
   if (!generatedDesign) return;
   
+  const format = document.getElementById('csv-format-select')?.value || 'long';
+  
+  let csv;
+  if (format === 'wide') {
+    csv = generateWideFormatCSV();
+  } else {
+    csv = generateLongFormatCSV();
+  }
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  
+  const formatSuffix = format === 'wide' ? '_wide' : '';
+  const filename = generatedDesign.syntheticData 
+    ? `conjoint_synthetic_data_${designConfig.numRespondents}resp${formatSuffix}.csv`
+    : `conjoint_design_template${formatSuffix}.csv`;
+  link.download = filename;
+  link.click();
+}
+
+function generateLongFormatCSV() {
   // Create CSV with respondent_id, task_id, alternative_id, chosen, attributes
   let csv = 'respondent_id,task_id,alternative_id,chosen';
   attributes.forEach(attr => csv += `,${attr.name}`);
@@ -999,14 +1043,74 @@ function downloadCSV() {
     });
   }
   
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  const filename = generatedDesign.syntheticData 
-    ? `conjoint_synthetic_data_${designConfig.numRespondents}resp.csv`
-    : 'conjoint_design_template.csv';
-  link.download = filename;
-  link.click();
+  return csv;
+}
+
+function generateWideFormatCSV() {
+  // Wide format: one row per task with columns for each alternative's attributes
+  // Header: respondent_id, task_id, chosen_alternative, alt1_attr1, alt1_attr2, ..., alt2_attr1, alt2_attr2, ...
+  
+  let header = 'respondent_id,task_id,chosen_alternative';
+  
+  // Add columns for each alternative
+  const maxAlts = designConfig.numAlternatives + (designConfig.includeNone ? 1 : 0);
+  for (let altNum = 1; altNum <= maxAlts; altNum++) {
+    attributes.forEach(attr => {
+      header += `,alt${altNum}_${attr.name}`;
+    });
+  }
+  let csv = header + '\n';
+  
+  if (generatedDesign.syntheticData) {
+    // Group synthetic data by respondent and task
+    const grouped = {};
+    generatedDesign.syntheticData.forEach(row => {
+      const key = `${row.respondent_id}_${row.task_id}`;
+      if (!grouped[key]) {
+        grouped[key] = {
+          respondent_id: row.respondent_id,
+          task_id: row.task_id,
+          alternatives: []
+        };
+      }
+      grouped[key].alternatives.push(row);
+    });
+    
+    // Convert to wide format
+    Object.values(grouped).forEach(task => {
+      const chosenAlt = task.alternatives.find(alt => alt.chosen === 1);
+      csv += `${task.respondent_id},${task.task_id},${chosenAlt ? chosenAlt.alternative_id : ''}`;
+      
+      // Add attribute values for each alternative
+      for (let altNum = 1; altNum <= maxAlts; altNum++) {
+        const alt = task.alternatives[altNum - 1];
+        attributes.forEach(attr => {
+          csv += `,${alt ? (alt[attr.name] || '') : ''}`;
+        });
+      }
+      csv += '\n';
+    });
+  } else {
+    // Template: one respondent
+    generatedDesign.tasks.forEach(task => {
+      csv += `R001,${task.task_id},`;
+      
+      // Add attribute values for each alternative
+      task.alternatives.forEach(alt => {
+        attributes.forEach(attr => {
+          csv += `,${alt[attr.name] || ''}`;
+        });
+      });
+      
+      // Fill remaining alternative slots if any
+      for (let i = task.alternatives.length; i < maxAlts; i++) {
+        attributes.forEach(() => csv += `,`);
+      }
+      csv += '\n';
+    });
+  }
+  
+  return csv;
 }
 
 function downloadJSON() {

@@ -84,6 +84,18 @@
           </ul>
         </details>
         <details class="intro-notes">
+          <summary>Understanding the "None" Option (Opt-Out Modeling)</summary>
+          <p><strong>How it works:</strong> The "None" alternative is modeled as a <strong>constant utility term</strong> (ASC_None) with no product attributes. This represents a respondent's baseline preference for "doing nothing" or "not purchasing."</p>
+          <p><strong>Why constant-only?</strong> Since "None" has no tangible product features (no brand, no price, no screen size, etc.), its utility doesn't vary with attribute changes. It serves as a <strong>fixed outside option</strong> that respondents can always choose instead of any product.</p>
+          <p><strong>Interpretation:</strong></p>
+          <ul>
+            <li><strong>Negative ASC_None</strong> (e.g., -2.5): Respondents generally prefer buying something over nothing. The more negative, the stronger the "must have a product" preference.</li>
+            <li><strong>Positive ASC_None</strong> (e.g., +1.2): Respondents prefer doing nothing unless a product offers substantial utility. Indicates high barriers to purchase.</li>
+            <li><strong>ASC_None ≈ 0:</strong> Indifference between "None" and a product with baseline attribute levels. Market is highly competitive for attention.</li>
+          </ul>
+          <p><strong>In market simulation:</strong> When you change product configurations (e.g., lower price, better brand), the "None" utility stays constant while product utilities change. This allows realistic "no purchase" share predictions that reflect actual market opt-out rates.</p>
+        </details>
+        <details class="intro-notes">
           <summary>When to Use Conjoint Analysis</summary>
           <p>
             Use conjoint when you need to understand customer preferences for multi-attribute products or services. Common marketing applications:
@@ -333,7 +345,7 @@
             <ul>
               <li><strong>Categorical attributes</strong> (brand, camera): Each level gets a coefficient relative to a baseline (usually the first alphabetically). Positive values mean preference over baseline; negative means less preferred.</li>
               <li><strong>Linear attributes</strong> (price, screen_size): Single coefficient per attribute. Positive = "more is better" (e.g., bigger screen); negative = "less is better" (e.g., lower price).</li>
-              <li><strong>None alternative (ASC_None):</strong> Positive = preference for "no purchase"; negative = strong preference to buy something.</li>
+              <li><strong>None alternative (ASC_None):</strong> The constant utility for choosing "no purchase." This has no product attributes—it's a fixed outside option. Negative values mean respondents strongly prefer buying something; positive values indicate high barriers to purchase (people prefer doing nothing unless products offer substantial value).</li>
               <li><strong>Competitor alternatives (ASC_Competitor_*):</strong> Positive = brand loyalty to competitor; negative = preference for your brands.</li>
             </ul>
             <p><strong>Std. Dev.:</strong> Variation across respondents. High std dev (>0.5) suggests heterogeneous preferences—good candidates for segmentation.</p>

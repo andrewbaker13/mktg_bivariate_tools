@@ -94,6 +94,7 @@
         <label for="case-study-select">Sample Case Studies (Optional)</label>
         <select id="case-study-select" onchange="handleCaseStudySelection(this.value)">
           <option value="">-- Select a case study to auto-populate --</option>
+          <option value="coffee">☕ Coffee Shop Selection (3 attributes - simple example)</option>
           <option value="hotel">🏨 Hotel Room Selection (5 attributes)</option>
           <option value="software">💻 SaaS Subscription Plans (6 attributes)</option>
         </select>
@@ -217,6 +218,18 @@
 
       <div class="input-group" style="margin-top: 2rem;">
         <h3>Download Design Files</h3>
+        
+        <div style="margin-top: 1rem;">
+          <label for="csv-format-select">CSV Format</label>
+          <select id="csv-format-select">
+            <option value="long">Long Format (recommended - supported by analyzer tool)</option>
+            <option value="wide">Wide Format (alternative - not supported by analyzer)</option>
+          </select>
+          <small style="color: var(--app-muted); display: block; margin-top: 0.25rem;">
+            Long format has one row per alternative. Wide format has one row per task with attributes as columns.
+          </small>
+        </div>
+        
         <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
           <button id="download-design-csv">Download CBC Template (CSV)</button>
           <button class="secondary" id="download-design-json">Design Specification (JSON)</button>
