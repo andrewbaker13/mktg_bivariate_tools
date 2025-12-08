@@ -35,13 +35,13 @@ let currentDataSource = 'manual';
 const CONJOINT_SCENARIOS = [
   {
     id: 'scenario-smartphone',
-    label: 'Smartphone Choice (150 respondents, 12 tasks)',
+    label: 'Smartphone Choice',
     file: 'scenarios/smartphone_cbc.txt',
     datasetPath: 'scenarios/smartphone_cbc.csv'
   },
   {
     id: 'scenario-streaming',
-    label: 'Streaming Service (200 respondents, 10 tasks)',
+    label: 'Streaming Service',
     file: 'scenarios/streaming_service_cbc.txt',
     datasetPath: 'scenarios/streaming_service_cbc.csv'
   }
@@ -623,6 +623,9 @@ function displayEstimationResults(result) {
   
   // Populate diagnostics
   populateDiagnostics(result);
+  
+  // Setup individual viewer
+  setupIndividualViewer(result.respondents);
 }
 
 /**
@@ -750,8 +753,8 @@ function generateAPAReport(result) {
     We estimated individual-level part-worth utilities for ${nResp} respondents using multinomial logit regression with L2 regularization. 
     Each respondent completed an average of ${meanTasks} choice tasks. The mean pseudo-R² (McFadden) was ${meanR2}, indicating ${parseFloat(meanR2) > 0.3 ? 'good' : 'moderate'} model fit. 
     Attribute importance analysis revealed that the most influential drivers of choice were: ${topAttrs}.
-    ${result.aggregate_summaries.mean_utilities.price ? 
-      `The mean price coefficient was ${result.aggregate_summaries.mean_utilities.price.toFixed(4)}, suggesting ${Math.abs(result.aggregate_summaries.mean_utilities.price) > 0.01 ? 'substantial' : 'moderate'} price sensitivity.` : ''}
+    ${result.aggregate_summaries.mean_utilities.price?.['_value']?.mean ? 
+      `The mean price coefficient was ${result.aggregate_summaries.mean_utilities.price['_value'].mean.toFixed(4)}, suggesting ${Math.abs(result.aggregate_summaries.mean_utilities.price['_value'].mean) > 0.01 ? 'substantial' : 'moderate'} price sensitivity.` : ''}
   `.trim();
   
   document.getElementById('conjoint-apa-report').textContent = report;
@@ -767,8 +770,8 @@ function generateManagerialReport(result) {
   const report = `
     Customers prioritize <strong>${topAttr[0]}</strong> (${topAttr[1].toFixed(1)}% importance) when making purchase decisions in this category. 
     This suggests marketing should emphasize ${topAttr[0]}-related messaging and product development should focus investment in this dimension.
-    ${result.aggregate_summaries.mean_utilities.price ? 
-      `Price sensitivity is ${Math.abs(result.aggregate_summaries.mean_utilities.price) > 0.01 ? 'high' : 'moderate'}, indicating customers will trade off features for lower prices. Consider value-tier segmentation strategies.` : ''}
+    ${result.aggregate_summaries.mean_utilities.price?.['_value']?.mean ? 
+      `Price sensitivity is ${Math.abs(result.aggregate_summaries.mean_utilities.price['_value'].mean) > 0.01 ? 'high' : 'moderate'}, indicating customers will trade off features for lower prices. Consider value-tier segmentation strategies.` : ''}
     Use the simulation tool below to test how different product configurations would perform in a competitive market scenario.
   `.trim();
   
@@ -811,7 +814,135 @@ function populateDiagnostics(result) {
   }
   
   html += '</ul>';
+  
+  // Add convergence diagnostics
+  const converged = result.respondents.filter(r => r.convergence?.converged).length;
+  const totalResp = result.respondents.length;
+  const convergenceRate = (converged / totalResp * 100).toFixed(1);
+  
+  const methodCounts = {};
+  result.respondents.forEach(r => {
+    const method = r.convergence?.method || 'Unknown';
+    methodCounts[method] = (methodCounts[method] || 0) + 1;
+  });
+  
+  const meanIterations = result.respondents
+    .filter(r => r.convergence?.iterations != null)
+    .reduce((sum, r) => sum + r.convergence.iterations, 0) / 
+    result.respondents.filter(r => r.convergence?.iterations != null).length;
+  
+  html += '<h4>Optimization Convergence</h4><ul>';
+  html += `<li><strong>Convergence rate:</strong> ${converged}/${totalResp} (${convergenceRate}%) respondents converged successfully</li>`;
+  html += `<li><strong>Mean iterations:</strong> ${meanIterations.toFixed(1)} (max: 200)</li>`;
+  html += `<li><strong>Methods used:</strong> `;
+  Object.entries(methodCounts).forEach(([method, count]) => {
+    html += `${method}: ${count} (${(count/totalResp*100).toFixed(1)}%); `;
+  });
+  html += '</li>';
+  
+  if (convergenceRate < 95) {
+    html += `<li class="warning">⚠️ ${100-parseFloat(convergenceRate)}% of respondents did not converge. This may indicate data quality issues or insufficient choice tasks.</li>`;
+  } else {
+    html += `<li class="success">✓ High convergence rate indicates reliable optimization.</li>`;
+  }
+  
+  html += '</ul>';
+  
   container.innerHTML = html;
+}
+
+/**
+ * Setup individual respondent viewer
+ */
+function setupIndividualViewer(respondents) {
+  const viewBtn = document.getElementById('conjoint-view-individual');
+  const viewer = document.getElementById('conjoint-individual-viewer');
+  const select = document.getElementById('conjoint-respondent-select');
+  const details = document.getElementById('conjoint-individual-details');
+  
+  if (!viewBtn || !viewer || !select || !details) return;
+  
+  // Populate dropdown
+  select.innerHTML = '<option value="">-- Choose a respondent --</option>';
+  respondents.forEach(resp => {
+    const option = document.createElement('option');
+    option.value = resp.respondent_id;
+    option.textContent = `${resp.respondent_id} (R²=${resp.fit.pseudo_r2?.toFixed(3) || '?'})`;
+    select.appendChild(option);
+  });
+  
+  // Toggle viewer visibility
+  viewBtn.addEventListener('click', () => {
+    const isHidden = viewer.style.display === 'none';
+    viewer.style.display = isHidden ? 'block' : 'none';
+    viewBtn.textContent = isHidden ? 'Hide individual viewer' : 'View individual respondent utilities';
+  });
+  
+  // Handle selection changes
+  select.addEventListener('change', (e) => {
+    const selectedId = e.target.value;
+    if (!selectedId) {
+      details.innerHTML = '<p class="muted">Select a respondent to view their estimated utilities and model fit.</p>';
+      return;
+    }
+    
+    const resp = respondents.find(r => r.respondent_id === selectedId);
+    if (!resp) return;
+    
+    let html = `
+      <h4>Respondent ${escapeHtml(resp.respondent_id)}</h4>
+      <div class="metric-output">Pseudo-R²: <strong>${resp.fit.pseudo_r2?.toFixed(3) || '—'}</strong></div>
+      <div class="metric-output">Log-likelihood: <strong>${resp.fit.log_likelihood?.toFixed(2) || '—'}</strong></div>
+      <div class="metric-output">Tasks completed: <strong>${resp.fit.n_tasks || '—'}</strong></div>
+      <div class="metric-output">Observations: <strong>${resp.fit.n_observations || '—'}</strong></div>
+      
+      <h5 style="margin-top: 1.5rem;">Coefficients</h5>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Utility</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    Object.entries(resp.coefficients).forEach(([param, value]) => {
+      html += `
+        <tr>
+          <td>${escapeHtml(param)}</td>
+          <td>${value?.toFixed(4) || '—'}</td>
+        </tr>
+      `;
+    });
+    
+    html += `
+        </tbody>
+      </table>
+      
+      <h5 style="margin-top: 1.5rem;">Attribute Importance</h5>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th>Importance (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    Object.entries(resp.attribute_importance).forEach(([attr, imp]) => {
+      html += `
+        <tr>
+          <td>${escapeHtml(attr)}</td>
+          <td>${imp?.toFixed(1) || '—'}%</td>
+        </tr>
+      `;
+    });
+    
+    html += '</tbody></table>';
+    details.innerHTML = html;
+  });
 }
 
 /**
@@ -965,10 +1096,8 @@ function computeSegmentProfiles(k) {
   for (let c = 0; c < k; c++) {
     const members = estimationResult.respondents.filter(r => r.segment === c);
     
-    // Aggregate utilities
-    const meanUtils = {};
+    // Aggregate attribute importance
     const meanImportance = {};
-    
     members.forEach(r => {
       Object.entries(r.attribute_importance).forEach(([attr, imp]) => {
         if (!meanImportance[attr]) meanImportance[attr] = [];
@@ -978,6 +1107,27 @@ function computeSegmentProfiles(k) {
     
     Object.keys(meanImportance).forEach(attr => {
       meanImportance[attr] = meanImportance[attr].reduce((a, b) => a + b, 0) / meanImportance[attr].length;
+    });
+    
+    // Aggregate utilities (coefficients)
+    const meanUtilities = {};
+    members.forEach(r => {
+      Object.entries(r.coefficients).forEach(([coef, val]) => {
+        if (val != null) {
+          if (!meanUtilities[coef]) meanUtilities[coef] = [];
+          meanUtilities[coef].push(val);
+        }
+      });
+    });
+    
+    Object.keys(meanUtilities).forEach(coef => {
+      const vals = meanUtilities[coef];
+      meanUtilities[coef] = {
+        mean: vals.reduce((a, b) => a + b, 0) / vals.length,
+        std: Math.sqrt(vals.reduce((a, b) => a + Math.pow(b - (vals.reduce((x, y) => x + y, 0) / vals.length), 2), 0) / vals.length),
+        min: Math.min(...vals),
+        max: Math.max(...vals)
+      };
     });
     
     const topAttr = Object.entries(meanImportance).sort((a, b) => b[1] - a[1])[0];
@@ -991,6 +1141,7 @@ function computeSegmentProfiles(k) {
       id: c,
       size: members.length,
       meanImportance,
+      meanUtilities,
       topAttribute: topAttr ? topAttr[0] : 'N/A',
       meanPriceCoef: meanPrice
     });
@@ -1030,7 +1181,7 @@ function displaySegmentationResults(segments) {
   
   Plotly.newPlot('chart-segment-importance', traces, layout, { responsive: true });
   
-  // Table
+  // Summary table
   const tbody = document.getElementById('conjoint-segment-table-body');
   tbody.innerHTML = '';
   segments.forEach((seg, i) => {
@@ -1042,6 +1193,50 @@ function displaySegmentationResults(segments) {
       <td>${seg.topAttribute}</td>
     `;
   });
+  
+  // Detailed utilities for each segment
+  const detailsContainer = document.getElementById('conjoint-segment-details');
+  if (detailsContainer) {
+    let html = '<h3>Segment-Level Part-Worth Utilities</h3>';
+    
+    segments.forEach((seg, i) => {
+      html += `
+        <details class="segment-utilities-details" open>
+          <summary><strong>Segment ${i + 1}</strong> (n=${seg.size}, top attribute: ${seg.topAttribute})</summary>
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Mean</th>
+                <th>Std. Dev.</th>
+                <th>Min</th>
+                <th>Max</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      Object.entries(seg.meanUtilities).forEach(([param, stats]) => {
+        html += `
+          <tr>
+            <td>${escapeHtml(param)}</td>
+            <td>${stats.mean?.toFixed(4) || '—'}</td>
+            <td>${stats.std?.toFixed(4) || '—'}</td>
+            <td>${stats.min?.toFixed(4) || '—'}</td>
+            <td>${stats.max?.toFixed(4) || '—'}</td>
+          </tr>
+        `;
+      });
+      
+      html += `
+            </tbody>
+          </table>
+        </details>
+      `;
+    });
+    
+    detailsContainer.innerHTML = html;
+  }
 }
 
 /**
@@ -1110,21 +1305,42 @@ function renderSimulationProducts() {
       const config = attributeConfig[attr];
       if (config.type === 'categorical') {
         const uniqueVals = [...new Set(getColumnValues(attr))].filter(v => v);
+        const currentVal = prod.attributes[attr] || uniqueVals[0];
         attrsHtml += `
           <label>${escapeHtml(attr)}:
             <select class="prod-attr" data-prod="${prod.id}" data-attr="${escapeHtml(attr)}">
-              ${uniqueVals.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('')}
+              ${uniqueVals.map(v => `<option value="${escapeHtml(v)}" ${v === currentVal ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('')}
             </select>
           </label>
         `;
       } else {
+        // For numeric: calculate min, max, median from data
+        const values = getColumnValues(attr).map(v => parseFloat(v)).filter(v => !isNaN(v));
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const sorted = values.sort((a, b) => a - b);
+        const median = sorted[Math.floor(sorted.length / 2)];
+        const currentVal = prod.attributes[attr] !== undefined ? prod.attributes[attr] : median;
+        
         attrsHtml += `
           <label>${escapeHtml(attr)}:
-            <input type="number" class="prod-attr" data-prod="${prod.id}" data-attr="${escapeHtml(attr)}" step="any">
+            <input type="number" class="prod-attr" data-prod="${prod.id}" data-attr="${escapeHtml(attr)}" 
+                   value="${currentVal}" min="${min}" max="${max}" step="any">
+            <span class="hint-inline">(${min}–${max})</span>
           </label>
         `;
       }
     });
+    
+    // Price and Cost inputs (only show separate price if price is NOT an attribute)
+    const hasPriceAttribute = attributeColumns.some(attr => attr.toLowerCase() === 'price');
+    let priceInputHtml = '';
+    
+    if (!hasPriceAttribute) {
+      // Price is NOT studied - add manual price input
+      const priceDefault = prod.price !== undefined ? prod.price : 500;
+      priceInputHtml = `<label>Price: <input type="number" class="prod-price" data-prod="${prod.id}" value="${priceDefault}" min="0" step="0.01"></label>`;
+    }
     
     card.innerHTML = `
       <div class="product-config-header">
@@ -1133,8 +1349,8 @@ function renderSimulationProducts() {
       </div>
       <div class="product-config-body">
         ${attrsHtml}
-        <label>Price: <input type="number" class="prod-price" data-prod="${prod.id}" value="${prod.price}" step="0.01"></label>
-        <label>Cost: <input type="number" class="prod-cost" data-prod="${prod.id}" value="${prod.cost}" step="0.01"></label>
+        ${priceInputHtml}
+        <label>Cost: <input type="number" class="prod-cost" data-prod="${prod.id}" value="${prod.cost || 0}" min="0" step="0.01"></label>
       </div>
     `;
     
@@ -1212,16 +1428,26 @@ function runSimulation() {
     const nResp = estimationResult.respondents.length;
     shares.forEach((_, i) => shares[i] /= nResp);
     
+    // Check if price is an attribute
+    const hasPriceAttribute = attributeColumns.some(attr => attr.toLowerCase() === 'price');
+    
     // Compute profits
-    const results = simulationProducts.map((prod, i) => ({
-      name: prod.name,
-      share: shares[i] * 100,
-      customers: Math.round(shares[i] * marketSize),
-      price: prod.price,
-      cost: prod.cost,
-      margin: prod.price - prod.cost,
-      profit: shares[i] * marketSize * (prod.price - prod.cost)
-    }));
+    const results = simulationProducts.map((prod, i) => {
+      // Get price from attribute if it's an attribute, otherwise from prod.price
+      const price = hasPriceAttribute && prod.attributes.price 
+        ? parseFloat(prod.attributes.price) 
+        : (prod.price || 0);
+      
+      return {
+        name: prod.name,
+        share: shares[i] * 100,
+        customers: Math.round(shares[i] * marketSize),
+        price: price,
+        cost: prod.cost || 0,
+        margin: price - (prod.cost || 0),
+        profit: shares[i] * marketSize * (price - (prod.cost || 0))
+      };
+    });
     
     // Display
     displaySimulationResults(results);
@@ -1254,8 +1480,9 @@ function computeUtility(product, coefficients) {
     }
   });
   
-  // Price
-  if (product.price && coefficients.price) {
+  // Price: only add if price is NOT already in attributes
+  const hasPriceAttribute = attributeColumns.some(attr => attr.toLowerCase() === 'price');
+  if (!hasPriceAttribute && product.price && coefficients.price) {
     utility += coefficients.price * product.price;
   }
   
@@ -1387,8 +1614,20 @@ async function loadScenario() {
     currentDataSource = 'scenario';
     currentScenarioName = scenario.label;
     
+    // Calculate actual respondents and tasks from raw data
+    const respIdx = parsed.headers.findIndex(h => h.toLowerCase().includes('respondent'));
+    const taskIdx = parsed.headers.findIndex(h => h.toLowerCase().includes('task'));
+    
+    let uniqueRespondents = 0;
+    let uniqueTasks = 0;
+    
+    if (respIdx >= 0 && taskIdx >= 0) {
+      uniqueRespondents = new Set(parsed.rows.map(r => r[respIdx])).size;
+      uniqueTasks = new Set(parsed.rows.map(r => r[taskIdx])).size;
+    }
+    
     document.getElementById('conjoint-upload-feedback').textContent = 
-      `✓ Loaded scenario: ${scenario.label} (${parsed.rows.length} rows)`;
+      `✓ Loaded scenario: ${scenario.label} (${uniqueRespondents} respondents, ${uniqueTasks} tasks, ${parsed.rows.length} rows)`;
     
     // Auto-proceed to mapping
     populateColumnMapping();

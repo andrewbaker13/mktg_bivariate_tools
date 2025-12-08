@@ -325,11 +325,41 @@
             </tr>
           </tbody>
         </table>
+        <details class="interpretation-aid" style="margin-top: 1rem;">
+          <summary>How to Interpret Part-Worth Utilities</summary>
+          <div class="interpretation-content">
+            <p><strong>Mean Utility:</strong> Average part-worth value across all respondents. Higher utilities indicate stronger preference.</p>
+            <ul>
+              <li><strong>Categorical attributes</strong> (brand, camera): Each level gets a coefficient relative to a baseline (usually the first alphabetically). Positive values mean preference over baseline; negative means less preferred.</li>
+              <li><strong>Linear attributes</strong> (price, screen_size): Single coefficient per attribute. Positive = "more is better" (e.g., bigger screen); negative = "less is better" (e.g., lower price).</li>
+              <li><strong>None alternative (ASC_None):</strong> Positive = preference for "no purchase"; negative = strong preference to buy something.</li>
+              <li><strong>Competitor alternatives (ASC_Competitor_*):</strong> Positive = brand loyalty to competitor; negative = preference for your brands.</li>
+            </ul>
+            <p><strong>Std. Dev.:</strong> Variation across respondents. High std dev (>0.5) suggests heterogeneous preferences—good candidates for segmentation.</p>
+            <p><strong>Min/Max:</strong> Range of individual utilities. Wide ranges indicate some respondents strongly prefer/dislike this level.</p>
+          </div>
+        </details>
         <p class="template-download">
           <button type="button" id="conjoint-download-utilities" class="secondary">
             Download individual utilities (CSV)
           </button>
+          <button type="button" id="conjoint-view-individual" class="secondary">
+            View individual respondent utilities
+          </button>
         </p>
+      </div>
+
+      <div class="card" id="conjoint-individual-viewer" style="display:none;">
+        <h3>Individual Respondent Utilities</h3>
+        <div class="input-group">
+          <label for="conjoint-respondent-select">Select Respondent:</label>
+          <select id="conjoint-respondent-select" class="input-field">
+            <option value="">-- Choose a respondent --</option>
+          </select>
+        </div>
+        <div id="conjoint-individual-details" style="margin-top: 1rem;">
+          <p class="muted">Select a respondent to view their estimated utilities and model fit.</p>
+        </div>
       </div>
     </section>
 
@@ -372,6 +402,10 @@
               <!-- Populated dynamically -->
             </tbody>
           </table>
+          
+          <div id="conjoint-segment-details" style="margin-top: 2rem;">
+            <!-- Segment utilities tables populated here -->
+          </div>
         </div>
       </div>
     </section>
