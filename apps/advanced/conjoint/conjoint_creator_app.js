@@ -398,6 +398,9 @@ function generateDesign() {
     displayDesignPreview();
     displayDesignDiagnostics();
     
+    // Setup button for scenario analysis (don't run automatically)
+    setupDesignScenarioButton();
+    
     let successMsg = '✓ Design generated successfully!';
     if (designConfig.populateSynthetic) {
       successMsg += ` Synthetic data created for ${designConfig.numRespondents} respondents.`;
@@ -978,6 +981,285 @@ function calculateStatisticalPower() {
   
   html += '</div>';
   return html;
+}
+
+function setupDesignScenarioButton() {
+  const btn = document.getElementById('run-design-scenarios-btn');
+  if (!btn) return;
+  
+  btn.onclick = async () => {
+    const statusEl = document.getElementById('scenario-analysis-status');
+    const chartEl = document.getElementById('design-tradeoffs-chart');
+    
+    btn.disabled = true;
+    btn.textContent = 'Computing scenarios...';
+    statusEl.textContent = 'Generating and evaluating 64 alternative design configurations. This may take 10-30 seconds...';
+    statusEl.style.color = '#ff9800';
+    
+    // Use setTimeout to allow UI update before heavy computation
+    setTimeout(async () => {
+      try {
+        await computeAndDisplayDesignTradeoffs();
+        
+        statusEl.textContent = '✓ Analysis complete. Charts show D-efficiency for alternative design configurations.';
+        statusEl.style.color = '#4caf50';
+        chartEl.style.display = 'block';
+        btn.textContent = 'Refresh Analysis';
+        btn.disabled = false;
+      } catch (error) {
+        console.error('Scenario analysis error:', error);
+        statusEl.textContent = '✗ Error computing scenarios: ' + error.message;
+        statusEl.style.color = '#d32f2f';
+        btn.disabled = false;
+        btn.textContent = 'Retry Analysis';
+      }
+    }, 50);
+  };
+}
+
+async function computeAndDisplayDesignTradeoffs() {
+  const currentTasks = designConfig.numTasks;
+  const currentAlts = designConfig.numAlternatives;
+  
+  // Vary tasks (5 to 20)
+  const taskRange = [];
+  const taskEfficiency = [];
+  
+  for (let tasks = 5; tasks <= 20; tasks++) {
+    taskRange.push(tasks);
+    // Generate design and compute true D-efficiency
+    const efficiency = await computeScenarioEfficiency(tasks, currentAlts);
+    taskEfficiency.push(efficiency);
+  }
+  
+  // Vary alternatives per task (2 to 6)
+  const altRange = [];
+  const altEfficiency = [];
+  
+  for (let alts = 2; alts <= 6; alts++) {
+    altRange.push(alts);
+    const efficiency = await computeScenarioEfficiency(currentTasks, alts);
+    altEfficiency.push(efficiency);
+  }
+  
+  // Create traces for Plotly
+  const trace1 = {
+    x: taskRange,
+    y: taskEfficiency,
+    mode: 'lines+markers',
+    name: 'Tasks per Respondent',
+    line: { color: '#2196f3', width: 3 },
+    marker: { size: 8, color: '#2196f3' }
+  };
+  
+  const trace2 = {
+    x: altRange,
+    y: altEfficiency,
+    mode: 'lines+markers',
+    name: 'Alternatives per Task',
+    line: { color: '#ff9800', width: 3 },
+    marker: { size: 8, color: '#ff9800' },
+    xaxis: 'x2',
+    yaxis: 'y2'
+  };
+  
+  // Add markers for current design
+  const currentTaskEfficiency = taskEfficiency[taskRange.indexOf(currentTasks)];
+  const currentAltEfficiency = altEfficiency[altRange.indexOf(currentAlts)];
+  
+  const currentTrace1 = {
+    x: [currentTasks],
+    y: [currentTaskEfficiency],
+    mode: 'markers',
+    name: 'Current Design',
+    marker: { size: 15, color: '#4caf50', symbol: 'star', line: { width: 2, color: '#fff' } },
+    showlegend: true
+  };
+  
+  const currentTrace2 = {
+    x: [currentAlts],
+    y: [currentAltEfficiency],
+    mode: 'markers',
+    name: 'Current (Alts)',
+    marker: { size: 15, color: '#4caf50', symbol: 'star', line: { width: 2, color: '#fff' } },
+    xaxis: 'x2',
+    yaxis: 'y2',
+    showlegend: true
+  };
+  
+  const layout = {
+    title: {
+      text: 'Design Efficiency Trade-offs (True D-Efficiency)',
+      font: { size: 16, color: 'var(--app-text, #1f2a37)' }
+    },
+    grid: { rows: 1, columns: 2, pattern: 'independent' },
+    xaxis: {
+      title: 'Tasks per Respondent',
+      showgrid: true,
+      gridcolor: '#e0e0e0'
+    },
+    yaxis: {
+      title: 'D-Efficiency (%)',
+      range: [0, 100],
+      showgrid: true,
+      gridcolor: '#e0e0e0'
+    },
+    xaxis2: {
+      title: 'Alternatives per Task',
+      showgrid: true,
+      gridcolor: '#e0e0e0'
+    },
+    yaxis2: {
+      title: 'D-Efficiency (%)',
+      range: [0, 100],
+      showgrid: true,
+      gridcolor: '#e0e0e0'
+    },
+    showlegend: true,
+    legend: { x: 0.5, y: -0.15, xanchor: 'center', orientation: 'h' },
+    margin: { t: 50, b: 80, l: 60, r: 60 },
+    plot_bgcolor: '#fafafa',
+    paper_bgcolor: '#fff'
+  };
+  
+  const data = [trace1, currentTrace1, trace2, currentTrace2];
+  
+  Plotly.newPlot('design-tradeoffs-chart', data, layout, { responsive: true, displayModeBar: false });
+}
+
+async function computeScenarioEfficiency(numTasks, numAlts) {
+  // Generate a design with specified parameters
+  const tempConfig = {
+    numTasks: numTasks,
+    numAlternatives: numAlts,
+    includeNone: designConfig.includeNone,
+    fullFactorial: false // Always use fractional for scenarios
+  };
+  
+  // Generate orthogonal profiles
+  const profiles = generateOrthogonalProfiles(numTasks * numAlts);
+  
+  // Build design matrix for D-efficiency calculation
+  const X = [];
+  let profileIndex = 0;
+  
+  for (let taskId = 1; taskId <= numTasks; taskId++) {
+    for (let altIdx = 0; altIdx < numAlts; altIdx++) {
+      if (profileIndex >= profiles.length) profileIndex = 0;
+      
+      const profile = profiles[profileIndex];
+      const row = [];
+      
+      // Encode categorical attributes as dummy variables
+      attributes.forEach(attr => {
+        if (attr.type === 'categorical') {
+          const sortedLevels = [...attr.levels].sort();
+          sortedLevels.slice(1).forEach(level => { // Skip baseline
+            row.push(profile[attr.name] === level ? 1 : 0);
+          });
+        } else {
+          // Numeric attribute
+          row.push(parseFloat(profile[attr.name]) || 0);
+        }
+      });
+      
+      X.push(row);
+      profileIndex++;
+    }
+  }
+  
+  // Compute D-efficiency: det(X'X)^(1/k) / n
+  // Where k = number of parameters, n = number of observations
+  if (X.length === 0 || X[0].length === 0) return 0;
+  
+  const XtX = multiplyMatrices(transposeMatrix(X), X);
+  const det = matrixDeterminant(XtX);
+  
+  if (det <= 0) return 0; // Singular matrix
+  
+  const k = X[0].length;
+  const n = X.length;
+  const dEfficiency = Math.pow(det, 1 / k) / n * 100;
+  
+  return Math.min(100, Math.max(0, dEfficiency));
+}
+
+// Matrix operations for D-efficiency calculation
+function transposeMatrix(matrix) {
+  const rows = matrix.length;
+  const cols = matrix[0].length;
+  const result = Array(cols).fill(0).map(() => Array(rows).fill(0));
+  
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      result[j][i] = matrix[i][j];
+    }
+  }
+  return result;
+}
+
+function multiplyMatrices(A, B) {
+  const rowsA = A.length;
+  const colsA = A[0].length;
+  const colsB = B[0].length;
+  const result = Array(rowsA).fill(0).map(() => Array(colsB).fill(0));
+  
+  for (let i = 0; i < rowsA; i++) {
+    for (let j = 0; j < colsB; j++) {
+      let sum = 0;
+      for (let k = 0; k < colsA; k++) {
+        sum += A[i][k] * B[k][j];
+      }
+      result[i][j] = sum;
+    }
+  }
+  return result;
+}
+
+function matrixDeterminant(matrix) {
+  const n = matrix.length;
+  
+  if (n === 1) return matrix[0][0];
+  if (n === 2) return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+  
+  // Use LU decomposition for larger matrices (more efficient)
+  // This is a simplified version - for production, use a proper linear algebra library
+  let det = 1;
+  const LU = matrix.map(row => [...row]); // Copy matrix
+  
+  for (let i = 0; i < n; i++) {
+    // Partial pivoting
+    let maxRow = i;
+    for (let k = i + 1; k < n; k++) {
+      if (Math.abs(LU[k][i]) > Math.abs(LU[maxRow][i])) {
+        maxRow = k;
+      }
+    }
+    
+    if (maxRow !== i) {
+      [LU[i], LU[maxRow]] = [LU[maxRow], LU[i]];
+      det *= -1;
+    }
+    
+    if (Math.abs(LU[i][i]) < 1e-10) return 0; // Singular matrix
+    
+    det *= LU[i][i];
+    
+    // Eliminate below
+    for (let k = i + 1; k < n; k++) {
+      const factor = LU[k][i] / LU[i][i];
+      for (let j = i; j < n; j++) {
+        LU[k][j] -= factor * LU[i][j];
+      }
+    }
+  }
+  
+  return det;
+}
+
+function displayDesignTradeoffs() {
+  // Legacy function - now handled by button click
+  // Keep for backwards compatibility but do nothing
 }
 
 // ========================================

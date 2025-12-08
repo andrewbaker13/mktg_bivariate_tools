@@ -95,6 +95,9 @@ window.addEventListener('beforeunload', checkAndTrackUsage);
  * Initialize the application
  */
 function initConjointApp() {
+  setupWorkflowStepper();
+  setupDataTabs();
+  setupExampleDatasets();
   setupFileUpload();
   setupScenarios();
   setupDownloadButtons();
@@ -106,6 +109,120 @@ function initConjointApp() {
   // Set modified date in footer
   const modifiedEl = document.getElementById('modified-date');
   if (modifiedEl) modifiedEl.textContent = CREATED_DATE;
+}
+
+/**
+ * Setup workflow stepper
+ */
+function setupWorkflowStepper() {
+  // Initial state: only step 1 is active
+  updateWorkflowStep(1);
+}
+
+/**
+ * Update workflow stepper to show progress
+ */
+function updateWorkflowStep(step) {
+  const steps = document.querySelectorAll('.workflow-step');
+  steps.forEach((stepEl, index) => {
+    const stepNumber = index + 1;
+    stepEl.classList.remove('active', 'completed');
+    
+    if (stepNumber < step) {
+      stepEl.classList.add('completed');
+    } else if (stepNumber === step) {
+      stepEl.classList.add('active');
+    }
+  });
+}
+
+/**
+ * Setup data tabs (Upload vs Examples)
+ */
+function setupDataTabs() {
+  const tabButtons = document.querySelectorAll('.data-tab');
+  const tabContents = document.querySelectorAll('.data-tab-content');
+  
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const targetTab = button.dataset.tab;
+      
+      // Remove active class from all tabs and contents
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('active'));
+      
+      // Add active class to clicked tab and corresponding content
+      button.classList.add('active');
+      document.getElementById(`tab-${targetTab}`).classList.add('active');
+    });
+  });
+}
+
+/**
+ * Setup example dataset loading
+ */
+function setupExampleDatasets() {
+  const exampleButtons = document.querySelectorAll('[data-load]');
+  
+  exampleButtons.forEach(button => {
+    button.addEventListener('click', async () => {
+      const exampleName = button.dataset.load;
+      await loadExampleDataset(exampleName);
+    });
+  });
+}
+
+/**
+ * Load example dataset
+ */
+async function loadExampleDataset(exampleName) {
+  const feedbackEl = document.getElementById('conjoint-upload-feedback');
+  
+  try {
+    feedbackEl.textContent = `Loading ${exampleName} example dataset...`;
+    
+    // Map example names to files
+    const fileMap = {
+      'smartphone': 'smartphone_cbc.csv',
+      'coffee': 'coffee_shop_cbc.csv',
+      'hotel': 'hotel_features_cbc.csv'
+    };
+    
+    const filename = fileMap[exampleName];
+    if (!filename) {
+      throw new Error('Example dataset not found');
+    }
+    
+    const response = await fetch(`scenarios/${filename}`);
+    if (!response.ok) {
+      throw new Error(`Failed to load example: ${response.statusText}`);
+    }
+    
+    const csvText = await response.text();
+    const parsed = parseCSV(csvText);
+    
+    conjointDataset = {
+      headers: parsed.headers,
+      rows: parsed.rows,
+      filename: `${exampleName}_example.csv`
+    };
+    
+    feedbackEl.textContent = `✓ Loaded ${exampleName} example (${parsed.rows.length} rows, ${parsed.headers.length} columns)`;
+    
+    // Show column mapping
+    populateColumnMappingSelects(parsed.headers);
+    document.getElementById('conjoint-column-mapping').style.display = 'block';
+    
+    // Update workflow stepper
+    updateWorkflowStep(2);
+    
+    // Switch back to upload tab to show feedback
+    document.querySelector('.data-tab[data-tab="upload"]').click();
+    
+  } catch (error) {
+    console.error('Example load error:', error);
+    feedbackEl.textContent = `Error loading example: ${error.message}`;
+  }
 }
 
 /**
@@ -325,6 +442,9 @@ function confirmMapping() {
   populateAttributeConfiguration();
   document.getElementById('conjoint-attribute-config').style.display = 'block';
   document.getElementById('conjoint-estimation-controls').style.display = 'block';
+  
+  // Update workflow stepper to step 3
+  updateWorkflowStep(3);
 }
 
 /**
@@ -542,6 +662,9 @@ async function runEstimation() {
     document.getElementById('conjoint-segmentation').style.display = 'block';
     document.getElementById('conjoint-simulation').style.display = 'block';
     document.getElementById('conjoint-optimization').style.display = 'block';
+    
+    // Update workflow stepper to step 4 (Analyze Results)
+    updateWorkflowStep(4);
     
   } catch (error) {
     console.error('Estimation error:', error);
@@ -1258,9 +1381,159 @@ function setupSimulationControls() {
   
   const runBtn = document.getElementById('conjoint-run-simulation');
   runBtn?.addEventListener('click', runSimulation);
+  
+  // Price mode selection
+  const priceModeSelect = document.getElementById('conjoint-price-mode');
+  priceModeSelect?.addEventListener('change', handlePriceModeChange);
+  
+  // Initialize price mode
+  handlePriceModeChange();
+  
+  // Base cost input
+  const baseCostInput = document.getElementById('conjoint-base-cost');
+  baseCostInput?.addEventListener('change', () => {
+    simulationConfig.baseCost = parseFloat(baseCostInput.value) || 0;
+  });
+  
+  // Simulation option checkboxes
+  const forceChoiceCheckbox = document.getElementById('conjoint-force-choice');
+  forceChoiceCheckbox?.addEventListener('change', () => {
+    simulationConfig.forceChoice = forceChoiceCheckbox.checked;
+    updateAutoIncludedDisplay();
+  });
+  
+  const ignoreCompetitorsCheckbox = document.getElementById('conjoint-ignore-competitors');
+  ignoreCompetitorsCheckbox?.addEventListener('change', () => {
+    simulationConfig.ignoreCompetitors = ignoreCompetitorsCheckbox.checked;
+    updateAutoIncludedDisplay();
+  });
+  
+  // Initialize auto-included display
+  updateAutoIncludedDisplay();
+}
+
+/**
+ * Update display of auto-included products (competitors and None)
+ */
+function updateAutoIncludedDisplay() {
+  const container = document.getElementById('conjoint-auto-included-products');
+  const list = document.getElementById('conjoint-auto-list');
+  
+  if (!container || !list) return;
+  
+  const autoIncluded = [];
+  
+  // Add None option if it exists and not being forced out
+  if (noneAlternative && !simulationConfig.forceChoice) {
+    autoIncluded.push('"None" / No Purchase option');
+  }
+  
+  // Add competitors if they exist and not being ignored
+  if (competitorAlternatives.length > 0 && !simulationConfig.ignoreCompetitors) {
+    competitorAlternatives.forEach(compId => {
+      autoIncluded.push(`Competitor: ${compId}`);
+    });
+  }
+  
+  if (autoIncluded.length > 0) {
+    list.innerHTML = autoIncluded.map(item => `<li>${escapeHtml(item)}</li>`).join('');
+    container.style.display = 'block';
+  } else {
+    container.style.display = 'none';
+  }
 }
 
 let simulationProducts = [];
+let simulationConfig = {
+  priceMode: 'attribute', // 'attribute', 'fixed', 'none'
+  baseCost: 0,
+  incrementalCosts: {}, // { 'Brand_Sony': 50, 'Camera_12MP': -10, ... }
+  showWTP: false,
+  forceChoice: false, // If true, exclude "None" from simulation
+  ignoreCompetitors: false // If true, exclude competitors from simulation
+};
+
+function handlePriceModeChange() {
+  const mode = document.getElementById('conjoint-price-mode')?.value || 'attribute';
+  simulationConfig.priceMode = mode;
+  
+  const wtpOptions = document.getElementById('price-wtp-options');
+  const hintEl = document.getElementById('price-mode-hint');
+  
+  if (mode === 'attribute') {
+    wtpOptions.style.display = 'block';
+    hintEl.textContent = 'Price was included as an attribute in the conjoint design. Its estimated coefficient can be used to calculate willingness-to-pay (WTP) for other attributes.';
+  } else if (mode === 'fixed') {
+    wtpOptions.style.display = 'none';
+    hintEl.textContent = 'Price was held constant in the conjoint design. You can manually set prices for simulation, but WTP cannot be calculated.';
+  } else {
+    wtpOptions.style.display = 'none';
+    hintEl.textContent = 'No pricing involved (e.g., free products, course selection). Simulation will show market shares only.';
+  }
+  
+  // Populate incremental costs UI
+  populateIncrementalCostsUI();
+}
+
+function populateIncrementalCostsUI() {
+  const container = document.getElementById('conjoint-cost-config-list');
+  if (!container || !estimationResult) return;
+  
+  let html = '';
+  
+  attributeColumns.forEach(attr => {
+    const config = attributeConfig[attr];
+    
+    // Skip price attribute for cost configuration
+    if (attr.toLowerCase() === 'price') return;
+    
+    if (config.type === 'categorical') {
+      const levels = [...new Set(getColumnValues(attr))].filter(v => v);
+      const sortedLevels = levels.sort();
+      const baseline = sortedLevels[0];
+      
+      html += `<div class="cost-attribute-group">
+        <h5>${escapeHtml(attr)}</h5>
+        <p class="hint-inline">Baseline: ${escapeHtml(baseline)} (cost = 0)</p>`;
+      
+      sortedLevels.slice(1).forEach(level => {
+        const key = `${attr}_${level}`;
+        const currentCost = simulationConfig.incrementalCosts[key] || 0;
+        html += `
+          <label>
+            <span>${escapeHtml(level)}:</span>
+            <input type="number" class="incr-cost" data-key="${escapeHtml(key)}" 
+                   value="${currentCost}" step="0.01" placeholder="0">
+            <span class="hint-inline">$/unit</span>
+          </label>`;
+      });
+      
+      html += `</div>`;
+    } else {
+      // For numeric attributes, show a single input for marginal cost per unit
+      const currentCost = simulationConfig.incrementalCosts[attr] || 0;
+      html += `<div class="cost-attribute-group">
+        <h5>${escapeHtml(attr)}</h5>
+        <label>
+          <span>Marginal cost per unit:</span>
+          <input type="number" class="incr-cost" data-key="${escapeHtml(attr)}" 
+                 value="${currentCost}" step="0.01" placeholder="0">
+          <span class="hint-inline">$/unit increase in ${escapeHtml(attr)}</span>
+        </label>
+      </div>`;
+    }
+  });
+  
+  container.innerHTML = html;
+  
+  // Attach listeners
+  document.querySelectorAll('.incr-cost').forEach(input => {
+    input.addEventListener('change', e => {
+      const key = e.target.dataset.key;
+      simulationConfig.incrementalCosts[key] = parseFloat(e.target.value) || 0;
+    });
+  });
+}
 
 /**
  * Add product to simulation
@@ -1339,15 +1612,19 @@ function renderSimulationProducts() {
       }
     });
     
-    // Price and Cost inputs (only show separate price if price is NOT an attribute)
-    const hasPriceAttribute = attributeColumns.some(attr => attr.toLowerCase() === 'price');
+    // Price input (only show if price mode requires manual entry)
     let priceInputHtml = '';
     
-    if (!hasPriceAttribute) {
-      // Price is NOT studied - add manual price input
+    if (simulationConfig.priceMode === 'fixed') {
+      // Price was fixed in design - add manual price input
       const priceDefault = prod.price !== undefined ? prod.price : 500;
-      priceInputHtml = `<label>Price: <input type="number" class="prod-price" data-prod="${prod.id}" value="${priceDefault}" min="0" step="0.01"></label>`;
+      priceInputHtml = `<label>Price ($): <input type="number" class="prod-price" data-prod="${prod.id}" value="${priceDefault}" min="0" step="0.01"></label>`;
     }
+    // If priceMode === 'attribute', price comes from attributes
+    // If priceMode === 'none', no price needed
+    
+    // Cost will be calculated automatically from base + incremental costs
+    const calculatedCost = calculateProductCost(prod);
     
     card.innerHTML = `
       <div class="product-config-header">
@@ -1357,7 +1634,10 @@ function renderSimulationProducts() {
       <div class="product-config-body">
         ${attrsHtml}
         ${priceInputHtml}
-        <label>Cost: <input type="number" class="prod-cost" data-prod="${prod.id}" value="${prod.cost || 0}" min="0" step="0.01"></label>
+        <div class="cost-display">
+          <strong>Calculated Cost:</strong> $${calculatedCost.toFixed(2)}
+          <span class="hint-inline">(Base: $${simulationConfig.baseCost.toFixed(2)} + Incremental)</span>
+        </div>
       </div>
     `;
     
@@ -1386,19 +1666,65 @@ function renderSimulationProducts() {
     });
   });
   
-  document.querySelectorAll('.prod-cost').forEach(input => {
-    input.addEventListener('change', e => {
-      const prod = simulationProducts.find(p => p.id === e.target.dataset.prod);
-      if (prod) prod.cost = parseFloat(e.target.value);
-    });
-  });
-  
   document.querySelectorAll('.remove-prod').forEach(btn => {
     btn.addEventListener('click', e => {
       simulationProducts = simulationProducts.filter(p => p.id !== e.target.dataset.prod);
       renderSimulationProducts();
     });
   });
+}
+
+/**
+ * Calculate product cost based on base cost + incremental costs
+ */
+function calculateProductCost(product) {
+  let cost = simulationConfig.baseCost;
+  
+  Object.entries(product.attributes).forEach(([attr, value]) => {
+    const config = attributeConfig[attr];
+    
+    if (config.type === 'categorical') {
+      const key = `${attr}_${value}`;
+      cost += simulationConfig.incrementalCosts[key] || 0;
+    } else {
+      // Numeric attribute: marginal cost per unit
+      const marginalCost = simulationConfig.incrementalCosts[attr] || 0;
+      const numValue = parseFloat(value) || 0;
+      cost += marginalCost * numValue;
+    }
+  });
+  
+  return cost;
+}
+
+/**
+ * Get competitor attributes from original data
+ */
+function getCompetitorAttributesFromData(competitorId) {
+  if (!conjointDataset || !conjointDataset.rows) return null;
+  
+  const { headers, rows } = conjointDataset;
+  const altIdx = headers.indexOf(columnMapping.alternative);
+  
+  // Find a row with this competitor alternative
+  const competitorRow = rows.find(row => row[altIdx] === competitorId);
+  if (!competitorRow) return null;
+  
+  // Extract attributes
+  const attributes = {};
+  let price = 0;
+  
+  attributeColumns.forEach(attr => {
+    const idx = headers.indexOf(attr);
+    const value = competitorRow[idx];
+    
+    if (attr.toLowerCase() === 'price') {
+      price = parseFloat(value) || 0;
+    }
+    attributes[attr] = value;
+  });
+  
+  return { attributes, price };
 }
 
 /**
@@ -1421,12 +1747,55 @@ function runSimulation() {
     statusEl.textContent = 'Running simulation...';
     
     const marketSize = parseInt(document.getElementById('conjoint-market-size')?.value || 10000);
+    simulationConfig.showWTP = document.getElementById('conjoint-show-wtp')?.checked || false;
+    simulationConfig.forceChoice = document.getElementById('conjoint-force-choice')?.checked || false;
+    simulationConfig.ignoreCompetitors = document.getElementById('conjoint-ignore-competitors')?.checked || false;
+    
+    // Build complete choice set: user products + competitors + none (respecting filters)
+    const allProducts = [...simulationProducts];
+    
+    // Add competitors to choice set (unless ignored)
+    if (!simulationConfig.ignoreCompetitors && competitorAlternatives.length > 0) {
+      competitorAlternatives.forEach(compId => {
+        // Get competitor attributes from original data
+        const compData = getCompetitorAttributesFromData(compId);
+        if (compData) {
+          allProducts.push({
+            id: `competitor_${compId}`,
+            name: `Competitor ${compId}`,
+            attributes: compData.attributes,
+            price: compData.price || 0,
+            isCompetitor: true
+          });
+        }
+      });
+    }
+    
+    // Add None option to choice set (unless forced choice)
+    let noneIndex = -1;
+    if (!simulationConfig.forceChoice && noneAlternative) {
+      noneIndex = allProducts.length;
+      allProducts.push({
+        id: 'none_option',
+        name: 'None / No Purchase',
+        attributes: {},
+        price: 0,
+        isNone: true
+      });
+    }
     
     // For each respondent, compute utilities for each product
-    const shares = simulationProducts.map(() => 0);
+    const shares = allProducts.map(() => 0);
     
     estimationResult.respondents.forEach(resp => {
-      const utilities = simulationProducts.map(prod => computeUtility(prod, resp.coefficients));
+      const utilities = allProducts.map(prod => {
+        if (prod.isNone) {
+          // None option uses ASC_None coefficient
+          return resp.coefficients['ASC_None'] || 0;
+        } else {
+          return computeUtility(prod, resp.coefficients);
+        }
+      });
       const probs = softmax(utilities);
       probs.forEach((p, i) => shares[i] += p);
     });
@@ -1435,36 +1804,125 @@ function runSimulation() {
     const nResp = estimationResult.respondents.length;
     shares.forEach((_, i) => shares[i] /= nResp);
     
-    // Check if price is an attribute
-    const hasPriceAttribute = attributeColumns.some(attr => attr.toLowerCase() === 'price');
-    
     // Compute profits
-    const results = simulationProducts.map((prod, i) => {
-      // Get price from attribute if it's an attribute, otherwise from prod.price
-      const price = hasPriceAttribute && prod.attributes.price 
-        ? parseFloat(prod.attributes.price) 
-        : (prod.price || 0);
+    const results = allProducts.map((prod, i) => {
+      // Get price based on price mode
+      let price = 0;
+      if (prod.isNone) {
+        price = 0; // None has no price
+      } else if (simulationConfig.priceMode === 'attribute' && prod.attributes.price) {
+        price = parseFloat(prod.attributes.price);
+      } else if (simulationConfig.priceMode === 'fixed') {
+        price = prod.price || 0;
+      }
+      // If priceMode === 'none', price stays 0
+      
+      // Calculate cost from base + incremental (0 for None option)
+      const cost = prod.isNone ? 0 : calculateProductCost(prod);
       
       return {
         name: prod.name,
         share: shares[i] * 100,
         customers: Math.round(shares[i] * marketSize),
         price: price,
-        cost: prod.cost || 0,
-        margin: price - (prod.cost || 0),
-        profit: shares[i] * marketSize * (price - (prod.cost || 0))
+        cost: cost,
+        margin: price - cost,
+        profit: shares[i] * marketSize * (price - cost)
       };
     });
     
+    // Calculate WTP if requested and price is an attribute
+    let wtpData = null;
+    if (simulationConfig.showWTP && simulationConfig.priceMode === 'attribute') {
+      wtpData = calculateWTP();
+    }
+    
     // Display
-    displaySimulationResults(results);
+    displaySimulationResults(results, wtpData);
     statusEl.textContent = '✓ Simulation complete.';
     document.getElementById('conjoint-simulation-results').style.display = 'block';
+    
+    // Update workflow stepper to step 5 (Simulate Markets)
+    updateWorkflowStep(5);
     
   } catch (error) {
     console.error('Simulation error:', error);
     statusEl.textContent = `Error: ${error.message}`;
   }
+}
+
+/**
+ * Calculate Willingness-to-Pay (WTP) for each attribute level
+ */
+function calculateWTP() {
+  // Find price coefficient
+  const priceAttr = attributeColumns.find(attr => attr.toLowerCase() === 'price');
+  if (!priceAttr) return null;
+  
+  const wtpResults = [];
+  
+  // For each attribute (except price itself)
+  attributeColumns.forEach(attr => {
+    if (attr.toLowerCase() === 'price') return;
+    
+    const config = attributeConfig[attr];
+    
+    if (config.type === 'categorical') {
+      const levels = [...new Set(getColumnValues(attr))].filter(v => v);
+      const sortedLevels = levels.sort();
+      const baseline = sortedLevels[0];
+      
+      sortedLevels.slice(1).forEach(level => {
+        const key = `${attr}_${level}`;
+        
+        // Calculate WTP across all respondents
+        const wtpValues = estimationResult.respondents.map(resp => {
+          const utility = resp.coefficients[key] || 0;
+          const priceCoef = resp.coefficients[priceAttr] || -0.01; // Default small negative value
+          
+          // WTP = -Δutility / price_coefficient
+          // Negative sign because price coefficient is typically negative
+          return -utility / priceCoef;
+        }).filter(v => isFinite(v) && Math.abs(v) < 10000); // Filter out extreme values
+        
+        if (wtpValues.length > 0) {
+          const mean = wtpValues.reduce((a, b) => a + b, 0) / wtpValues.length;
+          const variance = wtpValues.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / wtpValues.length;
+          const stdDev = Math.sqrt(variance);
+          
+          wtpResults.push({
+            attribute: attr,
+            level: level,
+            meanWTP: mean,
+            stdDevWTP: stdDev
+          });
+        }
+      });
+    }
+    // For numeric attributes, WTP is the coefficient ratio
+    else {
+      const wtpValues = estimationResult.respondents.map(resp => {
+        const utility = resp.coefficients[attr] || 0;
+        const priceCoef = resp.coefficients[priceAttr] || -0.01;
+        return -utility / priceCoef;
+      }).filter(v => isFinite(v) && Math.abs(v) < 10000);
+      
+      if (wtpValues.length > 0) {
+        const mean = wtpValues.reduce((a, b) => a + b, 0) / wtpValues.length;
+        const variance = wtpValues.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / wtpValues.length;
+        const stdDev = Math.sqrt(variance);
+        
+        wtpResults.push({
+          attribute: attr,
+          level: 'per unit',
+          meanWTP: mean,
+          stdDevWTP: stdDev
+        });
+      }
+    }
+  });
+  
+  return wtpResults;
 }
 
 /**
@@ -1509,13 +1967,19 @@ function softmax(values) {
 /**
  * Display simulation results
  */
-function displaySimulationResults(results) {
-  // Share chart
+function displaySimulationResults(results, wtpData = null) {
+  // Share chart - color code competitors and None differently
+  const colors = results.map(r => {
+    if (r.name.startsWith('None')) return '#9E9E9E';
+    if (r.name.startsWith('Competitor')) return '#FF9800';
+    return '#4A90E2';
+  });
+  
   const shareData = [{
     x: results.map(r => r.name),
     y: results.map(r => r.share),
     type: 'bar',
-    marker: { color: '#4A90E2' }
+    marker: { color: colors }
   }];
   
   Plotly.newPlot('chart-sim-share', shareData, {
@@ -1529,7 +1993,7 @@ function displaySimulationResults(results) {
     x: results.map(r => r.name),
     y: results.map(r => r.profit),
     type: 'bar',
-    marker: { color: '#2ECC71' }
+    marker: { color: colors }
   }];
   
   Plotly.newPlot('chart-sim-profit', profitData, {
@@ -1543,16 +2007,46 @@ function displaySimulationResults(results) {
   tbody.innerHTML = '';
   results.forEach(r => {
     const row = tbody.insertRow();
+    
+    // Add visual styling for competitors and None
+    let rowStyle = '';
+    if (r.name.startsWith('None')) {
+      rowStyle = ' style="background-color: #f5f5f5; font-style: italic;"';
+    } else if (r.name.startsWith('Competitor')) {
+      rowStyle = ' style="background-color: #fff3e0;"';
+    }
+    
     row.innerHTML = `
-      <td>${escapeHtml(r.name)}</td>
-      <td>${r.share.toFixed(2)}%</td>
-      <td>${r.customers.toLocaleString()}</td>
-      <td>$${r.price.toFixed(2)}</td>
-      <td>$${r.cost.toFixed(2)}</td>
-      <td>$${r.margin.toFixed(2)}</td>
-      <td>$${r.profit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+      <td${rowStyle}>${escapeHtml(r.name)}</td>
+      <td${rowStyle}>${r.share.toFixed(2)}%</td>
+      <td${rowStyle}>${r.customers.toLocaleString()}</td>
+      <td${rowStyle}>$${r.price.toFixed(2)}</td>
+      <td${rowStyle}>$${r.cost.toFixed(2)}</td>
+      <td${rowStyle}>$${r.margin.toFixed(2)}</td>
+      <td${rowStyle}>$${r.profit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
     `;
   });
+  
+  // WTP Details (if calculated)
+  const wtpSection = document.getElementById('conjoint-wtp-details');
+  if (wtpData && wtpData.length > 0) {
+    wtpSection.style.display = 'block';
+    
+    const wtpTbody = document.getElementById('conjoint-wtp-table-body');
+    wtpTbody.innerHTML = '';
+    
+    wtpData.forEach(wtp => {
+      const row = wtpTbody.insertRow();
+      row.innerHTML = `
+        <td>${escapeHtml(wtp.attribute)}</td>
+        <td>${escapeHtml(wtp.level)}</td>
+        <td>$${wtp.meanWTP.toFixed(2)}</td>
+        <td>$${wtp.stdDevWTP.toFixed(2)}</td>
+      `;
+    });
+  } else {
+    wtpSection.style.display = 'none';
+  }
 }
 
 /**

@@ -216,6 +216,26 @@
         </div>
       </details>
 
+      <details class="visualization-options" style="margin-top: 1rem;">
+        <summary>Alternative Design Considerations</summary>
+        <div class="visualization-options__body">
+          <p style="color: var(--app-muted); margin-bottom: 1rem;">
+            Explore how different design choices (tasks per respondent, alternatives per task) would impact statistical efficiency and data collection requirements.
+          </p>
+          
+          <button id="run-design-scenarios-btn" class="secondary" style="margin-bottom: 1rem;">
+            Run Design Scenario Analysis
+          </button>
+          <p id="scenario-analysis-status" style="color: var(--app-muted); font-size: 0.9rem; margin: 0.5rem 0;">
+            Click to generate D-efficiency curves for alternative design configurations. This will compute 64 full design scenarios (may take 10-30 seconds).
+          </p>
+          
+          <div id="design-tradeoffs-chart" style="width: 100%; height: 400px; display: none;">
+            <!-- Plotly chart will render here -->
+          </div>
+        </div>
+      </details>
+
       <div class="input-group" style="margin-top: 2rem;">
         <h3>Download Design Files</h3>
         

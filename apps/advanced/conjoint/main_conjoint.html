@@ -45,6 +45,49 @@
       <p class="hero-header__lede">
         Analyze choice-based conjoint (CBC) data to understand how customers value product attributes. Upload experiment data, estimate individual-level preferences (part-worth utilities), simulate market shares, and optimize product configurations for maximum profit.
       </p>
+      
+      <!-- Progressive Workflow Stepper -->
+      <div class="workflow-stepper" id="conjoint-workflow-stepper">
+        <div class="workflow-step" data-step="1">
+          <div class="workflow-step__indicator">
+            <span class="workflow-step__number">1</span>
+            <span class="workflow-step__checkmark">✓</span>
+          </div>
+          <div class="workflow-step__label">Upload Data</div>
+        </div>
+        <div class="workflow-step__connector"></div>
+        <div class="workflow-step" data-step="2">
+          <div class="workflow-step__indicator">
+            <span class="workflow-step__number">2</span>
+            <span class="workflow-step__checkmark">✓</span>
+          </div>
+          <div class="workflow-step__label">Configure Attributes</div>
+        </div>
+        <div class="workflow-step__connector"></div>
+        <div class="workflow-step" data-step="3">
+          <div class="workflow-step__indicator">
+            <span class="workflow-step__number">3</span>
+            <span class="workflow-step__checkmark">✓</span>
+          </div>
+          <div class="workflow-step__label">Estimate Model</div>
+        </div>
+        <div class="workflow-step__connector"></div>
+        <div class="workflow-step" data-step="4">
+          <div class="workflow-step__indicator">
+            <span class="workflow-step__number">4</span>
+            <span class="workflow-step__checkmark">✓</span>
+          </div>
+          <div class="workflow-step__label">Analyze Results</div>
+        </div>
+        <div class="workflow-step__connector"></div>
+        <div class="workflow-step" data-step="5">
+          <div class="workflow-step__indicator">
+            <span class="workflow-step__number">5</span>
+            <span class="workflow-step__checkmark">✓</span>
+          </div>
+          <div class="workflow-step__label">Simulate Markets</div>
+        </div>
+      </div>
     </header>
 
     <section class="test-overview" aria-labelledby="test-overview-heading">
@@ -133,10 +176,17 @@
       <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
       <article class="card data-entry-card">
         <div class="input-header">
-          <h3>Upload CBC Data</h3>
+          <h3>Step 1: Get Your Data</h3>
         </div>
 
-        <div class="mode-panel active" id="conjoint-upload-panel">
+        <!-- Tab Navigation -->
+        <div class="data-tabs">
+          <button class="data-tab active" data-tab="upload">📤 Upload Your Data</button>
+          <button class="data-tab" data-tab="examples">📚 Try Example Dataset</button>
+        </div>
+
+        <!-- Upload Tab -->
+        <div class="data-tab-content active" id="tab-upload">
           <div class="data-import-block">
             <p>
               Upload long-format CBC data where each row represents one alternative in one choice task for one respondent.
@@ -149,11 +199,50 @@
             </div>
             <input type="file" id="conjoint-input" accept=".csv,.tsv,.txt" hidden>
             <div class="template-buttons">
-              <button type="button" id="conjoint-template-download">Download template</button>
-              <button type="button" id="conjoint-load-demo-small" class="secondary">Load Demo (20 respondents)</button>
-              <button type="button" id="conjoint-load-demo-full" class="secondary">Load Demo (150 respondents)</button>
+              <button type="button" id="conjoint-template-download">Download Blank Template</button>
             </div>
             <p id="conjoint-upload-feedback" class="upload-status" aria-live="polite">No file uploaded.</p>
+          </div>
+        </div>
+
+        <!-- Examples Tab -->
+        <div class="data-tab-content" id="tab-examples">
+          <div class="example-datasets">
+            <div class="example-card" data-example="smartphone">
+              <div class="example-card__icon">📱</div>
+              <h4>Smartphone Preferences</h4>
+              <p class="example-card__stats">200 respondents • 8 tasks per person • 3 attributes</p>
+              <p class="example-card__description">
+                Consumer preferences for smartphones with varying Brand (Apple, Samsung, Google), Storage (64GB, 128GB, 256GB), and Price ($599-$1099). 
+                Includes "None" option to model opt-out behavior.
+              </p>
+              <p class="example-card__learning"><strong>Learning focus:</strong> Price sensitivity, brand equity, willingness-to-pay</p>
+              <button class="primary" data-load="smartphone">Load Dataset</button>
+            </div>
+
+            <div class="example-card" data-example="coffee">
+              <div class="example-card__icon">☕</div>
+              <h4>Coffee Shop Attributes</h4>
+              <p class="example-card__stats">150 respondents • 10 tasks per person • 4 attributes</p>
+              <p class="example-card__description">
+                Customer preferences for coffee shops varying by Atmosphere (Cozy, Modern, Minimalist), WiFi Quality (Fast, Slow, None), 
+                Seating Availability (Limited, Moderate, Ample), and Price per Coffee ($3-$6).
+              </p>
+              <p class="example-card__learning"><strong>Learning focus:</strong> Service attributes, amenity tradeoffs, customer segmentation</p>
+              <button class="primary" data-load="coffee">Load Dataset</button>
+            </div>
+
+            <div class="example-card" data-example="hotel">
+              <div class="example-card__icon">🏨</div>
+              <h4>Hotel Room Features</h4>
+              <p class="example-card__stats">180 respondents • 12 tasks per person • 5 attributes</p>
+              <p class="example-card__description">
+                Business traveler preferences for hotel rooms with varying Location (Downtown, Airport, Suburb), Star Rating (3-star to 5-star),
+                Free Breakfast (Yes/No), WiFi Speed (Basic, Premium), and Price per Night ($89-$289). Includes competitor hotels.
+              </p>
+              <p class="example-card__learning"><strong>Learning focus:</strong> Competitive positioning, feature bundling, market simulation</p>
+              <button class="primary" data-load="hotel">Load Dataset</button>
+            </div>
           </div>
         </div>
 
@@ -183,7 +272,7 @@
         </div>
 
         <div class="input-group" id="conjoint-attribute-config" style="display:none;">
-          <h3>Attribute Configuration</h3>
+          <h3>Step 2: Configure Attributes</h3>
           <p class="hint">
             Configure each attribute's type and identify special alternatives (None, Competitors). 
             The tool will automatically dummy-code categorical attributes and create appropriate model terms.
@@ -217,10 +306,25 @@
         </div>
 
         <div class="input-group" id="conjoint-estimation-controls" style="display:none;">
-          <h3>Model Estimation Settings</h3>
+          <h3>Step 3: Estimate Individual Utilities
+            <span class="help-icon">?
+              <span class="help-popover">
+                <div class="help-term">Hierarchical Bayes Estimation</div>
+                Estimates individual-level preferences by "borrowing strength" across respondents. More accurate than aggregate models and enables segmentation & personalized simulations.
+              </span>
+            </span>
+          </h3>
           <div class="input-grid">
             <div>
-              <label for="conjoint-regularization">Regularization strength (L2)</label>
+              <label for="conjoint-regularization">
+                Regularization strength (L2)
+                <span class="help-icon">?
+                  <span class="help-popover">
+                    <div class="help-term">Regularization (L2)</div>
+                    Prevents overfitting by penalizing extreme coefficient values. Higher values = more conservative estimates. Default 1.0 works well for most CBC studies.
+                  </span>
+                </span>
+              </label>
               <input type="number" id="conjoint-regularization" min="0" max="10" step="0.1" value="1.0">
               <p class="hint">Higher values reduce overfitting but may bias coefficients toward zero. Default 1.0 is suitable for most studies.</p>
             </div>
@@ -244,51 +348,98 @@
     <section class="visual-output" aria-labelledby="visual-output-heading" style="display:none;" id="conjoint-results-section">
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       
-      <div class="card">
-        <div class="chart-grid">
-          <article class="chart-card">
-            <h3>Attribute Importance (Aggregated)</h3>
-            <div class="chart-placeholder" id="chart-importance"></div>
-            <p class="chart-note">
-              Shows which attributes drive choice decisions most. Importance = (utility range within attribute) / (sum of all ranges). Higher bars = more influential attributes in purchase decisions.
-            </p>
-            <details class="interpretation-aid">
-              <summary>Interpretation Aid</summary>
-              <p class="muted">
-                If price has 40% importance and brand has 20%, customers are trading off price twice as much as brand when making choices. Use this to prioritize product development: focus on attributes with high importance and where you have competitive advantages.
-              </p>
-            </details>
-          </article>
-
-          <article class="chart-card">
-            <h3>Part-Worth Utilities (Mean Across Respondents)</h3>
-            <div class="chart-placeholder" id="chart-partworths"></div>
-            <p class="chart-note">
-              Average utility for each attribute level. Higher bars = more preferred. Use this to identify winning feature combinations.
-            </p>
-            <details class="interpretation-aid">
-              <summary>Interpretation Aid</summary>
-              <p class="muted">
-                Positive utilities indicate preference above the baseline; negative values indicate dispreference. The magnitude matters more than statistical significance here—a feature with +2.5 utility adds 2.5 units to total product utility compared to the baseline level.
-              </p>
-            </details>
-          </article>
+      <!-- Attribute Importance Card -->
+      <div class="result-card">
+        <div class="result-card__header">
+          <span class="result-card__header-icon">📊</span>
+          <h3 class="result-card__header-title">Attribute Importance</h3>
+          <span class="help-icon">?
+            <span class="help-popover">
+              <div class="help-term">Attribute Importance</div>
+              Shows which product features drive customer choices most. Calculated as the utility range within each attribute divided by the sum of all ranges.
+            </span>
+          </span>
+        </div>
+        <div class="result-card__body">
+          <div class="chart-placeholder" id="chart-importance"></div>
+          <p class="chart-note">
+            Shows which attributes drive choice decisions most. Higher bars = more influential attributes in purchase decisions.
+          </p>
+          
+          <div class="insight-callout tip">
+            <div class="insight-callout__icon">💡</div>
+            <div class="insight-callout__content">
+              <div class="insight-callout__title">Marketing Insight</div>
+              <p class="insight-callout__text">Attributes with &lt;10% importance have minimal impact on purchase decisions—consider removing them from your product strategy or marketing communications. Focus resources on high-importance attributes where you have competitive advantages.</p>
+            </div>
+          </div>
+        </div>
+        <div class="result-card__actions">
+          <button class="secondary" onclick="Plotly.downloadImage('chart-importance', {format: 'png', width: 1200, height: 600, filename: 'attribute_importance'})">📥 Export Chart (PNG)</button>
         </div>
       </div>
 
-      <div class="card">
-        <article class="chart-card">
-          <h3>Price Sensitivity Distribution</h3>
+      <!-- Part-Worth Utilities Card -->
+      <div class="result-card">
+        <div class="result-card__header">
+          <span class="result-card__header-icon">📈</span>
+          <h3 class="result-card__header-title">Part-Worth Utilities</h3>
+          <span class="help-icon">?
+            <span class="help-popover">
+              <div class="help-term">Part-Worth Utilities</div>
+              The value (in utility units) customers assign to each attribute level. Higher values indicate stronger preference. Use these to identify winning feature combinations.
+            </span>
+          </span>
+        </div>
+        <div class="result-card__body">
+          <div class="chart-placeholder" id="chart-partworths"></div>
+          <p class="chart-note">
+            Average utility for each attribute level. Higher bars = more preferred. Compare within attributes to see which levels win.
+          </p>
+          
+          <div class="insight-callout interpretation">
+            <div class="insight-callout__icon">📊</div>
+            <div class="insight-callout__content">
+              <div class="insight-callout__title">Interpretation Guide</div>
+              <p class="insight-callout__text">Positive utilities indicate preference above the baseline; negative values indicate dispreference. A feature with +2.5 utility adds 2.5 units to total product utility. Combine high-utility levels from each attribute to design optimal products.</p>
+            </div>
+          </div>
+        </div>
+        <div class="result-card__actions">
+          <button class="secondary" onclick="Plotly.downloadImage('chart-partworths', {format: 'png', width: 1200, height: 600, filename: 'partworth_utilities'})">📥 Export Chart (PNG)</button>
+        </div>
+      </div>
+
+      <!-- Price Sensitivity Card -->
+      <div class="result-card">
+        <div class="result-card__header">
+          <span class="result-card__header-icon">💰</span>
+          <h3 class="result-card__header-title">Price Sensitivity Distribution</h3>
+          <span class="help-icon">?
+            <span class="help-popover">
+              <div class="help-term">Price Sensitivity</div>
+              Histogram of price coefficients across respondents. More negative values = more price-sensitive customers. Wide distribution suggests opportunities for segmentation.
+            </span>
+          </span>
+        </div>
+        <div class="result-card__body">
           <div class="chart-placeholder" id="chart-price-dist"></div>
           <p class="chart-note">
-            Histogram of price coefficients across respondents. More negative = more price-sensitive. Use this to understand heterogeneity in willingness-to-pay.
+            Distribution of price coefficients across respondents. More negative = more price-sensitive.
           </p>
-          <details class="interpretation-aid">
-            <summary>Interpretation Aid</summary>
-            <p class="muted">
-              A wide distribution suggests different customer segments with varying price sensitivity. This justifies segmentation analysis and potentially tiered pricing strategies.
-            </p>
-          </details>
+          
+          <div class="insight-callout warning">
+            <div class="insight-callout__icon">⚠️</div>
+            <div class="insight-callout__content">
+              <div class="insight-callout__title">Common Mistake</div>
+              <p class="insight-callout__text">Don't assume all customers have the same price sensitivity! A wide distribution justifies segmentation analysis and potentially tiered pricing strategies (economy, standard, premium).</p>
+            </div>
+          </div>
+        </div>
+        <div class="result-card__actions">
+          <button class="secondary" onclick="Plotly.downloadImage('chart-price-dist', {format: 'png', width: 1200, height: 600, filename: 'price_sensitivity'})">📥 Export Chart (PNG)</button>
+        </div>
+      </div>
         </article>
       </div>
     </section>
@@ -299,7 +450,15 @@
       <div class="card metrics-panel">
         <div class="metric-output">Total respondents estimated: <span id="conjoint-n-respondents">&ndash;</span></div>
         <div class="metric-output">Mean tasks per respondent: <span id="conjoint-mean-tasks">&ndash;</span></div>
-        <div class="metric-output">Mean pseudo-R² (McFadden): <span id="conjoint-mean-r2">&ndash;</span></div>
+        <div class="metric-output">
+          Mean pseudo-R² (McFadden): <span id="conjoint-mean-r2">&ndash;</span>
+          <span class="help-icon">?
+            <span class="help-popover">
+              <div class="help-term">Pseudo R²</div>
+              Measures model fit. >0.20 is good, >0.40 is excellent for conjoint analysis. Unlike regular R², this doesn't represent % variance explained—it's based on likelihood improvement.
+            </span>
+          </span>
+        </div>
         <div class="metric-output">Estimation time: <span id="conjoint-estimation-time">&ndash;</span></div>
         <details class="interpretation-aid">
           <summary>Interpretation Aid</summary>
@@ -426,10 +585,95 @@
     <section class="simulation-section" aria-labelledby="simulation-heading" style="display:none;" id="conjoint-simulation">
       <h2 id="simulation-heading">MARKET SIMULATION</h2>
       <div class="card">
+        <h3>Price Configuration</h3>
+        <p>
+          First, specify how price should be treated in the market simulation.
+        </p>
+        
+        <div class="input-group">
+          <label for="conjoint-price-mode">Price Treatment</label>
+          <select id="conjoint-price-mode">
+            <option value="attribute">Price is an attribute in the conjoint design (estimated utility coefficient)</option>
+            <option value="fixed">Price was fixed in the conjoint design (not varied)</option>
+            <option value="none">No pricing (free products/services)</option>
+          </select>
+          <p class="hint" id="price-mode-hint">
+            If price was varied as an attribute, utilities can be translated into willingness-to-pay (WTP) values.
+          </p>
+        </div>
+        
+        <div id="price-wtp-options" style="display:none;">
+          <div class="input-group">
+            <label>
+              <input type="checkbox" id="conjoint-show-wtp">
+              Show Willingness-to-Pay (WTP) estimates
+              <span class="help-icon">?
+                <span class="help-popover">
+                  <div class="help-term">Willingness-to-Pay (WTP)</div>
+                  The dollar amount customers value a feature upgrade. Calculated as -Δutility / price_coefficient. Use this for pricing decisions and ROI analysis.
+                </span>
+              </span>
+            </label>
+            <p class="hint">
+              Calculate dollar value of each attribute level using the price coefficient. 
+              WTP = -Δutility / price_coefficient
+            </p>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Cost Structure</h3>
+        <p>
+          Define base costs and incremental costs for attribute levels to calculate profitability.
+        </p>
+        
+        <div class="input-group">
+          <label for="conjoint-base-cost">Base Cost (per unit)</label>
+          <input type="number" id="conjoint-base-cost" min="0" step="0.01" value="0">
+          <p class="hint">Fixed cost regardless of attribute configuration (e.g., core manufacturing cost).</p>
+        </div>
+        
+        <div id="conjoint-incremental-costs">
+          <h4>Incremental Costs by Attribute Level</h4>
+          <p class="hint">
+            Specify additional cost for each attribute level. Default is 0 (no cost impact). 
+            Positive values increase cost, negative values decrease cost relative to baseline.
+          </p>
+          <div id="conjoint-cost-config-list">
+            <!-- Dynamically populated with attribute level cost inputs -->
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
         <h3>Scenario Builder</h3>
         <p>
-          Define a competitive scenario with multiple product alternatives. The tool will compute predicted market shares using the estimated individual utilities. Add prices and costs to calculate profitability.
+          Define a competitive scenario with multiple product alternatives. The tool will compute predicted market shares using the estimated individual utilities.
         </p>
+
+        <div class="input-group">
+          <label><strong>Simulation Options</strong></label>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" id="conjoint-force-choice" />
+              <span>Force all to choose (exclude "None" option from simulation)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" id="conjoint-ignore-competitors" />
+              <span>Ignore competitors (exclude competitor products from simulation)</span>
+            </label>
+          </div>
+          <p class="hint">By default, competitors and "None" (if present in study) are included in simulations. Use these options to run "must purchase" or "our brands only" scenarios.</p>
+        </div>
+
+        <div id="conjoint-auto-included-products" style="display:none; margin-bottom: 1rem; padding: 1rem; background: #e3f2fd; border-radius: 4px;">
+          <p style="margin: 0 0 0.5rem; font-weight: 600;">Auto-Included in Simulation:</p>
+          <ul id="conjoint-auto-list" style="margin: 0; padding-left: 1.5rem;">
+            <!-- Auto-populated -->
+          </ul>
+        </div>
 
         <div class="simulation-controls">
           <button type="button" id="conjoint-add-product" class="secondary">+ Add Product Alternative</button>
@@ -452,6 +696,14 @@
         <div id="conjoint-simulation-results" style="display:none;">
           <h3>Simulation Results</h3>
           
+          <div class="insight-callout interpretation">
+            <div class="insight-callout__icon">📊</div>
+            <div class="insight-callout__content">
+              <div class="insight-callout__title">Reading Your Results</div>
+              <p class="insight-callout__text">Market share shows what % of customers prefer each option. If "None" captures >30% share, customers may not find current products compelling—consider improving core features or adjusting prices. Compare profit (not just share) to identify the optimal product configuration.</p>
+            </div>
+          </div>
+          
           <div class="chart-grid">
             <article class="chart-card">
               <h3>Market Share by Alternative</h3>
@@ -472,7 +724,7 @@
 
           <table class="summary-table">
             <thead>
-              <tr>
+              <tr id="conjoint-sim-table-header">
                 <th>Product</th>
                 <th>Market Share (%)</th>
                 <th>Customer Count</th>
@@ -480,12 +732,34 @@
                 <th>Cost</th>
                 <th>Margin</th>
                 <th>Total Profit</th>
+                <!-- WTP column added dynamically if price is an attribute -->
               </tr>
             </thead>
             <tbody id="conjoint-simulation-table-body">
               <!-- Populated dynamically -->
             </tbody>
           </table>
+
+          <div id="conjoint-wtp-details" style="display:none;">
+            <h4>Willingness-to-Pay (WTP) Analysis</h4>
+            <p class="hint">
+              WTP represents the dollar value customers place on each attribute level relative to the baseline. 
+              Calculated as: WTP = -Δutility / price_coefficient
+            </p>
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Attribute</th>
+                  <th>Level</th>
+                  <th>Mean WTP ($)</th>
+                  <th>Std Dev ($)</th>
+                </tr>
+              </thead>
+              <tbody id="conjoint-wtp-table-body">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
 
           <p class="template-download">
             <button type="button" id="conjoint-download-simulation" class="secondary">
