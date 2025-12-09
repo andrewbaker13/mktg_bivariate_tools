@@ -452,8 +452,50 @@
                         — OR create multi-round games —
                     </div>
 
+                    <!-- Course Selection (Optional) -->
+                    <div class="alert alert-warning" style="background: #fef3c7; border-color: #f59e0b; color: #92400e;">
+                        <strong>📚 Student Tracking:</strong> Associate this game with a course to track student performance and enable enrollment-based access control.
+                    </div>
+
+                    <div class="form-group">
+                        <label for="courseSelect">
+                            Course (Optional)
+                            <small style="color: #6b7280; font-weight: normal; margin-left: 0.5rem;">— Required for student tracking & analytics</small>
+                        </label>
+                        <select id="courseSelect">
+                            <option value="">No course - Open to all (guest mode)</option>
+                        </select>
+                    </div>
+
+                    <!-- Access Mode (Only shown when course selected) -->
+                    <div id="accessModeSection" style="display: none; margin-top: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 2px solid #e2e8f0;">
+                        <label style="font-size: 0.875rem; font-weight: 600; color: #475569; display: block; margin-bottom: 0.75rem;">
+                            🔒 Access Control
+                        </label>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <label style="display: flex; align-items: start; cursor: pointer; padding: 0.5rem; border-radius: 6px; border: 2px solid #d1d5db; background: white;">
+                                <input type="radio" name="accessMode" value="open_access" checked style="margin-top: 0.25rem; margin-right: 0.5rem; cursor: pointer;">
+                                <div>
+                                    <strong style="font-size: 0.875rem; color: #1e293b;">Open Access (Recommended)</strong>
+                                    <small style="display: block; color: #64748b; font-size: 0.75rem; margin-top: 0.25rem;">Anyone with the room code can join. Enrolled students tracked for analytics.</small>
+                                </div>
+                            </label>
+                            <label style="display: flex; align-items: start; cursor: pointer; padding: 0.5rem; border-radius: 6px; border: 2px solid #d1d5db; background: white;">
+                                <input type="radio" name="accessMode" value="enrollment_required" style="margin-top: 0.25rem; margin-right: 0.5rem; cursor: pointer;">
+                                <div>
+                                    <strong style="font-size: 0.875rem; color: #1e293b;">Enrollment Required</strong>
+                                    <small style="display: block; color: #64748b; font-size: 0.75rem; margin-top: 0.25rem;">Only students enrolled in this course can join.</small>
+                                </div>
+                            </label>
+                        </div>
+                        <div id="enrollmentWarning" style="display: none; margin-top: 0.75rem; padding: 0.75rem; background: #fef2f2; border-radius: 6px; border-left: 4px solid #dc2626;">
+                            <strong style="font-size: 0.75rem; color: #991b1b;">⚠️ Warning:</strong>
+                            <small style="display: block; color: #7f1d1d; font-size: 0.75rem; margin-top: 0.25rem;">With "Enrollment Required" mode, only enrolled students can join. You can still set a guest password below to allow non-enrolled users.</small>
+                        </div>
+                    </div>
+
                     <!-- Template Mode -->
-                    <div id="templateMode">
+                    <div id="templateMode" style="margin-top: 1.5rem;">
                         <div class="alert alert-info">
                             <strong>🎯 Multi-Round Templates:</strong> Select a pre-built template with multiple questions. Students play through all questions in order, with cumulative scoring!
                             <a href="game-template-builder.html" style="color: white; font-weight: 700; text-decoration: underline; display: block; margin-top: 0.5rem;">
@@ -821,12 +863,13 @@
                 const courses = await response.json();
                 
                 const select = document.getElementById('courseSelect');
-                select.innerHTML = '<option value="">Select a course...</option>';
+                select.innerHTML = '<option value="">No course - Open to all (guest mode)</option>';
                 courses.forEach(course => {
                     select.innerHTML += `<option value="${course.id}">${course.name}</option>`;
                 });
             } catch (error) {
                 console.error('Error loading courses:', error);
+                document.getElementById('courseSelect').innerHTML = '<option value="">Error loading courses</option>';
             }
         }
 
@@ -895,6 +938,36 @@
                     }
                 });
             }
+
+            // Course selection event listener
+            const courseSelect = document.getElementById('courseSelect');
+            const accessModeSection = document.getElementById('accessModeSection');
+            
+            if (courseSelect) {
+                courseSelect.addEventListener('change', function() {
+                    if (this.value) {
+                        // Course selected - show access mode options
+                        accessModeSection.style.display = 'block';
+                    } else {
+                        // No course - hide access mode options
+                        accessModeSection.style.display = 'none';
+                    }
+                });
+            }
+
+            // Access mode radio buttons event listener
+            const accessModeRadios = document.getElementsByName('accessMode');
+            const enrollmentWarning = document.getElementById('enrollmentWarning');
+            
+            accessModeRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'enrollment_required') {
+                        enrollmentWarning.style.display = 'block';
+                    } else {
+                        enrollmentWarning.style.display = 'none';
+                    }
+                });
+            });
         });
         
         // Toggle advanced settings panel
@@ -1103,11 +1176,21 @@
                 gameSettings.auto_advance_delay = parseInt(document.getElementById('autoAdvanceDelay').value);
             }
             
+            // Get course selection and access mode
+            const courseId = document.getElementById('courseSelect').value;
+            const accessMode = courseId ? document.querySelector('input[name="accessMode"]:checked').value : 'open_access';
+            
             const requestBody = {
                 game_template_id: parseInt(templateId),
                 guest_password: guestPassword,
                 game_settings: Object.keys(gameSettings).length > 0 ? gameSettings : null
             };
+            
+            // Add course_id if selected
+            if (courseId) {
+                requestBody.course_id = parseInt(courseId);
+                requestBody.access_mode = accessMode;
+            }
             
             try {
                 const response = await fetch(`${API_BASE}/game/create/`, {

@@ -115,6 +115,15 @@
             margin-bottom: 1rem;
             display: none;
         }
+        .warning-message {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #f59e0b;
+            display: none;
+        }
         .success-message {
             background: #efe;
             color: #070;
@@ -159,6 +168,7 @@
             </div>
 
             <div id="errorMessage" class="error-message"></div>
+            <div id="warningMessage" class="warning-message"></div>
             <div id="successMessage" class="success-message"></div>
 
             <form id="joinForm">
@@ -289,10 +299,13 @@
             const guestPassword = document.getElementById('guestPassword').value.trim();
             const joinBtn = document.getElementById('joinBtn');
             const errorMessage = document.getElementById('errorMessage');
+            const warningMessage = document.getElementById('warningMessage');
             const successMessage = document.getElementById('successMessage');
             
             // Clear messages
             errorMessage.style.display = 'none';
+            warningMessage.style.display = 'none';
+            successMessage.style.display = 'none';
             successMessage.style.display = 'none';
             
             // Validate
@@ -377,6 +390,11 @@
                     throw new Error(data.error || 'Failed to join game');
                 }
                 
+                // Show warning if present (e.g., guest in enrollment-required game)
+                if (data.warning) {
+                    showWarning(data.warning);
+                }
+                
                 // Store player session info
                 sessionStorage.setItem('gameSession', JSON.stringify(data.game_session));
                 sessionStorage.setItem('playerSession', JSON.stringify(data.player_session));
@@ -405,6 +423,12 @@
             const errorMessage = document.getElementById('errorMessage');
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
+        }
+        
+        function showWarning(message) {
+            const warningMessage = document.getElementById('warningMessage');
+            warningMessage.textContent = message;
+            warningMessage.style.display = 'block';
         }
         
         function showSuccess(message) {
