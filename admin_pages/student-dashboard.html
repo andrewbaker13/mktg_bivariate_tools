@@ -237,6 +237,78 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
         }
+        /* Game History Styles */
+        .game-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            border-left: 4px solid #8b5cf6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .game-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .game-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+        .game-card-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        .game-card-course {
+            color: #6b7280;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+        .game-card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+        .game-stat {
+            text-align: center;
+            padding: 0.5rem;
+            background: #f9fafb;
+            border-radius: 4px;
+        }
+        .game-stat-label {
+            font-size: 0.7rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .game-stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-top: 0.25rem;
+        }
+        .game-stat-value.rank-1 {
+            color: #eab308;
+        }
+        .game-stat-value.rank-2 {
+            color: #94a3b8;
+        }
+        .game-stat-value.rank-3 {
+            color: #cd7f32;
+        }
+        .game-card-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #e5e7eb;
+        }
     </style>
 </head>
 <body>
@@ -318,6 +390,21 @@
             <div class="chart-container" id="quiz-results-section" style="display: none;">
                 <h3>📝 Skills Check Results</h3>
                 <div id="quiz-results-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
+            </div>
+
+            <!-- Game History Section -->
+            <div class="chart-container" id="game-history-section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3>🎮 Game History</h3>
+                    <select id="game-course-filter" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                        <option value="">All Courses</option>
+                    </select>
+                </div>
+                <div id="game-history-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;"></div>
+                <div id="no-games-message" style="display: none; text-align: center; padding: 2rem; color: #6b7280;">
+                    <p>🎮 You haven't played any games yet!</p>
+                    <p style="font-size: 0.875rem;">Games played during class will appear here with your scores and rankings.</p>
+                </div>
             </div>
 
             <!-- Untried Tools -->
@@ -445,6 +532,9 @@
                 
                 // Load quiz results
                 await loadQuizResults();
+                
+                // Load game history
+                await loadGameHistory();
                 
                 // Show dashboard
                 document.getElementById('loading').style.display = 'none';
@@ -709,6 +799,102 @@
                 console.error('Error loading quiz results:', error);
                 document.getElementById('quiz-results-section').style.display = 'none';
             }
+        }
+
+        // Load game history
+        let allGames = [];
+        
+        async function loadGameHistory() {
+            try {
+                const response = await fetch(`${API_BASE}/student/game-history/`, {
+                    headers: {
+                        'Authorization': `Token ${localStorage.getItem('auth_token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    console.log('Game history not available');
+                    return;
+                }
+                
+                const data = await response.json();
+                allGames = data.games || [];
+                
+                if (allGames.length === 0) {
+                    document.getElementById('game-history-section').style.display = 'block';
+                    document.getElementById('no-games-message').style.display = 'block';
+                    return;
+                }
+                
+                // Populate course filter
+                const courses = [...new Set(allGames.filter(g => g.course_name).map(g => g.course_name))];
+                const courseFilter = document.getElementById('game-course-filter');
+                courseFilter.innerHTML = '<option value="">All Courses</option>' + 
+                    courses.map(c => `<option value="${c}">${c}</option>`).join('');
+                
+                // Add filter listener
+                courseFilter.addEventListener('change', renderGameHistory);
+                
+                // Show section and render
+                document.getElementById('game-history-section').style.display = 'block';
+                renderGameHistory();
+                
+            } catch (error) {
+                console.error('Error loading game history:', error);
+            }
+        }
+        
+        function renderGameHistory() {
+            const courseFilter = document.getElementById('game-course-filter').value;
+            const filteredGames = courseFilter ? 
+                allGames.filter(g => g.course_name === courseFilter) : allGames;
+            
+            const list = document.getElementById('game-history-list');
+            const noGamesMsg = document.getElementById('no-games-message');
+            
+            if (filteredGames.length === 0) {
+                list.style.display = 'none';
+                noGamesMsg.style.display = 'block';
+                noGamesMsg.innerHTML = courseFilter ? 
+                    '<p style="color: #6b7280;">No games found for this course.</p>' :
+                    '<p style="color: #6b7280;">🎮 You haven\'t played any games yet!</p><p style="font-size: 0.875rem;">Games played during class will appear here with your scores and rankings.</p>';
+                return;
+            }
+            
+            list.style.display = 'grid';
+            noGamesMsg.style.display = 'none';
+            
+            list.innerHTML = filteredGames.map(game => {
+                const playedDate = new Date(game.played_at);
+                const rankClass = game.rank <= 3 ? `rank-${game.rank}` : '';
+                const rankEmoji = game.rank === 1 ? '🥇' : game.rank === 2 ? '🥈' : game.rank === 3 ? '🥉' : '';
+                
+                return `
+                    <div class="game-card">
+                        <div class="game-card-header">
+                            <div>
+                                <div class="game-card-title">${game.room_code}</div>
+                                ${game.course_name ? `<div class="game-card-course">📚 ${game.course_name}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="game-card-stats">
+                            <div class="game-stat">
+                                <div class="game-stat-label">Score</div>
+                                <div class="game-stat-value">${game.final_score}</div>
+                            </div>
+                            <div class="game-stat">
+                                <div class="game-stat-label">Rank</div>
+                                <div class="game-stat-value ${rankClass}">${rankEmoji} ${game.rank}/${game.total_players}</div>
+                            </div>
+                        </div>
+                        <div class="game-card-meta">
+                            <span>📅 ${playedDate.toLocaleDateString()}</span>
+                            <span>⏰ ${playedDate.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</span>
+                            ${game.total_rounds > 1 ? `<span>🎯 ${game.total_rounds} rounds</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Load dashboard on page load

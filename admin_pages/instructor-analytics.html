@@ -140,6 +140,108 @@
                 grid-template-columns: 1fr;
             }
         }
+        /* Game Card Styles */
+        .game-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.25rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .game-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .game-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+        .game-room-code {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            font-family: monospace;
+            letter-spacing: 0.1em;
+        }
+        .game-status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .game-status-badge.waiting {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .game-status-badge.in_progress {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .game-status-badge.completed {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .game-status-badge.cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .game-card-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+        .game-stat-box {
+            text-align: center;
+            padding: 0.5rem;
+            background: #f9fafb;
+            border-radius: 4px;
+        }
+        .game-stat-label {
+            font-size: 0.7rem;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+        .game-stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-top: 0.25rem;
+        }
+        .game-card-actions {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .game-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .game-btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .game-btn-primary:hover {
+            background: #2563eb;
+        }
+        .game-btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .game-btn-secondary:hover {
+            background: #e5e7eb;
+        }
     </style>
 </head>
 <body>
@@ -260,6 +362,45 @@
                     <tbody id="student-table-body"></tbody>
                 </table>
             </div>
+
+            <!-- Hosted Games Section -->
+            <div class="chart-container" id="hosted-games-section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="margin: 0;">🎮 Hosted Games</h3>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <select id="game-status-filter" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                            <option value="">All Statuses</option>
+                            <option value="waiting">Waiting</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="hosted-games-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1rem;"></div>
+                <div id="no-hosted-games" style="display: none; text-align: center; padding: 2rem; color: #6b7280;">
+                    <p>🎮 No games hosted yet for this course.</p>
+                    <p style="font-size: 0.875rem;">Visit the <a href="game-host.html" style="color: #3b82f6;">Game Host page</a> to create your first game!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Results Modal -->
+        <div id="game-results-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+            <div style="background: white; margin: 2rem auto; max-width: 1200px; border-radius: 8px; padding: 2rem; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 id="modal-game-title">Game Results</h2>
+                    <button onclick="closeGameResultsModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="filter-guests-checkbox">
+                        <span>Hide Guest Players</span>
+                    </label>
+                    <button class="btn" onclick="exportGameResults()" style="padding: 0.5rem 1rem; font-size: 0.875rem;">⬇ Export Results</button>
+                </div>
+                <div id="modal-game-results"></div>
+            </div>
         </div>
 
         <!-- Student Detail Modal -->
@@ -359,6 +500,9 @@
                 // Load advanced analytics
                 loadAtRiskStudents(courseId);
                 loadActivityHeatmap(courseId);
+                
+                // Load hosted games
+                loadHostedGames(courseId);
                 
                 // Show dashboard
                 document.getElementById('loading').style.display = 'none';
@@ -654,6 +798,212 @@
             const a = document.createElement('a');
             a.href = url;
             a.download = `course_${currentCourseId}_students_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Game History Functions
+        let allGames = [];
+        let currentGameResults = null;
+        
+        async function loadHostedGames(courseId) {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/instructor/game-history/?course_id=${courseId}`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) {
+                    console.log('Game history not available');
+                    return;
+                }
+                
+                const data = await response.json();
+                allGames = data.games || [];
+                
+                if (allGames.length === 0) {
+                    document.getElementById('hosted-games-section').style.display = 'block';
+                    document.getElementById('no-hosted-games').style.display = 'block';
+                    return;
+                }
+                
+                // Add status filter listener
+                document.getElementById('game-status-filter').addEventListener('change', renderHostedGames);
+                
+                // Show section and render
+                document.getElementById('hosted-games-section').style.display = 'block';
+                renderHostedGames();
+                
+            } catch (error) {
+                console.error('Error loading hosted games:', error);
+            }
+        }
+        
+        function renderHostedGames() {
+            const statusFilter = document.getElementById('game-status-filter').value;
+            const filteredGames = statusFilter ? 
+                allGames.filter(g => g.status === statusFilter) : allGames;
+            
+            const grid = document.getElementById('hosted-games-grid');
+            const noGamesMsg = document.getElementById('no-hosted-games');
+            
+            if (filteredGames.length === 0) {
+                grid.style.display = 'none';
+                noGamesMsg.style.display = 'block';
+                noGamesMsg.innerHTML = statusFilter ? 
+                    '<p style="color: #6b7280;">No games found with this status.</p>' :
+                    '<p>🎮 No games hosted yet for this course.</p><p style="font-size: 0.875rem;">Visit the <a href="game-host.html" style="color: #3b82f6;">Game Host page</a> to create your first game!</p>';
+                return;
+            }
+            
+            grid.style.display = 'grid';
+            noGamesMsg.style.display = 'none';
+            
+            grid.innerHTML = filteredGames.map(game => {
+                const createdDate = new Date(game.created_at);
+                const statusLabel = game.status.replace('_', ' ');
+                
+                return `
+                    <div class="game-card">
+                        <div class="game-card-header">
+                            <div class="game-room-code">${game.room_code}</div>
+                            <span class="game-status-badge ${game.status}">${statusLabel}</span>
+                        </div>
+                        <div class="game-card-stats">
+                            <div class="game-stat-box">
+                                <div class="game-stat-label">Players</div>
+                                <div class="game-stat-value">${game.player_count}</div>
+                            </div>
+                            <div class="game-stat-box">
+                                <div class="game-stat-label">Rounds</div>
+                                <div class="game-stat-value">${game.total_rounds || 1}</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 0.75rem; font-size: 0.875rem; color: #6b7280;">
+                            <div>📅 ${createdDate.toLocaleDateString()} ${createdDate.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}</div>
+                            ${game.access_mode === 'enrollment_required' ? '<div style="margin-top: 0.25rem;">🔒 Enrollment Required</div>' : ''}
+                        </div>
+                        <div class="game-card-actions">
+                            <button class="game-btn game-btn-primary" onclick="loadGameResults(${game.id})">
+                                📊 View Results
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        async function loadGameResults(gameId) {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/instructor/game/${gameId}/results/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) {
+                    alert('Failed to load game results');
+                    return;
+                }
+                
+                currentGameResults = await response.json();
+                renderGameResults();
+                document.getElementById('game-results-modal').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading game results:', error);
+                alert('Failed to load game results');
+            }
+        }
+        
+        function renderGameResults() {
+            if (!currentGameResults) return;
+            
+            const filterGuests = document.getElementById('filter-guests-checkbox').checked;
+            const results = filterGuests ? 
+                currentGameResults.leaderboard.filter(p => !p.is_guest) : 
+                currentGameResults.leaderboard;
+            
+            document.getElementById('modal-game-title').textContent = 
+                `Game Results: ${currentGameResults.room_code}`;
+            
+            const container = document.getElementById('modal-game-results');
+            
+            if (results.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #6b7280;">No results to display.</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <strong>Total Players:</strong> ${currentGameResults.leaderboard.length} 
+                    (${currentGameResults.leaderboard.filter(p => p.is_guest).length} guests)
+                </div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; padding: 0.75rem; background: #f9fafb; border-bottom: 2px solid #e5e7eb;">Rank</th>
+                            <th style="text-align: left; padding: 0.75rem; background: #f9fafb; border-bottom: 2px solid #e5e7eb;">Player</th>
+                            <th style="text-align: center; padding: 0.75rem; background: #f9fafb; border-bottom: 2px solid #e5e7eb;">Score</th>
+                            <th style="text-align: center; padding: 0.75rem; background: #f9fafb; border-bottom: 2px solid #e5e7eb;">Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${results.map((player, idx) => {
+                            const rankEmoji = player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : player.rank === 3 ? '🥉' : '';
+                            const playerType = player.is_guest ? '👤 Guest' : '👨‍🎓 Student';
+                            
+                            return `
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 0.75rem; font-weight: 700;">${rankEmoji} ${player.rank}</td>
+                                    <td style="padding: 0.75rem;">${player.player_name}</td>
+                                    <td style="padding: 0.75rem; text-align: center; font-weight: 600;">${player.final_score}</td>
+                                    <td style="padding: 0.75rem; text-align: center;">${playerType}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            // Add filter listener
+            document.getElementById('filter-guests-checkbox').addEventListener('change', renderGameResults);
+        }
+        
+        function closeGameResultsModal() {
+            document.getElementById('game-results-modal').style.display = 'none';
+            currentGameResults = null;
+        }
+        
+        function exportGameResults() {
+            if (!currentGameResults) return;
+            
+            const filterGuests = document.getElementById('filter-guests-checkbox').checked;
+            const results = filterGuests ? 
+                currentGameResults.leaderboard.filter(p => !p.is_guest) : 
+                currentGameResults.leaderboard;
+            
+            // Create CSV content
+            const headers = ['Rank', 'Player Name', 'Score', 'Type'];
+            const rows = results.map(p => [
+                p.rank,
+                p.player_name,
+                p.final_score,
+                p.is_guest ? 'Guest' : 'Student'
+            ]);
+            
+            let csv = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+            
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `game_${currentGameResults.room_code}_results_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
             window.URL.revokeObjectURL(url);
         }
