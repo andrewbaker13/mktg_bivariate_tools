@@ -44,6 +44,90 @@
         .back-btn:hover {
             background: #2563eb;
         }
+        .mode-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-btn:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .mode-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .templates-list {
+            display: grid;
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .template-card {
+            padding: 1.5rem;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .template-card:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+        .template-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+        .template-card-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .template-card-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.75rem;
+        }
+        .template-card-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .template-action-btn {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .template-action-btn.edit {
+            background: #3b82f6;
+            color: white;
+        }
+        .template-action-btn.edit:hover {
+            background: #2563eb;
+        }
+        .template-action-btn.copy {
+            background: #10b981;
+            color: white;
+        }
+        .template-action-btn.copy:hover {
+            background: #059669;
+        }
         .main-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -264,8 +348,26 @@
     <div id="admin-nav-container"></div>
     <div class="builder-container">
         <div class="builder-header">
+            <a href="game-host.html" class="back-btn">← Back to Game Host</a>
             <h1>🎯 Game Template Builder</h1>
-            <p>Create multi-round game templates by selecting and ordering questions from your quiz bank.</p>
+            <p>Create, edit, or copy game templates by selecting and ordering minigames from your question bank.</p>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button id="newTemplateBtn" class="mode-btn active" onclick="switchMode('new')">
+                    ✨ New Template
+                </button>
+                <button id="loadTemplateBtn" class="mode-btn" onclick="switchMode('load')">
+                    📂 Load/Edit Template
+                </button>
+            </div>
+        </div>
+
+        <!-- Load Template Panel (initially hidden) -->
+        <div id="loadTemplatePanel" class="panel" style="display: none; margin-bottom: 2rem;">
+            <div class="panel-header">
+                <h2>📂 Load Existing Template</h2>
+            </div>
+            <div id="templatesList" class="templates-list"></div>
         </div>
 
         <div class="main-grid">
@@ -277,7 +379,7 @@
                 </div>
 
                 <div class="alert alert-info">
-                    Click questions below to add them to your template. You can mix Speed Tap and Closest Guess questions!
+                    Click minigames below to add them to your template. You can mix all 6 minigame types!
                 </div>
 
                 <div class="search-filter">
@@ -285,14 +387,17 @@
                         type="text" 
                         id="searchInput" 
                         class="search-input" 
-                        placeholder="🔍 Search questions...">
+                        placeholder="🔍 Search minigames...">
                     
                     <div class="filter-row">
                         <select id="gameTypeFilter">
-                            <option value="">All Game Types</option>
+                            <option value="">All Minigame Types</option>
                             <option value="speed_tap">Speed Tap</option>
                             <option value="closest_guess">Closest Guess</option>
                             <option value="push_range">Push Range</option>
+                            <option value="crowd_wisdom">Crowd Wisdom</option>
+                            <option value="word_guess">Word Guess</option>
+                            <option value="rpg_battle">RPG Party Battle</option>
                         </select>
                         <select id="courseFilter">
                             <option value="">All Courses</option>
@@ -312,18 +417,22 @@
                 </div>
 
                 <div id="emptyMessage" class="alert alert-warning">
-                    No questions selected yet. Click questions from the left panel to add them here.
+                    No minigames selected yet. Click minigames from the left panel to add them here.
                 </div>
 
                 <div id="selectedList" class="selected-list" style="display: none;"></div>
 
                 <div class="template-form" id="templateForm" style="display: none;">
+                    <div id="editModeInfo" class="alert alert-info" style="display: none;">
+                        <strong id="editModeTitle"></strong>
+                    </div>
+                    
                     <div class="form-group">
                         <label for="templateName">Template Name *</label>
                         <input 
                             type="text" 
                             id="templateName" 
-                            placeholder="e.g., Algebra Practice 1"
+                            placeholder="e.g., Intro to Statistics Game"
                             required>
                     </div>
 
@@ -348,20 +457,137 @@
         }
 
         let allQuestions = [];
+        let allTemplates = [];
         let selectedQuestions = [];
         let selectedListSortable = null;
-        let prefillTemplateId = null; // If rebuilding an existing template
+        let currentMode = 'new'; // 'new', 'edit', or 'copy'
+        let editingTemplateId = null;
 
-        // Check URL for prefill parameters (when rebuilding a template)
-        function checkPrefillParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const prefillIds = urlParams.get('prefill');
-            prefillTemplateId = urlParams.get('template_id');
-            
-            if (prefillIds) {
-                return prefillIds.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+        // Game type display mapping
+        const GAME_TYPE_LABELS = {
+            'speed_tap': 'Speed Tap',
+            'closest_guess': 'Closest Guess',
+            'push_range': 'Push Range',
+            'crowd_wisdom': 'Crowd Wisdom',
+            'word_guess': 'Word Guess',
+            'rpg_battle': 'RPG Party Battle'
+        };
+
+        // Switch between new/load modes
+        function switchMode(mode) {
+            const newBtn = document.getElementById('newTemplateBtn');
+            const loadBtn = document.getElementById('loadTemplateBtn');
+            const loadPanel = document.getElementById('loadTemplatePanel');
+            const mainGrid = document.querySelector('.main-grid');
+
+            if (mode === 'new') {
+                newBtn.classList.add('active');
+                loadBtn.classList.remove('active');
+                loadPanel.style.display = 'none';
+                mainGrid.style.display = 'grid';
+                
+                // Clear any editing state
+                currentMode = 'new';
+                editingTemplateId = null;
+                selectedQuestions = [];
+                document.getElementById('templateName').value = '';
+                document.getElementById('editModeInfo').style.display = 'none';
+                renderSelected();
+                renderQuestions();
+            } else if (mode === 'load') {
+                newBtn.classList.remove('active');
+                loadBtn.classList.add('active');
+                loadPanel.style.display = 'block';
+                mainGrid.style.display = 'none';
+                
+                loadTemplates();
             }
-            return [];
+        }
+
+        // Load all templates
+        async function loadTemplates() {
+            try {
+                const response = await fetch(`${API_BASE}/game/templates/`, {
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                allTemplates = await response.json();
+                renderTemplates();
+            } catch (error) {
+                console.error('Error loading templates:', error);
+                document.getElementById('templatesList').innerHTML = 
+                    '<div class="alert alert-warning">Error loading templates. Please try again.</div>';
+            }
+        }
+
+        // Render templates list
+        function renderTemplates() {
+            const container = document.getElementById('templatesList');
+            
+            if (allTemplates.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No templates created yet. Create your first one!</div>';
+                return;
+            }
+
+            container.innerHTML = allTemplates.map(template => {
+                const minigameCount = template.question_count || 0;
+                const createdDate = new Date(template.created_at).toLocaleDateString();
+                
+                return `
+                    <div class="template-card">
+                        <div class="template-card-header">
+                            <div class="template-card-title">${template.name}</div>
+                        </div>
+                        <div class="template-card-meta">
+                            <span>🎮 ${minigameCount} minigame${minigameCount !== 1 ? 's' : ''}</span>
+                            <span>📅 Created ${createdDate}</span>
+                        </div>
+                        <div class="template-card-actions">
+                            <button class="template-action-btn edit" onclick="loadTemplateForEdit(${template.id}, 'edit')">
+                                ✏️ Edit
+                            </button>
+                            <button class="template-action-btn copy" onclick="loadTemplateForEdit(${template.id}, 'copy')">
+                                📋 Copy
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Load a template for editing or copying
+        async function loadTemplateForEdit(templateId, mode) {
+            try {
+                const response = await fetch(`${API_BASE}/game/templates/${templateId}/`, {
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                const template = await response.json();
+                
+                currentMode = mode;
+                editingTemplateId = mode === 'edit' ? templateId : null;
+                
+                // Load the questions from the template
+                selectedQuestions = template.questions || [];
+                
+                // Set the template name
+                if (mode === 'edit') {
+                    document.getElementById('templateName').value = template.name;
+                    document.getElementById('editModeTitle').textContent = `✏️ Editing: ${template.name}`;
+                } else {
+                    document.getElementById('templateName').value = template.name + ' (Copy)';
+                    document.getElementById('editModeTitle').textContent = `📋 Copying: ${template.name}`;
+                }
+                
+                document.getElementById('editModeInfo').style.display = 'block';
+                
+                // Switch to edit view
+                switchMode('new');
+                renderSelected();
+                renderQuestions();
+                
+            } catch (error) {
+                console.error('Error loading template:', error);
+                alert('Error loading template: ' + error.message);
+            }
         }
 
         // Load courses for filter
@@ -391,32 +617,6 @@
                 
                 document.getElementById('loadingQuestions').style.display = 'none';
                 document.getElementById('questionsList').style.display = 'block';
-                
-                // Check for prefill parameters (rebuilding from broken template)
-                const prefillIds = checkPrefillParams();
-                if (prefillIds.length > 0) {
-                    // Pre-select questions that match the prefill IDs (in order)
-                    prefillIds.forEach(id => {
-                        const question = allQuestions.find(q => q.id === id);
-                        if (question) {
-                            selectedQuestions.push(question);
-                        }
-                    });
-                    
-                    if (selectedQuestions.length > 0) {
-                        // Show a notification that we're rebuilding
-                        const alert = document.createElement('div');
-                        alert.className = 'alert alert-info';
-                        alert.style.cssText = 'margin-bottom: 1rem; padding: 1rem; background: #dbeafe; border: 1px solid #3b82f6; border-radius: 8px;';
-                        alert.innerHTML = `
-                            <strong>🔧 Rebuilding Template</strong><br>
-                            ${selectedQuestions.length} valid question(s) have been pre-loaded. You can add more questions or reorder them before saving.
-                        `;
-                        document.querySelector('.builder-header').appendChild(alert);
-                        
-                        renderSelected();
-                    }
-                }
                 
                 renderQuestions();
             } catch (error) {
@@ -458,20 +658,20 @@
 
             const container = document.getElementById('questionsList');
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="alert alert-warning">No questions match your filters.</div>';
+                container.innerHTML = '<div class="alert alert-warning">No minigames match your filters.</div>';
                 return;
             }
 
             container.innerHTML = filtered.map(q => {
                 const courseNames = Array.isArray(q.course_names) ? q.course_names : [];
                 const courseLabel = courseNames.length > 0 ? courseNames.join(', ') : 'Any Course';
+                const gameTypeLabel = GAME_TYPE_LABELS[q.game_type] || q.game_type;
 
                 return `
                 <div class="question-card" onclick="addQuestion(${q.id})">
                     <div class="question-text">${q.question_text}</div>
                     <div class="question-meta">
-                        <span>🎮 ${q.game_type === 'speed_tap' ? 'Speed Tap' : q.game_type === 'push_range' ? 'Push Range' : 'Closest Guess'}</span>
-                        <span>⏱️ ${q.game_time_limit_seconds || 30}s</span>
+                        <span>🎮 ${gameTypeLabel}</span>
                         <span>📘 ${courseLabel}</span>
                     </div>
                 </div>
@@ -496,22 +696,6 @@
             renderQuestions();
         }
 
-        // Move question up
-        function moveUp(index) {
-            if (index === 0) return;
-            [selectedQuestions[index], selectedQuestions[index - 1]] = 
-            [selectedQuestions[index - 1], selectedQuestions[index]];
-            renderSelected();
-        }
-
-        // Move question down
-        function moveDown(index) {
-            if (index === selectedQuestions.length - 1) return;
-            [selectedQuestions[index], selectedQuestions[index + 1]] = 
-            [selectedQuestions[index + 1], selectedQuestions[index]];
-            renderSelected();
-        }
-
         // Render selected questions
         function renderSelected() {
             const count = selectedQuestions.length;
@@ -534,25 +718,21 @@
             document.getElementById('templateForm').style.display = 'block';
 
             const container = document.getElementById('selectedList');
-            container.innerHTML = selectedQuestions.map((q, index) => `
+            container.innerHTML = selectedQuestions.map((q, index) => {
+                const gameTypeLabel = GAME_TYPE_LABELS[q.game_type] || q.game_type;
+                
+                return `
                 <div class="selected-item" data-question-id="${q.id}">
                     <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
                     <div class="order-number">${index + 1}</div>
                     <div class="item-content">
                         <div class="item-text">${q.question_text.substring(0, 60)}${q.question_text.length > 60 ? '...' : ''}</div>
-                        <div class="item-type">🎮 ${q.game_type === 'speed_tap' ? 'Speed Tap' : q.game_type === 'push_range' ? 'Push Range' : 'Closest Guess'}</div>
+                        <div class="item-type">🎮 ${gameTypeLabel}</div>
                     </div>
                     <button class="remove-btn" onclick="removeQuestion(${index})">✕</button>
-                    <button onclick="moveUp(${index})" ${index === 0 ? 'disabled' : ''} 
-                            style="background: #3b82f6; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">
-                        ▲
-                    </button>
-                    <button onclick="moveDown(${index})" ${index === count - 1 ? 'disabled' : ''} 
-                            style="background: #3b82f6; color: white; border: none; padding: 0.5rem; border-radius: 4px; cursor: pointer;">
-                        ▼
-                    </button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             initSelectedListDrag();
         }
@@ -594,7 +774,7 @@
             }
 
             if (selectedQuestions.length === 0) {
-                alert('Please add at least one question');
+                alert('Please add at least one minigame');
                 return;
             }
 
@@ -602,17 +782,35 @@
             this.textContent = 'Saving...';
 
             try {
-                const response = await fetch(`${API_BASE}/game/templates/create/`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Token ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: name,
-                        question_ids: selectedQuestions.map(q => q.id)
-                    })
-                });
+                let response;
+                
+                if (currentMode === 'edit' && editingTemplateId) {
+                    // Update existing template
+                    response = await fetch(`${API_BASE}/game/templates/${editingTemplateId}/update/`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Token ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: name,
+                            question_ids: selectedQuestions.map(q => q.id)
+                        })
+                    });
+                } else {
+                    // Create new template (for 'new' or 'copy' mode)
+                    response = await fetch(`${API_BASE}/game/templates/create/`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Token ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: name,
+                            question_ids: selectedQuestions.map(q => q.id)
+                        })
+                    });
+                }
 
                 if (!response.ok) {
                     const error = await response.json();
@@ -622,13 +820,17 @@
                 const template = await response.json();
                 
                 const successMsg = document.getElementById('successMessage');
-                successMsg.textContent = `✅ Template "${template.name}" saved successfully! (${template.question_count} questions)`;
+                const action = currentMode === 'edit' ? 'updated' : 'saved';
+                successMsg.textContent = `✅ Template "${template.name}" ${action} successfully! (${template.question_count} minigames)`;
                 successMsg.style.display = 'block';
 
                 // Reset form
                 setTimeout(() => {
+                    currentMode = 'new';
+                    editingTemplateId = null;
                     selectedQuestions = [];
                     document.getElementById('templateName').value = '';
+                    document.getElementById('editModeInfo').style.display = 'none';
                     renderSelected();
                     renderQuestions();
                     successMsg.style.display = 'none';
