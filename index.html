@@ -8,93 +8,87 @@
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   <link rel="stylesheet" href="shared/css/main.css">
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
 
-      gtag('config', 'G-290ZJ9RE04');
-    </script>
-    <style>
-      .auth-bar {
-        background: #f9fafb;
-        border-bottom: 1px solid #e5e7eb;
-        padding: 0.75rem 0;
-        text-align: right;
-      }
-      .auth-bar__container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 1.5rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .auth-bar__links {
-        display: flex;
-        gap: 1.5rem;
-        align-items: center;
-        margin-left: auto;
-      }
-      .auth-bar__links a {
-        color: #3b82f6;
-        text-decoration: none;
-        font-size: 0.95rem;
-        font-weight: 500;
-      }
-      .auth-bar__links a:hover {
-        text-decoration: underline;
-      }
-      .auth-bar__status {
-        color: #10b981;
-        font-size: 0.95rem;
-        font-weight: 500;
-      }
-      /* Logout button - override ALL button styles */
-      button.auth-bar__logout,
-      .auth-bar__logout {
-        color: #6b7280 !important;
-        background: transparent !important;
-        background-color: transparent !important;
-        border: none !important;
-        cursor: pointer;
-        font-size: 0.9rem !important;
-        text-decoration: underline;
-        padding: 0.25rem 0.5rem !important;
-        margin-left: 0.75rem;
-        box-shadow: none !important;
-        font-family: inherit !important;
-        font-weight: normal !important;
-      }
-      button.auth-bar__logout:hover,
-      button.auth-bar__logout:focus,
-      button.auth-bar__logout:active,
-      .auth-bar__logout:hover,
-      .auth-bar__logout:focus,
-      .auth-bar__logout:active {
-        color: #374151 !important;
-        background: transparent !important;
-        background-color: transparent !important;
-        box-shadow: none !important;
-      }
-      button.auth-bar__logout:focus-visible,
-      .auth-bar__logout:focus-visible {
-        outline: 2px dotted #6b7280;
-        outline-offset: 2px;
-        background: transparent !important;
-      }
-      
-      /* Decision Tree Styles */
-      /* Print/PDF Styles */
-      @media print {
-        .no-print { display: none !important; }
-        body { background: white; }
-        .card { border: none; box-shadow: none; page-break-inside: avoid; }
-      }
-    </style>
-</head><body>
+    gtag('config', 'G-290ZJ9RE04');
+  </script>
+  <style>
+    .auth-bar {
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.75rem 0;
+      text-align: right;
+    }
+    .auth-bar__container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .auth-bar__links {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      margin-left: auto;
+    }
+    .auth-bar__links a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    .auth-bar__links a:hover {
+      text-decoration: underline;
+    }
+    .auth-bar__status {
+      color: #10b981;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    /* Logout button - override ALL button styles */
+    button.auth-bar__logout,
+    .auth-bar__logout {
+      color: #6b7280 !important;
+      background: transparent !important;
+      background-color: transparent !important;
+      border: none !important;
+      cursor: pointer;
+      font-size: 0.9rem !important;
+      text-decoration: underline;
+      padding: 0.25rem 0.5rem !important;
+      margin-left: 0.75rem;
+      box-shadow: none !important;
+      font-family: inherit !important;
+      font-weight: normal !important;
+    }
+    button.auth-bar__logout:hover,
+    button.auth-bar__logout:focus,
+    button.auth-bar__logout:active,
+    .auth-bar__logout:hover,
+    .auth-bar__logout:focus,
+    .auth-bar__logout:active {
+      color: #374151 !important;
+      background: transparent !important;
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+    button.auth-bar__logout:focus-visible,
+    .auth-bar__logout:focus-visible {
+      outline: 2px dotted #6b7280;
+      outline-offset: 2px;
+      background: transparent !important;
+    }
+  </style>
+</head>
+
+<body>
   <div class="auth-bar">
     <div class="auth-bar__container">
       <div></div>
@@ -106,488 +100,389 @@
   </div>
   
   <main class="app-main">
-    <header class="intro hero-header">
-      <div class="hero-header__top">
-        <h1>Marketing Analytics Statistics Tools</h1>
-        <div class="hero-context">
-          <span class="badge">Student Guide</span>
-          <span class="badge" style="background:#10b981;">24 Tools Available</span>
-        </div>
-      </div>
-      <p class="hero-header__lede">
-        Use this page to choose the right web app for your question, then click through to run the analysis with
-        guided inputs, visuals, and narrative reporting.
+    
+    <!-- HERO SECTION -->
+    <header class="hero-section">
+      <h1 class="hero-title">What do you want to analyze today?</h1>
+      <p class="hero-subtitle">
+        Choose the right tool for your marketing question. Run statistical tests, build predictive models, 
+        and simulate market scenarios with guided, student-friendly apps.
       </p>
+      <div class="hero-stats">
+        <span class="stat-badge">✨ 26 Tools</span>
+        <span class="stat-badge">🎓 Student Guide</span>
+        <span class="stat-badge">🚀 No Code Required</span>
+      </div>
     </header>
 
-    <section class="test-overview" aria-labelledby="quick-nav-heading">
-      <h2 id="quick-nav-heading">Quick Navigation</h2>
-      <div class="card">
-        <p style="margin-bottom:0.75rem;">Jump to a category:</p>
-        <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
-          <a href="#getting-started" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📊 Getting Started</a>
-          <a href="#exploratory" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📈 Descriptive Analysis</a>
-          <a href="#comparing-groups" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📉 Comparing Groups</a>
-          <a href="#categorical" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📊 Categorical Analysis</a>
-          <a href="#modeling" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">🔮 Predictive Modeling</a>
-          <a href="#timeseries" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📈 Time Series</a>
-          <a href="#optimization" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">🎯 Optimization</a>
-          <a href="#clustering" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📊 Clustering</a>
-          <a href="#probability" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">🎲 Probability & Simulation</a>
-          <a href="#planning" style="padding:0.4rem 0.8rem; background:#dbeafe; border-radius:4px; text-decoration:none; color:#1e40af; font-size:0.9rem;">📐 Study Design</a>
-          <a href="#test-picker" style="padding:0.4rem 0.8rem; background:#fef3c7; border-radius:4px; text-decoration:none; color:#92400e; font-size:0.9rem;">💡 Test Selector</a>
-           <a href="old_site/Previous_Student_Projects.html" target="_blank" rel="noopener" style="padding:0.4rem 0.8rem; background:#f3e8ff; border-radius:4px; text-decoration:none; color:#7c3aed; font-size:0.9rem;">🎓 Student Projects</a>
-        </div>
-      </div>
-    </section>
-
-    <section class="test-overview" aria-labelledby="getting-started">
-      <h2 id="getting-started">📊 Getting Started</h2>
-      <div class="card">
-        <p><strong>New to statistical analysis?</strong> Start with these tools to understand your data before running tests:</p>
-        <div class="tool-directory">
-          <article class="tool-card">
-            <h4>
-              <a href="apps/descriptive/univariate_analyzer/main_univariate_analyzer.html">Univariate Analyzer</a>
-              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">Start Here</span>
-              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.25rem;">Beginner</span>
-            </h4>
-            <p>
-              Explore a single variable's distribution, central tendency, spread, and outliers. Perfect for understanding your data 
-              <em>before</em> running hypothesis tests. See histograms, boxplots, normality tests, and descriptive statistics.
-            </p>
-            <p class="muted">Data: one numeric or categorical column from your dataset.</p>
-          </article>
-        </div>
-        <p class="muted" style="margin-top:1rem;">
-          <strong>💡 Pro tip:</strong> Always run exploratory analysis (like the Univariate Analyzer) before conducting hypothesis tests. 
-          Understanding distributions, outliers, and data quality helps you choose the right test and interpret results correctly.
-        </p>
-      </div>
-    </section>
-
-
-    <section class="scenario-section" aria-labelledby="helper-heading">
-      <h2 id="helper-heading" style="scroll-margin-top:2rem;">💡 Interactive Statistical Test Selector</h2>
-      <a id="test-picker" style="position:relative; top:-80px;"></a>
-      <div class="card">
-        <p style="font-size:1.05rem; margin-bottom:1.5rem;">
-          <strong>Not sure which test to use?</strong> Use our interactive selector to find the right statistical tool for your marketing question. 
-          Follow a guided path that narrows down your options based on your data structure and research goal.
-        </p>
-        <div style="text-align:center;">
-          <a href="stat-selector-tree.html" class="primary" style="display:inline-block; padding:1rem 2rem; text-decoration:none; background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color:white; border-radius:10px; font-weight:600; box-shadow:0 4px 12px rgba(59, 130, 246, 0.3); transition:all 0.2s;">
-            🧭 Launch Test Selector →
-          </a>
-          <p style="font-size:0.9rem; color:#64748b; margin-top:1rem;">
-            Interactive step-by-step guide with explanations, examples, and direct links to tools. 
-            Includes printable PDF version for offline reference.
+    <!-- SPOTLIGHT SECTION -->
+    <section class="spotlight-section">
+      <div class="spotlight-grid">
+        <div class="spotlight-content">
+          <span class="spotlight-badge">NEW FEATURE</span>
+          <h2>Conjoint Analysis & Market Simulation</h2>
+          <p>
+            Discover what customers truly value. Design choice-based experiments, estimate utilities with Hierarchical Bayes, 
+            and simulate market share scenarios against competitors.
           </p>
+          <div class="spotlight-actions">
+            <a href="apps/advanced/conjoint/main_conjoint.html" class="btn-primary">Launch Simulator →</a>
+            <a href="apps/advanced/conjoint/main_conjoint_creator.html" class="btn-secondary">Design Study</a>
+          </div>
+        </div>
+        <div class="spotlight-graphic-container">
+          <div class="spotlight-card-visual">
+            <div class="visual-header">
+              <div class="visual-dot red"></div>
+              <div class="visual-dot yellow"></div>
+              <div class="visual-dot green"></div>
+            </div>
+            <div class="visual-line short"></div>
+            <div class="visual-line long"></div>
+            <div class="visual-chart">
+              <div class="visual-bar primary"></div>
+              <div class="visual-bar secondary"></div>
+              <div class="visual-bar tertiary"></div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Browse Tools by Category -->
-    <h2 id="directory-heading" style="scroll-margin-top:2rem; text-align:center; margin-bottom:1rem; font-size:2rem;">Browse Tools by Category</h2>
-    <p class="muted" style="text-align:center; margin-bottom:2rem;">
-      Tools are organized by analysis type. Each card shows the tool's purpose, complexity level, and data requirements.
-    </p>
-    
-    <!-- Descriptive & Exploratory Analysis -->
-    <section class="scenario-section" style="margin-top:2rem;">
-      <div class="card" style="padding:2rem;">
-        <div class="tool-directory">
-          <h3 id="exploratory" style="scroll-margin-top:2rem;">📈 Descriptive &amp; Exploratory Analysis</h3>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/descriptive/univariate_analyzer/main_univariate_analyzer.html">Univariate Analyzer</a>
-              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">Start Here</span>
-              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.25rem;">Beginner</span>
-            </h4>
-            <p>
-              Explore a single variable's distribution, central tendency, spread, and outliers. See histograms, boxplots, normality tests, and comprehensive descriptive statistics.
-              Perfect for understanding your data <em>before</em> running hypothesis tests.
-            </p>
-            <p class="muted">Data: one numeric or categorical column from your dataset.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/descriptive/pearson_correlation/main_pearson.html">Pearson Correlation</a>
-              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
-            </h4>
-            <p>
-              Explores whether two continuous marketing metrics move together
-              (for example, <em>ad spend vs. revenue</em> or <em>time on site vs. conversion rate</em>). 
-              Includes correlation coefficient, significance tests, and scatterplots.
-            </p>
-            <p class="muted">Data: pairs of numeric values for each case.</p>
-          </article>
+    <!-- GETTING STARTED -->
+    <div class="category-header">
+      <div class="category-icon">🚀</div>
+      <h2>Getting Started</h2>
+    </div>
+    <div class="bento-grid">
+      <a href="apps/descriptive/univariate_analyzer/main_univariate_analyzer.html" class="tool-card-modern">
+        <div class="card-icon">📊</div>
+        <div class="card-content">
+          <h3 class="card-title">Univariate Analyzer</h3>
+          <p class="card-description">Explore a single variable's distribution, outliers, and summary stats. Always start here.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-beginner">Beginner</span>
+            <span>Descriptive</span>
+          </div>
         </div>
-      </div>
-    </section>
+      </a>
+      <a href="stat-selector-tree.html" class="tool-card-modern highlight-gold">
+        <div class="card-icon">🧭</div>
+        <div class="card-content">
+          <h3 class="card-title">Test Selector</h3>
+          <p class="card-description">Not sure which test to use? Follow this interactive guide to find the right tool.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-intermediate">Guide</span>
+            <span>Interactive</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/descriptive/pearson_correlation/main_pearson.html" class="tool-card-modern">
+        <div class="card-icon">🔗</div>
+        <div class="card-content">
+          <h3 class="card-title">Pearson Correlation</h3>
+          <p class="card-description">Check if two continuous metrics move together (e.g., ad spend vs. revenue).</p>
+          <div class="card-meta">
+            <span class="card-tag tag-beginner">Beginner</span>
+            <span>Association</span>
+          </div>
+        </div>
+      </a>
+    </div>
 
-    <!-- Comparing Groups (Hypothesis Testing) -->
-    <section class="scenario-section" style="margin-top:2rem;">
-      <div class="card" style="padding:2rem;">
-        <div class="tool-directory">
-          <h3 id="comparing-groups" style="scroll-margin-top:2rem;">📉 Comparing Groups (Hypothesis Testing)</h3>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/hypothesis_testing/ind_ttest/main_ind_ttest.html">Welch's t-test (Independent Means)</a>
-              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
-            </h4>
-            <p>
-              Compares average performance between two independent groups when variances and sample sizes may differ
-              (for example, <em>Control vs. New Subject Line</em>). Includes effect sizes, confidence intervals, and power analysis.
-            </p>
-            <p class="muted">Data: group means/SDs and sample sizes, or raw outcomes for each group.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/hypothesis_testing/paired_ttest/main_paired_ttest.html">Paired Sample t-test</a>
-              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
-            </h4>
-            <p>
-              Evaluates before/after or A/B measurements on the same people or accounts
-              (for example, <em>pre-course vs. post-course scores</em>). Tests whether the mean difference differs from zero.
-            </p>
-            <p class="muted">Data: paired numeric observations or paired summary statistics.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/hypothesis_testing/onewayanova/main_onewayanova.html">One-Way ANOVA</a>
-              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
-            </h4>
-            <p>
-              Tests whether <em>three or more</em> groups differ on a numeric outcome
-              (for example, <em>four landing page designs vs. revenue per visitor</em>). Includes post-hoc pairwise comparisons.
-            </p>
-            <p class="muted">Data: group means/SDs and sample sizes, or long-format raw data.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/hypothesis_testing/ab_proportion/main_ab_proportion.html">A/B Proportion Test</a>
-              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
-            </h4>
-            <p>
-              Compares conversion rates or other binary outcomes between two independent variants
-              (for example, <em>Newsletter CTA A vs. CTA B</em>). Shows relative lift, confidence intervals, and sample size recommendations.
-            </p>
-            <p class="muted">Data: conversions and sample sizes, or raw 0/1 outcomes by group.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/hypothesis_testing/mcnemar/main_mcnemar.html">McNemar Test</a>
-              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
-            </h4>
-            <p>
-              Focuses on "switchers" in paired yes/no data, such as matched pre/post responses
-              (for example, <em>same customers under two creative treatments</em>). Tests marginal homogeneity in 2×2 tables.
-            </p>
-            <p class="muted">Data: 2 &times; 2 matched table or raw paired outcomes.</p>
-          </article>
+    <!-- HYPOTHESIS TESTING -->
+    <div class="category-header">
+      <div class="category-icon">⚖️</div>
+      <h2>Hypothesis Testing</h2>
+    </div>
+    <div class="bento-grid">
+      <a href="apps/hypothesis_testing/ind_ttest/main_ind_ttest.html" class="tool-card-modern">
+        <div class="card-icon">🆚</div>
+        <div class="card-content">
+          <h3 class="card-title">Welch's t-test</h3>
+          <p class="card-description">Compare averages of two independent groups (e.g., Control vs. Treatment).</p>
+          <div class="card-meta">
+            <span class="card-tag tag-beginner">Beginner</span>
+            <span>Means</span>
+          </div>
         </div>
-      </div>
-    </section>
+      </a>
+      <a href="apps/hypothesis_testing/paired_ttest/main_paired_ttest.html" class="tool-card-modern">
+        <div class="card-icon">🔄</div>
+        <div class="card-content">
+          <h3 class="card-title">Paired t-test</h3>
+          <p class="card-description">Compare before/after scores for the same people (e.g., Pre vs. Post).</p>
+          <div class="card-meta">
+            <span class="card-tag tag-beginner">Beginner</span>
+            <span>Means</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/hypothesis_testing/onewayanova/main_onewayanova.html" class="tool-card-modern">
+        <div class="card-icon">🔢</div>
+        <div class="card-content">
+          <h3 class="card-title">One-Way ANOVA</h3>
+          <p class="card-description">Compare averages across 3+ groups (e.g., 4 different landing pages).</p>
+          <div class="card-meta">
+            <span class="card-tag tag-intermediate">Intermediate</span>
+            <span>Means</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/hypothesis_testing/ab_proportion/main_ab_proportion.html" class="tool-card-modern">
+        <div class="card-icon">🅰️</div>
+        <div class="card-content">
+          <h3 class="card-title">A/B Proportion Test</h3>
+          <p class="card-description">Compare conversion rates between two variants.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-beginner">Beginner</span>
+            <span>Proportions</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/hypothesis_testing/chisquare/main_chisquare.html" class="tool-card-modern">
+        <div class="card-icon">▦</div>
+        <div class="card-content">
+          <h3 class="card-title">Chi-Square Test</h3>
+          <p class="card-description">Check if two categorical variables are related (e.g., Device vs. Signup).</p>
+          <div class="card-meta">
+            <span class="card-tag tag-beginner">Beginner</span>
+            <span>Categorical</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/hypothesis_testing/mcnemar/main_mcnemar.html" class="tool-card-modern">
+        <div class="card-icon">🔀</div>
+        <div class="card-content">
+          <h3 class="card-title">McNemar Test</h3>
+          <p class="card-description">Analyze "switchers" in paired yes/no data (e.g., before/after purchase).</p>
+          <div class="card-meta">
+            <span class="card-tag tag-intermediate">Intermediate</span>
+            <span>Categorical</span>
+          </div>
+        </div>
+      </a>
+    </div>
 
-    <!-- Categorical Analysis -->
-    <section class="scenario-section" style="margin-top:2rem;">
-      <div class="card" style="padding:2rem;">
-        <div class="tool-directory">
-          <h3 id="categorical" style="scroll-margin-top:2rem;">📊 Categorical Analysis</h3>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/hypothesis_testing/chisquare/main_chisquare.html">Chi-square Test of Association</a>
-              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
-            </h4>
-            <p>
-              Checks whether two categorical variables are related
-              (for example, <em>device type by signup status</em> or <em>segment by offer selection</em>). 
-              Shows expected vs. observed frequencies and standardized residuals.
-            </p>
-            <p class="muted">Data: contingency table counts or raw categorical outcomes.</p>
-          </article>
+    <!-- PREDICTIVE MODELING -->
+    <div class="category-header">
+      <div class="category-icon">🔮</div>
+      <h2>Predictive Modeling</h2>
+    </div>
+    <div class="bento-grid">
+      <a href="apps/regression/bivariate_regression/main_bivariate_regression.html" class="tool-card-modern">
+        <div class="card-icon">📉</div>
+        <div class="card-content">
+          <h3 class="card-title">Simple Regression</h3>
+          <p class="card-description">Predict an outcome using one variable (e.g., Spend → Sales).</p>
+          <div class="card-meta">
+            <span class="card-tag tag-beginner">Beginner</span>
+            <span>Linear</span>
+          </div>
         </div>
-      </div>
-    </section>
+      </a>
+      <a href="apps/regression/ml_regression/ml_regression.html" class="tool-card-modern">
+        <div class="card-icon">📈</div>
+        <div class="card-content">
+          <h3 class="card-title">Multiple Regression</h3>
+          <p class="card-description">Predict a numeric outcome using multiple drivers.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-intermediate">Intermediate</span>
+            <span>Linear</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/regression/log_regression/log_regression.html" class="tool-card-modern">
+        <div class="card-icon">🎯</div>
+        <div class="card-content">
+          <h3 class="card-title">Logistic Regression</h3>
+          <p class="card-description">Predict binary outcomes like Churn vs. Retain.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-advanced">Advanced</span>
+            <span>Classification</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/regression/mn_log_regression/main_mn_log_regression.html" class="tool-card-modern">
+        <div class="card-icon">🍱</div>
+        <div class="card-content">
+          <h3 class="card-title">Multinomial Logit</h3>
+          <p class="card-description">Predict choice among 3+ options (e.g., Brand A vs B vs C).</p>
+          <div class="card-meta">
+            <span class="card-tag tag-advanced">Advanced</span>
+            <span>Choice</span>
+          </div>
+        </div>
+      </a>
+    </div>
 
-    <!-- Predictive Modeling -->
-    <section class="scenario-section" style="margin-top:2rem;">
-      <div class="card" style="padding:2rem;">
-        <div class="tool-directory">
-          <h3 id="modeling" style="scroll-margin-top:2rem;">🔮 Predictive Modeling</h3>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/regression/bivariate_regression/main_bivariate_regression.html">Bivariate Linear Regression</a>
-              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
-            </h4>
-            <p>
-              Fits a straight-line relationship between one predictor and one outcome, either for a continuous predictor
-              (for example, <em>weekly ad spend vs. revenue</em>) or a binary group indicator. 
-              Shows slope, intercept, R², and residual diagnostics.
-            </p>
-            <p class="muted">Data: summary stats (n, means, SDs, r) or raw paired observations.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/regression/ml_regression/ml_regression.html">Multiple Linear Regression</a>
-              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
-            </h4>
-            <p>
-              Models a numeric outcome using multiple predictors (continuous and categorical) with diagnostics and effect plots
-              (for example, <em>customer value vs. recency, frequency, and segment</em>). 
-              Includes multicollinearity checks, residual plots, and coefficient interpretation.
-            </p>
-            <p class="muted">Data: raw rows with one numeric outcome and several predictors.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/regression/log_regression/log_regression.html">Logistic Regression</a>
-              <span class="badge" style="background:#fbbf24; color:#78350f; font-size:0.75rem; margin-left:0.5rem;">Advanced</span>
-            </h4>
-            <p>
-              Models a binary outcome using multiple predictors to estimate odds ratios and predicted probabilities
-              (for example, <em>conversion vs. not convert based on traffic source, offer, and device</em>). 
-              Shows log-odds, odds ratios, ROC curves, and classification metrics.
-            </p>
-            <p class="muted">Data: raw rows with one binary outcome and several predictors.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/regression/mn_log_regression/main_mn_log_regression.html">Multinomial Logistic Regression</a>
-              <span class="badge" style="background:#fbbf24; color:#78350f; font-size:0.75rem; margin-left:0.5rem;">Advanced</span>
-            </h4>
-            <p>
-              Models a categorical outcome with 3+ levels using multiple predictors, framed as a choice model
-              (for example, <em>product choice based on price, brand, and customer segment</em>). 
-              Estimates relative risk ratios for each outcome level.
-            </p>
-            <p class="muted">Data: raw rows with one categorical outcome and multiple predictors.</p>
-          </article>
+    <!-- TEXT ANALYSIS -->
+    <div class="category-header">
+      <div class="category-icon">📝</div>
+      <h2>Text Analysis</h2>
+    </div>
+    <div class="bento-grid">
+      <a href="apps/text_analysis/qualitative_analyzer/main_qualitative_analyzer.html" class="tool-card-modern">
+        <div class="card-icon">💬</div>
+        <div class="card-content">
+          <h3 class="card-title">Qualitative Analyzer</h3>
+          <p class="card-description">Manually code and analyze interview transcripts or focus groups.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-new">New</span>
+            <span>Qualitative</span>
+          </div>
         </div>
-      </div>
-    </section>
+      </a>
+      <a href="apps/text_analysis/theme_extractor/main_theme_extractor.html" class="tool-card-modern">
+        <div class="card-icon">🧠</div>
+        <div class="card-content">
+          <h3 class="card-title">Theme Extractor</h3>
+          <p class="card-description">Automatically discover hidden topics in reviews using AI.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-new">New</span>
+            <span>NLP</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/probability/sentiment_lab/main_sentiment_lab.html" class="tool-card-modern">
+        <div class="card-icon">😊</div>
+        <div class="card-content">
+          <h3 class="card-title">Sentiment Lab</h3>
+          <p class="card-description">Score text as positive, negative, or neutral.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-new">New</span>
+            <span>NLP</span>
+          </div>
+        </div>
+      </a>
+    </div>
 
-    <!-- Text Analysis -->
-    <section class="scenario-section" style="margin-top:2rem;">
-      <div class="card" style="padding:2rem;">
-        <div class="tool-directory">
-          <h3 id="text-analysis" style="scroll-margin-top:2rem;">📝 Text Analysis</h3>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/text_analysis/qualitative_analyzer/main_qualitative_analyzer.html">Qualitative Analyzer</a>
-              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">NEW</span>
-              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.25rem;">Intermediate</span>
-            </h4>
-            <p>
-              Analyze focus group transcripts, interviews, and qualitative data with manual coding and theme extraction.
-              Upload structured or plain text transcripts, create custom codes, assign them to transcript lines in batch, and export coded data.
-              Includes powerful search (wildcards, Boolean operators), word frequency analysis with stop-word filtering, and re-importable CSV exports for saving work.
-            </p>
-            <p class="muted">Data: transcript files (CSV, TSV, or plain text). Supports speaker labels and timestamps.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/text_analysis/theme_extractor/main_theme_extractor.html">Theme Extractor</a>
-              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">NEW</span>
-              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.25rem;">Intermediate</span>
-            </h4>
-            <p>
-              Automatically discover hidden themes and topics in customer reviews, survey responses, and open-ended feedback using NLP.
-              Uses machine learning (NMF) to identify latent patterns across hundreds of documents without manual coding.
-              Export theme summaries and document assignments for further analysis.
-            </p>
-            <p class="muted">Data: text strings (reviews, comments, survey responses). Max 500 documents.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/probability/sentiment_lab/main_sentiment_lab.html">Sentiment Analysis Lab</a>
-              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">NEW</span>
-              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.25rem;">Intermediate</span>
-            </h4>
-            <p>
-              Analyze text sentiment using lexicon-based scoring methods. 
-              Process customer reviews, social media posts, or survey responses to extract sentiment scores and classify text as positive, negative, or neutral.
-              Includes word-level analysis and aggregated statistics.
-            </p>
-            <p class="muted">Data: text strings (reviews, comments, survey responses).</p>
-          </article>
+    <!-- ADVANCED & SPECIALIZED -->
+    <div class="category-header">
+      <div class="category-icon">⚡</div>
+      <h2>Advanced & Specialized</h2>
+    </div>
+    <div class="bento-grid">
+      <a href="apps/clustering/kmeans/main_kmeans.html" class="tool-card-modern">
+        <div class="card-icon">👥</div>
+        <div class="card-content">
+          <h3 class="card-title">K-Means Clustering</h3>
+          <p class="card-description">Segment customers into distinct groups based on behavior.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-intermediate">Intermediate</span>
+            <span>Segmentation</span>
+          </div>
         </div>
-      </div>
-    </section>
+      </a>
+      <a href="apps/time_series/arimax/main_arimax.html" class="tool-card-modern">
+        <div class="card-icon">📅</div>
+        <div class="card-content">
+          <h3 class="card-title">ARIMAX Forecasting</h3>
+          <p class="card-description">Forecast sales over time with external predictors like ad spend.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-advanced">Advanced</span>
+            <span>Time Series</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/advanced/resource_allocation/main_resource_allocation.html" class="tool-card-modern">
+        <div class="card-icon">💰</div>
+        <div class="card-content">
+          <h3 class="card-title">Budget Optimizer</h3>
+          <p class="card-description">Optimize allocation across channels to maximize ROI.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-advanced">Advanced</span>
+            <span>Optimization</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/probability/compound_event_probability/main_compound_event_probability.html" class="tool-card-modern">
+        <div class="card-icon">🎲</div>
+        <div class="card-content">
+          <h3 class="card-title">Probability Calc</h3>
+          <p class="card-description">Calculate likelihood of repeated events (Binomial/Poisson).</p>
+          <div class="card-meta">
+            <span class="card-tag tag-beginner">Beginner</span>
+            <span>Simulation</span>
+          </div>
+        </div>
+      </a>
+    </div>
 
-    <!-- Time Series -->
-    <section class="scenario-section" style="margin-top:2rem;">
-      <div class="card" style="padding:2rem;">
-        <div class="tool-directory">
-          <h3 id="time-series" style="scroll-margin-top:2rem;">📈 Time Series</h3>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/time_series/arimax/main_arimax.html">ARIMAX Time Series Forecasting</a>
-              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">NEW</span>
-              <span class="badge" style="background:#fbbf24; color:#78350f; font-size:0.75rem; margin-left:0.25rem;">Advanced</span>
-            </h4>
-            <p>
-              Model and forecast time series data with external predictors using ARIMAX (AutoRegressive Integrated Moving Average with eXogenous variables).
-              Perfect for <em>sales forecasting with ad spend</em>, <em>demand prediction with promotions</em>, or any sequential data with influencing factors.
-              Includes diagnostics (ACF/PACF), residual analysis, and customizable confidence intervals for forecasts.
-            </p>
-            <p class="muted">Data: time-ordered observations with optional predictor columns (ad spend, promotions, etc.).</p>
-          </article>
+    <!-- STUDY DESIGN -->
+    <div class="category-header">
+      <div class="category-icon">📐</div>
+      <h2>Study Design & Sampling</h2>
+    </div>
+    <div class="bento-grid">
+      <a href="apps/sample_size/sample_size_calculator/main_sample_size_calculator.html" class="tool-card-modern">
+        <div class="card-icon">📏</div>
+        <div class="card-content">
+          <h3 class="card-title">Sample Size (Single)</h3>
+          <p class="card-description">Plan n for one mean or proportion.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-beginner">Beginner</span>
+          </div>
         </div>
-      </div>
-    </section>
+      </a>
+      <a href="apps/sample_size/sample_size_AB_calculator/main_sample_size_ab_calculator.html" class="tool-card-modern">
+        <div class="card-icon">⚖️</div>
+        <div class="card-content">
+          <h3 class="card-title">Sample Size (A/B)</h3>
+          <p class="card-description">Plan n for comparing two groups.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-beginner">Beginner</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/sample_size/sample_size_corr_regression/main_sample_size_corr_regression.html" class="tool-card-modern">
+        <div class="card-icon">📉</div>
+        <div class="card-content">
+          <h3 class="card-title">Sample Size (Reg)</h3>
+          <p class="card-description">Plan n for correlation/regression.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-intermediate">Intermediate</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/sample_size/sample_size_multiarm_ab/main_sample_size_multiarm_ab.html" class="tool-card-modern">
+        <div class="card-icon">🐙</div>
+        <div class="card-content">
+          <h3 class="card-title">Multi-Arm A/B</h3>
+          <p class="card-description">Plan n for A/B/C/D tests.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-intermediate">Intermediate</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/sample_size/sampling_visualizer/main_sampling_visualizer.html" class="tool-card-modern">
+        <div class="card-icon">👁️</div>
+        <div class="card-content">
+          <h3 class="card-title">Sampling Visualizer</h3>
+          <p class="card-description">See how different sampling methods work.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-beginner">Beginner</span>
+          </div>
+        </div>
+      </a>
+      <a href="apps/probability/selection_probability_lab/main_selection_probability_lab.html" class="tool-card-modern">
+        <div class="card-icon">🎯</div>
+        <div class="card-content">
+          <h3 class="card-title">Selection Lab</h3>
+          <p class="card-description">Explore selection probabilities.</p>
+          <div class="card-meta">
+            <span class="card-tag tag-intermediate">Intermediate</span>
+          </div>
+        </div>
+      </a>
+    </div>
 
-    <!-- Advanced Optimization -->
-    <section class="scenario-section" style="margin-top:2rem;">
-      <div class="card" style="padding:2rem;">
-        <div class="tool-directory">
-          <h3 id="optimization" style="scroll-margin-top:2rem;">🎯 Advanced Optimization</h3>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/advanced/resource_allocation/main_resource_allocation.html">Marketing Resource Allocation Optimizer</a>
-              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">NEW</span>
-              <span class="badge" style="background:#fbbf24; color:#78350f; font-size:0.75rem; margin-left:0.25rem;">Advanced</span>
-            </h4>
-            <p>
-              Optimize budget allocation across multiple resources (sales reps, ad channels, regions, etc.) to maximize total output using fitted response models and constraints.
-              Perfect for <em>marketing budget optimization</em>, <em>sales territory allocation</em>, or <em>channel mix planning</em>.
-              Includes 7 response curve models (linear, logarithmic, power, quadratic, sqrt, logistic, bounded log), multi-start numerical optimization with gradient descent,
-              comprehensive constraint system (budget, min/max, cardinality, equity, baseline, extrapolation control), and scenario comparison tools.
-            </p>
-            <p class="muted">Data: historical observations with resource_id, input (spending/allocation), and output (results/revenue). Minimum 2 observations per resource recommended.</p>
-            <p style="margin-top:0.75rem; padding:0.75rem; background:#f0f9ff; border-left:4px solid #0284c7; border-radius:4px; font-size:0.9rem;">
-              <strong>🚀 Quick Start:</strong> Upload CSV → Auto-fit models → Set budget constraint → Run optimization → Export recommendations. 
-              Includes 4 preset scenarios (Sales Team, Ad Channels, Regional Marketing, Product Portfolio) with sample data.
-            </p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- Segmentation & Clustering -->
-    <section class="scenario-section" style="margin-top:2rem;">
-      <div class="card" style="padding:2rem;">
-        <div class="tool-directory">
-          <h3 id="clustering" style="scroll-margin-top:2rem;">📊 Segmentation &amp; Clustering</h3>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/clustering/kmeans/main_kmeans.html">K-Means Clustering</a>
-              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
-            </h4>
-            <p>
-              Segments records into a specified number of clusters based on numeric predictors,
-              assigning each case to the nearest cluster center. Includes elbow plots, silhouette scores, and cluster profiles.
-              Perfect for customer segmentation or market analysis.
-            </p>
-            <p class="muted">Data: raw rows with two or more numeric predictors for clustering.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- Probability & Distributions -->
-    <section class="scenario-section" style="margin-top:2rem;">
-      <div class="card" style="padding:2rem;">
-        <div class="tool-directory">
-          <h3 id="probability" style="scroll-margin-top:2rem;">🎲 Probability &amp; Distributions</h3>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/probability/compound_event_probability/main_compound_event_probability.html">Compound Event Probability Calculator</a>
-              <span class="badge" style="background:#10b981; font-size:0.75rem; margin-left:0.5rem;">NEW</span>
-              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.25rem;">Beginner</span>
-            </h4>
-            <p>
-              Calculate probabilities for repeated independent events using the binomial distribution. 
-              Answer questions like "What's the probability of 7+ conversions in 23 trials with 10% success rate?" 
-              Includes exact binomial, normal approximation, Poisson approximation, Monte Carlo simulation, and extensive educational content.
-            </p>
-            <p class="muted">Data: event probability, number of trials, and target success count.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- Study Design & Planning -->
-    <section class="scenario-section" style="margin-top:2rem;">
-      <div class="card" style="padding:2rem;">
-        <div class="tool-directory">
-          <h3 id="planning" style="scroll-margin-top:2rem;">📐 Study Design &amp; Planning</h3>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/sample_size/sample_size_calculator/main_sample_size_calculator.html">Sample Size Planner (Single outcome)</a>
-              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
-            </h4>
-            <p>
-              Plans how many observations you need to estimate or detect a change in a <em>single mean or single proportion</em>
-              (for example, <em>overall conversion rate or average order value</em>).
-              Supports both estimation (precision-based) and hypothesis testing (power-based) scenarios.
-            </p>
-            <p class="muted">Input: effect size, significance level, desired power or margin of error.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/sample_size/sample_size_AB_calculator/main_sample_size_ab_calculator.html">Sample Size Planner (A/B tests)</a>
-              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
-            </h4>
-            <p>
-              Plans total sample size for <em>A/B tests</em> comparing two means or two proportions, given the lift that would be
-              worth acting on, your confidence level, and desired power.
-              Essential for experiment planning before launching tests.
-            </p>
-            <p class="muted">Input: baseline rate/mean, minimum detectable effect, alpha, power.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/sample_size/sample_size_corr_regression/main_sample_size_corr_regression.html">Sample Size Planner (Correlation / Regression)</a>
-              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
-            </h4>
-            <p>
-              Plans how many <em>paired observations</em> you need to detect a non-zero correlation or simple regression slope between two metrics
-              (for example, <em>media spend vs. revenue</em> or <em>engagement vs. satisfaction</em>).
-              Accounts for expected effect size and desired statistical power.
-            </p>
-            <p class="muted">Input: expected correlation, significance level, desired power.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/sample_size/sample_size_multiarm_ab/main_sample_size_multiarm_ab.html">Sample Size Planner (Multi‑arm A/B)</a>
-              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
-            </h4>
-            <p>
-              Plans the per‑arm and total sample size for tests with a control and multiple variants (A/B/C/…), for either proportions or means,
-              under goals focused on minimum lift vs. control and/or any meaningful difference across arms.
-              Handles multiple comparison adjustments.
-            </p>
-            <p class="muted">Input: number of arms, baseline rate/mean, minimum detectable effect, alpha, power.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/sample_size/sampling_visualizer/main_sampling_visualizer.html">Sampling Designs Visualizer</a>
-              <span class="badge" style="background:#dbeafe; color:#1e40af; font-size:0.75rem; margin-left:0.5rem;">Beginner</span>
-            </h4>
-            <p>
-              Shows how simple random, stratified, cluster, systematic, and convenience sampling select individuals from the same population, and how
-              each design affects the composition and variability of sample estimates.
-              Interactive visual tool for understanding sampling methodology.
-            </p>
-            <p class="muted">Interactive simulation: compare sampling methods on the same population.</p>
-          </article>
-          <article class="tool-card">
-            <h4>
-              <a href="apps/probability/selection_probability_lab/main_selection_probability_lab.html">Selection Probability Lab</a>
-              <span class="badge" style="background:#fef3c7; color:#92400e; font-size:0.75rem; margin-left:0.5rem;">Intermediate</span>
-            </h4>
-            <p>
-              Explores the probability that specific items are selected from a finite population under sampling with or without replacement,
-              showing exact hypergeometric/binomial math, live equations, and simulated draws.
-              Deepens understanding of sampling probability mechanics.
-            </p>
-            <p class="muted">Interactive simulation: explore selection probabilities with/without replacement.</p>
-          </article>
-        </div>
-      </div>
-    </section>
+    <div class="footer-link-container">
+      <a href="old_site/Previous_Student_Projects.html" target="_blank" rel="noopener" class="footer-link">
+        <span>🎓 View Previous Student Projects</span>
+        <span>→</span>
+      </a>
+    </div>
 
   </main>
   
