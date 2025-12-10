@@ -202,12 +202,12 @@ const DataGenerator = {
         const noiseLevel = noise / 100;
 
         for (let i = 0; i < numSamples; i++) {
-            const price = Math.random() * 10 - 5; // -5 to 5
-            const quality = Math.random() * 10 - 5;
+            const monthsSubscribed = Math.random() * 10 - 5; // -5 to 5 (normalized)
+            const supportTickets = Math.random() * 10 - 5;   // -5 to 5 (normalized)
 
-            // High quality + low price = retain (1)
-            // Low quality + high price = churn (-1)
-            let label = (quality - price > 0) ? 1 : -1;
+            // More months + fewer tickets = retain (1)
+            // Fewer months + many tickets = churn (-1)
+            let label = (monthsSubscribed - supportTickets > 0) ? 1 : -1;
 
             // Add noise
             if (Math.random() < noiseLevel * 2) {
@@ -216,10 +216,12 @@ const DataGenerator = {
 
             data.push({
                 input: [
-                    price + (Math.random() - 0.5) * noiseLevel,
-                    quality + (Math.random() - 0.5) * noiseLevel
+                    monthsSubscribed + (Math.random() - 0.5) * noiseLevel,
+                    supportTickets + (Math.random() - 0.5) * noiseLevel
                 ],
-                output: label
+                output: label,
+                xLabel: 'Months Subscribed',
+                yLabel: 'Support Tickets'
             });
         }
 
@@ -232,22 +234,26 @@ const DataGenerator = {
         const noiseLevel = noise / 100;
 
         for (let i = 0; i < numSamples / 2; i++) {
-            // Segment 1: Premium customers (high price, high quality)
+            // Segment 1: Premium customers (high income, high loyalty)
             data.push({
                 input: [
                     3 + Math.random() * 2 + (Math.random() - 0.5) * noiseLevel * 2,
                     3 + Math.random() * 2 + (Math.random() - 0.5) * noiseLevel * 2
                 ],
-                output: 1
+                output: 1,
+                xLabel: 'Income Level',
+                yLabel: 'Brand Loyalty Score'
             });
 
-            // Segment 2: Budget customers (low price, moderate quality)
+            // Segment 2: Budget customers (lower income, lower loyalty)
             data.push({
                 input: [
                     -3 - Math.random() * 2 + (Math.random() - 0.5) * noiseLevel * 2,
                     -3 - Math.random() * 2 + (Math.random() - 0.5) * noiseLevel * 2
                 ],
-                output: -1
+                output: -1,
+                xLabel: 'Income Level',
+                yLabel: 'Brand Loyalty Score'
             });
         }
 
@@ -260,11 +266,12 @@ const DataGenerator = {
         const noiseLevel = noise / 100;
 
         for (let i = 0; i < numSamples; i++) {
-            const price = Math.random() * 10 - 5;
-            const quality = Math.random() * 10 - 5;
+            const adSpend = Math.random() * 10 - 5;      // Normalized ad spend
+            const emailFreq = Math.random() * 10 - 5;     // Normalized email frequency
 
-            // XOR pattern: Convert when price*quality < 0
-            let label = (price * quality < 0) ? 1 : -1;
+            // XOR pattern: Convert when one is high and other is low
+            // (Too much or too little of both doesn't work)
+            let label = (adSpend * emailFreq < 0) ? 1 : -1;
 
             // Add noise
             if (Math.random() < noiseLevel * 2) {
@@ -273,10 +280,12 @@ const DataGenerator = {
 
             data.push({
                 input: [
-                    price + (Math.random() - 0.5) * noiseLevel,
-                    quality + (Math.random() - 0.5) * noiseLevel
+                    adSpend + (Math.random() - 0.5) * noiseLevel,
+                    emailFreq + (Math.random() - 0.5) * noiseLevel
                 ],
-                output: label
+                output: label,
+                xLabel: 'Ad Spend ($100s)',
+                yLabel: 'Email Frequency (per week)'
             });
         }
 
@@ -289,11 +298,12 @@ const DataGenerator = {
         const noiseLevel = noise / 100;
 
         for (let i = 0; i < numSamples; i++) {
-            const price = Math.random() * 10 - 5;
-            const quality = Math.random() * 10 - 5;
+            const pageViews = Math.random() * 10 - 5;     // Normalized page views
+            const timeOnSite = Math.random() * 10 - 5;    // Normalized time (minutes)
 
-            // Circular decision boundary
-            const distance = Math.sqrt(price * price + quality * quality);
+            // Circular decision boundary: moderate engagement = high affinity
+            // Too little or too much = low affinity (bounced or just browsing)
+            const distance = Math.sqrt(pageViews * pageViews + timeOnSite * timeOnSite);
             let label = (distance < 3.5) ? 1 : -1;
 
             // Add noise
@@ -303,10 +313,12 @@ const DataGenerator = {
 
             data.push({
                 input: [
-                    price + (Math.random() - 0.5) * noiseLevel,
-                    quality + (Math.random() - 0.5) * noiseLevel
+                    pageViews + (Math.random() - 0.5) * noiseLevel,
+                    timeOnSite + (Math.random() - 0.5) * noiseLevel
                 ],
-                output: label
+                output: label,
+                xLabel: 'Page Views',
+                yLabel: 'Time on Site (min)'
             });
         }
 

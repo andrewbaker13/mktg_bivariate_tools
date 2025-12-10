@@ -31,27 +31,27 @@ const config = {
     trainSplit: 0.7
 };
 
-// Scenario descriptions
+// Scenario descriptions with updated variable names
 const scenarioInfo = {
     churn: {
         title: "Customer Churn Prediction",
-        description: "Your company tracks pricing and service quality for each customer. The challenge: predict which customers will churn (leave) vs stay loyal. <strong style='color: #3498db;'>Blue customers</strong> are likely to stay, <strong style='color: #e74c3c;'>red customers</strong> are likely to churn. The network learns patterns like: high quality + reasonable price = retention.",
+        description: "Predict which subscription customers will churn based on <strong>Months Subscribed</strong> and <strong>Support Tickets</strong>. Longer subscriptions with fewer support issues indicate loyalty. <strong style='color: #3498db;'>Blue = Stay</strong>, <strong style='color: #e74c3c;'>Red = Churn</strong>. Pattern: More months + fewer tickets = retained customer.",
         realWorld: "Used by subscription services (Netflix, Spotify) to identify at-risk customers before they cancel."
     },
     segment: {
         title: "Market Segmentation",
-        description: "You have customer data on pricing preferences and quality expectations. Goal: identify two distinct market segments (customer groups). <strong style='color: #3498db;'>Blue = premium segment</strong> (willing to pay more for quality), <strong style='color: #e74c3c;'>red = budget segment</strong> (price-conscious). The network finds the boundary between these groups.",
+        description: "Identify customer segments using <strong>Income Level</strong> and <strong>Brand Loyalty Score</strong>. Two distinct groups emerge: premium customers (high income, high loyalty) and budget-conscious customers (lower income, lower loyalty). <strong style='color: #3498db;'>Blue = Premium Segment</strong>, <strong style='color: #e74c3c;'>Red = Budget Segment</strong>.",
         realWorld: "Used by companies like Amazon and Target to personalize marketing campaigns for different customer types."
     },
     abtest: {
         title: "A/B Test Conversion Prediction",
-        description: "You're testing two website versions with different pricing and quality messaging. The pattern is complex (XOR-like): conversions happen when price and quality messages <em>mismatch</em> in specific ways. <strong style='color: #3498db;'>Blue = converts</strong>, <strong style='color: #e74c3c;'>red = bounces</strong>. This requires multiple layers to learn.",
-        realWorld: "Used by e-commerce sites and SaaS companies to predict which version will convert better for different customer types."
+        description: "Predict campaign conversions based on <strong>Ad Spend</strong> and <strong>Email Frequency</strong>. The pattern is complex (XOR-like): conversions happen when one factor is high and the other low. Too much or too little of both doesn't work. <strong style='color: #3498db;'>Blue = Converts</strong>, <strong style='color: #e74c3c;'>Red = Bounces</strong>. Requires multiple layers!",
+        realWorld: "Used by e-commerce sites and SaaS companies to optimize marketing budget allocation."
     },
     affinity: {
         title: "Product Affinity Analysis",
-        description: "Based on customer price sensitivity and quality preferences, predict product affinity (likelihood to purchase related products). The boundary is <em>circular</em>: customers in the middle range show highest affinity. <strong style='color: #3498db;'>Blue = high affinity</strong>, <strong style='color: #e74c3c;'>red = low affinity</strong>.",
-        realWorld: "Used by Amazon for 'frequently bought together' recommendations and by grocery stores for cross-selling."
+        description: "Predict product purchase intent using <strong>Page Views</strong> and <strong>Time on Site</strong>. The boundary is <em>circular</em>: moderate engagement shows highest affinity. Too little engagement = not interested, too much = just browsing. <strong style='color: #3498db;'>Blue = High Affinity</strong>, <strong style='color: #e74c3c;'>Red = Low Affinity</strong>.",
+        realWorld: "Used by Amazon for 'frequently bought together' recommendations and by retailers for cross-selling."
     }
 };
 
@@ -158,7 +158,9 @@ function trainStep() {
         }
 
         updateMetrics();
+        updateValidationStatus();
         drawLossChart();
+        drawDecisionBoundary();
     }
 
     drawNetwork();
@@ -185,6 +187,165 @@ function updateMetrics() {
     document.getElementById('testLoss').textContent = testLoss.toFixed(4);
     document.getElementById('iterations').textContent = iteration;
     document.getElementById('accuracy').textContent = accuracy.toFixed(1) + '%';
+}
+
+// Update validation status message
+function updateValidationStatus() {
+    if (!network) return;
+
+    const trainLoss = network.calculateLoss(
+        trainData.map(d => d.input),
+        trainData.map(d => d.output)
+    );
+    const testLoss = network.calculateLoss(
+        testData.map(d => d.input),
+        testData.map(d => d.output)
+    );
+    const trainAcc = network.calculateAccuracy(
+        trainData.map(d => d.input),
+        trainData.map(d => d.output)
+    );
+    const testAcc = network.calculateAccuracy(
+        testData.map(d => d.input),
+        testData.map(d => d.output)
+    );
+
+    const statusEl = document.getElementById('validationStatus');
+    const diff = Math.abs(trainAcc - testAcc);
+
+    let statusMsg = '';
+    let bgColor = '';
+
+    if (iteration === 0) {
+        statusMsg = 'Train your model to see validation results...';
+        bgColor = '#e8f5e9';
+    } else if (diff < 5 && testAcc > 80) {
+        statusMsg = `✅ <strong>Good fit!</strong> Train accuracy: ${trainAcc.toFixed(1)}%, Test accuracy: ${testAcc.toFixed(1)}%. Model generalizes well to unseen data.`;
+        bgColor = '#d4edda';
+    } else if (diff > 15) {
+        statusMsg = `⚠️ <strong>Possible overfitting.</strong> Train accuracy (${trainAcc.toFixed(1)}%) is much higher than test accuracy (${testAcc.toFixed(1)}%). Model may have memorized training data. Try: reduce layers/neurons, add regularization, or increase training data.`;
+        bgColor = '#fff3cd';
+    } else if (testAcc < 60) {
+        statusMsg = `⚠️ <strong>Underfitting.</strong> Test accuracy is only ${testAcc.toFixed(1)}%. Model is too simple. Try: add more layers/neurons, train longer, or add feature engineering.`;
+        bgColor = '#f8d7da';
+    } else {
+        statusMsg = `📊 <strong>Training in progress.</strong> Train: ${trainAcc.toFixed(1)}%, Test: ${testAcc.toFixed(1)}%. Keep training to see if model improves.`;
+        bgColor = '#e3f2fd';
+    }
+
+    statusEl.innerHTML = statusMsg;
+    document.getElementById('validationInsight').style.backgroundColor = bgColor;
+}
+
+// Draw decision boundary visualization
+function drawDecisionBoundary() {
+    const canvas = document.getElementById('boundaryCanvas');
+    if (!canvas || !network) return;
+
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas dimensions
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.width; // Square canvas
+    
+    const width = canvas.width;
+    const height = canvas.height;
+    const padding = 40;
+
+    ctx.clearRect(0, 0, width, height);
+
+    // Get data bounds from first two features only
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    [...trainData, ...testData].forEach(d => {
+        const [x, y] = d.input.slice(0, 2);
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+    });
+
+    // Add padding to bounds
+    const rangeX = maxX - minX;
+    const rangeY = maxY - minY;
+    minX -= rangeX * 0.1;
+    maxX += rangeX * 0.1;
+    minY -= rangeY * 0.1;
+    maxY += rangeY * 0.1;
+
+    // Scale functions
+    const scaleX = (x) => padding + ((x - minX) / (maxX - minX)) * (width - 2 * padding);
+    const scaleY = (y) => height - padding - ((y - minY) / (maxY - minY)) * (height - 2 * padding);
+    const unscaleX = (px) => minX + ((px - padding) / (width - 2 * padding)) * (maxX - minX);
+    const unscaleY = (py) => maxY - ((py - padding) / (height - 2 * padding)) * (maxY - minY);
+
+    // Draw decision boundary as colored background
+    const resolution = 5;
+    for (let px = padding; px < width - padding; px += resolution) {
+        for (let py = padding; py < height - padding; py += resolution) {
+            const x = unscaleX(px);
+            const y = unscaleY(py);
+            
+            const features = transformFeatures([x, y]);
+            const prediction = network.forward(features);
+            
+            // Color based on prediction
+            const intensity = Math.min(Math.abs(prediction) / 2, 1);
+            if (prediction > 0) {
+                ctx.fillStyle = `rgba(52, 152, 219, ${intensity * 0.3})`;
+            } else {
+                ctx.fillStyle = `rgba(231, 76, 60, ${intensity * 0.3})`;
+            }
+            
+            ctx.fillRect(px, py, resolution, resolution);
+        }
+    }
+
+    // Draw axes
+    ctx.strokeStyle = '#34495e';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(padding, height - padding);
+    ctx.lineTo(width - padding, height - padding);
+    ctx.moveTo(padding, height - padding);
+    ctx.lineTo(padding, padding);
+    ctx.stroke();
+
+    // Draw TEST data points (validation data)
+    testData.forEach(d => {
+        const [x, y] = d.input.slice(0, 2);
+        const cx = scaleX(x);
+        const cy = scaleY(y);
+        
+        // Larger circles with white border for visibility
+        ctx.fillStyle = d.output > 0 ? '#3498db' : '#e74c3c';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 6, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.strokeStyle = '#2c3e50';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    });
+
+    // Draw axis labels
+    const xLabel = trainData[0].xLabel || 'Variable X';
+    const yLabel = trainData[0].yLabel || 'Variable Y';
+    
+    ctx.fillStyle = '#2c3e50';
+    ctx.font = 'bold 13px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(xLabel, width / 2, height - 10);
+    
+    ctx.save();
+    ctx.translate(15, height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
 }
 
 // Draw network visualization
@@ -414,6 +575,8 @@ function setupEventListeners() {
         initializeNetwork();
         drawNetwork();
         drawLossChart();
+        drawDecisionBoundary();
+        updateValidationStatus();
     });
 
     // Dataset selection
@@ -426,6 +589,8 @@ function setupEventListeners() {
             generateData();
             initializeNetwork();
             drawNetwork();
+            drawDecisionBoundary();
+            updateValidationStatus();
         });
     });
 
@@ -445,6 +610,8 @@ function setupEventListeners() {
             generateData();
             initializeNetwork();
             drawNetwork();
+            drawDecisionBoundary();
+            updateValidationStatus();
         });
     });
 
@@ -454,6 +621,8 @@ function setupEventListeners() {
         document.getElementById('layersValue').textContent = config.hiddenLayers;
         initializeNetwork();
         drawNetwork();
+        drawDecisionBoundary();
+        updateValidationStatus();
     });
 
     // Neurons per layer slider
@@ -462,6 +631,8 @@ function setupEventListeners() {
         document.getElementById('neuronsValue').textContent = config.neuronsPerLayer;
         initializeNetwork();
         drawNetwork();
+        drawDecisionBoundary();
+        updateValidationStatus();
     });
 
     // Learning rate slider
@@ -475,6 +646,8 @@ function setupEventListeners() {
         config.activation = e.target.value;
         initializeNetwork();
         drawNetwork();
+        drawDecisionBoundary();
+        updateValidationStatus();
     });
 
     // Regularization
@@ -482,6 +655,8 @@ function setupEventListeners() {
         config.regularization = e.target.value;
         initializeNetwork();
         drawNetwork();
+        drawDecisionBoundary();
+        updateValidationStatus();
     });
 
     // Noise slider
@@ -491,6 +666,8 @@ function setupEventListeners() {
         generateData();
         initializeNetwork();
         drawNetwork();
+        drawDecisionBoundary();
+        updateValidationStatus();
     });
 
     // Train split slider
@@ -500,6 +677,8 @@ function setupEventListeners() {
         generateData();
         initializeNetwork();
         drawNetwork();
+        drawDecisionBoundary();
+        updateValidationStatus();
     });
 
     // Guided mode toggle
@@ -522,7 +701,7 @@ function updateScenarioDescription() {
     `;
 }
 
-// Show data preview modal
+// Show data preview modal with scatter plot
 function showDataPreview() {
     const modal = document.getElementById('dataModal');
     const content = document.getElementById('dataPreviewContent');
@@ -530,36 +709,50 @@ function showDataPreview() {
     // Get sample of 20 data points
     const sampleData = [...trainData.slice(0, 15), ...testData.slice(0, 5)];
     
+    // Get variable labels from first data point
+    const xLabel = trainData[0].xLabel || 'Variable X';
+    const yLabel = trainData[0].yLabel || 'Variable Y';
+    
     let html = `
-        <p style="color: #7f8c8d; margin-bottom: 15px;">
-            Showing 20 of ${trainData.length + testData.length} total data points. 
-            Each row represents one customer/observation.
-        </p>
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
-                <thead>
-                    <tr style="background: #34495e; color: white;">
-                        <th style="padding: 10px; text-align: left;">#</th>
-                        <th style="padding: 10px; text-align: right;">Price</th>
-                        <th style="padding: 10px; text-align: right;">Quality</th>
-                        <th style="padding: 10px; text-align: center;">Outcome</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div>
+                <h3 style="margin-top: 0; font-size: 1.1em;">📊 Data Visualization</h3>
+                <canvas id="scatterCanvas" width="350" height="350" style="border: 1px solid #ecf0f1; border-radius: 6px; background: white;"></canvas>
+                <p style="font-size: 0.85em; color: #7f8c8d; margin-top: 10px; text-align: center;">
+                    <strong style="color: #3498db;">●</strong> Positive Outcome | 
+                    <strong style="color: #e74c3c;">●</strong> Negative Outcome
+                </p>
+            </div>
+            <div>
+                <h3 style="margin-top: 0; font-size: 1.1em;">📋 Sample Data Table</h3>
+                <p style="color: #7f8c8d; margin-bottom: 10px; font-size: 0.85em;">
+                    Showing 20 of ${trainData.length + testData.length} total data points.
+                </p>
+                <div style="overflow-y: auto; max-height: 350px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85em;">
+                        <thead style="position: sticky; top: 0; background: #34495e; color: white;">
+                            <tr>
+                                <th style="padding: 8px; text-align: left;">#</th>
+                                <th style="padding: 8px; text-align: right;">${xLabel}</th>
+                                <th style="padding: 8px; text-align: right;">${yLabel}</th>
+                                <th style="padding: 8px; text-align: center;">Outcome</th>
+                            </tr>
+                        </thead>
+                        <tbody>
     `;
     
     sampleData.forEach((d, i) => {
-        const [price, quality] = d.input.slice(0, 2); // First two features
+        const [x, y] = d.input.slice(0, 2);
         const outcome = d.output > 0 ? 'Positive ✓' : 'Negative ✗';
         const outcomeColor = d.output > 0 ? '#3498db' : '#e74c3c';
         const rowBg = i % 2 === 0 ? '#f8f9fa' : 'white';
         
         html += `
             <tr style="background: ${rowBg};">
-                <td style="padding: 8px;">${i + 1}</td>
-                <td style="padding: 8px; text-align: right;">${price.toFixed(2)}</td>
-                <td style="padding: 8px; text-align: right;">${quality.toFixed(2)}</td>
-                <td style="padding: 8px; text-align: center; color: ${outcomeColor}; font-weight: bold;">
+                <td style="padding: 6px;">${i + 1}</td>
+                <td style="padding: 6px; text-align: right;">${x.toFixed(2)}</td>
+                <td style="padding: 6px; text-align: right;">${y.toFixed(2)}</td>
+                <td style="padding: 6px; text-align: center; color: ${outcomeColor}; font-weight: bold;">
                     ${outcome}
                 </td>
             </tr>
@@ -567,19 +760,104 @@ function showDataPreview() {
     });
     
     html += `
-                </tbody>
-            </table>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        <p style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 6px; font-size: 0.9em;">
-            <strong>Understanding the data:</strong><br>
-            • Price and Quality are the <strong>inputs</strong> (what we know)<br>
-            • Outcome is the <strong>target</strong> (what we want to predict)<br>
-            • The network learns the pattern connecting inputs to outcomes
-        </p>
+        <div style="padding: 15px; background: #e3f2fd; border-radius: 6px; font-size: 0.9em;">
+            <strong>🧠 Understanding the data:</strong><br>
+            • <strong>${xLabel}</strong> and <strong>${yLabel}</strong> are the <strong>inputs</strong> (what we measure)<br>
+            • <strong>Outcome</strong> is the <strong>target</strong> (what we want to predict)<br>
+            • The scatter plot shows the relationship between inputs and outcomes<br>
+            • The neural network learns to draw a decision boundary separating the two colors
+        </div>
     `;
     
     content.innerHTML = html;
     modal.style.display = 'block';
+    
+    // Draw scatter plot after modal is visible
+    setTimeout(() => {
+        const canvas = document.getElementById('scatterCanvas');
+        if (canvas) {
+            drawScatterPlot(canvas, [...trainData, ...testData]);
+        }
+    }, 50);
+}
+
+// Draw scatter plot of data
+function drawScatterPlot(canvas, data) {
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const padding = 40;
+    
+    ctx.clearRect(0, 0, width, height);
+    
+    // Find data bounds
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    data.forEach(d => {
+        const [x, y] = d.input;
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+    });
+    
+    // Add padding to bounds
+    const rangeX = maxX - minX;
+    const rangeY = maxY - minY;
+    minX -= rangeX * 0.1;
+    maxX += rangeX * 0.1;
+    minY -= rangeY * 0.1;
+    maxY += rangeY * 0.1;
+    
+    // Scale functions
+    const scaleX = (x) => padding + ((x - minX) / (maxX - minX)) * (width - 2 * padding);
+    const scaleY = (y) => height - padding - ((y - minY) / (maxY - minY)) * (height - 2 * padding);
+    
+    // Draw axes
+    ctx.strokeStyle = '#95a5a6';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(padding, height - padding);
+    ctx.lineTo(width - padding, height - padding);
+    ctx.moveTo(padding, height - padding);
+    ctx.lineTo(padding, padding);
+    ctx.stroke();
+    
+    // Draw data points
+    data.forEach(d => {
+        const [x, y] = d.input;
+        const cx = scaleX(x);
+        const cy = scaleY(y);
+        
+        ctx.fillStyle = d.output > 0 ? '#3498db' : '#e74c3c';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Outline
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    });
+    
+    // Draw axis labels
+    const xLabel = data[0].xLabel || 'X';
+    const yLabel = data[0].yLabel || 'Y';
+    
+    ctx.fillStyle = '#2c3e50';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(xLabel, width / 2, height - 10);
+    
+    ctx.save();
+    ctx.translate(15, height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
 }
 
 // Log tool usage
@@ -637,6 +915,12 @@ window.addEventListener('load', () => {
         
         drawLossChart();
         console.log('✓ Loss chart drawn');
+        
+        drawDecisionBoundary();
+        console.log('✓ Decision boundary drawn');
+        
+        updateValidationStatus();
+        console.log('✓ Validation status updated');
         
         // Hide advanced controls in guided mode by default
         const advanced = document.querySelectorAll('.advanced-controls');

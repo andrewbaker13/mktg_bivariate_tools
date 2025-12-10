@@ -240,20 +240,148 @@
             background: #c0392b;
         }
 
+        .training-section, .validation-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 1.3em;
+        }
+
+        .training-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .network-viz-box, .progress-viz-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .network-viz-box h3, .progress-viz-box h3, .boundary-viz-box h3, .validation-metrics-box h3 {
+            margin: 0 0 15px 0;
+            font-size: 1em;
+            color: #2c3e50;
+        }
+
         #networkCanvas {
+            width: 100%;
+            height: 350px;
+            border: 1px solid #ecf0f1;
+            border-radius: 4px;
+            background: white;
+            display: block;
+        }
+
+        #lossChart {
+            width: 100%;
+            height: 250px;
+            border: 1px solid #ecf0f1;
+            border-radius: 4px;
+            background: white;
+            display: block;
+        }
+
+        .metrics-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-mini {
+            flex: 1;
+            background: white;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .metric-mini .metric-label {
+            display: block;
+            font-size: 0.75em;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .metric-mini .metric-value {
+            display: block;
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .validation-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 20px;
+        }
+
+        .boundary-viz-box, .validation-metrics-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        #boundaryCanvas {
             width: 100%;
             height: 400px;
             border: 1px solid #ecf0f1;
             border-radius: 4px;
-            background: #f8f9fa;
+            background: white;
             display: block;
         }
 
-        .metrics-panel {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+        .metric-card-large {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .metric-card-large h4 {
+            margin: 0 0 10px 0;
+            font-size: 0.9em;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+
+        .metric-card-large .value-large {
+            font-size: 3em;
+            font-weight: 700;
+            color: #27ae60;
+        }
+
+        .validation-explanation {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .validation-explanation h4 {
+            margin: 0 0 10px 0;
+            font-size: 0.95em;
+            color: #2c3e50;
+        }
+
+        .validation-explanation ul {
+            margin: 0;
+            padding-left: 20px;
         }
 
         .metric-card {
@@ -463,33 +591,37 @@
                     
                     <h4 style="font-size: 0.9em; margin-bottom: 10px;">
                         Input Features 
-                        <span class="help-icon" title="Variables the network uses to make predictions. More features = more information, but can make learning harder">ⓘ</span>
+                        <span class="help-icon" title="Variables the network uses to make predictions. Start with basic features (X, Y), then add engineered features to capture complex patterns">ⓘ</span>
                     </h4>
                     <div class="feature-selector">
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="price" checked>
-                            <span>Price</span>
+                            <span>Variable X 
+                                <span class="help-icon" title="First variable (changes based on scenario: Months, Income, Ad Spend, or Page Views)">ⓘ</span>
+                            </span>
                         </label>
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="quality" checked>
-                            <span>Quality</span>
+                            <span>Variable Y 
+                                <span class="help-icon" title="Second variable (changes based on scenario: Tickets, Loyalty, Email Freq, or Time on Site)">ⓘ</span>
+                            </span>
                         </label>
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="priceSquared">
-                            <span>Price² 
-                                <span class="help-icon" title="Captures curved relationships (e.g., medium prices might be best)">ⓘ</span>
+                            <span>X² (Squared) 
+                                <span class="help-icon" title="Captures curved relationships - helps when medium values are best or worst">ⓘ</span>
                             </span>
                         </label>
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="qualitySquared">
-                            <span>Quality² 
-                                <span class="help-icon" title="Captures curved relationships">ⓘ</span>
+                            <span>Y² (Squared) 
+                                <span class="help-icon" title="Captures curved relationships in Y variable">ⓘ</span>
                             </span>
                         </label>
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="interaction">
-                            <span>Price × Quality 
-                                <span class="help-icon" title="Captures how price and quality work together">ⓘ</span>
+                            <span>X × Y (Interaction) 
+                                <span class="help-icon" title="Captures how X and Y work together - useful for XOR-like patterns">ⓘ</span>
                             </span>
                         </label>
                     </div>
@@ -557,9 +689,12 @@
 
             <!-- Visualization Panel -->
             <div class="visualization-panel">
-                <div class="network-viz">
-                    <div class="viz-header">
-                        <h2>Network Visualization</h2>
+                <!-- Step 3: Model Training -->
+                <div class="training-section">
+                    <div class="section-header">
+                        <h2>🎯 Step 3: Model Training
+                            <span class="help-icon" title="Watch as the network learns patterns by adjusting its internal weights. Blue lines = positive connections, red = negative">ⓘ</span>
+                        </h2>
                         <div class="control-buttons">
                             <button class="btn btn-primary" id="playPauseBtn">
                                 <span id="playPauseIcon">▶</span> Start Training
@@ -569,34 +704,92 @@
                         </div>
                     </div>
 
-                    <!-- Network Canvas -->
-                    <canvas id="networkCanvas"></canvas>
+                    <div class="training-grid">
+                        <!-- Network Architecture Visualization -->
+                        <div class="network-viz-box">
+                            <h3>Network Architecture 
+                                <span class="help-icon" title="Each circle is a neuron. Lines show connections. Thicker lines = stronger influence. Colors show if connection is positive (blue) or negative (red)">ⓘ</span>
+                            </h3>
+                            <canvas id="networkCanvas"></canvas>
+                        </div>
 
-                    <!-- Metrics -->
-                    <div class="metrics-panel">
-                        <div class="metric-card">
-                            <h4>Training Loss</h4>
-                            <div class="value" id="trainLoss">0.000</div>
-                        </div>
-                        <div class="metric-card">
-                            <h4>Test Loss</h4>
-                            <div class="value" id="testLoss">0.000</div>
-                        </div>
-                        <div class="metric-card">
-                            <h4>Iterations</h4>
-                            <div class="value" id="iterations">0</div>
-                        </div>
-                        <div class="metric-card">
-                            <h4>Accuracy</h4>
-                            <div class="value" id="accuracy">--</div>
-                            <div class="subvalue">Test Data</div>
+                        <!-- Training Progress Chart -->
+                        <div class="progress-viz-box">
+                            <h3>Training Progress 
+                                <span class="help-icon" title="Lower loss = better predictions. Orange line is training data (what it learns from). Green line is test data (how well it generalizes)">ⓘ</span>
+                            </h3>
+                            <canvas id="lossChart"></canvas>
+                            
+                            <!-- Metrics -->
+                            <div class="metrics-row">
+                                <div class="metric-mini">
+                                    <span class="metric-label">Iterations</span>
+                                    <span class="metric-value" id="iterations">0</span>
+                                </div>
+                                <div class="metric-mini">
+                                    <span class="metric-label">Train Loss</span>
+                                    <span class="metric-value" id="trainLoss">0.000</span>
+                                </div>
+                                <div class="metric-mini">
+                                    <span class="metric-label">Test Loss</span>
+                                    <span class="metric-value" id="testLoss">0.000</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Loss Chart -->
-                    <div class="chart-container">
-                        <h3 style="font-size: 1em; margin-bottom: 10px;">Training Progress</h3>
-                        <canvas id="lossChart"></canvas>
+                <div class="section-divider" style="margin: 30px 0;"></div>
+
+                <!-- Step 4: Model Validation -->
+                <div class="validation-section">
+                    <div class="section-header">
+                        <h2>✅ Step 4: Model Validation
+                            <span class="help-icon" title="See how well your trained model performs on NEW data it has never seen before. This tests if it truly learned the pattern or just memorized the training data">ⓘ</span>
+                        </h2>
+                    </div>
+
+                    <div class="validation-grid">
+                        <!-- Decision Boundary Visualization -->
+                        <div class="boundary-viz-box">
+                            <h3>Decision Boundary 
+                                <span class="help-icon" title="The colored background shows what the model predicts for every possible input. Blue regions = model predicts positive outcome, red = negative outcome">ⓘ</span>
+                            </h3>
+                            <canvas id="boundaryCanvas"></canvas>
+                            <p style="font-size: 0.85em; color: #7f8c8d; margin-top: 10px; text-align: center;">
+                                Background colors = model's predictions | Dots = actual data points
+                            </p>
+                        </div>
+
+                        <!-- Validation Metrics -->
+                        <div class="validation-metrics-box">
+                            <h3>Performance on Unseen Data 
+                                <span class="help-icon" title="These metrics show how well the model performs on test data it wasn't trained on - the true test of whether it learned the pattern">ⓘ</span>
+                            </h3>
+                            
+                            <div class="metric-card-large">
+                                <h4>Test Accuracy</h4>
+                                <div class="value-large" id="accuracy">--</div>
+                                <p style="font-size: 0.85em; color: #7f8c8d; margin-top: 8px;">
+                                    Percentage of test data points correctly classified
+                                </p>
+                            </div>
+
+                            <div class="validation-explanation">
+                                <h4>🤔 Understanding Validation</h4>
+                                <ul style="font-size: 0.9em; line-height: 1.8; color: #2c3e50;">
+                                    <li><strong>Test data</strong> (dots on decision boundary) were NOT used during training</li>
+                                    <li><strong>Good fit:</strong> Model performs similarly on training and test data</li>
+                                    <li><strong>Overfitting:</strong> Great on training, poor on test = memorized instead of learned</li>
+                                    <li><strong>Underfitting:</strong> Poor on both = model is too simple for the pattern</li>
+                                </ul>
+                                
+                                <div id="validationInsight" style="margin-top: 15px; padding: 12px; background: #e8f5e9; border-radius: 6px; font-size: 0.9em;">
+                                    <strong>💡 Current Model Status:</strong>
+                                    <p id="validationStatus" style="margin: 5px 0 0 0;">Train your model to see validation results...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
