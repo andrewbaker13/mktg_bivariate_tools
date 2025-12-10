@@ -1030,6 +1030,7 @@
         // Get quiz ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const quizId = urlParams.get('id');
+        const isPreviewMode = urlParams.get('preview') === 'true';
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
@@ -1058,7 +1059,11 @@
 
         async function loadQuizInfo() {
             try {
-                const response = await fetch(`${API_BASE}/quiz/${quizId}/`, {
+                const url = isPreviewMode 
+                    ? `${API_BASE}/quiz/${quizId}/preview/`
+                    : `${API_BASE}/quiz/${quizId}/`;
+                    
+                const response = await fetch(url, {
                     headers: {
                         'Authorization': `Token ${getAuthToken()}`
                     }
