@@ -497,10 +497,23 @@
                         <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
                             <li><strong>Uniform:</strong> Random numbers in a range (e.g., B0 between 5-15)</li>
                             <li><strong>Discrete:</strong> Random pick from list (e.g., brands: Nike, Adidas, Puma)</li>
-                            <li><strong>Formula (Calculate):</strong> Compute answer from other variables (e.g., {{B0}}+{{B1}}*{{X}})</li>
+                            <li><strong>Array:</strong> Tied data matrix - each student gets one column, all rows stay synchronized
+                                <ul style="margin-top: 0.25rem;">
+                                    <li>Define: 3×3 matrix with [product names, prices, warranties]</li>
+                                    <li>Access: {{ARRAY[0]}} for row 0, {{ARRAY[1]}} for row 1, etc.</li>
+                                    <li>Student A gets column 0, Student B gets column 1 - values stay tied!</li>
+                                </ul>
+                            </li>
+                            <li><strong>Formula (Calculate):</strong> Compute answer from other variables
+                                <ul style="margin-top: 0.25rem;">
+                                    <li>Basic: {{B0}}+{{B1}}*{{X}}</li>
+                                    <li>Math functions: Math.max(), Math.min(), Math.abs(), Math.round(), Math.floor(), Math.ceil(), Math.pow(), Math.sqrt()</li>
+                                    <li>Examples: Math.max({{q1}}, {{q2}}, {{q3}}), Math.abs({{value}} - {{target}}), Math.sqrt({{variance}})</li>
+                                </ul>
+                            </li>
                             <li><strong>Formula (Display):</strong> Show formula with values (e.g., "Sales = 8.2 + 1.5 × X")</li>
                         </ul>
-                        <p style="margin: 0.5rem 0 0 0;"><strong>Usage:</strong> Type {{variable_name}} anywhere in your question, answers, or feedback.</p>
+                        <p style="margin: 0.5rem 0 0 0;"><strong>Usage:</strong> Type {{variable_name}} or {{ARRAY_NAME[row]}} anywhere in your question, answers, or feedback.</p>
                     </div>
                     
                     <div id="variablesList" style="margin-top: 1rem;">
@@ -624,6 +637,7 @@
                         <option value="">Select type...</option>
                         <option value="uniform">Uniform (Random Number Range)</option>
                         <option value="discrete">Discrete (Random from List)</option>
+                        <option value="array">Array (Tied Data Matrix)</option>
                         <option value="formula_calculate">Formula - Calculate (Compute Result)</option>
                         <option value="formula_display">Formula - Display (Show Formula)</option>
                     </select>
@@ -1163,18 +1177,44 @@
             setTimeout(() => {
                 if (type === 'multiple_choice' || type === 'select_all') {
                     if (config.options) {
+                        // Check if any option has a correctness_condition
+                        const hasDynamicCorrectness = config.options.some(opt => opt.correctness_condition);
+                        
+                        // Set the checkbox
+                        const dynamicCheckbox = document.getElementById('useDynamicCorrectness');
+                        if (dynamicCheckbox) {
+                            dynamicCheckbox.checked = hasDynamicCorrectness;
+                        }
+                        
                         const optionsList = document.getElementById('optionsList');
                         optionsList.innerHTML = '';
+                        
                         config.options.forEach((opt, idx) => {
                             const div = document.createElement('div');
                             div.className = 'option-item';
-                            div.innerHTML = `
-                                <input type="text" placeholder="Option ${idx+1}" value="${opt.text}" required>
-                                <input type="checkbox" title="Correct answer" ${opt.is_correct ? 'checked' : ''}>
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            `;
+                            
+                            if (opt.correctness_condition) {
+                                // Dynamic option with condition
+                                div.innerHTML = `
+                                    <input type="text" placeholder="Option ${idx+1}" value="${opt.text}" required>
+                                    <input type="checkbox" title="Correct answer" class="static-correctness" style="display: none;">
+                                    <input type="text" placeholder="Condition" value="${opt.correctness_condition}" class="dynamic-correctness">
+                                    <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                `;
+                            } else {
+                                // Static option with checkbox
+                                div.innerHTML = `
+                                    <input type="text" placeholder="Option ${idx+1}" value="${opt.text}" required>
+                                    <input type="checkbox" title="Correct answer" class="static-correctness" ${opt.is_correct ? 'checked' : ''}>
+                                    <input type="text" placeholder="Condition" class="dynamic-correctness" style="display: none;">
+                                    <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                `;
+                            }
+                            
                             optionsList.appendChild(div);
                         });
                     }
@@ -1270,18 +1310,49 @@
             if (type === 'multiple_choice' || type === 'select_all') {
                 section.innerHTML = `
                     <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="useDynamicCorrectness" onchange="toggleDynamicCorrectness()" style="margin: 0;">
+                            <span>Use Dynamic Correctness (based on variables)</span>
+                        </label>
+                        <small style="display: block; margin-top: 0.5rem; color: var(--gray-600);">
+                            Enable this to make correctness conditional on variable values.
+                            <a href="#" onclick="toggleDynamicCorrectnessHelp(); return false;" style="margin-left: 0.5rem;">
+                                <i class="fas fa-question-circle"></i> Learn More
+                            </a>
+                        </small>
+                        <div id="dynamicCorrectnessHelp" style="display: none; background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 4px; padding: 1rem; margin-top: 0.5rem;">
+                            <strong>Dynamic Correctness Examples:</strong>
+                            <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                <li><code>{{this}} == {{max_sales}}</code> - Option is correct if it equals max_sales</li>
+                                <li><code>{{this}} > {{threshold}}</code> - Option is correct if greater than threshold</li>
+                                <li><code>{{this}} == Math.max({{q1}}, {{q2}}, {{q3}})</code> - Option is the maximum</li>
+                                <li><code>Math.abs({{this}} - {{target}}) < 10</code> - Option is within 10 of target</li>
+                                <li><code>Math.round({{this}}) == {{expected}}</code> - Rounded option equals expected</li>
+                                <li><code>Math.sqrt({{this}}) > {{threshold}}</code> - Square root exceeds threshold</li>
+                            </ul>
+                            <small><strong>Available functions:</strong> Math.max, Math.min, Math.abs, Math.round, Math.floor, Math.ceil, Math.pow, Math.sqrt</small><br>
+                            <small><strong>Note:</strong> Use <code>{{this}}</code> to reference the current option's value after variable substitution.</small>
+                        </div>
+                            </ul>
+                            <small><strong>Note:</strong> Use <code>{{this}}</code> to reference the current option's value after variable substitution.</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
                         <label>Answer Options*</label>
                         <div id="optionsList" class="answer-options">
                             <div class="option-item">
                                 <input type="text" placeholder="Option 1" required>
-                                <input type="checkbox" title="Correct answer">
+                                <input type="checkbox" title="Correct answer" class="static-correctness">
+                                <input type="text" placeholder="Condition (e.g., {{this}} == {{max}})" class="dynamic-correctness" style="display: none;">
                                 <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
                             <div class="option-item">
                                 <input type="text" placeholder="Option 2" required>
-                                <input type="checkbox" title="Correct answer">
+                                <input type="checkbox" title="Correct answer" class="static-correctness">
+                                <input type="text" placeholder="Condition (e.g., {{this}} == {{max}})" class="dynamic-correctness" style="display: none;">
                                 <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
                                     <i class="fas fa-times"></i>
                                 </button>
@@ -1384,16 +1455,38 @@
         function addOption() {
             const list = document.getElementById('optionsList');
             const count = list.children.length + 1;
+            const isDynamic = document.getElementById('useDynamicCorrectness')?.checked || false;
+            
             const div = document.createElement('div');
             div.className = 'option-item';
             div.innerHTML = `
                 <input type="text" placeholder="Option ${count}" required>
-                <input type="checkbox" title="Correct answer">
+                <input type="checkbox" title="Correct answer" class="static-correctness" style="${isDynamic ? 'display: none;' : ''}">
+                <input type="text" placeholder="Condition (e.g., {{this}} == {{max}})" class="dynamic-correctness" style="${isDynamic ? '' : 'display: none;'}">
                 <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
                     <i class="fas fa-times"></i>
                 </button>
             `;
             list.appendChild(div);
+        }
+
+        function toggleDynamicCorrectness() {
+            const isDynamic = document.getElementById('useDynamicCorrectness').checked;
+            const staticInputs = document.querySelectorAll('.static-correctness');
+            const dynamicInputs = document.querySelectorAll('.dynamic-correctness');
+            
+            staticInputs.forEach(input => {
+                input.style.display = isDynamic ? 'none' : '';
+            });
+            
+            dynamicInputs.forEach(input => {
+                input.style.display = isDynamic ? '' : 'none';
+            });
+        }
+
+        function toggleDynamicCorrectnessHelp() {
+            const help = document.getElementById('dynamicCorrectnessHelp');
+            help.style.display = help.style.display === 'none' ? 'block' : 'none';
         }
 
         function removeOption(btn) {
@@ -1503,6 +1596,70 @@
                         <strong>Example:</strong> Randomly picks one value each time. Different students see different values.
                     </div>
                 `;
+            } else if (type === 'array') {
+                configSection.innerHTML = `
+                    <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <strong><i class="fas fa-table"></i> Array Variables - Tied Data</strong>
+                        <p style="margin: 0.5rem 0 0 0;">Create a matrix where each COLUMN is a scenario, and each ROW is a related variable. All values in the selected column stay synchronized.</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Data Matrix*</label>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="addArrayRow()" title="Add Row">
+                                <i class="fas fa-plus"></i> Row
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="addArrayCol()" title="Add Column">
+                                <i class="fas fa-plus"></i> Column
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="pasteArrayData()" title="Paste from Excel/CSV">
+                                <i class="fas fa-paste"></i> Paste CSV/TSV
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="clearArrayData()" title="Clear All">
+                                <i class="fas fa-trash"></i> Clear
+                            </button>
+                        </div>
+                        <div id="arrayTableContainer" style="overflow-x: auto; border: 1px solid var(--gray-300); border-radius: 4px; padding: 0.5rem; background: white;">
+                            <table id="arrayDataTable" style="border-collapse: collapse;">
+                                <thead>
+                                    <tr id="arrayHeaderRow">
+                                        <th style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); min-width: 60px;">Row</th>
+                                        <th style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); min-width: 100px;">Col 0</th>
+                                        <th style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); min-width: 100px;">Col 1</th>
+                                        <th style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); min-width: 100px;">Col 2</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="arrayDataBody">
+                                    <tr>
+                                        <td style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); font-weight: bold;">0</td>
+                                        <td style="padding: 0; border: 1px solid var(--gray-300);"><input type="text" class="array-cell" data-row="0" data-col="0" style="width: 100%; border: none; padding: 0.5rem;"></td>
+                                        <td style="padding: 0; border: 1px solid var(--gray-300);"><input type="text" class="array-cell" data-row="0" data-col="1" style="width: 100%; border: none; padding: 0.5rem;"></td>
+                                        <td style="padding: 0; border: 1px solid var(--gray-300);"><input type="text" class="array-cell" data-row="0" data-col="2" style="width: 100%; border: none; padding: 0.5rem;"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); font-weight: bold;">1</td>
+                                        <td style="padding: 0; border: 1px solid var(--gray-300);"><input type="text" class="array-cell" data-row="1" data-col="0" style="width: 100%; border: none; padding: 0.5rem;"></td>
+                                        <td style="padding: 0; border: 1px solid var(--gray-300);"><input type="text" class="array-cell" data-row="1" data-col="1" style="width: 100%; border: none; padding: 0.5rem;"></td>
+                                        <td style="padding: 0; border: 1px solid var(--gray-300);"><input type="text" class="array-cell" data-row="1" data-col="2" style="width: 100%; border: none; padding: 0.5rem;"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <small style="display: block; margin-top: 0.5rem;">
+                            Max 50 rows × 50 columns. Access with {{ARRAY_NAME[row_index]}}.
+                        </small>
+                    </div>
+                    
+                    <div style="background: #dcfce7; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                        <strong>Example Usage:</strong><br>
+                        Array "PRODUCTS" with rows [name, price, warranty]:<br>
+                        • {{PRODUCTS[0]}} → Product name<br>
+                        • {{PRODUCTS[1]}} → Product price<br>
+                        • {{PRODUCTS[2]}} → Warranty months<br>
+                        <br>
+                        Each student gets one random column. All values stay synchronized!
+                    </div>
+                `;
             } else if (type === 'formula_calculate' || type === 'formula_display') {
                 const isCalculate = type === 'formula_calculate';
                 configSection.innerHTML = `
@@ -1565,6 +1722,36 @@
                 }
                 
                 varDef.values = values;
+            } else if (varType === 'array') {
+                // Extract array data from table
+                const arrayData = getArrayDataFromTable();
+                
+                if (arrayData.length === 0) {
+                    alert('Please enter at least one row of data');
+                    return;
+                }
+                
+                // Issue #6: Enhanced array validation with better error messages
+                if (arrayData.length > 50) {
+                    alert(`Array has ${arrayData.length} rows. Maximum 50 rows allowed.\n\nPlease reduce your data or split into multiple questions.`);
+                    return;
+                }
+                
+                const maxCols = Math.max(...arrayData.map(row => row.length));
+                if (maxCols > 50) {
+                    alert(`Array has ${maxCols} columns. Maximum 50 columns allowed.\n\nPlease reduce your data or split into multiple questions.`);
+                    return;
+                }
+                
+                // Validate all rows have same number of columns
+                const firstRowCols = arrayData[0].length;
+                const unevenRow = arrayData.findIndex(row => row.length !== firstRowCols);
+                if (unevenRow !== -1) {
+                    alert(`Row ${unevenRow} has ${arrayData[unevenRow].length} columns, but row 0 has ${firstRowCols} columns.\n\nAll rows must have the same number of columns.`);
+                    return;
+                }
+                
+                varDef.data = arrayData;
             } else if (varType === 'formula_calculate' || varType === 'formula_display') {
                 const expression = document.getElementById('varExpression').value.trim();
                 
@@ -1614,6 +1801,12 @@
                     typeIcon = 'fa-list';
                     typeLabel = 'Discrete';
                     details = `Values: ${def.values.slice(0, 3).join(', ')}${def.values.length > 3 ? '...' : ''}`;
+                } else if (def.type === 'array') {
+                    typeIcon = 'fa-table';
+                    typeLabel = 'Array';
+                    const rows = def.data.length;
+                    const cols = def.data[0]?.length || 0;
+                    details = `Matrix: ${rows} rows × ${cols} columns. Access with {{${name}[row_index]}}`;
                 } else if (def.type === 'formula') {
                     typeIcon = def.mode === 'calculate' ? 'fa-calculator' : 'fa-eye';
                     typeLabel = def.mode === 'calculate' ? 'Formula (Calculate)' : 'Formula (Display)';
@@ -1668,6 +1861,11 @@
                 document.getElementById('varDecimals').value = varDef.decimals;
             } else if (varDef.type === 'discrete') {
                 document.getElementById('varValues').value = varDef.values.join('\n');
+            } else if (varDef.type === 'array') {
+                // Wait for DOM to render, then populate array table
+                setTimeout(() => {
+                    loadArrayDataIntoTable(varDef.data);
+                }, 100);
             } else if (varDef.type === 'formula') {
                 document.getElementById('varExpression').value = varDef.expression;
                 if (varDef.mode === 'calculate') {
@@ -1685,6 +1883,220 @@
             
             delete questionVariables[varName];
             updateVariablesList();
+        }
+
+        // Array Variable Helper Functions
+        
+        function addArrayRow() {
+            const tbody = document.getElementById('arrayDataBody');
+            if (!tbody) return;
+            
+            const currentRows = tbody.querySelectorAll('tr').length;
+            
+            if (currentRows >= 50) {
+                alert('Maximum 50 rows allowed');
+                return;
+            }
+            
+            const currentCols = document.querySelectorAll('#arrayHeaderRow th').length - 1;
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); font-weight: bold;">${currentRows}</td>
+                ${Array.from({length: currentCols}, (_, colIdx) => `
+                    <td style="padding: 0; border: 1px solid var(--gray-300);">
+                        <input type="text" class="array-cell" data-row="${currentRows}" data-col="${colIdx}" style="width: 100%; border: none; padding: 0.5rem;">
+                    </td>
+                `).join('')}
+            `;
+            tbody.appendChild(tr);
+        }
+        
+        function addArrayCol() {
+            const headerRow = document.getElementById('arrayHeaderRow');
+            if (!headerRow) return;
+            
+            const currentCols = headerRow.querySelectorAll('th').length - 1;
+            
+            if (currentCols >= 50) {
+                alert('Maximum 50 columns allowed');
+                return;
+            }
+            
+            // Add header
+            const th = document.createElement('th');
+            th.style.cssText = 'padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); min-width: 100px;';
+            th.textContent = `Col ${currentCols}`;
+            headerRow.appendChild(th);
+            
+            // Add cells to each row
+            const tbody = document.getElementById('arrayDataBody');
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach((tr, rowIdx) => {
+                const td = document.createElement('td');
+                td.style.cssText = 'padding: 0; border: 1px solid var(--gray-300);';
+                td.innerHTML = `<input type="text" class="array-cell" data-row="${rowIdx}" data-col="${currentCols}" style="width: 100%; border: none; padding: 0.5rem;">`;
+                tr.appendChild(td);
+            });
+        }
+        
+        function pasteArrayData() {
+            const data = prompt('Paste data from Excel or CSV (tab or comma separated):\n\nExample:\nLaptop\tPhone\tTablet\n1200\t800\t600\n15\t8\t12');
+            
+            if (!data) return;
+            
+            try {
+                // Parse CSV/TSV data
+                const rows = data.trim().split('\n');
+                const parsedData = rows.map(row => {
+                    // Try tab-separated first, then comma
+                    if (row.includes('\t')) {
+                        return row.split('\t').map(cell => cell.trim());
+                    } else {
+                        return row.split(',').map(cell => cell.trim());
+                    }
+                });
+                
+                // Issue #6: Enhanced validation with size information
+                if (parsedData.length > 50) {
+                    alert(`Your data has ${parsedData.length} rows.\n\nMaximum 50 rows allowed. Please reduce your data.`);
+                    return;
+                }
+                
+                const maxCols = Math.max(...parsedData.map(row => row.length));
+                if (maxCols > 50) {
+                    alert(`Your data has ${maxCols} columns.\n\nMaximum 50 columns allowed. Please reduce your data.`);
+                    return;
+                }
+                
+                // Validate all rows have same number of columns
+                const firstRowCols = parsedData[0].length;
+                const unevenRow = parsedData.findIndex(row => row.length !== firstRowCols);
+                if (unevenRow !== -1) {
+                    alert(`Row ${unevenRow + 1} has ${parsedData[unevenRow].length} columns, but row 1 has ${firstRowCols}.\n\nAll rows must have the same number of columns.`);
+                    return;
+                }
+                
+                // Show success message with dimensions
+                console.log(`✅ Loaded array: ${parsedData.length} rows × ${maxCols} columns`);
+                
+                // Load into table
+                loadArrayDataIntoTable(parsedData);
+                
+            } catch (error) {
+                alert('Error parsing data. Please ensure it\'s tab or comma separated.');
+                console.error(error);
+            }
+        }
+        
+        function clearArrayData() {
+            if (!confirm('Clear all array data?')) return;
+            
+            // Reset to 2x3 empty grid
+            const headerRow = document.getElementById('arrayHeaderRow');
+            if (!headerRow) return;
+            
+            headerRow.innerHTML = `
+                <th style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); min-width: 60px;">Row</th>
+                <th style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); min-width: 100px;">Col 0</th>
+                <th style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); min-width: 100px;">Col 1</th>
+                <th style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); min-width: 100px;">Col 2</th>
+            `;
+            
+            const tbody = document.getElementById('arrayDataBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); font-weight: bold;">0</td>
+                    <td style="padding: 0; border: 1px solid var(--gray-300);"><input type="text" class="array-cell" data-row="0" data-col="0" style="width: 100%; border: none; padding: 0.5rem;"></td>
+                    <td style="padding: 0; border: 1px solid var(--gray-300);"><input type="text" class="array-cell" data-row="0" data-col="1" style="width: 100%; border: none; padding: 0.5rem;"></td>
+                    <td style="padding: 0; border: 1px solid var(--gray-300);"><input type="text" class="array-cell" data-row="0" data-col="2" style="width: 100%; border: none; padding: 0.5rem;"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); font-weight: bold;">1</td>
+                    <td style="padding: 0; border: 1px solid var(--gray-300);"><input type="text" class="array-cell" data-row="1" data-col="0" style="width: 100%; border: none; padding: 0.5rem;"></td>
+                    <td style="padding: 0; border: 1px solid var(--gray-300);"><input type="text" class="array-cell" data-row="1" data-col="1" style="width: 100%; border: none; padding: 0.5rem;"></td>
+                    <td style="padding: 0; border: 1px solid var(--gray-300);"><input type="text" class="array-cell" data-row="1" data-col="2" style="width: 100%; border: none; padding: 0.5rem;"></td>
+                </tr>
+            `;
+        }
+        
+        function getArrayDataFromTable() {
+            const tbody = document.getElementById('arrayDataBody');
+            if (!tbody) return [];
+            
+            const rows = tbody.querySelectorAll('tr');
+            const data = [];
+            
+            rows.forEach(tr => {
+                const inputs = tr.querySelectorAll('.array-cell');
+                const rowData = [];
+                let hasData = false;
+                
+                inputs.forEach(input => {
+                    const value = input.value.trim();
+                    rowData.push(value);
+                    if (value) hasData = true;
+                });
+                
+                // Only include rows with at least one value
+                if (hasData) {
+                    data.push(rowData);
+                }
+            });
+            
+            return data;
+        }
+        
+        function loadArrayDataIntoTable(data) {
+            if (!data || data.length === 0) return;
+            
+            const rows = data.length;
+            const cols = Math.max(...data.map(row => row.length));
+            
+            // Build header
+            const headerRow = document.getElementById('arrayHeaderRow');
+            if (!headerRow) return;
+            
+            headerRow.innerHTML = '<th style="padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); min-width: 60px;">Row</th>';
+            for (let c = 0; c < cols; c++) {
+                const th = document.createElement('th');
+                th.style.cssText = 'padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); min-width: 100px;';
+                th.textContent = `Col ${c}`;
+                headerRow.appendChild(th);
+            }
+            
+            // Build body
+            const tbody = document.getElementById('arrayDataBody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            for (let r = 0; r < rows; r++) {
+                const tr = document.createElement('tr');
+                
+                // Row label
+                const labelTd = document.createElement('td');
+                labelTd.style.cssText = 'padding: 0.5rem; border: 1px solid var(--gray-300); background: var(--gray-100); font-weight: bold;';
+                labelTd.textContent = r;
+                tr.appendChild(labelTd);
+                
+                // Cells
+                for (let c = 0; c < cols; c++) {
+                    const td = document.createElement('td');
+                    td.style.cssText = 'padding: 0; border: 1px solid var(--gray-300);';
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'array-cell';
+                    input.setAttribute('data-row', r);
+                    input.setAttribute('data-col', c);
+                    input.style.cssText = 'width: 100%; border: none; padding: 0.5rem;';
+                    input.value = data[r][c] || '';
+                    td.appendChild(input);
+                    tr.appendChild(td);
+                }
+                
+                tbody.appendChild(tr);
+            }
         }
 
         function previewVariables() {
@@ -2095,15 +2507,32 @@
             if (type === 'multiple_choice' || type === 'select_all') {
                 const options = [];
                 const optionItems = document.querySelectorAll('#optionsList .option-item');
+                const isDynamic = document.getElementById('useDynamicCorrectness')?.checked || false;
+                
                 optionItems.forEach((item, index) => {
-                    const text = item.querySelector('input[type="text"]').value;
-                    const isCorrect = item.querySelector('input[type="checkbox"]').checked;
+                    const textInput = item.querySelector('input[type="text"]');
+                    const text = textInput ? textInput.value : '';
+                    
                     if (text) {
-                        options.push({
+                        const option = {
                             text,
-                            is_correct: isCorrect,
                             order: index
-                        });
+                        };
+                        
+                        if (isDynamic) {
+                            // Get condition from the dynamic input
+                            const conditionInput = item.querySelector('.dynamic-correctness');
+                            const condition = conditionInput ? conditionInput.value.trim() : '';
+                            if (condition) {
+                                option.correctness_condition = condition;
+                            }
+                        } else {
+                            // Get static correctness from checkbox
+                            const checkbox = item.querySelector('.static-correctness');
+                            option.is_correct = checkbox ? checkbox.checked : false;
+                        }
+                        
+                        options.push(option);
                     }
                 });
                 config.options = options;

@@ -6,6 +6,7 @@
     <title>Skills Check Quiz | Dr. Baker Marketing</title>
     <link rel="stylesheet" href="../shared/css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
             --primary: #3b82f6;
@@ -171,6 +172,29 @@
             color: var(--gray-900);
             line-height: 1.6;
             margin-bottom: 1.5rem;
+        }
+
+        /* Chart Containers */
+        .chart-container {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.75rem;
+            text-align: center;
+        }
+
+        .chart-canvas-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
         }
 
         /* Answer Options */
@@ -907,6 +931,102 @@
         let timerInterval = null;
         let autoSaveInterval = null;
 
+        // Chart rendering (Issue #11: Chart integration)
+        const chartInstances = {};
+
+        function renderCharts(charts, questionId) {
+            const container = document.getElementById(`chartsContainer-${questionId}`);
+            if (!container || !charts) return;
+
+            // Clear any existing charts for this question
+            Object.keys(chartInstances).forEach(key => {
+                if (key.startsWith(`${questionId}_`)) {
+                    chartInstances[key].destroy();
+                    delete chartInstances[key];
+                }
+            });
+
+            // Render each chart
+            Object.entries(charts).forEach(([chartId, chartConfig]) => {
+                const chartDiv = document.createElement('div');
+                chartDiv.className = 'chart-container';
+                chartDiv.innerHTML = `
+                    ${chartConfig.title ? `<div class="chart-title">${chartConfig.title}</div>` : ''}
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="chart-${questionId}-${chartId}"></canvas>
+                    </div>
+                `;
+                container.appendChild(chartDiv);
+
+                // Create chart after DOM update
+                setTimeout(() => {
+                    const canvas = document.getElementById(`chart-${questionId}-${chartId}`);
+                    if (!canvas) return;
+
+                    const ctx = canvas.getContext('2d');
+                    let chartData;
+
+                    if (chartConfig.type === 'bar') {
+                        // Single series bar chart
+                        chartData = {
+                            labels: chartConfig.labels || [],
+                            datasets: [{
+                                data: chartConfig.data || [],
+                                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                                borderColor: 'rgba(59, 130, 246, 1)',
+                                borderWidth: 1
+                            }]
+                        };
+                    } else if (chartConfig.type === 'multibar') {
+                        // Multiple series bar chart
+                        const colors = [
+                            { bg: 'rgba(59, 130, 246, 0.7)', border: 'rgba(59, 130, 246, 1)' },
+                            { bg: 'rgba(16, 185, 129, 0.7)', border: 'rgba(16, 185, 129, 1)' },
+                            { bg: 'rgba(245, 158, 11, 0.7)', border: 'rgba(245, 158, 11, 1)' },
+                            { bg: 'rgba(239, 68, 68, 0.7)', border: 'rgba(239, 68, 68, 1)' },
+                            { bg: 'rgba(168, 85, 247, 0.7)', border: 'rgba(168, 85, 247, 1)' }
+                        ];
+
+                        chartData = {
+                            labels: chartConfig.labels || [],
+                            datasets: (chartConfig.series || []).map((series, idx) => ({
+                                label: series.name || `Series ${idx + 1}`,
+                                data: series.data || [],
+                                backgroundColor: colors[idx % colors.length].bg,
+                                borderColor: colors[idx % colors.length].border,
+                                borderWidth: 1
+                            }))
+                        };
+                    }
+
+                    const chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: chartData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: chartConfig.type === 'multibar',
+                                    position: 'top'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    chartInstances[`${questionId}_${chartId}`] = chart;
+                }, 50);
+            });
+        }
+
         // Get quiz ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const quizId = urlParams.get('id');
@@ -1101,8 +1221,7 @@
                 case 'select_all':
                     answerHtml = renderSelectAll(question);
                     break;
-                case 'calculation':
-                case 'numeric_range':
+                case 'numeric':
                     answerHtml = renderNumericInput(question);
                     break;
                 case 'fill_blank':
@@ -1129,11 +1248,17 @@
                     </div>
                     ${question.instruction ? `<p class="question-instruction">${question.instruction}</p>` : ''}
                     <div class="question-text">${question.question_text}</div>
+                    <div id="chartsContainer-${question.id}"></div>
                     <div class="answer-section">
                         ${answerHtml}
                     </div>
                 </div>
             `;
+
+            // Render charts if present (Issue #11: Chart integration)
+            if (question.charts) {
+                renderCharts(question.charts, question.id);
+            }
 
             // Setup drag-drop if needed
             if (question.type === 'reorder') {
