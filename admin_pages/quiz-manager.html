@@ -800,6 +800,9 @@
                 </div>
                 
                 <div class="quiz-actions">
+                    <button class="btn btn-primary btn-small" onclick="previewQuiz(${quiz.id})">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
                     ${!isShared ? `
                         <button class="btn btn-primary btn-small" onclick="editQuiz(${quiz.id})">
                             <i class="fas fa-edit"></i> Edit
@@ -1010,6 +1013,11 @@
         function manageQuestions(quizId) {
             // Navigate to question management page
             window.location.href = `quiz-questions.html?quiz_id=${quizId}`;
+        }
+
+        function previewQuiz(quizId) {
+            // Open quiz in preview mode (read-only, no submission)
+            window.open(`quiz.html?quiz_id=${quizId}&preview=true`, '_blank');
         }
 
         function closeModal(modalId) {
