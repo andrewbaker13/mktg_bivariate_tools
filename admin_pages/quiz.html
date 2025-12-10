@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../shared/css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             --primary: #3b82f6;
@@ -172,6 +173,49 @@
             color: var(--gray-900);
             line-height: 1.6;
             margin-bottom: 1.5rem;
+        }
+
+        /* Markdown content styling */
+        .question-text h1, .question-text h2, .question-text h3 {
+            color: var(--gray-900);
+            margin-top: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .question-text h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .question-text table {
+            border-collapse: collapse;
+            width: auto;
+            margin: 1rem 0;
+        }
+
+        .question-text th, .question-text td {
+            border: 1px solid var(--gray-300);
+            padding: 0.5rem 1rem;
+            text-align: left;
+        }
+
+        .question-text th {
+            background-color: var(--gray-100);
+            font-weight: 600;
+        }
+
+        .question-text ul, .question-text ol {
+            margin: 0.75rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .question-text li {
+            margin: 0.5rem 0;
+        }
+
+        .question-text strong {
+            font-weight: 600;
+            color: var(--gray-900);
         }
 
         /* Chart Containers */
@@ -1251,8 +1295,8 @@
                         <div class="question-number">${currentQuestionIndex + 1}</div>
                         <div class="question-points">${question.points} point${question.points !== 1 ? 's' : ''}</div>
                     </div>
-                    ${question.instruction ? `<p class="question-instruction">${question.instruction}</p>` : ''}
-                    <div class="question-text">${question.question_text}</div>
+                    ${question.instruction ? `<p class="question-instruction">${marked.parse(question.instruction)}</p>` : ''}
+                    <div class="question-text">${marked.parse(question.question_text)}</div>
                     <div id="chartsContainer-${question.id}"></div>
                     <div class="answer-section">
                         ${answerHtml}
