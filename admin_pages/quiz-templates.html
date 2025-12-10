@@ -640,7 +640,7 @@
         async function loadTools() {
             try {
                 const response = await fetch(`${API_BASE}/tools/`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
                 const tools = await response.json();
                 
@@ -660,7 +660,7 @@
         async function loadCourses() {
             try {
                 const response = await fetch(`${API_BASE}/quiz/manage/courses/`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
                 const courses = await response.json();
                 
@@ -678,7 +678,7 @@
             try {
                 const myTemplates = document.getElementById('filterMy').value === 'mine' ? '?my_templates=true' : '';
                 const response = await fetch(`${API_BASE}/quiz-templates/${myTemplates}`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
                 
                 if (!response.ok) throw new Error('Failed to load templates');
@@ -800,7 +800,7 @@
         async function loadQuestionsForSelector() {
             try {
                 const response = await fetch(`${API_BASE}/quiz-questions/`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
                 
                 if (!response.ok) throw new Error('Failed to load questions');
@@ -919,7 +919,7 @@
                     method,
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getToken()}`
+                        'Authorization': `Token ${getToken()}`
                     },
                     body: JSON.stringify(templateData)
                 });
@@ -953,7 +953,7 @@
             try {
                 const response = await fetch(`${API_BASE}/quiz-templates/${id}/delete/`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
                 
                 if (!response.ok) throw new Error('Failed to delete template');
@@ -990,7 +990,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getToken()}`
+                        'Authorization': `Token ${getToken()}`
                     },
                     body: JSON.stringify(data)
                 });

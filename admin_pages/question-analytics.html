@@ -423,7 +423,7 @@
         async function loadAnalytics() {
             try {
                 const response = await fetch(`${API_BASE}/quiz-analytics/summary/`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
                 
                 if (!response.ok) throw new Error('Failed to load analytics');
@@ -449,7 +449,7 @@
         async function loadComparison() {
             try {
                 const response = await fetch(`${API_BASE}/quiz-analytics/comparison/`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
                 
                 if (!response.ok) throw new Error('Failed to load comparison');
@@ -699,7 +699,7 @@
             try {
                 const response = await fetch(`${API_BASE}/quiz-analytics/refresh-all/`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
 
                 if (!response.ok) throw new Error('Failed to refresh analytics');

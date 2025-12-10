@@ -643,7 +643,7 @@
         async function loadTools() {
             try {
                 const response = await fetch(`${API_BASE}/tools/`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
                 const tools = await response.json();
                 
@@ -663,7 +663,7 @@
         async function loadQuestions() {
             try {
                 const response = await fetch(`${API_BASE}/quiz-questions/`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
                 
                 if (!response.ok) throw new Error('Failed to load questions');
@@ -814,10 +814,10 @@
             try {
                 const [questionRes, analyticsRes] = await Promise.all([
                     fetch(`${API_BASE}/quiz-questions/${id}/`, {
-                        headers: { 'Authorization': `Bearer ${getToken()}` }
+                        headers: { 'Authorization': `Token ${getToken()}` }
                     }),
                     fetch(`${API_BASE}/quiz-analytics/question/${id}/`, {
-                        headers: { 'Authorization': `Bearer ${getToken()}` }
+                        headers: { 'Authorization': `Token ${getToken()}` }
                     })
                 ]);
 
@@ -1002,7 +1002,7 @@
             try {
                 const response = await fetch(`${API_BASE}/quiz-analytics/question/${questionId}/refresh/`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
 
                 if (!response.ok) throw new Error('Failed to refresh analytics');
@@ -1019,7 +1019,7 @@
         async function editQuestion(id) {
             try {
                 const response = await fetch(`${API_BASE}/quiz-questions/${id}/`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
                 
                 if (!response.ok) throw new Error('Failed to load question');
@@ -1101,6 +1101,42 @@
                     if (config.keywords) {
                         document.getElementById('writtenKeywords').value = config.keywords.join(', ');
                     }
+                } else if (type === 'reorder') {
+                    if (config.correct_order && config.correct_order.length > 0) {
+                        const reorderList = document.getElementById('reorderList');
+                        reorderList.innerHTML = '';
+                        config.correct_order.forEach((item, idx) => {
+                            const div = document.createElement('div');
+                            div.className = 'option-item';
+                            div.innerHTML = `
+                                <input type="text" placeholder="Item ${idx+1} (in correct order)" value="${item}" required>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            `;
+                            reorderList.appendChild(div);
+                        });
+                    }
+                } else if (type === 'matching') {
+                    if (config.matching_pairs && config.matching_pairs.length > 0) {
+                        const matchingList = document.getElementById('matchingList');
+                        matchingList.innerHTML = '';
+                        config.matching_pairs.forEach((pair) => {
+                            const div = document.createElement('div');
+                            div.className = 'option-item';
+                            div.style.display = 'grid';
+                            div.style.gridTemplateColumns = '1fr 1fr auto';
+                            div.style.gap = '0.5rem';
+                            div.innerHTML = `
+                                <input type="text" placeholder="Left item" value="${pair.left}" required>
+                                <input type="text" placeholder="Right item" value="${pair.right}" required>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            `;
+                            matchingList.appendChild(div);
+                        });
+                    }
                 }
             }, 100);
         }
@@ -1111,7 +1147,7 @@
             try {
                 const response = await fetch(`${API_BASE}/quiz-questions/${id}/delete/`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                    headers: { 'Authorization': `Token ${getToken()}` }
                 });
                 
                 if (!response.ok) throw new Error('Failed to delete question');
@@ -1192,6 +1228,60 @@
                         <small>Leave empty for manual grading only</small>
                     </div>
                 `;
+            } else if (type === 'reorder') {
+                section.innerHTML = `
+                    <div class="form-group">
+                        <label>Items to Reorder* (students will drag these into correct order)</label>
+                        <div id="reorderList" class="answer-options">
+                            <div class="option-item">
+                                <input type="text" placeholder="First item (in correct order)" required>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="option-item">
+                                <input type="text" placeholder="Second item (in correct order)" required>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-secondary btn-add-option" onclick="addReorderItem()">
+                            <i class="fas fa-plus"></i> Add Item
+                        </button>
+                        <small style="display: block; margin-top: 0.5rem; color: var(--gray-700);">
+                            Enter items in the CORRECT order. Students will see them shuffled and must drag them to match this order.
+                        </small>
+                    </div>
+                `;
+            } else if (type === 'matching') {
+                section.innerHTML = `
+                    <div class="form-group">
+                        <label>Matching Pairs* (left items will be matched to right items)</label>
+                        <div id="matchingList" class="answer-options">
+                            <div class="option-item" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.5rem;">
+                                <input type="text" placeholder="Left item (e.g., Term)" required>
+                                <input type="text" placeholder="Right item (e.g., Definition)" required>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="option-item" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.5rem;">
+                                <input type="text" placeholder="Left item" required>
+                                <input type="text" placeholder="Right item" required>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-secondary btn-add-option" onclick="addMatchingPair()">
+                            <i class="fas fa-plus"></i> Add Pair
+                        </button>
+                        <small style="display: block; margin-top: 0.5rem; color: var(--gray-700);">
+                            Students will drag left items to match with correct right items. Right items will be shuffled.
+                        </small>
+                    </div>
+                `;
             }
         }
 
@@ -1212,6 +1302,37 @@
 
         function removeOption(btn) {
             btn.parentElement.remove();
+        }
+
+        function addReorderItem() {
+            const list = document.getElementById('reorderList');
+            const count = list.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            div.innerHTML = `
+                <input type="text" placeholder="Item ${count} (in correct order)" required>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            list.appendChild(div);
+        }
+
+        function addMatchingPair() {
+            const list = document.getElementById('matchingList');
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            div.style.display = 'grid';
+            div.style.gridTemplateColumns = '1fr 1fr auto';
+            div.style.gap = '0.5rem';
+            div.innerHTML = `
+                <input type="text" placeholder="Left item" required>
+                <input type="text" placeholder="Right item" required>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            list.appendChild(div);
         }
 
         // ========================================================================
@@ -1579,7 +1700,7 @@
                     method,
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getToken()}`
+                        'Authorization': `Token ${getToken()}`
                     },
                     body: JSON.stringify(questionData)
                 });
@@ -1628,6 +1749,28 @@
             } else if (type === 'written') {
                 const keywords = document.getElementById('writtenKeywords')?.value || '';
                 config.keywords = keywords.split(',').map(k => k.trim()).filter(k => k);
+            } else if (type === 'reorder') {
+                const items = [];
+                const itemElements = document.querySelectorAll('#reorderList .option-item input[type="text"]');
+                itemElements.forEach((input) => {
+                    if (input.value.trim()) {
+                        items.push(input.value.trim());
+                    }
+                });
+                config.correct_order = items;
+            } else if (type === 'matching') {
+                const pairs = [];
+                const pairElements = document.querySelectorAll('#matchingList .option-item');
+                pairElements.forEach((item) => {
+                    const inputs = item.querySelectorAll('input[type="text"]');
+                    if (inputs.length >= 2 && inputs[0].value.trim() && inputs[1].value.trim()) {
+                        pairs.push({
+                            left: inputs[0].value.trim(),
+                            right: inputs[1].value.trim()
+                        });
+                    }
+                });
+                config.matching_pairs = pairs;
             }
             
             // Add variables if any are defined
