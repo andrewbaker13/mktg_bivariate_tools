@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Bank - Dr. Baker Marketing</title>
+    <link rel="stylesheet" href="../shared/css/main.css">
+    <link rel="stylesheet" href="../shared/css/admin-nav.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: var(--gray-900);
+            font-size: 1.75rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .filters-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 0.5rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .question-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .question-type-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .type-multiple_choice { background: #dbeafe; color: #1e40af; }
+        .type-select_all { background: #fef3c7; color: #92400e; }
+        .type-numeric { background: #d1fae5; color: #065f46; }
+        .type-fill_blank { background: #e9d5ff; color: #6b21a8; }
+        .type-written { background: #fce7f3; color: #9f1239; }
+        .type-reorder { background: #fbcfe8; color: #831843; }
+        .type-matching { background: #fed7aa; color: #92400e; }
+
+        .difficulty-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .diff-easy { background: #d1fae5; color: #065f46; }
+        .diff-medium { background: #fef3c7; color: #92400e; }
+        .diff-hard { background: #fee2e2; color: #991b1b; }
+
+        .question-text {
+            font-size: 1rem;
+            color: var(--gray-900);
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+
+        .question-meta {
+            display: flex;
+            gap: 1.5rem;
+            margin: 1rem 0;
+            font-size: 0.875rem;
+            color: var(--gray-700);
+        }
+
+        .question-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .question-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-700);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .answer-options {
+            margin-top: 1rem;
+        }
+
+        .option-item {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+
+        .option-item input[type="text"] {
+            flex: 1;
+        }
+
+        .option-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        .btn-add-option {
+            margin-top: 0.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-700);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--gray-200);
+            margin-bottom: 1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-700);
+        }
+
+        .spinner {
+            border: 3px solid var(--gray-200);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .tag {
+            background: var(--gray-100);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: var(--gray-700);
+        }
+    </style>
+</head>
+<body>
+    <div id="adminNav"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-question-circle"></i> Question Bank</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="window.location.href='quiz-manager.html'">
+                    <i class="fas fa-arrow-left"></i> Back to Quizzes
+                </button>
+                <button class="btn btn-primary" onclick="openCreateModal()">
+                    <i class="fas fa-plus"></i> Create Question
+                </button>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Question Type</label>
+                    <select id="filterType" onchange="applyFilters()">
+                        <option value="">All Types</option>
+                        <option value="multiple_choice">Multiple Choice</option>
+                        <option value="select_all">Select All</option>
+                        <option value="numeric">Numeric</option>
+                        <option value="fill_blank">Fill in Blank</option>
+                        <option value="written">Written</option>
+                        <option value="reorder">Reorder</option>
+                        <option value="matching">Matching</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Difficulty</label>
+                    <select id="filterDifficulty" onchange="applyFilters()">
+                        <option value="">All Levels</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Tool/Topic</label>
+                    <select id="filterTool" onchange="applyFilters()">
+                        <option value="">All Tools</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Visibility</label>
+                    <select id="filterVisibility" onchange="applyFilters()">
+                        <option value="">All</option>
+                        <option value="private">Private</option>
+                        <option value="shared">Shared</option>
+                        <option value="universal">Universal</option>
+                    </select>
+                </div>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search questions..." onkeyup="handleSearch()">
+                <button class="btn btn-primary" onclick="applyFilters()">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </div>
+
+        <div id="questionsList" class="question-grid">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading questions...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Question Modal -->
+    <div id="questionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Create Question</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="questionForm" onsubmit="saveQuestion(event)">
+                <div class="form-group">
+                    <label>Question Type*</label>
+                    <select id="questionType" required onchange="handleTypeChange()">
+                        <option value="">Select type...</option>
+                        <option value="multiple_choice">Multiple Choice</option>
+                        <option value="select_all">Select All That Apply</option>
+                        <option value="numeric">Numeric/Calculation</option>
+                        <option value="fill_blank">Fill in the Blank</option>
+                        <option value="written">Written Response</option>
+                        <option value="reorder">Drag and Drop/Reorder</option>
+                        <option value="matching">Matching</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Question Text*</label>
+                    <textarea id="questionText" required placeholder="Enter your question..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Instructions (Optional)</label>
+                    <textarea id="instruction" placeholder="Additional instructions for students..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Image URL (Optional)</label>
+                    <input type="url" id="imageUrl" placeholder="https://...">
+                </div>
+
+                <div id="answerConfigSection">
+                    <!-- Dynamic answer configuration based on question type -->
+                </div>
+
+                <!-- Variable System -->
+                <div class="form-group" style="border-top: 2px solid var(--primary); padding-top: 1.5rem; margin-top: 2rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; color: var(--primary);">
+                        <i class="fas fa-random"></i> 
+                        Dynamic Variables (Optional)
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="toggleVariableHelp()" style="margin-left: auto;">
+                            <i class="fas fa-question-circle"></i> Help
+                        </button>
+                    </label>
+                    <small style="display: block; margin-bottom: 1rem; color: var(--gray-700);">
+                        Create questions with random values that differ for each student. Use {{variable_name}} in question text, answers, and feedback.
+                    </small>
+                    
+                    <div id="variableHelpBox" style="display: none; background: #dbeafe; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary);">
+                        <h4 style="margin: 0 0 0.5rem 0;"><i class="fas fa-lightbulb"></i> How to Use Variables</h4>
+                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                            <li><strong>Uniform:</strong> Random numbers in a range (e.g., B0 between 5-15)</li>
+                            <li><strong>Discrete:</strong> Random pick from list (e.g., brands: Nike, Adidas, Puma)</li>
+                            <li><strong>Formula (Calculate):</strong> Compute answer from other variables (e.g., {{B0}}+{{B1}}*{{X}})</li>
+                            <li><strong>Formula (Display):</strong> Show formula with values (e.g., "Sales = 8.2 + 1.5 × X")</li>
+                        </ul>
+                        <p style="margin: 0.5rem 0 0 0;"><strong>Usage:</strong> Type {{variable_name}} anywhere in your question, answers, or feedback.</p>
+                    </div>
+                    
+                    <div id="variablesList" style="margin-top: 1rem;">
+                        <!-- Variables will be added here -->
+                    </div>
+                    
+                    <button type="button" class="btn btn-secondary" onclick="showAddVariableModal()">
+                        <i class="fas fa-plus"></i> Add Variable
+                    </button>
+                    
+                    <button type="button" class="btn btn-secondary" onclick="previewVariables()">
+                        <i class="fas fa-eye"></i> Preview with Sample Values
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label>Feedback When Correct (Optional)</label>
+                    <textarea id="feedbackCorrect" placeholder="Great job! ..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Feedback When Incorrect (Optional)</label>
+                    <textarea id="feedbackIncorrect" placeholder="Not quite. ..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Tool/Topic</label>
+                    <select id="tool">
+                        <option value="">None</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Difficulty</label>
+                    <select id="difficulty">
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Tags (comma-separated)</label>
+                    <input type="text" id="tags" placeholder="regression, correlation, basics">
+                </div>
+
+                <div class="form-group">
+                    <label>Visibility</label>
+                    <select id="visibility">
+                        <option value="private">Private (only me)</option>
+                        <option value="shared">Shared (specific instructors)</option>
+                        <option value="universal">Universal (all instructors)</option>
+                    </select>
+                </div>
+
+                <div class="question-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Question
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Variable Modal -->
+    <div id="variableModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="variableModalTitle">Add Variable</h2>
+                <button class="close-modal" onclick="closeVariableModal()">&times;</button>
+            </div>
+            <form id="variableForm" onsubmit="saveVariable(event)">
+                <div class="form-group">
+                    <label>Variable Name*</label>
+                    <input type="text" id="varName" required placeholder="e.g., B0, X, brand_name" 
+                           pattern="[a-zA-Z_][a-zA-Z0-9_]*" title="Letters, numbers, underscore only. Must start with letter or underscore.">
+                    <small>Use letters, numbers, and underscores. No spaces. Use {{varName}} in your question.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Variable Type*</label>
+                    <select id="varType" required onchange="handleVarTypeChange()">
+                        <option value="">Select type...</option>
+                        <option value="uniform">Uniform (Random Number Range)</option>
+                        <option value="discrete">Discrete (Random from List)</option>
+                        <option value="formula_calculate">Formula - Calculate (Compute Result)</option>
+                        <option value="formula_display">Formula - Display (Show Formula)</option>
+                    </select>
+                </div>
+
+                <div id="varTypeConfig">
+                    <!-- Dynamic config based on type -->
+                </div>
+
+                <div class="question-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Variable
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeVariableModal()">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../shared/components/admin-nav.js"></script>
+    <script>
+        const API_BASE = 'https://drbaker-backend.onrender.com/api';
+        let allQuestions = [];
+        let currentEditId = null;
+        let questionVariables = {}; // Stores variables for current question being edited
+        let currentEditVarName = null; // For editing existing variables
+
+        // Auth
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+
+        function checkAuth() {
+            if (!getToken()) {
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!checkAuth()) return;
+            await loadTools();
+            await loadQuestions();
+        });
+
+        // Load tools for filter and form
+        async function loadTools() {
+            try {
+                const response = await fetch(`${API_BASE}/tools/`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                const tools = await response.json();
+                
+                const filterSelect = document.getElementById('filterTool');
+                const formSelect = document.getElementById('tool');
+                
+                tools.forEach(tool => {
+                    filterSelect.innerHTML += `<option value="${tool.slug}">${tool.name}</option>`;
+                    formSelect.innerHTML += `<option value="${tool.id}">${tool.name}</option>`;
+                });
+            } catch (error) {
+                console.error('Error loading tools:', error);
+            }
+        }
+
+        // Load questions
+        async function loadQuestions() {
+            try {
+                const response = await fetch(`${API_BASE}/quiz-questions/`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load questions');
+                
+                allQuestions = await response.json();
+                displayQuestions(allQuestions);
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                document.getElementById('questionsList').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Error Loading Questions</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Display questions
+        function displayQuestions(questions) {
+            const container = document.getElementById('questionsList');
+            
+            if (questions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-question-circle"></i>
+                        <h3>No Questions Found</h3>
+                        <p>Create your first question to get started.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = questions.map(q => `
+                <div class="question-card">
+                    <div class="question-header">
+                        <div>
+                            <span class="question-type-badge type-${q.question_type}">
+                                ${formatQuestionType(q.question_type)}
+                            </span>
+                            ${q.difficulty ? `<span class="difficulty-badge diff-${q.difficulty}">${q.difficulty}</span>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="question-text">${q.question_text}</div>
+                    
+                    ${q.tags && q.tags.length > 0 ? `
+                        <div class="tags">
+                            ${q.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="question-meta">
+                        ${q.tool ? `
+                            <div class="question-meta-item">
+                                <i class="fas fa-wrench"></i>
+                                ${q.tool.name}
+                            </div>
+                        ` : ''}
+                        <div class="question-meta-item">
+                            <i class="fas fa-eye"></i>
+                            ${q.visibility}
+                        </div>
+                        ${q.created_by ? `
+                            <div class="question-meta-item">
+                                <i class="fas fa-user"></i>
+                                ${q.created_by.username}
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="question-actions">
+                        <button class="btn btn-sm btn-primary" onclick="viewQuestion(${q.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="editQuestion(${q.id})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="deleteQuestion(${q.id})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Format question type for display
+        function formatQuestionType(type) {
+            const types = {
+                'multiple_choice': 'Multiple Choice',
+                'select_all': 'Select All',
+                'numeric': 'Numeric',
+                'fill_blank': 'Fill Blank',
+                'written': 'Written',
+                'reorder': 'Reorder',
+                'matching': 'Matching'
+            };
+            return types[type] || type;
+        }
+
+        // Filters
+        function applyFilters() {
+            const type = document.getElementById('filterType').value;
+            const difficulty = document.getElementById('filterDifficulty').value;
+            const tool = document.getElementById('filterTool').value;
+            const visibility = document.getElementById('filterVisibility').value;
+            const search = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = allQuestions.filter(q => {
+                if (type && q.question_type !== type) return false;
+                if (difficulty && q.difficulty !== difficulty) return false;
+                if (tool && (!q.tool || q.tool.slug !== tool)) return false;
+                if (visibility && q.visibility !== visibility) return false;
+                if (search) {
+                    const searchable = `${q.question_text} ${q.instruction} ${q.tags.join(' ')}`.toLowerCase();
+                    if (!searchable.includes(search)) return false;
+                }
+                return true;
+            });
+
+            displayQuestions(filtered);
+        }
+
+        function handleSearch() {
+            if (event.key === 'Enter') {
+                applyFilters();
+            }
+        }
+
+        // Modal functions
+        function openCreateModal() {
+            currentEditId = null;
+            questionVariables = {}; // Reset variables
+            document.getElementById('modalTitle').textContent = 'Create Question';
+            document.getElementById('questionForm').reset();
+            document.getElementById('answerConfigSection').innerHTML = '';
+            updateVariablesList();
+            document.getElementById('questionModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('questionModal').classList.remove('active');
+            currentEditId = null;
+            questionVariables = {}; // Clear variables
+        }
+
+        async function viewQuestion(id) {
+            try {
+                const [questionRes, analyticsRes] = await Promise.all([
+                    fetch(`${API_BASE}/quiz-questions/${id}/`, {
+                        headers: { 'Authorization': `Bearer ${getToken()}` }
+                    }),
+                    fetch(`${API_BASE}/quiz-analytics/question/${id}/`, {
+                        headers: { 'Authorization': `Bearer ${getToken()}` }
+                    })
+                ]);
+
+                if (!questionRes.ok) throw new Error('Failed to load question');
+                
+                const question = await questionRes.json();
+                const analytics = analyticsRes.ok ? await analyticsRes.json() : null;
+
+                showQuestionDetailsModal(question, analytics);
+            } catch (error) {
+                console.error('Error loading question:', error);
+                alert('Failed to load question details');
+            }
+        }
+
+        function showQuestionDetailsModal(question, analytics) {
+            const hasAnalytics = analytics && analytics.times_answered > 0;
+            
+            let analyticsHTML = '';
+            if (hasAnalytics) {
+                const performanceClass = 
+                    analytics.correct_rate >= 70 ? 'success' : 
+                    analytics.correct_rate >= 50 ? 'warning' : 'danger';
+                
+                const difficultyMatch = analytics.difficulty_match;
+                const matchBadge = difficultyMatch ? 
+                    '<span class="badge badge-success">✓ Difficulty Matches</span>' :
+                    `<span class="badge badge-warning">⚠ Difficulty Mismatch (Actual: ${analytics.actual_difficulty})</span>`;
+
+                analyticsHTML = `
+                    <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--gray-200);">
+                        <h3 style="margin-bottom: 1rem;"><i class="fas fa-chart-bar"></i> Performance Analytics</h3>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="background: var(--gray-50); padding: 1rem; border-radius: 8px;">
+                                <div style="font-size: 0.875rem; color: var(--gray-700); margin-bottom: 0.5rem;">Times Used</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">${analytics.times_used}</div>
+                            </div>
+                            <div style="background: var(--gray-50); padding: 1rem; border-radius: 8px;">
+                                <div style="font-size: 0.875rem; color: var(--gray-700); margin-bottom: 0.5rem;">Times Answered</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">${analytics.times_answered}</div>
+                            </div>
+                            <div style="background: var(--gray-50); padding: 1rem; border-radius: 8px;">
+                                <div style="font-size: 0.875rem; color: var(--gray-700); margin-bottom: 0.5rem;">Correct Rate</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--${performanceClass});">${analytics.correct_rate.toFixed(1)}%</div>
+                            </div>
+                            <div style="background: var(--gray-50); padding: 1rem; border-radius: 8px;">
+                                <div style="font-size: 0.875rem; color: var(--gray-700); margin-bottom: 0.5rem;">Avg Points</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">${analytics.average_points.toFixed(1)}</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            ${matchBadge}
+                        </div>
+
+                        ${analytics.response_distribution ? `
+                            <div style="margin-bottom: 1.5rem;">
+                                <h4 style="margin-bottom: 0.75rem;">Response Distribution</h4>
+                                <div style="display: grid; gap: 0.5rem;">
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: #d1fae5; border-radius: 4px;">
+                                        <span><i class="fas fa-check-circle" style="color: #065f46;"></i> Correct</span>
+                                        <strong>${analytics.times_correct} (${((analytics.times_correct/analytics.times_answered)*100).toFixed(1)}%)</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: #fee2e2; border-radius: 4px;">
+                                        <span><i class="fas fa-times-circle" style="color: #991b1b;"></i> Incorrect</span>
+                                        <strong>${analytics.times_incorrect} (${((analytics.times_incorrect/analytics.times_answered)*100).toFixed(1)}%)</strong>
+                                    </div>
+                                    ${analytics.times_partial > 0 ? `
+                                    <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: #fef3c7; border-radius: 4px;">
+                                        <span><i class="fas fa-minus-circle" style="color: #92400e;"></i> Partial</span>
+                                        <strong>${analytics.times_partial} (${((analytics.times_partial/analytics.times_answered)*100).toFixed(1)}%)</strong>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${analytics.recommendations && analytics.recommendations.length > 0 ? `
+                            <div style="background: #dbeafe; padding: 1rem; border-radius: 8px; border-left: 4px solid var(--primary);">
+                                <h4 style="margin: 0 0 0.5rem 0; color: var(--primary);"><i class="fas fa-lightbulb"></i> Recommendations</h4>
+                                <ul style="margin: 0; padding-left: 1.5rem;">
+                                    ${analytics.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        <div style="margin-top: 1rem;">
+                            <button class="btn btn-sm btn-secondary" onclick="refreshQuestionAnalytics(${question.id})">
+                                <i class="fas fa-sync-alt"></i> Refresh Analytics
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                analyticsHTML = `
+                    <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--gray-200); text-align: center; color: var(--gray-700);">
+                        <i class="fas fa-chart-bar" style="font-size: 2rem; color: var(--gray-200); margin-bottom: 1rem;"></i>
+                        <p>No performance data yet. This question hasn't been answered by students.</p>
+                    </div>
+                `;
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.id = 'viewQuestionModal';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2><i class="fas fa-eye"></i> Question Details</h2>
+                        <button class="btn btn-secondary" onclick="closeViewModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div style="padding: 2rem;">
+                        <div style="margin-bottom: 1.5rem;">
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                                <span class="badge badge-info">${question.question_type.replace('_', ' ')}</span>
+                                <span class="badge badge-${question.difficulty === 'hard' ? 'danger' : question.difficulty === 'medium' ? 'warning' : 'success'}">${question.difficulty}</span>
+                                ${question.tool ? `<span class="badge badge-info">${question.tool}</span>` : ''}
+                                <span class="badge badge-info">${question.visibility}</span>
+                            </div>
+                            
+                            <h3 style="margin-bottom: 1rem;">${question.question_text}</h3>
+                            
+                            ${question.instruction ? `<p style="color: var(--gray-700); font-style: italic; margin-bottom: 1rem;">${question.instruction}</p>` : ''}
+                            
+                            ${question.image_url ? `<img src="${question.image_url}" style="max-width: 100%; border-radius: 8px; margin-bottom: 1rem;" alt="Question image">` : ''}
+                        </div>
+
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="margin-bottom: 0.75rem;">Answer Configuration</h4>
+                            <pre style="background: var(--gray-50); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.875rem;">${JSON.stringify(question.answer_config, null, 2)}</pre>
+                        </div>
+
+                        ${question.feedback_correct ? `
+                            <div style="background: #d1fae5; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                <strong style="color: #065f46;"><i class="fas fa-check-circle"></i> Correct Feedback:</strong>
+                                <p style="margin: 0.5rem 0 0 0;">${question.feedback_correct}</p>
+                            </div>
+                        ` : ''}
+
+                        ${question.feedback_incorrect ? `
+                            <div style="background: #fee2e2; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                <strong style="color: #991b1b;"><i class="fas fa-times-circle"></i> Incorrect Feedback:</strong>
+                                <p style="margin: 0.5rem 0 0 0;">${question.feedback_incorrect}</p>
+                            </div>
+                        ` : ''}
+
+                        ${question.tags && question.tags.length > 0 ? `
+                            <div style="margin-bottom: 1rem;">
+                                <strong>Tags:</strong>
+                                ${question.tags.map(tag => `<span class="badge badge-secondary" style="margin-left: 0.5rem;">${tag}</span>`).join('')}
+                            </div>
+                        ` : ''}
+
+                        ${analyticsHTML}
+
+                        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                            <button class="btn btn-secondary" onclick="closeViewModal()">
+                                <i class="fas fa-times"></i> Close
+                            </button>
+                            <button class="btn btn-primary" onclick="closeViewModal(); editQuestion(${question.id});">
+                                <i class="fas fa-edit"></i> Edit Question
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        function closeViewModal() {
+            const modal = document.getElementById('viewQuestionModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        async function refreshQuestionAnalytics(questionId) {
+            try {
+                const response = await fetch(`${API_BASE}/quiz-analytics/question/${questionId}/refresh/`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to refresh analytics');
+
+                alert('Analytics refreshed successfully!');
+                closeViewModal();
+                viewQuestion(questionId); // Reload the view
+            } catch (error) {
+                console.error('Error refreshing analytics:', error);
+                alert('Failed to refresh analytics');
+            }
+        }
+
+        async function editQuestion(id) {
+            try {
+                const response = await fetch(`${API_BASE}/quiz-questions/${id}/`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load question');
+                
+                const question = await response.json();
+                currentEditId = id;
+                
+                // Fill form
+                document.getElementById('modalTitle').textContent = 'Edit Question';
+                document.getElementById('questionType').value = question.question_type;
+                document.getElementById('questionText').value = question.question_text;
+                document.getElementById('instruction').value = question.instruction || '';
+                document.getElementById('imageUrl').value = question.image_url || '';
+                document.getElementById('feedbackCorrect').value = question.feedback_correct || '';
+                document.getElementById('feedbackIncorrect').value = question.feedback_incorrect || '';
+                document.getElementById('tool').value = question.tool ? question.tool.id : '';
+                document.getElementById('difficulty').value = question.difficulty || 'medium';
+                document.getElementById('tags').value = question.tags.join(', ');
+                document.getElementById('visibility').value = question.visibility;
+                
+                // Load variables if they exist
+                if (question.answer_config && question.answer_config.variables) {
+                    questionVariables = question.answer_config.variables;
+                } else {
+                    questionVariables = {};
+                }
+                updateVariablesList();
+                
+                handleTypeChange();
+                
+                // Load answer config data into form fields
+                if (question.answer_config) {
+                    loadAnswerConfigIntoForm(question.question_type, question.answer_config);
+                }
+                
+                document.getElementById('questionModal').classList.add('active');
+            } catch (error) {
+                console.error('Error loading question:', error);
+                alert('Failed to load question');
+            }
+        }
+        
+        function loadAnswerConfigIntoForm(type, config) {
+            // Wait a moment for handleTypeChange to create the fields
+            setTimeout(() => {
+                if (type === 'multiple_choice' || type === 'select_all') {
+                    if (config.options) {
+                        const optionsList = document.getElementById('optionsList');
+                        optionsList.innerHTML = '';
+                        config.options.forEach((opt, idx) => {
+                            const div = document.createElement('div');
+                            div.className = 'option-item';
+                            div.innerHTML = `
+                                <input type="text" placeholder="Option ${idx+1}" value="${opt.text}" required>
+                                <input type="checkbox" title="Correct answer" ${opt.is_correct ? 'checked' : ''}>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            `;
+                            optionsList.appendChild(div);
+                        });
+                    }
+                } else if (type === 'numeric') {
+                    if (config.correct_answer !== undefined) {
+                        document.getElementById('numericAnswer').value = config.correct_answer;
+                    }
+                    if (config.tolerance !== undefined) {
+                        document.getElementById('numericTolerance').value = config.tolerance;
+                    }
+                } else if (type === 'fill_blank') {
+                    if (config.acceptable_answers) {
+                        document.getElementById('fillBlankAnswers').value = config.acceptable_answers.join(', ');
+                    }
+                    if (config.case_sensitive !== undefined) {
+                        const checkbox = document.getElementById('caseSensitive');
+                        if (checkbox) checkbox.checked = config.case_sensitive;
+                    }
+                } else if (type === 'written') {
+                    if (config.keywords) {
+                        document.getElementById('writtenKeywords').value = config.keywords.join(', ');
+                    }
+                }
+            }, 100);
+        }
+
+        async function deleteQuestion(id) {
+            if (!confirm('Are you sure you want to delete this question?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz-questions/${id}/delete/`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to delete question');
+                
+                await loadQuestions();
+                alert('Question deleted successfully');
+            } catch (error) {
+                console.error('Error deleting question:', error);
+                alert('Failed to delete question');
+            }
+        }
+
+        // Handle question type change
+        function handleTypeChange() {
+            const type = document.getElementById('questionType').value;
+            const section = document.getElementById('answerConfigSection');
+            
+            if (!type) {
+                section.innerHTML = '';
+                return;
+            }
+
+            // Generate appropriate answer config UI based on type
+            if (type === 'multiple_choice' || type === 'select_all') {
+                section.innerHTML = `
+                    <div class="form-group">
+                        <label>Answer Options*</label>
+                        <div id="optionsList" class="answer-options">
+                            <div class="option-item">
+                                <input type="text" placeholder="Option 1" required>
+                                <input type="checkbox" title="Correct answer">
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="option-item">
+                                <input type="text" placeholder="Option 2" required>
+                                <input type="checkbox" title="Correct answer">
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-secondary btn-add-option" onclick="addOption()">
+                            <i class="fas fa-plus"></i> Add Option
+                        </button>
+                    </div>
+                `;
+            } else if (type === 'numeric') {
+                section.innerHTML = `
+                    <div class="form-group">
+                        <label>Correct Answer*</label>
+                        <input type="number" id="numericAnswer" step="any" required placeholder="Enter correct answer">
+                    </div>
+                    <div class="form-group">
+                        <label>Tolerance (±)</label>
+                        <input type="number" id="numericTolerance" step="any" placeholder="0.01">
+                    </div>
+                `;
+            } else if (type === 'fill_blank') {
+                section.innerHTML = `
+                    <div class="form-group">
+                        <label>Acceptable Answers (comma-separated)*</label>
+                        <input type="text" id="fillBlankAnswers" required placeholder="answer1, answer2, answer3">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="caseSensitive">
+                            Case sensitive
+                        </label>
+                    </div>
+                `;
+            } else if (type === 'written') {
+                section.innerHTML = `
+                    <div class="form-group">
+                        <label>Keywords for Auto-Grading (optional, comma-separated)</label>
+                        <input type="text" id="writtenKeywords" placeholder="keyword1, keyword2, keyword3">
+                        <small>Leave empty for manual grading only</small>
+                    </div>
+                `;
+            }
+        }
+
+        function addOption() {
+            const list = document.getElementById('optionsList');
+            const count = list.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            div.innerHTML = `
+                <input type="text" placeholder="Option ${count}" required>
+                <input type="checkbox" title="Correct answer">
+                <button type="button" class="btn btn-sm btn-secondary" onclick="removeOption(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            list.appendChild(div);
+        }
+
+        function removeOption(btn) {
+            btn.parentElement.remove();
+        }
+
+        // ========================================================================
+        // VARIABLE SYSTEM
+        // ========================================================================
+
+        function toggleVariableHelp() {
+            const helpBox = document.getElementById('variableHelpBox');
+            helpBox.style.display = helpBox.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function showAddVariableModal() {
+            currentEditVarName = null;
+            document.getElementById('variableModalTitle').textContent = 'Add Variable';
+            document.getElementById('varName').value = '';
+            document.getElementById('varName').disabled = false;
+            document.getElementById('varType').value = '';
+            document.getElementById('varTypeConfig').innerHTML = '';
+            document.getElementById('variableModal').classList.add('active');
+        }
+
+        function closeVariableModal() {
+            document.getElementById('variableModal').classList.remove('active');
+            currentEditVarName = null;
+        }
+
+        function handleVarTypeChange() {
+            const type = document.getElementById('varType').value;
+            const configSection = document.getElementById('varTypeConfig');
+            
+            if (!type) {
+                configSection.innerHTML = '';
+                return;
+            }
+
+            if (type === 'uniform') {
+                configSection.innerHTML = `
+                    <div class="form-group">
+                        <label>Minimum Value*</label>
+                        <input type="number" id="varMin" step="any" required placeholder="e.g., 1">
+                    </div>
+                    <div class="form-group">
+                        <label>Maximum Value*</label>
+                        <input type="number" id="varMax" step="any" required placeholder="e.g., 100">
+                    </div>
+                    <div class="form-group">
+                        <label>Decimal Places</label>
+                        <input type="number" id="varDecimals" min="0" max="10" value="0" placeholder="0 for integers">
+                        <small>0 = integers (5, 23), 1 = one decimal (5.2, 23.7), etc.</small>
+                    </div>
+                    <div style="background: #f0f9ff; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                        <strong>Example:</strong> Min=5, Max=15, Decimals=1 → generates values like 7.3, 12.8, 9.2
+                    </div>
+                `;
+            } else if (type === 'discrete') {
+                configSection.innerHTML = `
+                    <div class="form-group">
+                        <label>Values (one per line)*</label>
+                        <textarea id="varValues" required placeholder="Nike\nAdidas\nPuma\nConverse" style="min-height: 120px;"></textarea>
+                        <small>Enter each possible value on a new line. Can be text or numbers.</small>
+                    </div>
+                    <div style="background: #f0f9ff; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                        <strong>Example:</strong> Randomly picks one value each time. Different students see different values.
+                    </div>
+                `;
+            } else if (type === 'formula_calculate' || type === 'formula_display') {
+                const isCalculate = type === 'formula_calculate';
+                configSection.innerHTML = `
+                    <div class="form-group">
+                        <label>Formula Expression*</label>
+                        <input type="text" id="varExpression" required placeholder="e.g., {{B0}} + {{B1}} * {{X}}">
+                        <small>Use {{variable_name}} to reference other variables. Supports +, -, *, /, ( )</small>
+                    </div>
+                    ${isCalculate ? `
+                        <div class="form-group">
+                            <label>Decimal Places (for result)</label>
+                            <input type="number" id="varDecimals" min="0" max="10" value="2" placeholder="2">
+                        </div>
+                    ` : ''}
+                    <div style="background: ${isCalculate ? '#dcfce7' : '#fef3c7'}; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                        <strong>${isCalculate ? 'Calculate Mode' : 'Display Mode'}:</strong><br>
+                        ${isCalculate ? 
+                            'Evaluates the formula and returns the numeric result.<br>Example: {{B0}}+{{B1}}*{{X}} with B0=8, B1=1.5, X=100 → <strong>158.00</strong>' :
+                            'Shows the formula with values substituted.<br>Example: Sales = {{B0}} + {{B1}} × Advertising with B0=8, B1=1.5 → <strong>"Sales = 8 + 1.5 × Advertising"</strong>'
+                        }
+                    </div>
+                    <div style="background: #fee2e2; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                        <strong>⚠️ Important:</strong> Define base variables (uniform/discrete) BEFORE formula variables that use them.
+                    </div>
+                `;
+            }
+        }
+
+        function saveVariable(event) {
+            event.preventDefault();
+            
+            const varName = document.getElementById('varName').value.trim();
+            const varType = document.getElementById('varType').value;
+            
+            // Build variable definition
+            let varDef = { type: varType.replace('formula_', '') };
+            
+            if (varType === 'uniform') {
+                const min = parseFloat(document.getElementById('varMin').value);
+                const max = parseFloat(document.getElementById('varMax').value);
+                const decimals = parseInt(document.getElementById('varDecimals').value);
+                
+                if (min >= max) {
+                    alert('Maximum must be greater than minimum');
+                    return;
+                }
+                
+                varDef.min = min;
+                varDef.max = max;
+                varDef.decimals = decimals;
+            } else if (varType === 'discrete') {
+                const values = document.getElementById('varValues').value
+                    .split('\n')
+                    .map(v => v.trim())
+                    .filter(v => v);
+                
+                if (values.length === 0) {
+                    alert('Please enter at least one value');
+                    return;
+                }
+                
+                varDef.values = values;
+            } else if (varType === 'formula_calculate' || varType === 'formula_display') {
+                const expression = document.getElementById('varExpression').value.trim();
+                
+                if (!expression) {
+                    alert('Please enter a formula expression');
+                    return;
+                }
+                
+                varDef.expression = expression;
+                varDef.mode = varType === 'formula_calculate' ? 'calculate' : 'display';
+                
+                if (varType === 'formula_calculate') {
+                    varDef.decimals = parseInt(document.getElementById('varDecimals').value);
+                }
+            }
+            
+            // Add to questionVariables
+            if (currentEditVarName && currentEditVarName !== varName) {
+                // Renaming variable
+                delete questionVariables[currentEditVarName];
+            }
+            
+            questionVariables[varName] = varDef;
+            
+            updateVariablesList();
+            closeVariableModal();
+        }
+
+        function updateVariablesList() {
+            const container = document.getElementById('variablesList');
+            
+            if (Object.keys(questionVariables).length === 0) {
+                container.innerHTML = '<p style="color: var(--gray-700); font-style: italic;">No variables defined yet. Click "Add Variable" to create one.</p>';
+                return;
+            }
+            
+            container.innerHTML = Object.entries(questionVariables).map(([name, def]) => {
+                let typeIcon = '';
+                let typeLabel = '';
+                let details = '';
+                
+                if (def.type === 'uniform') {
+                    typeIcon = 'fa-sliders-h';
+                    typeLabel = 'Uniform';
+                    details = `Range: ${def.min} to ${def.max}, Decimals: ${def.decimals}`;
+                } else if (def.type === 'discrete') {
+                    typeIcon = 'fa-list';
+                    typeLabel = 'Discrete';
+                    details = `Values: ${def.values.slice(0, 3).join(', ')}${def.values.length > 3 ? '...' : ''}`;
+                } else if (def.type === 'formula') {
+                    typeIcon = def.mode === 'calculate' ? 'fa-calculator' : 'fa-eye';
+                    typeLabel = def.mode === 'calculate' ? 'Formula (Calculate)' : 'Formula (Display)';
+                    details = def.expression;
+                }
+                
+                return `
+                    <div style="background: var(--gray-50); padding: 1rem; border-radius: 8px; margin-bottom: 0.75rem; border-left: 4px solid var(--primary);">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <i class="fas ${typeIcon}" style="color: var(--primary);"></i>
+                                    <strong style="font-size: 1.1rem; color: var(--gray-900);">{{${name}}}</strong>
+                                    <span style="background: var(--primary); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${typeLabel}</span>
+                                </div>
+                                <div style="font-size: 0.875rem; color: var(--gray-700);">${details}</div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="editVariable('${name}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="deleteVariable('${name}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editVariable(varName) {
+            currentEditVarName = varName;
+            const varDef = questionVariables[varName];
+            
+            document.getElementById('variableModalTitle').textContent = 'Edit Variable';
+            document.getElementById('varName').value = varName;
+            document.getElementById('varName').disabled = true; // Can't rename easily
+            
+            let typeValue = varDef.type;
+            if (typeValue === 'formula') {
+                typeValue = varDef.mode === 'calculate' ? 'formula_calculate' : 'formula_display';
+            }
+            
+            document.getElementById('varType').value = typeValue;
+            handleVarTypeChange();
+            
+            // Fill in values
+            if (varDef.type === 'uniform') {
+                document.getElementById('varMin').value = varDef.min;
+                document.getElementById('varMax').value = varDef.max;
+                document.getElementById('varDecimals').value = varDef.decimals;
+            } else if (varDef.type === 'discrete') {
+                document.getElementById('varValues').value = varDef.values.join('\n');
+            } else if (varDef.type === 'formula') {
+                document.getElementById('varExpression').value = varDef.expression;
+                if (varDef.mode === 'calculate') {
+                    document.getElementById('varDecimals').value = varDef.decimals;
+                }
+            }
+            
+            document.getElementById('variableModal').classList.add('active');
+        }
+
+        function deleteVariable(varName) {
+            if (!confirm(`Delete variable {{${varName}}}? Make sure it's not used in your question.`)) {
+                return;
+            }
+            
+            delete questionVariables[varName];
+            updateVariablesList();
+        }
+
+        function previewVariables() {
+            if (Object.keys(questionVariables).length === 0) {
+                alert('No variables defined yet.');
+                return;
+            }
+            
+            // Generate sample values
+            const sampleValues = generateSampleVariables();
+            
+            // Get current question text
+            const questionText = document.getElementById('questionText').value || '(No question text)';
+            const instruction = document.getElementById('instruction').value || '';
+            const feedbackCorrect = document.getElementById('feedbackCorrect').value || '';
+            
+            // Substitute variables
+            const preview = {
+                question: substituteVariables(questionText, sampleValues),
+                instruction: instruction ? substituteVariables(instruction, sampleValues) : '',
+                feedback: feedbackCorrect ? substituteVariables(feedbackCorrect, sampleValues) : ''
+            };
+            
+            // Show preview modal
+            alert(`PREVIEW WITH SAMPLE VALUES:\n\n${JSON.stringify(sampleValues, null, 2)}\n\n----- Question Text -----\n${preview.question}\n\n${preview.instruction ? `----- Instructions -----\n${preview.instruction}\n\n` : ''}${preview.feedback ? `----- Correct Feedback -----\n${preview.feedback}` : ''}`);
+        }
+
+        function generateSampleVariables() {
+            const values = {};
+            
+            // First pass: Base variables
+            for (const [name, def] of Object.entries(questionVariables)) {
+                if (def.type === 'uniform') {
+                    const range = def.max - def.min;
+                    const value = def.min + Math.random() * range;
+                    values[name] = def.decimals === 0 ? Math.round(value) : parseFloat(value.toFixed(def.decimals));
+                } else if (def.type === 'discrete') {
+                    values[name] = def.values[Math.floor(Math.random() * def.values.length)];
+                }
+            }
+            
+            // Second pass: Formulas
+            for (const [name, def] of Object.entries(questionVariables)) {
+                if (def.type === 'formula') {
+                    let expression = def.expression;
+                    
+                    // Substitute variables in expression
+                    for (const [varName, varValue] of Object.entries(values)) {
+                        expression = expression.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), varValue);
+                    }
+                    
+                    if (def.mode === 'display') {
+                        values[name] = expression;
+                    } else {
+                        // Calculate
+                        try {
+                            // Remove leading = if present
+                            expression = expression.replace(/^=/, '');
+                            const result = eval(expression);
+                            values[name] = def.decimals === 0 ? Math.round(result) : parseFloat(result.toFixed(def.decimals));
+                        } catch (e) {
+                            values[name] = `ERROR: ${e.message}`;
+                        }
+                    }
+                }
+            }
+            
+            return values;
+        }
+
+        function substituteVariables(text, values) {
+            let result = text;
+            for (const [name, value] of Object.entries(values)) {
+                result = result.replace(new RegExp(`\\{\\{${name}\\}\\}`, 'g'), value);
+            }
+            return result;
+        }
+
+        // ========================================================================
+        // END VARIABLE SYSTEM
+        // ========================================================================
+
+        // Save question
+        async function saveQuestion(event) {
+            event.preventDefault();
+            
+            const questionData = {
+                question_type: document.getElementById('questionType').value,
+                question_text: document.getElementById('questionText').value,
+                instruction: document.getElementById('instruction').value,
+                image_url: document.getElementById('imageUrl').value,
+                feedback_correct: document.getElementById('feedbackCorrect').value,
+                feedback_incorrect: document.getElementById('feedbackIncorrect').value,
+                tool: document.getElementById('tool').value || null,
+                difficulty: document.getElementById('difficulty').value,
+                tags: document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t),
+                visibility: document.getElementById('visibility').value,
+                answer_config: buildAnswerConfig()
+            };
+
+            try {
+                const url = currentEditId 
+                    ? `${API_BASE}/quiz-questions/${currentEditId}/update/`
+                    : `${API_BASE}/quiz-questions/create/`;
+                
+                const method = currentEditId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify(questionData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to save question');
+                }
+
+                await loadQuestions();
+                closeModal();
+                alert(currentEditId ? 'Question updated successfully' : 'Question created successfully');
+            } catch (error) {
+                console.error('Error saving question:', error);
+                alert(error.message);
+            }
+        }
+
+        // Build answer config based on question type
+        function buildAnswerConfig() {
+            const type = document.getElementById('questionType').value;
+            let config = {};
+            
+            if (type === 'multiple_choice' || type === 'select_all') {
+                const options = [];
+                const optionItems = document.querySelectorAll('#optionsList .option-item');
+                optionItems.forEach((item, index) => {
+                    const text = item.querySelector('input[type="text"]').value;
+                    const isCorrect = item.querySelector('input[type="checkbox"]').checked;
+                    if (text) {
+                        options.push({
+                            text,
+                            is_correct: isCorrect,
+                            order: index
+                        });
+                    }
+                });
+                config.options = options;
+            } else if (type === 'numeric') {
+                config.correct_answer = parseFloat(document.getElementById('numericAnswer').value);
+                config.tolerance = parseFloat(document.getElementById('numericTolerance').value || 0);
+            } else if (type === 'fill_blank') {
+                config.acceptable_answers = document.getElementById('fillBlankAnswers').value
+                    .split(',').map(a => a.trim()).filter(a => a);
+                config.case_sensitive = document.getElementById('caseSensitive')?.checked || false;
+            } else if (type === 'written') {
+                const keywords = document.getElementById('writtenKeywords')?.value || '';
+                config.keywords = keywords.split(',').map(k => k.trim()).filter(k => k);
+            }
+            
+            // Add variables if any are defined
+            if (Object.keys(questionVariables).length > 0) {
+                config.variables = questionVariables;
+            }
+            
+            return config;
+        }
+    </script>
+</body>
+</html>

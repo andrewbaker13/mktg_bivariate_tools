@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Analytics - Dr. Baker Marketing</title>
+    <link rel="stylesheet" href="../shared/css/main.css">
+    <link rel="stylesheet" href="../shared/css/admin-nav.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: var(--gray-900);
+            font-size: 1.75rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: var(--gray-200); color: var(--gray-700); }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray-700);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-subtext {
+            font-size: 0.875rem;
+            color: var(--gray-700);
+            margin-top: 0.5rem;
+        }
+
+        .chart-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chart-section h2 {
+            margin: 0 0 1.5rem 0;
+            color: var(--gray-900);
+        }
+
+        .chart-bar-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            color: var(--gray-700);
+        }
+
+        .chart-bar {
+            width: 100%;
+            height: 30px;
+            background: var(--gray-100);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding-right: 0.5rem;
+            justify-content: flex-end;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .questions-list {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .questions-list h2 {
+            margin: 0 0 1.5rem 0;
+        }
+
+        .question-item {
+            padding: 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+
+        .question-item:hover {
+            border-color: var(--primary);
+            background: var(--gray-50);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.5rem;
+        }
+
+        .question-text {
+            font-size: 1rem;
+            color: var(--gray-900);
+            margin-bottom: 0.75rem;
+            line-height: 1.5;
+        }
+
+        .question-stats {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.875rem;
+            color: var(--gray-700);
+        }
+
+        .question-stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-700);
+        }
+
+        .spinner {
+            border: 3px solid var(--gray-200);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-700);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--gray-200);
+            margin-bottom: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 12px;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray-700);
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .progress-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--primary) 0deg,
+                var(--gray-200) 0deg
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .progress-circle::before {
+            content: '';
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+        }
+
+        .progress-value {
+            position: relative;
+            z-index: 1;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+    </style>
+</head>
+<body>
+    <div id="adminNav"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-chart-line"></i> Question Analytics</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="window.location.href='question-bank.html'">
+                    <i class="fas fa-arrow-left"></i> Question Bank
+                </button>
+                <button class="btn btn-primary" onclick="refreshAllAnalytics()">
+                    <i class="fas fa-sync-alt"></i> Refresh All
+                </button>
+            </div>
+        </div>
+
+        <div id="statsContainer" class="stats-grid">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading analytics...</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('overview')">
+                <i class="fas fa-chart-pie"></i> Overview
+            </button>
+            <button class="tab-btn" onclick="switchTab('performance')">
+                <i class="fas fa-award"></i> Performance
+            </button>
+            <button class="tab-btn" onclick="switchTab('needsReview')">
+                <i class="fas fa-exclamation-triangle"></i> Needs Review
+            </button>
+            <button class="tab-btn" onclick="switchTab('mostUsed')">
+                <i class="fas fa-fire"></i> Most Used
+            </button>
+        </div>
+
+        <div id="overview" class="tab-content active">
+            <div class="chart-section">
+                <h2>Difficulty Distribution</h2>
+                <div id="difficultyChart"></div>
+            </div>
+
+            <div class="chart-section">
+                <h2>Performance by Question Type</h2>
+                <div id="typeChart"></div>
+            </div>
+        </div>
+
+        <div id="performance" class="tab-content">
+            <div class="questions-list">
+                <h2>Performance by Difficulty</h2>
+                <div id="performanceList"></div>
+            </div>
+        </div>
+
+        <div id="needsReview" class="tab-content">
+            <div class="questions-list">
+                <h2>Questions Needing Review</h2>
+                <p class="stat-subtext">Questions with low correct rates or difficulty mismatches</p>
+                <div id="needsReviewList"></div>
+            </div>
+
+            <div class="questions-list">
+                <h2>Difficulty Mismatches</h2>
+                <p class="stat-subtext">Questions where actual difficulty doesn't match the assigned difficulty</p>
+                <div id="mismatchList"></div>
+            </div>
+        </div>
+
+        <div id="mostUsed" class="tab-content">
+            <div class="questions-list">
+                <h2>Most Popular Questions</h2>
+                <p class="stat-subtext">Questions used most frequently across quizzes</p>
+                <div id="mostUsedList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/components/admin-nav.js"></script>
+    <script>
+        const API_BASE = 'https://drbaker-backend.onrender.com/api';
+        let analyticsData = null;
+        let comparisonData = null;
+
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+
+        function checkAuth() {
+            if (!getToken()) {
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!checkAuth()) return;
+            await loadAnalytics();
+            await loadComparison();
+        });
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch(`${API_BASE}/quiz-analytics/summary/`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load analytics');
+                
+                analyticsData = await response.json();
+                displayStats(analyticsData.summary);
+                displayDifficultyChart(analyticsData.difficulty_distribution);
+                displayNeedsReview(analyticsData.questions_needing_review);
+                displayMismatches(analyticsData.difficulty_mismatches.items);
+                displayMostUsed(analyticsData.most_used_questions);
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                document.getElementById('statsContainer').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Error Loading Analytics</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadComparison() {
+            try {
+                const response = await fetch(`${API_BASE}/quiz-analytics/comparison/`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load comparison');
+                
+                comparisonData = await response.json();
+                displayTypeChart(comparisonData.by_question_type);
+                displayPerformanceByDifficulty(comparisonData.by_difficulty);
+            } catch (error) {
+                console.error('Error loading comparison:', error);
+            }
+        }
+
+        function displayStats(summary) {
+            const container = document.getElementById('statsContainer');
+            container.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Total Questions</div>
+                    <div class="stat-value">${summary.total_questions}</div>
+                    <div class="stat-subtext">${summary.questions_with_data} with response data</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Correct Rate</div>
+                    <div class="stat-value">${summary.average_correct_rate}%</div>
+                    <div class="stat-subtext">Across all questions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Responses</div>
+                    <div class="stat-value">${Math.round(summary.average_times_answered)}</div>
+                    <div class="stat-subtext">Per question</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Needs Review</div>
+                    <div class="stat-value">${analyticsData.questions_needing_review.length}</div>
+                    <div class="stat-subtext">Low performing questions</div>
+                </div>
+            `;
+        }
+
+        function displayDifficultyChart(distribution) {
+            const container = document.getElementById('difficultyChart');
+            const total = Object.values(distribution).reduce((a, b) => a + b, 0);
+            
+            if (total === 0) {
+                container.innerHTML = '<p class="stat-subtext">No data available yet</p>';
+                return;
+            }
+
+            const levels = [
+                { key: 'very_easy', label: 'Very Easy', color: '#10b981' },
+                { key: 'easy', label: 'Easy', color: '#3b82f6' },
+                { key: 'medium', label: 'Medium', color: '#f59e0b' },
+                { key: 'hard', label: 'Hard', color: '#ef4444' },
+                { key: 'very_hard', label: 'Very Hard', color: '#991b1b' }
+            ];
+
+            container.innerHTML = levels.map(level => {
+                const count = distribution[level.key] || 0;
+                const percentage = total > 0 ? (count / total) * 100 : 0;
+                return `
+                    <div class="chart-bar-container">
+                        <div class="chart-label">
+                            <span>${level.label}</span>
+                            <span>${count} questions (${percentage.toFixed(1)}%)</span>
+                        </div>
+                        <div class="chart-bar">
+                            <div class="chart-bar-fill" style="width: ${percentage}%; background: ${level.color};">
+                                ${percentage > 10 ? percentage.toFixed(0) + '%' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function displayTypeChart(byType) {
+            const container = document.getElementById('typeChart');
+            
+            if (!byType || Object.keys(byType).length === 0) {
+                container.innerHTML = '<p class="stat-subtext">No data available yet</p>';
+                return;
+            }
+
+            const maxAnswered = Math.max(...Object.values(byType).map(t => t.avg_times_answered));
+
+            container.innerHTML = Object.entries(byType).map(([type, data]) => {
+                const percentage = (data.avg_times_answered / maxAnswered) * 100;
+                return `
+                    <div class="chart-bar-container">
+                        <div class="chart-label">
+                            <span>${data.label}</span>
+                            <span>${data.avg_correct_rate}% correct • ${data.count} questions</span>
+                        </div>
+                        <div class="chart-bar">
+                            <div class="chart-bar-fill" style="width: ${percentage}%;">
+                                ${percentage > 10 ? data.avg_times_answered.toFixed(0) + ' avg' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function displayPerformanceByDifficulty(byDifficulty) {
+            const container = document.getElementById('performanceList');
+            
+            if (!byDifficulty || Object.keys(byDifficulty).length === 0) {
+                container.innerHTML = '<p class="stat-subtext">No data available yet</p>';
+                return;
+            }
+
+            container.innerHTML = Object.entries(byDifficulty).map(([diff, data]) => `
+                <div class="question-item">
+                    <div class="question-header">
+                        <h3 style="margin: 0; text-transform: capitalize;">${diff}</h3>
+                        <span class="badge badge-info">${data.count} questions</span>
+                    </div>
+                    <div class="question-stats">
+                        <div class="question-stat-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>${data.avg_correct_rate}% Avg Correct Rate</span>
+                        </div>
+                        <div class="question-stat-item">
+                            <i class="fas fa-users"></i>
+                            <span>${Math.round(data.avg_times_answered)} Avg Responses</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayNeedsReview(questions) {
+            const container = document.getElementById('needsReviewList');
+            
+            if (!questions || questions.length === 0) {
+                container.innerHTML = '<p class="stat-subtext">All questions are performing well!</p>';
+                return;
+            }
+
+            container.innerHTML = questions.map(q => `
+                <div class="question-item">
+                    <div class="question-header">
+                        <span class="badge badge-${q.correct_rate < 30 ? 'danger' : 'warning'}">
+                            ${q.correct_rate.toFixed(1)}% correct
+                        </span>
+                    </div>
+                    <div class="question-text">${q.question_text}</div>
+                    <div class="question-stats">
+                        <div class="question-stat-item">
+                            <i class="fas fa-users"></i>
+                            <span>${q.times_answered} responses</span>
+                        </div>
+                        <div class="question-stat-item">
+                            <i class="fas fa-signal"></i>
+                            <span>${q.difficulty}</span>
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="viewQuestionAnalytics(${q.question_id})">
+                            <i class="fas fa-chart-bar"></i> View Details
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayMismatches(mismatches) {
+            const container = document.getElementById('mismatchList');
+            
+            if (!mismatches || mismatches.length === 0) {
+                container.innerHTML = '<p class="stat-subtext">No difficulty mismatches found!</p>';
+                return;
+            }
+
+            container.innerHTML = mismatches.map(m => `
+                <div class="question-item">
+                    <div class="question-header">
+                        <span class="badge badge-warning">
+                            Expected: ${m.expected} → Actual: ${m.actual}
+                        </span>
+                    </div>
+                    <div class="question-text">${m.question_text}</div>
+                    <div class="question-stats">
+                        <div class="question-stat-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>${m.correct_rate.toFixed(1)}% correct rate</span>
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="viewQuestionAnalytics(${m.question_id})">
+                            <i class="fas fa-chart-bar"></i> View Details
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayMostUsed(questions) {
+            const container = document.getElementById('mostUsedList');
+            
+            if (!questions || questions.length === 0) {
+                container.innerHTML = '<p class="stat-subtext">No usage data yet</p>';
+                return;
+            }
+
+            container.innerHTML = questions.map(q => `
+                <div class="question-item">
+                    <div class="question-header">
+                        <span class="badge badge-success">${q.times_used} quizzes</span>
+                    </div>
+                    <div class="question-text">${q.question_text}</div>
+                    <div class="question-stats">
+                        <div class="question-stat-item">
+                            <i class="fas fa-users"></i>
+                            <span>${q.times_answered} responses</span>
+                        </div>
+                        <div class="question-stat-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>${q.correct_rate.toFixed(1)}% correct</span>
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="viewQuestionAnalytics(${q.question_id})">
+                            <i class="fas fa-chart-bar"></i> View Details
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.tab-btn').classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        async function refreshAllAnalytics() {
+            if (!confirm('This will recalculate analytics for all questions. This may take a moment. Continue?')) {
+                return;
+            }
+
+            const btn = event.target.closest('button');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+
+            try {
+                const response = await fetch(`${API_BASE}/quiz-analytics/refresh-all/`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to refresh analytics');
+
+                alert('Analytics refreshed successfully!');
+                await loadAnalytics();
+                await loadComparison();
+            } catch (error) {
+                console.error('Error refreshing analytics:', error);
+                alert('Failed to refresh analytics');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh All';
+            }
+        }
+
+        function viewQuestionAnalytics(questionId) {
+            // TODO: Open modal or navigate to detailed analytics page
+            window.location.href = `question-bank.html?view=${questionId}&tab=analytics`;
+        }
+    </script>
+</body>
+</html>
