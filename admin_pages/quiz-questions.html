@@ -644,16 +644,19 @@
                 'matching': 'Matching'
             };
             
+            // Get option count from answer_config (new format) or options (legacy)
+            const optionCount = question.answer_config?.options?.length || question.options?.length || 0;
+            
             card.innerHTML = `
                 <div class="question-header">
                     ${canEdit ? '<i class="fas fa-grip-vertical drag-handle"></i>' : ''}
                     <div class="question-number">${number}</div>
                     <div class="question-content">
                         <div class="question-type-badge">${typeLabels[question.question_type] || question.question_type}</div>
-                        <div class="question-text">${question.question_text}</div>
+                        <div class="question-text">${question.question_text.substring(0, 150)}${question.question_text.length > 150 ? '...' : ''}</div>
                         <div class="question-meta">
-                            <span><i class="fas fa-star"></i> ${question.points} point${question.points !== 1 ? 's' : ''}</span>
-                            ${question.options.length > 0 ? `<span><i class="fas fa-list"></i> ${question.options.length} options</span>` : ''}
+                            ${optionCount > 0 ? `<span><i class="fas fa-list"></i> ${optionCount} options</span>` : ''}
+                            ${question.difficulty ? `<span><i class="fas fa-signal"></i> ${question.difficulty}</span>` : ''}
                             ${question.tags ? `<span><i class="fas fa-tag"></i> ${question.tags}</span>` : ''}
                         </div>
                     </div>

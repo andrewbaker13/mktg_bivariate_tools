@@ -3,7 +3,7 @@
  * Marketing Analytics Edition
  */
 
-const API_BASE = 'https://drbaker-backend.onrender.com/api';
+// API_BASE is already defined in auth_tracking.js
 const TOOL_SLUG = 'neural_network';
 
 // Global state
@@ -29,6 +29,30 @@ const config = {
     regularization: 'none',
     noise: 0,
     trainSplit: 0.7
+};
+
+// Scenario descriptions
+const scenarioInfo = {
+    churn: {
+        title: "Customer Churn Prediction",
+        description: "Your company tracks pricing and service quality for each customer. The challenge: predict which customers will churn (leave) vs stay loyal. <strong style='color: #3498db;'>Blue customers</strong> are likely to stay, <strong style='color: #e74c3c;'>red customers</strong> are likely to churn. The network learns patterns like: high quality + reasonable price = retention.",
+        realWorld: "Used by subscription services (Netflix, Spotify) to identify at-risk customers before they cancel."
+    },
+    segment: {
+        title: "Market Segmentation",
+        description: "You have customer data on pricing preferences and quality expectations. Goal: identify two distinct market segments (customer groups). <strong style='color: #3498db;'>Blue = premium segment</strong> (willing to pay more for quality), <strong style='color: #e74c3c;'>red = budget segment</strong> (price-conscious). The network finds the boundary between these groups.",
+        realWorld: "Used by companies like Amazon and Target to personalize marketing campaigns for different customer types."
+    },
+    abtest: {
+        title: "A/B Test Conversion Prediction",
+        description: "You're testing two website versions with different pricing and quality messaging. The pattern is complex (XOR-like): conversions happen when price and quality messages <em>mismatch</em> in specific ways. <strong style='color: #3498db;'>Blue = converts</strong>, <strong style='color: #e74c3c;'>red = bounces</strong>. This requires multiple layers to learn.",
+        realWorld: "Used by e-commerce sites and SaaS companies to predict which version will convert better for different customer types."
+    },
+    affinity: {
+        title: "Product Affinity Analysis",
+        description: "Based on customer price sensitivity and quality preferences, predict product affinity (likelihood to purchase related products). The boundary is <em>circular</em>: customers in the middle range show highest affinity. <strong style='color: #3498db;'>Blue = high affinity</strong>, <strong style='color: #e74c3c;'>red = low affinity</strong>.",
+        realWorld: "Used by Amazon for 'frequently bought together' recommendations and by grocery stores for cross-selling."
+    }
 };
 
 // Feature transformations
@@ -398,10 +422,19 @@ function setupEventListeners() {
             document.querySelectorAll('.dataset-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
             config.dataset = card.dataset.dataset;
+            updateScenarioDescription();
             generateData();
             initializeNetwork();
             drawNetwork();
         });
+    });
+
+    // View data button
+    document.getElementById('viewDataBtn').addEventListener('click', showDataPreview);
+
+    // Close modal
+    document.getElementById('closeModal').addEventListener('click', () => {
+        document.getElementById('dataModal').style.display = 'none';
     });
 
     // Feature checkboxes
@@ -478,6 +511,77 @@ function setupEventListeners() {
     });
 }
 
+// Update scenario description
+function updateScenarioDescription() {
+    const info = scenarioInfo[config.dataset];
+    const descEl = document.getElementById('scenarioDescription');
+    descEl.innerHTML = `
+        <strong>${info.title}</strong><br><br>
+        ${info.description}<br><br>
+        <em style="color: #7f8c8d;">💡 Real-world use: ${info.realWorld}</em>
+    `;
+}
+
+// Show data preview modal
+function showDataPreview() {
+    const modal = document.getElementById('dataModal');
+    const content = document.getElementById('dataPreviewContent');
+    
+    // Get sample of 20 data points
+    const sampleData = [...trainData.slice(0, 15), ...testData.slice(0, 5)];
+    
+    let html = `
+        <p style="color: #7f8c8d; margin-bottom: 15px;">
+            Showing 20 of ${trainData.length + testData.length} total data points. 
+            Each row represents one customer/observation.
+        </p>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                <thead>
+                    <tr style="background: #34495e; color: white;">
+                        <th style="padding: 10px; text-align: left;">#</th>
+                        <th style="padding: 10px; text-align: right;">Price</th>
+                        <th style="padding: 10px; text-align: right;">Quality</th>
+                        <th style="padding: 10px; text-align: center;">Outcome</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    sampleData.forEach((d, i) => {
+        const [price, quality] = d.input.slice(0, 2); // First two features
+        const outcome = d.output > 0 ? 'Positive ✓' : 'Negative ✗';
+        const outcomeColor = d.output > 0 ? '#3498db' : '#e74c3c';
+        const rowBg = i % 2 === 0 ? '#f8f9fa' : 'white';
+        
+        html += `
+            <tr style="background: ${rowBg};">
+                <td style="padding: 8px;">${i + 1}</td>
+                <td style="padding: 8px; text-align: right;">${price.toFixed(2)}</td>
+                <td style="padding: 8px; text-align: right;">${quality.toFixed(2)}</td>
+                <td style="padding: 8px; text-align: center; color: ${outcomeColor}; font-weight: bold;">
+                    ${outcome}
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+        <p style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 6px; font-size: 0.9em;">
+            <strong>Understanding the data:</strong><br>
+            • Price and Quality are the <strong>inputs</strong> (what we know)<br>
+            • Outcome is the <strong>target</strong> (what we want to predict)<br>
+            • The network learns the pattern connecting inputs to outcomes
+        </p>
+    `;
+    
+    content.innerHTML = html;
+    modal.style.display = 'block';
+}
+
 // Log tool usage
 async function logToolRun() {
     const token = localStorage.getItem('authToken');
@@ -518,6 +622,9 @@ window.addEventListener('load', () => {
     try {
         setupEventListeners();
         console.log('✓ Event listeners set up');
+        
+        updateScenarioDescription();
+        console.log('✓ Scenario description set');
         
         generateData();
         console.log('✓ Data generated:', trainData.length, 'train,', testData.length, 'test');

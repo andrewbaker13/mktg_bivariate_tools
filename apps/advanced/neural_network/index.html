@@ -109,8 +109,57 @@
 
         .dataset-card h4 {
             font-size: 0.85em;
-            margin: 0;
+            margin: 0 0 3px 0;
             color: #2c3e50;
+        }
+
+        .dataset-card .dataset-desc {
+            font-size: 0.75em;
+            color: #7f8c8d;
+            margin: 0;
+        }
+
+        .scenario-details {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+
+        .scenario-details h4 {
+            color: #2c3e50;
+        }
+
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(to right, transparent, #3498db, transparent);
+            margin: 25px 0;
+        }
+
+        .model-section {
+            background: #f0f7ff;
+            border-left: 3px solid #3498db;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+        }
+
+        .help-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            line-height: 16px;
+            text-align: center;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            font-size: 0.7em;
+            cursor: help;
+            margin-left: 3px;
+        }
+
+        .help-icon:hover {
+            background: #2980b9;
         }
 
         .feature-selector {
@@ -341,30 +390,81 @@
             <div class="controls-panel">
                 <!-- Dataset Selection -->
                 <div class="control-section">
-                    <h3>Marketing Scenario</h3>
+                    <h3>📊 Step 1: Choose Your Business Problem</h3>
+                    <p style="font-size: 0.85em; color: #7f8c8d; margin-bottom: 15px;">
+                        Select a real marketing scenario. Each has different patterns the network must learn.
+                    </p>
                     <div class="dataset-selector">
                         <div class="dataset-card active" data-dataset="churn">
                             <canvas class="dataset-preview" id="preview-churn"></canvas>
                             <h4>Customer Churn</h4>
+                            <p class="dataset-desc">Will customers stay or leave?</p>
                         </div>
                         <div class="dataset-card" data-dataset="segment">
                             <canvas class="dataset-preview" id="preview-segment"></canvas>
-                            <h4>Market Segment</h4>
+                            <h4>Market Segments</h4>
+                            <p class="dataset-desc">Identify customer groups</p>
                         </div>
                         <div class="dataset-card" data-dataset="abtest">
                             <canvas class="dataset-preview" id="preview-abtest"></canvas>
                             <h4>A/B Test</h4>
+                            <p class="dataset-desc">Predict which version converts</p>
                         </div>
                         <div class="dataset-card" data-dataset="affinity">
                             <canvas class="dataset-preview" id="preview-affinity"></canvas>
                             <h4>Product Affinity</h4>
+                            <p class="dataset-desc">Who will buy together?</p>
                         </div>
                     </div>
+                    
+                    <!-- Scenario Details -->
+                    <div class="scenario-details" id="scenarioDetails">
+                        <h4 style="font-size: 0.9em; margin-bottom: 8px;">Current Scenario:</h4>
+                        <p id="scenarioDescription" style="font-size: 0.85em; line-height: 1.5; color: #2c3e50;">
+                            Predict customer churn based on pricing and service quality. 
+                            <strong style="color: #3498db;">Blue</strong> = likely to stay, 
+                            <strong style="color: #e74c3c;">Red</strong> = likely to churn.
+                        </p>
+                        <button class="btn btn-secondary" id="viewDataBtn" style="width: 100%; margin-top: 10px; font-size: 0.85em;">
+                            👁️ View Sample Data
+                        </button>
+                    </div>
                 </div>
+                
+                <!-- Data Settings -->
+                <div class="control-section advanced-controls">
+                    <h3>⚙️ Data Settings</h3>
+                    <div class="control-group">
+                        <label>
+                            Noise Level 
+                            <span class="help-icon" title="Add randomness to make the pattern harder to learn (simulates real-world messiness)">ⓘ</span>
+                            : <span class="value-display" id="noiseValue">0%</span>
+                        </label>
+                        <input type="range" id="noise" min="0" max="50" value="0" step="1">
+                    </div>
+                    <div class="control-group">
+                        <label>
+                            Training Data 
+                            <span class="help-icon" title="% of data used to teach the network (rest is used to test how well it learned)">ⓘ</span>
+                            : <span class="value-display" id="trainSplitValue">70%</span>
+                        </label>
+                        <input type="range" id="trainSplit" min="50" max="90" value="70" step="5">
+                    </div>
+                </div>
+                
+                <div class="section-divider"></div>
 
                 <!-- Input Features -->
-                <div class="control-section">
-                    <h3>Input Features</h3>
+                <div class="control-section model-section">
+                    <h3>🧠 Step 2: Design Your Model</h3>
+                    <p style="font-size: 0.85em; color: #7f8c8d; margin-bottom: 15px;">
+                        Configure what information the network uses and how it processes it.
+                    </p>
+                    
+                    <h4 style="font-size: 0.9em; margin-bottom: 10px;">
+                        Input Features 
+                        <span class="help-icon" title="Variables the network uses to make predictions. More features = more information, but can make learning harder">ⓘ</span>
+                    </h4>
                     <div class="feature-selector">
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="price" checked>
@@ -376,41 +476,65 @@
                         </label>
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="priceSquared">
-                            <span>Price²</span>
+                            <span>Price² 
+                                <span class="help-icon" title="Captures curved relationships (e.g., medium prices might be best)">ⓘ</span>
+                            </span>
                         </label>
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="qualitySquared">
-                            <span>Quality²</span>
+                            <span>Quality² 
+                                <span class="help-icon" title="Captures curved relationships">ⓘ</span>
+                            </span>
                         </label>
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="interaction">
-                            <span>Price × Quality</span>
+                            <span>Price × Quality 
+                                <span class="help-icon" title="Captures how price and quality work together">ⓘ</span>
+                            </span>
                         </label>
                     </div>
                 </div>
 
                 <!-- Network Architecture -->
-                <div class="control-section">
-                    <h3>Network Structure</h3>
+                <div class="control-section model-section">
+                    <h4 style="font-size: 0.9em; margin-bottom: 10px;">
+                        Network Architecture 
+                        <span class="help-icon" title="The 'brain' structure: layers are levels of processing, neurons are the processing units">ⓘ</span>
+                    </h4>
                     <div class="control-group">
-                        <label>Hidden Layers: <span class="value-display" id="layersValue">1</span></label>
+                        <label>
+                            Hidden Layers 
+                            <span class="help-icon" title="More layers = can learn more complex patterns, but takes longer to train">ⓘ</span>
+                            : <span class="value-display" id="layersValue">1</span>
+                        </label>
                         <input type="range" id="hiddenLayers" min="0" max="4" value="1" step="1">
                     </div>
                     <div class="control-group">
-                        <label>Neurons per Layer: <span class="value-display" id="neuronsValue">4</span></label>
+                        <label>
+                            Neurons per Layer 
+                            <span class="help-icon" title="More neurons = more processing power per layer">ⓘ</span>
+                            : <span class="value-display" id="neuronsValue">4</span>
+                        </label>
                         <input type="range" id="neuronsPerLayer" min="2" max="8" value="4" step="1">
                     </div>
                 </div>
 
                 <!-- Learning Settings -->
-                <div class="control-section advanced-controls">
-                    <h3>Learning Settings</h3>
+                <div class="control-section advanced-controls model-section">
+                    <h4 style="font-size: 0.9em; margin-bottom: 10px;">Advanced Model Settings</h4>
                     <div class="control-group">
-                        <label>Learning Speed: <span class="value-display" id="learningRateValue">0.03</span></label>
+                        <label>
+                            Learning Speed 
+                            <span class="help-icon" title="How fast the network adjusts. Too fast = unstable, too slow = takes forever">ⓘ</span>
+                            : <span class="value-display" id="learningRateValue">0.03</span>
+                        </label>
                         <input type="range" id="learningRate" min="0.001" max="0.1" value="0.03" step="0.001">
                     </div>
                     <div class="control-group">
-                        <label>Transformation Type</label>
+                        <label>
+                            Transformation Type 
+                            <span class="help-icon" title="How neurons process information. ReLU is most common for modern networks">ⓘ</span>
+                        </label>
                         <select id="activation">
                             <option value="relu">ReLU (Recommended)</option>
                             <option value="tanh" selected>Tanh</option>
@@ -418,25 +542,15 @@
                         </select>
                     </div>
                     <div class="control-group">
-                        <label>Complexity Penalty</label>
+                        <label>
+                            Complexity Penalty 
+                            <span class="help-icon" title="Prevents overfitting by keeping weights small. L2 is most common">ⓘ</span>
+                        </label>
                         <select id="regularization">
                             <option value="none" selected>None (Simpler)</option>
                             <option value="L1">L1</option>
                             <option value="L2">L2</option>
                         </select>
-                    </div>
-                </div>
-
-                <!-- Data Settings -->
-                <div class="control-section advanced-controls">
-                    <h3>Data Settings</h3>
-                    <div class="control-group">
-                        <label>Noise Level: <span class="value-display" id="noiseValue">0%</span></label>
-                        <input type="range" id="noise" min="0" max="50" value="0" step="1">
-                    </div>
-                    <div class="control-group">
-                        <label>Training Data: <span class="value-display" id="trainSplitValue">70%</span></label>
-                        <input type="range" id="trainSplit" min="50" max="90" value="70" step="5">
                     </div>
                 </div>
             </div>
@@ -486,6 +600,15 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Data Preview Modal -->
+    <div id="dataModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; padding: 20px; overflow: auto;">
+        <div style="max-width: 800px; margin: 50px auto; background: white; border-radius: 12px; padding: 30px; position: relative;">
+            <button id="closeModal" style="position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 18px;">×</button>
+            <h2 style="margin-top: 0;">📊 Sample Data Preview</h2>
+            <div id="dataPreviewContent"></div>
         </div>
     </div>
 
