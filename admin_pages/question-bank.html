@@ -480,19 +480,19 @@
                 </div>
 
                 <!-- Variable System -->
-                <div class="form-group" style="border-top: 2px solid var(--primary); padding-top: 1.5rem; margin-top: 2rem;">
-                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; color: var(--primary);">
-                        <i class="fas fa-random"></i> 
-                        Dynamic Variables (Optional)
+                <div class="form-group" style="border-top: 3px solid var(--primary); padding-top: 1.5rem; margin-top: 2rem; background: #f0f9ff; padding: 1.5rem; border-radius: 8px; margin-left: -1rem; margin-right: -1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem; color: var(--primary); font-weight: 700;">
+                        <i class="fas fa-magic"></i> 
+                        🎲 Equations & Variables - Make Questions Dynamic!
                         <button type="button" class="btn btn-sm btn-secondary" onclick="toggleVariableHelp()" style="margin-left: auto;">
-                            <i class="fas fa-question-circle"></i> Help
+                            <i class="fas fa-chevron-up"></i> <span id="helpToggleText">Hide</span> Help
                         </button>
                     </label>
-                    <small style="display: block; margin-bottom: 1rem; color: var(--gray-700);">
-                        Create questions with random values that differ for each student. Use {{variable_name}} in question text, answers, and feedback.
+                    <small style="display: block; margin-bottom: 1rem; color: var(--gray-700); font-size: 0.95rem;">
+                        <strong>Create questions with random values that differ for each student!</strong> Use {{variable_name}} in question text, answers, and feedback.
                     </small>
                     
-                    <div id="variableHelpBox" style="display: none; background: #dbeafe; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary);">
+                    <div id="variableHelpBox" style="display: block; background: #dbeafe; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--primary);">
                         <h4 style="margin: 0 0 0.5rem 0;"><i class="fas fa-lightbulb"></i> How to Use Variables</h4>
                         <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
                             <li><strong>Uniform:</strong> Random numbers in a range (e.g., B0 between 5-15)</li>
@@ -1219,7 +1219,16 @@
 
         function toggleVariableHelp() {
             const helpBox = document.getElementById('variableHelpBox');
-            helpBox.style.display = helpBox.style.display === 'none' ? 'block' : 'none';
+            const toggleText = document.getElementById('helpToggleText');
+            const isHidden = helpBox.style.display === 'none';
+            
+            helpBox.style.display = isHidden ? 'block' : 'none';
+            toggleText.textContent = isHidden ? 'Hide' : 'Show';
+            
+            // Update icon
+            const btn = event.target.closest('button');
+            const icon = btn.querySelector('i');
+            icon.className = isHidden ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
         }
 
         function showAddVariableModal() {
