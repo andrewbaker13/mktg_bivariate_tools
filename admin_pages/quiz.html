@@ -1169,6 +1169,17 @@
                 document.getElementById('start-screen').style.display = 'none';
                 document.getElementById('loading-state').style.display = 'flex';
 
+                // In preview mode, skip the start endpoint and use preview data
+                if (isPreviewMode) {
+                    questions = quizData.questions;
+                    timeRemaining = quizData.time_limit_minutes ? quizData.time_limit_minutes * 60 : null;
+                    showQuizActive({
+                        quiz_title: quizData.title,
+                        time_limit_minutes: quizData.time_limit_minutes
+                    });
+                    return;
+                }
+
                 const response = await fetch(`${API_BASE}/quiz/${quizData.id}/start/`, {
                     method: 'POST',
                     headers: {
@@ -1205,6 +1216,12 @@
         function showQuizActive(data) {
             document.getElementById('loading-state').style.display = 'none';
             document.getElementById('quiz-active').style.display = 'block';
+            
+            // Show preview banner and hide submit button if in preview mode
+            if (isPreviewMode) {
+                document.getElementById('preview-banner').style.display = 'block';
+                document.getElementById('btn-submit').style.display = 'none';
+            }
 
             document.getElementById('quiz-title-text').textContent = data.quiz_title;
             document.getElementById('quiz-tool-badge').textContent = quizData.tool_name || 'Tool';
@@ -1216,8 +1233,10 @@
                 document.getElementById('quiz-timer').style.display = 'none';
             }
 
-            // Start auto-save
-            autoSaveInterval = setInterval(autoSave, 30000);
+            // Start auto-save (disabled in preview mode)
+            if (!isPreviewMode) {
+                autoSaveInterval = setInterval(autoSave, 30000);
+            }
 
             // Render questions
             renderQuestionDots();
@@ -1583,6 +1602,12 @@
         }
 
         function confirmSubmit() {
+            // Prevent submission in preview mode
+            if (isPreviewMode) {
+                alert('Cannot submit quiz in preview mode. This is for instructor review only - responses are not saved.');
+                return;
+            }
+            
             const answered = Object.keys(answers).length;
             const total = questions.length;
 
