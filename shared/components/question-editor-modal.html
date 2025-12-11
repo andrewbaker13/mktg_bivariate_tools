@@ -1,0 +1,248 @@
+<!-- Question Modal -->
+<div id="questionModal" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add Question</h2>
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="questionForm" onsubmit="saveQuestion(event)">
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label>Question Type*</label>
+                        <select id="questionType" required onchange="handleTypeChange()">
+                            <option value="">Select Type...</option>
+                            <option value="multiple_choice">Multiple Choice</option>
+                            <option value="select_all">Select All That Apply</option>
+                            <option value="numeric">Numeric Entry</option>
+                            <option value="fill_blank">Fill in the Blank</option>
+                            <option value="written">Written Response</option>
+                            <option value="reorder">Reorder / Rank</option>
+                            <option value="matching">Matching</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Difficulty</label>
+                        <select id="difficulty">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Visibility</label>
+                        <select id="visibility">
+                            <option value="private">Private</option>
+                            <option value="public" selected>Public</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Question Text* (Markdown supported)</label>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="previewUnsavedQuestion()">
+                            <i class="fas fa-eye"></i> Preview
+                        </button>
+                        <div style="flex: 1;"></div>
+                        <small style="color: var(--gray-600);">Use {{variable_name}} for dynamic values</small>
+                    </div>
+                    <textarea id="questionText" required placeholder="Enter your question text here..." style="min-height: 100px; font-family: monospace;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Instruction (Optional)</label>
+                    <textarea id="instruction" placeholder="Helper text shown below the question..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Image URL (Optional)</label>
+                    <input type="url" id="imageUrl" placeholder="https://example.com/image.png">
+                </div>
+
+                <!-- Dynamic Answer Configuration Section -->
+                <div id="answerConfigSection" style="background: var(--gray-50); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--gray-200); margin-bottom: 1.5rem;">
+                    <p style="color: var(--gray-600); text-align: center; font-style: italic;">Select a question type to configure answers.</p>
+                </div>
+
+                <!-- Variables Section -->
+                <div class="form-group" style="border-top: 1px solid var(--gray-200); padding-top: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <label style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-cube" style="color: var(--primary);"></i> Variables (Dynamic Content)
+                            <button type="button" class="btn btn-sm btn-text" onclick="toggleVariableHelp(event)" style="font-weight: normal; font-size: 0.85rem;">
+                                <i class="fas fa-chevron-down"></i> <span id="helpToggleText">Show</span> Help
+                            </button>
+                        </label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="previewVariables()">
+                                <i class="fas fa-random"></i> Test Values
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="showAddVariableModal()">
+                                <i class="fas fa-plus"></i> Add Variable
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="variableHelpBox" style="display: none; background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                        <p style="margin-top: 0;"><strong>How Variables Work:</strong></p>
+                        <ul style="margin-bottom: 0; padding-left: 1.5rem;">
+                            <li>Define variables like <code>x</code> (range 1-10) or <code>company</code> (list of names).</li>
+                            <li>Use them in Question Text or Answers as <code>{{x}}</code> or <code>{{company}}</code>.</li>
+                            <li>Each student gets different random values!</li>
+                            <li>Use <strong>Formulas</strong> to calculate answers based on other variables (e.g., <code>{{x}} * 2</code>).</li>
+                        </ul>
+                    </div>
+
+                    <div id="variablesList">
+                        <p style="color: var(--gray-700); font-style: italic;">No variables defined yet. Click "Add Variable" to create one.</p>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="form-group" style="border-top: 1px solid var(--gray-200); padding-top: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <label style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-chart-bar" style="color: #10b981;"></i> Charts & Graphs
+                            <button type="button" class="btn btn-sm btn-text" onclick="toggleChartHelp(event)" style="font-weight: normal; font-size: 0.85rem;">
+                                <i class="fas fa-chevron-down"></i> <span id="chartHelpToggleText">Show</span> Help
+                            </button>
+                        </label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="previewCharts()">
+                                <i class="fas fa-eye"></i> Preview Charts
+                            </button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="showAddChartModal()">
+                                <i class="fas fa-plus"></i> Add Chart
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="chartHelpBox" style="display: none; background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                        <p style="margin-top: 0;"><strong>Dynamic Charts:</strong></p>
+                        <ul style="margin-bottom: 0; padding-left: 1.5rem;">
+                            <li>Create Bar or Multi-Bar charts that use your variables.</li>
+                            <li>Example Data: <code>{{sales_q1}}, {{sales_q2}}, {{sales_q3}}</code></li>
+                            <li>Insert into Question Text using <code>{{CHART:my_chart_id}}</code></li>
+                        </ul>
+                    </div>
+
+                    <div id="chartsList">
+                        <p style="color: var(--gray-700); font-style: italic;">No charts added yet.</p>
+                    </div>
+                </div>
+
+                <div class="form-group" style="border-top: 1px solid var(--gray-200); padding-top: 1.5rem;">
+                    <label>Feedback</label>
+                    <div class="form-row">
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.9rem; color: var(--success);">Correct Feedback</label>
+                            <textarea id="feedbackCorrect" placeholder="Great job! The answer is..."></textarea>
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 0.9rem; color: var(--danger);">Incorrect Feedback</label>
+                            <textarea id="feedbackIncorrect" placeholder="Not quite. Hint: ..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tags</label>
+                    <input type="text" id="tags" placeholder="marketing, pricing, chapter1">
+                </div>
+
+                <div class="form-group">
+                    <label>Associated Tool (Optional)</label>
+                    <select id="tool">
+                        <option value="">None</option>
+                        <option value="ab_proportion">A/B Testing</option>
+                        <option value="chisquare">Chi-Square</option>
+                        <option value="regression">Regression</option>
+                        <option value="ind_ttest">T-Test</option>
+                        <option value="onewayanova">ANOVA</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Variable Modal -->
+<div id="variableModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2 id="variableModalTitle">Add Variable</h2>
+            <button class="close-modal" onclick="closeVariableModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form onsubmit="saveVariable(event)">
+                <div class="form-group">
+                    <label>Variable Name*</label>
+                    <input type="text" id="varName" required pattern="[a-zA-Z0-9_]+" placeholder="e.g., sales_q1">
+                    <small>Only letters, numbers, and underscores. No spaces.</small>
+                </div>
+                <div class="form-group">
+                    <label>Type*</label>
+                    <select id="varType" required onchange="handleVarTypeChange()">
+                        <option value="">Select Type...</option>
+                        <option value="uniform">Random Number (Uniform)</option>
+                        <option value="discrete">Random Value from List</option>
+                        <option value="array">Array (Tied Data)</option>
+                        <option value="formula_calculate">Formula (Calculate Result)</option>
+                        <option value="formula_display">Formula (Show Expression)</option>
+                    </select>
+                </div>
+                <div id="varTypeConfig">
+                    <!-- Dynamic config fields -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeVariableModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Variable</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Modal -->
+<div id="chartModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2 id="chartModalTitle">Add Chart</h2>
+            <button class="close-modal" onclick="closeChartModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form onsubmit="saveChart(event)">
+                <div class="form-group">
+                    <label>Chart ID*</label>
+                    <input type="text" id="chartId" required pattern="[a-zA-Z0-9_]+" placeholder="e.g., sales_chart">
+                    <small>Unique ID to reference this chart: {{CHART:sales_chart}}</small>
+                </div>
+                <div class="form-group">
+                    <label>Chart Type*</label>
+                    <select id="chartType" required onchange="handleChartTypeChange()">
+                        <option value="">Select Type...</option>
+                        <option value="bar">Bar Chart (Simple)</option>
+                        <option value="multibar">Multi-Series Bar Chart</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Chart Title (Optional)</label>
+                    <input type="text" id="chartTitle" placeholder="e.g., Quarterly Sales">
+                </div>
+                <div id="chartDataConfig">
+                    <!-- Dynamic config fields -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeChartModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Chart</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
