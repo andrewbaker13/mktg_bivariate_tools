@@ -609,6 +609,9 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> Save Question
                     </button>
+                    <button type="button" class="btn btn-info" onclick="previewUnsavedQuestion()" style="background-color: #0ea5e9; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-weight: 500;">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">
                         Cancel
                     </button>
@@ -1122,6 +1125,62 @@
         }
 
         // Preview Question
+        function previewUnsavedQuestion() {
+            try {
+                // Gather data from form
+                const question = {
+                    question_text: document.getElementById('questionText').value,
+                    question_type: document.getElementById('questionType').value,
+                    explanation: document.getElementById('feedbackCorrect').value, // Using feedback as explanation for preview context
+                    answer_config: buildAnswerConfig()
+                };
+
+                if (!question.question_text) {
+                    alert('Please enter question text first');
+                    return;
+                }
+
+                // Create a temporary modal for preview
+                const modal = document.createElement('div');
+                modal.className = 'modal active';
+                modal.style.zIndex = '2000';
+                
+                // Render the question content
+                let contentHTML = `
+                    <div class="modal-content" style="max-width: 800px;">
+                        <div class="modal-header">
+                            <h2><i class="fas fa-play"></i> Question Preview</h2>
+                            <button class="btn-close" onclick="this.closest('.modal').remove()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="preview-banner" style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #1e40af;">
+                                <i class="fas fa-info-circle"></i> This is how the question will appear to students.
+                            </div>
+                            
+                            <div class="question-card" style="box-shadow: none; border: 1px solid #e5e7eb;">
+                                <div class="question-text" style="font-size: 1.1rem; margin-bottom: 1.5rem;">
+                                    ${question.question_text}
+                                </div>
+                                
+                                ${renderPreviewInputs(question)}
+                            </div>
+                            
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close Preview</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                modal.innerHTML = contentHTML;
+                document.body.appendChild(modal);
+
+            } catch (error) {
+                console.error('Error previewing question:', error);
+                alert('Failed to generate preview: ' + error.message);
+            }
+        }
+
         async function previewQuestion(id) {
             try {
                 const response = await fetch(`${API_BASE}/quiz-questions/${id}/`, {
@@ -2630,7 +2689,9 @@
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.error || 'Failed to save question');
+                    // Show detailed message if available, otherwise generic error
+                    const errorMessage = error.message || error.error || 'Failed to save question';
+                    throw new Error(errorMessage);
                 }
 
                 await loadQuestions();
@@ -2638,7 +2699,7 @@
                 alert(currentEditId ? 'Question updated successfully' : 'Question created successfully');
             } catch (error) {
                 console.error('Error saving question:', error);
-                alert(error.message);
+                alert(`Error: ${error.message}`);
             }
         }
 
