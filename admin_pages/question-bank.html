@@ -327,8 +327,7 @@
         }
 
         .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
             gap: 1rem;
         }
 
@@ -795,6 +794,22 @@
             
             const title = prompt('Enter a title for the new quiz:');
             if (!title) return;
+
+            // Determine tool_id
+            let toolId = null;
+            const questionIds = Array.from(selectedQuestions);
+            
+            // Try to get tool from first selected question
+            const firstQ = allQuestions.find(q => q.id == questionIds[0]);
+            if (firstQ && firstQ.tool && firstQ.tool.id) {
+                toolId = firstQ.tool.id;
+            } 
+            // Fallback to first available tool
+            else if (window.availableTools && window.availableTools.length > 0) {
+                toolId = window.availableTools[0].id;
+            }
+
+            // Tool ID is now optional
             
             try {
                 // 1. Create Quiz
@@ -808,16 +823,19 @@
                         title: title,
                         description: 'Created from Question Bank selection',
                         is_active: false,
-                        time_limit_minutes: 30
+                        time_limit_minutes: 30,
+                        tool_id: toolId
                     })
                 });
                 
-                if (!createRes.ok) throw new Error('Failed to create quiz');
+                if (!createRes.ok) {
+                    const err = await createRes.json();
+                    throw new Error(err.error || 'Failed to create quiz');
+                }
                 const quiz = await createRes.json();
                 
                 // 2. Add Questions
                 let addedCount = 0;
-                const questionIds = Array.from(selectedQuestions);
                 
                 // Show progress
                 const btn = document.querySelector('#quizBuilderPanel .btn-primary');
