@@ -1113,6 +1113,7 @@
                                 <span class="badge badge-${question.difficulty === 'hard' ? 'danger' : question.difficulty === 'medium' ? 'warning' : 'success'}">${question.difficulty}</span>
                                 ${question.tool ? `<span class="badge badge-info">${question.tool}</span>` : ''}
                                 <span class="badge badge-info">${question.visibility}</span>
+                                <span class="badge badge-secondary" title="Edit Count"><i class="fas fa-pen"></i> ${question.edit_count || 0}</span>
                             </div>
                             
                             <h3 style="margin-bottom: 1rem;">${question.question_text}</h3>

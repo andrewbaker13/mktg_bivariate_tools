@@ -24,6 +24,11 @@ let currentEditChartId = null;
 function showCreateModal() {
     document.getElementById('modalTitle').textContent = 'Add Question';
     document.getElementById('questionForm').reset();
+    
+    // Hide warning
+    const warningEl = document.getElementById('editWarning');
+    if (warningEl) warningEl.style.display = 'none';
+    
     currentEditId = null;
     questionVariables = {};
     questionCharts = {};
@@ -53,7 +58,39 @@ async function editQuestion(questionId) {
         
         currentEditId = question.id;
         
-        document.getElementById('modalTitle').textContent = 'Edit Question';
+        // Show warning if used elsewhere
+        const warningEl = document.getElementById('editWarning');
+        const usageListEl = document.getElementById('usageList');
+        const usageCountEl = document.getElementById('usageCount');
+        
+        if (warningEl && usageListEl && usageCountEl) {
+            const quizzes = question.usage_in_quizzes || [];
+            const templates = question.usage_in_templates || [];
+            const totalUsage = quizzes.length + templates.length;
+            
+            if (totalUsage > 0) {
+                usageCountEl.textContent = totalUsage;
+                usageListEl.innerHTML = '';
+                
+                quizzes.forEach(q => {
+                    const li = document.createElement('li');
+                    li.textContent = `Quiz: ${q.title}`;
+                    usageListEl.appendChild(li);
+                });
+                
+                templates.forEach(t => {
+                    const li = document.createElement('li');
+                    li.textContent = `Template: ${t.name}`;
+                    usageListEl.appendChild(li);
+                });
+                
+                warningEl.style.display = 'block';
+            } else {
+                warningEl.style.display = 'none';
+            }
+        }
+        
+        document.getElementById('modalTitle').textContent = `Edit Question (Edited ${question.edit_count || 0} times)`;
         document.getElementById('questionType').value = question.question_type;
         document.getElementById('questionText').value = question.question_text;
         document.getElementById('instruction').value = question.instruction || '';
