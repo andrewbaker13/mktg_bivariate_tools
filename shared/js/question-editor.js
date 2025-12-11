@@ -912,6 +912,9 @@ function previewVariables() {
 
 function generateSampleVariables() {
     const values = {};
+    const formulas = [];
+
+    // 1. Generate base values (Uniform, Discrete)
     for (const [name, def] of Object.entries(questionVariables)) {
         if (def.type === 'uniform') {
             const range = def.max - def.min;
@@ -919,9 +922,44 @@ function generateSampleVariables() {
             values[name] = def.decimals === 0 ? Math.round(value) : parseFloat(value.toFixed(def.decimals));
         } else if (def.type === 'discrete') {
             values[name] = def.values[Math.floor(Math.random() * def.values.length)];
+        } else if (def.type === 'formula') {
+            formulas.push({ name, def });
         }
     }
-    // Formulas would go here (simplified for brevity)
+
+    // 2. Evaluate formulas (simple multi-pass to handle dependencies)
+    let lastRemaining = formulas.length + 1;
+    while (formulas.length > 0 && formulas.length < lastRemaining) {
+        lastRemaining = formulas.length;
+        const nextFormulas = [];
+
+        for (const item of formulas) {
+            try {
+                // Create a function with variables as arguments
+                const varNames = Object.keys(values);
+                const varValues = Object.values(values);
+                
+                // Safe-ish evaluation using Function constructor
+                // Note: This is client-side preview only. Backend has strict security.
+                const formulaFn = new Function(...varNames, `return ${item.def.formula};`);
+                const result = formulaFn(...varValues);
+                
+                if (item.def.mode === 'display') {
+                    values[item.name] = result; // Keep as string/whatever
+                } else {
+                    // Calculate mode - ensure number
+                    const numResult = parseFloat(result);
+                    values[item.name] = item.def.decimals === 0 ? Math.round(numResult) : parseFloat(numResult.toFixed(item.def.decimals));
+                }
+            } catch (e) {
+                // Dependency might be missing, try next pass
+                nextFormulas.push(item);
+            }
+        }
+        formulas.length = 0;
+        formulas.push(...nextFormulas);
+    }
+
     return values;
 }
 
@@ -1076,25 +1114,99 @@ function previewCharts() {
     alert('Chart preview not implemented in this view yet.');
 }
 
+function substituteVariables(text, variables) {
+    if (!text) return '';
+    let result = text;
+    for (const [name, value] of Object.entries(variables)) {
+        // Replace {{name}} with value
+        const regex = new RegExp(`\\{\\{\\s*${name}\\s*\\}\\}`, 'g');
+        result = result.replace(regex, value);
+    }
+    return result;
+}
+
 function previewUnsavedQuestion() {
     try {
         // Gather data from form
-        const question = {
+        const rawQuestion = {
             question_text: document.getElementById('questionText').value,
             question_type: document.getElementById('questionType').value,
-            explanation: document.getElementById('feedbackCorrect').value, // Using feedback as explanation for preview context
+            instruction: document.getElementById('instruction').value,
+            image_url: document.getElementById('imageUrl').value,
+            explanation: document.getElementById('feedbackCorrect').value,
             answer_config: buildAnswerConfig()
         };
 
-        if (!question.question_text) {
+        if (!rawQuestion.question_text) {
             alert('Please enter question text first');
             return;
+        }
+
+        // Generate sample variables
+        const variables = generateSampleVariables();
+        
+        // Substitute variables in text fields
+        const question = {
+            ...rawQuestion,
+            question_text: substituteVariables(rawQuestion.question_text, variables),
+            instruction: substituteVariables(rawQuestion.instruction, variables),
+            explanation: substituteVariables(rawQuestion.explanation, variables)
+        };
+
+        // Substitute variables in options if applicable
+        if (question.answer_config) {
+            // Multiple Choice / Select All
+            if (question.answer_config.options) {
+                question.answer_config.options = question.answer_config.options.map(opt => ({
+                    ...opt,
+                    text: substituteVariables(opt.text, variables)
+                }));
+            }
+            
+            // Matching Pairs
+            if (question.answer_config.matching_pairs) {
+                question.answer_config.matching_pairs = question.answer_config.matching_pairs.map(pair => ({
+                    left: substituteVariables(pair.left, variables),
+                    right: substituteVariables(pair.right, variables)
+                }));
+            }
+            
+            // Reorder Items
+            if (question.answer_config.correct_order) {
+                question.answer_config.correct_order = question.answer_config.correct_order.map(item => 
+                    substituteVariables(item, variables)
+                );
+            }
         }
 
         // Create a temporary modal for preview
         const modal = document.createElement('div');
         modal.className = 'modal active';
         modal.style.zIndex = '2000';
+        
+        // Render Charts
+        let chartsHTML = '';
+        if (questionCharts && Object.keys(questionCharts).length > 0) {
+            chartsHTML = '<div class="preview-charts" style="margin-bottom: 1.5rem; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">';
+            for (const [chartId, chartConfig] of Object.entries(questionCharts)) {
+                chartsHTML += `
+                    <div class="chart-container" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem;">
+                        <canvas id="preview-chart-${chartId}"></canvas>
+                    </div>
+                `;
+            }
+            chartsHTML += '</div>';
+        }
+
+        // Render Image
+        let imageHTML = '';
+        if (question.image_url) {
+            imageHTML = `
+                <div class="preview-image" style="margin-bottom: 1.5rem; text-align: center;">
+                    <img src="${question.image_url}" alt="Question Image" style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                </div>
+            `;
+        }
         
         // Render the question content
         let contentHTML = `
@@ -1105,13 +1217,21 @@ function previewUnsavedQuestion() {
                 </div>
                 <div class="modal-body">
                     <div class="preview-banner" style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #1e40af;">
-                        <i class="fas fa-info-circle"></i> This is how the question will appear to students.
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fas fa-info-circle"></i> This is how the question will appear to students.</span>
+                            <button class="btn btn-sm btn-text" onclick="alert(JSON.stringify(${JSON.stringify(variables).replace(/"/g, '&quot;')}, null, 2))">View Variables</button>
+                        </div>
                     </div>
                     
                     <div class="question-card" style="box-shadow: none; border: 1px solid #e5e7eb;">
+                        ${imageHTML}
+                        ${chartsHTML}
+                        
                         <div class="question-text" style="font-size: 1.1rem; margin-bottom: 1.5rem;">
-                            ${question.question_text}
+                            ${question.question_text.replace(/\n/g, '<br>')}
                         </div>
+                        
+                        ${question.instruction ? `<div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 1rem; font-style: italic;">${question.instruction}</div>` : ''}
                         
                         ${renderPreviewInputs(question)}
                     </div>
@@ -1125,6 +1245,56 @@ function previewUnsavedQuestion() {
         
         modal.innerHTML = contentHTML;
         document.body.appendChild(modal);
+
+        // Initialize Charts
+        if (window.Chart && questionCharts) {
+            for (const [chartId, chartConfig] of Object.entries(questionCharts)) {
+                const ctx = document.getElementById(`preview-chart-${chartId}`);
+                if (ctx) {
+                    // Substitute variables in chart data
+                    const processedConfig = JSON.parse(JSON.stringify(chartConfig)); // Deep copy
+                    
+                    // Helper to process chart data recursively
+                    const processChartData = (obj) => {
+                        for (const key in obj) {
+                            if (typeof obj[key] === 'string') {
+                                obj[key] = substituteVariables(obj[key], variables);
+                                // Try to convert to number if it looks like one
+                                if (!isNaN(obj[key]) && obj[key].trim() !== '') {
+                                    obj[key] = parseFloat(obj[key]);
+                                }
+                            } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                                processChartData(obj[key]);
+                            }
+                        }
+                    };
+                    processChartData(processedConfig);
+
+                    new Chart(ctx, {
+                        type: processedConfig.type || 'bar',
+                        data: {
+                            labels: processedConfig.labels || ['A', 'B', 'C'],
+                            datasets: [{
+                                label: processedConfig.title || 'Data',
+                                data: processedConfig.data || [10, 20, 30],
+                                backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                                borderColor: 'rgb(59, 130, 246)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: processedConfig.title || 'Chart'
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
 
     } catch (error) {
         console.error('Error previewing question:', error);
