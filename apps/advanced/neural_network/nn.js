@@ -202,22 +202,37 @@ const DataGenerator = {
         const noiseLevel = noise / 100;
 
         for (let i = 0; i < numSamples; i++) {
-            const monthsSubscribed = Math.random() * 10 - 5; // -5 to 5 (normalized)
-            const supportTickets = Math.random() * 10 - 5;   // -5 to 5 (normalized)
+            // Realistic distribution: Most customers are average, some outliers
+            // Using Box-Muller transform for normal distribution
+            const u1 = Math.random();
+            const u2 = Math.random();
+            const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+            const z2 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
+            
+            // Months: Skewed slightly positive (more new customers)
+            // Range approx -5 to 5
+            const monthsSubscribed = (z1 * 2.5); 
+            
+            // Tickets: Poisson-like but continuous
+            // Range approx -5 to 5
+            const supportTickets = (z2 * 2.5);
 
-            // More months + fewer tickets = retain (1)
-            // Fewer months + many tickets = churn (-1)
-            let label = (monthsSubscribed - supportTickets > 0) ? 1 : -1;
+            // Decision boundary: 
+            // Churn if (Tickets > Months + 1) OR (Tickets > 3)
+            // This means even long-term customers churn if tickets get too high
+            // And new customers churn easily with few tickets
+            let label = (supportTickets > monthsSubscribed + 1 || supportTickets > 3) ? -1 : 1;
 
-            // Add noise
-            if (Math.random() < noiseLevel * 2) {
+            // Add realistic noise (misclassification)
+            // 10% of customers behave irrationally regardless of noise setting
+            if (Math.random() < 0.1 + (noiseLevel * 0.4)) {
                 label *= -1;
             }
 
             data.push({
                 input: [
-                    monthsSubscribed + (Math.random() - 0.5) * noiseLevel,
-                    supportTickets + (Math.random() - 0.5) * noiseLevel
+                    monthsSubscribed,
+                    supportTickets
                 ],
                 output: label,
                 xLabel: 'Months Subscribed',
@@ -228,30 +243,41 @@ const DataGenerator = {
         return data;
     },
 
-    // Market Segmentation: Two distinct customer groups
+    // Market Segmentation: Two distinct customer groups with some overlap
     marketSegment(numSamples, noise = 0) {
         const data = [];
         const noiseLevel = noise / 100;
 
-        for (let i = 0; i < numSamples / 2; i++) {
-            // Segment 1: Premium customers (high income, high loyalty)
-            data.push({
-                input: [
-                    3 + Math.random() * 2 + (Math.random() - 0.5) * noiseLevel * 2,
-                    3 + Math.random() * 2 + (Math.random() - 0.5) * noiseLevel * 2
-                ],
-                output: 1,
-                xLabel: 'Income Level',
-                yLabel: 'Brand Loyalty Score'
-            });
+        for (let i = 0; i < numSamples; i++) {
+            let input, label;
+            
+            // 60% Budget, 40% Premium
+            if (Math.random() > 0.4) {
+                // Budget Segment (Lower Income, Lower Loyalty)
+                // Centered at (-2, -2) with spread
+                input = [
+                    -2 + (Math.random() + Math.random() - 1) * 2.5,
+                    -2 + (Math.random() + Math.random() - 1) * 2.5
+                ];
+                label = -1;
+            } else {
+                // Premium Segment (High Income, High Loyalty)
+                // Centered at (2, 2) with spread
+                input = [
+                    2 + (Math.random() + Math.random() - 1) * 2.5,
+                    2 + (Math.random() + Math.random() - 1) * 2.5
+                ];
+                label = 1;
+            }
 
-            // Segment 2: Budget customers (lower income, lower loyalty)
+            // Add noise/overlap
+            if (Math.random() < noiseLevel) {
+                label *= -1;
+            }
+
             data.push({
-                input: [
-                    -3 - Math.random() * 2 + (Math.random() - 0.5) * noiseLevel * 2,
-                    -3 - Math.random() * 2 + (Math.random() - 0.5) * noiseLevel * 2
-                ],
-                output: -1,
+                input: input,
+                output: label,
                 xLabel: 'Income Level',
                 yLabel: 'Brand Loyalty Score'
             });
@@ -266,22 +292,26 @@ const DataGenerator = {
         const noiseLevel = noise / 100;
 
         for (let i = 0; i < numSamples; i++) {
-            const adSpend = Math.random() * 10 - 5;      // Normalized ad spend
-            const emailFreq = Math.random() * 10 - 5;     // Normalized email frequency
+            // Uniform distribution for ad spend and email freq
+            // Marketing campaigns often test full ranges
+            const adSpend = Math.random() * 10 - 5;
+            const emailFreq = Math.random() * 10 - 5;
 
-            // XOR pattern: Convert when one is high and other is low
-            // (Too much or too little of both doesn't work)
-            let label = (adSpend * emailFreq < 0) ? 1 : -1;
+            // XOR pattern with a "sweet spot" twist
+            // Convert if (High Ad Spend AND Low Email) OR (Low Ad Spend AND High Email)
+            // But if BOTH are high -> Annoyed customer (No convert)
+            // If BOTH are low -> Unaware customer (No convert)
+            let label = (adSpend * emailFreq < -1) ? 1 : -1;
 
             // Add noise
-            if (Math.random() < noiseLevel * 2) {
+            if (Math.random() < noiseLevel) {
                 label *= -1;
             }
 
             data.push({
                 input: [
-                    adSpend + (Math.random() - 0.5) * noiseLevel,
-                    emailFreq + (Math.random() - 0.5) * noiseLevel
+                    adSpend,
+                    emailFreq
                 ],
                 output: label,
                 xLabel: 'Ad Spend ($100s)',
@@ -292,29 +322,39 @@ const DataGenerator = {
         return data;
     },
 
-    // Product Affinity: Circular boundary
+    // Product Affinity: Circular boundary with realistic spread
     productAffinity(numSamples, noise = 0) {
         const data = [];
         const noiseLevel = noise / 100;
 
         for (let i = 0; i < numSamples; i++) {
-            const pageViews = Math.random() * 10 - 5;     // Normalized page views
-            const timeOnSite = Math.random() * 10 - 5;    // Normalized time (minutes)
+            // Gaussian distribution centered at 0
+            const u1 = Math.random();
+            const u2 = Math.random();
+            const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+            const z2 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
+            
+            const pageViews = z1 * 2.5;
+            const timeOnSite = z2 * 2.5;
 
             // Circular decision boundary: moderate engagement = high affinity
-            // Too little or too much = low affinity (bounced or just browsing)
+            // "Goldilocks zone" - not too little, not too much (browsers)
             const distance = Math.sqrt(pageViews * pageViews + timeOnSite * timeOnSite);
-            let label = (distance < 3.5) ? 1 : -1;
+            
+            // Sweet spot is between 1.5 and 4.0 distance from origin
+            // Too close = bounced
+            // Too far = lost/confused/bot
+            let label = (distance > 1.5 && distance < 4.0) ? 1 : -1;
 
             // Add noise
-            if (Math.random() < noiseLevel * 2) {
+            if (Math.random() < noiseLevel) {
                 label *= -1;
             }
 
             data.push({
                 input: [
-                    pageViews + (Math.random() - 0.5) * noiseLevel,
-                    timeOnSite + (Math.random() - 0.5) * noiseLevel
+                    pageViews,
+                    timeOnSite
                 ],
                 output: label,
                 xLabel: 'Page Views',

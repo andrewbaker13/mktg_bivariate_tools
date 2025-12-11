@@ -36,24 +36,43 @@ const scenarioInfo = {
     churn: {
         title: "Customer Churn Prediction",
         description: "Predict which subscription customers will churn based on <strong>Months Subscribed</strong> and <strong>Support Tickets</strong>. Longer subscriptions with fewer support issues indicate loyalty. <strong style='color: #3498db;'>Blue = Stay</strong>, <strong style='color: #e74c3c;'>Red = Churn</strong>. Pattern: More months + fewer tickets = retained customer.",
-        realWorld: "Used by subscription services (Netflix, Spotify) to identify at-risk customers before they cancel."
+        realWorld: "Used by subscription services (Netflix, Spotify) to identify at-risk customers before they cancel.",
+        xLabel: "Months",
+        yLabel: "Tickets"
     },
     segment: {
         title: "Market Segmentation",
         description: "Identify customer segments using <strong>Income Level</strong> and <strong>Brand Loyalty Score</strong>. Two distinct groups emerge: premium customers (high income, high loyalty) and budget-conscious customers (lower income, lower loyalty). <strong style='color: #3498db;'>Blue = Premium Segment</strong>, <strong style='color: #e74c3c;'>Red = Budget Segment</strong>.",
-        realWorld: "Used by companies like Amazon and Target to personalize marketing campaigns for different customer types."
+        realWorld: "Used by companies like Amazon and Target to personalize marketing campaigns for different customer types.",
+        xLabel: "Income",
+        yLabel: "Loyalty"
     },
     abtest: {
         title: "A/B Test Conversion Prediction",
         description: "Predict campaign conversions based on <strong>Ad Spend</strong> and <strong>Email Frequency</strong>. The pattern is complex (XOR-like): conversions happen when one factor is high and the other low. Too much or too little of both doesn't work. <strong style='color: #3498db;'>Blue = Converts</strong>, <strong style='color: #e74c3c;'>Red = Bounces</strong>. Requires multiple layers!",
-        realWorld: "Used by e-commerce sites and SaaS companies to optimize marketing budget allocation."
+        realWorld: "Used by e-commerce sites and SaaS companies to optimize marketing budget allocation.",
+        xLabel: "Ad Spend",
+        yLabel: "Emails"
     },
     affinity: {
         title: "Product Affinity Analysis",
         description: "Predict product purchase intent using <strong>Page Views</strong> and <strong>Time on Site</strong>. The boundary is <em>circular</em>: moderate engagement shows highest affinity. Too little engagement = not interested, too much = just browsing. <strong style='color: #3498db;'>Blue = High Affinity</strong>, <strong style='color: #e74c3c;'>Red = Low Affinity</strong>.",
-        realWorld: "Used by Amazon for 'frequently bought together' recommendations and by retailers for cross-selling."
+        realWorld: "Used by Amazon for 'frequently bought together' recommendations and by retailers for cross-selling.",
+        xLabel: "Page Views",
+        yLabel: "Time"
     }
 };
+
+// Update feature labels in UI
+function updateFeatureLabels() {
+    const info = scenarioInfo[config.dataset];
+    
+    document.getElementById('label-x').textContent = info.xLabel;
+    document.getElementById('label-y').textContent = info.yLabel;
+    document.getElementById('label-x2').textContent = `${info.xLabel}²`;
+    document.getElementById('label-y2').textContent = `${info.yLabel}²`;
+    document.getElementById('label-xy').textContent = `${info.xLabel} × ${info.yLabel}`;
+}
 
 // Feature transformations
 function transformFeatures(input) {
@@ -699,6 +718,8 @@ function updateScenarioDescription() {
         ${info.description}<br><br>
         <em style="color: #7f8c8d;">💡 Real-world use: ${info.realWorld}</em>
     `;
+    
+    updateFeatureLabels();
 }
 
 // Show data preview modal with scatter plot
