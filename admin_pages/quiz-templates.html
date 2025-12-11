@@ -606,6 +606,22 @@
         </div>
     </div>
 
+    <!-- Template Info Modal -->
+    <div id="templateInfoModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-info-circle"></i> Template Details</h2>
+                <button class="close-modal" onclick="closeInfoModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="templateInfoContent">
+                <!-- Content populated by JS -->
+            </div>
+            <div class="modal-footer" style="padding: 1.5rem 2rem; border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeInfoModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <div id="admin-nav-container"></div>
     <script src="../shared/js/admin-nav.js"></script>
     <script>
@@ -762,7 +778,10 @@
                     
                     <div class="template-actions">
                         <button class="btn btn-sm btn-success" onclick="openCloneModal(${t.id}, '${t.name}')">
-                            <i class="fas fa-copy"></i> Use Template
+                            <i class="fas fa-copy"></i> Use Template to Make Quiz
+                        </button>
+                        <button class="btn btn-sm btn-info" onclick="showTemplateInfo(${t.id})" style="background-color: #17a2b8; color: white;">
+                            <i class="fas fa-info-circle"></i> More Info
                         </button>
                         <button class="btn btn-sm btn-primary" onclick="viewTemplate(${t.id})">
                             <i class="fas fa-eye"></i> View
@@ -980,6 +999,83 @@
                 console.error('Error deleting template:', error);
                 alert('Failed to delete template');
             }
+        }
+
+        function showTemplateInfo(id) {
+            const template = allTemplates.find(t => t.id === id);
+            if (!template) return;
+
+            const content = document.getElementById('templateInfoContent');
+            content.innerHTML = `
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0;">${template.name}</h3>
+                    ${template.description ? `<p style="color: var(--gray-700);">${template.description}</p>` : ''}
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <div>
+                        <h4 style="border-bottom: 1px solid var(--gray-200); padding-bottom: 0.5rem; margin-bottom: 1rem;">Details</h4>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 0.5rem 0; color: var(--gray-600);">Creator:</td>
+                                <td style="padding: 0.5rem 0; font-weight: 600;">${template.created_by ? template.created_by.username : 'Unknown'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem 0; color: var(--gray-600);">Created:</td>
+                                <td style="padding: 0.5rem 0;">${new Date(template.created_at).toLocaleDateString()}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem 0; color: var(--gray-600);">Last Modified:</td>
+                                <td style="padding: 0.5rem 0;">${new Date(template.updated_at).toLocaleDateString()}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem 0; color: var(--gray-600);">Visibility:</td>
+                                <td style="padding: 0.5rem 0;"><span class="badge badge-${template.visibility}">${template.visibility}</span></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem 0; color: var(--gray-600);">Difficulty:</td>
+                                <td style="padding: 0.5rem 0;"><span class="badge badge-${template.difficulty}">${template.difficulty}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div>
+                        <h4 style="border-bottom: 1px solid var(--gray-200); padding-bottom: 0.5rem; margin-bottom: 1rem;">Content</h4>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 0.5rem 0; color: var(--gray-600);">Questions:</td>
+                                <td style="padding: 0.5rem 0; font-weight: 600;">${template.question_count}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem 0; color: var(--gray-600);">Total Points:</td>
+                                <td style="padding: 0.5rem 0;">${template.total_points}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem 0; color: var(--gray-600);">Time Limit:</td>
+                                <td style="padding: 0.5rem 0;">${template.time_limit_minutes ? template.time_limit_minutes + ' min' : 'None'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem 0; color: var(--gray-600);">Tool:</td>
+                                <td style="padding: 0.5rem 0;">${template.tool ? template.tool.name : 'None'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                ${template.tags && template.tags.length > 0 ? `
+                    <div style="margin-bottom: 1.5rem;">
+                        <strong>Tags:</strong>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                            ${template.tags.map(tag => `<span class="badge badge-secondary">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            document.getElementById('templateInfoModal').classList.add('active');
+        }
+
+        function closeInfoModal() {
+            document.getElementById('templateInfoModal').classList.remove('active');
         }
 
         function openCloneModal(templateId, templateName) {
