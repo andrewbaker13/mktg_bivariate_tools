@@ -367,7 +367,8 @@
     </style>
 </head>
 <body>
-    <div id="adminNav"></div>
+    <div id="admin-nav-container"></div>
+    <script src="../shared/js/admin-nav.js"></script>
 
     <div class="container">
         <div class="header">
@@ -715,7 +716,6 @@
         let currentEditVarName = null; // For editing existing variables
         let questionCharts = {}; // Stores charts for current question being edited
         let currentEditChartId = null; // For editing existing charts
-        let currentEditVarName = null; // For editing existing variables
 
         // Auth
         function getToken() {

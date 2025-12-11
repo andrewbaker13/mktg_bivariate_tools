@@ -195,37 +195,52 @@ class NeuralNetwork {
 }
 
 // Dataset generators for marketing scenarios
+// Simple seeded random for tutorial consistency
+let _seed = 12345;
+function seededRandom() {
+    const x = Math.sin(_seed++) * 10000;
+    return x - Math.floor(x);
+}
+
+window.getRand = function() {
+    if (window.useSeededRandom) {
+        return seededRandom();
+    }
+    return Math.random();
+}
+
 const DataGenerator = {
     // Customer Churn: High-value customers (retain) vs likely churners
     customerChurn(numSamples, noise = 0) {
+        // Reset seed if using seeded random to ensure same dataset every time
+        if (window.useSeededRandom) _seed = 12345;
+
         const data = [];
         const noiseLevel = noise / 100;
 
         for (let i = 0; i < numSamples; i++) {
             // Realistic distribution: Most customers are average, some outliers
             // Using Box-Muller transform for normal distribution
-            const u1 = Math.random();
-            const u2 = Math.random();
+            const u1 = window.getRand();
+            const u2 = window.getRand();
             const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
             const z2 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
             
-            // Months: Skewed slightly positive (more new customers)
-            // Range approx -5 to 5
-            const monthsSubscribed = (z1 * 2.5); 
+            // Months: Positive values only (0 to ~6 scaled)
+            // Shifted Gaussian to ensure positivity
+            const monthsSubscribed = Math.max(0.1, Math.abs(z1 * 1.5 + 2)); 
             
-            // Tickets: Poisson-like but continuous
-            // Range approx -5 to 5
-            const supportTickets = (z2 * 2.5);
+            // Tickets: Positive values only
+            const supportTickets = Math.max(0.1, Math.abs(z2 * 1.5 + 2));
 
             // Decision boundary: 
-            // Churn if (Tickets > Months + 1) OR (Tickets > 3)
-            // This means even long-term customers churn if tickets get too high
-            // And new customers churn easily with few tickets
-            let label = (supportTickets > monthsSubscribed + 1 || supportTickets > 3) ? -1 : 1;
+            // Churn if Tickets are high relative to Months
+            // Diagonal split in positive quadrant
+            let label = (supportTickets > monthsSubscribed + 0.5) ? -1 : 1;
 
             // Add realistic noise (misclassification)
-            // 10% of customers behave irrationally regardless of noise setting
-            if (Math.random() < 0.1 + (noiseLevel * 0.4)) {
+            // 5% of customers behave irrationally regardless of noise setting (reduced from 25% to make 80% acc achievable)
+            if (window.getRand() < 0.05 + (noiseLevel * 0.4)) {
                 label *= -1;
             }
 
@@ -251,27 +266,34 @@ const DataGenerator = {
         for (let i = 0; i < numSamples; i++) {
             let input, label;
             
+            // Box-Muller for Gaussian distribution
+            const u1 = Math.random();
+            const u2 = Math.random();
+            const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+            const z2 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
+
             // 60% Budget, 40% Premium
             if (Math.random() > 0.4) {
                 // Budget Segment (Lower Income, Lower Loyalty)
-                // Centered at (-2, -2) with spread
+                // Centered at (1.5, 1.5)
                 input = [
-                    -2 + (Math.random() + Math.random() - 1) * 2.5,
-                    -2 + (Math.random() + Math.random() - 1) * 2.5
+                    Math.max(0.1, 1.5 + z1 * 0.8),
+                    Math.max(0.1, 1.5 + z2 * 0.8)
                 ];
                 label = -1;
             } else {
                 // Premium Segment (High Income, High Loyalty)
-                // Centered at (2, 2) with spread
+                // Centered at (4.5, 4.5)
                 input = [
-                    2 + (Math.random() + Math.random() - 1) * 2.5,
-                    2 + (Math.random() + Math.random() - 1) * 2.5
+                    Math.max(0.1, 4.5 + z1 * 0.8),
+                    Math.max(0.1, 4.5 + z2 * 0.8)
                 ];
                 label = 1;
             }
 
             // Add noise/overlap
-            if (Math.random() < noiseLevel) {
+            // 20% base noise + user setting
+            if (Math.random() < 0.2 + (noiseLevel * 0.6)) {
                 label *= -1;
             }
 
@@ -292,19 +314,23 @@ const DataGenerator = {
         const noiseLevel = noise / 100;
 
         for (let i = 0; i < numSamples; i++) {
-            // Uniform distribution for ad spend and email freq
-            // Marketing campaigns often test full ranges
-            const adSpend = Math.random() * 10 - 5;
-            const emailFreq = Math.random() * 10 - 5;
+            // Gaussian distribution centered at 3.0 (range 0-6)
+            const u1 = Math.random();
+            const u2 = Math.random();
+            const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+            const z2 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
 
-            // XOR pattern with a "sweet spot" twist
+            const adSpend = Math.max(0.1, 3.0 + z1 * 1.5);
+            const emailFreq = Math.max(0.1, 3.0 + z2 * 1.5);
+
+            // XOR pattern shifted to center (3,3)
             // Convert if (High Ad Spend AND Low Email) OR (Low Ad Spend AND High Email)
-            // But if BOTH are high -> Annoyed customer (No convert)
-            // If BOTH are low -> Unaware customer (No convert)
-            let label = (adSpend * emailFreq < -1) ? 1 : -1;
+            // (x-3)*(y-3) < -1 creates a similar hyperbolic boundary
+            let label = ((adSpend - 3) * (emailFreq - 3) < -1) ? 1 : -1;
 
             // Add noise
-            if (Math.random() < noiseLevel) {
+            // 20% base noise + user setting
+            if (Math.random() < 0.2 + (noiseLevel * 0.6)) {
                 label *= -1;
             }
 
@@ -328,26 +354,26 @@ const DataGenerator = {
         const noiseLevel = noise / 100;
 
         for (let i = 0; i < numSamples; i++) {
-            // Gaussian distribution centered at 0
+            // Gaussian distribution centered at 3.0
             const u1 = Math.random();
             const u2 = Math.random();
             const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
             const z2 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
             
-            const pageViews = z1 * 2.5;
-            const timeOnSite = z2 * 2.5;
+            const pageViews = Math.max(0.1, 3.0 + z1 * 1.5);
+            const timeOnSite = Math.max(0.1, 3.0 + z2 * 1.5);
 
-            // Circular decision boundary: moderate engagement = high affinity
-            // "Goldilocks zone" - not too little, not too much (browsers)
-            const distance = Math.sqrt(pageViews * pageViews + timeOnSite * timeOnSite);
+            // Circular decision boundary centered at (3,3)
+            const dx = pageViews - 3.0;
+            const dy = timeOnSite - 3.0;
+            const distance = Math.sqrt(dx * dx + dy * dy);
             
-            // Sweet spot is between 1.5 and 4.0 distance from origin
-            // Too close = bounced
-            // Too far = lost/confused/bot
-            let label = (distance > 1.5 && distance < 4.0) ? 1 : -1;
+            // Ring between 1.0 and 2.5
+            let label = (distance > 1.0 && distance < 2.5) ? 1 : -1;
 
             // Add noise
-            if (Math.random() < noiseLevel) {
+            // 20% base noise + user setting
+            if (Math.random() < 0.2 + (noiseLevel * 0.6)) {
                 label *= -1;
             }
 

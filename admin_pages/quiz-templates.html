@@ -642,15 +642,23 @@
                 const response = await fetch(`${API_BASE}/tools/`, {
                     headers: { 'Authorization': `Token ${getToken()}` }
                 });
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`Failed to load tools: ${response.status} ${response.statusText} - ${text.substring(0, 100)}`);
+                }
                 const tools = await response.json();
                 
                 const filterSelect = document.getElementById('filterTool');
                 const formSelect = document.getElementById('templateTool');
                 
-                tools.forEach(tool => {
-                    filterSelect.innerHTML += `<option value="${tool.slug}">${tool.name}</option>`;
-                    formSelect.innerHTML += `<option value="${tool.id}">${tool.name}</option>`;
-                });
+                if (Array.isArray(tools)) {
+                    tools.forEach(tool => {
+                        filterSelect.innerHTML += `<option value="${tool.slug}">${tool.name}</option>`;
+                        formSelect.innerHTML += `<option value="${tool.id}">${tool.name}</option>`;
+                    });
+                } else {
+                    console.error('Tools response is not an array:', tools);
+                }
             } catch (error) {
                 console.error('Error loading tools:', error);
             }
@@ -662,12 +670,20 @@
                 const response = await fetch(`${API_BASE}/quiz/manage/courses/`, {
                     headers: { 'Authorization': `Token ${getToken()}` }
                 });
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`Failed to load courses: ${response.status} ${response.statusText} - ${text.substring(0, 100)}`);
+                }
                 const courses = await response.json();
                 
                 const select = document.getElementById('cloneCourse');
-                courses.forEach(course => {
-                    select.innerHTML += `<option value="${course.id}">${course.name}</option>`;
-                });
+                if (Array.isArray(courses)) {
+                    courses.forEach(course => {
+                        select.innerHTML += `<option value="${course.id}">${course.name}</option>`;
+                    });
+                } else {
+                    console.error('Courses response is not an array:', courses);
+                }
             } catch (error) {
                 console.error('Error loading courses:', error);
             }

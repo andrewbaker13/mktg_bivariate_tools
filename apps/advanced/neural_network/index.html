@@ -3,53 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neural Network Playground - Dr. Baker Marketing Analytics</title>
+    <title>AI Marketing Prediction Lab - Dr. Baker Marketing Analytics</title>
     <link rel="stylesheet" href="../../../shared/css/main.css">
     <style>
         .playground-container {
-            max-width: 1400px;
+            max-width: 1200px; /* Standard app width */
             margin: 0 auto;
-            padding: 20px;
+            padding: clamp(1rem, 4vw, 3rem); /* Standard app padding */
         }
 
         .playground-header {
             text-align: center;
             margin-bottom: 30px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .playground-header h1 {
-            color: #2c3e50;
+            color: #1e40af; /* Standard header color */
             margin-bottom: 10px;
         }
 
         .playground-header p {
-            color: #7f8c8d;
+            color: var(--app-muted);
             font-size: 1.1em;
         }
 
         .playground-grid {
-            display: grid;
-            grid-template-columns: 250px 1fr;
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .step-card {
+            background: var(--app-card-bg);
+            border-radius: 12px; /* Standard card radius */
+            padding: clamp(1rem, 3vw, 2rem); /* Standard card padding */
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08); /* Standard card shadow */
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .step-card:hover {
+            box-shadow: 0 15px 35px rgba(15, 23, 42, 0.12);
+        }
+
+        /* Step 1 & 2 Color */
+        #step1, #step2 {
+            border-left-color: var(--app-accent);
+        }
+
+        /* Step 3 Color */
+        #step3 {
+            border-left-color: var(--app-warning);
+        }
+
+        /* Step 4 Color */
+        #step4 {
+            border-left-color: var(--app-success);
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--app-border);
+            padding-bottom: 15px;
+        }
+
+        .step-header h2 {
+            margin: 0;
+            color: #1e40af; /* Standard header color */
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Tutorial / Professor Mode Styles */
+        #tutorial-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px; /* Hidden by default */
+            width: 350px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            z-index: 2000;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            border-left: 5px solid var(--app-accent);
+        }
+
+        #tutorial-sidebar.active {
+            right: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid var(--app-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 1.2em;
+            color: #1e40af;
+        }
+
+        .close-tutorial {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--app-muted);
+        }
+
+        #tutorial-content {
+            padding: 25px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .tutorial-step-badge {
+            display: inline-block;
+            background: var(--app-accent);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .tutorial-body {
+            line-height: 1.6;
+            color: var(--app-text);
             margin-bottom: 20px;
         }
 
-        .controls-panel {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            height: fit-content;
+        .tutorial-body p {
+            margin-bottom: 15px;
         }
 
-        .control-section {
-            margin-bottom: 25px;
+        .tutorial-body .task {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid var(--app-success);
+            font-weight: 500;
         }
 
-        .control-section h3 {
-            font-size: 0.9em;
+        .tutorial-progress {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        #tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            display: none;
+            pointer-events: none; /* Allow clicking through to highlighted element? No, we want to block outside clicks */
+        }
+        
+        /* When overlay is active, allow pointer events on it to block clicks elsewhere */
+        #tutorial-overlay {
+            pointer-events: auto;
+        }
+
+        /* Highlighted element sits above overlay */
+        .tutorial-highlight {
+            position: relative;
+            z-index: 1001 !important;
+            background: white; /* Ensure background is opaque */
+            box-shadow: 0 0 0 5px var(--app-accent), 0 0 20px rgba(0,0,0,0.5); /* Blue glow ring */
+            pointer-events: auto;
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0px rgba(42, 125, 225, 0.7), 0 0 20px rgba(0,0,0,0.5); }
+            70% { box-shadow: 0 0 0 10px rgba(42, 125, 225, 0), 0 0 20px rgba(0,0,0,0.5); }
+            100% { box-shadow: 0 0 0 0px rgba(42, 125, 225, 0), 0 0 20px rgba(0,0,0,0.5); }
+        }
+
+        .dataset-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .model-design-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .model-design-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
             text-transform: uppercase;
-            color: #7f8c8d;
+            color: var(--app-muted);
             margin-bottom: 10px;
             font-weight: 600;
         }
@@ -62,7 +238,7 @@
             display: block;
             font-size: 0.9em;
             margin-bottom: 5px;
-            color: #2c3e50;
+            color: var(--app-text);
         }
 
         .control-group select,
@@ -72,7 +248,7 @@
 
         .control-group .value-display {
             font-size: 0.85em;
-            color: #3498db;
+            color: var(--app-accent);
             font-weight: 600;
         }
 
@@ -83,7 +259,7 @@
         }
 
         .dataset-card {
-            border: 2px solid #ecf0f1;
+            border: 2px solid var(--app-border);
             border-radius: 8px;
             padding: 10px;
             text-align: center;
@@ -92,12 +268,12 @@
         }
 
         .dataset-card:hover {
-            border-color: #3498db;
+            border-color: var(--app-accent);
             background: #f8f9fa;
         }
 
         .dataset-card.active {
-            border-color: #3498db;
+            border-color: var(--app-accent);
             background: #e3f2fd;
         }
 
@@ -110,12 +286,12 @@
         .dataset-card h4 {
             font-size: 0.85em;
             margin: 0 0 3px 0;
-            color: #2c3e50;
+            color: var(--app-text);
         }
 
         .dataset-card .dataset-desc {
             font-size: 0.75em;
-            color: #7f8c8d;
+            color: var(--app-muted);
             margin: 0;
         }
 
@@ -127,18 +303,18 @@
         }
 
         .scenario-details h4 {
-            color: #2c3e50;
+            color: var(--app-text);
         }
 
         .section-divider {
             height: 2px;
-            background: linear-gradient(to right, transparent, #3498db, transparent);
+            background: linear-gradient(to right, transparent, var(--app-accent), transparent);
             margin: 25px 0;
         }
 
         .model-section {
             background: #f0f7ff;
-            border-left: 3px solid #3498db;
+            border-left: 3px solid var(--app-accent);
             padding: 15px;
             margin-bottom: 15px;
             border-radius: 6px;
@@ -150,7 +326,7 @@
             height: 16px;
             line-height: 16px;
             text-align: center;
-            background: #3498db;
+            background: var(--app-accent);
             color: white;
             border-radius: 50%;
             font-size: 0.7em;
@@ -159,7 +335,7 @@
         }
 
         .help-icon:hover {
-            background: #2980b9;
+            background: var(--app-accent-dark);
         }
 
         .feature-selector {
@@ -196,7 +372,7 @@
         .viz-header h2 {
             margin: 0;
             font-size: 1.2em;
-            color: #2c3e50;
+            color: #1e40af;
         }
 
         .control-buttons {
@@ -207,42 +383,42 @@
         .btn {
             padding: 8px 16px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px; /* Standard button radius */
             cursor: pointer;
             font-weight: 600;
             transition: all 0.2s;
         }
 
         .btn-primary {
-            background: #3498db;
+            background: var(--app-accent);
             color: white;
         }
 
         .btn-primary:hover {
-            background: #2980b9;
+            background: var(--app-accent-dark);
         }
 
         .btn-secondary {
-            background: #95a5a6;
+            background: var(--app-muted);
             color: white;
         }
 
         .btn-secondary:hover {
-            background: #7f8c8d;
+            background: var(--app-text);
         }
 
         .btn-danger {
-            background: #e74c3c;
+            background: var(--app-danger);
             color: white;
         }
 
         .btn-danger:hover {
-            background: #c0392b;
+            background: #b91c1c; /* Darker red */
         }
 
         .training-section, .validation-section {
             background: white;
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
@@ -256,7 +432,7 @@
 
         .section-header h2 {
             margin: 0;
-            color: #2c3e50;
+            color: #1e40af;
             font-size: 1.3em;
         }
 
@@ -275,13 +451,13 @@
         .network-viz-box h3, .progress-viz-box h3, .boundary-viz-box h3, .validation-metrics-box h3 {
             margin: 0 0 15px 0;
             font-size: 1em;
-            color: #2c3e50;
+            color: var(--app-text);
         }
 
         #networkCanvas {
             width: 100%;
             height: 350px;
-            border: 1px solid #ecf0f1;
+            border: 1px solid var(--app-border);
             border-radius: 4px;
             background: white;
             display: block;
@@ -290,7 +466,7 @@
         #lossChart {
             width: 100%;
             height: 250px;
-            border: 1px solid #ecf0f1;
+            border: 1px solid var(--app-border);
             border-radius: 4px;
             background: white;
             display: block;
@@ -313,7 +489,7 @@
         .metric-mini .metric-label {
             display: block;
             font-size: 0.75em;
-            color: #7f8c8d;
+            color: var(--app-muted);
             text-transform: uppercase;
             margin-bottom: 5px;
         }
@@ -322,7 +498,7 @@
             display: block;
             font-size: 1.4em;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--app-text);
         }
 
         .validation-grid {
@@ -340,7 +516,7 @@
         #boundaryCanvas {
             width: 100%;
             height: 400px;
-            border: 1px solid #ecf0f1;
+            border: 1px solid var(--app-border);
             border-radius: 4px;
             background: white;
             display: block;
@@ -357,14 +533,14 @@
         .metric-card-large h4 {
             margin: 0 0 10px 0;
             font-size: 0.9em;
-            color: #7f8c8d;
+            color: var(--app-muted);
             text-transform: uppercase;
         }
 
         .metric-card-large .value-large {
             font-size: 3em;
             font-weight: 700;
-            color: #27ae60;
+            color: var(--app-success);
         }
 
         .validation-explanation {
@@ -376,7 +552,7 @@
         .validation-explanation h4 {
             margin: 0 0 10px 0;
             font-size: 0.95em;
-            color: #2c3e50;
+            color: var(--app-text);
         }
 
         .validation-explanation ul {
@@ -394,19 +570,19 @@
         .metric-card h4 {
             margin: 0 0 5px 0;
             font-size: 0.85em;
-            color: #7f8c8d;
+            color: var(--app-muted);
             text-transform: uppercase;
         }
 
         .metric-card .value {
             font-size: 1.8em;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--app-text);
         }
 
         .metric-card .subvalue {
             font-size: 0.9em;
-            color: #95a5a6;
+            color: var(--app-muted);
         }
 
         .chart-container {
@@ -416,35 +592,36 @@
         #lossChart {
             width: 100%;
             height: 200px;
-            border: 1px solid #ecf0f1;
+            border: 1px solid var(--app-border);
             border-radius: 4px;
             background: white;
             display: block;
         }
 
         .info-box {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
+            background: #eff6ff; /* Light blue */
+            border-left: 4px solid var(--app-accent);
             padding: 15px;
-            margin: 20px 0;
+            margin: 20px auto;
             border-radius: 4px;
+            max-width: 1000px;
         }
 
         .info-box h3 {
             margin: 0 0 10px 0;
-            color: #1976d2;
+            color: #1e40af;
             font-size: 1em;
         }
 
         .info-box p {
             margin: 0;
-            color: #424242;
+            color: var(--app-text);
             font-size: 0.9em;
             line-height: 1.6;
         }
 
         .guided-mode-banner {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--app-accent) 0%, #1e40af 100%);
             color: white;
             padding: 15px;
             border-radius: 8px;
@@ -452,6 +629,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .guided-mode-banner h3 {
@@ -490,16 +670,16 @@
 
     <div class="playground-container">
         <div class="playground-header">
-            <h1>🧠 Neural Network Playground</h1>
-            <p>Visualize and understand how neural networks learn marketing patterns</p>
+            <h1>🧠 AI Marketing Prediction Lab</h1>
+            <p>Understand and visualize how neural 🧠 networks (an "A.I." tool) can be designed to predict consumer behavior</p>
         </div>
 
         <!-- Guided Mode Banner -->
         <div class="guided-mode-banner">
-            <h3>👋 New to neural networks? Guided mode simplifies the controls!</h3>
+            <h3>👨‍🏫 Professor Mode: Guided Educational Experience</h3>
             <label>
                 <input type="checkbox" id="guidedMode" checked>
-                <span>Guided Mode</span>
+                <span>Enable Professor Mode</span>
             </label>
         </div>
 
@@ -513,59 +693,72 @@
             </p>
         </div>
 
-        <div class="playground-grid">
-            <!-- Controls Panel -->
-            <div class="controls-panel">
-                <!-- Dataset Selection -->
-                <div class="control-section">
-                    <h3>📊 Step 1: Choose Your Business Problem</h3>
-                    <p style="font-size: 0.85em; color: #7f8c8d; margin-bottom: 15px;">
-                        Select a real marketing scenario. Each has different patterns the network must learn.
-                    </p>
-                    <div class="dataset-selector">
-                        <div class="dataset-card active" data-dataset="churn">
-                            <canvas class="dataset-preview" id="preview-churn"></canvas>
-                            <h4>Customer Churn</h4>
-                            <p class="dataset-desc">Will customers stay or leave?</p>
-                        </div>
-                        <div class="dataset-card" data-dataset="segment">
-                            <canvas class="dataset-preview" id="preview-segment"></canvas>
-                            <h4>Market Segments</h4>
-                            <p class="dataset-desc">Identify customer groups</p>
-                        </div>
-                        <div class="dataset-card" data-dataset="abtest">
-                            <canvas class="dataset-preview" id="preview-abtest"></canvas>
-                            <h4>A/B Test</h4>
-                            <p class="dataset-desc">Predict which version converts</p>
-                        </div>
-                        <div class="dataset-card" data-dataset="affinity">
-                            <canvas class="dataset-preview" id="preview-affinity"></canvas>
-                            <h4>Product Affinity</h4>
-                            <p class="dataset-desc">Who will buy together?</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Scenario Details -->
-                    <div class="scenario-details" id="scenarioDetails">
-                        <h4 style="font-size: 0.9em; margin-bottom: 8px;">Current Scenario:</h4>
-                        <p id="scenarioDescription" style="font-size: 0.85em; line-height: 1.5; color: #2c3e50;">
-                            Predict customer churn based on pricing and service quality. 
-                            <strong style="color: #3498db;">Blue</strong> = likely to stay, 
-                            <strong style="color: #e74c3c;">Red</strong> = likely to churn.
-                        </p>
-                        <button class="btn btn-secondary" id="viewDataBtn" style="width: 100%; margin-top: 10px; font-size: 0.85em;">
-                            👁️ View Sample Data
-                        </button>
-                    </div>
+    <div class="playground-grid">
+        
+        <!-- Step 1: Business Problem -->
+        <div class="step-card" id="step1">
+            <div class="step-header">
+                <h2>📊 Step 1: Choose Your Business Problem</h2>
+            </div>
+            
+            <p style="color: var(--app-muted); margin-bottom: 20px;">
+                Select a real marketing scenario. Each has different patterns the network must learn.
+            </p>
+
+            <div class="dataset-selector">
+                <div class="dataset-card active" data-dataset="churn">
+                    <canvas class="dataset-preview" id="preview-churn"></canvas>
+                    <h4>Customer Churn</h4>
+                    <p class="dataset-desc">Will customers stay or leave?</p>
                 </div>
-                
-                <!-- Data Settings -->
-                <div class="control-section advanced-controls">
-                    <h3>⚙️ Data Settings</h3>
+                <div class="dataset-card" data-dataset="segment">
+                    <canvas class="dataset-preview" id="preview-segment"></canvas>
+                    <h4>Market Segments</h4>
+                    <p class="dataset-desc">Identify customer groups</p>
+                </div>
+                <div class="dataset-card" data-dataset="abtest">
+                    <canvas class="dataset-preview" id="preview-abtest"></canvas>
+                    <h4>A/B Test</h4>
+                    <p class="dataset-desc">Predict which version converts</p>
+                </div>
+                <div class="dataset-card" data-dataset="affinity">
+                    <canvas class="dataset-preview" id="preview-affinity"></canvas>
+                    <h4>Product Affinity</h4>
+                    <p class="dataset-desc">Who will buy together?</p>
+                </div>
+                <!-- Upload Option -->
+                <div class="dataset-card" id="uploadCard">
+                    <div style="height: 60px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--app-accent);">
+                        📂
+                    </div>
+                    <h4>Upload Data</h4>
+                    <p class="dataset-desc">CSV: 2 Features + 1 Outcome</p>
+                    <a href="#" id="downloadTemplateBtn" style="font-size: 0.8em; color: var(--app-accent); margin-top: 5px; display: inline-block; text-decoration: underline;">Download Template CSV</a>
+                    <input type="file" id="csvUpload" accept=".csv,.tsv,.txt" style="display: none;">
+                </div>
+            </div>
+
+            <div style="display: block;">
+                <!-- Scenario Details -->
+                <div class="scenario-details" id="scenarioDetails" style="margin-top: 0;">
+                    <h4 style="font-size: 0.9em; margin-bottom: 8px;">Current Scenario:</h4>
+                    <p id="scenarioDescription" style="font-size: 0.85em; line-height: 1.5; color: var(--app-text);">
+                        Predict customer churn based on pricing and service quality. 
+                        <strong style="color: var(--app-accent);">Blue</strong> = likely to stay, 
+                        <strong style="color: var(--app-danger);">Red</strong> = likely to churn.
+                    </p>
+                    <button class="btn btn-secondary" id="viewDataBtn" style="width: 100%; margin-top: 10px; font-size: 0.85em;">
+                        👁️ View Sample Data
+                    </button>
+                </div>
+
+                <!-- Data Settings (Hidden) -->
+                <div style="display: none;">
+                    <h4 style="font-size: 0.9em; margin-bottom: 10px; color: var(--app-text);">Data Settings</h4>
                     <div class="control-group">
                         <label>
                             Noise Level 
-                            <span class="help-icon" title="Add randomness to make the pattern harder to learn (simulates real-world messiness)">ⓘ</span>
+                            <span class="help-icon" title="Add randomness to make the pattern harder to learn">ⓘ</span>
                             : <span class="value-display" id="noiseValue">0%</span>
                         </label>
                         <input type="range" id="noise" min="0" max="50" value="0" step="1">
@@ -573,242 +766,222 @@
                     <div class="control-group">
                         <label>
                             Training Data 
-                            <span class="help-icon" title="% of data used to teach the network (rest is used to test how well it learned)">ⓘ</span>
+                            <span class="help-icon" title="% of data used to teach the network">ⓘ</span>
                             : <span class="value-display" id="trainSplitValue">70%</span>
                         </label>
                         <input type="range" id="trainSplit" min="50" max="90" value="70" step="5">
                     </div>
                 </div>
-                
-                <div class="section-divider"></div>
+            </div>
+        </div>
 
+        <!-- Step 2: Model Design -->
+        <div class="step-card" id="step2">
+            <div class="step-header">
+                <h2>🧠 Step 2: Design Your Model</h2>
+            </div>
+            
+            <p style="color: var(--app-muted); margin-bottom: 20px;">
+                Configure what information the network uses and how it processes it.
+            </p>
+
+            <div class="model-design-grid">
                 <!-- Input Features -->
-                <div class="control-section model-section">
-                    <h3>🧠 Step 2: Design Your Model</h3>
-                    <p style="font-size: 0.85em; color: #7f8c8d; margin-bottom: 15px;">
-                        Configure what information the network uses and how it processes it.
-                    </p>
-                    
-                    <h4 style="font-size: 0.9em; margin-bottom: 10px;">
+                <div>
+                    <h4 style="font-size: 0.9em; margin-bottom: 15px; color: var(--app-text);">
                         Input Features 
-                        <span class="help-icon" title="Variables the network uses to make predictions. Start with basic features (X, Y), then add engineered features to capture complex patterns">ⓘ</span>
+                        <span class="help-icon" title="Variables the network uses to make predictions">ⓘ</span>
                     </h4>
                     <div class="feature-selector">
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="price" checked>
-                            <span><span id="label-x">Variable X</span> 
-                                <span class="help-icon" title="First variable (changes based on scenario)">ⓘ</span>
-                            </span>
+                            <span id="label-x">Variable X</span>
                         </label>
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="quality" checked>
-                            <span><span id="label-y">Variable Y</span> 
-                                <span class="help-icon" title="Second variable (changes based on scenario)">ⓘ</span>
-                            </span>
+                            <span id="label-y">Variable Y</span>
                         </label>
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="priceSquared">
-                            <span><span id="label-x2">X²</span> 
-                                <span class="help-icon" title="Captures curved relationships - helps when medium values are best or worst">ⓘ</span>
-                            </span>
+                            <span id="label-x2">X² (Squared)</span>
                         </label>
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="qualitySquared">
-                            <span><span id="label-y2">Y²</span> 
-                                <span class="help-icon" title="Captures curved relationships in Y variable">ⓘ</span>
-                            </span>
+                            <span id="label-y2">Y² (Squared)</span>
                         </label>
                         <label class="feature-checkbox">
                             <input type="checkbox" name="feature" value="interaction">
-                            <span><span id="label-xy">X × Y</span> 
-                                <span class="help-icon" title="Captures how X and Y work together - useful for XOR-like patterns">ⓘ</span>
-                            </span>
+                            <span id="label-xy">X × Y (Interaction)</span>
+                        </label>
+                        <label class="feature-checkbox">
+                            <input type="checkbox" name="feature" value="logX">
+                            <span id="label-logx">ln(X)</span>
+                        </label>
+                        <label class="feature-checkbox">
+                            <input type="checkbox" name="feature" value="logY">
+                            <span id="label-logy">ln(Y)</span>
                         </label>
                     </div>
                 </div>
 
-                <!-- Network Architecture -->
-                <div class="control-section model-section">
-                    <h4 style="font-size: 0.9em; margin-bottom: 10px;">
-                        Network Architecture 
-                        <span class="help-icon" title="The 'brain' structure: layers are levels of processing, neurons are the processing units">ⓘ</span>
+                <!-- Architecture & Advanced -->
+                <div>
+                    <h4 style="font-size: 0.9em; margin-bottom: 15px; color: var(--app-text);">
+                        Network Architecture
+                        <span class="help-icon" title="The 'brain' structure">ⓘ</span>
                     </h4>
                     <div class="control-group">
                         <label>
-                            Hidden Layers 
-                            <span class="help-icon" title="More layers = can learn more complex patterns, but takes longer to train">ⓘ</span>
-                            : <span class="value-display" id="layersValue">1</span>
+                            Hidden Layers: <span class="value-display" id="layersValue">1</span>
                         </label>
                         <input type="range" id="hiddenLayers" min="0" max="4" value="1" step="1">
                     </div>
                     <div class="control-group">
                         <label>
-                            Neurons per Layer 
-                            <span class="help-icon" title="More neurons = more processing power per layer">ⓘ</span>
-                            : <span class="value-display" id="neuronsValue">4</span>
+                            Neurons per Layer: <span class="value-display" id="neuronsValue">4</span>
                         </label>
                         <input type="range" id="neuronsPerLayer" min="2" max="8" value="4" step="1">
                     </div>
-                </div>
 
-                <!-- Learning Settings -->
-                <div class="control-section advanced-controls model-section">
-                    <h4 style="font-size: 0.9em; margin-bottom: 10px;">Advanced Model Settings</h4>
-                    <div class="control-group">
-                        <label>
-                            Learning Speed 
-                            <span class="help-icon" title="How fast the network adjusts. Too fast = unstable, too slow = takes forever">ⓘ</span>
-                            : <span class="value-display" id="learningRateValue">0.03</span>
-                        </label>
-                        <input type="range" id="learningRate" min="0.001" max="0.1" value="0.03" step="0.001">
-                    </div>
-                    <div class="control-group">
-                        <label>
-                            Transformation Type 
-                            <span class="help-icon" title="How neurons process information. ReLU is most common for modern networks">ⓘ</span>
-                        </label>
-                        <select id="activation">
-                            <option value="relu">ReLU (Recommended)</option>
-                            <option value="tanh" selected>Tanh</option>
-                            <option value="sigmoid">Sigmoid</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
-                        <label>
-                            Complexity Penalty 
-                            <span class="help-icon" title="Prevents overfitting by keeping weights small. L2 is most common">ⓘ</span>
-                        </label>
-                        <select id="regularization">
-                            <option value="none" selected>None (Simpler)</option>
-                            <option value="L1">L1</option>
-                            <option value="L2">L2</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Visualization Panel -->
-            <div class="visualization-panel">
-                <!-- Step 3: Model Training -->
-                <div class="training-section">
-                    <div class="section-header">
-                        <h2>🎯 Step 3: Model Training
-                            <span class="help-icon" title="Watch as the network learns patterns by adjusting its internal weights. Blue lines = positive connections, red = negative">ⓘ</span>
-                        </h2>
-                        <div class="control-buttons">
-                            <button class="btn btn-primary" id="playPauseBtn">
-                                <span id="playPauseIcon">▶</span> Start Training
-                            </button>
-                            <button class="btn btn-secondary" id="stepBtn">Step</button>
-                            <button class="btn btn-danger" id="resetBtn">Reset</button>
+                    <div class="advanced-controls" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--app-border);">
+                        <h4 style="font-size: 0.9em; margin-bottom: 15px; color: var(--app-text);">Advanced Settings</h4>
+                        <div class="control-group">
+                            <label>Learning Speed: <span class="value-display" id="learningRateValue">0.03</span></label>
+                            <input type="range" id="learningRate" min="0.001" max="0.1" value="0.03" step="0.001">
                         </div>
-                    </div>
-
-                    <div class="training-grid">
-                        <!-- Network Architecture Visualization -->
-                        <div class="network-viz-box">
-                            <h3>Network Architecture 
-                                <span class="help-icon" title="Each circle is a neuron. Lines show connections. Thicker lines = stronger influence. Colors show if connection is positive (blue) or negative (red)">ⓘ</span>
-                            </h3>
-                            <canvas id="networkCanvas"></canvas>
-                        </div>
-
-                        <!-- Training Progress Chart -->
-                        <div class="progress-viz-box">
-                            <h3>Training Progress 
-                                <span class="help-icon" title="Lower loss = better predictions. Orange line is training data (what it learns from). Green line is test data (how well it generalizes)">ⓘ</span>
-                            </h3>
-                            <canvas id="lossChart"></canvas>
-                            
-                            <!-- Metrics -->
-                            <div class="metrics-row">
-                                <div class="metric-mini">
-                                    <span class="metric-label">Iterations</span>
-                                    <span class="metric-value" id="iterations">0</span>
-                                </div>
-                                <div class="metric-mini">
-                                    <span class="metric-label">Train Loss</span>
-                                    <span class="metric-value" id="trainLoss">0.000</span>
-                                </div>
-                                <div class="metric-mini">
-                                    <span class="metric-label">Test Loss</span>
-                                    <span class="metric-value" id="testLoss">0.000</span>
-                                </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="control-group">
+                                <label>Activation</label>
+                                <select id="activation">
+                                    <option value="relu">ReLU</option>
+                                    <option value="tanh" selected>Tanh</option>
+                                    <option value="sigmoid">Sigmoid</option>
+                                </select>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section-divider" style="margin: 30px 0;"></div>
-
-                <!-- Step 4: Model Validation -->
-                <div class="validation-section">
-                    <div class="section-header">
-                        <h2>✅ Step 4: Model Validation
-                            <span class="help-icon" title="See how well your trained model performs on NEW data it has never seen before. This tests if it truly learned the pattern or just memorized the training data">ⓘ</span>
-                        </h2>
-                    </div>
-
-                    <div class="validation-grid">
-                        <!-- Decision Boundary Visualization -->
-                        <div class="boundary-viz-box">
-                            <h3>Decision Boundary 
-                                <span class="help-icon" title="The colored background shows what the model predicts for every possible input. Blue regions = model predicts positive outcome, red = negative outcome">ⓘ</span>
-                            </h3>
-                            <canvas id="boundaryCanvas"></canvas>
-                            <p style="font-size: 0.85em; color: #7f8c8d; margin-top: 10px; text-align: center;">
-                                Background colors = model's predictions | Dots = actual data points
-                            </p>
-                        </div>
-
-                        <!-- Validation Metrics -->
-                        <div class="validation-metrics-box">
-                            <h3>Performance on Unseen Data 
-                                <span class="help-icon" title="These metrics show how well the model performs on test data it wasn't trained on - the true test of whether it learned the pattern">ⓘ</span>
-                            </h3>
-                            
-                            <div class="metric-card-large">
-                                <h4>Test Accuracy</h4>
-                                <div class="value-large" id="accuracy">--</div>
-                                <p style="font-size: 0.85em; color: #7f8c8d; margin-top: 8px;">
-                                    Percentage of test data points correctly classified
-                                </p>
-                            </div>
-
-                            <div class="validation-explanation">
-                                <h4>🤔 Understanding Validation</h4>
-                                <ul style="font-size: 0.9em; line-height: 1.8; color: #2c3e50;">
-                                    <li><strong>Test data</strong> (dots on decision boundary) were NOT used during training</li>
-                                    <li><strong>Good fit:</strong> Model performs similarly on training and test data</li>
-                                    <li><strong>Overfitting:</strong> Great on training, poor on test = memorized instead of learned</li>
-                                    <li><strong>Underfitting:</strong> Poor on both = model is too simple for the pattern</li>
-                                </ul>
-                                
-                                <div id="validationInsight" style="margin-top: 15px; padding: 12px; background: #e8f5e9; border-radius: 6px; font-size: 0.9em;">
-                                    <strong>💡 Current Model Status:</strong>
-                                    <p id="validationStatus" style="margin: 5px 0 0 0;">Train your model to see validation results...</p>
-                                </div>
+                            <div class="control-group">
+                                <label>Regularization</label>
+                                <select id="regularization">
+                                    <option value="none" selected>None</option>
+                                    <option value="L1">L1</option>
+                                    <option value="L2">L2</option>
+                                </select>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Step 3: Training -->
+        <div class="step-card" id="step3">
+            <div class="step-header">
+                <h2>🎯 Step 3: Model Training</h2>
+                <div class="control-buttons">
+                    <button class="btn btn-primary" id="playPauseBtn">
+                        <span id="playPauseIcon">▶</span> Start Training
+                    </button>
+                    <button class="btn btn-secondary" id="stepBtn">Step</button>
+                    <button class="btn btn-danger" id="resetBtn">Reset</button>
+                    <button class="btn btn-secondary" id="viewWeightsBtn" title="View internal model weights">Weights</button>
+                </div>
+            </div>
+
+            <div class="training-grid">
+                <div class="network-viz-box">
+                    <h3>Network Architecture</h3>
+                    <canvas id="networkCanvas"></canvas>
+                </div>
+                <div class="progress-viz-box">
+                    <h3>Training Progress</h3>
+                    <canvas id="lossChart"></canvas>
+                    <div class="metrics-row">
+                        <div class="metric-mini">
+                            <span class="metric-label">Iterations</span>
+                            <span class="metric-value" id="iterations">0</span>
+                        </div>
+                        <div class="metric-mini">
+                            <span class="metric-label">Train Loss</span>
+                            <span class="metric-value" id="trainLoss">0.000</span>
+                        </div>
+                        <div class="metric-mini">
+                            <span class="metric-label">Train Acc</span>
+                            <span class="metric-value" id="trainAccuracy">0.0%</span>
+                        </div>
+                        <div class="metric-mini">
+                            <span class="metric-label">Test Loss</span>
+                            <span class="metric-value" id="testLoss">0.000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Validation -->
+        <div class="step-card" id="step4">
+            <div class="step-header">
+                <h2>✅ Step 4: Model Validation</h2>
+            </div>
+
+            <div class="validation-grid">
+                <div class="boundary-viz-box">
+                    <h3>Decision Boundary</h3>
+                    <canvas id="boundaryCanvas"></canvas>
+                    <p style="font-size: 0.85em; color: var(--app-muted); margin-top: 10px; text-align: center; line-height: 1.4;">
+                        Background = predictions | Dots = actual data<br>
+                        <span style="font-size: 0.9em;">
+                            <strong>Color Intensity = Confidence</strong><br>
+                            Deep Color = Certain | Grey = Uncertain
+                        </span>
+                    </p>
+                </div>
+                <div class="validation-metrics-box">
+                    <h3>Performance on Unseen Data</h3>
+                    <div class="metric-card-large">
+                        <h4>Test Accuracy</h4>
+                        <div class="value-large" id="accuracy">--</div>
+                        <p style="font-size: 0.85em; color: var(--app-muted); margin-top: 8px;">
+                            Percentage of test data points correctly classified
+                        </p>
+                    </div>
+                    <div class="validation-explanation">
+                        <h4>🤔 Understanding Validation</h4>
+                        <ul style="font-size: 0.9em; line-height: 1.8; color: var(--app-text);">
+                            <li><strong>Test data</strong> were NOT used during training</li>
+                            <li><strong>Good fit:</strong> Similar performance on train/test</li>
+                            <li><strong>Overfitting:</strong> Great train, poor test</li>
+                        </ul>
+                        <div id="validationInsight" style="margin-top: 15px; padding: 12px; background: var(--app-bg-light); border-radius: 6px; font-size: 0.9em;">
+                            <strong>💡 Current Model Status:</strong>
+                            <p id="validationStatus" style="margin: 5px 0 0 0;">Train your model to see validation results...</p>
+                        </div>
+                        <button class="btn btn-secondary" id="viewPredictionsBtn" style="width: 100%; margin-top: 15px; font-size: 0.9em;">
+                            📋 View Prediction Details
+                        </button>
+                        <button class="btn btn-secondary" id="downloadPredictionsBtn" style="width: 100%; margin-top: 10px; font-size: 0.9em;">
+                            📥 Download Full Predictions (CSV)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Data Preview Modal -->
     <div id="dataModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; padding: 20px; overflow: auto;">
         <div style="max-width: 800px; margin: 50px auto; background: white; border-radius: 12px; padding: 30px; position: relative;">
-            <button id="closeModal" style="position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 18px;">×</button>
+            <button id="closeModal" style="position: absolute; top: 15px; right: 15px; background: var(--app-danger); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 18px;">×</button>
             <h2 style="margin-top: 0;">📊 Sample Data Preview</h2>
             <div id="dataPreviewContent"></div>
         </div>
     </div>
 
     <!-- Scripts -->
+    <script src="../../../shared/js/csv_utils.js"></script>
     <script src="../../../shared/js/auth_tracking.js"></script>
     <script src="../../../shared/js/auth_bar.js"></script>
     <script src="nn.js"></script>
     <script src="playground.js"></script>
+    <script src="tutorial.js"></script>
 </body>
 </html>

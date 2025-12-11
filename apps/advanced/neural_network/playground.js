@@ -18,6 +18,12 @@ let lossHistory = {
     test: []
 };
 
+// Global stats for feature scaling
+let dataStats = {
+    minX: 0, maxX: 8,
+    minY: 0, maxY: 8
+};
+
 // Configuration
 const config = {
     dataset: 'churn',
@@ -31,47 +37,52 @@ const config = {
     trainSplit: 0.7
 };
 
-// Scenario descriptions with updated variable names
-const scenarioInfo = {
+// Scenario descriptions
+const scenarioDescriptions = {
     churn: {
-        title: "Customer Churn Prediction",
-        description: "Predict which subscription customers will churn based on <strong>Months Subscribed</strong> and <strong>Support Tickets</strong>. Longer subscriptions with fewer support issues indicate loyalty. <strong style='color: #3498db;'>Blue = Stay</strong>, <strong style='color: #e74c3c;'>Red = Churn</strong>. Pattern: More months + fewer tickets = retained customer.",
-        realWorld: "Used by subscription services (Netflix, Spotify) to identify at-risk customers before they cancel.",
-        xLabel: "Months",
-        yLabel: "Tickets"
+        text: "This scenario challenges you to predict <strong>Customer Churn</strong>. We are analyzing two key variables: <strong>Months Subscribed</strong> (customer tenure) and <strong>Support Tickets</strong> (number of help requests). The goal is to draw a boundary that separates customers who are <strong style='color: var(--app-accent);'>Likely to Stay (Blue)</strong> from those who are <strong style='color: var(--app-danger);'>Likely to Churn (Red)</strong>. Notice how new customers (low tenure) with many support tickets are in the 'danger zone'."
     },
     segment: {
-        title: "Market Segmentation",
-        description: "Identify customer segments using <strong>Income Level</strong> and <strong>Brand Loyalty Score</strong>. Two distinct groups emerge: premium customers (high income, high loyalty) and budget-conscious customers (lower income, lower loyalty). <strong style='color: #3498db;'>Blue = Premium Segment</strong>, <strong style='color: #e74c3c;'>Red = Budget Segment</strong>.",
-        realWorld: "Used by companies like Amazon and Target to personalize marketing campaigns for different customer types.",
-        xLabel: "Income",
-        yLabel: "Loyalty"
+        text: "In this scenario, we are identifying distinct <strong>Market Segments</strong> based on <strong>Annual Income</strong> and <strong>Brand Loyalty Score</strong>. Marketing often involves finding 'clusters' of similar people. Here, we want to classify customers into the <strong style='color: var(--app-accent);'>Premium Segment (Blue)</strong> versus the <strong style='color: var(--app-danger);'>Budget Segment (Red)</strong>. This helps us target the right ads to the right people."
     },
     abtest: {
-        title: "A/B Test Conversion Prediction",
-        description: "Predict campaign conversions based on <strong>Ad Spend</strong> and <strong>Email Frequency</strong>. The pattern is complex (XOR-like): conversions happen when one factor is high and the other low. Too much or too little of both doesn't work. <strong style='color: #3498db;'>Blue = Converts</strong>, <strong style='color: #e74c3c;'>Red = Bounces</strong>. Requires multiple layers!",
-        realWorld: "Used by e-commerce sites and SaaS companies to optimize marketing budget allocation.",
-        xLabel: "Ad Spend",
-        yLabel: "Emails"
+        text: "This scenario simulates an <strong>A/B Test Analysis</strong>. We are looking at the relationship between <strong>Ad Spend</strong> and <strong>Email Frequency</strong> to predict conversion rates. The model needs to learn which combination of marketing pressure leads to a <strong style='color: var(--app-accent);'>Conversion (Blue)</strong> versus a <strong style='color: var(--app-danger);'>Bounce (Red)</strong>. Too much email might annoy users, while too little ad spend might result in low visibility."
     },
     affinity: {
-        title: "Product Affinity Analysis",
-        description: "Predict product purchase intent using <strong>Page Views</strong> and <strong>Time on Site</strong>. The boundary is <em>circular</em>: moderate engagement shows highest affinity. Too little engagement = not interested, too much = just browsing. <strong style='color: #3498db;'>Blue = High Affinity</strong>, <strong style='color: #e74c3c;'>Red = Low Affinity</strong>.",
-        realWorld: "Used by Amazon for 'frequently bought together' recommendations and by retailers for cross-selling.",
-        xLabel: "Page Views",
-        yLabel: "Time"
+        text: "Here we are predicting <strong>Product Affinity</strong>. We track user behavior metrics: <strong>Page Views</strong> and <strong>Time on Site</strong>. The neural network must determine if a visitor has <strong style='color: var(--app-accent);'>High Affinity (Blue)</strong> and is ready to buy, or <strong style='color: var(--app-danger);'>Low Affinity (Red)</strong> and needs more nurturing. This is crucial for real-time personalization engines."
     }
 };
 
+// Update scenario description
+function updateScenarioDescription() {
+    const desc = scenarioDescriptions[config.dataset];
+    const el = document.getElementById('scenarioDescription');
+    if (el && desc) {
+        el.innerHTML = desc.text;
+    }
+}
+
 // Update feature labels in UI
 function updateFeatureLabels() {
-    const info = scenarioInfo[config.dataset];
+    if (!trainData || trainData.length === 0) return;
+    const xLabel = trainData[0].xLabel || 'Variable X';
+    const yLabel = trainData[0].yLabel || 'Variable Y';
     
-    document.getElementById('label-x').textContent = info.xLabel;
-    document.getElementById('label-y').textContent = info.yLabel;
-    document.getElementById('label-x2').textContent = `${info.xLabel}²`;
-    document.getElementById('label-y2').textContent = `${info.yLabel}²`;
-    document.getElementById('label-xy').textContent = `${info.xLabel} × ${info.yLabel}`;
+    const labelX = document.getElementById('label-x');
+    const labelY = document.getElementById('label-y');
+    const labelX2 = document.getElementById('label-x2');
+    const labelY2 = document.getElementById('label-y2');
+    const labelXY = document.getElementById('label-xy');
+    const labelLogX = document.getElementById('label-logx');
+    const labelLogY = document.getElementById('label-logy');
+
+    if (labelX) labelX.textContent = `${xLabel} (X)`;
+    if (labelY) labelY.textContent = `${yLabel} (Y)`;
+    if (labelX2) labelX2.textContent = `${xLabel}² (X²)`;
+    if (labelY2) labelY2.textContent = `${yLabel}² (Y²)`;
+    if (labelXY) labelXY.textContent = `${xLabel} × ${yLabel} (X×Y)`;
+    if (labelLogX) labelLogX.textContent = `ln(${xLabel}) (ln X)`;
+    if (labelLogY) labelLogY.textContent = `ln(${yLabel}) (ln Y)`;
 }
 
 // Feature transformations
@@ -79,17 +90,42 @@ function transformFeatures(input) {
     const [x, y] = input;
     const features = [];
 
-    if (config.features.includes('price')) features.push(x);
-    if (config.features.includes('quality')) features.push(y);
-    if (config.features.includes('priceSquared')) features.push(x * x);
-    if (config.features.includes('qualitySquared')) features.push(y * y);
-    if (config.features.includes('interaction')) features.push(x * y);
+    // Scale inputs to roughly [-1, 1] range to prevent saturation
+    const rangeX = (dataStats.maxX - dataStats.minX) || 1;
+    const rangeY = (dataStats.maxY - dataStats.minY) || 1;
+    const midX = (dataStats.maxX + dataStats.minX) / 2;
+    const midY = (dataStats.maxY + dataStats.minY) / 2;
+
+    const scaledX = (x - midX) / (rangeX / 2);
+    const scaledY = (y - midY) / (rangeY / 2);
+
+    if (config.features.includes('price')) features.push(scaledX);
+    if (config.features.includes('quality')) features.push(scaledY);
+    
+    // x^2 is 0..64. Scale to -1..1: (x^2 - 32) / 32
+    // For dynamic data, we'll just square the scaled value (which is -1..1) -> 0..1
+    // Then scale 0..1 to -1..1 -> (sq * 2) - 1
+    if (config.features.includes('priceSquared')) features.push((scaledX * scaledX * 2) - 1);
+    if (config.features.includes('qualitySquared')) features.push((scaledY * scaledY * 2) - 1);
+    
+    // x*y is -1..1 * -1..1 = -1..1
+    if (config.features.includes('interaction')) features.push(scaledX * scaledY);
+    
+    // log(x) is roughly -2.3 to 2.1. This is fine for tanh.
+    if (config.features.includes('logX')) features.push(Math.log(Math.max(0.1, x)));
+    if (config.features.includes('logY')) features.push(Math.log(Math.max(0.1, y)));
 
     return features;
 }
 
 // Generate dataset
 function generateData() {
+    // If using custom uploaded data, don't regenerate
+    if (config.dataset === 'upload') return;
+
+    // Reset stats for generated data
+    dataStats = { minX: 0, maxX: 8, minY: 0, maxY: 8 };
+
     const generator = {
         'churn': DataGenerator.customerChurn,
         'segment': DataGenerator.marketSegment,
@@ -101,23 +137,33 @@ function generateData() {
 
     // Shuffle
     for (let i = allData.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const rand = window.getRand ? window.getRand() : Math.random();
+        const j = Math.floor(rand * (i + 1));
         [allData[i], allData[j]] = [allData[j], allData[i]];
     }
 
     // Split train/test
     const splitIndex = Math.floor(allData.length * config.trainSplit);
     trainData = allData.slice(0, splitIndex).map(d => ({
+        rawInput: d.input,
         input: transformFeatures(d.input),
-        output: d.output
+        output: d.output,
+        xLabel: d.xLabel,
+        yLabel: d.yLabel
     }));
     testData = allData.slice(splitIndex).map(d => ({
+        rawInput: d.input,
         input: transformFeatures(d.input),
-        output: d.output
+        output: d.output,
+        xLabel: d.xLabel,
+        yLabel: d.yLabel
     }));
 
     // Draw dataset previews
     drawDatasetPreviews(allData);
+    
+    // Update labels based on new data
+    updateFeatureLabels();
 }
 
 // Initialize network
@@ -180,9 +226,8 @@ function trainStep() {
         updateValidationStatus();
         drawLossChart();
         drawDecisionBoundary();
+        drawNetwork();
     }
-
-    drawNetwork();
 }
 
 // Update metrics display
@@ -197,6 +242,10 @@ function updateMetrics() {
         testData.map(d => d.input),
         testData.map(d => d.output)
     );
+    const trainAcc = network.calculateAccuracy(
+        trainData.map(d => d.input),
+        trainData.map(d => d.output)
+    );
     const accuracy = network.calculateAccuracy(
         testData.map(d => d.input),
         testData.map(d => d.output)
@@ -205,6 +254,7 @@ function updateMetrics() {
     document.getElementById('trainLoss').textContent = trainLoss.toFixed(4);
     document.getElementById('testLoss').textContent = testLoss.toFixed(4);
     document.getElementById('iterations').textContent = iteration;
+    document.getElementById('trainAccuracy').textContent = trainAcc.toFixed(1) + '%';
     document.getElementById('accuracy').textContent = accuracy.toFixed(1) + '%';
 }
 
@@ -238,14 +288,14 @@ function updateValidationStatus() {
     if (iteration === 0) {
         statusMsg = 'Train your model to see validation results...';
         bgColor = '#e8f5e9';
-    } else if (diff < 5 && testAcc > 80) {
+    } else if (diff <= 5 && testAcc > 75) {
         statusMsg = `✅ <strong>Good fit!</strong> Train accuracy: ${trainAcc.toFixed(1)}%, Test accuracy: ${testAcc.toFixed(1)}%. Model generalizes well to unseen data.`;
         bgColor = '#d4edda';
-    } else if (diff > 15) {
-        statusMsg = `⚠️ <strong>Possible overfitting.</strong> Train accuracy (${trainAcc.toFixed(1)}%) is much higher than test accuracy (${testAcc.toFixed(1)}%). Model may have memorized training data. Try: reduce layers/neurons, add regularization, or increase training data.`;
+    } else if (trainAcc > testAcc + 10) {
+        statusMsg = `⚠️ <strong>Possible overfitting.</strong> Train accuracy (${trainAcc.toFixed(1)}%) is significantly higher than test accuracy (${testAcc.toFixed(1)}%). Model may be memorizing noise. Try: reduce layers/neurons, add regularization, or increase training data.`;
         bgColor = '#fff3cd';
-    } else if (testAcc < 60) {
-        statusMsg = `⚠️ <strong>Underfitting.</strong> Test accuracy is only ${testAcc.toFixed(1)}%. Model is too simple. Try: add more layers/neurons, train longer, or add feature engineering.`;
+    } else if (trainAcc < 65) {
+        statusMsg = `⚠️ <strong>Underfitting.</strong> Training accuracy is only ${trainAcc.toFixed(1)}%. Model isn't learning the pattern well. Try: add more layers/neurons, train longer, or add feature engineering.`;
         bgColor = '#f8d7da';
     } else {
         statusMsg = `📊 <strong>Training in progress.</strong> Train: ${trainAcc.toFixed(1)}%, Test: ${testAcc.toFixed(1)}%. Keep training to see if model improves.`;
@@ -277,7 +327,7 @@ function drawDecisionBoundary() {
     // Get data bounds from first two features only
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     [...trainData, ...testData].forEach(d => {
-        const [x, y] = d.input.slice(0, 2);
+        const [x, y] = d.rawInput || d.input;
         minX = Math.min(minX, x);
         maxX = Math.max(maxX, x);
         minY = Math.min(minY, y);
@@ -298,6 +348,10 @@ function drawDecisionBoundary() {
     const unscaleX = (px) => minX + ((px - padding) / (width - 2 * padding)) * (maxX - minX);
     const unscaleY = (py) => maxY - ((py - padding) / (height - 2 * padding)) * (maxY - minY);
 
+    // Fill background with light grey (uncertainty color)
+    ctx.fillStyle = '#ecf0f1'; // Light grey
+    ctx.fillRect(padding, padding, width - 2 * padding, height - 2 * padding);
+
     // Draw decision boundary as colored background
     const resolution = 5;
     for (let px = padding; px < width - padding; px += resolution) {
@@ -309,11 +363,16 @@ function drawDecisionBoundary() {
             const prediction = network.forward(features);
             
             // Color based on prediction
-            const intensity = Math.min(Math.abs(prediction) / 2, 1);
+            // Use higher opacity for deeper colors
+            // prediction is roughly -1 to 1 (tanh)
+            const intensity = Math.min(Math.abs(prediction), 1);
+            
             if (prediction > 0) {
-                ctx.fillStyle = `rgba(52, 152, 219, ${intensity * 0.3})`;
+                // Blue
+                ctx.fillStyle = `rgba(52, 152, 219, ${intensity * 0.7})`;
             } else {
-                ctx.fillStyle = `rgba(231, 76, 60, ${intensity * 0.3})`;
+                // Red
+                ctx.fillStyle = `rgba(231, 76, 60, ${intensity * 0.7})`;
             }
             
             ctx.fillRect(px, py, resolution, resolution);
@@ -330,25 +389,27 @@ function drawDecisionBoundary() {
     ctx.lineTo(padding, padding);
     ctx.stroke();
 
-    // Draw TEST data points (validation data)
+    // Draw TEST data points (validation data) - SQUARES
     testData.forEach(d => {
-        const [x, y] = d.input.slice(0, 2);
+        const [x, y] = d.rawInput || d.input;
         const cx = scaleX(x);
         const cy = scaleY(y);
+        const size = 10; // Size of the square
         
-        // Larger circles with white border for visibility
         ctx.fillStyle = d.output > 0 ? '#3498db' : '#e74c3c';
-        ctx.beginPath();
-        ctx.arc(cx, cy, 6, 0, 2 * Math.PI);
-        ctx.fill();
         
+        // Draw square centered at cx, cy
+        ctx.fillRect(cx - size/2, cy - size/2, size, size);
+        
+        // White border
         ctx.strokeStyle = 'white';
         ctx.lineWidth = 2;
-        ctx.stroke();
+        ctx.strokeRect(cx - size/2, cy - size/2, size, size);
         
+        // Dark outline
         ctx.strokeStyle = '#2c3e50';
         ctx.lineWidth = 1;
-        ctx.stroke();
+        ctx.strokeRect(cx - size/2, cy - size/2, size, size);
     });
 
     // Draw axis labels
@@ -396,9 +457,22 @@ function drawNetwork() {
 
     const state = network.getState();
     const layers = state.layers;
-    const padding = 50;
+    const padding = 100; // Increased padding for labels
     const layerSpacing = (canvas.width - padding * 2) / (layers.length - 1);
     const nodeRadius = 15;
+
+    // Prepare input labels
+    const shortX = 'X';
+    const shortY = 'Y';
+
+    const inputLabels = [];
+    if (config.features.includes('price')) inputLabels.push(shortX);
+    if (config.features.includes('quality')) inputLabels.push(shortY);
+    if (config.features.includes('priceSquared')) inputLabels.push(`${shortX}²`);
+    if (config.features.includes('qualitySquared')) inputLabels.push(`${shortY}²`);
+    if (config.features.includes('interaction')) inputLabels.push(`${shortX}×${shortY}`);
+    if (config.features.includes('logX')) inputLabels.push(`ln(${shortX})`);
+    if (config.features.includes('logY')) inputLabels.push(`ln(${shortY})`);
 
     // Draw connections
     for (let i = 1; i < layers.length; i++) {
@@ -454,6 +528,15 @@ function drawNetwork() {
             ctx.strokeStyle = '#2c3e50';
             ctx.lineWidth = 2;
             ctx.stroke();
+
+            // Draw input labels
+            if (i === 0 && j < inputLabels.length) {
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(inputLabels[j], x - nodeRadius - 8, y);
+            }
         }
 
         // Layer labels
@@ -555,8 +638,9 @@ function drawDatasetPreviews(data) {
         ctx.clearRect(0, 0, 60, 60);
 
         previewData.forEach(d => {
-            const x = (d.input[0] + 5) / 10 * 60;
-            const y = (d.input[1] + 5) / 10 * 60;
+            // Scale 0-8 range to 0-60 canvas
+            const x = (d.input[0] / 8) * 60;
+            const y = 60 - (d.input[1] / 8) * 60; // Flip Y for canvas coordinates
 
             ctx.fillStyle = d.output > 0 ? '#3498db' : '#e74c3c';
             ctx.beginPath();
@@ -576,7 +660,7 @@ function setupEventListeners() {
 
         if (isTraining) {
             btn.innerHTML = '<span id="playPauseIcon">⏸</span> Pause Training';
-            trainingInterval = setInterval(trainStep, 50);
+            trainingInterval = setInterval(trainStep, 10);
         } else {
             btn.innerHTML = '<span id="playPauseIcon">▶</span> Resume Training';
             clearInterval(trainingInterval);
@@ -598,9 +682,19 @@ function setupEventListeners() {
         updateValidationStatus();
     });
 
-    // Dataset selection
+    // Dataset selector
     document.querySelectorAll('.dataset-card').forEach(card => {
-        card.addEventListener('click', () => {
+        card.addEventListener('click', (e) => {
+            // If upload card, trigger file input
+            if (card.id === 'uploadCard') {
+                // Prevent infinite loop from bubbling click event
+                if (e.target.id === 'csvUpload') return;
+                if (e.target.id === 'downloadTemplateBtn') return;
+                
+                document.getElementById('csvUpload').click();
+                return;
+            }
+
             document.querySelectorAll('.dataset-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
             config.dataset = card.dataset.dataset;
@@ -612,6 +706,58 @@ function setupEventListeners() {
             updateValidationStatus();
         });
     });
+
+    // File Upload Handler
+    const fileInput = document.getElementById('csvUpload');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileUpload);
+    }
+
+    // Download Template Button
+    const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+    if (downloadTemplateBtn) {
+        downloadTemplateBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Stop card click
+            e.preventDefault();
+            downloadSampleTemplate();
+        });
+    }
+
+    // Drag and drop support for upload card
+    const uploadCard = document.getElementById('uploadCard');
+    if (uploadCard) {
+        uploadCard.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadCard.style.borderColor = '#2196F3';
+            uploadCard.style.backgroundColor = '#e3f2fd';
+        });
+
+        uploadCard.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadCard.style.borderColor = '';
+            uploadCard.style.backgroundColor = '';
+        });
+
+        uploadCard.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadCard.style.borderColor = '';
+            uploadCard.style.backgroundColor = '';
+            
+            if (e.dataTransfer.files.length > 0) {
+                const fileInput = document.getElementById('csvUpload');
+                fileInput.files = e.dataTransfer.files;
+                // Trigger change event manually
+                const event = new Event('change');
+                fileInput.dispatchEvent(event);
+            }
+        });
+    }
+
+    // Download Predictions
+    const downloadBtn = document.getElementById('downloadPredictionsBtn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', downloadPredictions);
+    }
 
     // View data button
     document.getElementById('viewDataBtn').addEventListener('click', showDataPreview);
@@ -707,25 +853,322 @@ function setupEventListeners() {
             el.style.display = e.target.checked ? 'none' : 'block';
         });
     });
+
+    // View Predictions Button
+    const viewPredBtn = document.getElementById('viewPredictionsBtn');
+    if (viewPredBtn) {
+        viewPredBtn.addEventListener('click', showPredictionDetails);
+    }
+
+    // View Weights Button
+    const viewWeightsBtn = document.getElementById('viewWeightsBtn');
+    if (viewWeightsBtn) {
+        viewWeightsBtn.addEventListener('click', showModelWeights);
+    }
 }
 
-// Update scenario description
-function updateScenarioDescription() {
-    const info = scenarioInfo[config.dataset];
-    const descEl = document.getElementById('scenarioDescription');
-    descEl.innerHTML = `
-        <strong>${info.title}</strong><br><br>
-        ${info.description}<br><br>
-        <em style="color: #7f8c8d;">💡 Real-world use: ${info.realWorld}</em>
-    `;
+// Show model weights modal
+function showModelWeights() {
+    const modal = document.getElementById('dataModal');
+    const content = document.getElementById('dataPreviewContent');
+    const title = modal.querySelector('h2');
     
-    updateFeatureLabels();
+    title.textContent = '🧠 Model Weights & Visualization';
+    
+    if (!network) {
+        content.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No model trained yet. Start training to see weights.</p>';
+        modal.style.display = 'block';
+        return;
+    }
+
+    let html = `
+        <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #2ecc71;">
+            <h3 style="margin-top: 0; color: #27ae60; font-size: 1.1em;">🔍 What am I looking at?</h3>
+            <ul style="margin: 0; padding-left: 20px; line-height: 1.5; font-size: 0.9em; color: #2c3e50;">
+                <li style="margin-bottom: 8px;"><strong>First Layer Neurons:</strong> Usually learn simple boundaries. If you use raw inputs (X, Y), these are straight lines. If you add non-linear features (like X² or Interaction), these can be curves!</li>
+                <li style="margin-bottom: 8px;"><strong>Deeper Layers:</strong> These neurons combine the shapes from previous layers to create complex, non-linear patterns and "islands" of classification.</li>
+                <li><strong>Visualization:</strong> Shows the neuron's activation across the whole grid. <strong style="color: #3498db;">Blue</strong> = Active (Positive), <strong style="color: #e74c3c;">Red</strong> = Inactive (Negative).</li>
+            </ul>
+        </div>
+    `;
+
+    const state = network.getState();
+    
+    state.layers.forEach((layer, i) => {
+        if (i === 0) return; // Skip input layer (no weights)
+        
+        const layerName = i === state.layers.length - 1 ? 'Output Layer' : `Hidden Layer ${i}`;
+        
+        html += `
+            <div style="margin-bottom: 25px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                <h3 style="margin-top: 0; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+                    ${layerName}
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+        `;
+
+        // Determine labels for incoming weights
+        let inputLabels = [];
+        if (i === 1) {
+            // Previous layer is Input Layer
+            const shortX = 'X';
+            const shortY = 'Y';
+            if (config.features.includes('price')) inputLabels.push(shortX);
+            if (config.features.includes('quality')) inputLabels.push(shortY);
+            if (config.features.includes('priceSquared')) inputLabels.push(`${shortX}²`);
+            if (config.features.includes('qualitySquared')) inputLabels.push(`${shortY}²`);
+            if (config.features.includes('interaction')) inputLabels.push(`${shortX}×${shortY}`);
+            if (config.features.includes('logX')) inputLabels.push(`ln(${shortX})`);
+            if (config.features.includes('logY')) inputLabels.push(`ln(${shortY})`);
+        } else {
+            // Previous layer is a Hidden Layer
+            const prevLayerSize = state.layers[i-1].neurons.length;
+            for(let k=0; k<prevLayerSize; k++) {
+                inputLabels.push(`Neuron ${k+1}`);
+            }
+        }
+
+        layer.neurons.forEach((neuron, j) => {
+            const canvasId = `neuron-viz-${i}-${j}`;
+            html += `
+                <div style="background: white; padding: 15px; border: 1px solid #eee; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold; color: #3498db; margin-bottom: 5px;">Neuron ${j + 1}</div>
+                        <div style="font-size: 0.9em; color: #555;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                <span>Bias:</span>
+                                <span style="font-family: monospace; font-weight: bold;">${neuron.bias.toFixed(3)}</span>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #7f8c8d;">Incoming Weights:</div>
+                            <ul style="margin: 0; padding-left: 0; list-style: none; font-family: monospace; font-size: 0.85em;">
+                                ${neuron.weights.map((w, idx) => `
+                                    <li style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 2px 0;">
+                                        <span style="color: #95a5a6;">${inputLabels[idx] || 'Input ' + (idx+1)}:</span>
+                                        <span style="font-weight: bold; color: ${w > 0 ? '#2980b9' : '#c0392b'};">${w.toFixed(3)}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="width: 100px; display: flex; flex-direction: column; align-items: center;">
+                        <canvas id="${canvasId}" width="100" height="100" style="border: 1px solid #ddd; border-radius: 4px; background: #eee;"></canvas>
+                        <span style="font-size: 0.75em; color: #95a5a6; margin-top: 5px;">Activation Map</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+    });
+
+    content.innerHTML = html;
+    modal.style.display = 'block';
+
+    // Draw visualizations after modal is visible
+    setTimeout(() => {
+        drawNeuronVisualizations(state);
+    }, 50);
+}
+
+// Draw activation maps for all neurons in the modal
+function drawNeuronVisualizations(state) {
+    // Calculate bounds (same as decision boundary)
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    [...trainData, ...testData].forEach(d => {
+        const [x, y] = d.rawInput || d.input;
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+    });
+
+    const rangeX = maxX - minX;
+    const rangeY = maxY - minY;
+    minX -= rangeX * 0.1;
+    maxX += rangeX * 0.1;
+    minY -= rangeY * 0.1;
+    maxY += rangeY * 0.1;
+
+    state.layers.forEach((layer, i) => {
+        if (i === 0) return;
+
+        layer.neurons.forEach((neuron, j) => {
+            const canvas = document.getElementById(`neuron-viz-${i}-${j}`);
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Scale functions for this small canvas
+            const unscaleX = (px) => minX + (px / width) * (maxX - minX);
+            const unscaleY = (py) => maxY - (py / height) * (maxY - minY);
+
+            // Draw activation map
+            const resolution = 4; // Coarser resolution for performance
+            for (let px = 0; px < width; px += resolution) {
+                for (let py = 0; py < height; py += resolution) {
+                    const x = unscaleX(px);
+                    const y = unscaleY(py);
+                    
+                    // We need to run a forward pass to get the activation of THIS specific neuron
+                    // This is expensive but necessary
+                    const features = transformFeatures([x, y]);
+                    
+                    // Custom forward pass up to this layer/neuron
+                    // We can't use network.forward() because it returns the final output
+                    // We need the intermediate activation
+                    
+                    // 1. Set input layer
+                    const inputLayer = network.layers[0];
+                    for (let k = 0; k < features.length; k++) {
+                        inputLayer.neurons[k].output = features[k];
+                    }
+
+                    // 2. Propagate to target layer
+                    for (let l = 1; l <= i; l++) {
+                        const currentLayer = network.layers[l];
+                        const prevLayer = network.layers[l - 1];
+
+                        for (let n = 0; n < currentLayer.neurons.length; n++) {
+                            const currNeuron = currentLayer.neurons[n];
+                            let sum = currNeuron.bias;
+                            for (let w = 0; w < prevLayer.neurons.length; w++) {
+                                sum += prevLayer.neurons[w].output * currNeuron.weights[w];
+                            }
+                            // Apply activation (linear for output layer)
+                            if (l === network.layers.length - 1) {
+                                currNeuron.output = sum;
+                            } else {
+                                currNeuron.output = network.activate(sum);
+                            }
+                        }
+                    }
+
+                    // 3. Get output of target neuron
+                    const activation = network.layers[i].neurons[j].output;
+                    
+                    // Color
+                    const intensity = Math.min(Math.abs(activation), 1);
+                    if (activation > 0) {
+                        ctx.fillStyle = `rgba(52, 152, 219, ${intensity})`;
+                    } else {
+                        ctx.fillStyle = `rgba(231, 76, 60, ${intensity})`;
+                    }
+                    ctx.fillRect(px, py, resolution, resolution);
+                }
+            }
+        });
+    });
+
+    // Restore network state to avoid visual glitches in main graph
+    if (trainData && trainData.length > 0) {
+        network.forward(trainData[0].input);
+    }
+}
+
+// Show prediction details modal
+function showPredictionDetails() {
+    const modal = document.getElementById('dataModal');
+    const content = document.getElementById('dataPreviewContent');
+    const title = modal.querySelector('h2');
+    
+    title.textContent = '🤖 Model Predictions (Test Data)';
+    
+    let html = `
+        <p style="margin-bottom: 15px; color: #666;">
+            Comparing model predictions against actual outcomes for a sample of the test data.
+        </p>
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+            <thead>
+                <tr style="background: #f8f9fa; border-bottom: 2px solid #eee;">
+                    <th style="padding: 10px; text-align: left;">Input Features</th>
+                    <th style="padding: 10px; text-align: center;">Prediction</th>
+                    <th style="padding: 10px; text-align: center;">Confidence</th>
+                    <th style="padding: 10px; text-align: center;">Actual</th>
+                    <th style="padding: 10px; text-align: center;">Result</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    // Take first 15 test items
+    const sample = testData.slice(0, 15);
+    
+    sample.forEach(d => {
+        const rawOutput = network.forward(d.input);
+        const prediction = rawOutput > 0 ? 1 : -1;
+        const confidence = Math.abs(Math.tanh(rawOutput)); // Tanh output is -1 to 1
+        const isCorrect = prediction === d.output;
+        
+        // Format inputs
+        const inputsToDisplay = d.rawInput || d.input.slice(0, 2);
+        const inputStr = inputsToDisplay.map(v => v.toFixed(2)).join(', ');
+        
+        // Determine labels based on dataset
+        const posLabel = getPositiveLabel(config.dataset);
+        const negLabel = getNegativeLabel(config.dataset);
+        
+        const predLabel = prediction > 0 ? posLabel : negLabel;
+        const actualLabel = d.output > 0 ? posLabel : negLabel;
+        
+        const predColor = prediction > 0 ? '#3498db' : '#e74c3c';
+        const actualColor = d.output > 0 ? '#3498db' : '#e74c3c';
+        
+        html += `
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 10px;">${inputStr}</td>
+                <td style="padding: 10px; text-align: center; color: ${predColor}; font-weight: bold;">
+                    ${predLabel}
+                </td>
+                <td style="padding: 10px; text-align: center;">
+                    ${(confidence * 100).toFixed(1)}%
+                </td>
+                <td style="padding: 10px; text-align: center; color: ${actualColor};">
+                    ${actualLabel}
+                </td>
+                <td style="padding: 10px; text-align: center;">
+                    ${isCorrect ? '✅' : '❌'}
+                </td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table>';
+    content.innerHTML = html;
+    modal.style.display = 'block';
+}
+
+// Helper to get labels
+function getPositiveLabel(dataset) {
+    const map = {
+        'churn': 'Stay',
+        'segment': 'Premium',
+        'abtest': 'Convert',
+        'affinity': 'High'
+    };
+    return map[dataset] || 'Positive';
+}
+
+function getNegativeLabel(dataset) {
+    const map = {
+        'churn': 'Churn',
+        'segment': 'Budget',
+        'abtest': 'Bounce',
+        'affinity': 'Low'
+    };
+    return map[dataset] || 'Negative';
 }
 
 // Show data preview modal with scatter plot
 function showDataPreview() {
     const modal = document.getElementById('dataModal');
     const content = document.getElementById('dataPreviewContent');
+    const title = modal.querySelector('h2');
+    title.textContent = '📊 Sample Data Preview';
     
     // Get sample of 20 data points
     const sampleData = [...trainData.slice(0, 15), ...testData.slice(0, 5)];
@@ -763,7 +1206,7 @@ function showDataPreview() {
     `;
     
     sampleData.forEach((d, i) => {
-        const [x, y] = d.input.slice(0, 2);
+        const [x, y] = (d.rawInput || d.input).slice(0, 2);
         const outcome = d.output > 0 ? 'Positive ✓' : 'Negative ✗';
         const outcomeColor = d.output > 0 ? '#3498db' : '#e74c3c';
         const rowBg = i % 2 === 0 ? '#f8f9fa' : 'white';
@@ -816,10 +1259,10 @@ function drawScatterPlot(canvas, data) {
     
     ctx.clearRect(0, 0, width, height);
     
-    // Find data bounds
+    // Find data bounds using raw inputs
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     data.forEach(d => {
-        const [x, y] = d.input;
+        const [x, y] = d.rawInput || d.input; // Fallback for legacy/preview data
         minX = Math.min(minX, x);
         maxX = Math.max(maxX, x);
         minY = Math.min(minY, y);
@@ -835,22 +1278,27 @@ function drawScatterPlot(canvas, data) {
     maxY += rangeY * 0.1;
     
     // Scale functions
-    const scaleX = (x) => padding + ((x - minX) / (maxX - minX)) * (width - 2 * padding);
-    const scaleY = (y) => height - padding - ((y - minY) / (maxY - minY)) * (height - 2 * padding);
+    // Force square aspect ratio for the plot area to avoid squishing
+    const plotSize = Math.min(width - 2 * padding, height - 2 * padding);
+    const xOffset = (width - plotSize) / 2;
+    const yOffset = (height - plotSize) / 2;
+
+    const scaleX = (x) => xOffset + ((x - minX) / (maxX - minX)) * plotSize;
+    const scaleY = (y) => height - yOffset - ((y - minY) / (maxY - minY)) * plotSize;
     
     // Draw axes
     ctx.strokeStyle = '#95a5a6';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(padding, height - padding);
-    ctx.lineTo(width - padding, height - padding);
-    ctx.moveTo(padding, height - padding);
-    ctx.lineTo(padding, padding);
+    ctx.moveTo(xOffset, height - yOffset);
+    ctx.lineTo(width - xOffset, height - yOffset);
+    ctx.moveTo(xOffset, height - yOffset);
+    ctx.lineTo(xOffset, yOffset);
     ctx.stroke();
     
     // Draw data points
     data.forEach(d => {
-        const [x, y] = d.input;
+        const [x, y] = d.rawInput || d.input;
         const cx = scaleX(x);
         const cy = scaleY(y);
         
@@ -914,6 +1362,206 @@ async function logToolRun() {
     }
 }
 
+// Handle File Upload
+async function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+        const text = await file.text();
+        
+        // Custom parsing to allow string IDs
+        const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+        if (lines.length < 2) throw new Error('File must have a header and data rows.');
+        
+        const delimiter = lines[0].includes('\t') ? '\t' : ',';
+        const headers = lines[0].split(delimiter).map(h => h.trim().replace(/^"|"$/g, ''));
+        
+        const data = [];
+        for(let i=1; i<lines.length; i++) {
+            const parts = lines[i].split(delimiter).map(p => p.trim().replace(/^"|"$/g, ''));
+            if (parts.length === headers.length) {
+                const row = {};
+                headers.forEach((h, idx) => row[h] = parts[idx]);
+                data.push(row);
+            }
+        }
+
+        if (data.length === 0) throw new Error('No valid data rows found.');
+
+        // Detect ID column
+        let idCol = null;
+        if (typeof detectIdLikeColumns === 'function') {
+            const candidates = detectIdLikeColumns(headers, data);
+            if (candidates.length > 0) idCol = candidates[0].header;
+        }
+
+        // Identify numeric columns (excluding ID if found)
+        const potentialFeatures = headers.filter(h => h !== idCol);
+        const numericCols = potentialFeatures.filter(col => {
+            // Check first 100 rows
+            return data.slice(0, 100).every(row => {
+                const val = parseFloat(row[col]);
+                return !isNaN(val) && isFinite(val);
+            });
+        });
+
+        if (numericCols.length < 3) {
+            alert('Dataset must have at least 2 feature columns and 1 outcome column (all numeric).');
+            return;
+        }
+
+        // Assume last numeric column is outcome, first two are features
+        const outcomeCol = numericCols[numericCols.length - 1];
+        const xCol = numericCols[0];
+        const yCol = numericCols[1];
+
+        // Calculate stats for scaling
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        
+        const parsedData = [];
+        
+        data.forEach(row => {
+            const x = parseFloat(row[xCol]);
+            const y = parseFloat(row[yCol]);
+            const out = parseFloat(row[outcomeCol]);
+            
+            if (isNaN(x) || isNaN(y) || isNaN(out)) return;
+
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x);
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+            
+            parsedData.push({
+                input: [x, y],
+                output: [out], 
+                id: idCol ? row[idCol] : null,
+                xLabel: xCol,
+                yLabel: yCol
+            });
+        });
+
+        if (parsedData.length === 0) throw new Error('No valid numeric data found.');
+
+        // Update global stats
+        dataStats = { minX, maxX, minY, maxY };
+
+        // Shuffle
+        for (let i = parsedData.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [parsedData[i], parsedData[j]] = [parsedData[j], parsedData[i]];
+        }
+
+        // Split 50/50
+        const splitIndex = Math.floor(parsedData.length * 0.5);
+        
+        trainData = parsedData.slice(0, splitIndex).map(d => ({
+            ...d,
+            rawInput: d.input,
+            input: transformFeatures(d.input),
+            output: d.output[0]
+        }));
+        
+        testData = parsedData.slice(splitIndex).map(d => ({
+            ...d,
+            rawInput: d.input,
+            input: transformFeatures(d.input),
+            output: d.output[0]
+        }));
+
+        // Activate Upload Card UI
+        document.querySelectorAll('.dataset-card').forEach(c => c.classList.remove('active'));
+        document.getElementById('uploadCard').classList.add('active');
+        config.dataset = 'upload';
+
+        // Update UI
+        updateFeatureLabels();
+        initializeNetwork();
+        drawNetwork();
+        drawDecisionBoundary();
+        updateValidationStatus();
+        
+        // Update scenario text
+        const el = document.getElementById('scenarioDescription');
+        if (el) {
+            el.innerHTML = `<strong>Custom Dataset Loaded</strong><br>
+            Features: <strong>${xCol}</strong>, <strong>${yCol}</strong><br>
+            Target: <strong>${outcomeCol}</strong><br>
+            Records: ${parsedData.length} (Split 50/50)`;
+        }
+
+    } catch (err) {
+        console.error(err);
+        alert('Error processing file: ' + err.message);
+    } finally {
+        // Clear input so the same file can be selected again if needed
+        e.target.value = '';
+    }
+}
+
+// Download Predictions
+function downloadPredictions(e) {
+    if (e) e.preventDefault();
+    console.log('Download requested');
+    
+    if (!testData || testData.length === 0) {
+        alert('No validation data available. Please upload data or select a scenario first.');
+        return;
+    }
+    if (!network) {
+        alert('Network not initialized. Please reset or reload.');
+        return;
+    }
+
+    // Header
+    let csv = 'ID,Feature_X,Feature_Y,Actual_Outcome,Predicted_Probability,Prediction\n';
+
+    testData.forEach(d => {
+        const [x, y] = d.rawInput;
+        const actual = d.output;
+        
+        // Get prediction
+        const output = network.forward(d.input);
+        const prob = (Math.tanh(output) + 1) / 2; // Convert tanh -1..1 to 0..1 probability
+        const pred = prob > 0.5 ? 1 : 0;
+        
+        const id = d.id || '';
+        
+        csv += `${id},${x},${y},${actual},${prob.toFixed(4)},${pred}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'prediction_performance_testdata.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+// Download Sample Template
+function downloadSampleTemplate() {
+    const csvContent = "ID,Feature_1,Feature_2,Outcome\n" +
+        "1,2.5,3.1,0\n" +
+        "2,5.1,4.2,1\n" +
+        "3,1.2,1.8,0\n" +
+        "4,6.8,5.5,1\n" +
+        "5,3.3,2.9,0";
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'neural_net_template.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
 // Initialize on load
 window.addEventListener('load', () => {
     console.log('🚀 Neural Network Playground Loading...');
@@ -923,8 +1571,6 @@ window.addEventListener('load', () => {
         console.log('✓ Event listeners set up');
         
         updateScenarioDescription();
-        console.log('✓ Scenario description set');
-        
         generateData();
         console.log('✓ Data generated:', trainData.length, 'train,', testData.length, 'test');
         
