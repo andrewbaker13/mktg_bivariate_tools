@@ -834,8 +834,11 @@
                     </div>
                     
                     <div class="question-actions">
-                        <button class="btn btn-sm btn-primary" onclick="viewQuestion(${q.id})">
-                            <i class="fas fa-eye"></i> View
+                        <button class="btn btn-sm btn-primary" onclick="previewQuestion(${q.id})">
+                            <i class="fas fa-play"></i> Preview
+                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="viewQuestion(${q.id})">
+                            <i class="fas fa-chart-bar"></i> Analytics
                         </button>
                         <button class="btn btn-sm btn-secondary" onclick="editQuestion(${q.id})">
                             <i class="fas fa-edit"></i> Edit
@@ -1116,6 +1119,146 @@
                 console.error('Error refreshing analytics:', error);
                 alert('Failed to refresh analytics');
             }
+        }
+
+        // Preview Question
+        async function previewQuestion(id) {
+            try {
+                const response = await fetch(`${API_BASE}/quiz-questions/${id}/`, {
+                    headers: { 'Authorization': `Token ${getToken()}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load question');
+                
+                const question = await response.json();
+                
+                // Create a temporary modal for preview
+                const modal = document.createElement('div');
+                modal.className = 'modal active';
+                modal.style.zIndex = '2000';
+                
+                // Render the question content
+                let contentHTML = `
+                    <div class="modal-content" style="max-width: 800px;">
+                        <div class="modal-header">
+                            <h2><i class="fas fa-play"></i> Question Preview</h2>
+                            <button class="btn-close" onclick="this.closest('.modal').remove()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="preview-banner" style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #1e40af;">
+                                <i class="fas fa-info-circle"></i> This is how the question will appear to students.
+                            </div>
+                            
+                            <div class="question-card" style="box-shadow: none; border: 1px solid #e5e7eb;">
+                                <div class="question-text" style="font-size: 1.1rem; margin-bottom: 1.5rem;">
+                                    ${question.question_text}
+                                </div>
+                                
+                                ${renderPreviewInputs(question)}
+                            </div>
+                            
+                            ${question.explanation ? `
+                                <div style="margin-top: 1.5rem; padding: 1rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
+                                    <h4 style="color: #166534; margin-top: 0;"><i class="fas fa-lightbulb"></i> Explanation (Shown after submission)</h4>
+                                    <div style="color: #15803d;">${question.explanation}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close Preview</button>
+                        </div>
+                    </div>
+                `;
+                
+                modal.innerHTML = contentHTML;
+                document.body.appendChild(modal);
+                
+                // Render charts if any
+                if (question.answer_config && question.answer_config.charts) {
+                    // This would require the chart rendering logic from quiz.html
+                    // For now, we'll just show a placeholder if charts are detected
+                    // In a full implementation, we'd import the chart renderer
+                }
+                
+            } catch (error) {
+                console.error('Error previewing question:', error);
+                alert('Failed to load preview');
+            }
+        }
+
+        function renderPreviewInputs(question) {
+            const type = question.question_type;
+            const config = question.answer_config || {};
+            
+            if (type === 'multiple_choice') {
+                return `
+                    <div class="options-list">
+                        ${(config.options || []).map((opt, idx) => `
+                            <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="preview_mc" style="margin-top: 0.25rem;">
+                                <span>${opt.text}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (type === 'select_all') {
+                return `
+                    <div class="options-list">
+                        ${(config.options || []).map((opt, idx) => `
+                            <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" name="preview_sa">
+                                <span>${opt.text}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (type === 'numeric') {
+                return `
+                    <div style="margin-top: 1rem;">
+                        <input type="number" class="form-control" placeholder="Enter your answer..." style="max-width: 200px;">
+                        ${config.tolerance ? `<div style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">Accepts answer ± ${config.tolerance}</div>` : ''}
+                    </div>
+                `;
+            } else if (type === 'fill_blank' || type === 'written') {
+                return `
+                    <div style="margin-top: 1rem;">
+                        <textarea class="form-control" rows="3" placeholder="Type your answer here..."></textarea>
+                    </div>
+                `;
+            } else if (type === 'reorder') {
+                // Shuffle items for preview
+                const items = [...(config.correct_order || [])].sort(() => Math.random() - 0.5);
+                return `
+                    <div class="reorder-preview" style="margin-top: 1rem;">
+                        <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">Drag items to reorder:</div>
+                        ${items.map((item, idx) => `
+                            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 0.5rem; cursor: grab;">
+                                <i class="fas fa-grip-lines" style="color: #9ca3af;"></i>
+                                <span>${item}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (type === 'matching') {
+                const pairs = config.matching_pairs || [];
+                const rightOptions = pairs.map(p => p.right).sort(() => Math.random() - 0.5);
+                
+                return `
+                    <div class="matching-preview" style="margin-top: 1rem;">
+                        ${pairs.map(pair => `
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.75rem; align-items: center;">
+                                <div style="padding: 0.75rem; background: #f3f4f6; border-radius: 6px;">${pair.left}</div>
+                                <select class="form-control">
+                                    <option value="">Select match...</option>
+                                    ${rightOptions.map(opt => `<option>${opt}</option>`).join('')}
+                                </select>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            return '<div style="color: #6b7280; font-style: italic;">Preview not available for this question type yet.</div>';
         }
 
         async function editQuestion(id) {
