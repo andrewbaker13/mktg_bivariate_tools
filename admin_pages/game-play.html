@@ -1501,6 +1501,16 @@
             if (guessMin) guessMin.disabled = false;
             if (guessMax) guessMax.disabled = false;
             if (submitBtn) submitBtn.disabled = false;
+
+            // Re-enable Word Guess inputs
+            const wordInput = document.getElementById('wordGuessInput');
+            const wordSubmitBtn = document.querySelector('.submit-word-btn');
+            if (wordInput) wordInput.disabled = false;
+            if (wordSubmitBtn) {
+                wordSubmitBtn.disabled = false;
+                wordSubmitBtn.textContent = 'Submit Answer';
+                wordSubmitBtn.style.opacity = '1';
+            }
         }
         
         function handleRangeSubmitted(message) {
@@ -1588,6 +1598,12 @@
             const feedback = document.getElementById('feedback');
             const numberline = document.getElementById('numberline');
             
+            // Hide inputs and submit button to clean up the UI
+            const rangeInputs = document.querySelector('.range-inputs');
+            const submitBtn = document.querySelector('.submit-guess-btn');
+            if (rangeInputs) rangeInputs.style.display = 'none';
+            if (submitBtn) submitBtn.style.display = 'none';
+            
             // Check if correct answer is outside current range and expand if needed
             if (message.correct_answer < numberlineMin || message.correct_answer > numberlineMax) {
                 console.log('Correct answer outside range, expanding...');
@@ -1652,7 +1668,14 @@
             // Display aggregate statistics if available
             if (message.statistics && Object.keys(message.statistics).length > 0) {
                 const stats = message.statistics;
-                const statsHTML = `
+                
+                // Remove existing stats if any
+                const existingStats = document.getElementById('game-stats-container');
+                if (existingStats) existingStats.remove();
+
+                const statsDiv = document.createElement('div');
+                statsDiv.id = 'game-stats-container';
+                statsDiv.innerHTML = `
                     <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
                         <h4 style="margin: 0 0 10px 0; color: #1e293b;">📊 Overall Predictions</h4>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px;">
@@ -1665,7 +1688,12 @@
                         </div>
                     </div>
                 `;
-                feedback.innerHTML += statsHTML;
+                
+                // Append to the main container, so it appears at the bottom
+                const gameArea = document.querySelector('.closest-guess-area');
+                if (gameArea) {
+                    gameArea.appendChild(statsDiv);
+                }
             }
             
         }
@@ -3475,16 +3503,27 @@
             if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
             
             const input = document.getElementById('wordGuessInput');
-            const answer = input.value.toUpperCase().replace(/[^A-Z ]/g, '');
+            // Normalize: Trim whitespace, replace multiple spaces with single space
+            const answer = input.value.toUpperCase().replace(/[^A-Z ]/g, '').trim().replace(/\s+/g, ' ');
             
-            if (answer.length < 7) {
+            // Validate length - ensure at least 2 characters
+            if (answer.length < 2) {
                 const feedback = document.getElementById('feedback');
                 if (feedback) {
-                    feedback.innerHTML = '<div style="color: #ef4444;">Answer must be at least 7 letters (spaces don\'t count)</div>';
+                    feedback.innerHTML = '<div style="color: #ef4444;">Please enter an answer</div>';
                     setTimeout(() => { feedback.innerHTML = ''; }, 2000);
                 }
                 return;
             }
+            
+            // UI Feedback - show submitting state
+            const submitBtn = document.querySelector('.submit-word-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+                submitBtn.style.opacity = '0.7';
+            }
+            input.disabled = true;
             
             websocket.send(JSON.stringify({
                 action: 'word_guess_submit',
