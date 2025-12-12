@@ -722,8 +722,23 @@ function showFinalStandings(message, leaderboardVisibility) {
 
 function updateLeaderboard(leaderboard) {
     latestLeaderboard = leaderboard;
-    // We don't display the leaderboard in the game area during gameplay
-    // It's shown in the results screen or separate leaderboard view
+    
+    // Update header score and rank from leaderboard
+    if (playerSession && playerSession.display_name) {
+        const myEntry = leaderboard.find(entry => entry.name === playerSession.display_name);
+        if (myEntry) {
+            const scoreEl = document.getElementById('playerScore');
+            const rankEl = document.getElementById('playerRank');
+            
+            if (scoreEl) {
+                scoreEl.textContent = myEntry.score;
+            }
+            
+            if (rankEl && myEntry.rank) {
+                rankEl.textContent = myEntry.rank;
+            }
+        }
+    }
 }
 
 function handleGameEnd(message) {
@@ -829,17 +844,25 @@ function startTimer(seconds, startTime) {
 // Initialize connection when script loads
 // Note: This should be called after all scripts are loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Populate header info
-    if (playerSession) {
+    // Populate header info immediately
+    console.log('Populating header with playerSession:', playerSession);
+    
+    if (playerSession && playerSession.id) {
         const nameEl = document.getElementById('playerName');
-        // Try various name fields that might be present
-        const name = playerSession.name || playerSession.display_name || playerSession.guest_name || 'Player';
-        if (nameEl) nameEl.textContent = name;
+        // Use display_name which is returned by the serializer
+        const name = playerSession.display_name || 'Player';
+        if (nameEl) {
+            nameEl.textContent = name;
+            console.log('Set player name to:', name);
+        }
     }
     
     if (roomCode) {
         const roomEl = document.getElementById('roomCodeDisplay');
-        if (roomEl) roomEl.textContent = roomCode;
+        if (roomEl) {
+            roomEl.textContent = roomCode;
+            console.log('Set room code to:', roomCode);
+        }
     }
 
     // Only connect if we have a room code
