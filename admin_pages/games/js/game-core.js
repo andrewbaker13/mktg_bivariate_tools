@@ -179,6 +179,17 @@ function handleMessage(message) {
             }
             break;
             
+        case 'guess_submitted':
+            // Handle personal confirmation for closest guess
+            if (typeof handleRangeSubmitted === 'function') {
+                // Map backend 'guess_submitted' format to what handleRangeSubmitted expects
+                handleRangeSubmitted({
+                    ...message,
+                    player_id: playerSession.id // Ensure it's treated as own submission
+                });
+            }
+            break;
+            
         case 'guess_results':
             if (typeof handleGuessResults === 'function') {
                 handleGuessResults(message);
@@ -713,6 +724,15 @@ function handleGameEnd(message) {
     // Check if this is an intermediate round in a multi-round game
     const totalRounds = message.total_rounds || 1;
     const currentRound = message.current_round || 1;
+    
+    // If we have round stats, show the summary banner instead of just the waiting screen
+    if (message.round_stats) {
+        // Clear the game area first to remove the game interface
+        document.getElementById('gameArea').innerHTML = '';
+        // Show the unified results banner (which includes waiting message if needed)
+        handleUnifiedGameResults(message);
+        return;
+    }
     
     if (totalRounds > 1 && currentRound < totalRounds) {
         // Intermediate round - show waiting state instead of game over
