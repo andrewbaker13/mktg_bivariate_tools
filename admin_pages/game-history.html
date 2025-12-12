@@ -370,12 +370,17 @@
         async function loadCourses() {
             const token = getAuthToken();
             try {
+                // Endpoint is /api/courses/ based on core/urls.py
                 const response = await fetch(`${API_BASE}/courses/`, {
                     headers: { 'Authorization': `Token ${token}` }
                 });
                 const data = await response.json();
                 const select = document.getElementById('course-filter');
-                data.courses.forEach(course => {
+                
+                // Handle both array response and object with results
+                const courses = Array.isArray(data) ? data : (data.results || []);
+                
+                courses.forEach(course => {
                     const option = document.createElement('option');
                     option.value = course.id;
                     option.textContent = course.name;
@@ -654,8 +659,40 @@
         
         function exportCurrentGame() {
             if (!currentModalGame) return;
+            const token = getAuthToken();
+            // Use fetch to download with auth header, or use a temporary token URL if needed.
+            // Since window.open doesn't support headers, we might need a different approach 
+            // OR rely on session cookie if available (which it isn't for token auth).
+            
+            // However, the backend endpoint is protected by IsAuthenticated.
+            // Standard window.open won't send the Authorization header.
+            
+            // Solution: Fetch blob and download
             const url = `${API_BASE}/game/${currentModalGame.room_code}/export/?format=csv`;
-            window.open(url, '_blank');
+            
+            fetch(url, {
+                headers: {
+                    'Authorization': `Token ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Export failed');
+                return response.blob();
+            })
+            .then(blob => {
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `game_results_${currentModalGame.room_code}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(downloadUrl);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('Export error:', error);
+                alert('Failed to export CSV. Please try again.');
+            });
         }
 
         // Close modal on outside click
