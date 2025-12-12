@@ -494,6 +494,12 @@ function handleUnifiedGameResults(message) {
         // If stats are missing or all zeros, show a different message
         const hasValidStats = message.round_stats && (myStats.player_round_score > 0 || myStats.player_total_score > 0 || message.round_stats.percent_scored > 0);
         
+        // Update header score
+        const scoreEl = document.getElementById('playerScore');
+        if (scoreEl && myStats) {
+            scoreEl.textContent = myStats.player_total_score;
+        }
+        
         // Build game-specific details HTML
         let gameSpecificHTML = '';
         if (message.game_specific) {
@@ -823,6 +829,19 @@ function startTimer(seconds, startTime) {
 // Initialize connection when script loads
 // Note: This should be called after all scripts are loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Populate header info
+    if (playerSession) {
+        const nameEl = document.getElementById('playerName');
+        // Try various name fields that might be present
+        const name = playerSession.name || playerSession.display_name || playerSession.guest_name || 'Player';
+        if (nameEl) nameEl.textContent = name;
+    }
+    
+    if (roomCode) {
+        const roomEl = document.getElementById('roomCodeDisplay');
+        if (roomEl) roomEl.textContent = roomCode;
+    }
+
     // Only connect if we have a room code
     if (roomCode) {
         connectWebSocket();
