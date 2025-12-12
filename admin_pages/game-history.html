@@ -669,6 +669,7 @@
             
             // Solution: Fetch blob and download
             const url = `${API_BASE}/game/${currentModalGame.room_code}/export/?format=csv`;
+            console.log('Exporting from URL:', url); // Debugging
             
             fetch(url, {
                 headers: {
