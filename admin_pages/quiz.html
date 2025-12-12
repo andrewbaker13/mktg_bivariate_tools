@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Skills Check Quiz | Dr. Baker Marketing</title>
     <link rel="stylesheet" href="../shared/css/main.css">
+    <script src="../shared/js/tracking.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -1095,7 +1096,7 @@
                 const userProfile = getUserProfile();
                 if (userProfile && (userProfile.is_instructor || userProfile.is_staff)) {
                     // Instructor accessing quiz page without ID - redirect to template builder (where they can create/manage game questions)
-                    window.location.href = 'game-template-builder.html';
+                    window.location.href = 'games/game-template-builder.html';
                 } else {
                     // Student accessing without quiz ID - redirect to student dashboard
                     window.location.href = 'student-dashboard.html';

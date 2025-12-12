@@ -7,6 +7,7 @@
   <title>Theme Extractor - Marketing Text Analysis</title>
   <!-- Shared design system -->
   <link rel="stylesheet" href="../../../shared/css/main.css">
+    <script src="../../../shared/js/tracking.js"></script>
   <!-- App-specific styles -->
   <link rel="stylesheet" href="theme_extractor.css">
   <!-- Chart.js for visualizations -->
@@ -835,8 +836,27 @@ Love the design but wish it came in more colors."></textarea>
   </main>
 
   <footer class="app-footer">
-    <p><a href="../../../index.html">← Back to Tool Selection</a></p>
-    <p class="citation">Baker, Andrew. (2025). Theme Extractor - Marketing Text Analysis Tool.</p>
+    <div class="footer-content">
+        <div class="footer-nav">
+            <a href="../../../index.html">← Back to Tool Selection</a>
+        </div>
+        <div class="footer-meta">
+            <span>Created: <span id="created-date">2025-12-01</span></span>
+            <span class="meta-separator">&bull;</span>
+            <span>Last Updated: <span id="modified-date">2025-12-11</span></span>
+        </div>
+        <div class="footer-citation">
+            <span class="citation-label">Cite this tool</span>
+            <p class="citation-text">
+                Baker, A. (2025). <em>Theme Extractor - Marketing Text Analysis Tool</em>. Marketing Analysis Tools.
+                <br>
+                <span style="font-size: 0.85em; color: #6b7280;">Retrieved from: https://drbakermarketing.com/apps/text_analysis/theme_extractor/main_theme_extractor.html</span>
+            </p>
+        </div>
+        <div class="footer-copyright">
+            &copy; 2025 Andrew Baker. All rights reserved.
+        </div>
+    </div>
   </footer>
 
   <script src="../../../shared/js/csv_utils.js"></script>

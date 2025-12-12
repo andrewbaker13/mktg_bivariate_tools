@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Host Game - Marketing Analytics Tools</title>
-    <link rel="stylesheet" href="../shared/css/main.css">
-    <link rel="stylesheet" href="../shared/css/admin-nav.css">
+    <link rel="stylesheet" href="../../shared/css/main.css">
+    <script src="../../shared/js/tracking.js"></script>
+    <link rel="stylesheet" href="../../shared/css/admin-nav.css">
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
         body {
@@ -383,9 +384,14 @@
     <div id="admin-nav-container"></div>
     <div class="host-container">
         <div class="host-header">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+                <a href="game-history.html" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #f1f5f9; color: #475569; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;">
+                    <span>📜</span> View Game History
+                </a>
+            </div>
             <div class="room-code-display">
                 <div class="info-row">
-                    <p style="margin: 0;">Students join at: <span id="joinLinkDisplay">https://drbakermarketing.com/admin_pages/game-join.html</span></p>
+                    <p style="margin: 0;">Students join at: <span id="joinLinkDisplay">https://drbakermarketing.com/admin_pages/games/game-join.html</span></p>
                     <button class="copy-btn" id="copyJoinLinkBtn">Copy Link</button>
                 </div>
                 <div class="code-row">
@@ -635,7 +641,7 @@
     <script>
         const API_BASE = 'https://drbaker-backend.onrender.com/api';
         const WS_BASE = 'wss://drbaker-backend.onrender.com';
-        const JOIN_URL = 'https://drbakermarketing.com/admin_pages/game-join.html';
+        const JOIN_URL = 'https://drbakermarketing.com/admin_pages/games/game-join.html';
         
         let gameSession = null;
         let websocket = null;
@@ -653,7 +659,7 @@
         
         if (!token) {
             alert('Please log in first');
-            window.location.href = 'login.html';
+            window.location.href = '../login.html';
         }
 
         const STATUS_LABELS = {
@@ -714,7 +720,7 @@
                 qrCodeDiv.innerHTML = '';
                 
                 // Generate join URL with room code pre-filled
-                const joinUrl = `https://drbakermarketing.com/admin_pages/game-join.html?room=${currentRoomCode}`;
+                const joinUrl = `https://drbakermarketing.com/admin_pages/games/game-join.html?room=${currentRoomCode}`;
                 
                 // Create QR code
                 new QRCode(qrCodeDiv, {
@@ -1753,9 +1759,9 @@
         function handleLogout() {
             localStorage.removeItem('auth_token');
             localStorage.removeItem('user_data');
-            window.location.href = 'login.html';
+            window.location.href = '../login.html';
         }
     </script>
-    <script src="../shared/js/admin-nav.js"></script>
+    <script src="../../shared/js/admin-nav.js"></script>
 </body>
 </html>

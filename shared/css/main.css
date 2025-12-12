@@ -1537,3 +1537,84 @@ legend {
   color: #334155;
 }
 
+/* --- New Footer Styles (2025 Proposal) --- */
+.app-footer {
+  margin-top: 4rem;
+  padding: 3rem 1.5rem;
+  background-color: #f9fafb; /* Light gray background */
+  border-top: 1px solid #e5e7eb; /* Subtle border */
+  color: #6b7280; /* Muted text color */
+  font-family: system-ui, -apple-system, sans-serif;
+  text-align: center;
+}
+
+.footer-content {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.footer-nav a {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.footer-nav a:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.footer-meta {
+  font-size: 0.875rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  align-items: center;
+  color: #9ca3af;
+}
+
+.meta-separator {
+  color: #d1d5db;
+}
+
+.footer-citation {
+  background-color: #ffffff;
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+  text-align: left; /* Citation reads better left-aligned */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.citation-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.citation-text {
+  margin: 0;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.citation-text em {
+  font-style: italic;
+  color: #111827;
+}
+
+.footer-copyright {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 1rem;
+}
+

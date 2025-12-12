@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game History & Analytics | Dr. Baker Marketing</title>
+    <link rel="stylesheet" href="../../shared/css/main.css">
+    <script src="../../shared/js/tracking.js"></script>
+    <link rel="stylesheet" href="../../shared/css/admin-nav.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Filters Section */
+        .filters-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-width: 200px;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+        
+        .filter-group select, .filter-group input {
+            padding: 0.625rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.625rem 1.25rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        /* Games Grid */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .game-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .game-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .game-card-header {
+            padding: 1.25rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .room-code {
+            font-family: monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            background: #e2e8f0;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-completed { background: #dcfce7; color: #166534; }
+        .status-cancelled { background: #fee2e2; color: #991b1b; }
+        .status-in_progress { background: #dbeafe; color: #1e40af; }
+        
+        .game-card-body {
+            padding: 1.25rem;
+            flex-grow: 1;
+        }
+        
+        .game-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .game-meta {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-top: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+        }
+        
+        .game-card-footer {
+            padding: 1rem;
+            background: #f8fafc;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .btn-outline {
+            background: white;
+            border-color: #d1d5db;
+            color: #374151;
+        }
+        
+        .btn-outline:hover {
+            background: #f3f4f6;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90vh;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .results-table th, .results-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .results-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+        }
+        
+        .score-pill {
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .rank-medal {
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="admin-nav-container"></div>
+    <script src="../../shared/js/admin-nav.js"></script>
+
+    <div class="dashboard-container">
+        <header style="margin-bottom: 2rem;">
+            <h1 style="font-size: 2rem; color: #111827; margin-bottom: 0.5rem;">Game History & Analytics</h1>
+            <p style="color: #6b7280;">Review past game sessions, analyze student performance, and export results.</p>
+        </header>
+
+        <div class="filters-card">
+            <div class="filter-group">
+                <label>Course</label>
+                <select id="course-filter">
+                    <option value="">All Courses</option>
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Game Type</label>
+                <select id="type-filter">
+                    <option value="">All Types</option>
+                    <option value="speed_tap">Speed Tap</option>
+                    <option value="closest_guess">Closest Guess</option>
+                    <option value="push_range">Push Range</option>
+                    <option value="word_guess">Word Guess</option>
+                    <option value="multi_round">Multi-Round Template</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Status</label>
+                <select id="status-filter">
+                    <option value="">All Statuses</option>
+                    <option value="completed">Completed</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            <button class="btn-primary" onclick="loadGames()">Apply Filters</button>
+        </div>
+
+        <div id="loading" style="text-align: center; padding: 3rem; display: none;">
+            <div style="font-size: 1.5rem; color: #6b7280;">Loading games...</div>
+        </div>
+
+        <div id="games-grid" class="games-grid">
+            <!-- Games populated here -->
+        </div>
+        
+        <div id="no-games" style="text-align: center; padding: 4rem; display: none;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🎮</div>
+            <h3 style="color: #374151; margin-bottom: 0.5rem;">No games found</h3>
+            <p style="color: #6b7280;">Try adjusting your filters or host a new game.</p>
+        </div>
+    </div>
+
+    <!-- Game Details Modal -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2 id="modal-title" style="margin: 0; font-size: 1.5rem;">Game Results</h2>
+                    <div id="modal-subtitle" style="color: #6b7280; margin-top: 0.25rem;"></div>
+                </div>
+                <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem; gap: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+                        <input type="checkbox" id="show-guests" checked onchange="renderLeaderboard()">
+                        Show Guest Players
+                    </label>
+                    <button class="btn-primary btn-sm" onclick="exportCurrentGame('json')" style="flex: 0 0 auto; background-color: #4b5563;">
+                        🔍 Debug JSON
+                    </button>
+                    <button class="btn-primary btn-sm" onclick="exportCurrentGame('csv')" style="flex: 0 0 auto;">
+                        ⬇ Export CSV
+                    </button>
+                </div>
+                
+                <div id="modal-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <!-- Stats populated here -->
+                </div>
+
+                <h3 style="margin-bottom: 1rem;">Leaderboard</h3>
+                <div style="overflow-x: auto;">
+                    <table class="results-table">
+                        <thead id="leaderboard-head">
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th>Type</th>
+                                <th>Score</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                            <!-- Rows populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../shared/js/auth_tracking.js"></script>
+    <script>
+        // API_BASE is defined in auth_tracking.js
+        let allGames = [];
+        let currentModalGame = null;
+        let currentModalPlayers = [];
+
+        // Auth Check
+        if (!isAuthenticated()) {
+            window.location.href = '../login.html?redirect=games/game-history.html';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCourses();
+            loadGames();
+        });
+
+        async function loadCourses() {
+            const token = getAuthToken();
+            try {
+                // Endpoint is /api/courses/ based on core/urls.py
+                const response = await fetch(`${API_BASE}/courses/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                const data = await response.json();
+                const select = document.getElementById('course-filter');
+                
+                // Handle both array response and object with results
+                const courses = Array.isArray(data) ? data : (data.results || []);
+                
+                courses.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course.id;
+                    option.textContent = course.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading courses:', error);
+            }
+        }
+
+        async function loadGames() {
+            const token = getAuthToken();
+            const courseId = document.getElementById('course-filter').value;
+            const status = document.getElementById('status-filter').value;
+            const type = document.getElementById('type-filter').value;
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('games-grid').innerHTML = '';
+            document.getElementById('no-games').style.display = 'none';
+
+            try {
+                let url = `${API_BASE}/instructor/game-history/?page_size=100`;
+                if (courseId) url += `&course_id=${courseId}`;
+                if (status) url += `&status=${status}`;
+                
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                const data = await response.json();
+                
+                // Client-side filtering for game type (since API might not support it directly yet)
+                let games = data.results;
+                if (type) {
+                    games = games.filter(g => {
+                        if (type === 'multi_round') return g.is_multi_round;
+                        return g.game_type === type;
+                    });
+                }
+
+                allGames = games;
+                renderGames(games);
+            } catch (error) {
+                console.error('Error loading games:', error);
+                document.getElementById('games-grid').innerHTML = '<div style="color: red; text-align: center;">Error loading games.</div>';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function renderGames(games) {
+            const grid = document.getElementById('games-grid');
+            
+            if (games.length === 0) {
+                document.getElementById('no-games').style.display = 'block';
+                return;
+            }
+
+            grid.innerHTML = games.map(game => {
+                const date = new Date(game.created_at).toLocaleDateString(undefined, {
+                    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+                });
+                const time = new Date(game.created_at).toLocaleTimeString(undefined, {
+                    hour: '2-digit', minute: '2-digit'
+                });
+                
+                let typeLabel = game.game_type.replace('_', ' ').toUpperCase();
+                if (game.is_multi_round) typeLabel = `MULTI-ROUND: ${game.template_name || 'Custom'}`;
+
+                return `
+                    <div class="game-card">
+                        <div class="game-card-header">
+                            <span class="room-code">${game.room_code}</span>
+                            <span class="status-badge status-${game.status}">${game.status}</span>
+                        </div>
+                        <div class="game-card-body">
+                            <div class="game-title">${typeLabel}</div>
+                            <div class="game-meta">
+                                <span>📅 ${date} at ${time}</span>
+                                <span>📚 ${game.course ? game.course.name : 'No Course (Open)'}</span>
+                                <span>👥 ${game.player_count} Players</span>
+                            </div>
+                        </div>
+                        <div class="game-card-footer">
+                            <button class="btn-sm btn-primary" onclick="openGameDetails(${game.game_id})">View Results</button>
+                            ${game.status === 'in_progress' ? 
+                                `<a href="game-play.html?room=${game.room_code}&host=true" class="btn-sm btn-outline" style="text-decoration: none;">Resume</a>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function openGameDetails(gameId) {
+            const token = getAuthToken();
+            const modal = document.getElementById('details-modal');
+            
+            // Show loading state in modal
+            modal.classList.add('active');
+            document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading details...</td></tr>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/instructor/game/${gameId}/results/?include_guests=true`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                const data = await response.json();
+                
+                currentModalGame = data.game;
+                currentModalPlayers = data.players;
+                
+                // Update Header
+                document.getElementById('modal-title').textContent = `Game Results: ${data.game.room_code}`;
+                document.getElementById('modal-subtitle').textContent = `${new Date(data.game.created_at).toLocaleString()} • ${data.game.total_players} Players`;
+                
+                // Update Stats Cards
+                const statsHtml = `
+                    <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.875rem; color: #64748b;">Average Score</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;">
+                            ${calculateAverageScore(data.players)}
+                        </div>
+                    </div>
+                    <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.875rem; color: #64748b;">Participation</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">
+                            ${data.players.length}
+                        </div>
+                    </div>
+                `;
+                document.getElementById('modal-stats').innerHTML = statsHtml;
+                
+                renderLeaderboard();
+                
+            } catch (error) {
+                console.error('Error details:', error);
+                alert('Failed to load game details.');
+                closeModal();
+            }
+        }
+
+        function renderLeaderboard() {
+            const showGuests = document.getElementById('show-guests').checked;
+            const tbody = document.getElementById('leaderboard-body');
+            const thead = document.getElementById('leaderboard-head');
+            
+            const filteredPlayers = showGuests ? currentModalPlayers : currentModalPlayers.filter(p => !p.is_guest);
+            
+            if (filteredPlayers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No players found.</td></tr>';
+                return;
+            }
+
+            // 1. Determine Max Rounds
+            let maxRounds = 0;
+            
+            if (currentModalGame && currentModalGame.rounds_info && currentModalGame.rounds_info.length > 0) {
+                maxRounds = currentModalGame.rounds_info.length;
+            } else {
+                // Fallback: Scan players to find max round
+                filteredPlayers.forEach(p => {
+                    if (p.round_scores && Array.isArray(p.round_scores)) {
+                        p.round_scores.forEach(r => {
+                            if (typeof r === 'object' && r.round) {
+                                if (r.round > maxRounds) maxRounds = r.round;
+                            } else if (typeof r === 'number') {
+                                if (r > maxRounds) maxRounds = r;
+                            }
+                        });
+                    }
+                });
+            }
+
+            // 2. Build Header
+            let headerHtml = `
+                <tr>
+                    <th>Rank</th>
+                    <th>Player</th>
+                    <th>Type</th>
+                    <th>Total</th>
+            `;
+            
+            if (maxRounds > 0) {
+                for (let i = 1; i <= maxRounds; i++) {
+                    let label = `Round ${i}`;
+                    let tooltip = '';
+                    
+                    if (currentModalGame && currentModalGame.rounds_info) {
+                        const rInfo = currentModalGame.rounds_info.find(r => r.round === i);
+                        if (rInfo) {
+                            const typeLabel = rInfo.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            // Truncate question for tooltip if too long
+                            const qText = rInfo.question.length > 100 ? rInfo.question.substring(0, 100) + '...' : rInfo.question;
+                            label = `<div style="font-size: 0.75rem; font-weight: normal; color: #64748b; line-height: 1.2;">${typeLabel}</div>R${i}`;
+                            tooltip = `title="${qText}"`;
+                        }
+                    }
+                    headerHtml += `<th ${tooltip} style="min-width: 80px;">${label}</th>`;
+                }
+            } else {
+                // Fallback if no round structure detected
+                headerHtml += `<th>Details</th>`;
+            }
+            headerHtml += `</tr>`;
+            thead.innerHTML = headerHtml;
+
+            // 3. Build Rows
+            tbody.innerHTML = filteredPlayers.map((p, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+                const name = p.username || p.guest_name || 'Unknown';
+                const typeBadge = p.is_guest ? 
+                    '<span style="background: #f3f4f6; color: #6b7280; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">Guest</span>' : 
+                    '<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">Student</span>';
+                
+                let roundsHtml = '';
+                
+                if (maxRounds > 0) {
+                    for (let i = 1; i <= maxRounds; i++) {
+                        // Find round data
+                        let rData = null;
+                        if (p.round_scores && Array.isArray(p.round_scores)) {
+                            rData = p.round_scores.find(r => {
+                                if (typeof r === 'object') return r.round === i;
+                                return r === i; // Legacy number support
+                            });
+                        }
+
+                        if (rData) {
+                            let cellContent = '';
+                            let tooltip = '';
+                            
+                            if (typeof rData === 'object') {
+                                const pts = rData.points !== undefined ? rData.points : '?';
+                                cellContent = `<span style="font-weight: 500;">${pts}</span>`;
+                                
+                                // Extra info for tooltip
+                                const extra = [];
+                                if (rData.guess) extra.push(`Guess: ${rData.guess}`);
+                                if (rData.time) extra.push(`${rData.time}s`);
+                                if (rData.correct !== undefined) extra.push(rData.correct ? '✅' : '❌');
+                                if (extra.length > 0) tooltip = `title="${extra.join(', ')}"`;
+                            } else {
+                                // Legacy number
+                                cellContent = '✅';
+                            }
+                            
+                            roundsHtml += `<td ${tooltip} style="text-align: center;">${cellContent}</td>`;
+                        } else {
+                            roundsHtml += `<td style="text-align: center; color: #cbd5e1;">-</td>`;
+                        }
+                    }
+                } else {
+                    // Fallback for no round structure
+                    roundsHtml = `<td style="color: #94a3b8; font-style: italic;">No details</td>`;
+                }
+
+                return `
+                    <tr>
+                        <td><span class="rank-medal">${medal}</span></td>
+                        <td style="font-weight: 500;">${name}</td>
+                        <td>${typeBadge}</td>
+                        <td><span class="score-pill">${p.total_score} pts</span></td>
+                        ${roundsHtml}
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function calculateAverageScore(players) {
+            if (!players || players.length === 0) return 0;
+            const total = players.reduce((sum, p) => sum + p.total_score, 0);
+            return Math.round(total / players.length);
+        }
+
+        function closeModal() {
+            document.getElementById('details-modal').classList.remove('active');
+        }
+        
+        function exportCurrentGame(format = 'csv') {
+            if (!currentModalGame) return;
+            const token = getAuthToken();
+            
+            // Solution: Fetch blob and download
+            const url = `${API_BASE}/game/${currentModalGame.room_code}/export/?format=${format}`;
+            console.log(`Exporting ${format} from URL:`, url); // Debugging
+            
+            fetch(url, {
+                headers: {
+                    'Authorization': `Token ${token}`
+                }
+            })
+            .then(async response => {
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`Export failed: ${response.status} ${response.statusText} - ${text}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `game_results_${currentModalGame.room_code}.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(downloadUrl);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('Export error:', error);
+                alert(`Export failed: ${error.message}`);
+            });
+        }
+
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('details-modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

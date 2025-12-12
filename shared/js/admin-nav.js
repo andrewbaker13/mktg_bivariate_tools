@@ -8,11 +8,16 @@
  */
 
 (function() {
-    // Determine current page from URL
-    const currentPage = window.location.pathname.split('/').pop().replace('.html', '') || 'index';
+    // Determine current page and depth
+    const pathParts = window.location.pathname.split('/');
+    const currentPage = pathParts.pop().replace('.html', '') || 'index';
+    const isGamePage = pathParts.includes('games');
+    
+    // Determine path to shared component
+    const sharedPath = isGamePage ? '../../shared/components/admin-nav.html' : '../shared/components/admin-nav.html';
     
     // Load the nav HTML
-    fetch('../shared/components/admin-nav.html')
+    fetch(sharedPath)
         .then(response => {
             if (!response.ok) throw new Error('Failed to load admin nav');
             return response.text();
@@ -21,6 +26,23 @@
             const container = document.getElementById('admin-nav-container');
             if (container) {
                 container.innerHTML = html;
+                
+                // Fix links if we are in games/ subdirectory
+                if (isGamePage) {
+                    const links = container.querySelectorAll('a');
+                    links.forEach(link => {
+                        const href = link.getAttribute('href');
+                        if (href && !href.startsWith('http') && !href.startsWith('#')) {
+                            if (href.startsWith('games/')) {
+                                // Link to another game page: games/game-host.html -> game-host.html
+                                link.setAttribute('href', href.replace('games/', ''));
+                            } else {
+                                // Link to a root admin page: admin-dashboard.html -> ../admin-dashboard.html
+                                link.setAttribute('href', '../' + href);
+                            }
+                        }
+                    });
+                }
                 
                 // Highlight current page
                 const activeLink = container.querySelector(`[data-page="${currentPage}"]`);
@@ -43,5 +65,7 @@ function handleLogout() {
     localStorage.removeItem('is_staff');
     localStorage.removeItem('is_superuser');
     sessionStorage.clear();
-    window.location.href = 'login.html';
+    
+    const isGamePage = window.location.pathname.includes('/games/');
+    window.location.href = isGamePage ? '../login.html' : 'login.html';
 }
