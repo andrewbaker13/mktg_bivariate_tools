@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game History & Analytics | Dr. Baker Marketing</title>
-    <link rel="stylesheet" href="../shared/css/main.css">
-    <script src="../shared/js/tracking.js"></script>
-    <link rel="stylesheet" href="../shared/css/admin-nav.css">
+    <link rel="stylesheet" href="../../shared/css/main.css">
+    <script src="../../shared/js/tracking.js"></script>
+    <link rel="stylesheet" href="../../shared/css/admin-nav.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         .dashboard-container {
@@ -250,7 +250,7 @@
 </head>
 <body>
     <div id="admin-nav-container"></div>
-    <script src="../shared/js/admin-nav.js"></script>
+    <script src="../../shared/js/admin-nav.js"></script>
 
     <div class="dashboard-container">
         <header style="margin-bottom: 2rem;">
@@ -362,7 +362,7 @@
 
         // Auth Check
         if (!isAuthenticated()) {
-            window.location.href = 'login.html?redirect=game-history.html';
+            window.location.href = '../login.html?redirect=games/game-history.html';
         }
 
         // Initialize
