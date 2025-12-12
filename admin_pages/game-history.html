@@ -529,27 +529,24 @@
 
             // 1. Determine Max Rounds
             let maxRounds = 0;
-            filteredPlayers.forEach(p => {
-                if (p.round_scores && Array.isArray(p.round_scores)) {
-                    p.round_scores.forEach(r => {
-                        // Handle object format {round: 1, ...}
-                        if (typeof r === 'object' && r.round) {
-                            if (r.round > maxRounds) maxRounds = r.round;
-                        }
-                        // Handle simple number format (legacy/fallback)
-                        else if (typeof r === 'number') {
-                            // If it's just a number, we assume it's a round number? 
-                            // Or maybe it's a score? The previous code treated it as a round number label "R{r}".
-                            // But usually round_scores is [{round:1, points:10}].
-                            // If it's just [1, 2], that implies round numbers.
-                            if (r > maxRounds) maxRounds = r;
-                        }
-                    });
-                }
-            });
-
-            // If no round data found, default to 0 (will show just basic columns)
             
+            if (currentModalGame && currentModalGame.rounds_info && currentModalGame.rounds_info.length > 0) {
+                maxRounds = currentModalGame.rounds_info.length;
+            } else {
+                // Fallback: Scan players to find max round
+                filteredPlayers.forEach(p => {
+                    if (p.round_scores && Array.isArray(p.round_scores)) {
+                        p.round_scores.forEach(r => {
+                            if (typeof r === 'object' && r.round) {
+                                if (r.round > maxRounds) maxRounds = r.round;
+                            } else if (typeof r === 'number') {
+                                if (r > maxRounds) maxRounds = r;
+                            }
+                        });
+                    }
+                });
+            }
+
             // 2. Build Header
             let headerHtml = `
                 <tr>
@@ -561,7 +558,20 @@
             
             if (maxRounds > 0) {
                 for (let i = 1; i <= maxRounds; i++) {
-                    headerHtml += `<th>Round ${i}</th>`;
+                    let label = `Round ${i}`;
+                    let tooltip = '';
+                    
+                    if (currentModalGame && currentModalGame.rounds_info) {
+                        const rInfo = currentModalGame.rounds_info.find(r => r.round === i);
+                        if (rInfo) {
+                            const typeLabel = rInfo.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            // Truncate question for tooltip if too long
+                            const qText = rInfo.question.length > 100 ? rInfo.question.substring(0, 100) + '...' : rInfo.question;
+                            label = `<div style="font-size: 0.75rem; font-weight: normal; color: #64748b; line-height: 1.2;">${typeLabel}</div>R${i}`;
+                            tooltip = `title="${qText}"`;
+                        }
+                    }
+                    headerHtml += `<th ${tooltip} style="min-width: 80px;">${label}</th>`;
                 }
             } else {
                 // Fallback if no round structure detected
