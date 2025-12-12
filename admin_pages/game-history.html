@@ -319,7 +319,10 @@
                         <input type="checkbox" id="show-guests" checked onchange="renderLeaderboard()">
                         Show Guest Players
                     </label>
-                    <button class="btn-primary btn-sm" onclick="exportCurrentGame()" style="flex: 0 0 auto;">
+                    <button class="btn-primary btn-sm" onclick="exportCurrentGame('json')" style="flex: 0 0 auto; background-color: #4b5563;">
+                        🔍 Debug JSON
+                    </button>
+                    <button class="btn-primary btn-sm" onclick="exportCurrentGame('csv')" style="flex: 0 0 auto;">
                         ⬇ Export CSV
                     </button>
                 </div>
@@ -657,19 +660,13 @@
             document.getElementById('details-modal').classList.remove('active');
         }
         
-        function exportCurrentGame() {
+        function exportCurrentGame(format = 'csv') {
             if (!currentModalGame) return;
             const token = getAuthToken();
-            // Use fetch to download with auth header, or use a temporary token URL if needed.
-            // Since window.open doesn't support headers, we might need a different approach 
-            // OR rely on session cookie if available (which it isn't for token auth).
-            
-            // However, the backend endpoint is protected by IsAuthenticated.
-            // Standard window.open won't send the Authorization header.
             
             // Solution: Fetch blob and download
-            const url = `${API_BASE}/game/${currentModalGame.room_code}/export/?format=csv`;
-            console.log('Exporting from URL:', url); // Debugging
+            const url = `${API_BASE}/game/${currentModalGame.room_code}/export/?format=${format}`;
+            console.log(`Exporting ${format} from URL:`, url); // Debugging
             
             fetch(url, {
                 headers: {
@@ -687,7 +684,7 @@
                 const downloadUrl = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = downloadUrl;
-                a.download = `game_results_${currentModalGame.room_code}.csv`;
+                a.download = `game_results_${currentModalGame.room_code}.${format}`;
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(downloadUrl);
