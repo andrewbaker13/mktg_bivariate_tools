@@ -261,6 +261,13 @@ function handleMessage(message) {
             }
             break;
             
+        case 'word_guess_results':
+            // End of round results for Word Guess
+            if (typeof handleWordGuessResults === 'function') {
+                handleWordGuessResults(message);
+            }
+            break;
+            
         case 'game_results':
             handleUnifiedGameResults(message);
             break;
@@ -344,25 +351,29 @@ function showWaitingState(gameTypeFromServer) {
                 <p style="color: #f59e0b; font-weight: 600;">You joined during an active round.</p>
                 <p style="color: #64748b;">You'll be able to participate when the next round begins!</p>
                 ${gameExplanationHTML}
+            </div>
+        `;
+        return;
+    }
+    
+    // Only show QR code if game hasn't started yet (no gameType or gameStartTime means pre-game)
+    const showQR = !gameType && !gameStartTime;
+    const qrCodeHTML = showQR ? `
                 <div class="qr-code-box">
                     <h3>📱 Share with Classmates</h3>
                     <div id="qrcode"></div>
                     <p>Scan this QR code to join the game!</p>
                 </div>
-            </div>
-        `;
-    } else {
+    ` : '';
+    
+    if (showQR) {
         document.getElementById('gameArea').innerHTML = `
             <div class="waiting-state">
                 <h2>⏳ Waiting for game to start...</h2>
                 <div class="spinner"></div>
                 <p style="color: #64748b;">Your instructor will start the game soon</p>
                 ${gameExplanationHTML}
-                <div class="qr-code-box">
-                    <h3>📱 Share with Classmates</h3>
-                    <div id="qrcode"></div>
-                    <p>Scan this QR code to join the game!</p>
-                </div>
+                ${qrCodeHTML}
             </div>
         `;
     }
@@ -586,8 +597,24 @@ function handleUnifiedGameResults(message) {
                             <span style="background: rgba(148,163,184,0.3); padding: 8px 16px; border-radius: 20px;">⏰ ${gs.no_answer_count} no answer</span>
                         </div>
                     `;
+                }            } else if (message.game_type === 'word_guess') {
+                // Word Guess: Show correct answer and statistics
+                if (gs.fastest_correct) {
+                    gameSpecificHTML += `
+                        <div style="background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-size: 14px; opacity: 0.9;">⚡ Fastest Correct</div>
+                            <div style="font-size: 20px; font-weight: 700;">${gs.fastest_correct.player_name} <span style="opacity: 0.8; font-size: 14px;">(${gs.fastest_correct.time_remaining?.toFixed(1) || '?'}s remaining)</span></div>
+                        </div>
+                    `;
                 }
-            }
+                if (gs.correct_count !== undefined) {
+                    gameSpecificHTML += `
+                        <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;">
+                            <span style="background: rgba(16,185,129,0.3); padding: 8px 16px; border-radius: 20px;">✅ ${gs.correct_count} correct</span>
+                            <span style="background: rgba(148,163,184,0.3); padding: 8px 16px; border-radius: 20px;">⏰ ${gs.no_answer_count} no answer</span>
+                        </div>
+                    `;
+                }            }
         }
         
         const banner = document.createElement('div');

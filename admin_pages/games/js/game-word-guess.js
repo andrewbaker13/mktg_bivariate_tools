@@ -435,3 +435,63 @@ function startWordGuessTimer(seconds, startTime) {
     // Update every 100ms for smooth countdown
     timerInterval = setInterval(updateTimer, 100);
 }
+function handleWordGuessResults(message) {
+    // End-of-round summary for Word Guess
+    console.log('Word Guess round results:', message);
+    
+    // Show correct answer
+    const answer = message.correct_answer.toUpperCase();
+    const answerNoSpaces = answer.replace(/ /g, '');
+    
+    for (let i = 0; i < answerNoSpaces.length; i++) {
+        const revealedEl = document.getElementById(`revealedLetter${i}`);
+        if (revealedEl) {
+            revealedEl.textContent = answerNoSpaces[i];
+        }
+        
+        const letterBox = document.querySelector(`.letter-box[data-index="${i}"]`);
+        if (letterBox) {
+            letterBox.classList.add('correct');
+        }
+    }
+    
+    // Show final results feedback
+    const feedback = document.getElementById('feedback');
+    if (feedback) {
+        const myResult = message.player_results?.find(p => p.player_id === playerSession.id);
+        if (myResult) {
+            const correctPercentage = message.correct_count ? 
+                Math.round((message.correct_count / (message.correct_count + message.no_answer_count)) * 100) : 0;
+            
+            let resultHTML = '';
+            if (myResult.is_correct) {
+                resultHTML = `
+                    <div style="color: #10b981; font-size: 24px; font-weight: 700; margin-bottom: 10px;">
+                        ✅ Correct! +${myResult.points} points
+                    </div>
+                `;
+            } else if (myResult.answered) {
+                resultHTML = `
+                    <div style="color: #ef4444; font-size: 20px; font-weight: 600; margin-bottom: 10px;">
+                        ❌ Your answer: ${myResult.answer}
+                    </div>
+                `;
+            } else {
+                resultHTML = `
+                    <div style="color: #94a3b8; font-size: 18px; margin-bottom: 10px;">
+                        ⏰ No answer submitted
+                    </div>
+                `;
+            }
+            
+            resultHTML += `
+                <div style="font-size: 18px; color: #1e293b; margin-top: 15px;">
+                    <div><strong>Correct Answer:</strong> ${answer}</div>
+                    <div style="margin-top: 8px;"><strong>${correctPercentage}%</strong> of players got it right (${message.correct_count}/${message.correct_count + message.no_answer_count})</div>
+                </div>
+            `;
+            
+            feedback.innerHTML = resultHTML;
+        }
+    }
+}
