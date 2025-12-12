@@ -331,7 +331,7 @@
                 <h3 style="margin-bottom: 1rem;">Leaderboard</h3>
                 <div style="overflow-x: auto;">
                     <table class="results-table">
-                        <thead>
+                        <thead id="leaderboard-head">
                             <tr>
                                 <th>Rank</th>
                                 <th>Player</th>
@@ -518,6 +518,7 @@
         function renderLeaderboard() {
             const showGuests = document.getElementById('show-guests').checked;
             const tbody = document.getElementById('leaderboard-body');
+            const thead = document.getElementById('leaderboard-head');
             
             const filteredPlayers = showGuests ? currentModalPlayers : currentModalPlayers.filter(p => !p.is_guest);
             
@@ -526,6 +527,50 @@
                 return;
             }
 
+            // 1. Determine Max Rounds
+            let maxRounds = 0;
+            filteredPlayers.forEach(p => {
+                if (p.round_scores && Array.isArray(p.round_scores)) {
+                    p.round_scores.forEach(r => {
+                        // Handle object format {round: 1, ...}
+                        if (typeof r === 'object' && r.round) {
+                            if (r.round > maxRounds) maxRounds = r.round;
+                        }
+                        // Handle simple number format (legacy/fallback)
+                        else if (typeof r === 'number') {
+                            // If it's just a number, we assume it's a round number? 
+                            // Or maybe it's a score? The previous code treated it as a round number label "R{r}".
+                            // But usually round_scores is [{round:1, points:10}].
+                            // If it's just [1, 2], that implies round numbers.
+                            if (r > maxRounds) maxRounds = r;
+                        }
+                    });
+                }
+            });
+
+            // If no round data found, default to 0 (will show just basic columns)
+            
+            // 2. Build Header
+            let headerHtml = `
+                <tr>
+                    <th>Rank</th>
+                    <th>Player</th>
+                    <th>Type</th>
+                    <th>Total</th>
+            `;
+            
+            if (maxRounds > 0) {
+                for (let i = 1; i <= maxRounds; i++) {
+                    headerHtml += `<th>Round ${i}</th>`;
+                }
+            } else {
+                // Fallback if no round structure detected
+                headerHtml += `<th>Details</th>`;
+            }
+            headerHtml += `</tr>`;
+            thead.innerHTML = headerHtml;
+
+            // 3. Build Rows
             tbody.innerHTML = filteredPlayers.map((p, index) => {
                 const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
                 const name = p.username || p.guest_name || 'Unknown';
@@ -533,15 +578,55 @@
                     '<span style="background: #f3f4f6; color: #6b7280; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">Guest</span>' : 
                     '<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">Student</span>';
                 
+                let roundsHtml = '';
+                
+                if (maxRounds > 0) {
+                    for (let i = 1; i <= maxRounds; i++) {
+                        // Find round data
+                        let rData = null;
+                        if (p.round_scores && Array.isArray(p.round_scores)) {
+                            rData = p.round_scores.find(r => {
+                                if (typeof r === 'object') return r.round === i;
+                                return r === i; // Legacy number support
+                            });
+                        }
+
+                        if (rData) {
+                            let cellContent = '';
+                            let tooltip = '';
+                            
+                            if (typeof rData === 'object') {
+                                const pts = rData.points !== undefined ? rData.points : '?';
+                                cellContent = `<span style="font-weight: 500;">${pts}</span>`;
+                                
+                                // Extra info for tooltip
+                                const extra = [];
+                                if (rData.guess) extra.push(`Guess: ${rData.guess}`);
+                                if (rData.time) extra.push(`${rData.time}s`);
+                                if (rData.correct !== undefined) extra.push(rData.correct ? '✅' : '❌');
+                                if (extra.length > 0) tooltip = `title="${extra.join(', ')}"`;
+                            } else {
+                                // Legacy number
+                                cellContent = '✅';
+                            }
+                            
+                            roundsHtml += `<td ${tooltip} style="text-align: center;">${cellContent}</td>`;
+                        } else {
+                            roundsHtml += `<td style="text-align: center; color: #cbd5e1;">-</td>`;
+                        }
+                    }
+                } else {
+                    // Fallback for no round structure
+                    roundsHtml = `<td style="color: #94a3b8; font-style: italic;">No details</td>`;
+                }
+
                 return `
                     <tr>
                         <td><span class="rank-medal">${medal}</span></td>
                         <td style="font-weight: 500;">${name}</td>
                         <td>${typeBadge}</td>
                         <td><span class="score-pill">${p.total_score} pts</span></td>
-                        <td style="font-size: 0.85rem; color: #64748b;">
-                            ${p.round_scores ? `Rounds: ${p.round_scores.join(', ')}` : 'Single Round'}
-                        </td>
+                        ${roundsHtml}
                     </tr>
                 `;
             }).join('');
