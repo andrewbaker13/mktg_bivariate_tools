@@ -209,6 +209,35 @@ function handleMessage(message) {
             }
             break;
             
+        case 'word_guess_correct':
+            // Handle correct word guess confirmation
+            if (typeof handleWordGuessResult === 'function') {
+                handleWordGuessResult({
+                    is_correct: true,
+                    points: message.points,
+                    correct_answer: message.answer
+                });
+            }
+            break;
+
+        case 'word_guess_incorrect':
+            // Handle incorrect word guess feedback
+            const feedback = document.getElementById('feedback');
+            if (feedback) {
+                feedback.innerHTML = `<div style="color: #ef4444; font-size: 18px;">❌ ${message.message}</div>`;
+                setTimeout(() => { feedback.innerHTML = ''; }, 2000);
+            }
+            // Re-enable input
+            const input = document.getElementById('wordGuessInput');
+            const submitBtn = document.querySelector('.submit-word-btn');
+            if (input) input.disabled = false;
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Answer';
+                submitBtn.style.opacity = '1';
+            }
+            break;
+
         case 'word_guess_reveal':
             if (typeof handleWordGuessReveal === 'function') {
                 handleWordGuessReveal(message);
@@ -681,8 +710,27 @@ function updateLeaderboard(leaderboard) {
 }
 
 function handleGameEnd(message) {
-    // Just show the final standings
-    showFinalStandings(message, leaderboardVisibility);
+    // Check if this is an intermediate round in a multi-round game
+    const totalRounds = message.total_rounds || 1;
+    const currentRound = message.current_round || 1;
+    
+    if (totalRounds > 1 && currentRound < totalRounds) {
+        // Intermediate round - show waiting state instead of game over
+        document.getElementById('gameArea').innerHTML = `
+            <div class="waiting-state">
+                <h2>🎉 Round ${currentRound} Complete!</h2>
+                <div class="spinner"></div>
+                <p style="color: #64748b;">Waiting for instructor to start Round ${currentRound + 1}...</p>
+                <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px;">
+                    <h3>Current Standings</h3>
+                    <p>Check the leaderboard screen for full results!</p>
+                </div>
+            </div>
+        `;
+    } else {
+        // Final round - show final standings
+        showFinalStandings(message, leaderboardVisibility);
+    }
 }
 
 function handleRoundChange(message) {
