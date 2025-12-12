@@ -81,6 +81,12 @@ function showClosestGuessGame(message, timeLimit) {
 
 function submitGuess() {
     console.log('submitGuess() called');
+    
+    if (!playerSession || !playerSession.id) {
+        alert('Session error: Player ID missing. Please refresh the page.');
+        return;
+    }
+
     const guessMin = parseFloat(document.getElementById('guessMin').value);
     const guessMax = parseFloat(document.getElementById('guessMax').value);
     
@@ -159,7 +165,13 @@ function updateDynamicRange() {
     let dataMax = Math.max(...submittedGuesses.map(g => g.max));
     
     // Add 25% padding
-    const range = dataMax - dataMin;
+    let range = dataMax - dataMin;
+    if (range === 0) {
+        range = 10; // Default range if single point or identical guesses
+        // Center the range around the data point
+        dataMin -= range / 2;
+        dataMax += range / 2;
+    }
     const padding = range * 0.25;
     
     numberlineMin = Math.floor(dataMin - padding);
