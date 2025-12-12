@@ -20,52 +20,56 @@
         }
         .game-container {
             max-width: 1000px;
-            margin: 2rem auto;
-            padding: 1rem;
+            margin: 0.5rem auto;
+            padding: 0.5rem;
         }
         .game-header {
             background: white;
-            padding: 1.5rem;
+            padding: 0.75rem 1rem;
             border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 0.75rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            min-height: 50px;
         }
         .player-info h2 {
             margin: 0;
             color: #1e293b;
+            font-size: 1.1rem;
         }
         .player-info .room-code {
             color: #64748b;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
         }
         .game-stats {
             display: flex;
-            gap: 2rem;
+            gap: 1rem;
         }
         .stat-item {
             text-align: center;
         }
         .stat-item .label {
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             color: #64748b;
             text-transform: uppercase;
             font-weight: 600;
+            margin-bottom: 2px;
         }
         .stat-item .value {
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: #1e293b;
+            line-height: 1;
         }
         .game-area {
             background: white;
-            padding: 2rem;
+            padding: 1rem;
             border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-            margin-bottom: 1.5rem;
-            min-height: 400px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+            min-height: 300px;
         }
         
         /* Waiting state */
@@ -121,16 +125,17 @@
             margin-bottom: 2rem;
         }
         .question-text {
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             color: #1e293b;
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
         }
         .timer {
-            font-size: 3rem;
+            font-size: 2rem;
             font-weight: 700;
             color: #ef4444;
-            margin: 1rem 0;
+            margin: 0.25rem 0;
         }
         
         /* Speed Tap Game */
@@ -139,20 +144,24 @@
         }
         .answer-options {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin: 2rem 0;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.5rem;
+            margin: 1rem 0;
         }
         .answer-btn {
-            padding: 2rem;
-            font-size: 1.25rem;
+            padding: 1rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: #1e293b;
-            border: 3px solid #e2e8f0;
+            border: 2px solid #e2e8f0;
             border-radius: 12px;
             background: white;
             cursor: pointer;
             transition: all 0.2s;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .answer-btn:hover {
             border-color: #3b82f6;
@@ -1278,7 +1287,7 @@
             
             console.log('Final options array:', options);
             
-            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
+            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 25vh; margin: 0.5rem auto; border-radius: 8px; display: block; object-fit: contain;">` : '';
             
             document.getElementById('gameArea').innerHTML = `
                 <div class="speed-tap-area">
@@ -1391,7 +1400,7 @@
             
             const maxWidth = gameConfig?.max_range_width;
             const rangeRequirementText = maxWidth ? `<div style="color: #64748b; font-size: 14px; margin-top: 8px;">📏 Guesses must be within ${maxWidth} units</div>` : '<div style="color: #64748b; font-size: 14px; margin-top: 8px;">📏 Any range allowed (max 8 digits per number)</div>';
-            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
+            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 25vh; margin: 0.5rem auto; border-radius: 8px; display: block; object-fit: contain;">` : '';
             
             document.getElementById('gameArea').innerHTML = `
                 <div class="closest-guess-area">
@@ -1675,7 +1684,7 @@
         let cooldownTimeout = null;
         
         function showPushRangeGame(message, timeLimit) {
-            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
+            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 25vh; margin: 0.5rem auto; border-radius: 8px; display: block; object-fit: contain;">` : '';
             
             // Get team assignment
             myTeam = message.team_assignments?.[playerSession.id]?.team || 'left';
@@ -1738,6 +1747,11 @@
                         </div>
                     </div>
                     
+                    <div class="push-button-container">
+                        ${buttonHTML}
+                        <div class="my-presses">Your Presses: <span id="myPressCount">0</span></div>
+                    </div>
+
                     <div class="push-range-teams">
                         <div class="team-panel left">
                             <h4>🔵 BLUE TEAM →</h4>
@@ -1747,11 +1761,6 @@
                             <h4>← 🔴 RED TEAM</h4>
                             <div id="rightTeamRoster"></div>
                         </div>
-                    </div>
-                    
-                    <div class="push-button-container">
-                        ${buttonHTML}
-                        <div class="my-presses">Your Presses: <span id="myPressCount">0</span></div>
                     </div>
                 </div>
             `;
@@ -2904,7 +2913,7 @@
                 ];
             }
             
-            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
+            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 25vh; margin: 0.5rem auto; border-radius: 8px; display: block; object-fit: contain;">` : '';
             
             document.getElementById('gameArea').innerHTML = `
                 <div class="crowd-wisdom-area">
@@ -3268,7 +3277,7 @@
             
             letterGridHTML += '</div>';
             
-            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 300px; margin: 15px 0; border-radius: 8px; display: block;">` : '';
+            const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 25vh; margin: 0.5rem auto; border-radius: 8px; display: block; object-fit: contain;">` : '';
             
             document.getElementById('gameArea').innerHTML = `
                 <div class="word-guess-area">
@@ -3302,35 +3311,63 @@
                 
                 <style>
                     .word-guess-area {
-                        padding: 20px;
+                        padding: 1rem;
                     }
                     .word-guess-grid {
                         display: flex;
                         flex-direction: column;
                         align-items: center;
-                        gap: 10px;
-                        margin: 30px 0;
+                        gap: 0.5rem;
+                        margin: 1rem 0;
+                        width: 100%;
                     }
                     .word-row {
                         display: flex;
-                        gap: 8px;
+                        gap: 4px;
+                        flex-wrap: nowrap;
+                        justify-content: center;
+                        max-width: 100%;
                     }
                     .word-space {
-                        width: 20px;
+                        height: 1rem; /* Vertical space between words */
+                        width: 100%;
                     }
                     .letter-box {
-                        width: 50px;
-                        height: 60px;
-                        border: 3px solid #3b82f6;
-                        border-radius: 8px;
+                        width: 40px;
+                        height: 50px;
+                        border: 2px solid #3b82f6;
+                        border-radius: 6px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                         position: relative;
                         background: white;
-                        font-size: 28px;
+                        font-size: 24px;
                         font-weight: 700;
+                        flex-shrink: 1; /* Allow shrinking */
+                        min-width: 20px;
                     }
+                    
+                    @media (max-width: 480px) {
+                        .letter-box {
+                            width: 30px;
+                            height: 40px;
+                            font-size: 18px;
+                            border-width: 2px;
+                        }
+                        .word-row {
+                            gap: 2px;
+                        }
+                    }
+                    
+                    @media (max-width: 360px) {
+                        .letter-box {
+                            width: 24px;
+                            height: 34px;
+                            font-size: 14px;
+                        }
+                    }
+
                     .player-letter {
                         color: #6b7280;
                         position: absolute;
@@ -3527,6 +3564,14 @@
             const availablePointsEl = document.getElementById('availablePoints');
             const endTime = startTime + (seconds * 1000);
             
+            // Calculate reveal schedule
+            // Reveal up to 40% of letters over the duration
+            const answer = wordGuessState.answer ? wordGuessState.answer.replace(/ /g, '') : '';
+            const totalLetters = answer.length;
+            const lettersToReveal = Math.max(1, Math.floor(totalLetters * 0.4));
+            const revealInterval = seconds / (lettersToReveal + 1);
+            let nextRevealTime = seconds - revealInterval;
+            
             function updateTimer() {
                 const now = Date.now();
                 const remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
@@ -3542,10 +3587,40 @@
                 }
                 
                 // Update available points based on time remaining
-                // Points = max(0, 100 * ((time_remaining_percent - 25) / 50))
-                const points = Math.max(0, Math.round(100 * ((remainingPercent - 25) / 50)));
+                // Linear decay from 100 to 10 points
+                const points = Math.max(10, Math.round(10 + 90 * (remainingPercent / 100)));
+                
                 if (availablePointsEl) {
                     availablePointsEl.textContent = `${points} pts`;
+                }
+                
+                // Client-side letter reveal logic
+                // Only if we have the answer and haven't revealed everything
+                if (wordGuessState.answer && remaining < nextRevealTime && remaining > 0) {
+                    nextRevealTime -= revealInterval;
+                    
+                    // Find an unrevealed index
+                    const unrevealedIndices = [];
+                    const answerFull = wordGuessState.answer.toUpperCase().replace(/ /g, '');
+                    for (let i = 0; i < answerFull.length; i++) {
+                        if (!wordGuessState.revealedIndices.has(i)) {
+                            unrevealedIndices.push(i);
+                        }
+                    }
+                    
+                    if (unrevealedIndices.length > 0) {
+                        // Pick random index
+                        const randomIndex = unrevealedIndices[Math.floor(Math.random() * unrevealedIndices.length)];
+                        const letter = answerFull[randomIndex];
+                        
+                        // Simulate reveal message
+                        handleWordGuessReveal({
+                            revealed_letters: [{
+                                index: randomIndex,
+                                letter: letter
+                            }]
+                        });
+                    }
                 }
                 
                 if (remaining <= 0) {
