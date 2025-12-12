@@ -2270,14 +2270,6 @@
                 
                 // Push Range specific
                 if (message.game_type === 'push_range') {
-                    if (details.final_range) {
-                        const range = details.final_range;
-                        html += `
-                            <div style="padding: 15px; background: #e0e7ff; border-radius: 8px; border-left: 4px solid #6366f1;">
-                                📊 <strong>Final Range:</strong> ${range.left_boundary}% - ${range.right_boundary}% (width: ${range.width}%)
-                            </div>
-                        `;
-                    }
                     
                     if (details.top_pressers && details.top_pressers.length > 0) {
                         html += `
