@@ -694,7 +694,7 @@
             })
             .catch(error => {
                 console.error('Export error:', error);
-                alert('Failed to export CSV. Please try again.');
+                alert(`Export failed: ${error.message}`);
             });
         }
 
