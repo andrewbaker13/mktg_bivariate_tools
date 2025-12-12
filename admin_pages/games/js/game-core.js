@@ -144,7 +144,9 @@ function handleMessage(message) {
         case 'connection_established':
             console.log('Connection established');
             // If we have a game type, show waiting state with that type
-            if (message.game_type) {
+            if (message.game_session && message.game_session.game_type) {
+                showWaitingState(message.game_session.game_type);
+            } else if (message.game_type) {
                 showWaitingState(message.game_type);
             }
             break;
