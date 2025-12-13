@@ -836,6 +836,7 @@ function handleUnifiedGameResults(message) {
         
         // If there are more rounds, show the instruction card for the NEXT game below the results
         if (hasMoreRounds && nextGameType) {
+            console.log(`🎴 Rendering next game preview card for: ${nextGameType}`);
             const instructionCard = getInstructionCardHTML(nextGameType);
             if (instructionCard) {
                 // Add a "Next Up" header to make it clear this is for the upcoming round
@@ -847,7 +848,11 @@ function handleUnifiedGameResults(message) {
                     </div>
                 `;
                 gameArea.appendChild(nextGameSection);
+            } else {
+                console.error(`❌ Failed to get instruction card for game type: ${nextGameType}`);
             }
+        } else if (hasMoreRounds && !nextGameType) {
+            console.warn('⚠️ More rounds exist but nextGameType is not set!');
         }
         
         // If this is the final round, automatically transition to final standings after 3 seconds
