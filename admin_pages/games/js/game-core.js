@@ -163,6 +163,10 @@ function handleMessage(message) {
             handleCountdownStart(message);
             break;
             
+        case 'timer_sync':
+            handleTimerSync(message);
+            break;
+            
         case 'game_started':
             handleGameStart(message);
             break;
@@ -859,6 +863,29 @@ function handleError(message) {
     }
 }
 
+// Global timer sync state
+let expectedEndTime = null;
+const SYNC_DRIFT_THRESHOLD = 1000; // 1 second
+
+function handleTimerSync(message) {
+    // Server sends time_remaining in seconds
+    const serverTimeRemaining = message.time_remaining * 1000; // Convert to ms
+    const newExpectedEndTime = Date.now() + serverTimeRemaining;
+    
+    // Check if we need to adjust for drift
+    if (expectedEndTime !== null) {
+        const drift = Math.abs(newExpectedEndTime - expectedEndTime);
+        
+        if (drift > SYNC_DRIFT_THRESHOLD) {
+            console.log(`Timer drift detected: ${drift}ms - correcting`);
+            expectedEndTime = newExpectedEndTime;
+            // Timer will auto-correct on next update since it checks expectedEndTime
+        }
+    } else {
+        expectedEndTime = newExpectedEndTime;
+    }
+}
+
 // Generic timer function (used by Closest Guess and potentially others)
 function startTimer(seconds, startTime) {
     console.log('startTimer called for gameType:', gameType, 'seconds:', seconds);
@@ -870,11 +897,14 @@ function startTimer(seconds, startTime) {
     }
     
     const timerEl = document.getElementById('timer');
-    const endTime = startTime + (seconds * 1000);
+    expectedEndTime = startTime + (seconds * 1000);
+    const endTime = expectedEndTime;
     
     function updateTimer() {
         const now = Date.now();
-        const remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
+        // Use sync-corrected expectedEndTime if available
+        const currentEndTime = expectedEndTime || endTime;
+        const remaining = Math.max(0, Math.ceil((currentEndTime - now) / 1000));
         if (timerEl) {
             timerEl.textContent = remaining;
             
