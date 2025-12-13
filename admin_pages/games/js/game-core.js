@@ -863,9 +863,9 @@ function handleGameEnd(message) {
 }
 
 function handleRoundChange(message) {
-    // Store the next game type for showing instructions
+    // Store the next game type for showing instructions in the summary card
     nextGameType = message.next_game_type;
-    console.log('Round changed - next game type:', nextGameType);
+    console.log('📋 Round changed - next game type:', nextGameType);
     
     // Note: We don't call showWaitingState here because handleUnifiedGameResults
     // already shows the summary card with next game instructions included
