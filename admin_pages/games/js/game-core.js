@@ -596,6 +596,12 @@ function handleUnifiedGameResults(message) {
     const isFinalRound = message.current_round >= message.total_rounds;
     const hasMoreRounds = !isFinalRound;
     
+    // Store next game type if provided in this message (for immediate preview)
+    if (message.next_game_type) {
+        nextGameType = message.next_game_type;
+        console.log('📋 Next game type from results:', nextGameType);
+    }
+    
     // If we were waiting to enter, we can now enter for the next round
     if (isWaitingToEnter) {
         isWaitingToEnter = false;
