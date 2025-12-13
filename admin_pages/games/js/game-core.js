@@ -153,6 +153,10 @@ function handleMessage(message) {
             
         case 'identified':
             console.log('Player identified');
+            // Preload all game scripts for this session
+            if (message.game_types && message.game_types.length > 0) {
+                preloadAllGameScripts(message.game_types);
+            }
             break;
             
         case 'player_list_update':
@@ -471,6 +475,35 @@ async function handleCountdownStart(message) {
 
 // Lazy load game-specific JavaScript modules
 const loadedGameScripts = new Set();
+
+async function preloadAllGameScripts(gameTypes) {
+    console.log('🎯 Preloading all game scripts:', gameTypes);
+    
+    try {
+        // Load all scripts in parallel
+        const loadPromises = gameTypes.map(gameType => loadGameScript(gameType));
+        await Promise.all(loadPromises);
+        
+        console.log('✅ All game scripts preloaded successfully!');
+        
+        // Notify backend that scripts are loaded
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                action: 'scripts_loaded',
+                data: { loaded: true }
+            }));
+        }
+    } catch (error) {
+        console.error('❌ Error preloading scripts:', error);
+        // Still notify backend even if some failed - game will work with lazy loading fallback
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                action: 'scripts_loaded',
+                data: { loaded: false, error: error.message }
+            }));
+        }
+    }
+}
 
 async function loadGameScript(gameType) {
     // Map game types to their script files

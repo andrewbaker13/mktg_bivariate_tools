@@ -1723,8 +1723,14 @@
                 // Connection status: ws_connected=true → Online, is_connected but not ws → Entering, neither → Offline
                 let statusClass, statusText;
                 if (player.ws_connected) {
-                    statusClass = 'connected';
-                    statusText = '🟢 Online';
+                    // Check if scripts are loaded for online players
+                    if (player.scripts_loaded) {
+                        statusClass = 'connected';
+                        statusText = '🟢 Ready';
+                    } else {
+                        statusClass = 'entering';
+                        statusText = '⏳ Loading...';
+                    }
                 } else if (player.is_connected) {
                     statusClass = 'entering';
                     statusText = '🟡 Entering';
