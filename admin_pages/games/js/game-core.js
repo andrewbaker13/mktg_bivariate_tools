@@ -477,18 +477,36 @@ async function handleCountdownStart(message) {
 const loadedGameScripts = new Set();
 
 async function preloadAllGameScripts(gameTypes) {
-    console.log('🎯 Preloading all game scripts:', gameTypes);
+    // Remove duplicates
+    const uniqueGameTypes = [...new Set(gameTypes)];
+    const totalScripts = uniqueGameTypes.length;
+    let loadedCount = 0;
+    
+    console.log('🎯 Preloading all game scripts:', uniqueGameTypes);
     
     try {
-        // Load all scripts in parallel
-        const loadPromises = gameTypes.map(gameType => loadGameScript(gameType));
-        await Promise.all(loadPromises);
+        // Load scripts sequentially to send progress updates
+        for (const gameType of uniqueGameTypes) {
+            await loadGameScript(gameType);
+            loadedCount++;
+            
+            // Send progress update after each script loads
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    action: 'scripts_loading_progress',
+                    data: { 
+                        loaded_count: loadedCount,
+                        total_count: totalScripts
+                    }
+                }));
+            }
+        }
         
         console.log('✅ All game scripts preloaded successfully!');
         
-        // Notify backend that scripts are loaded
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
+        // Notify backend that all scripts are loaded
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+            websocket.send(JSON.stringify({
                 action: 'scripts_loaded',
                 data: { loaded: true }
             }));
@@ -496,8 +514,8 @@ async function preloadAllGameScripts(gameTypes) {
     } catch (error) {
         console.error('❌ Error preloading scripts:', error);
         // Still notify backend even if some failed - game will work with lazy loading fallback
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+            websocket.send(JSON.stringify({
                 action: 'scripts_loaded',
                 data: { loaded: false, error: error.message }
             }));

@@ -1728,8 +1728,11 @@
                         statusClass = 'connected';
                         statusText = '🟢 Ready';
                     } else {
+                        const loadedCount = player.scripts_loaded_count || 0;
+                        const totalCount = player.scripts_total_count || 0;
+                        const progressText = totalCount > 0 ? ` (${loadedCount}/${totalCount})` : '';
                         statusClass = 'entering';
-                        statusText = '⏳ Loading...';
+                        statusText = `⏳ Loading...${progressText}`;
                     }
                 } else if (player.is_connected) {
                     statusClass = 'entering';
