@@ -569,33 +569,75 @@ async function handleGameStart(message) {
     }
     
     // Now call game-specific functions (they're guaranteed to be loaded)
-    if (gameType === 'speed_tap' && typeof showSpeedTapGame === 'function') {
-        showSpeedTapGame(message, timeLimit);
-        if (typeof startSpeedTapTimer === 'function') {
-            startSpeedTapTimer(timeLimit, startTime);
+    console.log(`🎮 Attempting to start ${gameType} game...`);
+    
+    if (gameType === 'speed_tap') {
+        console.log('Checking showSpeedTapGame:', typeof showSpeedTapGame);
+        if (typeof showSpeedTapGame === 'function') {
+            showSpeedTapGame(message, timeLimit);
+            console.log('Checking startSpeedTapTimer:', typeof startSpeedTapTimer);
+            if (typeof startSpeedTapTimer === 'function') {
+                startSpeedTapTimer(timeLimit, startTime);
+            } else {
+                console.error('❌ startSpeedTapTimer not found!');
+            }
+        } else {
+            console.error('❌ showSpeedTapGame not found!');
         }
-    } else if (gameType === 'closest_guess' && typeof showClosestGuessGame === 'function') {
-        showClosestGuessGame(message, timeLimit);
-        if (typeof startTimer === 'function') {
-            startTimer(timeLimit, startTime);
+    } else if (gameType === 'closest_guess') {
+        console.log('Checking showClosestGuessGame:', typeof showClosestGuessGame);
+        if (typeof showClosestGuessGame === 'function') {
+            showClosestGuessGame(message, timeLimit);
+            console.log('Checking startTimer:', typeof startTimer);
+            if (typeof startTimer === 'function') {
+                startTimer(timeLimit, startTime);
+            } else {
+                console.error('❌ startTimer not found!');
+            }
+        } else {
+            console.error('❌ showClosestGuessGame not found!');
         }
-    } else if (gameType === 'push_range' && typeof showPushRangeGame === 'function') {
-        showPushRangeGame(message, timeLimit);
-        if (typeof startPushRangeTimer === 'function') {
-            startPushRangeTimer(timeLimit, startTime);
+    } else if (gameType === 'push_range') {
+        console.log('Checking showPushRangeGame:', typeof showPushRangeGame);
+        if (typeof showPushRangeGame === 'function') {
+            showPushRangeGame(message, timeLimit);
+            console.log('Checking startPushRangeTimer:', typeof startPushRangeTimer);
+            if (typeof startPushRangeTimer === 'function') {
+                startPushRangeTimer(timeLimit, startTime);
+            } else {
+                console.error('❌ startPushRangeTimer not found!');
+            }
+        } else {
+            console.error('❌ showPushRangeGame not found!');
         }
-    } else if (gameType === 'crowd_wisdom' && typeof showCrowdWisdomGame === 'function') {
-        showCrowdWisdomGame(message, timeLimit);
-        if (typeof startCrowdWisdomTimer === 'function') {
-            startCrowdWisdomTimer(timeLimit, startTime);
+    } else if (gameType === 'crowd_wisdom') {
+        console.log('Checking showCrowdWisdomGame:', typeof showCrowdWisdomGame);
+        if (typeof showCrowdWisdomGame === 'function') {
+            showCrowdWisdomGame(message, timeLimit);
+            console.log('Checking startCrowdWisdomTimer:', typeof startCrowdWisdomTimer);
+            if (typeof startCrowdWisdomTimer === 'function') {
+                startCrowdWisdomTimer(timeLimit, startTime);
+            } else {
+                console.error('❌ startCrowdWisdomTimer not found!');
+            }
+        } else {
+            console.error('❌ showCrowdWisdomGame not found!');
         }
-    } else if (gameType === 'word_guess' && typeof showWordGuessGame === 'function') {
-        showWordGuessGame(message, timeLimit);
-        if (typeof startWordGuessTimer === 'function') {
-            startWordGuessTimer(timeLimit, startTime);
+    } else if (gameType === 'word_guess') {
+        console.log('Checking showWordGuessGame:', typeof showWordGuessGame);
+        if (typeof showWordGuessGame === 'function') {
+            showWordGuessGame(message, timeLimit);
+            console.log('Checking startWordGuessTimer:', typeof startWordGuessTimer);
+            if (typeof startWordGuessTimer === 'function') {
+                startWordGuessTimer(timeLimit, startTime);
+            } else {
+                console.error('❌ startWordGuessTimer not found!');
+            }
+        } else {
+            console.error('❌ showWordGuessGame not found!');
         }
     } else {
-        console.error('Unknown game type or missing handler:', gameType);
+        console.error('❌ Unknown game type:', gameType);
     }
 }
 
