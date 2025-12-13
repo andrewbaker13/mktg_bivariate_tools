@@ -492,10 +492,16 @@ function handleGameStart(message) {
         ? message.game_time_limit 
         : 20;
     
-    // start_time from backend is when countdown started, so add 3 seconds for actual game start
-    const startTime = message.start_time ? new Date(message.start_time).getTime() + 3000 : Date.now();
+    // start_time from backend is when countdown started, so add 5 seconds for actual game start
+    // (Backend countdown duration is 5 seconds to account for network latency and rendering)
+    const startTime = message.start_time ? new Date(message.start_time).getTime() + 5000 : Date.now();
     
-    console.log('Calculated timeLimit:', timeLimit, 'seconds');
+    console.log('⏱️ Game timing:', {
+        timeLimit: timeLimit,
+        startTime: new Date(startTime).toISOString(),
+        expectedEndTime: new Date(startTime + timeLimit * 1000).toISOString(),
+        gameType: message.game_type
+    });
     
     if (gameType === 'speed_tap' && typeof showSpeedTapGame === 'function') {
         showSpeedTapGame(message, timeLimit);
@@ -705,12 +711,18 @@ function handleUnifiedGameResults(message) {
         gameArea.insertBefore(banner, gameArea.firstChild);
         
         // If there are more rounds, show the instruction card for the NEXT game below the results
-        if (hasMoreRounds && message.game_type) {
-            const instructionCard = getInstructionCardHTML(message.game_type);
+        if (hasMoreRounds && nextGameType) {
+            const instructionCard = getInstructionCardHTML(nextGameType);
             if (instructionCard) {
-                const cardDiv = document.createElement('div');
-                cardDiv.innerHTML = instructionCard;
-                gameArea.appendChild(cardDiv.firstChild);
+                // Add a "Next Up" header to make it clear this is for the upcoming round
+                const nextGameSection = document.createElement('div');
+                nextGameSection.innerHTML = `
+                    <div style="margin-top: 30px; text-align: center;">
+                        <h3 style="color: #64748b; font-size: 18px; margin-bottom: 15px;">📋 Next Round Preview</h3>
+                        ${instructionCard}
+                    </div>
+                `;
+                gameArea.appendChild(nextGameSection);
             }
         }
         
@@ -851,8 +863,12 @@ function handleGameEnd(message) {
 }
 
 function handleRoundChange(message) {
-    // Show waiting state for next round
-    showWaitingState(message.game_type);
+    // Store the next game type for showing instructions
+    nextGameType = message.next_game_type;
+    console.log('Round changed - next game type:', nextGameType);
+    
+    // Note: We don't call showWaitingState here because handleUnifiedGameResults
+    // already shows the summary card with next game instructions included
 }
 
 function handleError(message) {
@@ -875,9 +891,12 @@ function handleTimerSync(message) {
     // Check if we need to adjust for drift
     if (expectedEndTime !== null) {
         const drift = Math.abs(newExpectedEndTime - expectedEndTime);
+        const driftSeconds = (drift / 1000).toFixed(2);
+        
+        console.log(`⏱️ Timer sync: server=${(message.time_remaining).toFixed(2)}s, drift=${driftSeconds}s`);
         
         if (drift > SYNC_DRIFT_THRESHOLD) {
-            console.log(`Timer drift detected: ${drift}ms - correcting`);
+            console.warn(`⚠️ Timer drift detected: ${driftSeconds}s - correcting expectedEndTime`);
             expectedEndTime = newExpectedEndTime;
             // Timer will auto-correct on next update since it checks expectedEndTime
         }

@@ -23,6 +23,7 @@ let leaderboardVisibility = 'always_show'; // Default
 let websocket = null;
 let gameType = null;
 let gameStartTime = null;
+let nextGameType = null; // Store the upcoming game type for showing instructions
 let timerInterval = null;
 let numberlineMin = 0;
 let numberlineMax = 100;
