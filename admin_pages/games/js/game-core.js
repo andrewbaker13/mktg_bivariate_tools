@@ -571,19 +571,29 @@ async function handleGameStart(message) {
     // Now call game-specific functions (they're guaranteed to be loaded)
     if (gameType === 'speed_tap' && typeof showSpeedTapGame === 'function') {
         showSpeedTapGame(message, timeLimit);
-        startSpeedTapTimer(timeLimit, startTime);
+        if (typeof startSpeedTapTimer === 'function') {
+            startSpeedTapTimer(timeLimit, startTime);
+        }
     } else if (gameType === 'closest_guess' && typeof showClosestGuessGame === 'function') {
         showClosestGuessGame(message, timeLimit);
-        startTimer(timeLimit, startTime);
+        if (typeof startTimer === 'function') {
+            startTimer(timeLimit, startTime);
+        }
     } else if (gameType === 'push_range' && typeof showPushRangeGame === 'function') {
         showPushRangeGame(message, timeLimit);
-        startPushRangeTimer(timeLimit, startTime);
+        if (typeof startPushRangeTimer === 'function') {
+            startPushRangeTimer(timeLimit, startTime);
+        }
     } else if (gameType === 'crowd_wisdom' && typeof showCrowdWisdomGame === 'function') {
         showCrowdWisdomGame(message, timeLimit);
-        startCrowdWisdomTimer(timeLimit, startTime);
+        if (typeof startCrowdWisdomTimer === 'function') {
+            startCrowdWisdomTimer(timeLimit, startTime);
+        }
     } else if (gameType === 'word_guess' && typeof showWordGuessGame === 'function') {
         showWordGuessGame(message, timeLimit);
-        startWordGuessTimer(timeLimit, startTime);
+        if (typeof startWordGuessTimer === 'function') {
+            startWordGuessTimer(timeLimit, startTime);
+        }
     } else {
         console.error('Unknown game type or missing handler:', gameType);
     }
