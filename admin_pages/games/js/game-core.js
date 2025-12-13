@@ -444,17 +444,17 @@ async function handleCountdownStart(message) {
     overlay.style.display = 'flex';
     roundInfo.textContent = `Round ${message.current_round} of ${message.total_rounds}`;
     
-    // Countdown: 3, 2, 1
-    for (let count = 3; count >= 1; count--) {
+    // Countdown: 5, 4, 3, 2, 1 (matches backend 5 second duration)
+    for (let count = 5; count >= 1; count--) {
         numberDiv.textContent = count;
-        numberDiv.style.color = '#3b82f6';
+        numberDiv.style.color = count <= 3 ? '#ef4444' : '#3b82f6'; // Red for final 3 seconds
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
-    // Show GO!
+    // Show GO! briefly
     numberDiv.textContent = 'GO!';
     numberDiv.style.color = '#10b981';
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 100)); // Reduced from 500ms
     
     // Hide overlay
     overlay.style.display = 'none';
