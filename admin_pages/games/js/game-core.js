@@ -465,7 +465,50 @@ async function handleCountdownStart(message) {
     }
 }
 
-function handleGameStart(message) {
+// Lazy load game-specific JavaScript modules
+const loadedGameScripts = new Set();
+
+async function loadGameScript(gameType) {
+    // Map game types to their script files
+    const gameScriptMap = {
+        'speed_tap': 'game-speed-tap.js',
+        'closest_guess': 'game-closest-guess.js',
+        'push_range': 'game-push-range.js',
+        'crowd_wisdom': 'game-crowd-wisdom.js',
+        'word_guess': 'game-word-guess.js'
+    };
+    
+    const scriptFile = gameScriptMap[gameType];
+    if (!scriptFile) {
+        console.warn(`No script mapping found for game type: ${gameType}`);
+        return;
+    }
+    
+    // Check if already loaded
+    if (loadedGameScripts.has(gameType)) {
+        console.log(`Game script already loaded: ${scriptFile}`);
+        return;
+    }
+    
+    console.log(`Loading game script: ${scriptFile}`);
+    
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `js/${scriptFile}`;
+        script.onload = () => {
+            loadedGameScripts.add(gameType);
+            console.log(`✅ Successfully loaded: ${scriptFile}`);
+            resolve();
+        };
+        script.onerror = () => {
+            console.error(`❌ Failed to load: ${scriptFile}`);
+            reject(new Error(`Failed to load ${scriptFile}`));
+        };
+        document.head.appendChild(script);
+    });
+}
+
+async function handleGameStart(message) {
     gameType = message.game_type;
     gameStartTime = Date.now();
     
@@ -503,6 +546,25 @@ function handleGameStart(message) {
         gameType: message.game_type
     });
     
+    // Lazy load game-specific script if needed
+    try {
+        await loadGameScript(gameType);
+    } catch (error) {
+        console.error(`Failed to load game script for ${gameType}:`, error);
+        document.getElementById('gameArea').innerHTML = `
+            <div class="waiting-state" style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 1rem;">⚠️</div>
+                <h2>Error Loading Game</h2>
+                <p style="color: #ef4444;">Failed to load game module: ${gameType}</p>
+                <button onclick="location.reload()" style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 1rem;">
+                    🔄 Reload Page
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Now call game-specific functions (they're guaranteed to be loaded)
     if (gameType === 'speed_tap' && typeof showSpeedTapGame === 'function') {
         showSpeedTapGame(message, timeLimit);
         startSpeedTapTimer(timeLimit, startTime);
