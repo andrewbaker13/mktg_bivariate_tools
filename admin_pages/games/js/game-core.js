@@ -652,6 +652,14 @@ function handleUnifiedGameResults(message) {
     if (message.next_game_type) {
         nextGameType = message.next_game_type;
         console.log('📋 Next game type from results:', nextGameType);
+        
+        // Preload the next game's script immediately so it's ready when the round starts
+        if (hasMoreRounds) {
+            console.log('⚡ Preloading next game script:', nextGameType);
+            loadGameScript(nextGameType).catch(err => {
+                console.error('❌ Failed to preload next game script:', err);
+            });
+        }
     }
     
     // If we were waiting to enter, we can now enter for the next round
