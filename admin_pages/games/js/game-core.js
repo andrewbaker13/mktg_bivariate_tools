@@ -488,7 +488,8 @@ function handleGameStart(message) {
         ? message.game_time_limit 
         : 20;
     
-    const startTime = message.start_time ? new Date(message.start_time).getTime() : Date.now();
+    // start_time from backend is when countdown started, so add 3 seconds for actual game start
+    const startTime = message.start_time ? new Date(message.start_time).getTime() + 3000 : Date.now();
     
     console.log('Calculated timeLimit:', timeLimit, 'seconds');
     
