@@ -304,6 +304,47 @@ function handleMessage(message) {
     }
 }
 
+function getInstructionCardHTML(gameType) {
+    // Get game type helper text
+    const gameTypeHelpers = {
+        'speed_tap': {
+            title: '⚡ Speed Tap',
+            description: 'Faster answers get more points (or lose more points!)<br>Answer quickly but correctly to maximize your score!'
+        },
+        'closest_guess': {
+            title: '🎯 Closest Guess',
+            description: 'Submit a range that captures the correct answer!<br>Narrower ranges earn bonus points. Answer quickly for speed bonuses!'
+        },
+        'push_range': {
+            title: '🤜🟦🟥🤛 Push Range',
+            description: 'Smash the button to help pick the range where the answer is!<br>Teamwork required! Riskier ranges earn more points.<br>Those who tap more earn more points if correct!'
+        },
+        'crowd_wisdom': {
+            title: '🧠 Crowd Wisdom',
+            description: 'Watch what others guess in real-time!<br>Points decrease as more people answer. Be bold - tough question bonuses await!'
+        },
+        'word_guess': {
+            title: '🔤 Word Guess',
+            description: 'Fill in the letters like hangman!<br>Letters reveal over time. Guess early for maximum points!'
+        },
+        'rpg_battle': {
+            title: '⚔️ RPG Battle',
+            description: 'Team up to defeat the boss!<br>Answer questions correctly to deal damage!'
+        }
+    };
+    
+    const helper = gameType && gameTypeHelpers[gameType] ? gameTypeHelpers[gameType] : null;
+    
+    if (!helper) return '';
+    
+    return `
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin: 2rem auto; max-width: 500px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">${helper.title}</div>
+            <div style="font-size: 1.1rem; line-height: 1.6;">${helper.description}</div>
+        </div>
+    `;
+}
+
 function showWaitingState(gameTypeFromServer) {
     // Get game type helper text
     const gameTypeHelpers = {
@@ -333,14 +374,7 @@ function showWaitingState(gameTypeFromServer) {
         }
     };
     
-    const helper = gameTypeFromServer && gameTypeHelpers[gameTypeFromServer] ? gameTypeHelpers[gameTypeFromServer] : null;
-    
-    const gameExplanationHTML = helper ? `
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin: 2rem auto; max-width: 500px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">${helper.title}</div>
-            <div style="font-size: 1.1rem; line-height: 1.6;">${helper.description}</div>
-        </div>
-    ` : '';
+    const gameExplanationHTML = getInstructionCardHTML(gameTypeFromServer);
     
     // Check if player joined mid-round and is waiting
     if (isWaitingToEnter) {
@@ -664,6 +698,16 @@ function handleUnifiedGameResults(message) {
         // Insert banner at the TOP of gameArea (before existing content)
         const gameArea = document.getElementById('gameArea');
         gameArea.insertBefore(banner, gameArea.firstChild);
+        
+        // If there are more rounds, show the instruction card for the NEXT game below the results
+        if (hasMoreRounds && message.game_type) {
+            const instructionCard = getInstructionCardHTML(message.game_type);
+            if (instructionCard) {
+                const cardDiv = document.createElement('div');
+                cardDiv.innerHTML = instructionCard;
+                gameArea.appendChild(cardDiv.firstChild);
+            }
+        }
         
         // If this is the final round, automatically transition to final standings after 3 seconds
         if (isFinalRound) {
