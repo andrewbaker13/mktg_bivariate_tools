@@ -1720,26 +1720,37 @@
                 const rank = player.rank || '—';
                 const extraInfo = player.joined_at_round ? `First round: ${player.joined_at_round}` : '';
                 
-                // Connection status: ws_connected=true → Online, is_connected but not ws → Entering, neither → Offline
+                // Connection status (first indicator)
                 let statusClass, statusText;
                 if (player.ws_connected) {
-                    // Check if scripts are loaded for online players
-                    if (player.scripts_loaded) {
-                        statusClass = 'connected';
-                        statusText = '🟢 Ready';
-                    } else {
-                        const loadedCount = player.scripts_loaded_count || 0;
-                        const totalCount = player.scripts_total_count || 0;
-                        const progressText = totalCount > 0 ? ` (${loadedCount}/${totalCount})` : '';
-                        statusClass = 'entering';
-                        statusText = `⏳ Loading...${progressText}`;
-                    }
+                    statusClass = 'connected';
+                    statusText = '🟢 Online';
                 } else if (player.is_connected) {
                     statusClass = 'entering';
                     statusText = '🟡 Entering';
                 } else {
                     statusClass = 'disconnected';
                     statusText = '🔴 Offline';
+                }
+                
+                // Script loading status (second indicator)
+                let loadingStatusClass, loadingStatusText;
+                if (player.ws_connected) {
+                    // Only show loading status for connected players
+                    if (player.scripts_loaded) {
+                        loadingStatusClass = 'connected';
+                        loadingStatusText = '✅ Ready';
+                    } else {
+                        const loadedCount = player.scripts_loaded_count || 0;
+                        const totalCount = player.scripts_total_count || 0;
+                        const progressText = totalCount > 0 ? ` (${loadedCount}/${totalCount})` : '';
+                        loadingStatusClass = 'entering';
+                        loadingStatusText = `⏳ Loading...${progressText}`;
+                    }
+                } else {
+                    // Not connected - no loading status to show
+                    loadingStatusClass = '';
+                    loadingStatusText = '';
                 }
                 
                 return `
@@ -1752,9 +1763,12 @@
                         </div>
                         ${badgeRow}
                     </div>
-                    <span class="player-status ${statusClass}">
-                        ${statusText}
-                    </span>
+                    <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">
+                        <span class="player-status ${statusClass}">
+                            ${statusText}
+                        </span>
+                        ${loadingStatusText ? `<span class="player-status ${loadingStatusClass}">${loadingStatusText}</span>` : ''}
+                    </div>
                 </div>
                 `;
             }).join('');
