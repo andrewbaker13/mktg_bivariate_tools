@@ -440,6 +440,10 @@ async function handleCountdownStart(message) {
     const numberDiv = document.getElementById('countdownNumber');
     const roundInfo = document.getElementById('countdownRoundInfo');
     
+    // CRITICAL: Clear gameArea to remove previous round's summary card
+    // This prevents the player from being stuck on the results screen
+    document.getElementById('gameArea').innerHTML = '';
+    
     // Show overlay
     overlay.style.display = 'flex';
     roundInfo.textContent = `Round ${message.current_round} of ${message.total_rounds}`;
@@ -535,9 +539,9 @@ async function handleGameStart(message) {
         ? message.game_time_limit 
         : 20;
     
-    // start_time from backend is when countdown started, so add 5 seconds for actual game start
-    // (Backend countdown duration is 5 seconds to account for network latency and rendering)
-    const startTime = message.start_time ? new Date(message.start_time).getTime() + 5000 : Date.now();
+    // Backend sends start_time which is the actual game start time (after countdown)
+    // Use it directly - do NOT add countdown duration as that's already accounted for
+    const startTime = message.start_time ? new Date(message.start_time).getTime() : Date.now();
     
     console.log('⏱️ Game timing:', {
         timeLimit: timeLimit,
