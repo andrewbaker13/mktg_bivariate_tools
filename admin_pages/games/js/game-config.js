@@ -1,5 +1,4 @@
-const API_BASE = 'https://drbaker-backend.onrender.com/api';
-const WS_BASE = 'wss://drbaker-backend.onrender.com';
+// API_BASE and WS_BASE are defined in api-config.js
 
 // Get session data
 const urlParams = new URLSearchParams(window.location.search);

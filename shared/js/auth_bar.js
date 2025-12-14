@@ -28,8 +28,14 @@
       let isStaff = false;
 
       try {
-        const API_BASE = 'https://drbaker-backend.onrender.com/api';
-        const profile = await fetch(`${API_BASE}/auth/profile/`, {
+        // Use global API_BASE if available, otherwise detect
+        let apiBase = window.API_BASE;
+        if (!apiBase) {
+             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+             apiBase = isLocal ? 'http://localhost:8000/api' : 'https://drbaker-backend.onrender.com/api';
+        }
+
+        const profile = await fetch(`${apiBase}/auth/profile/`, {
           headers: { 'Authorization': `Token ${token}` }
         }).then(r => r.json());
         isStaff = profile.is_staff || false;
