@@ -1587,8 +1587,8 @@
             overlay.style.display = 'flex';
             roundInfo.textContent = `Round ${message.current_round} of ${message.total_rounds}`;
             
-            // Countdown: 3, 2, 1
-            for (let count = 3; count >= 1; count--) {
+            // Countdown: 5, 4, 3, 2, 1 (matches player countdown)
+            for (let count = 5; count >= 1; count--) {
                 numberDiv.textContent = count;
                 numberDiv.style.color = '#3b82f6';
                 await new Promise(resolve => setTimeout(resolve, 1000));
