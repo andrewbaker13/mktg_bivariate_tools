@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fixing Login...</title>
+</head>
+<body>
+    <h1>Clearing session and redirecting...</h1>
+    <script>
+        console.log('Clearing local storage...');
+        localStorage.clear();
+        console.log('Redirecting to login...');
+        setTimeout(() => {
+            window.location.href = '../login.html';
+        }, 1000);
+    </script>
+</body>
+</html>

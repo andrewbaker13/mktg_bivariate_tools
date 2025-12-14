@@ -6,8 +6,8 @@
  */
 
 // Switch between local and production
-const API_BASE = window.location.hostname === 'localhost' || window.location.protocol === 'file:'
-    ? 'http://localhost:8001/api'
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
+    ? 'http://localhost:8000/api'
     : 'https://drbaker-backend.onrender.com/api';
 
 // ========================================

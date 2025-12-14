@@ -852,13 +852,21 @@
                 const response = await fetch(`${API_BASE}/courses/`, {
                     headers: {'Authorization': `Token ${token}`}
                 });
+                
+                if (response.status === 401) {
+                    handleLogout();
+                    return;
+                }
+                
                 const courses = await response.json();
                 
                 const select = document.getElementById('courseSelect');
                 select.innerHTML = '<option value="">No course - Open to all (guest mode)</option>';
-                courses.forEach(course => {
-                    select.innerHTML += `<option value="${course.id}">${course.name}</option>`;
-                });
+                if (Array.isArray(courses)) {
+                    courses.forEach(course => {
+                        select.innerHTML += `<option value="${course.id}">${course.name}</option>`;
+                    });
+                }
             } catch (error) {
                 console.error('Error loading courses:', error);
                 document.getElementById('courseSelect').innerHTML = '<option value="">Error loading courses</option>';
@@ -871,15 +879,23 @@
                 const response = await fetch(`${API_BASE}/game/templates/`, {
                     headers: {'Authorization': `Token ${token}`}
                 });
+                
+                if (response.status === 401) {
+                    handleLogout();
+                    return;
+                }
+                
                 const templates = await response.json();
                 
                 const select = document.getElementById('templateSelect');
                 select.innerHTML = '<option value="">Select a template...</option>';
-                templates.forEach(template => {
-                    const universalBadge = template.is_universal ? ' 🌐' : '';
-                    const cloneAttr = template.is_universal ? ` data-is-universal="true"` : '';
-                    select.innerHTML += `<option value="${template.id}"${cloneAttr}>${template.name}${universalBadge} (${template.question_count} minigames)</option>`;
-                });
+                if (Array.isArray(templates)) {
+                    templates.forEach(template => {
+                        const universalBadge = template.is_universal ? ' 🌐' : '';
+                        const cloneAttr = template.is_universal ? ` data-is-universal="true"` : '';
+                        select.innerHTML += `<option value="${template.id}"${cloneAttr}>${template.name}${universalBadge} (${template.question_count} minigames)</option>`;
+                    });
+                }
             } catch (error) {
                 console.error('Error loading templates:', error);
                 document.getElementById('templateSelect').innerHTML = '<option value="">Error loading templates</option>';
@@ -1861,8 +1877,13 @@
         }
 
         // Initialize
-        loadCourses();
-        loadTemplates();
+        // Check for token immediately
+        if (!token) {
+            handleLogout();
+        } else {
+            loadCourses();
+            loadTemplates();
+        }
         
         // Logout function
         function handleLogout() {
