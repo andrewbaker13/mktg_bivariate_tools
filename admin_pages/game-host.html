@@ -417,6 +417,10 @@
                     <div class="value" id="playerCount">0</div>
                 </div>
                 <div class="status-card">
+                    <h3>Participation</h3>
+                    <div class="value" id="participationStat">0%</div>
+                </div>
+                <div class="status-card">
                     <h3>Game Type</h3>
                     <div class="value" id="gameType">-</div>
                 </div>
@@ -1730,6 +1734,8 @@
                     handleRoundChanged(message);
                 } else if (message.type === 'countdown_start') {
                     handleCountdownStart(message);
+                } else if (message.type === 'participation_update') {
+                    updateParticipationDisplay(message.active_count);
                 }
             };
             
@@ -1782,6 +1788,8 @@
             if (!Array.isArray(players) || players.length === 0) {
                 container.style.display = 'block';
                 list.innerHTML = '';
+                // Reset participation if no players
+                updateParticipationDisplay(0);
                 return;
             }
             
@@ -1824,6 +1832,33 @@
                 </div>
                 `;
             }).join('');
+        }
+
+        function updateParticipationDisplay(activeCount) {
+            const statEl = document.getElementById('participationStat');
+            if (!statEl) return;
+            
+            // Get total players from the badge
+            const totalPlayers = parseInt(document.getElementById('playerCountBadge').textContent) || 0;
+            
+            if (totalPlayers === 0) {
+                statEl.textContent = '0%';
+                statEl.style.color = '#1e293b';
+                return;
+            }
+            
+            // Calculate percentage
+            const percentage = Math.min(100, Math.round((activeCount / totalPlayers) * 100));
+            statEl.textContent = `${percentage}%`;
+            
+            // Color coding
+            if (percentage >= 80) {
+                statEl.style.color = '#10b981'; // Green
+            } else if (percentage >= 50) {
+                statEl.style.color = '#f59e0b'; // Orange
+            } else {
+                statEl.style.color = '#ef4444'; // Red
+            }
         }
 
         // Initialize
