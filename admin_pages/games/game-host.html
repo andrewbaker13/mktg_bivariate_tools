@@ -384,6 +384,30 @@
     <div id="admin-nav-container"></div>
     <div class="host-container">
         <div class="host-header">
+            <!-- Active Games Management -->
+            <div id="activeGamesSection" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <label for="activeGameSelect" style="display: block; font-weight: 600; color: #1e40af; margin-bottom: 0.5rem;">
+                            🔴 Resume Active Game
+                        </label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <select id="activeGameSelect" style="flex: 1; padding: 0.5rem; border: 1px solid #93c5fd; border-radius: 6px;">
+                                <option value="">Select a running game...</option>
+                            </select>
+                            <button id="resumeGameBtn" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;" disabled>
+                                Resume
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <button id="cleanupGamesBtn" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.9rem; background: #ef4444;">
+                            🗑️ End Old Games (>24h)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
                 <a href="game-history.html" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #f1f5f9; color: #475569; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;">
                     <span>📜</span> View Game History
@@ -1893,9 +1917,135 @@
             }).join('');
         }
 
+        // Active Games Management
+        async function loadActiveGames() {
+            try {
+                const response = await fetch(`${API_BASE}/instructor/game-history/?status=waiting,in_progress`, {
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                const data = await response.json();
+                const games = data.results || [];
+                
+                const section = document.getElementById('activeGamesSection');
+                const select = document.getElementById('activeGameSelect');
+                const resumeBtn = document.getElementById('resumeGameBtn');
+                const cleanupBtn = document.getElementById('cleanupGamesBtn');
+                
+                if (games.length > 0) {
+                    section.style.display = 'block';
+                    select.innerHTML = '<option value="">Select a running game...</option>';
+                    
+                    games.forEach(game => {
+                        const created = new Date(game.created_at).toLocaleString();
+                        const isCurrent = gameSession && game.room_code === gameSession.room_code;
+                        const label = `${game.room_code} - ${game.template_name || 'Custom Game'} (${created}) ${isCurrent ? '(Current)' : ''}`;
+                        select.innerHTML += `<option value="${game.room_code}">${label}</option>`;
+                    });
+                    
+                    // Handle selection
+                    select.onchange = () => {
+                        resumeBtn.disabled = !select.value;
+                    };
+                    
+                    // Handle resume
+                    resumeBtn.onclick = () => {
+                        if (select.value) {
+                            window.location.href = `game-host.html?room_code=${select.value}`;
+                        }
+                    };
+                    
+                    // Handle cleanup
+                    cleanupBtn.onclick = async () => {
+                        if (!confirm('Are you sure you want to end all games older than 24 hours? This cannot be undone.')) return;
+                        
+                        cleanupBtn.disabled = true;
+                        cleanupBtn.textContent = 'Cleaning up...';
+                        
+                        try {
+                            const now = new Date();
+                            const oneDayMs = 24 * 60 * 60 * 1000;
+                            let endedCount = 0;
+                            
+                            for (const game of games) {
+                                const created = new Date(game.created_at);
+                                if (now - created > oneDayMs) {
+                                    await fetch(`${API_BASE}/game/${game.room_code}/end/`, {
+                                        method: 'POST',
+                                        headers: {'Authorization': `Token ${token}`}
+                                    });
+                                    endedCount++;
+                                }
+                            }
+                            
+                            showToast(`Cleaned up ${endedCount} old games`, 'success');
+                            setTimeout(loadActiveGames, 1000); // Refresh list
+                        } catch (error) {
+                            console.error('Cleanup error:', error);
+                            showToast('Error cleaning up games', 'error');
+                        } finally {
+                            cleanupBtn.disabled = false;
+                            cleanupBtn.textContent = '🗑️ End Old Games (>24h)';
+                        }
+                    };
+                } else {
+                    section.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading active games:', error);
+            }
+        }
+
         // Initialize
         loadCourses();
         loadTemplates();
+        loadActiveGames();
+
+        // Check for room_code in URL to resume game
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCodeParam = urlParams.get('room_code');
+        
+        if (roomCodeParam) {
+            // Fetch game details and initialize
+            fetch(`${API_BASE}/game/${roomCodeParam}/`, {
+                headers: {'Authorization': `Token ${token}`}
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Game not found');
+                return response.json();
+            })
+            .then(data => {
+                gameSession = data;
+                currentRoomCode = data.room_code;
+                
+                // Switch UI
+                document.getElementById('setupSection').style.display = 'none';
+                document.getElementById('gameSection').style.display = 'block';
+                document.getElementById('roomCodeDisplay').textContent = data.room_code;
+                document.getElementById('copyRoomCodeBtn').disabled = false;
+                
+                // Generate QR Code
+                const joinUrl = `${JOIN_URL}?code=${data.room_code}`;
+                document.getElementById('qrcode').innerHTML = '';
+                new QRCode(document.getElementById('qrcode'), {
+                    text: joinUrl,
+                    width: 128,
+                    height: 128
+                });
+                
+                // Update status
+                setStatusIndicator(data.status);
+                
+                // Connect WS
+                connectWebSocket(data.room_code);
+                pollPlayers();
+                
+                showToast(`Resumed game ${data.room_code}`, 'success');
+            })
+            .catch(error => {
+                console.error('Error resuming game:', error);
+                showToast('Could not resume game: ' + error.message, 'error');
+            });
+        }
         
         // Logout function
         function handleLogout() {
