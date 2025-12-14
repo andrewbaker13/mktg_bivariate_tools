@@ -343,6 +343,10 @@ function updateTeamRosters() {
     const leftRoster = document.getElementById('leftTeamRoster');
     const rightRoster = document.getElementById('rightTeamRoster');
     
+    // Sort rosters by presses (descending)
+    teamRosters.left.sort((a, b) => b.presses - a.presses);
+    teamRosters.right.sort((a, b) => b.presses - a.presses);
+    
     if (leftRoster) {
         leftRoster.innerHTML = teamRosters.left.map(player => {
             const isOwn = player.id === playerSession.id;
@@ -452,3 +456,31 @@ function startPushRangeTimer(seconds, startTime) {
     updateTimer();
     timerInterval = setInterval(updateTimer, 100);
 }
+
+// Listen for player updates to keep rosters in sync
+document.addEventListener('game-player-update', (e) => {
+    const players = e.detail;
+    
+    // Only update if we are in push_range game mode (check if UI exists)
+    const leftRoster = document.getElementById('leftTeamRoster');
+    if (!leftRoster) return;
+    
+    // Rebuild rosters from the authoritative player list
+    teamRosters = {left: [], right: []};
+    
+    players.forEach(p => {
+        // Check game_state for team assignment
+        // Note: game_state is added to player object in core/consumers.py
+        const team = p.game_state?.push_range_team;
+        
+        if (team && (team === 'left' || team === 'right')) {
+            teamRosters[team].push({
+                id: p.id,
+                name: p.name,
+                presses: p.game_state.push_range_presses || 0
+            });
+        }
+    });
+    
+    updateTeamRosters();
+});

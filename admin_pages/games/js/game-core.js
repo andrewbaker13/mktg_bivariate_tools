@@ -3,6 +3,9 @@
  * Handles WebSocket connection, message routing, and global game state
  */
 
+const API_BASE = window.API_BASE;
+const WS_BASE = window.WS_BASE;
+
 function connectWebSocket() {
     logTiming('wsConnectionStart', Date.now());
     

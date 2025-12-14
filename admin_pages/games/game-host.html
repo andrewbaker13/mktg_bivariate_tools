@@ -672,6 +672,9 @@
     <script src="../../shared/js/api-config.js"></script>
     <script>
         // Config loaded from api-config.js
+        const API_BASE = window.API_BASE;
+        const WS_BASE = window.WS_BASE;
+        const JOIN_URL = window.JOIN_URL;
         
         let gameSession = null;
         let websocket = null;
@@ -1788,6 +1791,10 @@
                 
                 if (message.type === 'player_list_update') {
                     updatePlayersList(message.players);
+                    
+                    // Dispatch event for game modules to update their internal state
+                    const event = new CustomEvent('game-player-update', { detail: message.players });
+                    document.dispatchEvent(event);
                 } else if (message.type === 'leaderboard_update') {
                     currentLeaderboard = message.leaderboard || [];
                     console.log('Leaderboard updated:', currentLeaderboard);
