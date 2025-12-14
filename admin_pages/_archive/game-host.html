@@ -1665,7 +1665,7 @@
 
             // Set Safety Net Timeout
             // Default to 20s if not provided, plus 1.5s buffer
-            const timeLimit = (message.game_data && message.game_data.time_limit) ? message.game_data.time_limit : 20;
+            const timeLimit = (message.game_data && (message.game_data.game_time_limit || message.game_data.time_limit)) ? (message.game_data.game_time_limit || message.game_data.time_limit) : 20;
             const safetyBuffer = 1.5; // 1.5 seconds buffer
             const totalDelay = (timeLimit + safetyBuffer) * 1000;
             

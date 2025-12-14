@@ -417,6 +417,10 @@
                     <div class="value" id="playerCount">0</div>
                 </div>
                 <div class="status-card">
+                    <h3>Time Left</h3>
+                    <div class="value" id="timeLeft">-</div>
+                </div>
+                <div class="status-card">
                     <h3>Game Type</h3>
                     <div class="value" id="gameType">-</div>
                 </div>
@@ -612,6 +616,9 @@
                         <button class="btn btn-primary" id="nextRoundBtn" style="display: none; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
                             ⏭️ Next Round
                         </button>
+                        <button class="btn btn-danger" id="endRoundEarlyBtn" style="display: none; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);">
+                            ⏹️ End Round Early
+                        </button>
                         <button class="btn btn-danger" id="endGameBtn">
                             ⏹️ End Game
                         </button>
@@ -646,6 +653,7 @@
         let gameSession = null;
         let websocket = null;
         let reconnectTimeout = null;
+        let roundTimeout = null;
         let hasShownConnectionToast = false;
         let isManualWebsocketClose = false;
         let currentRoomCode = '';
@@ -1298,12 +1306,76 @@
                 nextBtn.textContent = '⏭️ Next Round';
             }
         });
+
+        // End Round Early button
+        document.getElementById('endRoundEarlyBtn').addEventListener('click', function() {
+            endCurrentRound('manual');
+        });
+
+        async function endCurrentRound(reason) {
+            if (!gameSession) return;
+            
+            console.log(`Ending round early (${reason})...`);
+            
+            // Clear the safety net timeout since we're ending it now
+            if (roundTimeout) {
+                clearTimeout(roundTimeout);
+                roundTimeout = null;
+            }
+            
+            // Clear visual timer
+            if (window.timerInterval) {
+                clearInterval(window.timerInterval);
+                window.timerInterval = null;
+            }
+            const timeLeftEl = document.getElementById('timeLeft');
+            if (timeLeftEl) timeLeftEl.textContent = 'Ending...';
+
+            try {
+                const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/end_round/`, {
+                    method: 'POST',
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                
+                if (!response.ok) throw new Error('Failed to end round');
+                
+                // The WebSocket will handle the state update (game_ended or round_ended message)
+                // But we can update UI immediately to prevent double-clicks
+                const btn = document.getElementById('endRoundEarlyBtn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Ending...';
+                }
+                
+            } catch (error) {
+                console.error('Error ending round:', error);
+                showToast('Failed to end round: ' + error.message, 'error');
+            }
+        }
         
         // Handle game ended event from WebSocket
         let autoAdvanceTimeout = null; // Track timeout for cancellation
         
         function handleGameEnded(message) {
             console.log('Game ended event received:', message);
+            
+            // Clear safety timeout
+            if (roundTimeout) {
+                clearTimeout(roundTimeout);
+                roundTimeout = null;
+            }
+            
+            // Clear visual timer
+            if (window.timerInterval) {
+                clearInterval(window.timerInterval);
+                window.timerInterval = null;
+            }
+            const timeLeftEl = document.getElementById('timeLeft');
+            if (timeLeftEl) timeLeftEl.textContent = 'Ended';
+            
+            // Hide End Round Early button
+            const endRoundBtn = document.getElementById('endRoundEarlyBtn');
+            if (endRoundBtn) endRoundBtn.style.display = 'none';
             
             // Use message data directly since it's most up-to-date
             const totalRounds = message.total_rounds || (gameSession ? gameSession.total_rounds : 1);
@@ -1602,6 +1674,53 @@
             // Hide overlay
             overlay.style.display = 'none';
             numberDiv.style.color = '#3b82f6';
+            
+            // Show "End Round Early" button
+            const endRoundBtn = document.getElementById('endRoundEarlyBtn');
+            if (endRoundBtn) {
+                endRoundBtn.style.display = 'inline-block';
+                endRoundBtn.disabled = false;
+                endRoundBtn.textContent = '⏹️ End Round Early';
+            }
+
+            // Set Safety Net Timeout
+            // Default to 20s if not provided, plus 1.5s buffer
+            const timeLimit = (message.game_data && (message.game_data.game_time_limit || message.game_data.time_limit)) ? (message.game_data.game_time_limit || message.game_data.time_limit) : 20;
+            const safetyBuffer = 1.5; // 1.5 seconds buffer
+            const totalDelay = (timeLimit + safetyBuffer) * 1000;
+            
+            console.log(`Setting safety net timeout for ${timeLimit}s + ${safetyBuffer}s buffer`);
+            
+            if (roundTimeout) clearTimeout(roundTimeout);
+            
+            // Start Visual Timer
+            const timeLeftEl = document.getElementById('timeLeft');
+            if (timeLeftEl) {
+                let secondsLeft = timeLimit;
+                timeLeftEl.textContent = secondsLeft + 's';
+                timeLeftEl.style.color = '#1e293b'; // Reset color
+                
+                // Clear any existing interval
+                if (window.timerInterval) clearInterval(window.timerInterval);
+                
+                window.timerInterval = setInterval(() => {
+                    secondsLeft--;
+                    if (secondsLeft >= 0) {
+                        timeLeftEl.textContent = secondsLeft + 's';
+                        if (secondsLeft <= 5) {
+                            timeLeftEl.style.color = '#ef4444'; // Red warning
+                        }
+                    } else {
+                        timeLeftEl.textContent = '0s';
+                        clearInterval(window.timerInterval);
+                    }
+                }, 1000);
+            }
+            
+            roundTimeout = setTimeout(() => {
+                console.log('Safety net timeout triggered - ending round automatically');
+                endCurrentRound('timeout');
+            }, totalDelay);
             
             // Now trigger the actual game start
             // The game_data is embedded in the countdown_start message
