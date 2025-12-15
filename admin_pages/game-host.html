@@ -391,7 +391,7 @@
             </div>
             <div class="room-code-display">
                 <div class="info-row">
-                    <p style="margin: 0;">Students join at: <span id="joinLinkDisplay">https://drbakermarketing.com/admin_pages/game-join.html</span></p>
+                    <p style="margin: 0;">Students join at: <span id="joinLinkDisplay">https://drbakermarketing.com/admin_pages/game-play.html</span></p>
                     <button class="copy-btn" id="copyJoinLinkBtn">Copy Link</button>
                 </div>
                 <div class="code-row">
@@ -721,13 +721,20 @@
             // Generate QR code for the game join link
             const qrContainer = document.getElementById('qrCodeContainer');
             const qrCodeDiv = document.getElementById('qrcode');
+            const joinLinkDisplay = document.getElementById('joinLinkDisplay');
             
             if (currentRoomCode) {
                 // Clear any existing QR code
                 qrCodeDiv.innerHTML = '';
                 
-                // Generate join URL with room code pre-filled
-                const joinUrl = `https://drbakermarketing.com/admin_pages/game-join.html?room=${currentRoomCode}`;
+                // Generate join URL with room code pre-filled (auto-detect local vs production)
+                const baseUrl = `${window.location.protocol}//${window.location.host}`;
+                const joinUrl = `${baseUrl}/admin_pages/games/game-join.html?room=${currentRoomCode}`;
+                
+                // Update the displayed link text to include room code
+                if (joinLinkDisplay) {
+                    joinLinkDisplay.textContent = joinUrl;
+                }
                 
                 // Create QR code
                 new QRCode(qrCodeDiv, {
@@ -745,6 +752,12 @@
                 // Hide QR container when no room code
                 qrContainer.style.display = 'none';
                 qrCodeDiv.innerHTML = '';
+                
+                // Reset link display to default
+                if (joinLinkDisplay) {
+                    const baseUrl = `${window.location.protocol}//${window.location.host}`;
+                    joinLinkDisplay.textContent = `${baseUrl}/admin_pages/games/game-join.html`;
+                }
             }
         }
 
@@ -775,7 +788,12 @@
         setConnectionStatus();
 
         document.getElementById('copyJoinLinkBtn')?.addEventListener('click', () => {
-            copyTextToClipboard(JOIN_URL, 'Join link copied');
+            // Copy the full URL with room code parameter (auto-detect local vs production)
+            const baseUrl = `${window.location.protocol}//${window.location.host}`;
+            const joinUrl = currentRoomCode
+                ? `${baseUrl}/admin_pages/games/game-join.html?room=${currentRoomCode}`
+                : `${baseUrl}/admin_pages/games/game-join.html`;
+            copyTextToClipboard(joinUrl, 'Join link copied');
         });
 
         copyRoomCodeBtn?.addEventListener('click', () => {
@@ -1750,7 +1768,8 @@
                 } else if (message.type === 'countdown_start') {
                     handleCountdownStart(message);
                 } else if (message.type === 'participation_update') {
-                    updateParticipationDisplay(message.active_count);
+                    console.log('📊 Received participation_update:', message);
+                    updateParticipationDisplay(message.percentage, message.participated_count, message.total_count);
                 }
             };
             
@@ -1849,22 +1868,15 @@
             }).join('');
         }
 
-        function updateParticipationDisplay(activeCount) {
+        function updateParticipationDisplay(percentage, participatedCount, totalCount) {
             const statEl = document.getElementById('participationStat');
             if (!statEl) return;
             
-            // Get total players from the badge
-            const totalPlayers = parseInt(document.getElementById('playerCountBadge').textContent) || 0;
-            
-            if (totalPlayers === 0) {
-                statEl.textContent = '0%';
-                statEl.style.color = '#1e293b';
-                return;
-            }
-            
-            // Calculate percentage
-            const percentage = Math.min(100, Math.round((activeCount / totalPlayers) * 100));
-            statEl.textContent = `${percentage}%`;
+            // Display percentage with fraction below
+            statEl.innerHTML = `
+                ${percentage}%
+                <small style="display: block; font-size: 0.7rem; font-weight: 400; color: #64748b; margin-top: 2px;">${participatedCount}/${totalCount}</small>
+            `;
             
             // Color coding
             if (percentage >= 80) {

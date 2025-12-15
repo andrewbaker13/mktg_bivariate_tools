@@ -443,6 +443,7 @@
                 <div class="status-card">
                     <h3>Participation</h3>
                     <div class="value" id="participationStat">0%</div>
+                    <small id="participationFraction" style="display: block; margin-top: 4px; color: #64748b; font-size: 0.875rem;">0/0</small>
                 </div>
                 <div class="status-card">
                     <h3>Time Left</h3>
@@ -1809,7 +1810,7 @@
                 } else if (message.type === 'countdown_start') {
                     handleCountdownStart(message);
                 } else if (message.type === 'participation_update') {
-                    updateParticipationDisplay(message.active_count);
+                    updateParticipationDisplay(message);
                 }
             };
             
@@ -1929,22 +1930,24 @@
             }).join('');
         }
 
-        function updateParticipationDisplay(activeCount) {
+        function updateParticipationDisplay(data) {
             const statEl = document.getElementById('participationStat');
+            const fractionEl = document.getElementById('participationFraction');
             if (!statEl) return;
             
-            // Get total players from the badge
-            const totalPlayers = parseInt(document.getElementById('playerCountBadge').textContent) || 0;
+            // Use pre-calculated percentage from backend (based on game-specific actions)
+            const percentage = data.percentage || 0;
+            const participatedCount = data.participated_count || 0;
+            const totalCount = data.total_count || 0;
             
-            if (totalPlayers === 0) {
-                statEl.textContent = '0%';
-                statEl.style.color = '#1e293b';
-                return;
-            }
-            
-            // Calculate percentage
-            const percentage = Math.min(100, Math.round((activeCount / totalPlayers) * 100));
+            // Display large percentage
             statEl.textContent = `${percentage}%`;
+            statEl.title = `${participatedCount}/${totalCount} players have taken a game action`;
+            
+            // Display small fraction below
+            if (fractionEl) {
+                fractionEl.textContent = `${participatedCount}/${totalCount}`;
+            }
             
             // Color coding
             if (percentage >= 80) {
