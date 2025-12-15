@@ -454,6 +454,24 @@
                     <div class="value" id="gameType">-</div>
                 </div>
             </div>
+            
+            <!-- Round Progress Bar -->
+            <div id="roundProgressContainer" style="display: none; margin: 1rem 0; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">
+                    <span>Round Progress</span>
+                    <span id="roundProgressText">0 / 0</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                    <div id="roundProgressBar" style="height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); width: 0%; transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+            
+            <!-- Game Settings Summary -->
+            <div id="gameSettingsSummary" style="display: none; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem;">
+                <h3 style="font-size: 0.875rem; font-weight: 600; color: #64748b; margin: 0 0 0.75rem 0;">⚙️ Game Settings</h3>
+                <div id="gameSettingsContent" style="font-size: 0.813rem; color: #475569; line-height: 1.6;"></div>
+            </div>
+            
             <div class="connection-pill" id="connectionStatus">WS: Idle</div>
         </div>
 
@@ -636,6 +654,13 @@
                         <div id="countdownRoundInfo" style="font-size: 24px; color: white; margin-top: 20px;"></div>
                     </div>
                     <div id="questionDisplay"></div>
+                    
+                    <!-- Next Question Preview -->
+                    <div id="nextQuestionPreview" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.75rem 1rem; border-radius: 6px; margin: 0.75rem 0; font-size: 0.875rem;">
+                        <div style="font-weight: 600; color: #64748b; margin-bottom: 0.25rem;">📋 Up Next:</div>
+                        <div id="nextQuestionText" style="color: #475569;"></div>
+                    </div>
+                    
                     <div class="game-config" id="gameConfig"></div>
                     
                     <div class="control-buttons">
@@ -648,6 +673,9 @@
                         <button class="btn btn-danger" id="endRoundEarlyBtn" style="display: none; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);">
                             ⏹️ End Round Early
                         </button>
+                        <button class="btn btn-success" id="newGameBtn" onclick="startNewGame()" style="display: none; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                            🆕 Start New Game
+                        </button>
                         <button class="btn btn-danger" id="endGameBtn">
                             ⏹️ End Game
                         </button>
@@ -658,7 +686,10 @@
             <div class="players-panel">
                 <div class="panel-header">
                     <h2>Players</h2>
-                    <span id="playerCountBadge" style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600;">0</span>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span id="playerCountBadge" style="background: #3b82f6; color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600;">0</span>
+                        <button id="kickPlayersBtn" onclick="openKickPlayersModal()" style="padding: 0.25rem 0.75rem; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 0.875rem; cursor: pointer; display: none;">👢 Kick</button>
+                    </div>
                 </div>
 
                 <div id="playersListContainer">
@@ -700,6 +731,41 @@
             alert('Please log in first');
             window.location.href = '../login.html';
         }
+
+        // Check for active game on page load (persistence on refresh)
+        window.addEventListener('DOMContentLoaded', async function() {
+            const savedRoomCode = localStorage.getItem('active_game_room_code');
+            if (savedRoomCode) {
+                console.log('Found saved game, attempting to restore:', savedRoomCode);
+                try {
+                    const response = await fetch(`${API_BASE}/game/${savedRoomCode}/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Only restore if game is still active
+                        if (data.status === 'in_progress' || data.status === 'waiting' || data.status === 'paused') {
+                            console.log('Restoring active game session');
+                            gameSession = data;
+                            currentRoomCode = data.room_code;
+                            showHostScreen(data);
+                            connectWebSocket(data.room_code);
+                            pollPlayers();
+                            showToast('Game session restored', 'success');
+                        } else {
+                            // Game ended, clear saved state
+                            localStorage.removeItem('active_game_room_code');
+                        }
+                    } else {
+                        // Game not found, clear saved state
+                        localStorage.removeItem('active_game_room_code');
+                    }
+                } catch (error) {
+                    console.error('Error restoring game:', error);
+                    localStorage.removeItem('active_game_room_code');
+                }
+            }
+        });
 
         const STATUS_LABELS = {
             waiting: 'Waiting',
@@ -1173,6 +1239,14 @@
                 setStatusIndicator(gameSession.status);
                 showToast('Game session created', 'success');
                 
+                // Save room code to localStorage for persistence on refresh
+                localStorage.setItem('active_game_room_code', gameSession.room_code);
+                
+                // Update new UI features
+                updateRoundProgress(gameSession.current_round || 1, gameSession.total_rounds || 1);
+                updateGameSettingsSummary();
+                updateNextQuestionPreview();
+                
                 document.getElementById('setupSection').style.display = 'none';
                 document.getElementById('gameSection').style.display = 'block';
                 
@@ -1340,7 +1414,9 @@
 
         // End Round Early button
         document.getElementById('endRoundEarlyBtn').addEventListener('click', function() {
-            endCurrentRound('manual');
+            if (confirm('⚠️ End this round early?\n\nThis will immediately end the current round and show results. Players who haven\'t answered yet will score 0 points.\n\nContinue?')) {
+                endCurrentRound('manual');
+            }
         });
 
         async function endCurrentRound(reason) {
@@ -1518,6 +1594,15 @@
                 showToast('Game over! 🎉', 'success');
                 document.getElementById('startGameBtn').disabled = true;
                 document.getElementById('nextRoundBtn').style.display = 'none';
+                
+                // Show "Start New Game" button
+                const newGameBtn = document.getElementById('newGameBtn');
+                if (newGameBtn) {
+                    newGameBtn.style.display = 'inline-block';
+                }
+                
+                // Clear saved game from localStorage
+                localStorage.removeItem('active_game_room_code');
 
                 // Build Game Over overlay
                 const overlay = document.createElement('div');
@@ -1677,6 +1762,10 @@
             }
             setStatusIndicator('paused', `Round ${message.current_round} Ready`);
             showToast(`Round ${message.current_round} is ready`, 'info');
+            
+            // Update UI features
+            updateRoundProgress(message.current_round, message.total_rounds);
+            updateNextQuestionPreview();
         }
         
         // Handle countdown event from WebSocket
@@ -1859,12 +1948,17 @@
         function updatePlayersList(players = []) {
             const container = document.getElementById('playersListContainer');
             const list = document.getElementById('playersList');
+            const kickBtn = document.getElementById('kickPlayersBtn');
             
             if (!Array.isArray(players) || players.length === 0) {
                 container.style.display = 'block';
                 list.innerHTML = '';
+                if (kickBtn) kickBtn.style.display = 'none';
                 return;
             }
+            
+            // Show kick button if there are players
+            if (kickBtn) kickBtn.style.display = 'inline-block';
             
             container.style.display = 'none';
             list.innerHTML = players.map(player => {
@@ -2081,6 +2175,11 @@
                 connectWebSocket(data.room_code);
                 pollPlayers();
                 
+                // Update UI features
+                updateRoundProgress(data.current_round || 1, data.total_rounds || 1);
+                updateGameSettingsSummary();
+                updateNextQuestionPreview();
+                
                 showToast(`Resumed game ${data.room_code}`, 'success');
             })
             .catch(error => {
@@ -2089,10 +2188,282 @@
             });
         }
         
+        // Start New Game function - resets to fresh state
+        function startNewGame() {
+            // Clear localStorage
+            localStorage.removeItem('active_game_room_code');
+            
+            // Close WebSocket
+            if (websocket) {
+                isManualWebsocketClose = true;
+                websocket.close();
+                websocket = null;
+            }
+            
+            // Clear game session
+            gameSession = null;
+            currentRoomCode = '';
+            
+            // Reload page to fresh state
+            window.location.reload();
+        }
+        
+        // Check for active game on page load (persistence on refresh)
+        window.addEventListener('DOMContentLoaded', async function() {
+            const savedRoomCode = localStorage.getItem('active_game_room_code');
+            if (savedRoomCode) {
+                console.log('Found saved game, attempting to restore:', savedRoomCode);
+                try {
+                    const response = await fetch(`${API_BASE}/game/${savedRoomCode}/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Only restore if game is still active
+                        if (data.status === 'in_progress' || data.status === 'waiting' || data.status === 'paused') {
+                            console.log('Restoring active game session');
+                            gameSession = data;
+                            currentRoomCode = data.room_code;
+                            
+                            // Update UI to show game screen
+                            document.getElementById('setupSection').style.display = 'none';
+                            document.getElementById('gameSection').style.display = 'block';
+                            
+                            updateRoomCodeDisplay(data.room_code);
+                            document.getElementById('gameType').textContent = data.game_type || `${data.total_rounds} Minigames`;
+                            setStatusIndicator(data.status);
+                            
+                            // Generate QR Code
+                            const joinUrl = `${JOIN_URL}?code=${data.room_code}`;
+                            document.getElementById('qrcode').innerHTML = '';
+                            new QRCode(document.getElementById('qrcode'), {
+                                text: joinUrl,
+                                width: 128,
+                                height: 128
+                            });
+                            
+                            // Display current round info
+                            if (data.total_rounds > 1) {
+                                document.getElementById('questionDisplay').innerHTML = `
+                                    <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; margin-bottom: 1rem;">
+                                        <strong>🎯 Game Session:</strong><br>
+                                        Round ${data.current_round} of ${data.total_rounds}<br>
+                                        Game restored from browser refresh
+                                    </div>
+                                `;
+                            }
+                            
+                            // Show appropriate buttons based on status
+                            if (data.status === 'in_progress') {
+                                document.getElementById('startGameBtn').style.display = 'none';
+                                document.getElementById('nextRoundBtn').style.display = 'none';
+                                document.getElementById('endRoundEarlyBtn').style.display = 'inline-block';
+                            } else if (data.status === 'paused' && data.current_round < data.total_rounds) {
+                                document.getElementById('startGameBtn').style.display = 'none';
+                                document.getElementById('nextRoundBtn').style.display = 'inline-block';
+                                document.getElementById('endRoundEarlyBtn').style.display = 'none';
+                            } else {
+                                document.getElementById('startGameBtn').style.display = 'inline-block';
+                                document.getElementById('startGameBtn').disabled = false;
+                            }
+                            
+                            connectWebSocket(data.room_code);
+                            pollPlayers();
+                            showToast('Game session restored', 'success');
+                        } else {
+                            // Game ended, clear saved state
+                            localStorage.removeItem('active_game_room_code');
+                        }
+                    } else {
+                        // Game not found, clear saved state
+                        localStorage.removeItem('active_game_room_code');
+                    }
+                } catch (error) {
+                    console.error('Error restoring game:', error);
+                    localStorage.removeItem('active_game_room_code');
+                }
+            }
+        });
+        
+        // Update round progress bar
+        function updateRoundProgress(current, total) {
+            const container = document.getElementById('roundProgressContainer');
+            const progressText = document.getElementById('roundProgressText');
+            const progressBar = document.getElementById('roundProgressBar');
+            
+            if (total > 1) {
+                container.style.display = 'block';
+                progressText.textContent = `${current} / ${total}`;
+                const percentage = (current / total) * 100;
+                progressBar.style.width = `${percentage}%`;
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        
+        // Update game settings summary
+        function updateGameSettingsSummary() {
+            if (!gameSession) return;
+            
+            const container = document.getElementById('gameSettingsSummary');
+            const content = document.getElementById('gameSettingsContent');
+            
+            let settings = [];
+            
+            if (gameSession.total_rounds > 1) {
+                settings.push(`📊 ${gameSession.total_rounds} rounds total`);
+            }
+            
+            if (gameSession.time_limit) {
+                settings.push(`⏱️ ${gameSession.time_limit}s per round`);
+            }
+            
+            if (gameSession.auto_advance) {
+                const delay = gameSession.auto_advance_delay || 5;
+                settings.push(`🔄 Auto-advance (${delay}s delay)`);
+            }
+            
+            if (gameSession.course_name) {
+                settings.push(`📚 Course: ${gameSession.course_name}`);
+            }
+            
+            if (settings.length > 0) {
+                content.innerHTML = settings.join('<br>');
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        
+        // Update next question preview
+        function updateNextQuestionPreview() {
+            if (!gameSession || !gameSession.questions) return;
+            
+            const preview = document.getElementById('nextQuestionPreview');
+            const nextText = document.getElementById('nextQuestionText');
+            
+            const currentRound = gameSession.current_round || 1;
+            const totalRounds = gameSession.total_rounds || 1;
+            
+            if (currentRound < totalRounds && gameSession.questions[currentRound]) {
+                const nextQ = gameSession.questions[currentRound];
+                nextText.textContent = `Round ${currentRound + 1}: ${nextQ.question_text || nextQ.game_type}`;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+        
+        // Open kick players modal
+        function openKickPlayersModal() {
+            if (!gameSession || !gameSession.room_code) return;
+            
+            fetch(`${API_BASE}/game/${gameSession.room_code}/`, {
+                headers: { 'Authorization': `Token ${token}` }
+            })
+            .then(r => r.json())
+            .then(data => {
+                const players = data.players || [];
+                
+                if (players.length === 0) {
+                    alert('No players to kick');
+                    return;
+                }
+                
+                // Create modal HTML
+                const modal = document.createElement('div');
+                modal.id = 'kickPlayersModal';
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+                
+                modal.innerHTML = `
+                    <div style="background: white; border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%; max-height: 80vh; overflow: auto;">
+                        <h2 style="margin: 0 0 1rem 0; color: #1e293b;">👢 Kick Players</h2>
+                        <p style="margin: 0 0 1.5rem 0; color: #64748b; font-size: 0.875rem;">Select players to remove from the game</p>
+                        
+                        <div id="kickPlayersList" style="max-height: 300px; overflow-y: auto; margin-bottom: 1.5rem;">
+                            ${players.map(p => `
+                                <label style="display: flex; align-items: center; padding: 0.75rem; background: #f8fafc; border-radius: 6px; margin-bottom: 0.5rem; cursor: pointer; border: 2px solid transparent;">
+                                    <input type="checkbox" value="${p.id}" style="margin-right: 0.75rem; width: 18px; height: 18px; cursor: pointer;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 500; color: #1e293b;">${p.display_name || p.name}</div>
+                                        <div style="font-size: 0.813rem; color: #64748b;">Score: ${p.score || 0} • ${p.ws_connected ? '🟢 Online' : '🔴 Offline'}</div>
+                                    </div>
+                                </label>
+                            `).join('')}
+                        </div>
+                        
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button onclick="closeKickPlayersModal()" style="flex: 1; padding: 0.75rem; background: #e2e8f0; color: #475569; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                                Cancel
+                            </button>
+                            <button onclick="confirmKickPlayers()" style="flex: 1; padding: 0.75rem; background: #ef4444; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                                Kick Selected
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Close on backdrop click
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) closeKickPlayersModal();
+                });
+            })
+            .catch(error => {
+                console.error('Error loading players:', error);
+                showToast('Failed to load players', 'error');
+            });
+        }
+        
+        // Close kick players modal
+        function closeKickPlayersModal() {
+            const modal = document.getElementById('kickPlayersModal');
+            if (modal) modal.remove();
+        }
+        
+        // Confirm and kick selected players
+        async function confirmKickPlayers() {
+            const checkboxes = document.querySelectorAll('#kickPlayersList input[type="checkbox"]:checked');
+            const playerIds = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (playerIds.length === 0) {
+                alert('Please select at least one player to kick');
+                return;
+            }
+            
+            const confirmed = confirm(`⚠️ Kick ${playerIds.length} player(s)?\\n\\nThis will immediately disconnect them from the game. They can rejoin if they have the room code.\\n\\nContinue?`);
+            
+            if (!confirmed) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/kick-players/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ player_ids: playerIds })
+                });
+                
+                if (!response.ok) throw new Error('Failed to kick players');
+                
+                showToast(`${playerIds.length} player(s) kicked`, 'success');
+                closeKickPlayersModal();
+                
+                // Refresh player list
+                pollPlayers();
+            } catch (error) {
+                console.error('Error kicking players:', error);
+                showToast('Failed to kick players: ' + error.message, 'error');
+            }
+        }
+        
         // Logout function
         function handleLogout() {
             localStorage.removeItem('auth_token');
             localStorage.removeItem('user_data');
+            localStorage.removeItem('active_game_room_code');
             window.location.href = '../login.html';
         }
     </script>

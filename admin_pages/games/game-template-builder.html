@@ -393,12 +393,12 @@
                     <div class="filter-row">
                         <select id="gameTypeFilter">
                             <option value="">All Minigame Types</option>
-                            <option value="speed_tap">Speed Tap</option>
-                            <option value="closest_guess">Closest Guess</option>
-                            <option value="push_range">Push Range</option>
-                            <option value="crowd_wisdom">Crowd Wisdom</option>
-                            <option value="word_guess">Word Guess</option>
-                            <option value="rpg_battle">RPG Party Battle</option>
+                            <option value="speed_tap">⚡ Speed Tap</option>
+                            <option value="closest_guess">🎯 Closest Guess</option>
+                            <option value="push_range">🤜🟦🟥🤛 Push Range</option>
+                            <option value="crowd_wisdom">🧠 Crowd Wisdom</option>
+                            <option value="word_guess">🔤 Word Guess</option>
+                            <option value="rpg_battle">⚔️ RPG Party Battle</option>
                         </select>
                         <select id="courseFilter">
                             <option value="">All Courses</option>
@@ -466,14 +466,14 @@
         let currentMode = 'new'; // 'new', 'edit', or 'copy'
         let editingTemplateId = null;
 
-        // Game type display mapping
+        // Game type display mapping (matching in-game instruction emojis)
         const GAME_TYPE_LABELS = {
-            'speed_tap': 'Speed Tap',
-            'closest_guess': 'Closest Guess',
-            'push_range': 'Push Range',
-            'crowd_wisdom': 'Crowd Wisdom',
-            'word_guess': 'Word Guess',
-            'rpg_battle': 'RPG Party Battle'
+            'speed_tap': '⚡ Speed Tap',
+            'closest_guess': '🎯 Closest Guess',
+            'push_range': '🤜🟦🟥🤛 Push Range',
+            'crowd_wisdom': '🧠 Crowd Wisdom',
+            'word_guess': '🔤 Word Guess',
+            'rpg_battle': '⚔️ RPG Party Battle'
         };
 
         // Switch between new/load modes
@@ -613,7 +613,7 @@
         // Load all questions
         async function loadQuestions() {
             try {
-                const response = await fetch(`${API_BASE}/game/questions/`, {
+                const response = await fetch(`${API_BASE}/game-questions/`, {
                     headers: {'Authorization': `Token ${token}`}
                 });
                 allQuestions = await response.json();

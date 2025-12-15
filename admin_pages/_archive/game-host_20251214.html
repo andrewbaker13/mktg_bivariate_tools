@@ -1642,6 +1642,13 @@
                 };
                 actions.appendChild(shareBtn);
 
+                // Return to Setup button
+                const setupBtn = document.createElement('button');
+                setupBtn.className = 'btn';
+                setupBtn.textContent = '🎮 New Game';
+                setupBtn.onclick = () => window.location.href = 'game-host.html';
+                actions.appendChild(setupBtn);
+
                 // Dashboard button
                 const dashBtn = document.createElement('button');
                 dashBtn.className = 'btn';
@@ -1895,6 +1902,53 @@
         } else {
             loadCourses();
             loadTemplates();
+            
+            // Check for room_code in URL to resume game after refresh
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomCodeParam = urlParams.get('room_code');
+            
+            if (roomCodeParam) {
+                // Fetch game details and resume
+                fetch(`${API_BASE}/game/${roomCodeParam}/`, {
+                    headers: {'Authorization': `Token ${token}`}
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Game not found');
+                    return response.json();
+                })
+                .then(data => {
+                    gameSession = data;
+                    currentRoomCode = data.room_code;
+                    
+                    // Switch UI to game section
+                    document.getElementById('setupSection').style.display = 'none';
+                    document.getElementById('gameSection').style.display = 'block';
+                    updateRoomCodeDisplay(data.room_code);
+                    
+                    // Generate QR Code
+                    const baseUrl = `${window.location.protocol}//${window.location.host}`;
+                    const joinUrl = `${baseUrl}/admin_pages/games/game-join.html?code=${data.room_code}`;
+                    document.getElementById('qrcode').innerHTML = '';
+                    new QRCode(document.getElementById('qrcode'), {
+                        text: joinUrl,
+                        width: 128,
+                        height: 128
+                    });
+                    
+                    // Update game status
+                    setStatusIndicator(data.status);
+                    
+                    // Connect WebSocket and start polling
+                    connectWebSocket(data.room_code);
+                    pollPlayers();
+                    
+                    showToast(`Resumed game ${data.room_code}`, 'success');
+                })
+                .catch(error => {
+                    console.error('Error resuming game:', error);
+                    showToast('Could not resume game. Starting fresh.', 'error');
+                });
+            }
         }
         
         // Logout function

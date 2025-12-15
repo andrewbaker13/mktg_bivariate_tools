@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../../shared/css/styles.css">
     <link rel="stylesheet" href="../../shared/css/admin-nav.css">
     <script src="../../shared/js/tracking.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -385,6 +386,160 @@
         .back-link:hover {
             text-decoration: underline;
         }
+
+        /* Bulk Upload Styles */
+        .bulk-upload-section {
+            background: #fef3c7;
+            border: 3px solid #f59e0b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .bulk-upload-section h2 {
+            color: #92400e;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .bulk-upload-section h2:hover {
+            color: #78350f;
+        }
+
+        .bulk-content {
+            display: none;
+        }
+
+        .bulk-content.active {
+            display: block;
+        }
+
+        .drop-zone {
+            border: 3px dashed #d97706;
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1rem;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: #92400e;
+            background: #fffbeb;
+        }
+
+        .drop-zone-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .drop-zone-text {
+            color: #92400e;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .drop-zone-subtext {
+            color: #d97706;
+            font-size: 0.875rem;
+        }
+
+        .bulk-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .btn-template {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .btn-template:hover {
+            background: #059669;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .upload-results {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .upload-results.success {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            color: #065f46;
+        }
+
+        .upload-results.partial {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .upload-results.error {
+            background: #fee2e2;
+            border: 2px solid #ef4444;
+            color: #991b1b;
+        }
+
+        .error-list {
+            margin-top: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .error-item {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .error-item:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
@@ -394,6 +549,45 @@
         <p class="subtitle">Create questions for Speed Tap, Closest Guess, and Push Range games</p>
 
         <div id="alertContainer"></div>
+
+        <!-- Bulk Upload Section -->
+        <div class="bulk-upload-section">
+            <h2 onclick="toggleBulkUpload()">📤 Bulk Upload Questions (click to expand)</h2>
+            <div class="bulk-content" id="bulkContent">
+                <p style="color: #92400e; margin-bottom: 1rem;">Upload up to 50 questions at once using a TSV/CSV file. Download a template to get started.</p>
+                
+                <div class="form-group">
+                    <label for="bulkGameType">Select Question Type for Bulk Upload *</label>
+                    <select id="bulkGameType" onchange="updateBulkTemplate()">
+                        <option value="">-- Select Game Type --</option>
+                        <option value="speed_tap">⚡ Speed Tap</option>
+                        <option value="crowd_wisdom">🧠 Crowd Wisdom</option>
+                        <option value="word_guess">🔤 Word Guess</option>
+                        <option value="closest_guess">🎯 Closest Guess</option>
+                        <option value="push_range">🤜🟦🟥🤛 Push Range</option>
+                    </select>
+                </div>
+
+                <div class="bulk-controls">
+                    <button type="button" class="btn-template" onclick="downloadTemplate()" id="downloadTemplateBtn" disabled>📥 Download TSV Template</button>
+                </div>
+
+                <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <div class="drop-zone-icon">📁</div>
+                    <div class="drop-zone-text">Drag & Drop TSV/CSV file here</div>
+                    <div class="drop-zone-subtext">or click to browse (max 50 questions)</div>
+                    <input type="file" id="fileInput" accept=".tsv,.csv" style="display: none;" onchange="handleFileSelect(event)">
+                </div>
+
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill">0%</div>
+                    </div>
+                </div>
+
+                <div class="upload-results" id="uploadResults"></div>
+            </div>
+        </div>
 
         <form id="questionForm">
             <!-- Game Type Selection -->
@@ -421,7 +615,7 @@
                         <div class="description">Range estimation game</div>
                     </div>
                     <div class="game-type-card" data-type="push_range">
-                        <div class="icon">🔥</div>
+                        <div class="icon">🤜🟦🟥🤛</div>
                         <div class="title">Push Range</div>
                         <div class="description">Team button mashing</div>
                     </div>
@@ -438,7 +632,7 @@
 
                 <div class="grid-2">
                     <div class="form-group">
-                        <label for="difficulty">Difficulty</label>
+                        <label for="difficulty">Difficulty (optional)</label>
                         <select id="difficulty">
                             <option value="easy">Easy</option>
                             <option value="medium" selected>Medium</option>
@@ -451,7 +645,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="tags">Tags (comma-separated)</label>
+                    <label for="tags">Tags (optional, comma-separated)</label>
                     <input type="text" id="tags" placeholder="e.g., marketing, statistics, finance">
                     <div class="help-text">Add tags to organize and filter questions</div>
                 </div>
@@ -491,6 +685,38 @@
                     </div>
                     <button type="button" class="add-option-btn" onclick="addOption()">+ Add Option</button>
                     <div class="help-text">At least 2 options required, one must be marked correct</div>
+                </div>
+            </div>
+
+            <!-- Crowd Wisdom Config -->
+            <div class="form-section game-specific-config" id="crowdWisdomConfig">
+                <h2>3️⃣ 🧠 Crowd Wisdom Options</h2>
+                <div class="form-group">
+                    <label>Answer Options (select correct answer) *</label>
+                    <div class="options-container" id="crowdWisdomOptionsContainer">
+                        <div class="option-row">
+                            <input type="text" class="crowd-wisdom-option-text" placeholder="Option A" required>
+                            <input type="radio" name="crowdWisdomCorrectOption" value="0" required>
+                            <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                        </div>
+                        <div class="option-row">
+                            <input type="text" class="crowd-wisdom-option-text" placeholder="Option B" required>
+                            <input type="radio" name="crowdWisdomCorrectOption" value="1">
+                            <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                        </div>
+                        <div class="option-row">
+                            <input type="text" class="crowd-wisdom-option-text" placeholder="Option C" required>
+                            <input type="radio" name="crowdWisdomCorrectOption" value="2">
+                            <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                        </div>
+                        <div class="option-row">
+                            <input type="text" class="crowd-wisdom-option-text" placeholder="Option D" required>
+                            <input type="radio" name="crowdWisdomCorrectOption" value="3">
+                            <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                        </div>
+                    </div>
+                    <button type="button" class="add-option-btn" onclick="addCrowdWisdomOption()">+ Add Option</button>
+                    <div class="help-text">At least 2 options required, one must be marked correct. Players will see live distribution of answers.</div>
                 </div>
             </div>
 
@@ -588,6 +814,368 @@
         // Get auth token using shared auth module
         const authToken = getAuthToken();
 
+        // ===== BULK UPLOAD FUNCTIONS =====
+
+        function toggleBulkUpload() {
+            const content = document.getElementById('bulkContent');
+            content.classList.toggle('active');
+        }
+
+        function updateBulkTemplate() {
+            const gameType = document.getElementById('bulkGameType').value;
+            document.getElementById('downloadTemplateBtn').disabled = !gameType;
+        }
+
+        function downloadTemplate() {
+            const gameType = document.getElementById('bulkGameType').value;
+            if (!gameType) return;
+
+            let tsvContent = '';
+            
+            if (gameType === 'speed_tap' || gameType === 'crowd_wisdom') {
+                const gameName = gameType === 'speed_tap' ? 'Speed Tap' : 'Crowd Wisdom';
+                tsvContent = 'question_text\tdifficulty\ttags\timage_url\toption_1\toption_2\toption_3\toption_4\tcorrect_option_number\n';
+                tsvContent += `What is 2+2?\tmedium\tmath,basic\t\tTwo\tThree\tFour\tFive\t3\n`;
+            } else if (gameType === 'closest_guess') {
+                tsvContent = 'question_text\tdifficulty\ttags\timage_url\tmin_value\tmax_value\tcorrect_value\tmax_range_width\n';
+                tsvContent += 'What percentage of US adults have a college degree?\tmedium\teducation,statistics\t\t0\t100\t37.5\t10\n';
+            } else if (gameType === 'push_range') {
+                tsvContent = 'question_text\tdifficulty\ttags\timage_url\tcorrect_value\ttarget_zone_start\ttarget_zone_end\n';
+                tsvContent += 'Push the bar to 75%!\tmedium\tteamwork\t\t75\t70\t80\n';
+            } else if (gameType === 'word_guess') {
+                tsvContent = 'question_text\tdifficulty\ttags\timage_url\tanswer\thint\n';
+                tsvContent += 'Guess this statistical technique\thard\tstatistics,methods\t\tREGRESSION\tUsed to predict outcomes\n';
+            }
+
+            const blob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${gameType}_template.tsv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Drag and drop handlers
+        const dropZone = document.getElementById('dropZone');
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            const gameType = document.getElementById('bulkGameType').value;
+            if (!gameType) {
+                showAlert('Please select a game type first', 'error');
+                return;
+            }
+
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            if (fileExt !== 'tsv' && fileExt !== 'csv') {
+                showAlert('Please upload a TSV or CSV file', 'error');
+                return;
+            }
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    processUploadData(results.data, gameType);
+                },
+                error: function(error) {
+                    showAlert('Error parsing file: ' + error.message, 'error');
+                }
+            });
+        }
+
+        function processUploadData(data, gameType) {
+            // Validate row count
+            if (data.length === 0) {
+                showAlert('File is empty', 'error');
+                return;
+            }
+            if (data.length > 50) {
+                showAlert(`Too many questions (${data.length}). Maximum is 50. Please split into multiple files.`, 'error');
+                return;
+            }
+
+            // Validate and transform data
+            const questions = [];
+            const errors = [];
+
+            for (let i = 0; i < data.length; i++) {
+                const row = data[i];
+                const rowNum = i + 2; // +2 because row 1 is header, and we're 0-indexed
+                
+                try {
+                    const question = validateAndTransformRow(row, gameType, rowNum);
+                    questions.push(question);
+                } catch (error) {
+                    errors.push(`Row ${rowNum}: ${error.message}`);
+                }
+            }
+
+            if (errors.length > 0) {
+                displayValidationErrors(errors, questions.length);
+                return;
+            }
+
+            // Show preview and confirm
+            if (confirm(`Ready to upload ${questions.length} questions. Continue?`)) {
+                uploadBulkQuestions(questions);
+            }
+        }
+
+        function validateAndTransformRow(row, gameType, rowNum) {
+            // Check required base fields
+            if (!row.question_text || row.question_text.trim() === '') {
+                throw new Error('Missing question_text');
+            }
+
+            const questionData = {
+                question_text: row.question_text.trim(),
+                game_type: gameType,
+                difficulty: row.difficulty || 'medium',
+                tags: row.tags || '',
+                image_url: row.image_url || null,
+                game_config: {}
+            };
+
+            // Validate game-specific fields
+            if (gameType === 'speed_tap' || gameType === 'crowd_wisdom') {
+                const options = [];
+                let correctIndex = parseInt(row.correct_option_number);
+                
+                if (isNaN(correctIndex) || correctIndex < 1) {
+                    throw new Error('correct_option_number must be a number >= 1');
+                }
+                
+                correctIndex -= 1; // Convert to 0-indexed
+                
+                for (let i = 1; i <= 10; i++) {
+                    const optText = row[`option_${i}`];
+                    if (optText && optText.trim()) {
+                        options.push({
+                            text: optText.trim(),
+                            is_correct: (i - 1) === correctIndex,
+                            order: i
+                        });
+                    }
+                }
+
+                if (options.length < 2) {
+                    throw new Error('Need at least 2 options');
+                }
+                
+                if (correctIndex >= options.length) {
+                    throw new Error(`correct_option_number (${correctIndex + 1}) exceeds number of options (${options.length})`);
+                }
+
+                questionData.game_config = {
+                    options: options,
+                    correct_value: options[correctIndex].text,
+                    points_base: 100
+                };
+
+            } else if (gameType === 'closest_guess') {
+                const minValue = parseFloat(row.min_value);
+                const maxValue = parseFloat(row.max_value);
+                const correctValue = parseFloat(row.correct_value);
+
+                if (isNaN(minValue)) throw new Error('min_value must be a number');
+                if (isNaN(maxValue)) throw new Error('max_value must be a number');
+                if (isNaN(correctValue)) throw new Error('correct_value must be a number');
+                if (correctValue < minValue || correctValue > maxValue) {
+                    throw new Error('correct_value must be between min_value and max_value');
+                }
+
+                questionData.game_config = {
+                    min_value: minValue,
+                    max_value: maxValue,
+                    correct_value: correctValue,
+                    points_base: 100
+                };
+
+                if (row.max_range_width && row.max_range_width.trim() !== '') {
+                    questionData.game_config.max_range_width = parseFloat(row.max_range_width);
+                }
+
+            } else if (gameType === 'push_range') {
+                const correctValue = parseInt(row.correct_value);
+                
+                if (isNaN(correctValue) || correctValue < 0 || correctValue > 100) {
+                    throw new Error('correct_value must be between 0 and 100');
+                }
+
+                questionData.game_config = {
+                    correct_value: correctValue,
+                    points_base: 100
+                };
+
+                if (row.target_zone_start && row.target_zone_start.trim() !== '') {
+                    questionData.game_config.target_zone_start = parseInt(row.target_zone_start);
+                }
+                if (row.target_zone_end && row.target_zone_end.trim() !== '') {
+                    questionData.game_config.target_zone_end = parseInt(row.target_zone_end);
+                }
+
+            } else if (gameType === 'word_guess') {
+                const answer = (row.answer || '').trim().toUpperCase();
+                
+                if (!/^[A-Z\s]+$/.test(answer)) {
+                    throw new Error('answer can only contain letters and spaces');
+                }
+                
+                const charCount = answer.replace(/\s/g, '').length;
+                if (charCount < 7) {
+                    throw new Error(`answer must have at least 7 letters (currently ${charCount})`);
+                }
+
+                questionData.game_config = {
+                    answer: answer,
+                    hint: row.hint || null,
+                    points_base: 100
+                };
+            }
+
+            return questionData;
+        }
+
+        function displayValidationErrors(errors, successCount) {
+            const resultsDiv = document.getElementById('uploadResults');
+            resultsDiv.className = 'upload-results error';
+            resultsDiv.style.display = 'block';
+            
+            let html = `<strong>❌ Validation Failed</strong><br>`;
+            html += `${successCount} questions passed validation, but ${errors.length} had errors:<br>`;
+            html += '<div class="error-list">';
+            errors.forEach(err => {
+                html += `<div class="error-item">${err}</div>`;
+            });
+            html += '</div>';
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        async function uploadBulkQuestions(questions) {
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const resultsDiv = document.getElementById('uploadResults');
+            
+            progressContainer.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            
+            const results = {
+                success: [],
+                failed: []
+            };
+
+            for (let i = 0; i < questions.length; i++) {
+                const question = questions[i];
+                const progress = Math.round(((i + 1) / questions.length) * 100);
+                progressFill.style.width = progress + '%';
+                progressFill.textContent = `${i + 1}/${questions.length} (${progress}%)`;
+
+                try {
+                    const response = await fetch(`${API_BASE}/game-questions/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Token ${authToken}`
+                        },
+                        body: JSON.stringify(question)
+                    });
+
+                    if (response.ok) {
+                        results.success.push(i + 2); // +2 for row number in original file
+                    } else {
+                        const errorData = await response.json();
+                        results.failed.push({
+                            row: i + 2,
+                            error: errorData.message || JSON.stringify(errorData)
+                        });
+                    }
+                } catch (error) {
+                    results.failed.push({
+                        row: i + 2,
+                        error: error.message
+                    });
+                }
+
+                // Small delay to prevent overwhelming the server
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            // Display results
+            displayUploadResults(results);
+            
+            // Reset file input and progress
+            document.getElementById('fileInput').value = '';
+            progressContainer.style.display = 'none';
+            progressFill.style.width = '0%';
+            
+            // Refresh question list if any succeeded
+            if (results.success.length > 0) {
+                loadQuestions();
+            }
+        }
+
+        function displayUploadResults(results) {
+            const resultsDiv = document.getElementById('uploadResults');
+            resultsDiv.style.display = 'block';
+            
+            const total = results.success.length + results.failed.length;
+            
+            if (results.failed.length === 0) {
+                resultsDiv.className = 'upload-results success';
+                resultsDiv.innerHTML = `<strong>✅ Upload Complete!</strong><br>${results.success.length} questions uploaded successfully.`;
+            } else if (results.success.length === 0) {
+                resultsDiv.className = 'upload-results error';
+                let html = `<strong>❌ Upload Failed</strong><br>All ${results.failed.length} questions failed:<br>`;
+                html += '<div class="error-list">';
+                results.failed.forEach(err => {
+                    html += `<div class="error-item">Row ${err.row}: ${err.error}</div>`;
+                });
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+            } else {
+                resultsDiv.className = 'upload-results partial';
+                let html = `<strong>⚠️ Partial Success</strong><br>`;
+                html += `${results.success.length} succeeded, ${results.failed.length} failed:<br>`;
+                html += '<div class="error-list">';
+                results.failed.forEach(err => {
+                    html += `<div class="error-item">Row ${err.row}: ${err.error}</div>`;
+                });
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+            }
+        }
+
+        // ===== END BULK UPLOAD FUNCTIONS =====
+
         // Game type selection
         document.querySelectorAll('.game-type-card').forEach(card => {
             card.addEventListener('click', function() {
@@ -600,8 +1188,10 @@
                     config.classList.remove('active');
                 });
                 
-                if (selectedGameType === 'speed_tap' || selectedGameType === 'crowd_wisdom') {
+                if (selectedGameType === 'speed_tap') {
                     document.getElementById('speedTapConfig').classList.add('active');
+                } else if (selectedGameType === 'crowd_wisdom') {
+                    document.getElementById('crowdWisdomConfig').classList.add('active');
                 } else if (selectedGameType === 'closest_guess') {
                     document.getElementById('closestGuessConfig').classList.add('active');
                 } else if (selectedGameType === 'push_range') {
@@ -658,6 +1248,33 @@
             }
         }
 
+        function addCrowdWisdomOption() {
+            const container = document.getElementById('crowdWisdomOptionsContainer');
+            const index = container.children.length;
+            const optionRow = document.createElement('div');
+            optionRow.className = 'option-row';
+            optionRow.innerHTML = `
+                <input type="text" class="crowd-wisdom-option-text" placeholder="Option ${String.fromCharCode(65 + index)}" required>
+                <input type="radio" name="crowdWisdomCorrectOption" value="${index}">
+                <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                <button type="button" onclick="removeCrowdWisdomOption(this)">×</button>
+            `;
+            container.appendChild(optionRow);
+        }
+
+        function removeCrowdWisdomOption(btn) {
+            const container = document.getElementById('crowdWisdomOptionsContainer');
+            if (container.children.length > 2) {
+                btn.parentElement.remove();
+                // Update radio button values
+                Array.from(container.children).forEach((row, index) => {
+                    row.querySelector('input[type="radio"]').value = index;
+                });
+            } else {
+                alert('Must have at least 2 options');
+            }
+        }
+
         // Form submission
         document.getElementById('questionForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -677,10 +1294,41 @@
             };
 
             // Build game_config based on type
-            if (selectedGameType === 'speed_tap' || selectedGameType === 'crowd_wisdom') {
+            if (selectedGameType === 'speed_tap') {
                 const options = [];
                 const optionTexts = document.querySelectorAll('.option-text');
                 const correctIndex = parseInt(document.querySelector('input[name="correctOption"]:checked')?.value);
+                
+                if (isNaN(correctIndex)) {
+                    showAlert('Please select the correct answer', 'error');
+                    return;
+                }
+
+                optionTexts.forEach((input, index) => {
+                    if (input.value.trim()) {
+                        options.push({
+                            text: input.value.trim(),
+                            is_correct: index === correctIndex,
+                            order: index + 1
+                        });
+                    }
+                });
+
+                if (options.length < 2) {
+                    showAlert('Please provide at least 2 options', 'error');
+                    return;
+                }
+
+                questionData.game_config = {
+                    options: options,
+                    correct_value: options[correctIndex].text,
+                    points_base: 100
+                };
+
+            } else if (selectedGameType === 'crowd_wisdom') {
+                const options = [];
+                const optionTexts = document.querySelectorAll('.crowd-wisdom-option-text');
+                const correctIndex = parseInt(document.querySelector('input[name="crowdWisdomCorrectOption"]:checked')?.value);
                 
                 if (isNaN(correctIndex)) {
                     showAlert('Please select the correct answer', 'error');
@@ -842,7 +1490,7 @@
                 const typeLabel = q.game_type === 'speed_tap' ? '⚡ Speed Tap' :
                                 q.game_type === 'crowd_wisdom' ? '🧠 Crowd Wisdom' :
                                 q.game_type === 'word_guess' ? '🔤 Word Guess' :
-                                q.game_type === 'closest_guess' ? '🎯 Closest Guess' : '🔥 Push Range';
+                                q.game_type === 'closest_guess' ? '🎯 Closest Guess' : '🤜🟦🟥🤛 Push Range';
                 
                 return `
                     <div class="question-card">
@@ -916,7 +1564,7 @@
             document.getElementById('imageUrl').value = question.image_url || '';
 
             // Fill game-specific fields
-            if ((question.game_type === 'speed_tap' || question.game_type === 'crowd_wisdom') && question.game_config.options) {
+            if (question.game_type === 'speed_tap' && question.game_config.options) {
                 const container = document.getElementById('optionsContainer');
                 container.innerHTML = '';
                 question.game_config.options.forEach((opt, index) => {
@@ -927,6 +1575,20 @@
                         <input type="radio" name="correctOption" value="${index}" ${opt.is_correct ? 'checked' : ''}>
                         <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
                         ${index >= 2 ? '<button type="button" onclick="removeOption(this)">×</button>' : ''}
+                    `;
+                    container.appendChild(optionRow);
+                });
+            } else if (question.game_type === 'crowd_wisdom' && question.game_config.options) {
+                const container = document.getElementById('crowdWisdomOptionsContainer');
+                container.innerHTML = '';
+                question.game_config.options.forEach((opt, index) => {
+                    const optionRow = document.createElement('div');
+                    optionRow.className = 'option-row';
+                    optionRow.innerHTML = `
+                        <input type="text" class="crowd-wisdom-option-text" value="${opt.text}" required>
+                        <input type="radio" name="crowdWisdomCorrectOption" value="${index}" ${opt.is_correct ? 'checked' : ''}>
+                        <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                        ${index >= 2 ? '<button type="button" onclick="removeCrowdWisdomOption(this)">×</button>' : ''}
                     `;
                     container.appendChild(optionRow);
                 });
@@ -977,6 +1639,31 @@
                 <div class="option-row">
                     <input type="text" class="option-text" placeholder="Option D" required>
                     <input type="radio" name="correctOption" value="3">
+                    <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                </div>
+            `;
+
+            // Reset Crowd Wisdom options to default 4
+            const crowdWisdomContainer = document.getElementById('crowdWisdomOptionsContainer');
+            crowdWisdomContainer.innerHTML = `
+                <div class="option-row">
+                    <input type="text" class="crowd-wisdom-option-text" placeholder="Option A" required>
+                    <input type="radio" name="crowdWisdomCorrectOption" value="0" required>
+                    <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                </div>
+                <div class="option-row">
+                    <input type="text" class="crowd-wisdom-option-text" placeholder="Option B" required>
+                    <input type="radio" name="crowdWisdomCorrectOption" value="1">
+                    <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                </div>
+                <div class="option-row">
+                    <input type="text" class="crowd-wisdom-option-text" placeholder="Option C" required>
+                    <input type="radio" name="crowdWisdomCorrectOption" value="2">
+                    <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
+                </div>
+                <div class="option-row">
+                    <input type="text" class="crowd-wisdom-option-text" placeholder="Option D" required>
+                    <input type="radio" name="crowdWisdomCorrectOption" value="3">
                     <span style="font-size: 0.875rem; color: #64748b;">Correct?</span>
                 </div>
             `;
