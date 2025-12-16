@@ -90,6 +90,12 @@
             background: white;
             border-radius: 4px;
             position: relative;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .qr-code-container #qrcode:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .qr-logo-overlay {
             position: absolute;
@@ -421,7 +427,14 @@
                     <!-- QR Code -->
                     <div class="qr-code-container" id="qrCodeContainer" style="display: none;">
                         <div id="qrcode"></div>
-                        <p>📱 Scan to join game</p>
+                        <p>📱 Scan to join game <span style="font-size: 0.85em; opacity: 0.8;">(click to enlarge)</span></p>
+                    </div>
+                    
+                    <!-- Projector View Button -->
+                    <div id="projectorButtonContainer" style="margin-top: 1rem; display: none;">
+                        <button id="openProjectorBtn" onclick="openProjectorView()" style="width: 100%; padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.25); color: white; border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(10px);" onmouseover="this.style.background='rgba(255,255,255,0.35)'; this.style.borderColor='rgba(255,255,255,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.25)'; this.style.borderColor='rgba(255,255,255,0.3)'">
+                            🖥️ Open Projector View
+                        </button>
                     </div>
                 </div>
             </div>
@@ -465,6 +478,16 @@
             <div id="gameSettingsSummary" style="display: none; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem;">
                 <h3 style="font-size: 0.875rem; font-weight: 600; color: #64748b; margin: 0 0 0.75rem 0;">⚙️ Game Settings</h3>
                 <div id="gameSettingsContent" style="font-size: 0.813rem; color: #475569; line-height: 1.6;"></div>
+            </div>
+            
+            <!-- Current Round Info (shown during active rounds) -->
+            <div id="currentRoundInfo" style="display: none; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #38bdf8; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                <h3 style="font-size: 0.9rem; font-weight: 600; color: #0369a1; margin: 0 0 0.75rem 0;">🎮 Current Round</h3>
+                <div style="font-size: 0.875rem; color: #075985; line-height: 1.8;">
+                    <div><strong>Game:</strong> <span id="currentGameName">-</span></div>
+                    <div><strong>Type:</strong> <span id="currentGameType">-</span></div>
+                    <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #bae6fd;"><strong>Prompt:</strong><br><span id="currentGamePrompt" style="font-style: italic;">-</span></div>
+                </div>
             </div>
             
             <div class="connection-pill" id="connectionStatus">⚫ Ready</div>
@@ -703,13 +726,6 @@
                 <h2 style="margin: 0; color: #1e293b;">Game Management</h2>
             </div>
             
-            <!-- Projector View Button -->
-            <div id="projectorButtonContainer" style="margin-bottom: 1rem; display: none;">
-                <button id="openProjectorBtn" onclick="openProjectorView()" style="width: 100%; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(102, 126, 234, 0.3)'">
-                    🖥️ Open Projector View
-                </button>
-            </div>
-            
             <!-- View Game History -->
             <div style="margin-bottom: 1rem;">
                 <a href="game-history.html" style="display: block; text-align: center; padding: 0.75rem 1.5rem; background: #f1f5f9; color: #475569; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
@@ -785,6 +801,7 @@
         let currentRoomCode = '';
         let currentLeaderboard = [];
         let token = localStorage.getItem('auth_token');
+        let currentPlayers = []; // Track players for disconnect warning
         
         const toastContainer = document.getElementById('toastContainer');
         const statusChipEl = document.getElementById('gameStatus');
@@ -909,6 +926,13 @@
                     logo.className = 'qr-logo-overlay';
                     qrCodeDiv.appendChild(logo);
                 }, 100);
+                
+                // Make QR code clickable to open large version
+                qrCodeDiv.style.cursor = 'pointer';
+                qrCodeDiv.title = 'Click to enlarge QR code';
+                qrCodeDiv.addEventListener('click', function() {
+                    openLargeQRCode(joinUrl);
+                });
                 
                 // Show QR container
                 qrContainer.style.display = 'flex';
@@ -1462,6 +1486,21 @@
         document.getElementById('nextRoundBtn').addEventListener('click', async function() {
             if (!gameSession) return;
             
+            // Check for disconnected players (>10% threshold)
+            if (currentPlayers.length > 0) {
+                const disconnectedPlayers = currentPlayers.filter(p => !p.ws_connected);
+                const disconnectRate = disconnectedPlayers.length / currentPlayers.length;
+                
+                if (disconnectRate > 0.1) {
+                    const disconnectPercent = Math.round(disconnectRate * 100);
+                    const warningMsg = `⚠️ ${disconnectedPlayers.length} of ${currentPlayers.length} players (${disconnectPercent}%) appear disconnected\n\nDisconnected players:\n${disconnectedPlayers.map(p => '• ' + p.name).join('\n')}\n\nThey may not be able to participate in the next round.\n\nDo you want to continue anyway?`;
+                    
+                    if (!confirm(warningMsg)) {
+                        return; // Host cancelled
+                    }
+                }
+            }
+            
             console.log('Next Round button clicked');
             const nextBtn = this;
             nextBtn.disabled = true;
@@ -1532,6 +1571,9 @@
             }
             const timeLeftEl = document.getElementById('timeLeft');
             if (timeLeftEl) timeLeftEl.textContent = 'Ending...';
+            
+            // Hide current round info
+            hideCurrentRoundInfo();
 
             try {
                 const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/end_round/`, {
@@ -1892,6 +1934,9 @@
             overlay.style.display = 'flex';
             roundInfo.textContent = `Round ${message.current_round} of ${message.total_rounds}`;
             
+            // Update current round info panel
+            updateCurrentRoundInfo(message);
+            
             // Countdown: 5, 4, 3, 2, 1 (matches player countdown)
             for (let count = 5; count >= 1; count--) {
                 numberDiv.textContent = count;
@@ -2059,6 +2104,9 @@
 
         // Update players list
         function updatePlayersList(players = []) {
+            // Store current players for disconnect checking
+            currentPlayers = players;
+            
             const container = document.getElementById('playersListContainer');
             const list = document.getElementById('playersList');
             const kickBtn = document.getElementById('kickPlayersBtn');
@@ -2461,6 +2509,39 @@
             }
         }
         
+        // Update current round info panel (shown during active rounds)
+        function updateCurrentRoundInfo(message) {
+            const container = document.getElementById('currentRoundInfo');
+            const gameName = document.getElementById('currentGameName');
+            const gameType = document.getElementById('currentGameType');
+            const gamePrompt = document.getElementById('currentGamePrompt');
+            
+            if (message && message.game_data) {
+                const data = message.game_data;
+                
+                // Update game name
+                gameName.textContent = data.game_name || data.game_type || 'Unknown Game';
+                
+                // Update game type
+                gameType.textContent = data.game_type || 'Unknown';
+                
+                // Update prompt
+                gamePrompt.textContent = data.prompt || data.question || 'No prompt available';
+                
+                // Show the container
+                container.style.display = 'block';
+            } else {
+                // Hide if no data
+                container.style.display = 'none';
+            }
+        }
+        
+        // Hide current round info (call when round ends)
+        function hideCurrentRoundInfo() {
+            const container = document.getElementById('currentRoundInfo');
+            container.style.display = 'none';
+        }
+        
         // Update game settings summary
         function updateGameSettingsSummary() {
             if (!gameSession) return;
@@ -2650,6 +2731,12 @@
             // Open projector view in new tab
             const projectorUrl = `game-projector.html?room=${currentRoomCode}`;
             window.open(projectorUrl, '_blank');
+        }
+        
+        function openLargeQRCode(url) {
+            // Open the dedicated QR display page
+            const qrPageUrl = `qr-display.html?url=${encodeURIComponent(url)}&room=${encodeURIComponent(currentRoomCode)}`;
+            window.open(qrPageUrl, '_blank', 'width=900,height=1000');
         }
 
         async function cleanupGamesByAge(hours) {

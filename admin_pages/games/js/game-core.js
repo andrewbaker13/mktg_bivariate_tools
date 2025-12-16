@@ -920,13 +920,111 @@ function handleUnifiedGameResults(message) {
                 // Show chart if available
                 console.log('[CLOSEST GUESS DEBUG] Has chart_data?', !!gs.chart_data);
                 console.log('[CLOSEST GUESS DEBUG] chart_data:', gs.chart_data);
-                console.log('[CLOSEST GUESS DEBUG] showClosestGuessResults function exists?', typeof showClosestGuessResults === 'function');
-                if (typeof showClosestGuessResults === 'function' && gs.chart_data) {
-                    console.log('[CLOSEST GUESS DEBUG] Calling showClosestGuessResults...');
-                    gameSpecificHTML += showClosestGuessResults(gs.chart_data);
-                } else if (gs.chart_data) {
-                    // Fallback: show we have chart data but function not loaded
-                    console.log('[CLOSEST GUESS] Chart data available but showClosestGuessResults function not loaded');
+                
+                // Inline chart rendering for Closest Guess - matching in-game style
+                if (gs.chart_data && gs.chart_data.results && gs.chart_data.results.length > 0) {
+                    const canvasId = 'closestGuessResultsCanvas_' + Date.now();
+                    gameSpecificHTML += `
+                        <div style="margin: 20px 0;">
+                            <canvas id="${canvasId}" width="800" height="300" style="max-width: 100%; background: rgba(255,255,255,0.95); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></canvas>
+                        </div>
+                    `;
+                    
+                    setTimeout(() => {
+                        const canvas = document.getElementById(canvasId);
+                        if (!canvas) {
+                            console.error('[CLOSEST GUESS] Canvas not found:', canvasId);
+                            return;
+                        }
+                        
+                        const ctx = canvas.getContext('2d');
+                        const width = canvas.width;
+                        const height = canvas.height;
+                        ctx.clearRect(0, 0, width, height);
+                        
+                        const correctAnswer = gs.chart_data.correct_answer;
+                        const results = gs.chart_data.results;
+                        
+                        // Calculate range
+                        let minVal = Math.min(...results.map(r => r.guess_min));
+                        let maxVal = Math.max(...results.map(r => r.guess_max));
+                        
+                        // Expand range to include correct answer
+                        if (correctAnswer !== undefined && correctAnswer !== null) {
+                            minVal = Math.min(minVal, correctAnswer);
+                            maxVal = Math.max(maxVal, correctAnswer);
+                        }
+                        
+                        // Add padding
+                        const range = maxVal - minVal;
+                        minVal -= range * 0.1;
+                        maxVal += range * 0.1;
+                        
+                        // Draw axis
+                        const margin = 60;
+                        const axisY = height - 50;
+                        const chartWidth = width - 2 * margin;
+                        
+                        ctx.strokeStyle = '#64748b';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(margin, axisY);
+                        ctx.lineTo(width - margin, axisY);
+                        ctx.stroke();
+                        
+                        // Draw player ranges as horizontal bars
+                        const barHeight = Math.min(30, (height - 100) / results.length);
+                        results.forEach((result, idx) => {
+                            const x1 = margin + ((result.guess_min - minVal) / (maxVal - minVal)) * chartWidth;
+                            const x2 = margin + ((result.guess_max - minVal) / (maxVal - minVal)) * chartWidth;
+                            const y = 30 + idx * (barHeight + 5);
+                            
+                            // Draw bar
+                            ctx.fillStyle = result.is_correct ? 'rgba(16, 185, 129, 0.5)' : 'rgba(148, 163, 184, 0.4)';
+                            ctx.fillRect(x1, y, x2 - x1, barHeight);
+                            
+                            // Draw border
+                            ctx.strokeStyle = result.is_correct ? '#10b981' : '#94a3b8';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(x1, y, x2 - x1, barHeight);
+                            
+                            // Draw player name
+                            ctx.fillStyle = '#1e293b';
+                            ctx.font = '12px Arial';
+                            ctx.textAlign = 'right';
+                            ctx.fillText(result.player_name.substring(0, 15), margin - 5, y + barHeight / 2 + 4);
+                        });
+                        
+                        // Draw correct answer line (BLACK)
+                        if (correctAnswer !== undefined && correctAnswer !== null) {
+                            const answerX = margin + ((correctAnswer - minVal) / (maxVal - minVal)) * chartWidth;
+                            ctx.strokeStyle = '#000000';
+                            ctx.lineWidth = 3;
+                            ctx.beginPath();
+                            ctx.moveTo(answerX, 20);
+                            ctx.lineTo(answerX, axisY);
+                            ctx.stroke();
+                            
+                            // Answer label (black)
+                            ctx.fillStyle = '#000000';
+                            ctx.font = 'bold 14px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText(`${correctAnswer}`, answerX, 15);
+                        }
+                        
+                        // Draw scale labels
+                        ctx.fillStyle = '#1e293b';
+                        ctx.font = '12px Arial';
+                        ctx.textAlign = 'center';
+                        const numTicks = 5;
+                        for (let i = 0; i <= numTicks; i++) {
+                            const val = minVal + (i / numTicks) * (maxVal - minVal);
+                            const x = margin + (i / numTicks) * chartWidth;
+                            ctx.fillText(val.toFixed(1), x, axisY + 20);
+                        }
+                        
+                        console.log('[CLOSEST GUESS] Chart rendered successfully');
+                    }, 100);
                 }
             } else if (message.game_type === 'push_range') {
                 // Push Range: Show final range and whether it captured the answer

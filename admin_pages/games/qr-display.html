@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan to Join Game - Praxis Play</title>
+    <link rel="icon" type="image/svg+xml" href="../../art_assets/svg_logos/praxisplay_notext_logo.svg">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            padding: 2rem;
+        }
+        
+        .container {
+            background: white;
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .logo {
+            width: 200px;
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            color: #1e293b;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        .instructions {
+            color: #64748b;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        
+        #qrcode {
+            display: inline-block;
+            padding: 2rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .room-code-box {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .room-code-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+        
+        .room-code {
+            font-size: 4rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .links-section {
+            background: #f1f5f9;
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+        
+        .link-item {
+            margin: 1rem 0;
+        }
+        
+        .link-label {
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .link-url {
+            font-family: 'Courier New', monospace;
+            color: #1e293b;
+            font-size: 1.1rem;
+            word-break: break-all;
+            background: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .convenience-link {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="../../art_assets/svg_logos/praxisplay_main_logo.svg" alt="Praxis Play" class="logo">
+        
+        <h1>🎮 Scan to Join Game</h1>
+        <p class="instructions">Point your phone camera at this QR code</p>
+        
+        <div id="qrcode"></div>
+        
+        <div class="room-code-box">
+            <div class="room-code-label">Room Code</div>
+            <div class="room-code" id="roomCode">----</div>
+        </div>
+        
+        <div class="links-section">
+            <div class="link-item">
+                <div class="link-label">✨ Easy Link (Tell Students This!)</div>
+                <div class="link-url convenience-link" id="shortLink">drbakermarketing.com/game</div>
+            </div>
+            
+            <div class="link-item">
+                <div class="link-label">🔗 Full Join Link</div>
+                <div class="link-url" id="fullLink">Loading...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const joinUrl = urlParams.get('url') || '';
+        const roomCode = urlParams.get('room') || '----';
+        
+        // Display room code
+        document.getElementById('roomCode').textContent = roomCode;
+        
+        // Display links
+        document.getElementById('fullLink').textContent = joinUrl;
+        
+        // Determine which short link to show based on the domain
+        const shortLinkEl = document.getElementById('shortLink');
+        if (joinUrl.includes('mktpraxis.com')) {
+            shortLinkEl.textContent = 'mktpraxis.com/game';
+        } else {
+            shortLinkEl.textContent = 'drbakermarketing.com/game';
+        }
+        
+        // Generate large QR code (600x600px)
+        if (joinUrl) {
+            new QRCode(document.getElementById('qrcode'), {
+                text: joinUrl,
+                width: 600,
+                height: 600,
+                colorDark: '#1e293b',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+    </script>
+</body>
+</html>

@@ -3,3 +3,7 @@ http://drbakermarketing.com/* https://drbakermarketing.com/:splat 301!
 http://www.drbakermarketing.com/* https://www.drbakermarketing.com/:splat 301!
 http://mktpraxis.com/* https://mktpraxis.com/:splat 301!
 http://www.mktpraxis.com/* https://www.mktpraxis.com/:splat 301!
+
+# Short game portal redirects for easy student access
+/game              /admin_pages/games/game-join.html    301
+/game.html         /admin_pages/games/game-join.html    301
