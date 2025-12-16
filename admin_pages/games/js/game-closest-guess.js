@@ -126,7 +126,13 @@ function handleRangeSubmitted(message) {
     const feedback = document.getElementById('feedback');
     const numberline = document.getElementById('numberline');
     
-    console.log('handleRangeSubmitted called:', message);
+    console.log('[CLOSEST GUESS] handleRangeSubmitted called:', message);
+    console.log('[CLOSEST GUESS] numberline element:', numberline);
+    
+    if (!numberline) {
+        console.error('[CLOSEST GUESS] Numberline not found in handleRangeSubmitted');
+        return;
+    }
     
     // Track this guess
     submittedGuesses.push({
@@ -212,6 +218,14 @@ function redrawNumberline() {
 function handleGuessResults(message) {
     const feedback = document.getElementById('feedback');
     const numberline = document.getElementById('numberline');
+    
+    console.log('[CLOSEST GUESS] handleGuessResults called');
+    console.log('[CLOSEST GUESS] numberline element:', numberline);
+    
+    if (!numberline) {
+        console.error('[CLOSEST GUESS] Numberline element not found!');
+        return;
+    }
     
     // Hide inputs and submit button to clean up the UI
     const rangeInputs = document.querySelector('.range-inputs');

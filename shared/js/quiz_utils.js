@@ -114,10 +114,10 @@ function getQuizUrl(quizId) {
     
     if (isInApps) {
         // We're in apps/category/tool/ - need to go up 3 levels
-        return `../../../admin_pages/quiz.html?id=${quizId}`;
+        return `../../../admin_pages/quiz/quiz.html?id=${quizId}`;
     } else {
         // We're at root or admin_pages level
-        return `admin_pages/quiz.html?id=${quizId}`;
+        return `admin_pages/quiz/quiz.html?id=${quizId}`;
     }
 }
 

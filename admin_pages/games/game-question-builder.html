@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Question Builder - Dr. Baker Marketing</title>
-    <link rel="stylesheet" href="../../shared/css/styles.css">
+    <title>Praxis Play Question Builder - Dr. Baker Marketing</title>
+    <link rel="icon" type="image/svg+xml" href="../../art_assets/svg_logos/praxisplay_notext_logo.svg">
     <link rel="stylesheet" href="../../shared/css/admin-nav.css">
     <script src="../../shared/js/tracking.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -242,10 +242,24 @@
         }
 
         .alert {
-            padding: 1rem;
+            padding: 1.25rem;
             border-radius: 8px;
             margin-bottom: 1.5rem;
             font-weight: 600;
+            font-size: 1rem;
+            animation: slideDown 0.3s ease-out;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .alert-success {
@@ -361,6 +375,153 @@
 
         .btn-delete:hover {
             background: #dc2626;
+        }
+        
+        .btn-inspect {
+            padding: 0.5rem 0.75rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+            font-size: 1.1rem;
+        }
+        
+        .btn-inspect:hover {
+            background: #2563eb;
+        }
+        
+        /* Inspection Modal Styles */
+        .inspection-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+        
+        .inspection-modal-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .inspection-modal-header {
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .inspection-modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .inspection-modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .inspection-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .inspection-modal-body {
+            padding: 2rem;
+        }
+        
+        .inspection-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .inspection-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .inspection-section-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+        
+        .inspection-field {
+            margin-bottom: 1rem;
+        }
+        
+        .inspection-field-label {
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+        
+        .inspection-field-value {
+            color: #1e293b;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .inspection-field-value.code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+        }
+        
+        .inspection-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        
+        .inspection-badge.easy {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .inspection-badge.medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .inspection-badge.hard {
+            background: #fecaca;
+            color: #991b1b;
         }
 
         .help-text {
@@ -545,10 +706,14 @@
 <body>
     <div id="admin-nav-container"></div>
     <div class="container">
-        <h1>🎮 Game Question Builder</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h1>🎮 Game Question Builder</h1>
+            <div style="display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 0.5rem 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <img src="../../art_assets/svg_logos/praxisplay_notext_logo.svg" alt="Praxis Play" style="width: 24px; height: 24px;">
+                <span style="color: white; font-weight: 600; font-size: 0.9rem;">Praxis Play Tool</span>
+            </div>
+        </div>
         <p class="subtitle">Create questions for Speed Tap, Closest Guess, and Push Range games</p>
-
-        <div id="alertContainer"></div>
 
         <!-- Bulk Upload Section -->
         <div class="bulk-upload-section">
@@ -589,7 +754,7 @@
             </div>
         </div>
 
-        <form id="questionForm">
+        <form id="questionForm" novalidate>
             <!-- Game Type Selection -->
             <div class="form-section">
                 <h2>1️⃣ Select Game Type</h2>
@@ -788,13 +953,78 @@
                 <button type="button" class="btn btn-secondary" onclick="resetForm()">Clear Form</button>
                 <button type="submit" class="btn btn-primary">💾 Save Question</button>
             </div>
+            
+            <!-- Alert messages appear here after save -->
+            <div id="alertContainer"></div>
         </form>
 
         <!-- Saved Questions List -->
         <div class="questions-list">
-            <h2>📚 Your Saved Questions</h2>
-            <div id="questionsList">
-                <p style="color: #64748b; text-align: center; padding: 2rem;">No questions yet. Create your first one above!</p>
+            <h2 onclick="toggleQuestionsList()" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                <span>✏️ Edit Your Saved Minigames</span>
+                <span id="questionsToggleIcon" style="font-size: 1.2rem;">▼</span>
+            </h2>
+            <div id="questionsListContent" style="display: none;">
+                <!-- Search, Filter, and Sort Controls -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <input type="text" id="searchQuestions" placeholder="🔍 Search by question text or tags..." style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem;">
+                    </div>
+                    <div style="min-width: 200px;">
+                        <select id="filterGameType" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; cursor: pointer;">
+                            <option value="">🎮 All Game Types</option>
+                            <option value="speed_tap">⚡ Speed Tap</option>
+                            <option value="crowd_wisdom">🧠 Crowd Wisdom</option>
+                            <option value="word_guess">🔤 Word Guess</option>
+                            <option value="closest_guess">🎯 Closest Guess</option>
+                            <option value="push_range">🔥 Push Range</option>
+                        </select>
+                    </div>
+                    <div style="min-width: 180px;">
+                        <select id="filterDifficulty" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; cursor: pointer;">
+                            <option value="">⭐ All Difficulties</option>
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                    <div style="min-width: 180px;">
+                        <select id="filterVisibility" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; cursor: pointer;">
+                            <option value="all">👥 All Questions</option>
+                            <option value="mine">👤 My Questions</option>
+                            <option value="universal">🌐 Universal</option>
+                        </select>
+                    </div>
+                    <div style="min-width: 200px;">
+                        <select id="sortQuestions" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; cursor: pointer;">
+                            <option value="newest">📅 Newest First</option>
+                            <option value="oldest">📅 Oldest First</option>
+                            <option value="type">🎮 By Game Type</option>
+                            <option value="difficulty">⭐ By Difficulty</option>
+                            <option value="az">🔤 A-Z</option>
+                            <option value="za">🔤 Z-A</option>
+                        </select>
+                    </div>
+                    <button id="clearFiltersBtn" onclick="clearAllFilters()" style="padding: 0.75rem 1.25rem; background: #f1f5f9; color: #475569; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; white-space: nowrap;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                        🔄 Clear Filters
+                    </button>
+                </div>
+                <div id="questionsList">
+                    <p style="color: #64748b; text-align: center; padding: 2rem;">No Minigames yet. Create your first one above!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inspection Modal -->
+    <div id="inspectionModal" class="inspection-modal" onclick="if(event.target === this) closeInspectionModal()">
+        <div class="inspection-modal-content">
+            <div class="inspection-modal-header">
+                <h2>👁️ Question Details</h2>
+                <button class="inspection-modal-close" onclick="closeInspectionModal()">×</button>
+            </div>
+            <div class="inspection-modal-body" id="inspectionModalBody">
+                <!-- Content loaded dynamically -->
             </div>
         </div>
     </div>
@@ -1183,21 +1413,36 @@
                 this.classList.add('selected');
                 selectedGameType = this.dataset.type;
                 
-                // Show/hide game-specific configs
+                // Show/hide game-specific configs and manage required attributes
                 document.querySelectorAll('.game-specific-config').forEach(config => {
                     config.classList.remove('active');
+                    // Disable required validation on hidden fields
+                    config.querySelectorAll('input[required], textarea[required], select[required]').forEach(field => {
+                        field.setAttribute('data-was-required', 'true');
+                        field.removeAttribute('required');
+                    });
                 });
                 
+                // Show the selected config and re-enable required attributes
+                let activeConfig = null;
                 if (selectedGameType === 'speed_tap') {
-                    document.getElementById('speedTapConfig').classList.add('active');
+                    activeConfig = document.getElementById('speedTapConfig');
                 } else if (selectedGameType === 'crowd_wisdom') {
-                    document.getElementById('crowdWisdomConfig').classList.add('active');
+                    activeConfig = document.getElementById('crowdWisdomConfig');
                 } else if (selectedGameType === 'closest_guess') {
-                    document.getElementById('closestGuessConfig').classList.add('active');
+                    activeConfig = document.getElementById('closestGuessConfig');
                 } else if (selectedGameType === 'push_range') {
-                    document.getElementById('pushRangeConfig').classList.add('active');
+                    activeConfig = document.getElementById('pushRangeConfig');
                 } else if (selectedGameType === 'word_guess') {
-                    document.getElementById('wordGuessConfig').classList.add('active');
+                    activeConfig = document.getElementById('wordGuessConfig');
+                }
+                
+                if (activeConfig) {
+                    activeConfig.classList.add('active');
+                    // Re-enable required on visible fields
+                    activeConfig.querySelectorAll('input[data-was-required], textarea[data-was-required], select[data-was-required]').forEach(field => {
+                        field.setAttribute('required', '');
+                    });
                 }
             });
         });
@@ -1406,16 +1651,22 @@
                 const answer = document.getElementById('wordGuessAnswer').value.trim().toUpperCase();
                 const hint = document.getElementById('wordGuessHint').value.trim();
                 
+                // Validate answer exists
+                if (!answer) {
+                    showAlert('⚠️ Word Guess answer is required', 'error');
+                    return;
+                }
+                
                 // Validate answer: only letters and spaces
                 if (!/^[A-Z\s]+$/.test(answer)) {
-                    showAlert('Answer can only contain letters and spaces', 'error');
+                    showAlert(`⚠️ Word Guess answer can only contain letters and spaces. Current answer: "${answer}"`, 'error');
                     return;
                 }
                 
                 // Check minimum character count (excluding spaces)
                 const charCount = answer.replace(/\s/g, '').length;
                 if (charCount < 7) {
-                    showAlert(`Answer must have at least 7 letters (currently ${charCount})`, 'error');
+                    showAlert(`⚠️ Word Guess answer must have at least 7 letters (currently has ${charCount}). Current answer: "${answer}"`, 'error');
                     return;
                 }
                 
@@ -1466,8 +1717,8 @@
                 });
 
                 if (response.ok) {
-                    const questions = await response.json();
-                    displayQuestions(questions);
+                    allQuestions = await response.json();
+                    filterAndSortQuestions();
                 }
             } catch (error) {
                 console.error('Error loading questions:', error);
@@ -1503,12 +1754,215 @@
                             </div>
                         </div>
                         <div class="actions">
+                            <button class="btn-inspect" onclick="inspectQuestion(${q.id})" title="View full details">👁️</button>
                             <button class="btn-edit" onclick="editQuestion(${q.id})">Edit</button>
                             <button class="btn-delete" onclick="deleteQuestion(${q.id})">Delete</button>
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        async function inspectQuestion(id) {
+            try {
+                const response = await fetch(`${API_BASE}/game-questions/${id}/`, {
+                    headers: {
+                        'Authorization': `Token ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const question = await response.json();
+                    showInspectionModal(question);
+                } else {
+                    showAlert('Error loading question details', 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+        }
+
+        function showInspectionModal(question) {
+            const modal = document.getElementById('inspectionModal');
+            const body = document.getElementById('inspectionModalBody');
+            
+            // Format game type label
+            const gameTypeLabels = {
+                'speed_tap': '⚡ Speed Tap',
+                'crowd_wisdom': '🧠 Crowd Wisdom',
+                'word_guess': '🔤 Word Guess',
+                'closest_guess': '🎯 Closest Guess',
+                'push_range': '🔥 Push Range'
+            };
+            const gameTypeLabel = gameTypeLabels[question.game_type] || question.game_type;
+            
+            // Format dates
+            const createdDate = new Date(question.created_at).toLocaleString();
+            const updatedDate = new Date(question.updated_at).toLocaleString();
+            
+            // Build game-specific details
+            let gameSpecificHTML = '';
+            
+            if (question.game_type === 'speed_tap' && question.game_config.options) {
+                const correctIndex = question.game_config.correct_option_index;
+                gameSpecificHTML = `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Options</div>
+                        <div class="inspection-field-value">
+                            ${question.game_config.options.map((opt, i) => 
+                                `${i + 1}. ${opt} ${i === correctIndex ? '<strong style="color: #10b981;">(✓ Correct)</strong>' : ''}`
+                            ).join('<br>')}
+                        </div>
+                    </div>
+                `;
+            } else if (question.game_type === 'crowd_wisdom' && question.game_config.options) {
+                const correctIndex = question.game_config.correct_option_index;
+                gameSpecificHTML = `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Options</div>
+                        <div class="inspection-field-value">
+                            ${question.game_config.options.map((opt, i) => 
+                                `${i + 1}. ${opt} ${i === correctIndex ? '<strong style="color: #10b981;">(✓ Correct)</strong>' : ''}`
+                            ).join('<br>')}
+                        </div>
+                    </div>
+                `;
+            } else if (question.game_type === 'closest_guess') {
+                gameSpecificHTML = `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Range</div>
+                        <div class="inspection-field-value">
+                            Min: ${question.game_config.min_value} | Max: ${question.game_config.max_value}
+                        </div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Correct Value</div>
+                        <div class="inspection-field-value">
+                            <strong style="color: #10b981;">${question.game_config.correct_value}</strong>
+                        </div>
+                    </div>
+                    ${question.game_config.max_range_width ? `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Max Range Width</div>
+                        <div class="inspection-field-value">${question.game_config.max_range_width}</div>
+                    </div>
+                    ` : ''}
+                `;
+            } else if (question.game_type === 'push_range') {
+                gameSpecificHTML = `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Correct Value</div>
+                        <div class="inspection-field-value">
+                            <strong style="color: #10b981;">${question.game_config.correct_value}%</strong>
+                        </div>
+                    </div>
+                    ${question.game_config.target_zone_start || question.game_config.target_zone_end ? `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Target Zone</div>
+                        <div class="inspection-field-value">
+                            ${question.game_config.target_zone_start || 0}% - ${question.game_config.target_zone_end || 100}%
+                        </div>
+                    </div>
+                    ` : ''}
+                `;
+            } else if (question.game_type === 'word_guess') {
+                gameSpecificHTML = `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Answer</div>
+                        <div class="inspection-field-value">
+                            <strong style="color: #10b981; font-size: 1.2rem; letter-spacing: 0.1em;">${question.game_config.answer}</strong>
+                        </div>
+                    </div>
+                    ${question.game_config.hint ? `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Hint</div>
+                        <div class="inspection-field-value">${question.game_config.hint}</div>
+                    </div>
+                    ` : ''}
+                `;
+            }
+            
+            body.innerHTML = `
+                <!-- Metainformation Section -->
+                <div class="inspection-section">
+                    <div class="inspection-section-title">📋 Metainformation</div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Question ID</div>
+                        <div class="inspection-field-value">${question.id}</div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Game Type</div>
+                        <div class="inspection-field-value">${gameTypeLabel}</div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Difficulty</div>
+                        <div class="inspection-field-value">
+                            <span class="inspection-badge ${question.difficulty}">${question.difficulty.toUpperCase()}</span>
+                        </div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Time Limit</div>
+                        <div class="inspection-field-value">${question.time_limit_seconds} seconds</div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Tags</div>
+                        <div class="inspection-field-value">${question.tags || '<em style="color: #94a3b8;">No tags</em>'}</div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Created By</div>
+                        <div class="inspection-field-value">${question.created_by_username || 'Unknown'}</div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Created At</div>
+                        <div class="inspection-field-value">${createdDate}</div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Last Updated</div>
+                        <div class="inspection-field-value">${updatedDate}</div>
+                    </div>
+                </div>
+                
+                <!-- Question Content Section -->
+                <div class="inspection-section">
+                    <div class="inspection-section-title">❓ Question Content</div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Question Text</div>
+                        <div class="inspection-field-value" style="font-size: 1.1rem; font-weight: 500;">${question.question_text}</div>
+                    </div>
+                    ${question.image_url ? `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Image URL</div>
+                        <div class="inspection-field-value">
+                            <a href="${question.image_url}" target="_blank" style="color: #3b82f6; text-decoration: underline;">${question.image_url}</a>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <!-- Game-Specific Details Section -->
+                <div class="inspection-section">
+                    <div class="inspection-section-title">🎮 Game-Specific Details</div>
+                    ${gameSpecificHTML}
+                </div>
+                
+                <!-- Raw Config Section -->
+                <div class="inspection-section">
+                    <div class="inspection-section-title">⚙️ Raw Configuration</div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">game_config (JSON)</div>
+                        <div class="inspection-field-value code">${JSON.stringify(question.game_config, null, 2)}</div>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeInspectionModal() {
+            const modal = document.getElementById('inspectionModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
         }
 
         async function deleteQuestion(id) {
@@ -1677,9 +2131,146 @@
             }, 5000);
         }
 
+        // Toggle questions list visibility
+        function toggleQuestionsList() {
+            const content = document.getElementById('questionsListContent');
+            const icon = document.getElementById('questionsToggleIcon');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.textContent = '▲';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '▼';
+            }
+        }
+
+        // Store original questions for filtering/sorting
+        let allQuestions = [];
+
+        // Search and filter questions
+        function filterAndSortQuestions() {
+            const searchTerm = document.getElementById('searchQuestions').value.toLowerCase();
+            const filterType = document.getElementById('filterGameType').value;
+            const filterDiff = document.getElementById('filterDifficulty').value;
+            const filterVis = document.getElementById('filterVisibility').value;
+            const sortBy = document.getElementById('sortQuestions').value;
+            
+            let filtered = allQuestions.filter(q => {
+                // Search filter
+                const questionText = (q.question_text || '').toLowerCase();
+                const tags = (q.tags || '').toLowerCase();
+                const matchesSearch = !searchTerm || questionText.includes(searchTerm) || tags.includes(searchTerm);
+                
+                // Game type filter
+                const matchesType = !filterType || q.game_type === filterType;
+                
+                // Difficulty filter
+                const matchesDiff = !filterDiff || q.difficulty === filterDiff;
+                
+                // Visibility filter
+                const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+                const currentUserId = userData.id;
+                const isMyQuestion = q.created_by === currentUserId;
+                const isUniversal = q.is_universal === true;
+                
+                let matchesVis = true;
+                if (filterVis === 'mine') {
+                    matchesVis = isMyQuestion;
+                } else if (filterVis === 'universal') {
+                    matchesVis = isUniversal;
+                }
+                // 'all' means no filter
+                
+                return matchesSearch && matchesType && matchesDiff && matchesVis;
+            });
+            
+            // Sort filtered results
+            filtered.sort((a, b) => {
+                switch(sortBy) {
+                    case 'newest':
+                        return new Date(b.created_at) - new Date(a.created_at);
+                    case 'oldest':
+                        return new Date(a.created_at) - new Date(b.created_at);
+                    case 'type':
+                        return (a.game_type || '').localeCompare(b.game_type || '');
+                    case 'difficulty':
+                        const diffOrder = { easy: 1, medium: 2, hard: 3 };
+                        return (diffOrder[a.difficulty] || 2) - (diffOrder[b.difficulty] || 2);
+                    case 'az':
+                        return (a.question_text || '').localeCompare(b.question_text || '');
+                    case 'za':
+                        return (b.question_text || '').localeCompare(a.question_text || '');
+                    default:
+                        return 0;
+                }
+            });
+            
+            displayQuestions(filtered);
+        }
+        
+        // Clear all filters function
+        function clearAllFilters() {
+            document.getElementById('searchQuestions').value = '';
+            document.getElementById('filterGameType').value = '';
+            document.getElementById('filterDifficulty').value = '';
+            document.getElementById('filterVisibility').value = 'all';
+            document.getElementById('sortQuestions').value = 'newest';
+            filterAndSortQuestions();
+        }
+
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Disable required on all hidden game-specific fields
+            document.querySelectorAll('.game-specific-config').forEach(config => {
+                if (!config.classList.contains('active')) {
+                    config.querySelectorAll('input[required], textarea[required], select[required]').forEach(field => {
+                        field.setAttribute('data-was-required', 'true');
+                        field.removeAttribute('required');
+                    });
+                }
+            });
+        });
+
         // Load questions on page load
         loadQuestions();
+
+        // Add event listeners for search, filter, and sort
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchQuestions');
+            const filterTypeSelect = document.getElementById('filterGameType');
+            const filterDiffSelect = document.getElementById('filterDifficulty');
+            const filterVisSelect = document.getElementById('filterVisibility');
+            const sortSelect = document.getElementById('sortQuestions');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', filterAndSortQuestions);
+            }
+            
+            if (filterTypeSelect) {
+                filterTypeSelect.addEventListener('change', filterAndSortQuestions);
+            }
+            
+            if (filterDiffSelect) {
+                filterDiffSelect.addEventListener('change', filterAndSortQuestions);
+            }
+            
+            if (filterVisSelect) {
+                filterVisSelect.addEventListener('change', filterAndSortQuestions);
+            }
+            
+            if (sortSelect) {
+                sortSelect.addEventListener('change', filterAndSortQuestions);
+            }
+        });
     </script>
     <script src="../../shared/js/admin-nav.js"></script>
+    <footer style="text-align: center; padding: 2rem 1rem; color: rgba(255,255,255,0.8); font-size: 0.9rem;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <img src="../../art_assets/svg_logos/praxisplay_notext_logo.svg" alt="Praxis Play" style="width: 20px; height: 20px; opacity: 0.8;">
+            <span>Powered by <strong>Praxis Play</strong></span>
+        </div>
+        <div style="opacity: 0.7; font-size: 0.85rem;">Dr. Baker Marketing | Engaging Analytics Education</div>
+    </footer>
 </body>
 </html>

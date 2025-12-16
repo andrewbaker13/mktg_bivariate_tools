@@ -53,12 +53,16 @@ function showWordGuessGame(message, timeLimit) {
     
     const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 25vh; margin: 0.5rem auto; border-radius: 8px; display: block; object-fit: contain;">` : '';
     
+    const questionSize = window.isProjectorMode ? '56px' : '1.1rem';
+    const hintColor = window.isProjectorMode ? 'white' : '#64748b';
+    const hintSize = window.isProjectorMode ? '40px' : '1rem';
+    
     document.getElementById('gameArea').innerHTML = `
         <div class="word-guess-area">
             <div class="question-display">
-                <div class="question-text">${message.question_text}</div>
+                <div class="question-text" style="font-size: ${questionSize};">${message.question_text}</div>
                 ${imageHTML}
-                ${hint ? `<div style="color: #64748b; font-style: italic; margin-top: 10px;">Hint: ${hint}</div>` : ''}
+                ${hint ? `<div class="hint-text" style="color: ${hintColor}; font-style: italic; margin-top: 10px; font-size: ${hintSize}; font-weight: 600;">Hint: ${hint}</div>` : ''}
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
                     <div class="timer" id="timer">${timeLimit}</div>
                     <div style="font-size: 24px; font-weight: 700; color: #10b981;" id="availablePoints">100 pts</div>
@@ -249,8 +253,8 @@ function submitWordGuess() {
     if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
     
     const input = document.getElementById('wordGuessInput');
-    // Normalize: Trim whitespace, replace multiple spaces with single space
-    const answer = input.value.toUpperCase().replace(/[^A-Z ]/g, '').trim().replace(/\s+/g, ' ');
+    // Normalize: Remove all spaces (spaces don't matter for answer checking)
+    const answer = input.value.toUpperCase().replace(/[^A-Z ]/g, '').replace(/ /g, '').trim();
     
     // Validate length - ensure at least 2 characters
     if (answer.length < 2) {
@@ -282,14 +286,19 @@ function submitWordGuess() {
 }
 
 function handleWordGuessReveal(message) {
+    console.log('[WORD GUESS] Received reveal message:', message);
+    
     // Update revealed letters
     const revealedLetters = message.revealed_letters || [];
+    console.log('[WORD GUESS] Revealing', revealedLetters.length, 'letters:', revealedLetters);
+    
     revealedLetters.forEach(item => {
         const index = item.index;
         const letter = item.letter;
         wordGuessState.revealedIndices.add(index);
         
         const revealedEl = document.getElementById(`revealedLetter${index}`);
+        console.log(`[WORD GUESS] Letter ${index}: element found=${!!revealedEl}, letter='${letter}'`);
         if (revealedEl) {
             revealedEl.textContent = letter;
         }
@@ -300,6 +309,8 @@ function handleWordGuessReveal(message) {
             playerEl.textContent = '';
         }
     });
+    
+    console.log('[WORD GUESS] Total revealed indices:', wordGuessState.revealedIndices.size);
 }
 
 function handleWordGuessResult(message) {
@@ -379,34 +390,8 @@ function startWordGuessTimer(seconds, startTime) {
             availablePointsEl.textContent = `${points} pts`;
         }
         
-        // Client-side letter reveal logic
-        // Only if we have the answer and haven't revealed everything
-        if (wordGuessState.answer && remaining < nextRevealTime && remaining > 0) {
-            nextRevealTime -= revealInterval;
-            
-            // Find an unrevealed index
-            const unrevealedIndices = [];
-            const answerFull = wordGuessState.answer.toUpperCase().replace(/ /g, '');
-            for (let i = 0; i < answerFull.length; i++) {
-                if (!wordGuessState.revealedIndices.has(i)) {
-                    unrevealedIndices.push(i);
-                }
-            }
-            
-            if (unrevealedIndices.length > 0) {
-                // Pick random index
-                const randomIndex = unrevealedIndices[Math.floor(Math.random() * unrevealedIndices.length)];
-                const letter = answerFull[randomIndex];
-                
-                // Simulate reveal message
-                handleWordGuessReveal({
-                    revealed_letters: [{
-                        index: randomIndex,
-                        letter: letter
-                    }]
-                });
-            }
-        }
+        // Timer update only - letter reveals come from server via word_guess_reveal messages
+        // No client-side randomization to ensure all players see the same letters
         
         if (remaining <= 0) {
             clearInterval(timerInterval);

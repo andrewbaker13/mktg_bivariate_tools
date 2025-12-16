@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Template Builder - Marketing Analytics Tools</title>
+    <title>Praxis Play Template Builder - Dr. Baker Marketing</title>
+    <link rel="icon" type="image/svg+xml" href="../../art_assets/svg_logos/praxisplay_notext_logo.svg">
     <link rel="stylesheet" href="../../shared/css/main.css">
     <script src="../../shared/js/tracking.js"></script>
     <link rel="stylesheet" href="../../shared/css/admin-nav.css">
@@ -49,6 +50,7 @@
             padding: 0.75rem 1.5rem;
             border: 2px solid #e2e8f0;
             background: white;
+            color: #1e293b;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
@@ -57,6 +59,7 @@
         .mode-btn:hover {
             border-color: #3b82f6;
             background: #eff6ff;
+            color: #1e40af;
         }
         .mode-btn.active {
             background: #3b82f6;
@@ -193,8 +196,10 @@
             background: #f8fafc;
             border: 2px solid #e2e8f0;
             border-radius: 8px;
-            cursor: pointer;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
         .question-card:hover {
             border-color: #3b82f6;
@@ -275,6 +280,152 @@
         .remove-btn:hover {
             background: #dc2626;
         }
+        .inspect-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-right: 0.5rem;
+        }
+        .inspect-btn:hover {
+            background: #2563eb;
+        }
+        
+        /* Inspection Modal Styles */
+        .inspection-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+        
+        .inspection-modal-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .inspection-modal-header {
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .inspection-modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .inspection-modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .inspection-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .inspection-modal-body {
+            padding: 2rem;
+        }
+        
+        .inspection-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .inspection-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .inspection-section-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+        
+        .inspection-field {
+            margin-bottom: 1rem;
+        }
+        
+        .inspection-field-label {
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+        
+        .inspection-field-value {
+            color: #1e293b;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .inspection-field-value.code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+        }
+        
+        .inspection-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        
+        .inspection-badge.easy {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .inspection-badge.medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .inspection-badge.hard {
+            background: #fecaca;
+            color: #991b1b;
+        }
+        
         .template-form {
             padding-top: 1rem;
             border-top: 2px solid #e2e8f0;
@@ -350,7 +501,13 @@
     <div class="builder-container">
         <div class="builder-header">
             <a href="game-host.html" class="back-btn">← Back to Game Host</a>
-            <h1>🎯 Game Template Builder</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>🎯 Game Template Builder</h1>
+                <div style="display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 0.5rem 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <img src="../../art_assets/svg_logos/praxisplay_notext_logo.svg" alt="Praxis Play" style="width: 24px; height: 24px;">
+                    <span style="color: white; font-weight: 600; font-size: 0.9rem;">Praxis Play Tool</span>
+                </div>
+            </div>
             <p>Create, edit, or copy game templates by selecting and ordering minigames from your question bank.</p>
             
             <div style="display: flex; gap: 1rem; margin-top: 1rem;">
@@ -613,7 +770,7 @@
         // Load all questions
         async function loadQuestions() {
             try {
-                const response = await fetch(`${API_BASE}/game-questions/`, {
+                const response = await fetch(`${API_BASE}/game-questions/?include_all=true`, {
                     headers: {'Authorization': `Token ${token}`}
                 });
                 allQuestions = await response.json();
@@ -671,8 +828,9 @@
                 const gameTypeLabel = GAME_TYPE_LABELS[q.game_type] || q.game_type;
 
                 return `
-                <div class="question-card" onclick="addQuestion(${q.id})">
-                    <div class="question-text">${q.question_text}</div>
+                <div class="question-card">
+                    <div class="question-text" onclick="addQuestion(${q.id})" style="cursor: pointer; flex: 1;">${q.question_text}</div>
+                    <button class="inspect-btn" onclick="event.stopPropagation(); inspectQuestion(${q.id})" title="View full details">👁️</button>
                     <div class="question-meta">
                         <span>🎮 ${gameTypeLabel}</span>
                         <span>📘 ${courseLabel}</span>
@@ -732,6 +890,7 @@
                         <div class="item-text">${q.question_text.substring(0, 60)}${q.question_text.length > 60 ? '...' : ''}</div>
                         <div class="item-type">🎮 ${gameTypeLabel}</div>
                     </div>
+                    <button class="inspect-btn" onclick="event.stopPropagation(); inspectQuestion(${q.id})" title="View full details">👁️</button>
                     <button class="remove-btn" onclick="removeQuestion(${index})">✕</button>
                 </div>
             `;
@@ -852,10 +1011,225 @@
         document.getElementById('gameTypeFilter').addEventListener('change', renderQuestions);
         document.getElementById('courseFilter').addEventListener('change', renderQuestions);
 
+        // Inspection modal functions
+        async function inspectQuestion(questionId) {
+            try {
+                const response = await fetch(`${API_BASE}/game-questions/${questionId}/`, {
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                
+                if (response.ok) {
+                    const question = await response.json();
+                    showInspectionModal(question);
+                } else {
+                    alert('Error loading question details');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function showInspectionModal(question) {
+            const modal = document.getElementById('inspectionModal');
+            const body = document.getElementById('inspectionModalBody');
+            
+            // Format game type label
+            const gameTypeLabel = GAME_TYPE_LABELS[question.game_type] || question.game_type;
+            
+            // Format dates
+            const createdDate = new Date(question.created_at).toLocaleString();
+            const updatedDate = new Date(question.updated_at).toLocaleString();
+            
+            // Build game-specific details
+            let gameSpecificHTML = '';
+            
+            if (question.game_type === 'speed_tap' && question.game_config.options) {
+                const correctIndex = question.game_config.correct_option_index;
+                gameSpecificHTML = `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Options</div>
+                        <div class="inspection-field-value">
+                            ${question.game_config.options.map((opt, i) => 
+                                `${i + 1}. ${opt} ${i === correctIndex ? '<strong style="color: #10b981;">(✓ Correct)</strong>' : ''}`
+                            ).join('<br>')}
+                        </div>
+                    </div>
+                `;
+            } else if (question.game_type === 'crowd_wisdom' && question.game_config.options) {
+                const correctIndex = question.game_config.correct_option_index;
+                gameSpecificHTML = `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Options</div>
+                        <div class="inspection-field-value">
+                            ${question.game_config.options.map((opt, i) => 
+                                `${i + 1}. ${opt} ${i === correctIndex ? '<strong style="color: #10b981;">(✓ Correct)</strong>' : ''}`
+                            ).join('<br>')}
+                        </div>
+                    </div>
+                `;
+            } else if (question.game_type === 'closest_guess') {
+                gameSpecificHTML = `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Range</div>
+                        <div class="inspection-field-value">
+                            Min: ${question.game_config.min_value} | Max: ${question.game_config.max_value}
+                        </div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Correct Value</div>
+                        <div class="inspection-field-value">
+                            <strong style="color: #10b981;">${question.game_config.correct_value}</strong>
+                        </div>
+                    </div>
+                    ${question.game_config.max_range_width ? `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Max Range Width</div>
+                        <div class="inspection-field-value">${question.game_config.max_range_width}</div>
+                    </div>
+                    ` : ''}
+                `;
+            } else if (question.game_type === 'push_range') {
+                gameSpecificHTML = `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Correct Value</div>
+                        <div class="inspection-field-value">
+                            <strong style="color: #10b981;">${question.game_config.correct_value}%</strong>
+                        </div>
+                    </div>
+                    ${question.game_config.target_zone_start || question.game_config.target_zone_end ? `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Target Zone</div>
+                        <div class="inspection-field-value">
+                            ${question.game_config.target_zone_start || 0}% - ${question.game_config.target_zone_end || 100}%
+                        </div>
+                    </div>
+                    ` : ''}
+                `;
+            } else if (question.game_type === 'word_guess') {
+                gameSpecificHTML = `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Answer</div>
+                        <div class="inspection-field-value">
+                            <strong style="color: #10b981; font-size: 1.2rem; letter-spacing: 0.1em;">${question.game_config.answer}</strong>
+                        </div>
+                    </div>
+                    ${question.game_config.hint ? `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Hint</div>
+                        <div class="inspection-field-value">${question.game_config.hint}</div>
+                    </div>
+                    ` : ''}
+                `;
+            }
+            
+            body.innerHTML = `
+                <!-- Metainformation Section -->
+                <div class="inspection-section">
+                    <div class="inspection-section-title">📋 Metainformation</div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Question ID</div>
+                        <div class="inspection-field-value">${question.id}</div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Game Type</div>
+                        <div class="inspection-field-value">${gameTypeLabel}</div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Difficulty</div>
+                        <div class="inspection-field-value">
+                            <span class="inspection-badge ${question.difficulty}">${question.difficulty.toUpperCase()}</span>
+                        </div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Time Limit</div>
+                        <div class="inspection-field-value">${question.time_limit_seconds} seconds</div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Tags</div>
+                        <div class="inspection-field-value">${question.tags || '<em style="color: #94a3b8;">No tags</em>'}</div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Created By</div>
+                        <div class="inspection-field-value">${question.created_by_username || 'Unknown'}</div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Created At</div>
+                        <div class="inspection-field-value">${createdDate}</div>
+                    </div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Last Updated</div>
+                        <div class="inspection-field-value">${updatedDate}</div>
+                    </div>
+                </div>
+                
+                <!-- Question Content Section -->
+                <div class="inspection-section">
+                    <div class="inspection-section-title">❓ Question Content</div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Question Text</div>
+                        <div class="inspection-field-value" style="font-size: 1.1rem; font-weight: 500;">${question.question_text}</div>
+                    </div>
+                    ${question.image_url ? `
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">Image URL</div>
+                        <div class="inspection-field-value">
+                            <a href="${question.image_url}" target="_blank" style="color: #3b82f6; text-decoration: underline;">${question.image_url}</a>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <!-- Game-Specific Details Section -->
+                <div class="inspection-section">
+                    <div class="inspection-section-title">🎮 Game-Specific Details</div>
+                    ${gameSpecificHTML}
+                </div>
+                
+                <!-- Raw Config Section -->
+                <div class="inspection-section">
+                    <div class="inspection-section-title">⚙️ Raw Configuration</div>
+                    <div class="inspection-field">
+                        <div class="inspection-field-label">game_config (JSON)</div>
+                        <div class="inspection-field-value code">${JSON.stringify(question.game_config, null, 2)}</div>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeInspectionModal() {
+            const modal = document.getElementById('inspectionModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
         // Initialize
         loadCourses();
         loadQuestions();
     </script>
+    
+    <!-- Inspection Modal -->
+    <div id="inspectionModal" class="inspection-modal" onclick="if(event.target === this) closeInspectionModal()">
+        <div class="inspection-modal-content">
+            <div class="inspection-modal-header">
+                <h2>👁️ Question Details</h2>
+                <button class="inspection-modal-close" onclick="closeInspectionModal()">×</button>
+            </div>
+            <div class="inspection-modal-body" id="inspectionModalBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+    
     <script src="../../shared/js/admin-nav.js"></script>
+    <footer style="text-align: center; padding: 2rem 1rem; color: rgba(255,255,255,0.8); font-size: 0.9rem;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <img src="../../art_assets/svg_logos/praxisplay_notext_logo.svg" alt="Praxis Play" style="width: 20px; height: 20px; opacity: 0.8;">
+            <span>Powered by <strong>Praxis Play</strong></span>
+        </div>
+        <div style="opacity: 0.7; font-size: 0.85rem;">Dr. Baker Marketing | Engaging Analytics Education</div>
+    </footer>
 </body>
 </html>

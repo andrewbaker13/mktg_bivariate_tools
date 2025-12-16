@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Host Game - Marketing Analytics Tools</title>
+    <title>Host Praxis Play - Dr. Baker Marketing</title>
+    <link rel="icon" type="image/svg+xml" href="../../art_assets/svg_logos/praxisplay_notext_logo.svg">
     <link rel="stylesheet" href="../../shared/css/main.css">
     <script src="../../shared/js/tracking.js"></script>
     <link rel="stylesheet" href="../../shared/css/admin-nav.css">
@@ -88,6 +89,20 @@
             padding: 0.5rem;
             background: white;
             border-radius: 4px;
+            position: relative;
+        }
+        .qr-logo-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 38px;
+            height: 38px;
+            background: white;
+            padding: 4px;
+            border-radius: 0;
+            box-shadow: 0 0 0 3px white;
+            pointer-events: none;
         }
         .qr-code-container p {
             color: #1e293b;
@@ -150,7 +165,7 @@
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
-            color: #334155;
+            color: #1e293b;
         }
         .form-group select, .form-group input {
             width: 100%;
@@ -384,50 +399,30 @@
     <div id="admin-nav-container"></div>
     <div class="host-container">
         <div class="host-header">
-            <!-- Active Games Management -->
-            <div id="activeGamesSection" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                    <div style="flex: 1; min-width: 250px;">
-                        <label for="activeGameSelect" style="display: block; font-weight: 600; color: #1e40af; margin-bottom: 0.5rem;">
-                            🔴 Resume Active Game
-                        </label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <select id="activeGameSelect" style="flex: 1; padding: 0.5rem; border: 1px solid #93c5fd; border-radius: 6px;">
-                                <option value="">Select a running game...</option>
-                            </select>
-                            <button id="resumeGameBtn" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;" disabled>
-                                Resume
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                        <button id="cleanupGamesBtn" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.9rem; background: #ef4444;">
-                            🗑️ End Old Games (>24h)
-                        </button>
-                    </div>
+            <!-- Praxis Play Branding & Room Code Display -->
+            <div style="display: flex; align-items: flex-start; gap: 2rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                <!-- Logo on Left -->
+                <div style="flex-shrink: 0;">
+                    <img src="../../art_assets/svg_logos/praxisplay_main_logo.svg" alt="Praxis Play" style="width: 160px; display: block;">
                 </div>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-                <a href="game-history.html" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #f1f5f9; color: #475569; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;">
-                    <span>📜</span> View Game History
-                </a>
-            </div>
-            <div class="room-code-display">
-                <div class="info-row">
-                    <p style="margin: 0;">Students join at: <span id="joinLinkDisplay">https://drbakermarketing.com/admin_pages/games/game-join.html</span></p>
-                    <button class="copy-btn" id="copyJoinLinkBtn">Copy Link</button>
-                </div>
-                <div class="code-row">
-                    <h1 id="roomCodeDisplay">----</h1>
-                    <button class="copy-btn" id="copyRoomCodeBtn" disabled>Copy Code</button>
-                </div>
-                <p style="margin-top: 0.5rem;">Room Code</p>
                 
-                <!-- QR Code -->
-                <div class="qr-code-container" id="qrCodeContainer" style="display: none;">
-                    <div id="qrcode"></div>
-                    <p>📱 Scan to join game</p>
+                <!-- Room Code Display on Right -->
+                <div class="room-code-display" style="flex: 1; min-width: 300px;">
+                    <div class="info-row">
+                        <p style="margin: 0;">Students join at: <span id="joinLinkDisplay">https://drbakermarketing.com/admin_pages/games/game-join.html</span></p>
+                        <button class="copy-btn" id="copyJoinLinkBtn">Copy Link</button>
+                    </div>
+                    <div class="code-row">
+                        <h1 id="roomCodeDisplay">----</h1>
+                        <button class="copy-btn" id="copyRoomCodeBtn" disabled>Copy Code</button>
+                    </div>
+                    <p style="margin-top: 0.5rem;">Room Code</p>
+                    
+                    <!-- QR Code -->
+                    <div class="qr-code-container" id="qrCodeContainer" style="display: none;">
+                        <div id="qrcode"></div>
+                        <p>📱 Scan to join game</p>
+                    </div>
                 </div>
             </div>
             
@@ -472,7 +467,7 @@
                 <div id="gameSettingsContent" style="font-size: 0.813rem; color: #475569; line-height: 1.6;"></div>
             </div>
             
-            <div class="connection-pill" id="connectionStatus">WS: Idle</div>
+            <div class="connection-pill" id="connectionStatus">⚫ Ready</div>
         </div>
 
         <div class="main-content">
@@ -484,7 +479,7 @@
                 <div id="setupSection">
                     <!-- Header -->
                     <div style="margin-bottom: 1.5rem;">
-                        <h3 style="margin: 0 0 0.5rem 0; color: #1e293b;">🎯 Create Game Session</h3>
+                        <h3 style="margin: 0 0 0.5rem 0; color: #1e293b;">🎯 Create Praxis Play Session</h3>
                         <p style="margin: 0; color: #64748b; font-size: 0.875rem;">Select a game template, configure settings, and start hosting</p>
                     </div>
 
@@ -533,8 +528,8 @@
                     <!-- Template Selection -->
                     <div id="templateMode" style="margin-top: 1.5rem;">
                         <div class="alert alert-info">
-                            <strong>🎮 Game Templates:</strong> Templates contain one or more mini-games that students play through in sequence with cumulative scoring.
-                            <a href="game-template-builder.html" style="color: white; font-weight: 700; text-decoration: underline; display: block; margin-top: 0.5rem;">
+                            <strong>🎮 Praxis Play Templates:</strong> Templates contain one or more mini-games that students play through in sequence with cumulative scoring.
+                            <a href="game-template-builder.html" style="display: inline-block; margin-top: 0.5rem; padding: 0.5rem 1rem; background: white; color: #1e40af; font-weight: 600; text-decoration: none; border-radius: 6px; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'">
                                 ➕ Create New Template
                             </a>
                         </div>
@@ -701,9 +696,78 @@
                 <div class="players-list" id="playersList"></div>
             </div>
         </div>
+
+        <!-- Game Management Card (separate card below) -->
+        <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); margin-top: 2rem;">
+            <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e2e8f0;">
+                <h2 style="margin: 0; color: #1e293b;">Game Management</h2>
+            </div>
+            
+            <!-- Projector View Button -->
+            <div id="projectorButtonContainer" style="margin-bottom: 1rem; display: none;">
+                <button id="openProjectorBtn" onclick="openProjectorView()" style="width: 100%; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(102, 126, 234, 0.3)'">
+                    🖥️ Open Projector View
+                </button>
+            </div>
+            
+            <!-- View Game History -->
+            <div style="margin-bottom: 1rem;">
+                <a href="game-history.html" style="display: block; text-align: center; padding: 0.75rem 1.5rem; background: #f1f5f9; color: #475569; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                    <span>📜</span> View Game History
+                </a>
+            </div>
+
+            <!-- Active Games Management -->
+            <div id="activeGamesSection" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px;">
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div>
+                        <label for="activeGameSelect" style="display: block; font-weight: 600; color: #1e40af; margin-bottom: 0.5rem;">
+                            🔴 Resume Active Game
+                        </label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <select id="activeGameSelect" style="flex: 1; padding: 0.5rem; border: 1px solid #93c5fd; border-radius: 6px;">
+                                <option value="">Select a running game...</option>
+                            </select>
+                            <button id="resumeGameBtn" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.9rem;" disabled>
+                                Resume
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <button id="cleanupGamesBtn" class="btn btn-danger" style="width: 100%; padding: 0.5rem 1rem; font-size: 0.9rem; background: #ef4444;">
+                            🗑️ End Old Games
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Cleanup Games Modal -->
+    <div id="cleanupModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <h2 style="margin: 0 0 1rem 0; color: #1e293b; font-size: 1.5rem;">🗑️ End Old Games</h2>
+            <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.95rem;">Select the age threshold to end your old games:</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button onclick="cleanupGamesByAge(2)" style="padding: 1rem; background: #fef3c7; color: #92400e; border: 2px solid #fbbf24; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.2s;" onmouseover="this.style.background='#fde68a'" onmouseout="this.style.background='#fef3c7'">
+                    ⏰ Older than 2 hours
+                </button>
+                <button onclick="cleanupGamesByAge(24)" style="padding: 1rem; background: #fed7aa; color: #7c2d12; border: 2px solid #fb923c; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.2s;" onmouseover="this.style.background='#fdba74'" onmouseout="this.style.background='#fed7aa'">
+                    📅 Older than 24 hours
+                </button>
+                <button onclick="cleanupGamesByAge(168)" style="padding: 1rem; background: #fecaca; color: #7f1d1d; border: 2px solid #f87171; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.2s;" onmouseover="this.style.background='#fca5a5'" onmouseout="this.style.background='#fecaca'">
+                    🗓️ Older than 1 week
+                </button>
+            </div>
+            
+            <button onclick="closeCleanupModal()" style="margin-top: 1rem; padding: 0.75rem; width: 100%; background: #f1f5f9; color: #475569; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">
+                Cancel
+            </button>
+        </div>
+    </div>
 
     <script src="../../shared/js/api-config.js"></script>
     <script>
@@ -837,6 +901,15 @@
                     correctLevel: QRCode.CorrectLevel.M
                 });
                 
+                // Add Praxis Play logo overlay
+                setTimeout(() => {
+                    const logo = document.createElement('img');
+                    logo.src = '../../art_assets/svg_logos/praxisplay_notext_logo.svg';
+                    logo.alt = 'Praxis Play';
+                    logo.className = 'qr-logo-overlay';
+                    qrCodeDiv.appendChild(logo);
+                }, 100);
+                
                 // Show QR container
                 qrContainer.style.display = 'flex';
             } else {
@@ -860,11 +933,11 @@
             if (!connectionStatusEl) return;
             connectionStatusEl.className = `connection-pill ${state || ''}`;
             const labels = {
-                connected: 'WS: Connected',
-                connecting: 'WS: Connecting…',
-                disconnected: 'WS: Disconnected'
+                connected: '🟢 Live',
+                connecting: '🟡 Connecting…',
+                disconnected: '🔴 Disconnected'
             };
-            connectionStatusEl.textContent = labelOverride || labels[state] || 'WS: Idle';
+            connectionStatusEl.textContent = labelOverride || labels[state] || '⚫ Ready';
         }
 
         document.getElementById('joinLinkDisplay').textContent = JOIN_URL;
@@ -1249,6 +1322,9 @@
                 
                 document.getElementById('setupSection').style.display = 'none';
                 document.getElementById('gameSection').style.display = 'block';
+                
+                // Show projector button
+                document.getElementById('projectorButtonContainer').style.display = 'block';
                 
                 // Display game info
                 if (gameSession.total_rounds > 1) {
@@ -1690,22 +1766,40 @@
                         exportBtn.disabled = true;
                         exportBtn.textContent = '⏳ Exporting...';
                         
+                        console.log('Exporting results for room:', gameSession.room_code);
+                        
                         // Call the detailed export API endpoint
                         const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/export/`, {
                             headers: {'Authorization': `Token ${token}`}
                         });
                         
+                        console.log('Export response status:', response.status);
+                        
                         if (!response.ok) {
-                            throw new Error('Failed to export results');
+                            const errorText = await response.text();
+                            console.error('Export error response:', errorText);
+                            throw new Error(`Server returned ${response.status}: ${errorText}`);
                         }
+                        
+                        // Check content type
+                        const contentType = response.headers.get('content-type');
+                        console.log('Export content-type:', contentType);
                         
                         // Get the CSV blob
                         const blob = await response.blob();
+                        console.log('Export blob size:', blob.size, 'bytes');
+                        
+                        if (blob.size === 0) {
+                            throw new Error('Export returned empty file');
+                        }
+                        
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
                         a.download = `game_results_${gameSession.room_code}_${new Date().toISOString().slice(0,10)}.csv`;
+                        document.body.appendChild(a);
                         a.click();
+                        document.body.removeChild(a);
                         URL.revokeObjectURL(url);
                         
                         exportBtn.textContent = '✅ Exported!';
@@ -1718,7 +1812,7 @@
                         console.error('Export error:', error);
                         exportBtn.textContent = '📄 Export Results';
                         exportBtn.disabled = false;
-                        showToast('Failed to export results: ' + error.message, 'error');
+                        showToast('Failed to export: ' + error.message, 'error');
                     }
                 };
                 actions.appendChild(exportBtn);
@@ -1741,11 +1835,11 @@
                 };
                 actions.appendChild(shareBtn);
 
-                // Dashboard button
+                // Return button - go back to fresh game host page
                 const dashBtn = document.createElement('button');
                 dashBtn.className = 'btn';
-                dashBtn.textContent = '🏠 Return to Dashboard';
-                dashBtn.onclick = () => window.location.href = '/admin_pages/instructor.html';
+                dashBtn.textContent = '🏠 Start New Game';
+                dashBtn.onclick = () => window.location.href = 'game-host.html';
                 actions.appendChild(dashBtn);
 
                 overlay.appendChild(actions);
@@ -2090,38 +2184,9 @@
                         }
                     };
                     
-                    // Handle cleanup
-                    cleanupBtn.onclick = async () => {
-                        if (!confirm('Are you sure you want to end all games older than 24 hours? This cannot be undone.')) return;
-                        
-                        cleanupBtn.disabled = true;
-                        cleanupBtn.textContent = 'Cleaning up...';
-                        
-                        try {
-                            const now = new Date();
-                            const oneDayMs = 24 * 60 * 60 * 1000;
-                            let endedCount = 0;
-                            
-                            for (const game of games) {
-                                const created = new Date(game.created_at);
-                                if (now - created > oneDayMs) {
-                                    await fetch(`${API_BASE}/game/${game.room_code}/end/`, {
-                                        method: 'POST',
-                                        headers: {'Authorization': `Token ${token}`}
-                                    });
-                                    endedCount++;
-                                }
-                            }
-                            
-                            showToast(`Cleaned up ${endedCount} old games`, 'success');
-                            setTimeout(loadActiveGames, 1000); // Refresh list
-                        } catch (error) {
-                            console.error('Cleanup error:', error);
-                            showToast('Error cleaning up games', 'error');
-                        } finally {
-                            cleanupBtn.disabled = false;
-                            cleanupBtn.textContent = '🗑️ End Old Games (>24h)';
-                        }
+                    // Handle cleanup - show modal with time options
+                    cleanupBtn.onclick = () => {
+                        openCleanupModal();
                     };
                 } else {
                     section.style.display = 'none';
@@ -2161,12 +2226,22 @@
                 
                 // Generate QR Code
                 const joinUrl = `${JOIN_URL}?code=${data.room_code}`;
-                document.getElementById('qrcode').innerHTML = '';
-                new QRCode(document.getElementById('qrcode'), {
+                const qrCodeDiv = document.getElementById('qrcode');
+                qrCodeDiv.innerHTML = '';
+                new QRCode(qrCodeDiv, {
                     text: joinUrl,
                     width: 128,
                     height: 128
                 });
+                
+                // Add Praxis Play logo overlay
+                setTimeout(() => {
+                    const logo = document.createElement('img');
+                    logo.src = '../../art_assets/svg_logos/praxisplay_notext_logo.svg';
+                    logo.alt = 'Praxis Play';
+                    logo.className = 'qr-logo-overlay';
+                    qrCodeDiv.appendChild(logo);
+                }, 100);
                 
                 // Update status
                 setStatusIndicator(data.status);
@@ -2235,12 +2310,22 @@
                             
                             // Generate QR Code
                             const joinUrl = `${JOIN_URL}?code=${data.room_code}`;
-                            document.getElementById('qrcode').innerHTML = '';
-                            new QRCode(document.getElementById('qrcode'), {
+                            const qrCodeDiv = document.getElementById('qrcode');
+                            qrCodeDiv.innerHTML = '';
+                            new QRCode(qrCodeDiv, {
                                 text: joinUrl,
                                 width: 128,
                                 height: 128
                             });
+                            
+                            // Add Praxis Play logo overlay
+                            setTimeout(() => {
+                                const logo = document.createElement('img');
+                                logo.src = '../../art_assets/svg_logos/praxisplay_notext_logo.svg';
+                                logo.alt = 'Praxis Play';
+                                logo.className = 'qr-logo-overlay';
+                                qrCodeDiv.appendChild(logo);
+                            }, 100);
                             
                             // Display current round info
                             if (data.total_rounds > 1) {
@@ -2466,7 +2551,88 @@
             localStorage.removeItem('active_game_room_code');
             window.location.href = '../login.html';
         }
+
+        // Cleanup modal functions
+        function openCleanupModal() {
+            document.getElementById('cleanupModal').style.display = 'flex';
+        }
+
+        function closeCleanupModal() {
+            document.getElementById('cleanupModal').style.display = 'none';
+        }
+
+        function openProjectorView() {
+            if (!currentRoomCode) {
+                alert('No active game to project');
+                return;
+            }
+            // Open projector view in new tab
+            const projectorUrl = `game-projector.html?room=${currentRoomCode}`;
+            window.open(projectorUrl, '_blank');
+        }
+
+        async function cleanupGamesByAge(hours) {
+            closeCleanupModal();
+            
+            const cleanupBtn = document.getElementById('cleanupGamesBtn');
+            cleanupBtn.disabled = true;
+            cleanupBtn.textContent = 'Cleaning up...';
+            
+            try {
+                // Get fresh list of active games
+                const response = await fetch(`${API_BASE}/instructor/game-history/?status=waiting,in_progress`, {
+                    headers: {'Authorization': `Token ${token}`}
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch games: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Cleanup - fetched games:', data);
+                
+                // Handle response - could be array or object with results property
+                const games = Array.isArray(data) ? data : (data.results || []);
+                
+                if (games.length === 0) {
+                    showToast('No active games to clean up', 'info');
+                    return;
+                }
+                
+                const now = new Date();
+                const thresholdMs = hours * 60 * 60 * 1000;
+                let endedCount = 0;
+                
+                for (const game of games) {
+                    const created = new Date(game.created_at);
+                    if (now - created > thresholdMs) {
+                        await fetch(`${API_BASE}/game/${game.room_code}/end/`, {
+                            method: 'POST',
+                            headers: {'Authorization': `Token ${token}`}
+                        });
+                        endedCount++;
+                    }
+                }
+                
+                const timeLabel = hours === 2 ? '2 hours' : hours === 24 ? '24 hours' : '1 week';
+                showToast(`Cleaned up ${endedCount} game${endedCount !== 1 ? 's' : ''} older than ${timeLabel}`, 'success');
+                setTimeout(loadActiveGames, 1000); // Refresh list
+            } catch (error) {
+                console.error('Cleanup error:', error);
+                showToast('Error cleaning up games: ' + error.message, 'error');
+            } finally {
+                cleanupBtn.disabled = false;
+                cleanupBtn.textContent = '🗑️ End Old Games';
+            }
+        }
     </script>
     <script src="../../shared/js/admin-nav.js"></script>
+    <footer style="text-align: center; padding: 2rem 1rem; color: rgba(255,255,255,0.8); font-size: 0.9rem;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <img src="../../art_assets/svg_logos/praxisplay_notext_logo.svg" alt="Praxis Play" style="width: 20px; height: 20px; opacity: 0.8;">
+            <span>Powered by <strong>Praxis Play</strong></span>
+        </div>
+        <div style="opacity: 0.7; font-size: 0.85rem;">Dr. Baker Marketing | Engaging Analytics Education</div>
+    </footer>
 </body>
 </html>

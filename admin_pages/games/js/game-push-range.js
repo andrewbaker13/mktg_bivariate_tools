@@ -18,8 +18,11 @@ let teamRosters = {left: [], right: []};
 function showPushRangeGame(message, timeLimit) {
     const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 25vh; margin: 0.5rem auto; border-radius: 8px; display: block; object-fit: contain;">` : '';
     
-    // Get team assignment
-    myTeam = message.team_assignments?.[playerSession.id]?.team || 'left';
+    // Check if we're in projector mode
+    const isProjector = window.isProjectorMode || false;
+    
+    // Get team assignment (only for players, not projector)
+    myTeam = !isProjector && message.team_assignments?.[playerSession?.id] ? message.team_assignments[playerSession.id].team : 'left';
     myPressCount = 0;
     pendingPresses = 0;
     localLeftBoundary = 0;
@@ -42,9 +45,10 @@ function showPushRangeGame(message, timeLimit) {
     
     // Left team pushes the left boundary RIGHT (closing from the left)
     // Right team pushes the right boundary LEFT (closing from the right)
-    const buttonHTML = myTeam === 'left' 
+    // Don't show button in projector mode
+    const buttonHTML = !isProjector && (myTeam === 'left' 
         ? '<button class="push-button left" id="pushButton">PUSH →</button>'
-        : '<button class="push-button right" id="pushButton">← PUSH</button>';
+        : '<button class="push-button right" id="pushButton">← PUSH</button>');
     
     document.getElementById('gameArea').innerHTML = `
         <div class="push-range-area">
@@ -79,10 +83,10 @@ function showPushRangeGame(message, timeLimit) {
                 </div>
             </div>
             
-            <div class="push-button-container">
+            ${!isProjector ? `<div class="push-button-container">
                 ${buttonHTML}
                 <div class="my-presses">Your Presses: <span id="myPressCount">0</span></div>
-            </div>
+            </div>` : ''}
 
             <div class="push-range-teams">
                 <div class="team-panel left">
@@ -283,12 +287,29 @@ function handlePushRangeUpdate(message) {
     localLeftBoundary = message.left_boundary;
     localRightBoundary = message.right_boundary;
     
+    console.log('[PUSH RANGE] Updating chart:', {
+        left: localLeftBoundary,
+        right: localRightBoundary,
+        isProjector: window.isProjectorMode
+    });
+    
     // Update the visual bar fills
     const leftFill = document.getElementById('leftFill');
     const rightFill = document.getElementById('rightFill');
     
-    if (leftFill) leftFill.style.width = localLeftBoundary + '%';
-    if (rightFill) rightFill.style.width = (100 - localRightBoundary) + '%';
+    console.log('[PUSH RANGE] Chart elements:', {
+        leftFill: leftFill,
+        rightFill: rightFill
+    });
+    
+    if (leftFill) {
+        leftFill.style.width = localLeftBoundary + '%';
+        console.log('[PUSH RANGE] Set leftFill width to:', localLeftBoundary + '%');
+    }
+    if (rightFill) {
+        rightFill.style.width = (100 - localRightBoundary) + '%';
+        console.log('[PUSH RANGE] Set rightFill width to:', (100 - localRightBoundary) + '%');
+    }
     
     // Update the bracket-style guess range indicator
     const bracketLeftEdge = document.getElementById('bracketLeftEdge');

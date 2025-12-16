@@ -12,9 +12,13 @@
     const pathParts = window.location.pathname.split('/');
     const currentPage = pathParts.pop().replace('.html', '') || 'index';
     const isGamePage = pathParts.includes('games');
+    const isQuizPage = pathParts.includes('quiz');
     
     // Determine path to shared component
-    const sharedPath = isGamePage ? '../../shared/components/admin-nav.html' : '../shared/components/admin-nav.html';
+    let sharedPath = '../shared/components/admin-nav.html';
+    if (isGamePage || isQuizPage) {
+        sharedPath = '../../shared/components/admin-nav.html';
+    }
     
     // Load the nav HTML
     fetch(sharedPath)
@@ -27,15 +31,18 @@
             if (container) {
                 container.innerHTML = html;
                 
-                // Fix links if we are in games/ subdirectory
-                if (isGamePage) {
+                // Fix links if we are in a subdirectory
+                if (isGamePage || isQuizPage) {
                     const links = container.querySelectorAll('a');
                     links.forEach(link => {
                         const href = link.getAttribute('href');
                         if (href && !href.startsWith('http') && !href.startsWith('#')) {
-                            if (href.startsWith('games/')) {
+                            if (isGamePage && href.startsWith('games/')) {
                                 // Link to another game page: games/game-host.html -> game-host.html
                                 link.setAttribute('href', href.replace('games/', ''));
+                            } else if (isQuizPage && href.startsWith('quiz/')) {
+                                // Link to another quiz page: quiz/quiz-manager.html -> quiz-manager.html
+                                link.setAttribute('href', href.replace('quiz/', ''));
                             } else {
                                 // Link to a root admin page: admin-dashboard.html -> ../admin-dashboard.html
                                 link.setAttribute('href', '../' + href);
@@ -66,6 +73,6 @@ function handleLogout() {
     localStorage.removeItem('is_superuser');
     sessionStorage.clear();
     
-    const isGamePage = window.location.pathname.includes('/games/');
-    window.location.href = isGamePage ? '../login.html' : 'login.html';
+    const isSubfolder = window.location.pathname.includes('/games/') || window.location.pathname.includes('/quiz/');
+    window.location.href = isSubfolder ? '../login.html' : 'login.html';
 }

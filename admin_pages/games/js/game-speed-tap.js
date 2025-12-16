@@ -33,6 +33,45 @@ function showSpeedTapGame(message, timeLimit) {
     
     const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 25vh; margin: 0.5rem auto; border-radius: 8px; display: block; object-fit: contain;">` : '';
     
+    // Projector mode: show participation instead of interactive buttons
+    if (window.isProjectorMode) {
+        // Reset participation tracking for new question
+        if (window.speedTapParticipation) {
+            window.speedTapParticipation.respondedPlayers = new Set();
+        }
+        
+        document.getElementById('gameArea').innerHTML = `
+            <div class="speed-tap-area">
+                <div class="question-display">
+                    <div class="question-text" style="font-size: 48px; margin-bottom: 20px;">${message.question_text}</div>
+                    ${imageHTML}
+                    <div class="timer" id="timer" style="font-size: 80px; font-weight: 800; color: #ef4444; text-align: center; margin: 20px 0;">${timeLimit}</div>
+                </div>
+                <div class="answer-options" id="answerOptions" style="pointer-events: none; opacity: 0.9;">
+                    ${options.map(opt => `
+                        <button class="answer-btn" data-answer="${opt.text}" style="font-size: 36px; padding: 30px; min-height: 100px;">
+                            ${opt.text}
+                        </button>
+                    `).join('')}
+                </div>
+                <div id="speedTapParticipation" style="margin-top: 40px; text-align: center; background: #f8fafc; padding: 30px; border-radius: 16px;">
+                    <div style="font-size: 48px; font-weight: 700; color: #64748b; margin: 20px 0;">
+                        0 / ${window.speedTapParticipation?.totalPlayers || '?'} Players Responded
+                    </div>
+                    <div style="font-size: 64px; font-weight: 800; color: #1e293b;">
+                        0%
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Initialize participation display
+        if (window.updateSpeedTapParticipation) {
+            setTimeout(() => window.updateSpeedTapParticipation(), 100);
+        }
+        return;
+    }
+    
     document.getElementById('gameArea').innerHTML = `
         <div class="speed-tap-area">
             <div class="question-display">

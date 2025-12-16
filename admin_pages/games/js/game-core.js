@@ -33,7 +33,7 @@ function connectWebSocket() {
             action: 'identify',
             data: {
                 player_session_id: playerSession.id,
-                role: 'player'
+                role: window.isProjectorMode ? 'spectator' : 'player'
             }
         }));
         
@@ -164,6 +164,28 @@ function handleMessage(message) {
             
         case 'player_list_update':
             console.log('Players updated:', message.players);
+            // Store players globally - CRITICAL for projector mode  
+            window.latestPlayers = message.players || [];
+            
+            // Always update player count in projector mode
+            if (window.isProjectorMode && message.players) {
+                const playerCountEl = document.getElementById('playerCount');
+                console.log('[PROJECTOR] Player count element:', playerCountEl);
+                console.log('[PROJECTOR] Setting player count to:', message.players.length);
+                if (playerCountEl) {
+                    playerCountEl.textContent = message.players.length;
+                    playerCountEl.style.color = '#1e293b';
+                }
+                // Update speed tap participation tracker
+                if (window.speedTapParticipation) {
+                    window.speedTapParticipation.totalPlayers = message.players.length;
+                }
+            }
+            
+            // Update speed tap participation tracker
+            if (window.speedTapParticipation && message.players) {
+                window.speedTapParticipation.totalPlayers = message.players.length;
+            }
             break;
             
         case 'countdown_start':
@@ -179,6 +201,13 @@ function handleMessage(message) {
             break;
             
         case 'speed_tap_answer':
+            // Track participation in projector mode
+            if (window.isProjectorMode && window.speedTapParticipation && message.player_id) {
+                window.speedTapParticipation.respondedPlayers.add(message.player_id);
+                if (typeof window.updateSpeedTapParticipation === 'function') {
+                    window.updateSpeedTapParticipation();
+                }
+            }
             if (typeof handleSpeedTapAnswer === 'function') {
                 handleSpeedTapAnswer(message);
             }
@@ -348,10 +377,15 @@ function getInstructionCardHTML(gameType) {
     
     if (!helper) return '';
     
+    const fontSize = window.isProjectorMode ? '64px' : '2rem';
+    const descSize = window.isProjectorMode ? '40px' : '1.1rem';
+    const maxWidth = window.isProjectorMode ? '1200px' : '500px';
+    const padding = window.isProjectorMode ? '3rem' : '2rem';
+    
     return `
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin: 2rem auto; max-width: 500px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-            <div style="font-size: 2rem; margin-bottom: 1rem;">${helper.title}</div>
-            <div style="font-size: 1.1rem; line-height: 1.6;">${helper.description}</div>
+        <div class="instruction-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: ${padding}; border-radius: 12px; margin: 2rem auto; max-width: ${maxWidth}; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+            <div class="title" style="font-size: ${fontSize}; margin-bottom: 1rem;">${helper.title}</div>
+            <div class="description" style="font-size: ${descSize}; line-height: 1.6;">${helper.description}</div>
         </div>
     `;
 }
@@ -437,6 +471,16 @@ function showWaitingState(gameTypeFromServer) {
                 colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.M
             });
+            
+            // Add Praxis Play logo overlay for branding consistency
+            setTimeout(() => {
+                const logo = document.createElement('img');
+                logo.src = '../../art_assets/svg_logos/praxisplay_notext_logo.svg';
+                logo.alt = 'Praxis Play';
+                logo.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 38px; height: 38px; background: white; padding: 4px; border-radius: 0; box-shadow: 0 0 0 3px white; pointer-events: none;';
+                qrCodeDiv.style.position = 'relative';
+                qrCodeDiv.appendChild(logo);
+            }, 100);
         }
     }, 100);
 }
@@ -569,6 +613,38 @@ async function loadGameScript(gameType) {
 async function handleGameStart(message) {
     gameType = message.game_type;
     gameStartTime = Date.now();
+    
+    // Update projector current round display
+    if (window.isProjectorMode) {
+        const currentRoundEl = document.getElementById('currentRound');
+        const playerCountEl = document.getElementById('playerCount');
+        
+        console.log('[PROJECTOR] Round element:', currentRoundEl);
+        console.log('[PROJECTOR] current_round:', message.current_round);
+        
+        // Backend sends current_round (1-indexed), not round_index
+        if (currentRoundEl && message.current_round !== undefined) {
+            currentRoundEl.textContent = message.current_round;
+            currentRoundEl.style.color = '#1e293b';
+            console.log('[PROJECTOR] Set round to:', message.current_round);
+        }
+        
+        // Also refresh player count from latestPlayers or team_assignments
+        if (playerCountEl) {
+            let playerCount = 0;
+            if (window.latestPlayers) {
+                playerCount = window.latestPlayers.length;
+            } else if (message.team_assignments) {
+                // Fallback: count players from team_assignments
+                playerCount = Object.keys(message.team_assignments).length;
+            }
+            if (playerCount > 0) {
+                playerCountEl.textContent = playerCount;
+                playerCountEl.style.color = '#1e293b';
+                console.log('[PROJECTOR] Refreshed player count to:', playerCount);
+            }
+        }
+    }
     
     // DEBUGGING: Log the entire message to see what we're receiving
     console.log('=== handleGameStart called ===');
@@ -820,6 +896,20 @@ function handleUnifiedGameResults(message) {
                         </div>
                     `;
                 }
+                // Show correct answer
+                if (message.correct_answer) {
+                    const fontSize = window.isProjectorMode ? '48px' : '20px';
+                    const padding = window.isProjectorMode ? '20px 30px' : '12px 20px';
+                    // Extract answer text - correct_answer might be an object with 'text' property or a string
+                    const answerText = typeof message.correct_answer === 'object' ? 
+                        (message.correct_answer.text || message.correct_answer.answer || JSON.stringify(message.correct_answer)) : 
+                        message.correct_answer;
+                    gameSpecificHTML += `
+                        <div style="background: rgba(255,255,255,0.2); padding: ${padding}; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-size: ${fontSize}; font-weight: 700;">Correct Answer: ${answerText}</div>
+                        </div>
+                    `;
+                }
                 if (gs.correct_count !== undefined) {
                     gameSpecificHTML += `
                         <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;">
@@ -835,6 +925,16 @@ function handleUnifiedGameResults(message) {
                         <div style="background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 8px; margin-bottom: 15px;">
                             <div style="font-size: 14px; opacity: 0.9;">⚡ Fastest Correct</div>
                             <div style="font-size: 20px; font-weight: 700;">${gs.fastest_correct.player_name} <span style="opacity: 0.8; font-size: 14px;">(${gs.fastest_correct.time_remaining?.toFixed(1) || '?'}s remaining)</span></div>
+                        </div>
+                    `;
+                }
+                // Show correct answer
+                if (message.correct_answer) {
+                    const fontSize = window.isProjectorMode ? '48px' : '20px';
+                    const padding = window.isProjectorMode ? '20px 30px' : '12px 20px';
+                    gameSpecificHTML += `
+                        <div style="background: rgba(255,255,255,0.2); padding: ${padding}; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-size: ${fontSize}; font-weight: 700;">Correct Answer: ${message.correct_answer.toUpperCase()}</div>
                         </div>
                     `;
                 }
@@ -903,9 +1003,11 @@ function handleUnifiedGameResults(message) {
             if (instructionCard) {
                 // Add a "Next Up" header to make it clear this is for the upcoming round
                 const nextGameSection = document.createElement('div');
+                const headerColor = window.isProjectorMode ? 'white' : '#64748b';
+                const headerSize = window.isProjectorMode ? '56px' : '18px';
                 nextGameSection.innerHTML = `
                     <div style="margin-top: 30px; text-align: center;">
-                        <h3 style="color: #64748b; font-size: 18px; margin-bottom: 15px;">📋 Next Round Preview</h3>
+                        <h3 style="color: ${headerColor}; font-size: ${headerSize}; margin-bottom: 15px;">📋 Next Round Preview</h3>
                         ${instructionCard}
                     </div>
                 `;
@@ -949,28 +1051,57 @@ function handleUnifiedGameResults(message) {
 
 function showFinalStandings(message, leaderboardVisibility) {
     const gameArea = document.getElementById('gameArea');
+    const isProjector = window.isProjectorMode || false;
     
     // Use the stored leaderboard instead of message.leaderboard
     const leaderboard = latestLeaderboard || [];
-    const shouldShowLeaderboard = leaderboardVisibility === 'always_show' && leaderboard.length > 0;
     
-    // Find player's position and stats
-    const myPosition = leaderboard.length > 0 ? leaderboard.findIndex(p => 
-        p.player_id === playerSession.id || p.player_name === playerSession.display_name
-    ) : -1;
+    // Check projector settings for leaderboard visibility
+    const projectorShowsLeaderboard = window.isProjectorMode ? window.projectorSettings?.showLeaderboard : true;
+    const shouldShowLeaderboard = leaderboardVisibility === 'always_show' && leaderboard.length > 0 && projectorShowsLeaderboard;
     
-    const myStats = message.round_stats?.player_stats?.[playerSession.id] || {
-        player_total_score: playerSession.score || 0
-    };
+    // Find player's position and stats (skip in projector mode)
+    let myPosition = -1;
+    let myStats = { player_total_score: 0 };
+    
+    if (!isProjector && playerSession) {
+        myPosition = leaderboard.length > 0 ? leaderboard.findIndex(p => 
+            p.player_id === playerSession.id || p.player_name === playerSession.display_name
+        ) : -1;
+        
+        myStats = message.round_stats?.player_stats?.[playerSession.id] || {
+            player_total_score: playerSession.score || 0
+        };
+    }
+    
+    // Responsive sizing for projector vs player mode
+    const iconSize = isProjector ? '128px' : '64px';
+    const titleSize = isProjector ? '72px' : '32px';
+    const subtitleSize = isProjector ? '36px' : '18px';
+    const scoreContainerPadding = isProjector ? '40px' : '20px';
+    const scoreLabelSize = isProjector ? '32px' : '16px';
+    const scoreValueSize = isProjector ? '96px' : '48px';
+    const rankSize = isProjector ? '36px' : '18px';
+    const leaderboardTitleSize = isProjector ? '48px' : '24px';
+    const leaderboardItemSize = isProjector ? '32px' : '16px';
+    const leaderboardItemPadding = isProjector ? '16px' : '8px';
     
     let leaderboardHTML = '';
     if (shouldShowLeaderboard) {
+        // Apply player name masking if in projector mode
+        const getDisplayName = (name, index) => {
+            if (window.isProjectorMode && !window.projectorSettings?.showPlayerNames) {
+                return `Player ${index + 1}`;
+            }
+            return name;
+        };
+        
         leaderboardHTML = `
-            <div class="leaderboard-preview" style="margin-top: 20px; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
-                <h3 style="margin-bottom: 10px; color: white;">🏆 Final Leaderboard</h3>
+            <div class="leaderboard-preview" style="margin-top: ${isProjector ? '40px' : '20px'}; background: rgba(255,255,255,0.1); padding: ${isProjector ? '30px' : '15px'}; border-radius: ${isProjector ? '16px' : '8px'};">
+                <h3 style="margin-bottom: ${isProjector ? '20px' : '10px'}; color: white; font-size: ${leaderboardTitleSize};">🏆 Final Leaderboard</h3>
                 ${leaderboard.slice(0, 5).map((p, i) => `
-                    <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <span>#${i+1} ${p.player_name}</span>
+                    <div style="display: flex; justify-content: space-between; padding: ${leaderboardItemPadding}; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: ${leaderboardItemSize};">
+                        <span>#${i+1} ${getDisplayName(p.player_name, i)}</span>
                         <span style="font-weight: bold;">${p.score} pts</span>
                     </div>
                 `).join('')}
@@ -978,25 +1109,39 @@ function showFinalStandings(message, leaderboardVisibility) {
         `;
     }
     
-    gameArea.innerHTML = `
-        <div class="results-display" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white;">
-            <div style="font-size: 64px; margin-bottom: 20px;">🏁</div>
-            <h2 style="font-size: 32px; margin-bottom: 10px;">Game Complete!</h2>
-            <p style="color: #94a3b8; font-size: 18px;">Thanks for playing!</p>
-            
-            <div style="margin: 30px 0; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 12px;">
-                <div style="font-size: 16px; color: #94a3b8; margin-bottom: 5px;">Your Final Score</div>
-                <div style="font-size: 48px; font-weight: 800; color: #3b82f6;">${myStats.player_total_score}</div>
-                ${myPosition !== -1 ? `<div style="font-size: 18px; color: #10b981; margin-top: 5px;">Rank #${myPosition + 1}</div>` : ''}
+    // For projector mode, show leaderboard only (no personal score section)
+    if (isProjector) {
+        gameArea.innerHTML = `
+            <div class="results-display" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 40px; text-align: center;">
+                <div style="font-size: ${iconSize}; margin-bottom: 30px;">🏁</div>
+                <h2 style="font-size: ${titleSize}; margin-bottom: 20px; font-weight: 800;">Game Complete!</h2>
+                <p style="color: #94a3b8; font-size: ${subtitleSize};">Thanks for playing!</p>
+                
+                ${leaderboardHTML}
             </div>
-            
-            ${leaderboardHTML}
-            
-            <button onclick="location.reload()" style="margin-top: 30px; background: #3b82f6; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer;">
-                🔄 Play Again
-            </button>
-        </div>
-    `;
+        `;
+    } else {
+        // Player mode shows personal score + leaderboard
+        gameArea.innerHTML = `
+            <div class="results-display" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; text-align: center;">
+                <div style="font-size: ${iconSize}; margin-bottom: 20px;">🏁</div>
+                <h2 style="font-size: ${titleSize}; margin-bottom: 10px;">Game Complete!</h2>
+                <p style="color: #94a3b8; font-size: ${subtitleSize};">Thanks for playing!</p>
+                
+                <div style="margin: 30px 0; padding: ${scoreContainerPadding}; background: rgba(255,255,255,0.1); border-radius: 12px;">
+                    <div style="font-size: ${scoreLabelSize}; color: #94a3b8; margin-bottom: 5px;">Your Final Score</div>
+                    <div style="font-size: ${scoreValueSize}; font-weight: 800; color: #3b82f6;">${myStats.player_total_score}</div>
+                    ${myPosition !== -1 ? `<div style="font-size: ${rankSize}; color: #10b981; margin-top: 5px;">Rank #${myPosition + 1}</div>` : ''}
+                </div>
+                
+                ${leaderboardHTML}
+                
+                <button onclick="location.reload()" style="margin-top: 30px; background: #3b82f6; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer;">
+                    🔄 Play Again
+                </button>
+            </div>
+        `;
+    }
 }
 
 function updateLeaderboard(leaderboard) {

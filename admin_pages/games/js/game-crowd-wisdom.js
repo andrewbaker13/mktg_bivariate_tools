@@ -113,6 +113,26 @@ function showCrowdWisdomGame(message, timeLimit) {
                 transition: all 0.2s ease;
                 text-align: left;
             }
+            .projector-mode .crowd-wisdom-btn {
+                width: 300px;
+                padding: 20px 24px;
+                font-size: 32px;
+                pointer-events: none;
+                display: block !important;
+            }
+            .projector-mode .distribution-row {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            .projector-mode .distribution-bar-wrapper {
+                height: 35px;
+                margin: 0 20px;
+            }
+            .projector-mode .distribution-percent {
+                font-size: 36px;
+                font-weight: 700;
+                min-width: 100px;
+            }
             .crowd-wisdom-btn:hover:not(:disabled) {
                 background: #eff6ff;
                 border-color: #2563eb;
