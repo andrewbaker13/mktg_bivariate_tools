@@ -308,6 +308,20 @@ function handleMessage(message) {
             }
             break;
             
+        case 'line_fit_data':
+            // Handle scatter data for Line Fit game
+            if (typeof handleLineFitData === 'function') {
+                handleLineFitData(message);
+            }
+            break;
+            
+        case 'line_fit_submission':
+            // Handle line submission from another player
+            if (typeof handleLineFitSubmission === 'function') {
+                handleLineFitSubmission(message);
+            }
+            break;
+            
         case 'game_results':
             handleUnifiedGameResults(message);
             break;
@@ -367,6 +381,10 @@ function getInstructionCardHTML(gameType) {
             title: '🔤 Word Guess',
             description: 'Fill in the letters like hangman!<br>Letters reveal over time. Guess early for maximum points!'
         },
+        'line_fit': {
+            title: '📈 Line Fit',
+            description: 'Click two points on the scatter plot to draw a regression line!<br>Lines closest to the data earn the most points. Make it count!'
+        },
         'rpg_battle': {
             title: '⚔️ RPG Battle',
             description: 'Team up to defeat the boss!<br>Answer questions correctly to deal damage!'
@@ -412,6 +430,10 @@ function showWaitingState(gameTypeFromServer) {
         'word_guess': {
             title: '🔤 Word Guess',
             description: 'Fill in the letters like hangman!<br>Letters reveal over time. Guess early for maximum points!'
+        },
+        'line_fit': {
+            title: '📈 Line Fit',
+            description: 'Click two points on the scatter plot to draw a regression line!<br>Lines closest to the data earn the most points. Make it count!'
         },
         'rpg_battle': {
             title: '⚔️ RPG Battle',
@@ -577,7 +599,8 @@ async function loadGameScript(gameType) {
         'closest_guess': 'game-closest-guess.js',
         'push_range': 'game-push-range.js',
         'crowd_wisdom': 'game-crowd-wisdom.js',
-        'word_guess': 'game-word-guess.js'
+        'word_guess': 'game-word-guess.js',
+        'line_fit': 'line-fit.js'
     };
     
     const scriptFile = gameScriptMap[gameType];
@@ -766,6 +789,19 @@ async function handleGameStart(message) {
         } else {
             console.error('❌ showWordGuessGame not found!');
         }
+    } else if (gameType === 'line_fit') {
+        console.log('Checking showLineFitGame:', typeof showLineFitGame);
+        if (typeof showLineFitGame === 'function') {
+            showLineFitGame(message, timeLimit);
+            console.log('Checking startLineFitTimer:', typeof startLineFitTimer);
+            if (typeof startLineFitTimer === 'function') {
+                startLineFitTimer(timeLimit, startTime);
+            } else {
+                console.error('❌ startLineFitTimer not found!');
+            }
+        } else {
+            console.error('❌ showLineFitGame not found!');
+        }
     } else {
         console.error('❌ Unknown game type:', gameType);
     }
@@ -945,7 +981,31 @@ function handleUnifiedGameResults(message) {
                             <span style="background: rgba(148,163,184,0.3); padding: 8px 16px; border-radius: 20px;">⏰ ${gs.no_answer_count} no answer</span>
                         </div>
                     `;
-                }            }
+                }            } else if (message.game_type === 'line_fit') {
+                // Line Fit: Show scatter plot with true line and all submissions
+                if (typeof showLineFitResults === 'function') {
+                    gameSpecificHTML += showLineFitResults(message.game_specific);
+                } else {
+                    // Fallback text display if function not loaded
+                    if (gs.true_line) {
+                        gameSpecificHTML += `
+                            <div style="background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 8px; margin-bottom: 15px;">
+                                <div style="font-size: 14px; opacity: 0.9;">📈 True Regression Line</div>
+                                <div style="font-size: 18px; font-weight: 700;">y = ${gs.true_line.slope.toFixed(3)}x + ${gs.true_line.intercept.toFixed(2)}</div>
+                                <div style="font-size: 14px; opacity: 0.8;">r = ${gs.correlation?.toFixed(3) || '?'}, R² = ${gs.r_squared?.toFixed(3) || '?'}</div>
+                            </div>
+                        `;
+                    }
+                    if (gs.average_sse !== undefined) {
+                        gameSpecificHTML += `
+                            <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;">
+                                <span style="background: rgba(99,102,241,0.3); padding: 8px 16px; border-radius: 20px;">📊 Average SSE: ${gs.average_sse.toFixed(2)}</span>
+                                <span style="background: rgba(16,185,129,0.3); padding: 8px 16px; border-radius: 20px;">✅ ${gs.submission_count} submissions</span>
+                            </div>
+                        `;
+                    }
+                }
+            }
         }
         
         const banner = document.createElement('div');

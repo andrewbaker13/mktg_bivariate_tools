@@ -672,6 +672,76 @@
         .top-presser-item:nth-child(2) { background: #fef3c7; }
         .top-presser-item:nth-child(3) { background: #e5e7eb; }
         .top-presser-item:nth-child(4) { background: #fed7aa; }
+        
+        /* Line Fit Game */
+        .line-fit-area {
+            padding: 1rem;
+        }
+        .line-fit-container {
+            position: relative;
+            margin: 2rem auto;
+            max-width: 650px;
+        }
+        #scatterCanvas {
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .canvas-instructions {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #06b6d4;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: #f0f9ff;
+            border-radius: 8px;
+            border: 2px solid #bae6fd;
+        }
+        .line-fit-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+        .line-fit-btn {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 150px;
+        }
+        .line-fit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        .line-fit-btn:active {
+            transform: translateY(0);
+        }
+        .line-fit-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .confirm-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        .redraw-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 2px solid #fbbf24;
+        }
     </style>
 </head>
 <body>

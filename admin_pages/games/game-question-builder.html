@@ -784,6 +784,11 @@
                         <div class="title">Push Range</div>
                         <div class="description">Team button mashing</div>
                     </div>
+                    <div class="game-type-card" data-type="line_fit">
+                        <div class="icon">📈</div>
+                        <div class="title">Line Fit</div>
+                        <div class="description">Draw regression lines on scatter plots</div>
+                    </div>
                 </div>
             </div>
 
@@ -948,6 +953,72 @@
                 </div>
             </div>
 
+            <!-- Line Fit Config -->
+            <div class="form-section game-specific-config" id="lineFitConfig">
+                <h2>3️⃣ 📈 Line Fit Configuration</h2>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="lineFitXLabel">X-Axis Label *</label>
+                        <input type="text" id="lineFitXLabel" placeholder="e.g., Marketing Spend ($1000s)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lineFitYLabel">Y-Axis Label *</label>
+                        <input type="text" id="lineFitYLabel" placeholder="e.g., Sales Revenue ($1000s)" required>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="lineFitXMin">X-Axis Minimum *</label>
+                        <input type="number" id="lineFitXMin" step="0.1" placeholder="e.g., 0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lineFitXMax">X-Axis Maximum *</label>
+                        <input type="number" id="lineFitXMax" step="0.1" placeholder="e.g., 100" required>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="lineFitYMin">Y-Axis Minimum *</label>
+                        <input type="number" id="lineFitYMin" step="0.1" placeholder="e.g., 0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lineFitYMax">Y-Axis Maximum *</label>
+                        <input type="number" id="lineFitYMax" step="0.1" placeholder="e.g., 150" required>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="lineFitPointCount">Number of Data Points *</label>
+                        <input type="number" id="lineFitPointCount" min="20" max="60" placeholder="e.g., 32" value="32" required>
+                        <div class="help-text">20-60 points (default: 32)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="lineFitCorrelation">Correlation Strength *</label>
+                        <select id="lineFitCorrelation" required>
+                            <option value="">Select strength...</option>
+                            <option value="weak">Weak (0.2-0.4)</option>
+                            <option value="moderate" selected>Moderate (0.4-0.6)</option>
+                            <option value="strong">Strong (0.6-0.8)</option>
+                        </select>
+                        <div class="help-text">How closely data follows the line</div>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="lineFitOutliers">Number of Outliers</label>
+                        <input type="number" id="lineFitOutliers" min="0" max="5" placeholder="e.g., 2" value="2">
+                        <div class="help-text">0-5 outlier points (optional)</div>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="lineFitHeteroscedasticity" checked>
+                            Include Heteroscedasticity
+                        </label>
+                        <div class="help-text">Varying spread in data (more realistic)</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Action Buttons -->
             <div class="button-group">
                 <button type="button" class="btn btn-secondary" onclick="resetForm()">Clear Form</button>
@@ -978,6 +1049,7 @@
                             <option value="word_guess">🔤 Word Guess</option>
                             <option value="closest_guess">🎯 Closest Guess</option>
                             <option value="push_range">🔥 Push Range</option>
+                            <option value="line_fit">📈 Line Fit</option>
                         </select>
                     </div>
                     <div style="min-width: 180px;">
@@ -1435,6 +1507,8 @@
                     activeConfig = document.getElementById('pushRangeConfig');
                 } else if (selectedGameType === 'word_guess') {
                     activeConfig = document.getElementById('wordGuessConfig');
+                } else if (selectedGameType === 'line_fit') {
+                    activeConfig = document.getElementById('lineFitConfig');
                 }
                 
                 if (activeConfig) {
@@ -1675,6 +1749,73 @@
                     hint: hint || null,
                     points_base: 100
                 };
+            
+            } else if (selectedGameType === 'line_fit') {
+                const xLabel = document.getElementById('lineFitXLabel').value.trim();
+                const yLabel = document.getElementById('lineFitYLabel').value.trim();
+                const xMin = parseFloat(document.getElementById('lineFitXMin').value);
+                const xMax = parseFloat(document.getElementById('lineFitXMax').value);
+                const yMin = parseFloat(document.getElementById('lineFitYMin').value);
+                const yMax = parseFloat(document.getElementById('lineFitYMax').value);
+                const pointCount = parseInt(document.getElementById('lineFitPointCount').value);
+                const correlation = document.getElementById('lineFitCorrelation').value;
+                const outliers = parseInt(document.getElementById('lineFitOutliers').value) || 0;
+                const heteroscedasticity = document.getElementById('lineFitHeteroscedasticity').checked;
+                
+                // Validate required fields
+                if (!xLabel || !yLabel) {
+                    showAlert('⚠️ Axis labels are required', 'error');
+                    return;
+                }
+                
+                if (isNaN(xMin) || isNaN(xMax) || isNaN(yMin) || isNaN(yMax)) {
+                    showAlert('⚠️ All axis ranges are required', 'error');
+                    return;
+                }
+                
+                if (xMin >= xMax) {
+                    showAlert('⚠️ X-axis maximum must be greater than minimum', 'error');
+                    return;
+                }
+                
+                if (yMin >= yMax) {
+                    showAlert('⚠️ Y-axis maximum must be greater than minimum', 'error');
+                    return;
+                }
+                
+                if (isNaN(pointCount) || pointCount < 20 || pointCount > 60) {
+                    showAlert('⚠️ Point count must be between 20 and 60', 'error');
+                    return;
+                }
+                
+                if (!correlation) {
+                    showAlert('⚠️ Correlation strength is required', 'error');
+                    return;
+                }
+                
+                // Map correlation strength to ranges
+                const correlationRanges = {
+                    'weak': [0.2, 0.4],
+                    'moderate': [0.4, 0.6],
+                    'strong': [0.6, 0.8]
+                };
+                
+                const [corrMin, corrMax] = correlationRanges[correlation];
+                
+                questionData.game_config = {
+                    x_label: xLabel,
+                    y_label: yLabel,
+                    x_min: xMin,
+                    x_max: xMax,
+                    y_min: yMin,
+                    y_max: yMax,
+                    point_count: pointCount,
+                    correlation_min: corrMin,
+                    correlation_max: corrMax,
+                    outlier_count: outliers,
+                    add_outliers: outliers > 0,
+                    heteroscedastic: heteroscedasticity
+                };
             }
 
             // Save question
@@ -1737,11 +1878,13 @@
                 const typeBadge = q.game_type === 'speed_tap' ? 'speed-tap' : 
                                 q.game_type === 'crowd_wisdom' ? 'crowd-wisdom' :
                                 q.game_type === 'word_guess' ? 'word-guess' :
-                                q.game_type === 'closest_guess' ? 'closest-guess' : 'push-range';
+                                q.game_type === 'closest_guess' ? 'closest-guess' : 
+                                q.game_type === 'line_fit' ? 'line-fit' : 'push-range';
                 const typeLabel = q.game_type === 'speed_tap' ? '⚡ Speed Tap' :
                                 q.game_type === 'crowd_wisdom' ? '🧠 Crowd Wisdom' :
                                 q.game_type === 'word_guess' ? '🔤 Word Guess' :
-                                q.game_type === 'closest_guess' ? '🎯 Closest Guess' : '🤜🟦🟥🤛 Push Range';
+                                q.game_type === 'closest_guess' ? '🎯 Closest Guess' :
+                                q.game_type === 'line_fit' ? '📈 Line Fit' : '🤜🟦🟥🤛 Push Range';
                 
                 return `
                     <div class="question-card">
@@ -1792,7 +1935,8 @@
                 'crowd_wisdom': '🧠 Crowd Wisdom',
                 'word_guess': '🔤 Word Guess',
                 'closest_guess': '🎯 Closest Guess',
-                'push_range': '🔥 Push Range'
+                'push_range': '🔥 Push Range',
+                'line_fit': '📈 Line Fit'
             };
             const gameTypeLabel = gameTypeLabels[question.game_type] || question.game_type;
             
@@ -2060,6 +2204,26 @@
                 document.getElementById('wordGuessHint').value = question.game_config.hint || '';
                 // Trigger input event to update character counter
                 document.getElementById('wordGuessAnswer').dispatchEvent(new Event('input'));
+            } else if (question.game_type === 'line_fit') {
+                document.getElementById('lineFitXLabel').value = question.game_config.x_label || '';
+                document.getElementById('lineFitYLabel').value = question.game_config.y_label || '';
+                document.getElementById('lineFitXMin').value = question.game_config.x_min || '';
+                document.getElementById('lineFitXMax').value = question.game_config.x_max || '';
+                document.getElementById('lineFitYMin').value = question.game_config.y_min || '';
+                document.getElementById('lineFitYMax').value = question.game_config.y_max || '';
+                document.getElementById('lineFitPointCount').value = question.game_config.point_count || 32;
+                document.getElementById('lineFitOutliers').value = question.game_config.outlier_count || 0;
+                document.getElementById('lineFitHeteroscedasticity').checked = question.game_config.heteroscedastic !== false;
+                
+                // Set correlation dropdown based on ranges
+                const corrMin = question.game_config.correlation_min || 0.4;
+                if (corrMin < 0.4) {
+                    document.getElementById('lineFitCorrelation').value = 'weak';
+                } else if (corrMin < 0.6) {
+                    document.getElementById('lineFitCorrelation').value = 'moderate';
+                } else {
+                    document.getElementById('lineFitCorrelation').value = 'strong';
+                }
             }
 
             showAlert('Editing question. Make changes and save.', 'success');
