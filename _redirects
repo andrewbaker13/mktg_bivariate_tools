@@ -1,3 +1,5 @@
 # Force HTTPS for all HTTP requests
 http://drbakermarketing.com/* https://drbakermarketing.com/:splat 301!
 http://www.drbakermarketing.com/* https://www.drbakermarketing.com/:splat 301!
+http://mktpraxis.com/* https://mktpraxis.com/:splat 301!
+http://www.mktpraxis.com/* https://www.mktpraxis.com/:splat 301!

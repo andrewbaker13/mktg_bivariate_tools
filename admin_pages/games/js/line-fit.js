@@ -856,18 +856,26 @@ function drawLineFitResultsCanvas(canvasId, gameSpecific) {
         ctx.fill();
     });
     
+    // Debug logging
+    console.log('[LINE FIT RESULTS] all_submissions:', gs.all_submissions);
+    console.log('[LINE FIT RESULTS] Number of submissions:', gs.all_submissions?.length || 0);
+    
     // Draw all other submissions (gray, thin, semi-transparent)
     if (gs.all_submissions && gs.all_submissions.length > 3) {
-        gs.all_submissions.slice(3).forEach(submission => {
-            drawLine(submission.slope, submission.intercept, 'rgba(156, 163, 175, 0.4)', 2);
+        console.log('[LINE FIT RESULTS] Drawing', gs.all_submissions.length - 3, 'gray lines');
+        gs.all_submissions.slice(3).forEach((submission, idx) => {
+            console.log(`[LINE FIT RESULTS] Gray line ${idx + 4}: slope=${submission.slope}, intercept=${submission.intercept}`);
+            drawLine(submission.slope, submission.intercept, 'rgba(156, 163, 175, 0.5)', 2);
         });
     }
     
     // Draw top 3 lines (green, medium thickness)
     if (gs.all_submissions && gs.all_submissions.length > 0) {
         const top3 = gs.all_submissions.slice(0, Math.min(3, gs.all_submissions.length));
-        top3.forEach(submission => {
-            drawLine(submission.slope, submission.intercept, 'rgba(16, 185, 129, 0.7)', 3);
+        console.log('[LINE FIT RESULTS] Drawing', top3.length, 'green lines (top 3)');
+        top3.forEach((submission, idx) => {
+            console.log(`[LINE FIT RESULTS] Green line ${idx + 1}: slope=${submission.slope}, intercept=${submission.intercept}`);
+            drawLine(submission.slope, submission.intercept, 'rgba(16, 185, 129, 0.5)', 3);
         });
     }
     

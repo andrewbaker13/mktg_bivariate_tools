@@ -88,7 +88,7 @@ function showPushRangeGame(message, timeLimit) {
                 <div class="my-presses">Your Presses: <span id="myPressCount">0</span></div>
             </div>` : ''}
 
-            <div class="push-range-teams">
+            <div class="push-range-teams" style="${isProjector ? 'display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1200px; margin: 20px auto;' : ''}">
                 <div class="team-panel left">
                     <h4>🔵 BLUE TEAM →</h4>
                     <div id="leftTeamRoster"></div>
@@ -386,6 +386,127 @@ function updateTeamRosters() {
                 <span>${player.presses}</span>
             </div>`;
         }).join('');
+    }
+}
+
+function showPushRangeResults(chartData) {
+    if (!chartData) return '';
+    
+    // Create canvas for the chart
+    const canvasId = 'pushRangeResultsCanvas';
+    setTimeout(() => drawPushRangeResultsCanvas(canvasId, chartData), 100);
+    
+    return `
+        <div style="margin: 20px 0;">
+            <canvas id="${canvasId}" width="800" height="200" style="max-width: 100%; background: rgba(255,255,255,0.95); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></canvas>
+        </div>
+    `;
+}
+
+function drawPushRangeResultsCanvas(canvasId, chartData) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Clear
+    ctx.clearRect(0, 0, width, height);
+    
+    // Draw axis
+    const margin = 60;
+    const axisY = height / 2;
+    const chartWidth = width - 2 * margin;
+    
+    // Draw baseline
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(margin, axisY);
+    ctx.lineTo(width - margin, axisY);
+    ctx.stroke();
+    
+    // Draw range boundaries (blue and red fills)
+    const leftBoundary = chartData.left_boundary || 0;
+    const rightBoundary = chartData.right_boundary || 100;
+    const correctAnswer = chartData.correct_answer;
+    
+    const leftX = margin + (leftBoundary / 100) * chartWidth;
+    const rightX = margin + (rightBoundary / 100) * chartWidth;
+    
+    // Fill the range
+    ctx.fillStyle = chartData.is_correct ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+    ctx.fillRect(leftX, axisY - 40, rightX - leftX, 80);
+    
+    // Draw boundary lines
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(leftX, axisY - 50);
+    ctx.lineTo(leftX, axisY + 50);
+    ctx.stroke();
+    
+    ctx.strokeStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.moveTo(rightX, axisY - 50);
+    ctx.lineTo(rightX, axisY + 50);
+    ctx.stroke();
+    
+    // Draw correct answer marker
+    if (correctAnswer !== undefined && correctAnswer !== null) {
+        const answerX = margin + (correctAnswer / 100) * chartWidth;
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(answerX, axisY - 60);
+        ctx.lineTo(answerX, axisY + 60);
+        ctx.stroke();
+        
+        // Answer label
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Answer: ${correctAnswer}%`, answerX, axisY - 70);
+    }
+    
+    // Draw scale labels
+    ctx.fillStyle = '#1e293b';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    for (let i = 0; i <= 100; i += 25) {
+        const x = margin + (i / 100) * chartWidth;
+        ctx.fillText(`${i}%`, x, axisY + 70);
+    }
+    
+    // Draw boundary labels
+    ctx.font = 'bold 14px Arial';
+    ctx.fillStyle = '#3b82f6';
+    ctx.textAlign = 'center';
+    ctx.fillText(`🔵 ${leftBoundary.toFixed(1)}%`, leftX, axisY - 60);
+    
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText(`🔴 ${rightBoundary.toFixed(1)}%`, rightX, axisY - 60);
+    
+    // Draw player contribution markers (small dots above/below the range)
+    if (chartData.player_contributions && chartData.player_contributions.length > 0) {
+        chartData.player_contributions.forEach((player, idx) => {
+            // Determine position based on team
+            const yOffset = player.team === 'left' ? -25 : 25;
+            const xPos = player.team === 'left' ? leftX : rightX;
+            const yPos = axisY + yOffset;
+            
+            // Draw small circle for each press
+            const circleCount = Math.min(player.presses, 10); // Cap visual display
+            for (let i = 0; i < circleCount; i++) {
+                const circleX = xPos + (Math.random() - 0.5) * 30;
+                const circleY = yPos + (Math.random() - 0.5) * 15;
+                ctx.fillStyle = player.team === 'left' ? 'rgba(59, 130, 246, 0.6)' : 'rgba(239, 68, 68, 0.6)';
+                ctx.beginPath();
+                ctx.arc(circleX, circleY, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
     }
 }
 

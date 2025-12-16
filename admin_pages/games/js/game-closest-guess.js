@@ -215,6 +215,118 @@ function redrawNumberline() {
     });
 }
 
+function showClosestGuessResults(chartData) {
+    if (!chartData) return '';
+    
+    // Create canvas for the chart
+    const canvasId = 'closestGuessResultsCanvas';
+    setTimeout(() => drawClosestGuessResultsCanvas(canvasId, chartData), 100);
+    
+    return `
+        <div style="margin: 20px 0;">
+            <canvas id="${canvasId}" width="800" height="300" style="max-width: 100%; background: rgba(255,255,255,0.95); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></canvas>
+        </div>
+    `;
+}
+
+function drawClosestGuessResultsCanvas(canvasId, chartData) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Clear
+    ctx.clearRect(0, 0, width, height);
+    
+    // Determine range from data
+    const playerRanges = chartData.player_ranges || [];
+    const correctAnswer = chartData.correct_answer;
+    
+    if (playerRanges.length === 0) return;
+    
+    let minVal = Math.min(...playerRanges.map(r => r.min));
+    let maxVal = Math.max(...playerRanges.map(r => r.max));
+    
+    // Expand range to include correct answer
+    if (correctAnswer !== undefined && correctAnswer !== null) {
+        minVal = Math.min(minVal, correctAnswer);
+        maxVal = Math.max(maxVal, correctAnswer);
+    }
+    
+    // Add padding
+    const range = maxVal - minVal;
+    minVal -= range * 0.1;
+    maxVal += range * 0.1;
+    
+    // Draw axis
+    const margin = 60;
+    const axisY = height - 50;
+    const chartWidth = width - 2 * margin;
+    
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(margin, axisY);
+    ctx.lineTo(width - margin, axisY);
+    ctx.stroke();
+    
+    // Draw player ranges as horizontal bars
+    const barHeight = Math.min(30, (height - 100) / playerRanges.length);
+    playerRanges.forEach((range, idx) => {
+        const rangeMin = range.min;
+        const rangeMax = range.max;
+        
+        const x1 = margin + ((rangeMin - minVal) / (maxVal - minVal)) * chartWidth;
+        const x2 = margin + ((rangeMax - minVal) / (maxVal - minVal)) * chartWidth;
+        const y = 30 + idx * (barHeight + 5);
+        
+        // Draw bar
+        ctx.fillStyle = range.is_correct ? 'rgba(16, 185, 129, 0.5)' : 'rgba(148, 163, 184, 0.4)';
+        ctx.fillRect(x1, y, x2 - x1, barHeight);
+        
+        // Draw border
+        ctx.strokeStyle = range.is_correct ? '#10b981' : '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x1, y, x2 - x1, barHeight);
+        
+        // Draw player name
+        ctx.fillStyle = '#1e293b';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText(range.player_name.substring(0, 15), margin - 5, y + barHeight / 2 + 4);
+    });
+    
+    // Draw correct answer line
+    if (correctAnswer !== undefined && correctAnswer !== null) {
+        const answerX = margin + ((correctAnswer - minVal) / (maxVal - minVal)) * chartWidth;
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(answerX, 20);
+        ctx.lineTo(answerX, axisY);
+        ctx.stroke();
+        
+        // Answer label
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Answer: ${correctAnswer}`, answerX, 15);
+    }
+    
+    // Draw scale labels
+    ctx.fillStyle = '#1e293b';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    const labelCount = 5;
+    for (let i = 0; i <= labelCount; i++) {
+        const val = minVal + (i / labelCount) * (maxVal - minVal);
+        const x = margin + (i / labelCount) * chartWidth;
+        ctx.fillText(val.toFixed(1), x, axisY + 20);
+    }
+}
+
 function handleGuessResults(message) {
     const feedback = document.getElementById('feedback');
     const numberline = document.getElementById('numberline');

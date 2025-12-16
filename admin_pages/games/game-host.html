@@ -1416,7 +1416,10 @@
         document.getElementById('endGameBtn').addEventListener('click', async function() {
             if (!gameSession) return;
             
-            if (!confirm('Are you sure you want to end the game?')) return;
+            // Enhanced confirmation dialog
+            const confirmMessage = `⚠️ END ENTIRE GAME SESSION?\n\nThis will:\n• Stop the current round immediately\n• Skip all remaining rounds\n• Show final results and leaderboard\n• End the game for all players\n\nThis action cannot be undone.\n\nAre you sure you want to end the entire game?`;
+            
+            if (!confirm(confirmMessage)) return;
             
             try {
                 const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/end/`, {
@@ -1427,12 +1430,28 @@
                 if (!response.ok) throw new Error('Failed to end game');
                 
                 gameSession = await response.json();
-                setStatusIndicator('completed');
-                showToast('Game ended', 'warning');
+                setStatusIndicator('completed', 'Game Over!');
+                showToast('Game ended - showing final results', 'warning');
                 
-                this.disabled = true;
+                // Hide all control buttons except New Game
+                this.style.display = 'none';
                 document.getElementById('startGameBtn').disabled = true;
                 document.getElementById('nextRoundBtn').style.display = 'none';
+                document.getElementById('endRoundEarlyBtn').style.display = 'none';
+                
+                // Show New Game button
+                const newGameBtn = document.getElementById('newGameBtn');
+                if (newGameBtn) {
+                    newGameBtn.style.display = 'inline-block';
+                }
+                
+                // Clear saved game
+                localStorage.removeItem('active_game_room_code');
+                
+                // Show end-of-game overlay with leaderboard (reusing existing logic)
+                if (latestLeaderboard && latestLeaderboard.length > 0) {
+                    showGameOverOverlay(latestLeaderboard);
+                }
             } catch (error) {
                 showToast(error.message || 'Error ending game', 'error');
                 alert('Error ending game: ' + error.message);
@@ -2263,6 +2282,62 @@
             });
         }
         
+        // Show game over overlay with final leaderboard
+        function showGameOverOverlay(leaderboard) {
+            // Remove existing overlay if present
+            const existing = document.getElementById('gameOverOverlay');
+            if (existing) existing.remove();
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'gameOverOverlay';
+            overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(30,41,59,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem;';
+            
+            const container = document.createElement('div');
+            container.style.cssText = 'background: white; border-radius: 16px; padding: 2rem; max-width: 600px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.4);';
+            
+            const banner = document.createElement('h1');
+            banner.textContent = '🎉 Game Over!';
+            banner.style.cssText = 'color: #10b981; font-size: 2.5rem; margin-bottom: 1.5rem; text-align: center;';
+            container.appendChild(banner);
+            
+            const leaderboardDiv = document.createElement('div');
+            leaderboardDiv.style.cssText = 'margin-bottom: 2rem;';
+            
+            const leaderboardTitle = document.createElement('h2');
+            leaderboardTitle.textContent = '🏆 Final Standings';
+            leaderboardTitle.style.cssText = 'font-size: 1.5rem; margin-bottom: 1rem; text-align: center;';
+            leaderboardDiv.appendChild(leaderboardTitle);
+            
+            const topPlayers = leaderboard.slice(0, 5);
+            topPlayers.forEach((player, index) => {
+                const playerRow = document.createElement('div');
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                playerRow.textContent = `${medal} ${player.display_name || 'Player'} - ${player.total_score} pts`;
+                playerRow.style.cssText = 'padding: 0.75rem; margin-bottom: 0.5rem; background: #f1f5f9; border-radius: 8px; font-size: 1.1rem; font-weight: 600;';
+                leaderboardDiv.appendChild(playerRow);
+            });
+            container.appendChild(leaderboardDiv);
+            
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.cssText = 'display: flex; gap: 1rem; justify-content: center;';
+            
+            const newGameBtn = document.createElement('button');
+            newGameBtn.textContent = '🆕 Start New Game';
+            newGameBtn.style.cssText = 'padding: 1rem 2rem; font-size: 1.1rem; font-weight: 700; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);';
+            newGameBtn.onclick = startNewGame;
+            buttonContainer.appendChild(newGameBtn);
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = 'Close';
+            closeBtn.style.cssText = 'padding: 1rem 2rem; font-size: 1.1rem; font-weight: 700; background: #64748b; color: white; border: none; border-radius: 8px; cursor: pointer;';
+            closeBtn.onclick = () => overlay.remove();
+            buttonContainer.appendChild(closeBtn);
+            
+            container.appendChild(buttonContainer);
+            overlay.appendChild(container);
+            document.body.appendChild(overlay);
+        }
+        
         // Start New Game function - resets to fresh state
         function startNewGame() {
             // Clear localStorage
@@ -2430,10 +2505,16 @@
             const currentRound = gameSession.current_round || 1;
             const totalRounds = gameSession.total_rounds || 1;
             
-            if (currentRound < totalRounds && gameSession.questions[currentRound]) {
-                const nextQ = gameSession.questions[currentRound];
-                nextText.textContent = `Round ${currentRound + 1}: ${nextQ.question_text || nextQ.game_type}`;
+            // After round_changed fires, current_round is the round ABOUT TO START (already incremented)
+            // So we show the preview for the current round, not the next one
+            // Example: current_round=2 means round 2 is about to start, show questions[1] (0-indexed)
+            const currentQuestionIndex = currentRound - 1;  // Convert to 0-indexed
+            
+            if (currentRound <= totalRounds && gameSession.questions[currentQuestionIndex]) {
+                const currentQ = gameSession.questions[currentQuestionIndex];
+                nextText.textContent = `Round ${currentRound}: ${currentQ.question_text || currentQ.game_type}`;
                 preview.style.display = 'block';
+                console.log(`[PREVIEW] Showing round ${currentRound} preview (questions[${currentQuestionIndex}]): ${currentQ.question_text || currentQ.game_type}`);
             } else {
                 preview.style.display = 'none';
             }

@@ -47,11 +47,12 @@ function showSpeedTapGame(message, timeLimit) {
                     ${imageHTML}
                     <div class="timer" id="timer" style="font-size: 80px; font-weight: 800; color: #ef4444; text-align: center; margin: 20px 0;">${timeLimit}</div>
                 </div>
-                <div class="answer-options" id="answerOptions" style="pointer-events: none; opacity: 0.9;">
-                    ${options.map(opt => `
-                        <button class="answer-btn" data-answer="${opt.text}" style="font-size: 36px; padding: 30px; min-height: 100px;">
-                            ${opt.text}
-                        </button>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
+                    ${options.map((opt, index) => `
+                        <div style="background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,250,252,0.95)); padding: 40px 30px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); border: 3px solid rgba(102,126,234,0.3); text-align: center;">
+                            <div style="font-size: 28px; font-weight: 700; color: #667eea; margin-bottom: 12px;">${String.fromCharCode(65 + index)}</div>
+                            <div style="font-size: 36px; font-weight: 600; color: #1e293b; line-height: 1.3;">${opt.text}</div>
+                        </div>
                     `).join('')}
                 </div>
                 <div id="speedTapParticipation" style="margin-top: 40px; text-align: center; background: #f8fafc; padding: 30px; border-radius: 16px;">
