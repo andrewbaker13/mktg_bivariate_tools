@@ -127,7 +127,7 @@
             margin-bottom: 2rem;
         }
         .question-text {
-            font-size: 1.1rem;
+            font-size: 1.4rem;
             color: #1e293b;
             font-weight: 600;
             margin-bottom: 0.5rem;
@@ -270,7 +270,7 @@
         }
         .numberline {
             position: relative;
-            height: 80px;
+            height: 140px;
             margin: 2rem 0;
         }
         .numberline-axis {
@@ -292,7 +292,7 @@
         .range-box {
             position: absolute;
             bottom: 5px;
-            height: 60px;
+            height: 120px;
             background: rgba(59, 130, 246, 0.10);
             border: none;
             border-radius: 6px;
@@ -302,6 +302,11 @@
             background: rgba(239, 68, 68, 0.20);
             border: none;
             z-index: 10;
+        }
+        /* Projector mode: taller range bars */
+        body.projector-mode .range-box {
+            height: 220px;
+            bottom: 20px;
         }
         .correct-answer-marker {
             position: absolute;
@@ -463,66 +468,81 @@
             font-weight: 600;
         }
         
-        /* Bracket-style Guess Range Indicator */
+        /* Whisker-style Guess Range Indicator */
         .guess-range-bracket {
             position: relative;
-            display: flex;
-            align-items: stretch;
             margin-top: 8px;
-            height: 50px;
+            height: 65px;
             transition: all 0.15s ease-out;
         }
         .bracket-left-edge, .bracket-right-edge {
+            position: absolute;
             width: 3px;
             background: #0f172a;
-            position: relative;
             transition: left 0.15s ease-out, right 0.15s ease-out;
         }
         .bracket-left-edge {
-            position: absolute;
-            left: 0%;
-            top: 0;
-            height: 100%;
-            border-radius: 2px 0 0 2px;
+            left: calc(0% + 25px);
+            top: 32px;
+            height: 25px;
+            border-radius: 2px;
         }
         .bracket-right-edge {
-            position: absolute;
-            right: 0%;
-            top: 0;
-            height: 100%;
-            border-radius: 0 2px 2px 0;
+            right: calc(0% + 25px);
+            top: 32px;
+            height: 25px;
+            border-radius: 2px;
         }
         .bracket-left-edge .edge-value,
         .bracket-right-edge .edge-value {
             position: absolute;
-            top: -28px;
-            font-size: 1.1rem;
+            top: -46px;
+            font-size: 2.2rem;
             font-weight: 800;
-            color: #0f172a;
             white-space: nowrap;
         }
         .bracket-left-edge .edge-value {
             left: 50%;
             transform: translateX(-50%);
+            color: #3b82f6;
         }
         .bracket-right-edge .edge-value {
             right: 50%;
             transform: translateX(50%);
+            color: #ef4444;
         }
         .bracket-bottom {
             position: absolute;
-            left: 0%;
-            right: 0%;
-            bottom: 0;
+            left: calc(0% + 25px);
+            right: calc(0% + 25px);
+            top: 43px;
+            height: 3px;
+            transition: left 0.15s ease-out, right 0.15s ease-out;
+        }
+        .bracket-bottom::before,
+        .bracket-bottom::after {
+            content: '';
+            position: absolute;
+            top: 0;
             height: 3px;
             background: #0f172a;
-            transition: left 0.15s ease-out, right 0.15s ease-out;
+            transition: width 0.15s ease-out;
+        }
+        .bracket-bottom::before {
+            /* Left whisker */
+            right: 50%;
+            left: 0;
+        }
+        .bracket-bottom::after {
+            /* Right whisker */
+            left: 50%;
+            right: 0;
         }
         .bracket-label {
             position: absolute;
-            bottom: 8px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -530,6 +550,7 @@
             padding: 4px 12px;
             border-radius: 6px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            z-index: 2;
         }
         .range-label {
             font-size: 0.7rem;
@@ -597,7 +618,8 @@
             background: #fee2e2;
         }
         .push-button-container {
-            text-align: center;
+            display: flex;
+            justify-content: center;
             margin: 2rem 0;
         }
         .push-button {
@@ -610,6 +632,19 @@
             transition: all 0.1s;
             user-select: none;
             -webkit-user-select: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .push-button .push-main {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .push-button .push-count {
+            font-size: 1.2rem;
+            font-weight: 600;
+            opacity: 0.95;
         }
         .push-button:active {
             transform: scale(0.95);
@@ -632,13 +667,7 @@
             box-shadow: 0 4px 0 #991b1b;
             transform: translateY(4px);
         }
-        .my-presses {
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-top: 1rem;
-            color: #1e293b;
-        }
+
         .push-range-result {
             text-align: center;
             padding: 2rem;

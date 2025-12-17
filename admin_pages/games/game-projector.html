@@ -343,74 +343,93 @@
             z-index: 1;
         }
         
-        /* Bracket styles for guess range */
+        /* Whisker-style Guess Range Indicator */
         .guess-range-bracket {
             position: relative;
-            display: flex;
-            align-items: stretch;
             margin-top: 8px;
-            height: 50px;
+            height: 65px;
             transition: all 0.15s ease-out;
         }
         
         .bracket-left-edge, .bracket-right-edge {
+            position: absolute;
             width: 3px;
             background: #0f172a;
-            position: relative;
             transition: left 0.15s ease-out, right 0.15s ease-out;
         }
         
         .bracket-left-edge {
-            position: absolute;
-            left: 0%;
-            top: 0;
-            height: 100%;
-            border-radius: 2px 0 0 2px;
+            left: calc(0% + 25px);
+            top: 32px;
+            height: 25px;
+            border-radius: 2px;
         }
         
         .bracket-right-edge {
-            position: absolute;
-            right: 0%;
-            top: 0;
-            height: 100%;
-            border-radius: 0 2px 2px 0;
+            right: calc(0% + 25px);
+            top: 32px;
+            height: 25px;
+            border-radius: 2px;
         }
         
         .bracket-left-edge .edge-value,
         .bracket-right-edge .edge-value {
             position: absolute;
-            top: -28px;
-            font-size: 1.1rem;
+            top: -46px;
+            font-size: 2.2rem;
             font-weight: 800;
-            color: #0f172a;
             white-space: nowrap;
         }
         
         .bracket-left-edge .edge-value {
             left: 50%;
             transform: translateX(-50%);
+            color: #3b82f6;
         }
         
         .bracket-right-edge .edge-value {
             right: 50%;
             transform: translateX(50%);
+            color: #ef4444;
         }
         
         .bracket-bottom {
             position: absolute;
-            left: 0%;
-            right: 0%;
-            bottom: 0;
+            left: calc(0% + 25px);
+            right: calc(0% + 25px);
+            top: 43px;
+            height: 3px;
+            transition: left 0.15s ease-out, right 0.15s ease-out;
+        }
+        .bracket-bottom::before,
+        .bracket-bottom::after {
+            content: '';
+            position: absolute;
+            top: 0;
             height: 3px;
             background: #0f172a;
-            transition: left 0.15s ease-out, right 0.15s ease-out;
+            transition: width 0.15s ease-out;
+        }
+        .bracket-bottom::before {
+            /* Left whisker */
+            right: 50%;
+            left: 0;
+        }
+        .bracket-bottom::after {
+            /* Right whisker */
+            left: 50%;
+            right: 0;
         }
         
         .range-label {
             font-size: 0.875rem;
             font-weight: 600;
-            color: white;
+            color: #64748b;
             text-transform: uppercase;
+        }
+        
+        .bracket-label {
+            text-align: center;
         }
         
         .edge-value {
@@ -436,11 +455,47 @@
         }
         
         .projector-mode .edge-value {
-            font-size: 32px !important;
+            font-size: 51px !important;
+            background: white !important;
+            padding: 8px 16px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+            top: -16px !important;
         }
         
         .projector-mode .range-label {
             font-size: 24px !important;
+            color: white !important;
+        }
+        
+        .projector-mode .bracket-label {
+            position: static !important;
+            transform: none !important;
+            margin-bottom: 10px !important;
+            text-align: center !important;
+        }
+        
+        .projector-mode .bracket-left-edge,
+        .projector-mode .bracket-right-edge {
+            background: transparent !important;
+        }
+        
+        .projector-mode .bracket-bottom {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            background: transparent !important;
+            height: auto !important;
+            position: relative !important;
+            top: auto !important;
+            left: 0 !important;
+            right: 0 !important;
+            margin-bottom: 10px !important;
+        }
+        
+        .projector-mode .bracket-bottom::before,
+        .projector-mode .bracket-bottom::after {
+            display: none !important;
         }
         
         .projector-mode .push-range-teams {
@@ -449,6 +504,8 @@
         
         .projector-mode .team-panel {
             padding: 30px !important;
+            background: white !important;
+            border-radius: 16px !important;
         }
         
         .projector-mode .team-panel.left {
@@ -463,7 +520,7 @@
         
         .projector-mode .team-panel h4 {
             font-size: 40px !important;
-            margin-bottom: 20px !important;
+            margin: 0 0 20px 0 !important;
         }
         
         .projector-mode .team-panel.left h4 {
@@ -476,6 +533,22 @@
         
         .projector-mode .team-roster {
             font-size: 28px !important;
+        }
+        
+        .projector-mode .team-member {
+            display: flex !important;
+            justify-content: space-between !important;
+            padding: 8px 0 !important;
+        }
+        
+        .projector-mode .team-member .player-name {
+            flex: 1 !important;
+        }
+        
+        .projector-mode .team-member .press-count {
+            font-weight: 700 !important;
+            min-width: 60px !important;
+            text-align: right !important;
         }
         
         /* Closest Guess - scale up for projector, hide input controls */
@@ -692,9 +765,25 @@
             showLeaderboard: true
         };
         
-        // Get room code from URL (will be redeclared by game-config.js, so use different var name)
+        // Get room code and snapshot from URL
         const projectorUrlParams = new URLSearchParams(window.location.search);
         const roomCodeFromUrl = projectorUrlParams.get('room');
+        let snapshotFile = projectorUrlParams.get('snapshot');
+        const stateParam = projectorUrlParams.get('state');
+        const devParam = projectorUrlParams.get('dev');
+        
+        // 🚧 DEV MODE: Map state parameter to snapshot file
+        if (stateParam && devParam === '1' && window.location.hostname === 'localhost') {
+            snapshotFile = `${stateParam}.json`;
+        }
+        
+        // 🚧 DEV MODE: Enable if snapshot parameter is present
+        if (snapshotFile && window.location.hostname === 'localhost') {
+            console.warn('🚧 DEV MODE ACTIVE - Using snapshot:', snapshotFile);
+            window.DEV_MODE = true;
+            window.DEV_STATE = snapshotFile.replace('.json', '');
+            window.DEV_SNAPSHOT_PATH = `dev_data/snapshots/${snapshotFile}`;
+        }
         
         if (roomCodeFromUrl) {
             document.getElementById('roomCode').textContent = roomCodeFromUrl;
@@ -787,7 +876,11 @@
     </script>
     
     <script src="js/game-core.js"></script>
-    <!-- Game-specific modules lazy loaded on demand by game-core.js -->
+    <script src="js/game-push-range.js"></script>
+    <script src="js/game-closest-guess.js"></script>
+    <script src="js/game-word-guess.js"></script>
+    <script src="js/game-speed-tap.js"></script>
+    <!-- Game-specific modules needed for results rendering -->
 
     <footer style="text-align: center; padding: 2rem 1rem; color: rgba(255,255,255,0.9); font-size: 20px; margin-top: 2rem;">
         <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">

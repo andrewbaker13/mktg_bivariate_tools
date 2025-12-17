@@ -53,9 +53,80 @@ function showWordGuessGame(message, timeLimit) {
     
     const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 25vh; margin: 0.5rem auto; border-radius: 8px; display: block; object-fit: contain;">` : '';
     
+    // Player view styling variables
     const questionSize = window.isProjectorMode ? '56px' : '1.1rem';
     const hintColor = window.isProjectorMode ? 'white' : '#64748b';
     const hintSize = window.isProjectorMode ? '40px' : '1rem';
+    
+    // Projector mode: show timer and points in white boxes like Speed Tap
+    if (window.isProjectorMode) {
+        document.getElementById('gameArea').innerHTML = `
+            <div class="word-guess-area">
+                <div class="question-display" style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: nowrap; margin: 20px 0;">
+                    <div class="timer" id="timer" style="font-size: 80px; font-weight: 800; color: #ef4444; text-align: center; background: white; border-radius: 16px; padding: 20px 40px; flex-shrink: 0; min-width: 120px;">${timeLimit}</div>
+                    <div class="question-text" style="font-size: 48px; font-weight: 700; text-align: center; background: white; border-radius: 16px; padding: 30px 50px; color: #1e293b; flex: 1; max-width: 70%;">${message.question_text}</div>
+                    <div style="font-size: 48px; font-weight: 800; color: #10b981; text-align: center; background: white; border-radius: 16px; padding: 20px 40px; flex-shrink: 0; min-width: 160px;" id="availablePoints">100 pts</div>
+                </div>
+                ${imageHTML}
+                ${hint ? `<div class="hint-text" style="color: white; font-style: italic; margin: 20px 0; font-size: 40px; font-weight: 600; text-align: center;">Hint: ${hint}</div>` : ''}
+                
+                ${letterGridHTML}
+                
+                <div id="feedback" style="margin-top: 30px; font-size: 32px; color: white; font-weight: 600; min-height: 50px; text-align: center;"></div>
+            </div>
+            
+            <style>
+                .word-guess-area {
+                    padding: 2rem;
+                }
+                .word-guess-grid {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 1.5rem;
+                    margin: 2rem 0;
+                    width: 100%;
+                }
+                .word-row {
+                    display: flex;
+                    gap: 12px;
+                    flex-wrap: nowrap;
+                    justify-content: center;
+                    max-width: 100%;
+                }
+                .word-space {
+                    height: 2rem;
+                    width: 100%;
+                }
+                .letter-box {
+                    width: 80px;
+                    height: 100px;
+                    border: 4px solid #3b82f6;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    position: relative;
+                    background: white;
+                    font-size: 56px;
+                    font-weight: 800;
+                    flex-shrink: 1;
+                    min-width: 60px;
+                }
+                .player-letter {
+                    color: #6b7280;
+                    position: absolute;
+                    font-weight: 700;
+                }
+                .revealed-letter {
+                    color: #3b82f6;
+                    position: absolute;
+                    font-weight: 800;
+                }
+            </style>
+        `;
+        return;
+    }
     
     document.getElementById('gameArea').innerHTML = `
         <div class="word-guess-area">
@@ -76,12 +147,12 @@ function showWordGuessGame(message, timeLimit) {
                     type="text" 
                     id="wordGuessInput" 
                     class="word-guess-input" 
-                    placeholder="Type your guess (letters only, all caps)"
+                    placeholder="Type your guess"
                     maxlength="100"
                     autocomplete="off"
                     spellcheck="false"
                 >
-                <button class="submit-word-btn" onclick="submitWordGuess()">Submit Answer</button>
+                <button class="submit-word-btn" onclick="submitWordGuess()" disabled style="opacity: 0.5; cursor: not-allowed;">Submit Answer</button>
             </div>
             
             <div id="feedback" style="margin-top: 20px; font-size: 18px; color: #64748b; font-weight: 500; min-height: 30px;"></div>
@@ -244,6 +315,20 @@ function handleWordGuessInput(e) {
         const letterEl = document.getElementById(`playerLetter${i}`);
         if (letterEl && !wordGuessState.revealedIndices.has(i)) {
             letterEl.textContent = inputNoSpaces[i];
+        }
+    }
+    
+    // Enable/disable submit button based on whether EXACTLY the right number of letters are filled
+    const submitBtn = document.querySelector('.submit-word-btn');
+    if (submitBtn) {
+        if (inputNoSpaces.length === answerNoSpaces.length) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.cursor = 'not-allowed';
         }
     }
 }

@@ -44,6 +44,10 @@ class MockWebSocket {
                 const now = new Date().toISOString();
                 console.log(`🚧 Updating start_time from ${snapshot.start_time} to ${now}`);
                 snapshot.start_time = now;
+                
+                // Override time limit to 30 seconds for faster dev testing
+                console.log(`🚧 Overriding game_time_limit from ${snapshot.game_time_limit} to 30 seconds`);
+                snapshot.game_time_limit = 30;
             }
             
             // Send snapshot message to game handler
@@ -73,6 +77,114 @@ class MockWebSocket {
                             players: snapshot.players
                         });
                     }, 400);
+                }
+                
+                // 🚧 DEV MODE: For push_range, send periodic boundary updates
+                if (snapshot.game_type === 'push_range' && snapshot.team_assignments) {
+                    // Simulate boundary updates every 2 seconds
+                    let leftBoundary = 0;
+                    let rightBoundary = 100;
+                    const updateInterval = setInterval(() => {
+                        leftBoundary = Math.min(leftBoundary + Math.random() * 3, 45);
+                        rightBoundary = Math.max(rightBoundary - Math.random() * 3, 55);
+                        
+                        console.log(`🚧 MockWebSocket: Sending push_range_update (left: ${leftBoundary.toFixed(1)}%, right: ${rightBoundary.toFixed(1)}%)`);
+                        this.simulateMessage({
+                            type: 'push_range_update',
+                            left_boundary: parseFloat(leftBoundary.toFixed(2)),
+                            right_boundary: parseFloat(rightBoundary.toFixed(2)),
+                            team_stats: {
+                                left: { total_presses: Math.floor(leftBoundary * 10), players: 5 },
+                                right: { total_presses: Math.floor((100 - rightBoundary) * 10), players: 5 }
+                            }
+                        });
+                    }, 2000);
+                    
+                    // Stop updates after 30 seconds (or time limit)
+                    setTimeout(() => clearInterval(updateInterval), (snapshot.game_time_limit || 30) * 1000);
+                }
+                
+                // 🚧 DEV MODE: For closest_guess, send submitted_ranges as range_submitted messages
+                if (snapshot.submitted_ranges && snapshot.game_type === 'closest_guess') {
+                    snapshot.submitted_ranges.forEach((range, index) => {
+                        setTimeout(() => {
+                            console.log(`🚧 MockWebSocket: Sending range submission from ${range.player_name}`);
+                            this.simulateMessage({
+                                type: 'range_submitted',
+                                player_id: range.player_id,
+                                player_name: range.player_name,
+                                guess_min: range.min,
+                                guess_max: range.max
+                            });
+                        }, 500 + (index * 150));
+                    });
+                }
+                
+                // 🚧 DEV MODE: For crowd_wisdom, send distribution updates
+                if (snapshot.distribution_updates && snapshot.game_type === 'crowd_wisdom') {
+                    snapshot.distribution_updates.forEach((update) => {
+                        setTimeout(() => {
+                            console.log(`🚧 MockWebSocket: Sending crowd wisdom distribution update`);
+                            this.simulateMessage({
+                                type: 'crowd_wisdom_distribution',
+                                distribution: update.distribution,
+                                percent_answered: update.percent_answered,
+                                percent_unanswered: update.percent_unanswered
+                            });
+                        }, update.delay_ms);
+                    });
+                }
+                
+                // 🚧 DEV MODE: For line_fit, send scatter data and other submissions
+                if (snapshot.game_type === 'line_fit') {
+                    // Send scatter data immediately after game starts
+                    if (snapshot.scatter_data_message) {
+                        setTimeout(() => {
+                            console.log('🚧 MockWebSocket: Sending line fit scatter data');
+                            this.simulateMessage(snapshot.scatter_data_message);
+                        }, 500);
+                    }
+                    
+                    // Send other player submissions at specified delays
+                    if (snapshot.other_submissions) {
+                        snapshot.other_submissions.forEach((submission) => {
+                            setTimeout(() => {
+                                console.log(`🚧 MockWebSocket: Sending line submission from ${submission.player_name}`);
+                                this.simulateMessage(submission);
+                            }, submission.delay_ms);
+                        });
+                    }
+                }
+                
+                // 🚧 DEV MODE: For word_guess, simulate letter reveals over time
+                if (snapshot.game_type === 'word_guess' && snapshot.game_config?.answer) {
+                    const answer = snapshot.game_config.answer.toUpperCase().replace(/ /g, '');
+                    const timeLimit = snapshot.game_time_limit || 90;
+                    const numReveals = Math.min(3, Math.floor(answer.length / 3)); // Reveal ~1/3 of letters
+                    
+                    // Generate random indices to reveal
+                    const indicesToReveal = [];
+                    const availableIndices = Array.from({length: answer.length}, (_, i) => i);
+                    for (let i = 0; i < numReveals; i++) {
+                        const randomIdx = Math.floor(Math.random() * availableIndices.length);
+                        indicesToReveal.push(availableIndices[randomIdx]);
+                        availableIndices.splice(randomIdx, 1);
+                    }
+                    
+                    // Send reveal messages at intervals throughout the game
+                    indicesToReveal.forEach((index, i) => {
+                        const delayMs = ((timeLimit * 1000) / (numReveals + 1)) * (i + 1);
+                        setTimeout(() => {
+                            console.log(`🚧 MockWebSocket: Revealing letter at index ${index}`);
+                            this.simulateMessage({
+                                type: 'word_guess_reveal',
+                                revealed_letters: [{
+                                    index: index,
+                                    letter: answer[index]
+                                }]
+                            });
+                        }, delayMs);
+                    });
                 }
             }, 200);
             
@@ -972,8 +1084,18 @@ async function handleGameStart(message) {
     }
 }
 
-function handleUnifiedGameResults(message) {
+async function handleUnifiedGameResults(message) {
     console.log('Game results:', message);
+    
+    // Make sure current game script is loaded (for dev mode jumping to results)
+    if (message.game_type && !loadedGameScripts.has(message.game_type)) {
+        console.log('📦 Loading current game script for results:', message.game_type);
+        try {
+            await loadGameScript(message.game_type);
+        } catch (err) {
+            console.error('❌ Failed to load current game script:', err);
+        }
+    }
     
     // Determine if this is the final round
     const isFinalRound = message.current_round >= message.total_rounds;
@@ -1027,14 +1149,11 @@ function handleUnifiedGameResults(message) {
             if (message.game_type === 'speed_tap') {
                 // Speed Tap: Show fastest correct player and answer stats
                 if (gs.fastest_correct) {
-                    const nameFontSize = window.isProjectorMode ? '32px' : '20px';
-                    const timeFontSize = window.isProjectorMode ? '24px' : '14px';
-                    const labelFontSize = window.isProjectorMode ? '18px' : '14px';
+                    const fontSize = window.isProjectorMode ? '48px' : '20px';
                     const padding = window.isProjectorMode ? '20px 30px' : '12px 20px';
                     gameSpecificHTML += `
                         <div style="background: rgba(255,255,255,0.15); padding: ${padding}; border-radius: 8px; margin-bottom: 15px;">
-                            <div style="font-size: ${labelFontSize}; opacity: 0.9;">⚡ Fastest Correct</div>
-                            <div style="font-size: ${nameFontSize}; font-weight: 700;">${gs.fastest_correct.player_name} <span style="opacity: 0.8; font-size: ${timeFontSize};">(${gs.fastest_correct.response_time?.toFixed(2) || '?'}s)</span></div>
+                            <div style="font-size: ${fontSize};">⚡ Fastest Correct: <span style="font-weight: 700;">${gs.fastest_correct.player_name}</span> (${gs.fastest_correct.response_time?.toFixed(2) || '?'}s)</div>
                         </div>
                     `;
                 }
@@ -1044,7 +1163,7 @@ function handleUnifiedGameResults(message) {
                     const padding = window.isProjectorMode ? '20px 30px' : '12px 20px';
                     gameSpecificHTML += `
                         <div style="background: rgba(255,255,255,0.2); padding: ${padding}; border-radius: 8px; margin-bottom: 15px;">
-                            <div style="font-size: ${fontSize}; font-weight: 700;">Correct Answer: ${message.correct_answer}</div>
+                            <div style="font-size: ${fontSize};">Correct Answer: <span style="font-weight: 700;">${message.correct_answer}</span></div>
                         </div>
                     `;
                 }
@@ -1052,9 +1171,19 @@ function handleUnifiedGameResults(message) {
                     const statFontSize = window.isProjectorMode ? '24px' : '14px';
                     const statPadding = window.isProjectorMode ? '12px 24px' : '8px 16px';
                     gameSpecificHTML += `
-                        <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;">
+                        <div style="display: flex; gap: 15px; justify-content: center; align-items: center; margin-bottom: 10px;">
                             <span style="background: rgba(16,185,129,0.3); padding: ${statPadding}; border-radius: 20px; font-size: ${statFontSize};">✅ ${gs.correct_count} correct</span>
                             <span style="background: rgba(239,68,68,0.3); padding: ${statPadding}; border-radius: 20px; font-size: ${statFontSize};">❌ ${gs.incorrect_count} incorrect</span>
+                            ${window.isProjectorMode && hasMoreRounds ? `<span style="font-size: 28px; opacity: 0.9; margin-left: 10px;"><span style="display: inline-block; animation: rotate 2.5s ease-in-out infinite;">⏳</span> Waiting for instructor to start next round...</span>
+                            <style>
+                                @keyframes rotate {
+                                    0% { transform: rotate(0deg); }
+                                    40% { transform: rotate(180deg); }
+                                    50% { transform: rotate(180deg); }
+                                    90% { transform: rotate(360deg); }
+                                    100% { transform: rotate(360deg); }
+                                }
+                            </style>` : ''}
                         </div>
                     `;
                 }
@@ -1067,146 +1196,169 @@ function handleUnifiedGameResults(message) {
             } else if (message.game_type === 'closest_guess') {
                 // Closest Guess: Show top scorer with their range
                 if (gs.top_scorer) {
+                    const fontSize = window.isProjectorMode ? '48px' : '20px';
+                    const padding = window.isProjectorMode ? '20px 30px' : '12px 20px';
                     gameSpecificHTML += `
-                        <div style="background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 8px; margin-bottom: 15px;">
-                            <div style="font-size: 14px; opacity: 0.9;">🎯 Top Scorer</div>
-                            <div style="font-size: 20px; font-weight: 700;">${gs.top_scorer.name} <span style="opacity: 0.8; font-size: 14px;">(${gs.top_scorer.points} pts, range: ${gs.top_scorer.range})</span></div>
+                        <div style="background: rgba(255,255,255,0.15); padding: ${padding}; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-size: ${fontSize};">🎯 Top Scorer: <span style="font-weight: 700;">${gs.top_scorer.name}</span> (${gs.top_scorer.points} pts, range: ${gs.top_scorer.range})</div>
                         </div>
                     `;
                 }
                 if (gs.correct_count !== undefined) {
+                    const statFontSize = window.isProjectorMode ? '24px' : '14px';
+                    const statPadding = window.isProjectorMode ? '12px 24px' : '8px 16px';
                     gameSpecificHTML += `
-                        <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;">
-                            <span style="background: rgba(16,185,129,0.3); padding: 8px 16px; border-radius: 20px;">✅ ${gs.correct_count}/${gs.total_guesses} captured answer</span>
-                            ${gs.average_range_width ? `<span style="background: rgba(99,102,241,0.3); padding: 8px 16px; border-radius: 20px;">📊 Avg range: ${gs.average_range_width.toFixed(1)}</span>` : ''}
+                        <div style="display: flex; gap: 15px; justify-content: center; align-items: center; margin-bottom: 10px;">
+                            <span style="background: rgba(16,185,129,0.3); padding: ${statPadding}; border-radius: 20px; font-size: ${statFontSize};">✅ ${gs.correct_count}/${gs.total_guesses} captured answer</span>
+                            ${gs.average_range_width ? `<span style="background: rgba(99,102,241,0.3); padding: ${statPadding}; border-radius: 20px; font-size: ${statFontSize};">📊 Avg range: ${gs.average_range_width.toFixed(1)}</span>` : ''}
+                            ${window.isProjectorMode && hasMoreRounds ? `<span style="font-size: 28px; opacity: 0.9; margin-left: 10px;"><span style="display: inline-block; animation: rotate 2.5s ease-in-out infinite;">⏳</span> Waiting for instructor to start next round...</span>
+                            <style>
+                                @keyframes rotate {
+                                    0% { transform: rotate(0deg); }
+                                    40% { transform: rotate(180deg); }
+                                    50% { transform: rotate(180deg); }
+                                    90% { transform: rotate(360deg); }
+                                    100% { transform: rotate(360deg); }
+                                }
+                            </style>` : ''}
                         </div>
                     `;
                 }
-                // Show chart if available
+                // Show chart if available - build from player_stats if chart_data not provided
                 console.log('[CLOSEST GUESS DEBUG] Has chart_data?', !!gs.chart_data);
                 console.log('[CLOSEST GUESS DEBUG] chart_data:', gs.chart_data);
                 
-                // Inline chart rendering for Closest Guess - matching in-game style
-                if (gs.chart_data && gs.chart_data.results && gs.chart_data.results.length > 0) {
-                    const canvasId = 'closestGuessResultsCanvas_' + Date.now();
+                // Build chart data from round_stats if not provided
+                let chartDataToUse = gs.chart_data;
+                if (!chartDataToUse && message.round_stats && message.round_stats.player_stats) {
+                    const results = [];
+                    for (const [playerId, stats] of Object.entries(message.round_stats.player_stats)) {
+                        if (stats.answered && stats.range) {
+                            const [min, max] = stats.range.split('-').map(Number);
+                            results.push({
+                                player_name: stats.player_name,
+                                guess_min: min,
+                                guess_max: max,
+                                is_correct: stats.captured_answer
+                            });
+                        }
+                    }
+                    if (results.length > 0) {
+                        chartDataToUse = {
+                            correct_answer: parseFloat(message.correct_answer),
+                            results: results
+                        };
+                    }
+                }
+                
+                // HTML number line rendering for Closest Guess - matching in-game projector style
+                if (chartDataToUse && chartDataToUse.results && chartDataToUse.results.length > 0) {
+                    const containerId = 'closestGuessResultsContainer_' + Date.now();
+                    const correctAnswer = chartDataToUse.correct_answer;
+                    const results = chartDataToUse.results;
+                    
+                    // Calculate range from submitted guesses (for labels)
+                    let dataMin = Math.min(...results.map(r => r.guess_min));
+                    let dataMax = Math.max(...results.map(r => r.guess_max));
+                    
+                    // Calculate display range including correct answer (for chart bounds)
+                    let displayMin = Math.min(dataMin, correctAnswer);
+                    let displayMax = Math.max(dataMax, correctAnswer);
+                    
+                    // Add 10% padding to display range
+                    let displayRange = displayMax - displayMin;
+                    if (displayRange === 0) {
+                        displayRange = 10;
+                        displayMin -= displayRange / 2;
+                        displayMax += displayRange / 2;
+                    }
+                    const padding = displayRange * 0.10;
+                    const numberlineMin = Math.floor(displayMin - padding);
+                    const numberlineMax = Math.ceil(displayMax + padding);
+                    
+                    // Calculate positions for min/max labels
+                    const minPos = ((dataMin - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
+                    const maxPos = ((dataMax - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
+                    
+                    // Calculate position for correct answer marker
+                    const answerPos = ((correctAnswer - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
+                    
+                    // Calculate average guess (midpoint of each range, then average)
+                    const rangeMidpoints = results.map(r => (r.guess_min + r.guess_max) / 2);
+                    const averageGuess = rangeMidpoints.reduce((sum, val) => sum + val, 0) / rangeMidpoints.length;
+                    const averagePos = ((averageGuess - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
+                    
+                    // Responsive sizing based on mode
+                    const titleSize = window.isProjectorMode ? '36px' : '20px';
+                    const barHeight = window.isProjectorMode ? '220px' : '120px';
+                    const containerHeight = window.isProjectorMode ? '480px' : '280px';
+                    const lineWidth = window.isProjectorMode ? '10px' : '6px';
+                    const greenLineHeight = window.isProjectorMode ? '340px' : '180px';
+                    const avgLabelBottom = window.isProjectorMode ? '250px' : '140px';
+                    const answerLabelBottom = window.isProjectorMode ? '370px' : '200px';
+                    const valueFontSize = window.isProjectorMode ? '40px' : '24px';
+                    const labelFontSize = window.isProjectorMode ? '20px' : '14px';
+                    const minMaxValueSize = window.isProjectorMode ? '40px' : '24px';
+                    const minMaxLabelSize = window.isProjectorMode ? '24px' : '16px';
+                    const minMaxBottom = window.isProjectorMode ? '130px' : '70px';
+                    
+                    // Build range bars HTML
+                    let rangeBarsHTML = '';
+                    results.forEach(result => {
+                        const rangeWidth = ((result.guess_max - result.guess_min) / (numberlineMax - numberlineMin)) * 100;
+                        const rangeLeft = ((result.guess_min - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
+                        rangeBarsHTML += `
+                            <div style="position: absolute; left: ${Math.max(0, Math.min(100, rangeLeft))}%; width: ${Math.max(0, Math.min(100, rangeWidth))}%; height: ${barHeight}; bottom: 20px; background: rgba(59, 130, 246, 0.10); border-radius: 6px;"></div>
+                        `;
+                    });
+                    
                     gameSpecificHTML += `
-                        <div style="margin: 20px 0;">
-                            <canvas id="${canvasId}" width="800" height="300" style="max-width: 100%; background: rgba(255,255,255,0.95); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></canvas>
+                        <div style="margin: 40px 0;">
+                            <div style="font-size: ${titleSize}; font-weight: 700; color: #1e293b; margin-bottom: 20px; text-align: center;">📊 All Player Ranges</div>
+                            <div style="min-height: ${containerHeight}; background: rgba(255,255,255,0.95); border-radius: 12px; padding: 40px 20px; position: relative;">
+                                ${rangeBarsHTML}
+                                <div style="position: absolute; left: ${averagePos}%; bottom: 20px; width: 0; height: ${barHeight}; border-left: ${lineWidth} dotted #000000; transform: translateX(-50%); z-index: 1;"></div>
+                                <div style="position: absolute; left: ${averagePos}%; bottom: ${avgLabelBottom}; transform: translateX(-50%); text-align: center; background: white; border-radius: 12px; padding: 8px 15px; z-index: 10;">
+                                    <div style="font-size: ${valueFontSize}; font-weight: 700; color: #000000;">${averageGuess.toFixed(1)}</div>
+                                    <div style="font-size: ${labelFontSize}; font-weight: 400; color: #000000;">Average Guess</div>
+                                </div>
+                                <div style="position: absolute; left: ${answerPos}%; bottom: 20px; width: ${lineWidth}; height: ${greenLineHeight}; background: #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); transform: translateX(-50%); z-index: 1;"></div>
+                                <div style="position: absolute; left: ${answerPos}%; bottom: ${answerLabelBottom}; transform: translateX(-50%); text-align: center; background: white; border-radius: 12px; padding: 8px 15px; z-index: 10;">
+                                    <div style="font-size: ${valueFontSize}; font-weight: 700; color: #10b981;">${correctAnswer}</div>
+                                    <div style="font-size: ${labelFontSize}; font-weight: 400; color: #10b981;">Correct Answer</div>
+                                </div>
+                                <div style="position: absolute; left: ${minPos - 2.5}%; bottom: ${minMaxBottom}; transform: translate(-50%, 50%); text-align: center;">
+                                    <div style="font-size: ${minMaxValueSize}; font-weight: 700; color: #1e293b;">${dataMin}</div>
+                                    <div style="font-size: ${minMaxLabelSize}; font-weight: 600; color: #64748b;">(min)</div>
+                                </div>
+                                <div style="position: absolute; left: ${maxPos + 2.5}%; bottom: ${minMaxBottom}; transform: translate(-50%, 50%); text-align: center;">
+                                    <div style="font-size: ${minMaxValueSize}; font-weight: 700; color: #1e293b;">${dataMax}</div>
+                                    <div style="font-size: ${minMaxLabelSize}; font-weight: 600; color: #64748b;">(max)</div>
+                                </div>
+                            </div>
                         </div>
                     `;
-                    
-                    setTimeout(() => {
-                        const canvas = document.getElementById(canvasId);
-                        if (!canvas) {
-                            console.error('[CLOSEST GUESS] Canvas not found:', canvasId);
-                            return;
-                        }
-                        
-                        const ctx = canvas.getContext('2d');
-                        const width = canvas.width;
-                        const height = canvas.height;
-                        ctx.clearRect(0, 0, width, height);
-                        
-                        const correctAnswer = gs.chart_data.correct_answer;
-                        const results = gs.chart_data.results;
-                        
-                        // Calculate range
-                        let minVal = Math.min(...results.map(r => r.guess_min));
-                        let maxVal = Math.max(...results.map(r => r.guess_max));
-                        
-                        // Expand range to include correct answer
-                        if (correctAnswer !== undefined && correctAnswer !== null) {
-                            minVal = Math.min(minVal, correctAnswer);
-                            maxVal = Math.max(maxVal, correctAnswer);
-                        }
-                        
-                        // Add padding
-                        const range = maxVal - minVal;
-                        minVal -= range * 0.1;
-                        maxVal += range * 0.1;
-                        
-                        // Draw axis
-                        const margin = 60;
-                        const axisY = height - 50;
-                        const chartWidth = width - 2 * margin;
-                        
-                        ctx.strokeStyle = '#64748b';
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.moveTo(margin, axisY);
-                        ctx.lineTo(width - margin, axisY);
-                        ctx.stroke();
-                        
-                        // Draw player ranges as horizontal bars
-                        const barHeight = Math.min(30, (height - 100) / results.length);
-                        results.forEach((result, idx) => {
-                            const x1 = margin + ((result.guess_min - minVal) / (maxVal - minVal)) * chartWidth;
-                            const x2 = margin + ((result.guess_max - minVal) / (maxVal - minVal)) * chartWidth;
-                            const y = 30 + idx * (barHeight + 5);
-                            
-                            // Draw bar
-                            ctx.fillStyle = result.is_correct ? 'rgba(16, 185, 129, 0.5)' : 'rgba(148, 163, 184, 0.4)';
-                            ctx.fillRect(x1, y, x2 - x1, barHeight);
-                            
-                            // Draw border
-                            ctx.strokeStyle = result.is_correct ? '#10b981' : '#94a3b8';
-                            ctx.lineWidth = 2;
-                            ctx.strokeRect(x1, y, x2 - x1, barHeight);
-                            
-                            // Draw player name
-                            ctx.fillStyle = '#1e293b';
-                            ctx.font = '12px Arial';
-                            ctx.textAlign = 'right';
-                            ctx.fillText(result.player_name.substring(0, 15), margin - 5, y + barHeight / 2 + 4);
-                        });
-                        
-                        // Draw correct answer line (BLACK)
-                        if (correctAnswer !== undefined && correctAnswer !== null) {
-                            const answerX = margin + ((correctAnswer - minVal) / (maxVal - minVal)) * chartWidth;
-                            ctx.strokeStyle = '#000000';
-                            ctx.lineWidth = 3;
-                            ctx.beginPath();
-                            ctx.moveTo(answerX, 20);
-                            ctx.lineTo(answerX, axisY);
-                            ctx.stroke();
-                            
-                            // Answer label (black)
-                            ctx.fillStyle = '#000000';
-                            ctx.font = 'bold 14px Arial';
-                            ctx.textAlign = 'center';
-                            ctx.fillText(`${correctAnswer}`, answerX, 15);
-                        }
-                        
-                        // Draw scale labels
-                        ctx.fillStyle = '#1e293b';
-                        ctx.font = '12px Arial';
-                        ctx.textAlign = 'center';
-                        const numTicks = 5;
-                        for (let i = 0; i <= numTicks; i++) {
-                            const val = minVal + (i / numTicks) * (maxVal - minVal);
-                            const x = margin + (i / numTicks) * chartWidth;
-                            ctx.fillText(val.toFixed(1), x, axisY + 20);
-                        }
-                        
-                        console.log('[CLOSEST GUESS] Chart rendered successfully');
-                    }, 100);
                 }
             } else if (message.game_type === 'push_range') {
-                // Push Range: Show final range and whether it captured the answer
+                // Push Range: Show final range and correct answer
+                const fontSize = window.isProjectorMode ? '48px' : '20px';
+                const padding = window.isProjectorMode ? '20px 30px' : '12px 20px';
                 const rangeColor = gs.is_correct ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
                 const rangeIcon = gs.is_correct ? '✅' : '❌';
                 gameSpecificHTML += `
-                    <div style="background: ${rangeColor}; padding: 12px 20px; border-radius: 8px; margin-bottom: 15px;">
-                        <div style="font-size: 14px; opacity: 0.9;">${rangeIcon} Final Range</div>
-                        <div style="font-size: 20px; font-weight: 700;">${gs.final_range} <span style="opacity: 0.8; font-size: 14px;">(Answer: ${message.correct_answer}%)</span></div>
+                    <div style="background: ${rangeColor}; padding: ${padding}; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="font-size: ${fontSize};">${rangeIcon} Final Range: <span style="font-weight: 700;">${gs.final_range}</span> (Answer: ${message.correct_answer}%)</div>
                     </div>
                 `;
                 if (gs.top_pressers && gs.top_pressers.length > 0) {
                     const topPresser = gs.top_pressers[0];
                     const teamEmoji = topPresser.team === 'left' ? '🔵' : '🔴';
+                    const statFontSize = window.isProjectorMode ? '24px' : '14px';
+                    const statPadding = window.isProjectorMode ? '12px 24px' : '8px 16px';
+                    const topPresserPoints = topPresser.points || topPresser.presses;
                     gameSpecificHTML += `
-                        <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;">
-                            <span style="background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px;">🏆 Top Presser: ${teamEmoji} ${topPresser.player_name} (${topPresser.presses} presses)</span>
+                        <div style="display: flex; gap: 15px; justify-content: center; align-items: center; margin-bottom: 10px;">
+                            <span style="background: rgba(255,255,255,0.2); padding: ${statPadding}; border-radius: 20px; font-size: ${statFontSize};">🏆 Top Presser: ${teamEmoji} ${topPresser.player_name} (${topPresser.presses} presses) • ${topPresserPoints} pts</span>
                         </div>
                     `;
                 }
@@ -1216,7 +1368,7 @@ function handleUnifiedGameResults(message) {
                 console.log('[PUSH RANGE DEBUG] showPushRangeResults function exists?', typeof showPushRangeResults === 'function');
                 if (typeof showPushRangeResults === 'function' && gs.chart_data) {
                     console.log('[PUSH RANGE DEBUG] Calling showPushRangeResults...');
-                    gameSpecificHTML += showPushRangeResults(gs.chart_data);
+                    gameSpecificHTML += `<div style="padding-top: 120px;">${showPushRangeResults(gs.chart_data)}</div>`;
                 } else if (gs.chart_data) {
                     console.log('[PUSH RANGE] Chart data available but showPushRangeResults function not loaded');
                 }
@@ -1252,6 +1404,51 @@ function handleUnifiedGameResults(message) {
                         </div>
                     `;
                 }
+                // Show player's result first (points earned/lost)
+                if (myStats && myStats.points_earned !== undefined) {
+                    const pointsColor = myStats.points_earned > 0 ? '#10b981' : myStats.points_earned < 0 ? '#ef4444' : '#64748b';
+                    const pointsPrefix = myStats.points_earned > 0 ? '+' : '';
+                    gameSpecificHTML += `
+                        <div style="background: rgba(255,255,255,0.15); padding: 15px 20px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                            <div style="color: ${pointsColor}; font-size: 28px; font-weight: 700;">${pointsPrefix}${myStats.points_earned} points</div>
+                            ${myStats.got_tough_bonus ? '<div style="color: #f59e0b; margin-top: 5px; font-size: 14px;">🏆 Tough Question Bonus (2x)!</div>' : ''}
+                        </div>
+                    `;
+                }
+                
+                // Show distribution chart with color coding
+                if (gs.final_distribution && Array.isArray(gs.final_distribution)) {
+                    const totalAnswered = gs.final_distribution.reduce((sum, opt) => sum + (opt.percent || 0), 0);
+                    const percentDidntAnswer = Math.max(0, 100 - totalAnswered);
+                    const correctIndex = gs.correct_option_index;
+                    
+                    gameSpecificHTML += `
+                        <div class="distribution-container" style="margin-top: 20px;">
+                            <div class="distribution-row unanswered-row" style="display: flex; align-items: center; margin-bottom: 10px; padding: 8px; border-radius: 8px; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);">
+                                <div class="distribution-label" style="width: 180px; font-weight: 600; color: #64748b;">❌ Didn't Answer</div>
+                                <div class="distribution-bar-wrapper" style="flex: 1; height: 24px; background: #e2e8f0; border-radius: 12px; margin: 0 12px; overflow: hidden;">
+                                    <div class="distribution-bar" style="height: 100%; width: ${percentDidntAnswer}%; border-radius: 12px; background: linear-gradient(90deg, #ef4444, #f87171);"></div>
+                                </div>
+                                <div class="distribution-percent" style="width: 50px; text-align: right; font-weight: 700; color: #1e293b;">${Math.round(percentDidntAnswer)}%</div>
+                            </div>
+                            ${gs.final_distribution.map((opt) => {
+                                const isCorrect = opt.option_index === correctIndex;
+                                const barColor = isCorrect ? 'linear-gradient(90deg, #10b981, #34d399)' : 'linear-gradient(90deg, #ef4444, #f87171)';
+                                const textColor = isCorrect ? '#10b981' : '#ef4444';
+                                return `
+                                    <div class="distribution-row" style="display: flex; align-items: center; margin-bottom: 10px; padding: 8px; border-radius: 8px; background: #f8fafc;">
+                                        <div class="distribution-label" style="width: 180px; font-weight: 600; color: #1e293b;">${opt.text}</div>
+                                        <div class="distribution-bar-wrapper" style="flex: 1; height: 24px; background: #e2e8f0; border-radius: 12px; margin: 0 12px; overflow: hidden;">
+                                            <div class="distribution-bar" style="height: 100%; width: ${opt.percent || 0}%; border-radius: 12px; background: ${barColor};"></div>
+                                        </div>
+                                        <div class="distribution-percent" style="width: 50px; text-align: right; font-weight: 700; color: ${textColor};">${Math.round(opt.percent || 0)}%</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+                
                 if (gs.correct_count !== undefined) {
                     gameSpecificHTML += `
                         <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;">
@@ -1285,12 +1482,15 @@ function handleUnifiedGameResults(message) {
                         </div>
                     `;
                 }            } else if (message.game_type === 'word_guess') {
-                // Word Guess: Show correct answer and statistics
+                // Word Guess: Match Speed Tap results formatting
                 if (gs.fastest_correct) {
+                    const fontSize = window.isProjectorMode ? '48px' : '20px';
+                    const padding = window.isProjectorMode ? '20px 30px' : '12px 20px';
+                    // Use guess_time from snapshot data
+                    const timeValue = gs.fastest_correct.guess_time || gs.fastest_correct.time_remaining || gs.fastest_correct.time || 0;
                     gameSpecificHTML += `
-                        <div style="background: rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 8px; margin-bottom: 15px;">
-                            <div style="font-size: 14px; opacity: 0.9;">⚡ Fastest Correct</div>
-                            <div style="font-size: 20px; font-weight: 700;">${gs.fastest_correct.player_name} <span style="opacity: 0.8; font-size: 14px;">(${gs.fastest_correct.time_remaining?.toFixed(1) || '?'}s remaining)</span></div>
+                        <div style="background: rgba(255,255,255,0.15); padding: ${padding}; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="font-size: ${fontSize};">⚡ Fastest Correct: <span style="font-weight: 700;">${gs.fastest_correct.player_name}</span> (${timeValue.toFixed(1)}s)</div>
                         </div>
                     `;
                 }
@@ -1300,15 +1500,27 @@ function handleUnifiedGameResults(message) {
                     const padding = window.isProjectorMode ? '20px 30px' : '12px 20px';
                     gameSpecificHTML += `
                         <div style="background: rgba(255,255,255,0.2); padding: ${padding}; border-radius: 8px; margin-bottom: 15px;">
-                            <div style="font-size: ${fontSize}; font-weight: 700;">Correct Answer: ${message.correct_answer.toUpperCase()}</div>
+                            <div style="font-size: ${fontSize};">Correct Answer: <span style="font-weight: 700;">${message.correct_answer.toUpperCase()}</span></div>
                         </div>
                     `;
                 }
                 if (gs.correct_count !== undefined) {
+                    const statFontSize = window.isProjectorMode ? '24px' : '14px';
+                    const statPadding = window.isProjectorMode ? '12px 24px' : '8px 16px';
                     gameSpecificHTML += `
-                        <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;">
-                            <span style="background: rgba(16,185,129,0.3); padding: 8px 16px; border-radius: 20px;">✅ ${gs.correct_count} correct</span>
-                            <span style="background: rgba(148,163,184,0.3); padding: 8px 16px; border-radius: 20px;">⏰ ${gs.no_answer_count} no answer</span>
+                        <div style="display: flex; gap: 15px; justify-content: center; align-items: center; margin-bottom: 10px;">
+                            <span style="background: rgba(16,185,129,0.3); padding: ${statPadding}; border-radius: 20px; font-size: ${statFontSize};">✅ ${gs.correct_count} correct</span>
+                            <span style="background: rgba(239,68,68,0.3); padding: ${statPadding}; border-radius: 20px; font-size: ${statFontSize};">❌ ${gs.incorrect_count || 0} incorrect</span>
+                            ${window.isProjectorMode && hasMoreRounds ? `<span style="font-size: 28px; opacity: 0.9; margin-left: 10px;"><span style="display: inline-block; animation: rotate 2.5s ease-in-out infinite;">⏳</span> Waiting for instructor to start next round...</span>
+                            <style>
+                                @keyframes rotate {
+                                    0% { transform: rotate(0deg); }
+                                    40% { transform: rotate(180deg); }
+                                    50% { transform: rotate(180deg); }
+                                    90% { transform: rotate(360deg); }
+                                    100% { transform: rotate(360deg); }
+                                }
+                            </style>` : ''}
                         </div>
                     `;
                 }            } else if (message.game_type === 'line_fit') {
@@ -1349,16 +1561,11 @@ function handleUnifiedGameResults(message) {
         if (hasValidStats) {
             banner.innerHTML = `
                 <div style="text-align: center;">
-                    <h2 style="color: white; margin: 0 0 15px 0; font-size: 24px;">
+                    <h2 style="color: white; margin: 0 0 15px 0; font-size: ${window.isProjectorMode ? '20px' : '24px'};">
                         🎉 Round ${message.current_round} of ${message.total_rounds} Complete!
                     </h2>
                     ${gameSpecificHTML}
-                    ${window.isProjectorMode ? `
-                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px); max-width: 400px; margin: 15px auto;">
-                            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Players Scored</div>
-                            <div style="font-size: 28px; font-weight: 700;">${message.round_stats.percent_scored}%</div>
-                        </div>
-                    ` : `
+                    ${!window.isProjectorMode ? `
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px;">
                             <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; backdrop-filter: blur(10px);">
                                 <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">Players Scored</div>
@@ -1373,8 +1580,8 @@ function handleUnifiedGameResults(message) {
                                 <div style="font-size: 28px; font-weight: 700;">${myStats.player_total_score} pts</div>
                             </div>
                         </div>
-                    `}
-                    ${hasMoreRounds ? '<div style="margin-top: 15px; font-size: 16px; opacity: 0.9;">⏳ Waiting for instructor to start next round...</div>' : '<div style="margin-top: 15px; font-size: 18px; font-weight: 600;">🏁 Final Round Complete!</div>'}
+                        ${hasMoreRounds ? '<div style="margin-top: 15px; font-size: 16px; opacity: 0.9;">⏳ Waiting for instructor to start next round...</div>' : '<div style="margin-top: 15px; font-size: 18px; font-weight: 600;">🏁 Final Round Complete!</div>'}
+                    ` : ''}
                 </div>
             `;
         } else {
@@ -1385,10 +1592,7 @@ function handleUnifiedGameResults(message) {
                         🎉 Round ${message.current_round} of ${message.total_rounds} Complete!
                     </h2>
                     ${gameSpecificHTML}
-                    <div style="font-size: 16px; opacity: 0.9; margin-top: 15px;">
-                        Check the leaderboard for your score →
-                    </div>
-                    ${hasMoreRounds ? '<div style="margin-top: 15px; font-size: 16px; opacity: 0.9;">⏳ Waiting for instructor to start next round...</div>' : '<div style="margin-top: 15px; font-size: 18px; font-weight: 600;">🏁 Final Round Complete!</div>'}
+                    ${hasMoreRounds ? (window.isProjectorMode ? '<div style="margin-top: 25px; font-size: 28px; opacity: 0.9;"><span style="display: inline-block; animation: rotate 2.5s ease-in-out infinite;">⏳</span> Waiting for instructor to start next round...<style>@keyframes rotate { 0% { transform: rotate(0deg); } 40% { transform: rotate(180deg); } 50% { transform: rotate(180deg); } 90% { transform: rotate(360deg); } 100% { transform: rotate(360deg); } }</style></div>' : '<div style="margin-top: 15px; font-size: 16px; opacity: 0.9;">⏳ Waiting for instructor to start next round...</div>') : '<div style="margin-top: 15px; font-size: 18px; font-weight: 600;">🏁 Final Round Complete!</div>'}
                 </div>
             `;
         }
@@ -1774,113 +1978,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ========== CHART RENDERING FUNCTIONS ==========
 // These need to be in game-core.js so they're always available for end-of-round results
-
-function showPushRangeResults(chartData) {
-    if (!chartData) return '';
-    
-    // Create canvas for the chart
-    const canvasId = 'pushRangeResultsCanvas_' + Date.now();
-    setTimeout(() => drawPushRangeResultsCanvas(canvasId, chartData), 100);
-    
-    return `
-        <div style="margin: 20px 0;">
-            <canvas id="${canvasId}" width="800" height="200" style="max-width: 100%; background: rgba(255,255,255,0.95); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></canvas>
-        </div>
-    `;
-}
-
-function drawPushRangeResultsCanvas(canvasId, chartData) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) {
-        console.log('[PUSH RANGE CHART] Canvas not found:', canvasId);
-        return;
-    }
-    
-    console.log('[PUSH RANGE CHART] Drawing chart with data:', chartData);
-    
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
-    
-    // Clear
-    ctx.clearRect(0, 0, width, height);
-    
-    // Draw axis
-    const margin = 60;
-    const axisY = height / 2;
-    const chartWidth = width - 2 * margin;
-    
-    // Draw baseline
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(margin, axisY);
-    ctx.lineTo(width - margin, axisY);
-    ctx.stroke();
-    
-    // Draw range boundaries (blue and red fills)
-    const leftBoundary = chartData.left_boundary || 0;
-    const rightBoundary = chartData.right_boundary || 100;
-    const correctAnswer = chartData.correct_answer;
-    
-    const leftX = margin + (leftBoundary / 100) * chartWidth;
-    const rightX = margin + (rightBoundary / 100) * chartWidth;
-    
-    // Fill the range
-    ctx.fillStyle = chartData.is_correct ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)';
-    ctx.fillRect(leftX, axisY - 40, rightX - leftX, 80);
-    
-    // Draw boundary lines
-    ctx.strokeStyle = '#3b82f6';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(leftX, axisY - 50);
-    ctx.lineTo(leftX, axisY + 50);
-    ctx.stroke();
-    
-    ctx.strokeStyle = '#ef4444';
-    ctx.beginPath();
-    ctx.moveTo(rightX, axisY - 50);
-    ctx.lineTo(rightX, axisY + 50);
-    ctx.stroke();
-    
-    // Draw correct answer marker
-    if (correctAnswer !== undefined && correctAnswer !== null) {
-        const answerX = margin + (correctAnswer / 100) * chartWidth;
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(answerX, axisY - 60);
-        ctx.lineTo(answerX, axisY + 60);
-        ctx.stroke();
-        
-        // Answer label
-        ctx.fillStyle = '#f59e0b';
-        ctx.font = 'bold 14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(`Answer: ${correctAnswer}%`, answerX, axisY - 70);
-    }
-    
-    // Draw scale labels
-    ctx.fillStyle = '#1e293b';
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'center';
-    for (let i = 0; i <= 100; i += 25) {
-        const x = margin + (i / 100) * chartWidth;
-        ctx.fillText(`${i}%`, x, axisY + 70);
-    }
-    
-    // Draw boundary labels
-    ctx.font = 'bold 14px Arial';
-    ctx.fillStyle = '#3b82f6';
-    ctx.textAlign = 'center';
-    ctx.fillText(`🔵 ${leftBoundary.toFixed(1)}%`, leftX, axisY - 60);
-    
-    ctx.fillStyle = '#ef4444';
-    ctx.fillText(`🔴 ${rightBoundary.toFixed(1)}%`, rightX, axisY - 60);
-    
-    console.log('[PUSH RANGE CHART] Chart drawn successfully');
-}
+// Note: showPushRangeResults is now in game-push-range.js and returns HTML
 
 function showClosestGuessResults(chartData) {
     console.log('[CLOSEST GUESS CHART] showClosestGuessResults called with:', chartData);

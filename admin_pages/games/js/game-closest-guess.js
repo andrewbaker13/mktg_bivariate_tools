@@ -38,6 +38,33 @@ function showClosestGuessGame(message, timeLimit) {
     const rangeRequirementText = maxWidth ? `<div style="color: #64748b; font-size: 14px; margin-top: 8px;">📏 Guesses must be within ${maxWidth} units</div>` : '<div style="color: #64748b; font-size: 14px; margin-top: 8px;">📏 Any range allowed (max 8 digits per number)</div>';
     const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 25vh; margin: 0.5rem auto; border-radius: 8px; display: block; object-fit: contain;">` : '';
     
+    // Projector mode: show timer, question, and points in white boxes with number line visualization
+    if (window.isProjectorMode) {
+        document.getElementById('gameArea').innerHTML = `
+            <div class="closest-guess-area">
+                <div class="question-display" style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: nowrap; margin: 20px 0;">
+                    <div class="timer" id="timer" style="font-size: 80px; font-weight: 800; color: #ef4444; text-align: center; background: white; border-radius: 16px; padding: 20px 40px; flex-shrink: 0; min-width: 120px;">${timeLimit}</div>
+                    <div class="question-text" style="font-size: 48px; font-weight: 700; text-align: center; background: white; border-radius: 16px; padding: 30px 50px; color: #1e293b; flex: 1; max-width: 70%;">${message.question_text}</div>
+                    <div style="font-size: 48px; font-weight: 800; color: #10b981; text-align: center; background: white; border-radius: 16px; padding: 20px 40px; flex-shrink: 0; min-width: 160px;" id="availablePoints">100 pts</div>
+                </div>
+                ${imageHTML}
+                ${maxWidth ? `<div style="color: white; font-size: 32px; margin: 20px 0; text-align: center; font-weight: 600;">📏 Guesses must be within ${maxWidth} units</div>` : ''}
+                
+                <div class="numberline-container" style="margin-top: 40px;">
+                    <div class="numberline-title" style="font-size: 36px; font-weight: 700; color: #1e293b; margin-bottom: 20px; text-align: center;">📊 All Player Ranges</div>
+                    <div class="numberline" id="numberline" style="min-height: 300px; background: rgba(255,255,255,0.95); border-radius: 12px; padding: 40px 20px; position: relative;">
+                        <div class="numberline-axis"></div>
+                    </div>
+                    <div class="numberline-labels" style="display: flex; justify-content: space-between; font-size: 28px; font-weight: 700; color: white; margin-top: 15px;">
+                        <span>${numberlineMin}</span>
+                        <span>${numberlineMax}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
     document.getElementById('gameArea').innerHTML = `
         <div class="closest-guess-area">
             <div class="question-display">
@@ -66,7 +93,7 @@ function showClosestGuessGame(message, timeLimit) {
             <div id="feedback"></div>
             
             <div class="numberline-container">
-                <div class="numberline-title">📊 All Player Ranges (Real-time)</div>
+                <div class="numberline-title">📊 All Player Ranges</div>
                 <div class="numberline" id="numberline">
                     <div class="numberline-axis"></div>
                 </div>
@@ -170,7 +197,7 @@ function updateDynamicRange() {
     let dataMin = Math.min(...submittedGuesses.map(g => g.min));
     let dataMax = Math.max(...submittedGuesses.map(g => g.max));
     
-    // Add 25% padding
+    // Add 10% padding
     let range = dataMax - dataMin;
     if (range === 0) {
         range = 10; // Default range if single point or identical guesses
@@ -178,18 +205,34 @@ function updateDynamicRange() {
         dataMin -= range / 2;
         dataMax += range / 2;
     }
-    const padding = range * 0.25;
+    const padding = range * 0.10;
     
     numberlineMin = Math.floor(dataMin - padding);
     numberlineMax = Math.ceil(dataMax + padding);
     
-    // Update labels
+    // Update labels - position them dynamically based on actual data min/max
     const labels = document.querySelector('.numberline-labels');
     if (labels) {
+        // Calculate positions as percentages
+        const minPos = ((dataMin - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
+        const maxPos = ((dataMax - numberlineMin) / (numberlineMax - numberlineMin)) * 100;
+        
+        // Different font sizes for projector vs player mode
+        const valueFontSize = window.isProjectorMode ? '40px' : '20px';
+        const labelFontSize = window.isProjectorMode ? '24px' : '14px';
+        const containerHeight = window.isProjectorMode ? '70px' : '40px';
+        
         labels.innerHTML = `
-            <span>${numberlineMin}</span>
-            <span style="font-size: 12px; color: #64748b;">(Range: ${numberlineMin} to ${numberlineMax})</span>
-            <span>${numberlineMax}</span>
+            <div style="position: relative; width: 100%; height: ${containerHeight};">
+                <div style="position: absolute; left: ${minPos}%; transform: translateX(-50%); text-align: center;">
+                    <div style="font-size: ${valueFontSize}; font-weight: 700; color: #1e293b;">${dataMin}</div>
+                    <div style="font-size: ${labelFontSize}; font-weight: 600; color: #64748b;">(min)</div>
+                </div>
+                <div style="position: absolute; left: ${maxPos}%; transform: translateX(-50%); text-align: center;">
+                    <div style="font-size: ${valueFontSize}; font-weight: 700; color: #1e293b;">${dataMax}</div>
+                    <div style="font-size: ${labelFontSize}; font-weight: 600; color: #64748b;">(max)</div>
+                </div>
+            </div>
         `;
     }
 }
@@ -211,6 +254,13 @@ function redrawNumberline() {
         rangeBox.className = 'range-box' + (guess.player_id === playerSession.id ? ' own' : '');
         rangeBox.style.left = Math.max(0, Math.min(100, rangeLeft)) + '%';
         rangeBox.style.width = Math.max(0, Math.min(100, rangeWidth)) + '%';
+        
+        // Projector mode: make bars much taller
+        if (window.isProjectorMode) {
+            rangeBox.style.height = '220px';
+            rangeBox.style.bottom = '20px';
+        }
+        
         numberline.appendChild(rangeBox);
     });
 }

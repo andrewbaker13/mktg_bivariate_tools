@@ -42,12 +42,13 @@ function showSpeedTapGame(message, timeLimit) {
         
         document.getElementById('gameArea').innerHTML = `
             <div class="speed-tap-area">
-                <div class="question-display">
-                    <div class="question-text" style="font-size: 48px; margin-bottom: 20px;">${message.question_text}</div>
-                    ${imageHTML}
-                    <div class="timer" id="timer" style="font-size: 80px; font-weight: 800; color: #ef4444; text-align: center; margin: 20px 0;">${timeLimit}</div>
+                <div class="question-display" style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: nowrap; margin: 20px 0;">
+                    <div class="timer" id="timer" style="font-size: 80px; font-weight: 800; color: #ef4444; text-align: center; background: white; border-radius: 16px; padding: 20px 40px; flex-shrink: 0; min-width: 120px;">${timeLimit}</div>
+                    <div class="question-text" style="font-size: 48px; font-weight: 700; text-align: center; background: white; border-radius: 16px; padding: 30px 50px; color: #1e293b; flex: 1; max-width: 70%;">${message.question_text}</div>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
+                ${imageHTML}
+                
+                <div style="display: grid; grid-template-columns: repeat(${options.length}, 1fr); gap: 20px; max-width: 1400px; margin: 0 auto;">
                     ${options.map((opt, index) => `
                         <div style="background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,250,252,0.95)); padding: 40px 30px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); border: 3px solid rgba(102,126,234,0.3); text-align: center;">
                             <div style="font-size: 28px; font-weight: 700; color: #667eea; margin-bottom: 12px;">${String.fromCharCode(65 + index)}</div>
