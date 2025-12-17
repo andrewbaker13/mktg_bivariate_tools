@@ -646,6 +646,41 @@
 
     <!-- Game Modules (same as game-play.html) -->
     <script src="../../shared/js/api-config.js"></script>
+    
+    <!-- 🚧 DEV MODE: Auth bypass and mock session data -->
+    <script>
+        if (window.DEV_MODE) {
+            console.log('🚧 DEV MODE: Bypassing auth checks and setting mock session data (PROJECTOR)');
+            
+            // Mock authentication
+            sessionStorage.setItem('authToken', 'DEV_MOCK_TOKEN');
+            sessionStorage.setItem('isGuest', 'false');
+            
+            // Mock game session
+            sessionStorage.setItem('gameSession', JSON.stringify({
+                room_code: 'DEV1',
+                game_type: 'speed_tap',
+                status: 'in_progress',
+                instructor_name: 'Dev Instructor',
+                course_name: 'Dev Course'
+            }));
+            
+            // Mock projector player session (spectator role)
+            sessionStorage.setItem('playerSession', JSON.stringify({
+                id: 998,
+                display_name: 'Projector View',
+                user: null,
+                score: 0,
+                rank: null,
+                isProjector: true
+            }));
+            
+            sessionStorage.setItem('waitingToEnter', 'false');
+            
+            console.log('🚧 DEV MODE: Mock projector session data set');
+        }
+    </script>
+    
     <script src="js/game-config.js"></script>
     <script src="js/game-utils.js"></script>
     

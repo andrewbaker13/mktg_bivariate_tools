@@ -6,6 +6,164 @@
 const API_BASE = window.API_BASE;
 const WS_BASE = window.WS_BASE;
 
+// 🚧 DEV MODE - Mock WebSocket for UI testing without backend
+class MockWebSocket {
+    constructor(url) {
+        console.log('🚧 MockWebSocket created:', url);
+        this.url = url;
+        this.readyState = 0; // CONNECTING
+        
+        // Simulate connection opening
+        setTimeout(() => {
+            this.readyState = 1; // OPEN
+            if (this.onopen) {
+                console.log('🚧 MockWebSocket: Triggering onopen');
+                this.onopen({});
+            }
+            
+            // Load snapshot data
+            this.loadSnapshot();
+        }, 100);
+    }
+    
+    async loadSnapshot() {
+        try {
+            const snapshotPath = window.DEV_SNAPSHOT_PATH;
+            console.log('🚧 Loading snapshot from:', snapshotPath);
+            
+            const response = await fetch(snapshotPath);
+            if (!response.ok) {
+                throw new Error(`Failed to load snapshot: ${response.status}`);
+            }
+            
+            const snapshot = await response.json();
+            console.log('🚧 Snapshot loaded:', snapshot.type);
+            
+            // 🚧 DEV MODE: Dynamically update timestamps to "now" so timer doesn't instantly expire
+            if (snapshot.type === 'game_started' && snapshot.start_time) {
+                const now = new Date().toISOString();
+                console.log(`🚧 Updating start_time from ${snapshot.start_time} to ${now}`);
+                snapshot.start_time = now;
+            }
+            
+            // Send snapshot message to game handler
+            setTimeout(() => {
+                if (this.onmessage) {
+                    console.log('🚧 MockWebSocket: Sending snapshot message');
+                    this.onmessage({ data: JSON.stringify(snapshot) });
+                }
+                
+                // 🚧 DEV MODE: Send initial leaderboard if snapshot has one
+                if (snapshot.leaderboard) {
+                    setTimeout(() => {
+                        console.log('🚧 MockWebSocket: Sending initial leaderboard');
+                        this.simulateMessage({
+                            type: 'leaderboard_update',
+                            leaderboard: snapshot.leaderboard
+                        });
+                    }, 300);
+                }
+                
+                // 🚧 DEV MODE: For projector, simulate players list
+                if (snapshot.players && window.isProjectorMode) {
+                    setTimeout(() => {
+                        console.log('🚧 MockWebSocket: Sending player list for projector');
+                        this.simulateMessage({
+                            type: 'player_list_update',
+                            players: snapshot.players
+                        });
+                    }, 400);
+                }
+            }, 200);
+            
+        } catch (error) {
+            console.error('🚧 Failed to load snapshot:', error);
+            if (this.onerror) {
+                this.onerror(error);
+            }
+        }
+    }
+    
+    send(data) {
+        const message = JSON.parse(data);
+        console.log('🚧 MockWebSocket: Would send:', message.action, message.data);
+        
+        // Simulate some responses based on actions
+        setTimeout(() => {
+            if (message.action === 'identify') {
+                this.simulateMessage({
+                    type: 'identified',
+                    game_types: ['speed_tap']
+                });
+            } else if (message.action === 'speed_tap') {
+                // Player submitted answer - simulate results after 2 seconds
+                console.log('🚧 MockWebSocket: Player answered:', message.data.answer);
+                console.log('🚧 MockWebSocket: Will show results in 2 seconds...');
+                
+                setTimeout(() => {
+                    // Load the corresponding results snapshot
+                    const currentState = window.DEV_STATE;
+                    
+                    // If currently showing active game, automatically load results
+                    if (currentState.includes('_active')) {
+                        console.log('🚧 MockWebSocket: Auto-loading results snapshot');
+                        this.loadResultsSnapshot(message.data.answer);
+                    }
+                }, 2000);
+            }
+        }, 100);
+    }
+    
+    async loadResultsSnapshot(playerAnswer) {
+        try {
+            // Determine if answer was correct by checking the active snapshot's correct answer
+            // For demo purposes, let's assume "Retention Rate" is correct (from our mock data)
+            const correctAnswer = "Retention Rate";
+            const isCorrect = playerAnswer === correctAnswer;
+            
+            const resultsFile = isCorrect 
+                ? 'speed_tap_results_correct.json' 
+                : 'speed_tap_results_incorrect.json';
+            
+            console.log(`🚧 Loading results: ${resultsFile}`);
+            
+            const response = await fetch(`dev_data/snapshots/${resultsFile}`);
+            if (!response.ok) {
+                throw new Error(`Failed to load results: ${response.status}`);
+            }
+            
+            const results = await response.json();
+            
+            // Override with player's actual answer
+            results.player_answer = playerAnswer;
+            results.is_correct = isCorrect;
+            
+            console.log('🚧 MockWebSocket: Sending results');
+            if (this.onmessage) {
+                this.onmessage({ data: JSON.stringify(results) });
+            }
+            
+        } catch (error) {
+            console.error('🚧 Failed to load results snapshot:', error);
+        }
+    }
+    
+    simulateMessage(message) {
+        if (this.onmessage) {
+            console.log('🚧 MockWebSocket: Simulating message:', message.type);
+            this.onmessage({ data: JSON.stringify(message) });
+        }
+    }
+    
+    close() {
+        console.log('🚧 MockWebSocket: Closing');
+        this.readyState = 3; // CLOSED
+        if (this.onclose) {
+            this.onclose({ wasClean: true });
+        }
+    }
+}
+
 function connectWebSocket() {
     logTiming('wsConnectionStart', Date.now());
     
@@ -16,7 +174,13 @@ function connectWebSocket() {
     const wsUrl = `${WS_BASE}/ws/game/${roomCode}/?session_id=${playerSession.id}`;
     console.log('Connecting to WebSocket:', wsUrl);
     
-    websocket = new WebSocket(wsUrl);
+    // 🚧 DEV MODE: Use MockWebSocket instead of real WebSocket
+    if (window.DEV_MODE) {
+        console.log('🚧 Using MockWebSocket (dev mode)');
+        websocket = new MockWebSocket(wsUrl);
+    } else {
+        websocket = new WebSocket(wsUrl);
+    }
     
     websocket.onopen = function(e) {
         logTiming('wsConnectionComplete', Date.now());
@@ -327,6 +491,7 @@ function handleMessage(message) {
             break;
             
         case 'leaderboard_update':
+            console.log('📊 Received leaderboard_update message:', message);
             updateLeaderboard(message.leaderboard);
             break;
             
@@ -1228,9 +1393,10 @@ function handleUnifiedGameResults(message) {
             `;
         }
         
-        // Insert banner at the TOP of gameArea (before existing content)
+        // Clear gameArea and insert the results banner
         const gameArea = document.getElementById('gameArea');
-        gameArea.insertBefore(banner, gameArea.firstChild);
+        gameArea.innerHTML = '';
+        gameArea.appendChild(banner);
         
         // If there are more rounds, show the instruction card for the NEXT game below the results
         if (hasMoreRounds && nextGameType) {
@@ -1381,7 +1547,40 @@ function showFinalStandings(message, leaderboardVisibility) {
 }
 
 function updateLeaderboard(leaderboard) {
+    console.log('🏆 Updating leaderboard with data:', leaderboard);
     latestLeaderboard = leaderboard;
+    
+    // Render leaderboard list
+    const leaderboardList = document.getElementById('leaderboardList');
+    if (leaderboardList && leaderboard && leaderboard.length > 0) {
+        // Get current player's ID from session
+        const playerSessionData = JSON.parse(sessionStorage.getItem('playerSession') || '{}');
+        const currentPlayerId = playerSessionData.id;
+        
+        // Build leaderboard HTML
+        let html = '';
+        leaderboard.forEach((player, index) => {
+            const rank = index + 1;
+            // Support both backend format (name, player_id) and dev mode format (player_name, player_id)
+            const playerName = player.player_name || player.name || 'Unknown';
+            const playerId = player.player_id;
+            const isOwnPlayer = playerId === currentPlayerId;
+            const rankClass = rank === 1 ? 'first' : rank === 2 ? 'second' : rank === 3 ? 'third' : '';
+            const itemClass = isOwnPlayer ? 'leaderboard-item own' : 'leaderboard-item';
+            
+            html += `
+                <div class="${itemClass}">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div class="rank ${rankClass}">${rank}</div>
+                        <div>${playerName}</div>
+                    </div>
+                    <div style="font-weight: 700; font-size: 1.1rem;">${player.score}</div>
+                </div>
+            `;
+        });
+        
+        leaderboardList.innerHTML = html;
+    }
     
     // Update header score and rank from leaderboard
     if (playerSession && playerSession.display_name) {

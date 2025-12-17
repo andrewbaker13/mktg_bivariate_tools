@@ -2,7 +2,13 @@
 
 // Get session data
 const urlParams = new URLSearchParams(window.location.search);
-const roomCode = urlParams.get('room');
+let roomCode = urlParams.get('room');
+
+// 🚧 DEV MODE: Use mock room code if in dev mode
+if (window.DEV_MODE && !roomCode) {
+    console.log('🚧 DEV MODE: Using mock room code');
+    roomCode = 'DEV1';
+}
 
 if (!roomCode) {
     alert('No room code provided');
