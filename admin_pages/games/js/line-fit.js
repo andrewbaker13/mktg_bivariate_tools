@@ -45,6 +45,63 @@ function showLineFitGame(message, timeLimit) {
     const imageHTML = message.image_url ? 
         `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 20vh; margin: 0.5rem auto; border-radius: 8px; display: block; object-fit: contain;">` : '';
     
+    // Projector mode: show large scatter plot with submission tracking
+    if (window.isProjectorMode) {
+        // Get player count from message.players or window.latestPlayers
+        const playerCount = message.players?.length || window.latestPlayers?.length || 0;
+        
+        document.getElementById('gameArea').innerHTML = `
+            <div class="line-fit-area">
+                <div class="question-display" style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: nowrap; margin: 20px 0;">
+                    <div class="timer" id="timer" style="font-size: 80px; font-weight: 800; color: #ef4444; text-align: center; background: white; border-radius: 16px; padding: 20px 40px; flex-shrink: 0; min-width: 120px;">${timeLimit}</div>
+                    <div class="question-text" style="font-size: 48px; font-weight: 700; text-align: center; background: white; border-radius: 16px; padding: 30px 50px; color: #1e293b; flex: 1; max-width: 70%;">${message.question_text}</div>
+                </div>
+                ${imageHTML}
+                
+                <div class="line-fit-container" style="max-width: 1200px; margin: 0 auto;">
+                    <canvas id="scatterCanvas" width="900" height="700" style="width: 100%; height: auto;"></canvas>
+                    <div id="canvasInstructions" class="canvas-instructions" style="font-size: 32px; margin-top: 20px;">
+                        Waiting for scatter data...
+                    </div>
+                </div>
+                
+                <div id="lineFitParticipation" style="margin-top: 40px; text-align: center; background: #f8fafc; padding: 30px; border-radius: 16px;">
+                    <div style="font-size: 48px; font-weight: 700; color: #64748b; margin: 20px 0;">
+                        <span id="submissionCount">0</span> / <span id="totalPlayers">${playerCount}</span> Players Submitted
+                    </div>
+                    <div style="font-size: 64px; font-weight: 800; color: #1e293b;">
+                        <span id="submissionPercent">0</span>%
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Initialize submission tracking
+        if (!window.lineFitParticipation) {
+            window.lineFitParticipation = {
+                totalPlayers: playerCount,
+                submittedPlayers: new Set()
+            };
+        }
+        
+        // Wait for DOM and initialize canvas
+        setTimeout(() => {
+            lineFitState.canvas = document.getElementById('scatterCanvas');
+            if (lineFitState.canvas) {
+                lineFitState.ctx = lineFitState.canvas.getContext('2d');
+                lineFitState.canvas.style.background = '#ffffff';
+                lineFitState.canvas.style.borderRadius = '8px';
+                lineFitState.canvas.style.border = '2px solid #d1d5db';
+                
+                if (lineFitState.scatterData) {
+                    processScatterData();
+                }
+            }
+        }, 0);
+        return;
+    }
+    
+    // Player mode: show interactive canvas with controls
     document.getElementById('gameArea').innerHTML = `
         <div class="line-fit-area">
             <div class="question-display">
@@ -54,6 +111,11 @@ function showLineFitGame(message, timeLimit) {
             </div>
             
             <div class="line-fit-container">
+                <div id="lineStats" class="line-stats" style="display: none; text-align: center; margin-bottom: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 2px solid #3b82f6;">
+                    <div style="font-size: 18px; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem;">Your Predicted Line</div>
+                    <div id="lineEquation" style="font-size: 20px; font-weight: 700; color: #3b82f6; margin-bottom: 0.25rem;"></div>
+                    <div id="lineCorrelation" style="font-size: 18px; font-weight: 600; color: #8b5cf6;"></div>
+                </div>
                 <canvas id="scatterCanvas" width="600" height="500"></canvas>
                 <div id="canvasInstructions" class="canvas-instructions">
                     Waiting for scatter data...
@@ -83,10 +145,10 @@ function showLineFitGame(message, timeLimit) {
             lineFitState.canvas.addEventListener('click', handleCanvasClick);
             
             // Style the canvas
-            lineFitState.canvas.style.background = '#1e1e1e';
+            lineFitState.canvas.style.background = '#ffffff';
             lineFitState.canvas.style.borderRadius = '8px';
             lineFitState.canvas.style.cursor = 'crosshair';
-            lineFitState.canvas.style.border = '2px solid #374151';
+            lineFitState.canvas.style.border = '2px solid #d1d5db';
             
             console.log('[LINE FIT] Canvas initialized, checking for stored data...');
             
@@ -137,16 +199,20 @@ function processScatterData() {
     
     lineFitState.mode = 'placing_first';
     
-    // Update instructions
+    // Update instructions (hide in projector mode)
     const instructions = document.getElementById('canvasInstructions');
     if (instructions) {
-        instructions.innerHTML = '🎯 Click to place your FIRST point';
-        instructions.style.color = '#06b6d4'; // Cyan
+        if (window.isProjectorMode) {
+            instructions.style.display = 'none';
+        } else {
+            instructions.innerHTML = '🎯 Click to place your FIRST point';
+            instructions.style.color = '#06b6d4'; // Cyan
+        }
     }
     
-    // Show controls
+    // Show controls (only in player mode)
     const controls = document.getElementById('lineFitControls');
-    if (controls) {
+    if (controls && !window.isProjectorMode) {
         controls.style.display = 'flex';
     }
     
@@ -262,6 +328,94 @@ function calculateLineFromPoints() {
     lineFitState.proposedLine = { slope, intercept };
     
     console.log('[LINE FIT] Calculated line:', lineFitState.proposedLine);
+    
+    // Calculate and display predicted correlation
+    updateLineStats();
+}
+
+/**
+ * Calculate correlation coefficient (r) for the proposed line
+ * Uses R² (coefficient of determination) approach
+ */
+function calculatePredictedCorrelation() {
+    if (!lineFitState.proposedLine || !lineFitState.scatterData) {
+        return null;
+    }
+    
+    const points = lineFitState.scatterData.points;
+    const { slope, intercept } = lineFitState.proposedLine;
+    
+    // Calculate actual Y values and their mean
+    const actualY = points.map(p => p.y);
+    const meanActualY = actualY.reduce((sum, y) => sum + y, 0) / actualY.length;
+    
+    // Calculate predicted Y values from the player's line
+    const predictedY = points.map(p => slope * p.x + intercept);
+    
+    // Calculate R² (coefficient of determination)
+    // R² = 1 - (SS_res / SS_tot)
+    // SS_res = sum of squared residuals (actual - predicted)²
+    // SS_tot = total sum of squares (actual - mean)²
+    
+    let ssRes = 0;  // Sum of squared residuals
+    let ssTot = 0;  // Total sum of squares
+    
+    for (let i = 0; i < actualY.length; i++) {
+        const residual = actualY[i] - predictedY[i];
+        const deviation = actualY[i] - meanActualY;
+        
+        ssRes += residual * residual;
+        ssTot += deviation * deviation;
+    }
+    
+    if (ssTot === 0) {
+        return 0;
+    }
+    
+    const rSquared = 1 - (ssRes / ssTot);
+    
+    // R² can be negative if the line is worse than just using the mean
+    // For display purposes, clamp to 0 (r = 0 means no linear relationship)
+    // Preserve sign based on slope direction
+    const clampedRSquared = Math.max(0, rSquared);
+    const r = Math.sqrt(clampedRSquared) * (slope >= 0 ? 1 : -1);
+    
+    return r;
+}
+
+/**
+ * Update the line statistics display
+ */
+function updateLineStats() {
+    const lineStatsDiv = document.getElementById('lineStats');
+    const lineEquationDiv = document.getElementById('lineEquation');
+    const lineCorrelationDiv = document.getElementById('lineCorrelation');
+    
+    if (!lineStatsDiv || !lineEquationDiv || !lineCorrelationDiv) {
+        return;
+    }
+    
+    if (!lineFitState.proposedLine) {
+        lineStatsDiv.style.display = 'none';
+        return;
+    }
+    
+    const { slope, intercept } = lineFitState.proposedLine;
+    const r = calculatePredictedCorrelation();
+    
+    // Format equation
+    const slopeStr = slope.toFixed(2);
+    const interceptStr = intercept >= 0 ? `+ ${intercept.toFixed(2)}` : `- ${Math.abs(intercept).toFixed(2)}`;
+    lineEquationDiv.textContent = `Predicted fit line: y = ${slopeStr}x ${interceptStr}`;
+    
+    // Format correlation
+    if (r !== null) {
+        lineCorrelationDiv.textContent = `Predicted r = ${r.toFixed(3)}`;
+    } else {
+        lineCorrelationDiv.textContent = '';
+    }
+    
+    lineStatsDiv.style.display = 'block';
 }
 
 /**
@@ -362,6 +516,12 @@ function redrawLineFit() {
     lineFitState.proposedLine = null;
     lineFitState.mode = 'placing_first';
     
+    // Hide line stats
+    const lineStatsDiv = document.getElementById('lineStats');
+    if (lineStatsDiv) {
+        lineStatsDiv.style.display = 'none';
+    }
+    
     // Disable buttons
     document.getElementById('confirmBtn').disabled = true;
     document.getElementById('redrawBtn').disabled = true;
@@ -385,6 +545,12 @@ function redrawLineFit() {
 function handleLineFitSubmission(message) {
     console.log('[LINE FIT] Player submitted:', message);
     
+    // Track submission in projector mode
+    if (window.isProjectorMode && window.lineFitParticipation && message.player_id) {
+        window.lineFitParticipation.submittedPlayers.add(message.player_id);
+        updateLineFitParticipation();
+    }
+    
     // Don't show own submission (already have it)
     if (message.player_id === playerSession.id) {
         return;
@@ -398,6 +564,25 @@ function handleLineFitSubmission(message) {
     
     // Redraw to show new line
     drawScatterPlot();
+}
+
+/**
+ * Update projector mode participation display
+ */
+function updateLineFitParticipation() {
+    if (!window.isProjectorMode || !window.lineFitParticipation) return;
+    
+    const submissionCount = window.lineFitParticipation.submittedPlayers.size;
+    const totalPlayers = window.lineFitParticipation.totalPlayers;
+    const percent = totalPlayers > 0 ? Math.round((submissionCount / totalPlayers) * 100) : 0;
+    
+    const countEl = document.getElementById('submissionCount');
+    const totalEl = document.getElementById('totalPlayers');
+    const percentEl = document.getElementById('submissionPercent');
+    
+    if (countEl) countEl.textContent = submissionCount;
+    if (totalEl) totalEl.textContent = totalPlayers;
+    if (percentEl) percentEl.textContent = percent;
 }
 
 /**
@@ -482,7 +667,7 @@ function drawScatterPlot() {
     }
     
     // Clear canvas
-    ctx.fillStyle = '#1e1e1e';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     const plotWidth = canvas.width - margins.left - margins.right;
@@ -491,7 +676,7 @@ function drawScatterPlot() {
     const plotTop = margins.top;
     
     // Draw axes
-    ctx.strokeStyle = '#374151';
+    ctx.strokeStyle = '#000000';
     ctx.lineWidth = 2;
     ctx.beginPath();
     // X-axis
@@ -502,32 +687,9 @@ function drawScatterPlot() {
     ctx.lineTo(plotLeft, plotTop + plotHeight);
     ctx.stroke();
     
-    // Draw grid lines (subtle)
-    ctx.strokeStyle = '#2d3748';
-    ctx.lineWidth = 1;
-    const gridLines = 5;
-    
-    // Vertical grid lines
-    for (let i = 1; i < gridLines; i++) {
-        const x = plotLeft + (plotWidth / gridLines) * i;
-        ctx.beginPath();
-        ctx.moveTo(x, plotTop);
-        ctx.lineTo(x, plotTop + plotHeight);
-        ctx.stroke();
-    }
-    
-    // Horizontal grid lines
-    for (let i = 1; i < gridLines; i++) {
-        const y = plotTop + (plotHeight / gridLines) * i;
-        ctx.beginPath();
-        ctx.moveTo(plotLeft, y);
-        ctx.lineTo(plotLeft + plotWidth, y);
-        ctx.stroke();
-    }
-    
     // Draw axis labels
-    ctx.fillStyle = '#e5e7eb';
-    ctx.font = '14px sans-serif';
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 16px sans-serif';
     ctx.textAlign = 'center';
     
     // X-axis label
@@ -541,29 +703,34 @@ function drawScatterPlot() {
     ctx.restore();
     
     // Draw tick labels
-    ctx.font = '12px sans-serif';
-    ctx.fillStyle = '#9ca3af';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillStyle = '#000000';
     
-    // X-axis ticks
+    // X-axis ticks (min, middle, max)
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
+    const xMid = (config.x_min + config.x_max) / 2;
     ctx.fillText(config.x_min.toFixed(1), plotLeft, plotTop + plotHeight + 5);
+    ctx.fillText(xMid.toFixed(1), plotLeft + plotWidth / 2, plotTop + plotHeight + 5);
     ctx.fillText(config.x_max.toFixed(1), plotLeft + plotWidth, plotTop + plotHeight + 5);
     
-    // Y-axis ticks
+    // Y-axis ticks (min, middle, max)
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
+    const yMid = (config.y_min + config.y_max) / 2;
     ctx.fillText(config.y_max.toFixed(1), plotLeft - 5, plotTop);
+    ctx.fillText(yMid.toFixed(1), plotLeft - 5, plotTop + plotHeight / 2);
     ctx.fillText(config.y_min.toFixed(1), plotLeft - 5, plotTop + plotHeight);
     
-    // Draw scatter points (white circles)
+    // Draw scatter points (hollow black circles)
     if (lineFitState.scatterData && lineFitState.scatterData.points) {
-        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
         lineFitState.scatterData.points.forEach(point => {
             const canvasCoords = dataToCanvas(point.x, point.y);
             ctx.beginPath();
-            ctx.arc(canvasCoords.x, canvasCoords.y, 4, 0, 2 * Math.PI);
-            ctx.fill();
+            ctx.arc(canvasCoords.x, canvasCoords.y, 5, 0, 2 * Math.PI);
+            ctx.stroke();
         });
     }
     
@@ -700,22 +867,63 @@ function showLineFitResults(gameSpecific) {
     
     const gs = gameSpecific;
     const canvasId = 'lineFitResultsCanvas';
+    const isProjector = window.isProjectorMode;
     
-    // Create canvas HTML
+    // Adjust sizes for projector mode
+    const titleSize = isProjector ? '24px' : '14px';
+    const equationSize = isProjector ? '48px' : '20px';
+    const statsSize = isProjector ? '32px' : '14px';
+    const canvasSize = isProjector ? 'width="1200" height="900"' : 'width="600" height="600"';
+    const legendSize = isProjector ? '24px' : '14px';
+    const legendPadding = isProjector ? '12px 24px' : '8px 16px';
+    
+    // Calculate player's predicted r from their line (if available)
+    let playerPredictedR = null;
+    if (gs.your_line && gs.scatter_data) {
+        const points = gs.scatter_data.points.map(p => 
+            Array.isArray(p) ? { x: p[0], y: p[1] } : p
+        );
+        const actualY = points.map(p => p.y);
+        const meanActualY = actualY.reduce((sum, y) => sum + y, 0) / actualY.length;
+        const predictedY = points.map(p => gs.your_line.slope * p.x + gs.your_line.intercept);
+        
+        let ssRes = 0;
+        let ssTot = 0;
+        for (let i = 0; i < actualY.length; i++) {
+            ssRes += Math.pow(actualY[i] - predictedY[i], 2);
+            ssTot += Math.pow(actualY[i] - meanActualY, 2);
+        }
+        const rSquared = 1 - (ssRes / ssTot);
+        playerPredictedR = Math.sqrt(Math.max(0, rSquared)) * (gs.your_line.slope >= 0 ? 1 : -1);
+    }
+    
+    // Create canvas HTML with side-by-side comparison (only show player's line in player mode)
+    const headerSize = isProjector ? '32px' : '20px';
     let html = `
         <div style="margin: 20px 0; text-align: center;">
-            <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">📈 True Regression Line</div>
-                <div style="font-size: 20px; font-weight: 700;">y = ${gs.true_line.slope.toFixed(3)}x + ${gs.true_line.intercept.toFixed(2)}</div>
-                <div style="font-size: 14px; opacity: 0.8; margin-top: 5px;">
-                    r = ${gs.correlation?.toFixed(3) || '?'} | R² = ${gs.r_squared?.toFixed(3) || '?'}
+            <div style="display: ${!isProjector && gs.your_line ? 'grid' : 'block'}; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div style="background: rgba(255,215,0,0.15); padding: ${isProjector ? '30px' : '15px'}; border-radius: 8px; border: 2px solid rgba(255,215,0,0.5);">
+                    <div style="font-size: ${headerSize}; color: #ffffff; font-weight: 700; margin-bottom: ${isProjector ? '10px' : '5px'};">📈 True Regression Line</div>
+                    <div style="font-size: ${equationSize}; font-weight: 700; color: #ffffff;">y = ${gs.true_line.slope.toFixed(3)}x + ${gs.true_line.intercept.toFixed(2)}</div>
+                    <div style="font-size: ${statsSize}; color: rgba(255,255,255,0.9); margin-top: ${isProjector ? '10px' : '5px'};">
+                        r = ${gs.correlation?.toFixed(3) || '?'} | R² = ${gs.r_squared?.toFixed(3) || '?'}
+                    </div>
                 </div>
+                ${!isProjector && gs.your_line ? `
+                <div style="background: rgba(59,130,246,0.15); padding: 15px; border-radius: 8px; border: 2px solid rgba(59,130,246,0.5);">
+                    <div style="font-size: ${headerSize}; color: #ffffff; font-weight: 700; margin-bottom: 5px;">📊 Your Prediction Guess</div>
+                    <div style="font-size: ${equationSize}; font-weight: 700; color: #ffffff;">y = ${gs.your_line.slope.toFixed(3)}x ${gs.your_line.intercept >= 0 ? '+' : '-'} ${Math.abs(gs.your_line.intercept).toFixed(2)}</div>
+                    <div style="font-size: ${statsSize}; color: rgba(255,255,255,0.9); margin-top: 5px;">
+                        ${playerPredictedR !== null ? `Predicted r = ${playerPredictedR.toFixed(3)}` : ''}
+                    </div>
+                </div>
+                ` : ''}
             </div>
-            <canvas id="${canvasId}" width="600" height="600" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); background: #1e1e1e;"></canvas>
-            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
-                <span style="background: rgba(255,215,0,0.3); padding: 8px 16px; border-radius: 20px;">🥇 True Line (Gold)</span>
-                <span style="background: rgba(16,185,129,0.3); padding: 8px 16px; border-radius: 20px;">🏆 Top 3 (Green)</span>
-                <span style="background: rgba(148,163,184,0.3); padding: 8px 16px; border-radius: 20px;">📊 All Others (Gray)</span>
+            <canvas id="${canvasId}" ${canvasSize} style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); background: #1e1e1e;"></canvas>
+            <div style="display: flex; gap: ${isProjector ? '25px' : '15px'}; justify-content: center; margin-top: ${isProjector ? '25px' : '15px'}; flex-wrap: wrap;">
+                <span style="background: rgba(255,215,0,0.3); padding: ${legendPadding}; border-radius: 20px; font-size: ${legendSize};">🥇 True Line (Gold)</span>
+                <span style="background: rgba(16,185,129,0.3); padding: ${legendPadding}; border-radius: 20px; font-size: ${legendSize};">🏆 Top 3 (Green)</span>
+                <span style="background: rgba(148,163,184,0.3); padding: ${legendPadding}; border-radius: 20px; font-size: ${legendSize};">📊 All Others (Gray)</span>
             </div>
             ${gs.average_sse !== undefined ? `
             <div style="display: flex; gap: 15px; justify-content: center; margin-top: 10px;">
@@ -761,7 +969,7 @@ function drawLineFitResultsCanvas(canvasId, gameSpecific) {
     };
     
     // Clear canvas
-    ctx.fillStyle = '#1e1e1e';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     const plotWidth = canvas.width - margins.left - margins.right;
@@ -777,7 +985,7 @@ function drawLineFitResultsCanvas(canvasId, gameSpecific) {
     }
     
     // Helper function to draw a line
-    function drawLine(slope, intercept, color, lineWidth) {
+    function drawLine(slope, intercept, color, lineWidth, dashed = false) {
         const x1 = bounds.x_min;
         const y1 = slope * x1 + intercept;
         const x2 = bounds.x_max;
@@ -788,46 +996,43 @@ function drawLineFitResultsCanvas(canvasId, gameSpecific) {
         
         ctx.strokeStyle = color;
         ctx.lineWidth = lineWidth;
+        
+        // Set line dash pattern if requested
+        if (dashed) {
+            ctx.setLineDash([10, 5]); // 10px dash, 5px gap
+        } else {
+            ctx.setLineDash([]); // Solid line
+        }
+        
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
         ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
+        
+        // Reset line dash
+        ctx.setLineDash([]);
     }
     
     // Draw axes
-    ctx.strokeStyle = '#374151';
+    ctx.strokeStyle = '#000000';
     ctx.lineWidth = 2;
     ctx.beginPath();
+    // X-axis
     ctx.moveTo(plotLeft, plotTop + plotHeight);
     ctx.lineTo(plotLeft + plotWidth, plotTop + plotHeight);
+    // Y-axis
     ctx.moveTo(plotLeft, plotTop);
     ctx.lineTo(plotLeft, plotTop + plotHeight);
     ctx.stroke();
     
-    // Draw grid
-    ctx.strokeStyle = '#2d3748';
-    ctx.lineWidth = 1;
-    for (let i = 1; i < 5; i++) {
-        const x = plotLeft + (plotWidth / 5) * i;
-        ctx.beginPath();
-        ctx.moveTo(x, plotTop);
-        ctx.lineTo(x, plotTop + plotHeight);
-        ctx.stroke();
-        
-        const y = plotTop + (plotHeight / 5) * i;
-        ctx.beginPath();
-        ctx.moveTo(plotLeft, y);
-        ctx.lineTo(plotLeft + plotWidth, y);
-        ctx.stroke();
-    }
-    
     // Draw axis labels
     const axisLabels = gs.scatter_data.axis_labels || { x: 'X', y: 'Y' };
-    ctx.fillStyle = '#e5e7eb';
-    ctx.font = '14px sans-serif';
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 16px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(axisLabels.x, plotLeft + plotWidth / 2, canvas.height - 10);
     
+    // Y-axis label (rotated)
     ctx.save();
     ctx.translate(15, plotTop + plotHeight / 2);
     ctx.rotate(-Math.PI / 2);
@@ -835,45 +1040,73 @@ function drawLineFitResultsCanvas(canvasId, gameSpecific) {
     ctx.restore();
     
     // Draw tick labels
-    ctx.font = '12px sans-serif';
-    ctx.fillStyle = '#9ca3af';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillStyle = '#000000';
+    
+    // X-axis ticks (min, middle, max)
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
+    const xMid = (bounds.x_min + bounds.x_max) / 2;
     ctx.fillText(bounds.x_min.toFixed(1), plotLeft, plotTop + plotHeight + 5);
+    ctx.fillText(xMid.toFixed(1), plotLeft + plotWidth / 2, plotTop + plotHeight + 5);
     ctx.fillText(bounds.x_max.toFixed(1), plotLeft + plotWidth, plotTop + plotHeight + 5);
     
+    // Y-axis ticks (min, middle, max)
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
+    const yMid = (bounds.y_min + bounds.y_max) / 2;
     ctx.fillText(bounds.y_max.toFixed(1), plotLeft - 5, plotTop);
+    ctx.fillText(yMid.toFixed(1), plotLeft - 5, plotTop + plotHeight / 2);
     ctx.fillText(bounds.y_min.toFixed(1), plotLeft - 5, plotTop + plotHeight);
     
-    // Draw scatter points (white)
-    ctx.fillStyle = '#ffffff';
+    // Draw scatter points (hollow black circles)
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
     points.forEach(point => {
         const canvasCoords = dataToCanvas(point.x, point.y);
         ctx.beginPath();
-        ctx.arc(canvasCoords.x, canvasCoords.y, 4, 0, 2 * Math.PI);
-        ctx.fill();
+        ctx.arc(canvasCoords.x, canvasCoords.y, 5, 0, 2 * Math.PI);
+        ctx.stroke();
     });
     
     // Debug logging
     console.log('[LINE FIT RESULTS] all_submissions:', gs.all_submissions);
     console.log('[LINE FIT RESULTS] Number of submissions:', gs.all_submissions?.length || 0);
     
-    // Draw all other submissions (gray, thin, semi-transparent)
+    // Find player's submission and their rank
+    let playerSubmission = null;
+    let playerRank = null;
+    if (gs.all_submissions && gs.your_line) {
+        playerSubmission = gs.all_submissions.find(sub => 
+            sub.player_id === playerSession.id || 
+            (Math.abs(sub.slope - gs.your_line.slope) < 0.001 && 
+             Math.abs(sub.intercept - gs.your_line.intercept) < 0.001)
+        );
+        if (playerSubmission) {
+            playerRank = playerSubmission.rank;
+        }
+    }
+    
+    // Draw all other submissions (gray, thin, semi-transparent) - excluding player's line
     if (gs.all_submissions && gs.all_submissions.length > 3) {
         console.log('[LINE FIT RESULTS] Drawing', gs.all_submissions.length - 3, 'gray lines');
         gs.all_submissions.slice(3).forEach((submission, idx) => {
+            // Skip player's line - will draw it separately
+            if (submission.player_id === playerSession.id) return;
+            
             console.log(`[LINE FIT RESULTS] Gray line ${idx + 4}: slope=${submission.slope}, intercept=${submission.intercept}`);
             drawLine(submission.slope, submission.intercept, 'rgba(156, 163, 175, 0.5)', 2);
         });
     }
     
-    // Draw top 3 lines (green, medium thickness)
+    // Draw top 3 lines (green, medium thickness) - excluding player's line
     if (gs.all_submissions && gs.all_submissions.length > 0) {
         const top3 = gs.all_submissions.slice(0, Math.min(3, gs.all_submissions.length));
         console.log('[LINE FIT RESULTS] Drawing', top3.length, 'green lines (top 3)');
         top3.forEach((submission, idx) => {
+            // Skip player's line - will draw it separately
+            if (submission.player_id === playerSession.id) return;
+            
             console.log(`[LINE FIT RESULTS] Green line ${idx + 1}: slope=${submission.slope}, intercept=${submission.intercept}`);
             drawLine(submission.slope, submission.intercept, 'rgba(16, 185, 129, 0.5)', 3);
         });
@@ -882,5 +1115,15 @@ function drawLineFitResultsCanvas(canvasId, gameSpecific) {
     // Draw true regression line (gold, thick, prominent)
     if (gs.true_line) {
         drawLine(gs.true_line.slope, gs.true_line.intercept, '#FFD700', 5);
+    }
+    
+    // Draw player's line last (on top) - thicker and dotted
+    // Color depends on ranking: green if top 3, gray otherwise
+    if (gs.your_line && !window.isProjectorMode) {
+        const playerColor = (playerRank && playerRank <= 3) 
+            ? 'rgba(16, 185, 129, 0.9)'  // Green for top 3
+            : 'rgba(156, 163, 175, 0.9)'; // Gray for others
+        drawLine(gs.your_line.slope, gs.your_line.intercept, playerColor, 4, true);
+        console.log(`[LINE FIT RESULTS] Drew player's line (rank: ${playerRank}, color: ${playerColor})`);
     }
 }

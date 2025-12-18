@@ -1,5 +1,5 @@
 {
-  "message_type": "round_results",
+  "type": "game_results",
   "game_type": "line_fit",
   "current_round": 4,
   "total_rounds": 5,
@@ -48,7 +48,7 @@
     },
     "leaderboard_position": "7th best fit",
     "feedback": "Your line underestimated the slope. The relationship was stronger than you thought!",
-    "scatter_plot_data": {
+    "scatter_data": {
       "points": [
         [15, 230],
         [18, 275],
@@ -61,15 +61,29 @@
         [38, 512],
         [40, 538]
       ],
-      "correct_line": {"slope": 12.3, "intercept": 45},
-      "your_line": {"slope": 8.5, "intercept": 60},
-      "other_lines": [
-        {"slope": 12.1, "intercept": 46, "player_name": "Alice"},
-        {"slope": 11.8, "intercept": 48, "player_name": "Bob"},
-        {"slope": 13.0, "intercept": 43, "player_name": "Charlie"},
-        {"slope": 10.5, "intercept": 52, "player_name": "Diana"}
-      ]
-    }
+      "bounds": {
+        "x_min": 10,
+        "x_max": 45,
+        "y_min": 200,
+        "y_max": 600
+      },
+      "axis_labels": {
+        "x": "Sales Reps",
+        "y": "Revenue ($k)"
+      }
+    },
+    "true_line": {"slope": 12.3, "intercept": 45},
+    "correlation": 0.88,
+    "r_squared": 0.77,
+    "all_submissions": [
+      {"slope": 12.1, "intercept": 46, "player_id": 1, "player_name": "Alice", "sse": 85.2, "rank": 1},
+      {"slope": 11.8, "intercept": 48, "player_id": 2, "player_name": "Bob", "sse": 92.4, "rank": 2},
+      {"slope": 13.0, "intercept": 43, "player_id": 3, "player_name": "Charlie", "sse": 95.7, "rank": 3},
+      {"slope": 10.5, "intercept": 52, "player_id": 4, "player_name": "Diana", "sse": 125.3, "rank": 4},
+      {"slope": 8.5, "intercept": 60, "player_id": 999, "player_name": "You", "sse": 285.4, "rank": 7}
+    ],
+    "submission_count": 7,
+    "average_sse": 145.8
   },
   "leaderboard": [
     {"player_id": 1, "player_name": "Alice", "score": 645},

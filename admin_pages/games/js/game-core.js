@@ -135,7 +135,7 @@ class MockWebSocket {
                     });
                 }
                 
-                // 🚧 DEV MODE: For line_fit, send scatter data and other submissions
+                // 🚧 DEV MODE: For line_fit, send scatter data
                 if (snapshot.game_type === 'line_fit') {
                     // Send scatter data immediately after game starts
                     if (snapshot.scatter_data_message) {
@@ -145,15 +145,8 @@ class MockWebSocket {
                         }, 500);
                     }
                     
-                    // Send other player submissions at specified delays
-                    if (snapshot.other_submissions) {
-                        snapshot.other_submissions.forEach((submission) => {
-                            setTimeout(() => {
-                                console.log(`🚧 MockWebSocket: Sending line submission from ${submission.player_name}`);
-                                this.simulateMessage(submission);
-                            }, submission.delay_ms);
-                        });
-                    }
+                    // NOTE: other_submissions should NOT be sent during active game
+                    // They should only appear in the results phase (game_results message)
                 }
                 
                 // 🚧 DEV MODE: For word_guess, simulate letter reveals over time
@@ -462,6 +455,14 @@ function handleMessage(message) {
             if (window.speedTapParticipation && message.players) {
                 window.speedTapParticipation.totalPlayers = message.players.length;
             }
+            
+            // Update line fit participation tracker
+            if (window.lineFitParticipation && message.players) {
+                window.lineFitParticipation.totalPlayers = message.players.length;
+                if (typeof updateLineFitParticipation === 'function') {
+                    updateLineFitParticipation();
+                }
+            }
             break;
             
         case 'countdown_start':
@@ -762,10 +763,11 @@ function showWaitingState(gameTypeFromServer) {
         if (qrCodeDiv && roomCode && typeof QRCode !== 'undefined') {
             qrCodeDiv.innerHTML = ''; // Clear any existing
             const joinUrl = `https://drbakermarketing.com/admin_pages/games/game-join.html?room=${roomCode}`;
+            const qrSize = window.isProjectorMode ? 270 : 180; // 50% larger for projector
             new QRCode(qrCodeDiv, {
                 text: joinUrl,
-                width: 180,
-                height: 180,
+                width: qrSize,
+                height: qrSize,
                 colorDark: "#1e293b",
                 colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.M
@@ -776,7 +778,8 @@ function showWaitingState(gameTypeFromServer) {
                 const logo = document.createElement('img');
                 logo.src = '../../art_assets/svg_logos/praxisplay_notext_logo.svg';
                 logo.alt = 'Praxis Play';
-                logo.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 38px; height: 38px; background: white; padding: 4px; border-radius: 0; box-shadow: 0 0 0 3px white; pointer-events: none;';
+                const logoSize = window.isProjectorMode ? 57 : 38; // Scale with QR code
+                logo.style.cssText = `position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: ${logoSize}px; height: ${logoSize}px; background: white; padding: 4px; border-radius: 0; box-shadow: 0 0 0 3px white; pointer-events: none;`;
                 qrCodeDiv.style.position = 'relative';
                 qrCodeDiv.appendChild(logo);
             }, 100);

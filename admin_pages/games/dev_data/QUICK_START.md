@@ -92,6 +92,15 @@ http://localhost:5500/admin_pages/games/game-projector.html?dev=1&state=speed_ta
 | [📺 Projector Active](http://localhost:5500/admin_pages/games/game-projector.html?dev=1&state=line_fit_projector_active) | Projector view with scatter plot and live submissions |
 | [📺 Projector Results](http://localhost:5500/admin_pages/games/game-projector.html?dev=1&state=line_fit_projector_results) | Projector results showing best fit player |
 
+### Waiting Screens (Between Rounds)
+| Quick Link | What You'll See |
+|------------|-----------------|
+| [⏳ Speed Tap](http://localhost:5500/admin_pages/games/game-play.html?dev=1&state=waiting_speed_tap) | Waiting screen with Speed Tap instruction card |
+| [⏳ Line Fit](http://localhost:5500/admin_pages/games/game-play.html?dev=1&state=waiting_line_fit) | Waiting screen with Line Fit instruction card |
+| [⏳ Crowd Wisdom](http://localhost:5500/admin_pages/games/game-play.html?dev=1&state=waiting_crowd_wisdom) | Waiting screen with Crowd Wisdom instruction card |
+| [⏳ Word Guess](http://localhost:5500/admin_pages/games/game-play.html?dev=1&state=waiting_word_guess) | Waiting screen with Word Guess instruction card |
+| [⏳ Projector](http://localhost:5500/admin_pages/games/game-projector.html?dev=1&state=waiting_projector) | Projector waiting screen (between rounds) |
+
 ---
 
 ## 🎨 Common Tasks

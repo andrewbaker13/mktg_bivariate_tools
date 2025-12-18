@@ -1,5 +1,5 @@
 {
-  "message_type": "round_results",
+  "type": "game_results",
   "game_type": "line_fit",
   "current_round": 3,
   "total_rounds": 5,
@@ -47,7 +47,7 @@
       "final_points": 88
     },
     "leaderboard_position": "2nd best fit",
-    "scatter_plot_data": {
+    "scatter_data": {
       "points": [
         [1.2, 60],
         [2.5, 65],
@@ -60,14 +60,28 @@
         [8.5, 92],
         [9.2, 95]
       ],
-      "correct_line": {"slope": 4.5, "intercept": 55},
-      "your_line": {"slope": 4.6, "intercept": 54.5},
-      "other_lines": [
-        {"slope": 4.2, "intercept": 57, "player_name": "Bob"},
-        {"slope": 4.7, "intercept": 54, "player_name": "Alice"},
-        {"slope": 4.4, "intercept": 56, "player_name": "Charlie"}
-      ]
-    }
+      "bounds": {
+        "x_min": 0,
+        "x_max": 10,
+        "y_min": 50,
+        "y_max": 100
+      },
+      "axis_labels": {
+        "x": "Hours Studied",
+        "y": "Exam Score"
+      }
+    },
+    "true_line": {"slope": 4.5, "intercept": 55},
+    "correlation": 0.92,
+    "r_squared": 0.85,
+    "all_submissions": [
+      {"slope": 4.6, "intercept": 54.5, "player_id": 999, "player_name": "You", "sse": 12.5, "rank": 1},
+      {"slope": 4.7, "intercept": 54, "player_id": 1, "player_name": "Alice", "sse": 15.2, "rank": 2},
+      {"slope": 4.2, "intercept": 57, "player_id": 2, "player_name": "Bob", "sse": 28.4, "rank": 3},
+      {"slope": 4.4, "intercept": 56, "player_id": 3, "player_name": "Charlie", "sse": 18.7, "rank": 4}
+    ],
+    "submission_count": 4,
+    "average_sse": 18.7
   },
   "leaderboard": [
     {"player_id": 999, "player_name": "You", "score": 468},

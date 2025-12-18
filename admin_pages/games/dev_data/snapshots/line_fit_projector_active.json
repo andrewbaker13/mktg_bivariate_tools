@@ -1,5 +1,5 @@
 {
-  "message_type": "new_game",
+  "type": "game_started",
   "game_type": "line_fit",
   "question_text": "Draw a line that best fits the data showing hours studied vs. exam score",
   "image_url": null,
