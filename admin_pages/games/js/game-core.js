@@ -599,6 +599,15 @@ function handleMessage(message) {
             }
             break;
             
+        case 'line_fit_player_data':
+            // Store player's own line data for use in results display
+            if (!window.lineFitPlayerData) {
+                window.lineFitPlayerData = {};
+            }
+            window.lineFitPlayerData = message;
+            console.log('[LINE FIT] Received player-specific line data:', message);
+            break;
+            
         case 'game_results':
             handleUnifiedGameResults(message);
             break;
@@ -1532,6 +1541,15 @@ async function handleUnifiedGameResults(message) {
                 console.log('[GAME CORE DEBUG] game_specific keys:', Object.keys(message.game_specific || {}));
                 console.log('[GAME CORE DEBUG] all_submissions:', message.game_specific?.all_submissions);
                 console.log('[GAME CORE DEBUG] Full message object:', message);
+                
+                // Merge player-specific data if available
+                if (window.lineFitPlayerData && window.lineFitPlayerData.your_line) {
+                    message.game_specific.your_line = window.lineFitPlayerData.your_line;
+                    message.game_specific.your_rank = window.lineFitPlayerData.your_rank;
+                    message.game_specific.your_points = window.lineFitPlayerData.your_points;
+                    console.log('[GAME CORE DEBUG] Merged player line data:', message.game_specific.your_line);
+                }
+                
                 if (typeof showLineFitResults === 'function') {
                     gameSpecificHTML += showLineFitResults(message.game_specific);
                 } else {
