@@ -93,11 +93,19 @@ function showLineFitGame(message, timeLimit) {
                 lineFitState.canvas.style.borderRadius = '8px';
                 lineFitState.canvas.style.border = '2px solid #d1d5db';
                 
+                console.log('[LINE FIT PROJECTOR] Canvas initialized, scatter data available:', !!lineFitState.scatterData);
+                
+                // If data arrived before canvas was ready, process it now
                 if (lineFitState.scatterData) {
+                    console.log('[LINE FIT PROJECTOR] Processing scatter data immediately');
                     processScatterData();
+                } else {
+                    console.log('[LINE FIT PROJECTOR] Waiting for scatter data...');
                 }
+            } else {
+                console.error('[LINE FIT PROJECTOR] Canvas element not found!');
             }
-        }, 0);
+        }, 100);
         return;
     }
     
@@ -168,6 +176,7 @@ function showLineFitGame(message, timeLimit) {
  */
 function handleLineFitData(message) {
     console.log('[LINE FIT] Received scatter data:', message);
+    console.log('[LINE FIT] Canvas ready:', !!lineFitState.canvas, 'Context ready:', !!lineFitState.ctx);
     
     // Convert points from [[x,y], [x,y]] arrays to [{x,y}, {x,y}] objects
     if (message.points && Array.isArray(message.points)) {
@@ -179,12 +188,26 @@ function handleLineFitData(message) {
     
     // Check if UI is ready (canvas exists)
     if (!lineFitState.canvas || !lineFitState.ctx) {
-        console.log('[LINE FIT] Data received but UI not ready yet, waiting...');
+        console.log('[LINE FIT] Data received but UI not ready yet, will retry...');
         // UI will call processScatterData() when ready
+        // Also retry every 100ms for up to 2 seconds in case of timing issues
+        let retries = 0;
+        const retryInterval = setInterval(() => {
+            retries++;
+            if (lineFitState.canvas && lineFitState.ctx) {
+                console.log('[LINE FIT] Canvas became ready, processing data now');
+                clearInterval(retryInterval);
+                processScatterData();
+            } else if (retries >= 20) {
+                console.error('[LINE FIT] Canvas still not ready after 2 seconds, giving up');
+                clearInterval(retryInterval);
+            }
+        }, 100);
         return;
     }
     
     // UI is ready, process immediately
+    console.log('[LINE FIT] UI ready, processing scatter data immediately');
     processScatterData();
 }
 
