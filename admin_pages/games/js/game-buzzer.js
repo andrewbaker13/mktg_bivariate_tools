@@ -11,7 +11,7 @@ const buzzerState = {
     hasBuzzed: false,
     isDisqualified: false,
     hasPenalty: false,
-    penaltyDelayMs: 250,
+    falseStartPenalty: 250, // Configurable penalty (received from backend)
     myRank: null,
     clockOffsetMs: 0, // Client time ahead of server by this amount
     syncHistory: [], // Store last 5 sync measurements
@@ -36,10 +36,10 @@ function startTimeSync() {
 
 function sendTimePing() {
     const clientSendMs = Date.now();
-    sendMessage({
+    websocket.send(JSON.stringify({
         action: 'buzzer_time_ping',
         data: { clientSendMs }
-    });
+    }));
 }
 
 function handleTimePong(data) {
@@ -137,13 +137,13 @@ function handleBuzzerPress() {
         buzzerState.isDisqualified = true;
         buzzerState.hasBuzzed = true;
         
-        sendMessage({
+        websocket.send(JSON.stringify({
             action: 'buzzer_false_start',
             data: {
                 roundId: buzzerState.roundId,
                 pressClientMs: now
             }
-        });
+        }));
         
         updateBuzzerButton('disqualified', '❌ FALSE START', true);
         updateBuzzerStatus('disqualified', 'FALSE START — OUT THIS ROUND');
@@ -158,13 +158,13 @@ function handleBuzzerPress() {
         // Calculate server timestamp estimate
         const pressServerMsEstimate = now - buzzerState.clockOffsetMs;
         
-        sendMessage({
+        websocket.send(JSON.stringify({
             action: 'buzzer_buzz',
             data: {
                 roundId: buzzerState.roundId,
                 pressServerMsEstimate
             }
-        });
+        }));
         
         updateBuzzerButton('buzzed', '✓ LOCKED IN', true);
         updateBuzzerStatus('buzzed', 'Buzz recorded! Waiting for your rank...');
@@ -182,6 +182,23 @@ function handleBuzzerArm(data) {
     buzzerState.myRank = null;
     buzzerState.releaseAtServerMs = null;
     
+    // Store penalty setting if provided
+    if (data.falseStartPenalty !== undefined) {
+        buzzerState.falseStartPenalty = data.falseStartPenalty;
+    }
+    
+    // Check if this player has a penalty
+    const playerSession = JSON.parse(sessionStorage.getItem('playerSession') || '{}');
+    const myPlayerId = playerSession.id;
+    const penalizedPlayerIds = data.penalizedPlayerIds || [];
+    
+    if (penalizedPlayerIds.includes(myPlayerId)) {
+        buzzerState.hasPenalty = true;
+        console.log(`[BUZZER] Player ${myPlayerId} has penalty: +${buzzerState.falseStartPenalty}ms delay`);
+    } else {
+        buzzerState.hasPenalty = false;
+    }
+    
     // Clear rank display
     document.getElementById('buzzerRankDisplay').style.display = 'none';
     document.getElementById('buzzerTop3').style.display = 'none';
@@ -189,12 +206,16 @@ function handleBuzzerArm(data) {
     // Show penalty notice if applicable
     const penaltyNotice = document.getElementById('buzzerPenaltyNotice');
     if (buzzerState.hasPenalty) {
+        const penaltyText = buzzerState.falseStartPenalty === 0 
+            ? 'No delay penalty (but still disqualified last round)'
+            : `${buzzerState.falseStartPenalty}ms delay this round (false start penalty)`;
+        penaltyNotice.innerHTML = `⚠️ ${penaltyText}`;
         penaltyNotice.style.display = 'block';
     } else {
         penaltyNotice.style.display = 'none';
     }
     
-    updateBuzzerButton('locked', 'DON\'T PRESS', true);
+    updateBuzzerButton('locked', 'DON\'T PRESS', false);
     updateBuzzerStatus('locked', '🔶 Round armed - button will turn green soon...');
     
     // Refresh time sync right before enable
@@ -207,19 +228,22 @@ function handleBuzzerEnable(data) {
     buzzerState.phase = 'LIVE';
     buzzerState.releaseAtServerMs = data.releaseAtServerMs;
     
+    // Store penalty setting
+    buzzerState.falseStartPenalty = data.falseStartPenalty || 250;
+    
     // Calculate when to show green button
     const serverNow = Date.now() - buzzerState.clockOffsetMs;
     let delayMs = buzzerState.releaseAtServerMs - serverNow;
     
     // Apply penalty if present
     if (buzzerState.hasPenalty) {
-        delayMs += buzzerState.penaltyDelayMs;
-        console.log('[BUZZER] Penalty applied: +250ms delay');
+        delayMs += buzzerState.falseStartPenalty;
+        console.log(`[BUZZER] Penalty applied: +${buzzerState.falseStartPenalty}ms delay`);
         // Clear penalty after applying
         buzzerState.hasPenalty = false;
     }
     
-    updateBuzzerStatus('locked', `🟡 Get ready... (${Math.max(0, Math.ceil(delayMs / 1000))}s)`);
+    updateBuzzerStatus('locked', '🟡 Get ready...');
     
     // Schedule button to turn green
     setTimeout(() => {
@@ -350,6 +374,12 @@ if (window.registerGameHandler) {
     window.registerGameHandler('buzzer_reset', handleBuzzerReset);
     window.registerGameHandler('buzzer_state', handleBuzzerState);
     window.registerGameHandler('buzzer_time_pong', handleTimePong);
+}
+
+// Hide leaderboard for buzzer game (not relevant)
+const leaderboard = document.getElementById('leaderboard');
+if (leaderboard) {
+    leaderboard.style.display = 'none';
 }
 
 // Cleanup on disconnect

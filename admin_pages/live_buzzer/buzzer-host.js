@@ -148,7 +148,7 @@ function updateSetupPlayerList(players) {
     
     list.innerHTML = players.map(player => `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; margin-bottom: 0.5rem; background: #f8fafc; border-radius: 8px;">
-            <span style="font-weight: 600; color: #1e293b;">${player.guest_name || player.username || 'Player'}</span>
+            <span style="font-weight: 600; color: #1e293b;">${player.display_name || 'Player'}</span>
             <span style="font-size: 0.85rem; color: #10b981;">✓ Ready</span>
         </div>
     `).join('');
@@ -159,18 +159,45 @@ function startBuzzerGame() {
     
     isGameStarted = true;
     
+    // Capture penalty setting
+    const penaltySelect = document.getElementById('penaltySelect');
+    buzzerState.falseStartPenalty = parseInt(penaltySelect.value) || 250;
+    console.log(`[BUZZER HOST] False start penalty set to ${buzzerState.falseStartPenalty}ms`);
+    
     // Hide setup screen, show game screen
     document.getElementById('setupScreen').style.display = 'none';
     document.getElementById('gameScreen').style.display = 'flex';
     
-    // Update room code in game screen
+    // Update room code in game screen header
     document.getElementById('roomCode').textContent = roomCode;
+    
+    // Update room code in footer
+    document.getElementById('roomCodeFooter').textContent = roomCode;
+    
+    // Generate footer QR code
+    const qrFooter = document.getElementById('qrCodeFooter');
+    qrFooter.innerHTML = '';
+    const joinUrl = `${JOIN_URL}?room=${roomCode}`;
+    try {
+        new QRCode(qrFooter, {
+            text: joinUrl,
+            width: 80,
+            height: 80,
+            colorDark: '#1e293b',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    } catch (error) {
+        console.error('[BUZZER HOST] Footer QR code generation error:', error);
+    }
     
     // Send start_game message to backend
     if (websocket && websocket.readyState === WebSocket.OPEN) {
         websocket.send(JSON.stringify({
             action: 'start_game',
-            data: {}
+            data: {
+                falseStartPenalty: buzzerState.falseStartPenalty
+            }
         }));
     }
     
@@ -198,6 +225,11 @@ function connectWebSocket() {
     websocket.onmessage = function(event) {
         const message = JSON.parse(event.data);
         console.log('[BUZZER HOST] Message:', message.type, message);
+        
+        // Log error messages
+        if (message.type === 'error') {
+            console.error('[BUZZER HOST] Server error:', message.message);
+        }
         
         handleWebSocketMessage(message);
     };
@@ -239,6 +271,10 @@ function handleWebSocketMessage(message) {
             handleBuzzerStateUpdate(message);
             break;
             
+        case 'buzzer_state_update':
+            handleBuzzerStateUpdate(message);
+            break;
+            
         case 'buzzer_reset':
             handleBuzzerReset(message);
             break;
@@ -257,6 +293,7 @@ function handlePlayerJoined(message) {
 function handlePlayerListUpdate(message) {
     console.log('[BUZZER HOST] Player list update:', message.players);
     buzzerState.allPlayers = message.players || [];
+    console.log('[BUZZER HOST] All players:', buzzerState.allPlayers);
     updatePlayerCount();
     updateNoBuzzList();
 }
@@ -265,6 +302,15 @@ function handleBuzzerArmed(message) {
     console.log('[BUZZER HOST] Buzzer armed');
     buzzerState.phase = 'ARMED';
     buzzerState.roundId = message.roundId;
+    
+    // Clear previous round results
+    buzzerState.rankedBuzzers = [];
+    buzzerState.falseStarts = [];
+    
+    // Update all lists (clears buzz order/false starts, moves everyone to No Buzz)
+    updateRankedList();
+    updateFalseStartList();
+    updateNoBuzzList();
     
     updatePhaseIndicator();
     updateControlButtons();
@@ -303,9 +349,16 @@ function handleBuzzerReset(message) {
     buzzerState.phase = 'RESET';
     buzzerState.roundNumber++;
     
+    // Display the lead time that was used for this round
+    const leadTimeDisplay = document.getElementById('leadTimeDisplay');
+    const leadTimeValue = document.getElementById('leadTimeValue');
+    if (leadTimeDisplay && leadTimeValue) {
+        leadTimeValue.textContent = buzzerState.leadTimeMs;
+        leadTimeDisplay.style.display = 'block';
+    }
+    
     // Keep final results visible
     updatePhaseIndicator();
-    updateRoundNumber();
     updateControlButtons();
     showToast('Round ended', 'success');
 }
@@ -314,6 +367,10 @@ function handleBuzzerReset(message) {
 function armRound() {
     console.log('[BUZZER HOST] Arming round...');
     
+    // Generate random lead time between 200ms and 800ms for this round
+    buzzerState.leadTimeMs = Math.floor(Math.random() * (800 - 200 + 1)) + 200;
+    console.log(`[BUZZER HOST] Random lead time for this round: ${buzzerState.leadTimeMs}ms`);
+    
     if (websocket && websocket.readyState === WebSocket.OPEN) {
         const roundId = `round_${Date.now()}`;
         
@@ -321,7 +378,8 @@ function armRound() {
             action: 'buzzer_arm',
             data: {
                 roundId,
-                roundNumber: buzzerState.roundNumber
+                roundNumber: buzzerState.roundNumber,
+                falseStartPenalty: buzzerState.falseStartPenalty || 250
             }
         }));
     } else {
@@ -331,6 +389,7 @@ function armRound() {
 
 function enableBuzzer() {
     console.log('[BUZZER HOST] Enabling buzzer...');
+    console.log(`[BUZZER HOST] Using lead time: ${buzzerState.leadTimeMs}ms`);
     
     if (websocket && websocket.readyState === WebSocket.OPEN) {
         websocket.send(JSON.stringify({
@@ -371,29 +430,27 @@ function exitBuzzer() {
 
 // UI update functions
 function updatePhaseIndicator() {
-    const indicator = document.getElementById('phaseIndicator');
-    const text = document.getElementById('phaseText');
+    const status = document.getElementById('gameStatus');
+    const text = document.getElementById('statusText');
     
-    indicator.className = 'phase-indicator';
+    if (!status || !text) return; // Elements might not exist on setup screen
+    
+    status.className = 'game-status';
     
     switch (buzzerState.phase) {
         case 'RESET':
-            indicator.classList.add('reset');
-            text.textContent = '⚪ ROUND ENDED';
+            status.classList.add('reset');
+            text.textContent = '⚪ RESET';
             break;
         case 'ARMED':
-            indicator.classList.add('armed');
-            text.textContent = '🔶 ARMED - READY TO ENABLE';
+            status.classList.add('armed');
+            text.textContent = '🔶 ARMED';
             break;
         case 'LIVE':
-            indicator.classList.add('live');
-            text.textContent = '🟢 LIVE - BUZZER ACTIVE!';
+            status.classList.add('live');
+            text.textContent = '🟢 LIVE';
             break;
     }
-}
-
-function updateRoundNumber() {
-    document.getElementById('roundNumber').textContent = buzzerState.roundNumber;
 }
 
 function updatePlayerCount() {
@@ -507,14 +564,16 @@ function updateNoBuzzList() {
         return;
     }
     
-    list.innerHTML = noBuzz.map(player => `
+    list.innerHTML = noBuzz.map(player => {
+        const playerName = player.display_name || player.guest_name || player.username || `Player ${player.id}`;
+        return `
         <div class="buzz-item">
             <div class="buzz-player-info">
-                <div class="buzz-player-name">${player.guest_name || player.username}</div>
+                <div class="buzz-player-name">${playerName}</div>
                 <div class="buzz-time">${buzzerState.phase === 'LIVE' ? 'Not buzzed yet' : 'No buzz this round'}</div>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 function showToast(message, type = 'info') {

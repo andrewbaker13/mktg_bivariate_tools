@@ -642,6 +642,47 @@ function handleMessage(message) {
                 }
             }
             break;
+            
+        // Live Buzzer messages
+        case 'buzzer_arm':
+            if (typeof handleBuzzerArm === 'function') {
+                handleBuzzerArm(message);
+            }
+            break;
+            
+        case 'buzzer_armed':
+            // Host notification - no action needed on player side
+            console.log('[BUZZER] Round armed by host');
+            break;
+            
+        case 'buzzer_enable':
+            if (typeof handleBuzzerEnable === 'function') {
+                handleBuzzerEnable(message);
+            }
+            break;
+            
+        case 'buzzer_enabled':
+            // Host notification - no action needed on player side
+            console.log('[BUZZER] Buzzer enabled by host');
+            break;
+            
+        case 'buzzer_state_update':
+            if (typeof updateBuzzerState === 'function') {
+                updateBuzzerState(message);
+            }
+            break;
+            
+        case 'buzzer_reset':
+            if (typeof handleBuzzerReset === 'function') {
+                handleBuzzerReset(message);
+            }
+            break;
+            
+        case 'buzzer_time_pong':
+            if (typeof handleTimePong === 'function') {
+                handleTimePong(message);
+            }
+            break;
     }
 }
 
@@ -1091,6 +1132,14 @@ async function handleGameStart(message) {
             }
         } else {
             console.error('❌ showLineFitGame not found!');
+        }
+    } else if (gameType === 'live_buzzer') {
+        console.log('Checking showBuzzerUI:', typeof showBuzzerUI);
+        if (typeof showBuzzerUI === 'function') {
+            showBuzzerUI(message);
+            startTimeSync();
+        } else {
+            console.error('❌ showBuzzerUI not found!');
         }
     } else {
         console.error('❌ Unknown game type:', gameType);
