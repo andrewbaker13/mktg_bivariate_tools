@@ -9,41 +9,8 @@
   // Reference to shared utilities
   const StatsUtils = window.StatsUtils || {};
 
-  // Usage tracking
-  const pageLoadTime = Date.now();
-  let hasSuccessfulRun = false;
-
-  // Usage tracking function
-  function checkAndTrackUsage() {
-    const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-    if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-    if (!hasSuccessfulRun) return;
-    if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-    
-    const today = new Date().toISOString().split('T')[0];
-    const storageKey = `tool-tracked-mlr-interactions-${today}`;
-    if (localStorage.getItem(storageKey)) return;
-    
-    if (typeof logToolUsage === 'function') {
-      const trackingData = {
-        interactionType: state.interactionType,
-        centerContinuous: state.centerContinuous,
-        numPredictors: state.predictors.length
-      };
-      const scenario = state.scenarioData.length > 0 ? state.scenarioData[0].name : null;
-      const dataSource = state.scenarioData.length > 0 ? 'scenario' : 'manual';
-      
-      logToolUsage('mlr-interactions', trackingData, `MLR Interactions analysis completed`, {
-        scenario: scenario,
-        dataSource: dataSource
-      });
-      localStorage.setItem(storageKey, 'true');
-      console.log('Usage tracked for MLR Interactions');
-    }
-  }
-
-  // Track usage on page unload
-  window.addEventListener('beforeunload', checkAndTrackUsage);
+  // Tool identifier for engagement tracking
+  const TOOL_SLUG = 'mlr-interactions';
 
   // Global state
   const state = {
@@ -568,8 +535,10 @@
     // Managerial report
     generateManagerialReport(results);
     
-    // Mark successful run for usage tracking
-    hasSuccessfulRun = true;
+    // Engagement tracking - mark successful run
+    if (typeof markRunSuccessful === 'function' && results && isFinite(results.F) && isFinite(results.pModel)) {
+        markRunSuccessful({ f: results.F, p: results.pModel, r2: results.R2 });
+    }
     
     // Coefficient interpretation
     renderCoefInterpretation(results);
@@ -1516,6 +1485,11 @@
     if (downloadButton) {
       downloadButton.addEventListener('click', handleDownloadFittedAndResiduals);
     }
+    
+    // Initialize engagement tracking
+    if (typeof initEngagementTracking === 'function') {
+        initEngagementTracking(TOOL_SLUG);
+    }
   }
   
   function handleDownloadFittedAndResiduals() {
@@ -2012,6 +1986,11 @@
           return parsed;
         });
         
+        // Track scenario load
+        if (typeof markScenarioLoaded === 'function') {
+            markScenarioLoaded(scenario.label || scenario.id);
+        }
+        
         // Set interaction type from scenario
         if (scenario.interactionType) {
           const typeMap = {
@@ -2114,6 +2093,11 @@
       
       renderVariableSelectors();
       document.getElementById('raw-upload-status').textContent = `Loaded ${state.rawData.length} rows from ${file.name}`;
+      
+      // Track data upload
+      if (typeof markDataUploaded === 'function') {
+          markDataUploaded(file.name);
+      }
     };
     reader.readAsText(file);
   }
@@ -2122,6 +2106,11 @@
     if (!state.parsedData.length || !state.outcome || !state.predictors.length) {
       console.log('Not ready to run analysis');
       return;
+    }
+    
+    // Track run attempt
+    if (typeof markRunAttempted === 'function') {
+        markRunAttempted();
     }
     
     // Get focal/moderator from UI

@@ -1,29 +1,8 @@
 // k-Means Clustering Explorer – interactive behavior
 
+const TOOL_SLUG = 'kmeans-clustering';
 const CREATED_DATE = '2025-11-21';
 let modifiedDate = new Date().toLocaleDateString();
-
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-kmeans-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('kmeans', {}, `K-means clustering completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for K-means Clustering');
-  }
-}
 
 const DataSourceModes = {
   UPLOAD: 'upload',
@@ -76,6 +55,11 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDemoLoader();
   setupRunButton();
   setupDownloadResultsButton();
+  
+  // Initialize engagement tracking
+  if (typeof initEngagementTracking === 'function') {
+    initEngagementTracking(TOOL_SLUG);
+  }
 });
 
 function hydrateTimestamps() {
@@ -144,6 +128,11 @@ function setupScenarioSelect() {
       });
     }
     updateScenarioDownloadButton();
+    
+    // Track scenario loading
+    if (typeof markScenarioLoaded === 'function') {
+      markScenarioLoaded(selected.label);
+    }
   });
 }
 
@@ -248,6 +237,11 @@ function setupUpload() {
           `Loaded ${rows.length} row(s) with ${headers.length} column(s). All columns are treated as numeric features.`,
           'success'
         );
+        
+        // Track file upload
+        if (typeof markDataUploaded === 'function') {
+          markDataUploaded(file.name || 'uploaded_file.csv');
+        }
       } catch (error) {
         setFeedback(error.message || 'Unable to parse file.', 'error');
       }
@@ -431,6 +425,11 @@ function setupRunButton() {
 }
 
 function runClustering() {
+  // Track button click
+  if (typeof markRunAttempted === 'function') {
+    markRunAttempted();
+  }
+  
   if (!currentRows.length || !currentHeaders.length) {
     updateDiagnosticsText('Load a dataset first (upload a CSV or use the demo dataset).');
     return;
@@ -521,6 +520,19 @@ function runClustering() {
   renderElbowChart(elbowKValues, elbowWCSS, k);
   renderSilhouetteChart(silKValues, silValues, k);
   updateSummary(solutionForK, featureMatrix, selectedFeatureNames, avgSilhouette);
+
+  // Track successful run
+  if (typeof markRunSuccessful === 'function') {
+    markRunSuccessful(
+      {
+        k: k,
+        n_features: selectedFeatureNames.length,
+        n_obs: currentRows.length,
+        scale_mode: scaleSelect?.value || 'none'
+      },
+      `k=${k}, silhouette=${avgSilhouette?.toFixed(3)}, wcss=${solutionForK.wcss?.toFixed(2)}, n=${currentRows.length}`
+    );
+  }
 
   // Store state for downloads
   lastClusteringState = {

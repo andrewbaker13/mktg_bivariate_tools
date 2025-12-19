@@ -3,27 +3,10 @@
 const CREATED_DATE = '2025-11-21';
 let modifiedDate = new Date().toLocaleDateString();
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-sample-size-ab-calculator-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('sample-size-ab-calculator', {}, `A/B test sample size calculation completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for A/B Test Sample Size Calculator');
-  }
-}
+const TOOL_SLUG = 'sample-size-ab';
+// Debouncing for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 const OutcomeModes = {
   PROPORTION: 'proportion',
@@ -924,8 +907,27 @@ function highlightCurrentOnPowerChart() {
     highlightCurrentOnVariabilityChart();
     highlightCurrentOnPowerChart();
 
-    hasSuccessfulRun = true;
-    checkAndTrackUsage();
+    // Track successful calculation with debouncing
+    renderCount++;
+    const now = Date.now();
+    if (renderCount > 1 && (now - lastTrackTime) > 500 && isFinite(SampleSizeABState.nTotal)) {
+      lastTrackTime = now;
+      if (typeof markRunAttempted === 'function') {
+        markRunAttempted();
+      }
+      if (typeof markRunSuccessful === 'function') {
+        markRunSuccessful(
+          {
+            mode: SampleSizeABState.mode,
+            alpha: SampleSizeABState.alpha,
+            power: SampleSizeABState.power,
+            sidedness: SampleSizeABState.sidedness,
+            allocation_ratio: SampleSizeABState.allocationRatio
+          },
+          `n1=${SampleSizeABState.n1}, n2=${SampleSizeABState.n2}, nTotal=${SampleSizeABState.nTotal}`
+        );
+      }
+    }
   }
 
 function updateScenarioDownload(dataset) {
@@ -1040,6 +1042,9 @@ function setupScenarioSelect() {
       filename: `${scenario.id}_notes.txt`,
       content: scenario.description
     });
+    if (typeof markScenarioLoaded === 'function') {
+      markScenarioLoaded(scenario.label);
+    }
     reflectConfidenceButtons();
     updateDesign();
   });
@@ -1053,4 +1058,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupScenarioSelect();
   setupScenarioDownload();
   updateDesign();
+  
+  if (typeof initEngagementTracking === 'function') {
+    initEngagementTracking(TOOL_SLUG);
+  }
 });

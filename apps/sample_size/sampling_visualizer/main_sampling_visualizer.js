@@ -2,28 +2,7 @@
 
 const SAMPLING_CREATED_DATE = '2025-11-25';
 let samplingModifiedDate = new Date().toLocaleDateString();
-
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-sampling-visualizer-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('sampling-visualizer', {}, `Sampling visualization completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Sampling Visualizer');
-  }
-}
+const TOOL_SLUG = 'sampling-visualizer';
 
 const POP_ROWS = 40;
 const POP_COLS = 25;
@@ -247,6 +226,11 @@ function applySamplingScenario(id) {
 
   if (descEl) {
     descEl.innerHTML = `<p>${scenario.description}</p>`;
+  }
+
+  // Track scenario loaded
+  if (typeof markScenarioLoaded === 'function') {
+    markScenarioLoaded(scenario.label);
   }
 
   const cfg = scenario.config || {};
@@ -757,9 +741,6 @@ function renderSamplingDistribution() {
     return;
   }
 
-  hasSuccessfulRun = true;
-  checkAndTrackUsage();
-
   // Compute axis ranges based on the overall mean distribution so that
   // subgroup views share the same X/Y scales as the overall view.
   const NUM_BINS = 15;
@@ -976,6 +957,11 @@ function setSamplingWarning(message) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize engagement tracking
+  if (typeof initEngagementTracking === 'function') {
+    initEngagementTracking(TOOL_SLUG);
+  }
+
   const createdLabel = document.getElementById('created-date');
   const modifiedLabel = document.getElementById('modified-date');
   if (createdLabel) createdLabel.textContent = SAMPLING_CREATED_DATE;
@@ -1098,6 +1084,18 @@ document.addEventListener('DOMContentLoaded', () => {
     drawBtn.addEventListener('click', event => {
       event.preventDefault();
       drawSampleOnce();
+      
+      // Track tool run
+      if (typeof markRunSuccessful === 'function') {
+        const design = document.getElementById('sampling-design-select')?.value || SamplingDesigns.SRS;
+        const nInput = document.getElementById('sample-size-input');
+        const requestedN = parseInt(nInput?.value || '80', 10);
+        markRunSuccessful({
+          design: design,
+          sampleSize: requestedN,
+          action: 'draw-single-sample'
+        });
+      }
     });
   }
   const simulateBtn = document.getElementById('simulate-many-btn');
@@ -1105,6 +1103,21 @@ document.addEventListener('DOMContentLoaded', () => {
     simulateBtn.addEventListener('click', event => {
       event.preventDefault();
       simulateManySamples();
+      
+      // Track tool run
+      if (typeof markRunSuccessful === 'function') {
+        const design = document.getElementById('sampling-design-select')?.value || SamplingDesigns.SRS;
+        const nInput = document.getElementById('sample-size-input');
+        const numInput = document.getElementById('num-simulations-input');
+        const requestedN = parseInt(nInput?.value || '80', 10);
+        const iterations = parseInt(numInput?.value || '200', 10);
+        markRunSuccessful({
+          design: design,
+          sampleSize: requestedN,
+          numSimulations: iterations,
+          action: 'simulate-many-samples'
+        });
+      }
     });
   }
 });

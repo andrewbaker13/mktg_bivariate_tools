@@ -1,26 +1,11 @@
 // Minimal, stable chi-square app logic (no chart/features)
 (function () {
-  // Usage tracking variables
-  let pageLoadTime = Date.now();
-  let hasSuccessfulRun = false;
-
-  // Usage tracking function
-  function checkAndTrackUsage() {
-    const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-    if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-    if (!hasSuccessfulRun) return;
-    if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-    
-    const today = new Date().toISOString().split('T')[0];
-    const storageKey = `tool-tracked-chisquare-${today}`;
-    if (localStorage.getItem(storageKey)) return;
-    
-    if (typeof logToolUsage === 'function') {
-      logToolUsage('chisquare', {}, `Chi-square test completed`);
-      localStorage.setItem(storageKey, 'true');
-      console.log('Usage tracked for Chi-square Test');
-    }
-  }
+  // Tool identification for engagement tracking
+  const TOOL_SLUG = 'chi-square-test';
+  
+  // Debouncing for auto-run tracking
+  let renderCount = 0;
+  let lastTrackTime = 0;
 
   var rowsInput = document.getElementById('rows');
   var colsInput = document.getElementById('cols');
@@ -358,9 +343,6 @@
     updateCellLabels(obs, E, rowTotals, colTotals, grand);
     // Diagnostics panel
     updateDiagnosticsPanel(obs, E, rowTotals, colTotals, grand, res);
-
-    hasSuccessfulRun = true;
-    checkAndTrackUsage();
   }
 
   function computeTotals(obs) {
@@ -609,6 +591,24 @@
     var reject = isFinite(res.p) && res.p < alpha;
     if (decisionEl) decisionEl.textContent = (reject ? 'Reject H0 at alpha=' : 'Fail to reject H0 at alpha=') + alpha;
     if (interpEl) interpEl.textContent = buildInterpretation(reject, res.p, res.df);
+
+    // Track successful analysis for engagement with debouncing
+    if (res && isFinite(res.chi2) && isFinite(res.p)) {
+      renderCount++;
+      const now = Date.now();
+      if (renderCount > 1 && (now - lastTrackTime) > 500) {
+        lastTrackTime = now;
+        if (typeof markRunAttempted === 'function') {
+          markRunAttempted();
+        }
+        if (typeof markRunSuccessful === 'function') {
+          markRunSuccessful(
+            { rows: R, cols: C, chi2: res.chi2 },
+            `chi2=${res.chi2.toFixed(3)}, p=${res.p.toFixed(4)}`
+          );
+        }
+      }
+    }
   }
 
   function updateNarratives(N, res, usedYates) {
@@ -1355,6 +1355,11 @@
       updateScenarioDownload(null);
       return;
     }
+
+    // Track scenario selection for engagement
+    if (typeof markScenarioLoaded === 'function') {
+      markScenarioLoaded(scenario.label);
+    }
     var scenarioTextPromise = fetch(scenario.file, { cache: 'no-cache' })
       .then(function (response) {
         if (!response.ok) throw new Error('Unable to load scenario file (' + response.status + ')');
@@ -1519,4 +1524,9 @@ function applyEditNames(){
     var evt=new Event('change'); var rowsEl=document.getElementById('rows'); if(rowsEl) rowsEl.dispatchEvent(evt); // trigger safe path
   }
   closeEditPanel();
+
+  // Initialize engagement tracking
+  if (typeof initEngagementTracking === 'function') {
+    initEngagementTracking(TOOL_SLUG);
+  }
 }

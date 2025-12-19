@@ -3,6 +3,8 @@
  * For analyzing focus group transcripts and qualitative data
  */
 
+const TOOL_SLUG = 'qualitative-analyzer';
+
 // Global state
 const state = {
   transcript: [], // Array of { lineNumber, speaker, timestamp, text, codes: {}, lineType: 'dialogue'|'section-header'|'activity-marker'|'stage-direction', sectionId: null }
@@ -32,6 +34,7 @@ const state = {
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', function() {
+  initEngagementTracking(TOOL_SLUG);
   initializeApp();
   loadScenarios();
   setupEventListeners();
@@ -159,6 +162,7 @@ function handleFileUpload(file, mode) {
     const content = e.target.result;
     parseTranscript(content, mode);
     feedback.textContent = `Loaded: ${file.name} (${state.transcript.length} lines)`;
+    markDataUploaded(file.name);
   };
   reader.onerror = () => {
     feedback.textContent = 'Error reading file';
@@ -1251,7 +1255,9 @@ function loadScenarios() {
       const response = await fetch(file);
       const content = await response.text();
       parseTranscript(content, 'plain');
-      document.getElementById('scenario-feedback').textContent = `Loaded: ${scenarios.find(s => s.file === file)?.name}`;
+      const scenarioName = scenarios.find(s => s.file === file)?.name;
+      document.getElementById('scenario-feedback').textContent = `Loaded: ${scenarioName}`;
+      markScenarioLoaded(scenarioName);
     } catch (error) {
       document.getElementById('scenario-feedback').textContent = 'Error loading scenario';
       console.error('Error loading scenario:', error);
@@ -1311,6 +1317,8 @@ function resetStopWords() {
  * Analyze word frequency
  */
 function analyzeWordFrequency() {
+  markRunAttempted();
+  
   if (state.transcript.length === 0) {
     alert('Please upload a transcript first.');
     return;
@@ -1362,6 +1370,11 @@ function analyzeWordFrequency() {
   tbody.innerHTML = html;
   document.getElementById('frequency-results').classList.remove('hidden');
   updateWordSelectionCount();
+  
+  markRunSuccessful({
+    word_count: sorted.length,
+    transcript_lines: state.transcript.length
+  });
 }
 
 /**

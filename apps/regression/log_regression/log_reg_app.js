@@ -1,8 +1,11 @@
 // Logistic Regression Tool - rebuilt controller
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
+// Tool identifier for tracking
+const TOOL_SLUG = 'logistic-regression';
+
+// Debouncing for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 // ---------- State ----------
 let selectedOutcome = null;
@@ -60,27 +63,6 @@ function escapeHtml(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-log-regression-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('log-regression', {
-      outcome: selectedOutcome,
-      predictor_count: selectedPredictors.length
-    }, `Logistic regression analysis completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Logistic Regression');
-  }
 }
 
 function clamp(value, min, max) {
@@ -617,6 +599,12 @@ function importRawData(text, { isFromScenario = false, scenarioHints = null } = 
     statusMessage += ` Constant column(s) were detected and excluded from predictor options because they have no variation: <strong>${constantPredictors.join(', ')}</strong>.`;
   }
   setRawUploadStatus(statusMessage, 'success');
+  
+  // Track file upload for engagement
+  if (typeof markDataUploaded === 'function' && !isFromScenario) {
+    markDataUploaded('uploaded_file.csv');
+  }
+  
   updateOutcomeCodingFromData();
   renderVariableSelectors();
   updateResults();
@@ -725,6 +713,11 @@ async function loadScenario(id) {
       } else {
         const descContainer = document.getElementById('scenario-description');
         if (descContainer) descContainer.textContent = body || '';
+      }
+      
+      // Track scenario loading for engagement
+      if (typeof markScenarioLoaded === 'function') {
+        markScenarioLoaded(scenario.label);
       }
     } catch {
       if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
@@ -2232,8 +2225,24 @@ function updateResults() {
     renderEffectPlot(model, filtered, predictorsInfo);
     renderActualFitted(model);
     renderCoefInterpretation(model);
+    
+    // Track successful analysis with debouncing
+    renderCount++;
+    const now = Date.now();
+    if (renderCount > 1 && (now - lastTrackTime) > 500 && Number.isFinite(modelPVal)) {
+      lastTrackTime = now;
+      if (typeof markRunAttempted === 'function') {
+        markRunAttempted();
+      }
+      if (typeof markRunSuccessful === 'function') {
+        markRunSuccessful(
+          { outcome: selectedOutcome, predictors: selectedPredictors, n: model.n },
+          `pseudoR²=${formatNumber(model.pseudoR2, 3)}, p=${formatP(modelPVal)}`
+        );
+      }
+    }
+    
     hasSuccessfulRun = true;
-    checkAndTrackUsage();
     const modifiedLabel = document.getElementById('modified-date');
     if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();
   } finally {
@@ -2267,6 +2276,8 @@ function updateResults() {
         handleDownloadLogisticResults();
       });
     }
+    
+    if (typeof initEngagementTracking === 'function') { initEngagementTracking(TOOL_SLUG); }
   });
 
   function handleDownloadLogisticResults() {

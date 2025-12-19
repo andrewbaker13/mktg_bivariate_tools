@@ -1,27 +1,12 @@
 const CREATED_DATE = new Date('2025-11-06').toLocaleDateString();
 let modifiedDate = new Date().toLocaleDateString();
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
+// Tool identifier for engagement tracking
+const TOOL_SLUG = 'oneway-anova';
 
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-onewayanova-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('onewayanova', {}, `One-way ANOVA analysis completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for One-way ANOVA');
-  }
-}
+// Debouncing variables for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 const MAX_GROUPS = 10;
 const MIN_GROUPS = 2;
@@ -1784,6 +1769,12 @@ async function loadScenarioById(id) {
         }
         const datasetInfo = buildScenarioDataset(parsed, scenario.id);
         updateScenarioDownloadButton(datasetInfo);
+        
+        // Track scenario load
+        if (typeof markScenarioLoaded === 'function') {
+            markScenarioLoaded(scenario.label || scenario.id);
+        }
+        
         updateResults();
     } catch (error) {
         console.error('Scenario load error:', error);
@@ -2094,8 +2085,16 @@ function updateResults() {
     updateDiagnostics(anovaStats, groups);
     updateSummaryTable(groups, intervals, sortedLevels[sortedLevels.length - 1], anovaStats);
 
-    hasSuccessfulRun = true;
-    checkAndTrackUsage();
+    // Debounced engagement tracking for auto-run tool
+    renderCount++;
+    const now = Date.now();
+    if (now - lastTrackTime > 3000) {
+        lastTrackTime = now;
+        if (typeof markRunSuccessful === 'function' && anovaStats && isFinite(anovaStats.fStatistic) && isFinite(anovaStats.pValue)) {
+            markRunSuccessful({ f: anovaStats.fStatistic, p: anovaStats.pValue });
+        }
+    }
+    
     modifiedDate = new Date().toLocaleDateString();
     const modifiedLabel = document.getElementById('modified-date');
     if (modifiedLabel) {
@@ -2157,5 +2156,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateResults();
+    
+    // Initialize engagement tracking
+    if (typeof initEngagementTracking === 'function') {
+        initEngagementTracking(TOOL_SLUG);
+    }
 });
 

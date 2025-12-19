@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Course Analytics | Dr. Baker Marketing</title>
     <link rel="icon" type="image/svg+xml" href="../art_assets/svg_logos/clr_notext_logo.svg">
-    <link rel="stylesheet" href="../shared/css/global.css">
+    <link rel="stylesheet" href="../shared/css/main.css">
     <link rel="stylesheet" href="../shared/css/admin-nav.css">
     <script src="../shared/js/tracking.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -436,12 +436,13 @@
                 const response = await fetch(`${API_BASE}/courses/`, {
                     headers: { 'Authorization': `Token ${token}` }
                 });
-                const data = await response.json();
+                const courses = await response.json();
                 
                 const select = document.getElementById('course-select');
                 select.innerHTML = '<option value="">-- Select a course --</option>';
                 
-                data.courses.forEach(course => {
+                // API returns array directly, not wrapped in {courses: [...]}
+                courses.forEach(course => {
                     const option = document.createElement('option');
                     option.value = course.id;
                     option.textContent = `${course.name} (${course.student_count} students)`;

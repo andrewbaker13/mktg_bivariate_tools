@@ -1,29 +1,12 @@
 // Compound Event Probability Calculator
 
+const TOOL_SLUG = 'compound-probability';
 const COMPOUND_LAB_CREATED_DATE = '2025-11-28';
 let compoundLabModifiedDate = new Date().toLocaleDateString();
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-compound-event-probability-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('compound-event-probability', {}, `Compound event probability calculation completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Compound Event Probability');
-  }
-}
+// Debouncing variables for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 const EventScenarios = [
   {
@@ -225,6 +208,11 @@ document.getElementById('event-scenario-select').addEventListener('change', (e) 
   const scenario = EventScenarios.find(s => s.id === scenarioId);
   if (!scenario) return;
   
+  // Track scenario loaded
+  if (typeof markScenarioLoaded === 'function') {
+    markScenarioLoaded(TOOL_SLUG, scenarioId, scenario.label);
+  }
+  
   descDiv.innerHTML = scenario.description;
   
   // Apply settings
@@ -345,8 +333,23 @@ function updateCalculations() {
   updateAPAReport(n, p, k, mode, approxMode, targetProb, eventLabel);
   updateManagerialReport(n, p, k, mode, targetProb, eventLabel);
 
-  hasSuccessfulRun = true;
-  checkAndTrackUsage();
+  // Debounced tracking for auto-run tool
+  renderCount++;
+  const now = Date.now();
+  if (now - lastTrackTime > 2000) {
+    lastTrackTime = now;
+    if (typeof markRunSuccessful === 'function') {
+      markRunSuccessful(TOOL_SLUG, {
+        probability: p,
+        trials: n,
+        targetSuccesses: k,
+        comparisonMode: mode,
+        targetProbability: targetProb,
+        expectedValue: n * p,
+        stdDev: Math.sqrt(n * p * (1 - p))
+      });
+    }
+  }
 }
 
 function calculatePMF(n, p, approxMode) {
@@ -1084,4 +1087,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('modified-date').textContent = compoundLabModifiedDate;
   
   updateCalculations();
+  
+  // Initialize engagement tracking
+  if (typeof InitEngagementTracking === 'function') {
+    InitEngagementTracking(TOOL_SLUG);
+  }
 });

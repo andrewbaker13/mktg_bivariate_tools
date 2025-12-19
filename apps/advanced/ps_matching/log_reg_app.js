@@ -1,26 +1,7 @@
 // Logistic Regression Tool - rebuilt controller
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-ps-matching-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('ps-matching', {}, `Propensity score matching completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Propensity Score Matching');
-  }
-}
+// Tool identifier for engagement tracking
+const TOOL_SLUG = 'propensity-score-matching';
 
 // ---------- State ----------
 let selectedOutcome = null;
@@ -555,6 +536,14 @@ function importRawData(text, { isFromScenario = false, scenarioHints = null } = 
   dataset = { headers: parsed.headers, rows: parsed.rows };
   lastRawDataset = { headers: parsed.headers, rows: parsed.rows };
   columnMeta = buildColumnMeta(parsed.rows, parsed.headers);
+  
+  // Track data upload or scenario load
+  if (options.isFromScenario && typeof markScenarioLoaded === 'function' && options.scenarioHints) {
+      markScenarioLoaded(options.scenarioHints.label || options.scenarioHints.id);
+  } else if (!options.isFromScenario && typeof markDataUploaded === 'function') {
+      markDataUploaded('uploaded_data.csv');
+  }
+  
   const hints = applyScenarioHints(scenarioHints, dataset.headers);
   const defaults = inferDefaults(columnMeta, dataset.headers);
   selectedOutcome = hints?.outcome || defaults.outcome;
@@ -2169,8 +2158,10 @@ function renderCoefInterpretation(model) {
       renderActualFitted(model);
       renderCoefInterpretation(model);
 
-      hasSuccessfulRun = true;
-      checkAndTrackUsage();
+      // Engagement tracking - mark successful run
+      if (typeof markRunSuccessful === 'function' && model && isFinite(model.logLikelihood)) {
+          markRunSuccessful({ logLikelihood: model.logLikelihood, auc: model.auc });
+      }
 
       const modifiedLabel = document.getElementById('modified-date');
       if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();
@@ -2204,6 +2195,11 @@ function renderCoefInterpretation(model) {
         event.preventDefault();
         handleDownloadLogisticResults();
       });
+    }
+    
+    // Initialize engagement tracking
+    if (typeof initEngagementTracking === 'function') {
+        initEngagementTracking(TOOL_SLUG);
     }
   });
 

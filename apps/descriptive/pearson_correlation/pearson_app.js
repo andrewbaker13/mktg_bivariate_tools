@@ -1,9 +1,12 @@
 const CREATED_DATE = new Date('2025-11-06').toLocaleDateString();
 let modifiedDate = new Date().toLocaleDateString();
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
+// Tool identifier for tracking
+const TOOL_SLUG = 'pearson-correlation';
+
+// Debouncing for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 const InputModes = Object.freeze({
     MANUAL: 'manual',
@@ -146,32 +149,7 @@ function getCoefficientSymbol(method = selectedCorrelationMethod) {
     return method === CorrelationMethods.SPEARMAN ? SYMBOLS.spearman : 'r';
 }
 
-// Usage tracking function
-function checkAndTrackUsage() {
-    // Check if user meets all criteria for tracking
-    const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60; // Convert to minutes
-    
-    // Criteria: 10 seconds (testing), successful run, authenticated
-    if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-    if (!hasSuccessfulRun) return;
-    if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-    
-    // Check if already tracked today using localStorage
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-    const storageKey = `tool-tracked-pearson-correlation-${today}`;
-    
-    if (localStorage.getItem(storageKey)) return; // Already tracked today
-    
-    // Track the usage
-    if (typeof logToolUsage === 'function') {
-        logToolUsage('pearson-correlation', {
-            method: selectedCorrelationMethod,
-            mode: activeMode
-        }, `Pearson correlation analysis completed`);
-        localStorage.setItem(storageKey, 'true');
-        console.log('Usage tracked for Pearson Correlation');
-    }
-}
+
 
 function erf(x) {
     if (window.StatsUtils && typeof StatsUtils.erf === 'function') {
@@ -1742,8 +1720,19 @@ function updateResults() {
             return;
         }
         updateStatus('Matrix analysis complete. Explore the heatmap, intervals, and scatter dropdown below.');
-        hasSuccessfulRun = true;
-        checkAndTrackUsage();
+        
+        // Track engagement with debouncing to prevent multiple calls
+        renderCount++;
+        const now = Date.now();
+        if (renderCount > 1 && (now - lastTrackTime) > 500) {
+            markRunAttempted();
+            markRunSuccessful({
+                mode: 'matrix',
+                variables: matrixStats.variables.length,
+                method: selectedCorrelationMethod
+            }, `Matrix correlation analysis with ${matrixStats.variables.length} variables`);
+            lastTrackTime = now;
+        }
         toggleSingleOutputs(false);
         toggleMatrixOutputs(true);
         updateResultCards(null, data);
@@ -1779,13 +1768,32 @@ function updateResults() {
         method: selectedCorrelationMethod,
         data_mode: activeMode,
         has_labels: !!(data.labels && data.labels.x && data.labels.y)
-    }, `r = ${stats.r.toFixed(3)}, p = ${stats.pValue < 0.001 ? '<.001' : stats.pValue.toFixed(4)}, n = ${stats.n}`).catch(err => {
+    }, `r = ${stats.r.toFixed(3)}, p = ${stats.pValue < 0.001 ? '<.001' : stats.pValue.toFixed(4)}, n = ${stats.n}`, {
+        scenario: null,
+        dataSource: activeMode === 'SCENARIO' ? 'scenario' : activeMode === 'UPLOAD' ? 'upload' : 'manual'
+    }).catch(err => {
         console.warn('Usage tracking failed:', err);
     });
     
+    // Mark engagement milestones for auto-run tool
+    if (typeof markRunAttempted === 'function') markRunAttempted();
+    if (typeof markRunSuccessful === 'function') {
+        markRunSuccessful({
+            n: stats.n,
+            r: stats.r,
+            p_value: stats.pValue,
+            method: selectedCorrelationMethod
+        }, `r = ${stats.r.toFixed(3)}, p = ${stats.pValue < 0.001 ? '<.001' : stats.pValue.toFixed(4)}, n = ${stats.n}`);
+    }
+    
     updateStatus('Analysis complete. Interpret the cards, charts, and diagnostics below.');
-    hasSuccessfulRun = true;
-    checkAndTrackUsage();
+    
+    // Track engagement with debouncing
+    renderCount++;
+    const now = Date.now();
+    if (renderCount > 1 && (now - lastTrackTime) > 500) {
+        lastTrackTime = now;
+    }
     toggleSingleOutputs(true);
     toggleMatrixOutputs(false);
     updateResultCards(stats, data);
@@ -2279,6 +2287,12 @@ function parseMatrixRawText(text) {
 
 function handleFile(file) {
     if (!file) return;
+    
+    // Track file upload for engagement
+    if (typeof markDataUploaded === 'function') {
+        markDataUploaded(file.name);
+    }
+    
     const reader = new FileReader();
     reader.onload = event => {
         if (activeMode !== InputModes.PAIRED) {
@@ -2559,6 +2573,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (createdLabel) createdLabel.textContent = CREATED_DATE;
     if (modifiedLabel) modifiedLabel.textContent = modifiedDate;
 
+    // TRACKING: Initialize engagement tracking
+    if (typeof initEngagementTracking === 'function') {
+        initEngagementTracking(TOOL_SLUG);
+        resetSessionTracking();
+        console.log('🔍 Engagement tracking initialized for Pearson Correlation');
+    }
+
     setupManualControls();
     setupModeButtons();
     setupMethodControls();
@@ -2577,4 +2598,43 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSummaryStatsTable(null, null);
     switchMode(activeMode, { suppressUpdate: true });
     refreshScenarioDownloadVisibility();
+    
+    // TRACKING: Set up event-based tracking
+    setupEventTracking();
 });
+
+// Event-based tracking setup
+function setupEventTracking() {
+    // Track scenario selection
+    const scenarioSelect = document.getElementById('scenario-select');
+    if (scenarioSelect) {
+        scenarioSelect.addEventListener('change', (e) => {
+            if (e.target.value && typeof markScenarioLoaded === 'function') {
+                const option = e.target.options[e.target.selectedIndex];
+                markScenarioLoaded(option.textContent);
+            }
+        });
+    }
+
+    // Track file uploads
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', (e) => {
+            if (e.target.files[0] && typeof markDataUploaded === 'function') {
+                markDataUploaded(e.target.files[0].name);
+            }
+        });
+    });
+
+    // Track analyze button clicks (look for common button patterns)
+    const analyzeButtons = document.querySelectorAll('button[id*="analyze"], button[id*="run"], button[id*="calculate"], button[id*="compute"]');
+    analyzeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (typeof markRunAttempted === 'function') {
+                markRunAttempted();
+            }
+        });
+    });
+    
+    console.log('📊 Event tracking listeners attached');
+}

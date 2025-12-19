@@ -771,6 +771,140 @@
             color: #92400e;
             border: 2px solid #fbbf24;
         }
+        
+        /* Live Buzzer Game */
+        .buzzer-area {
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+        .buzzer-button-container {
+            margin: 3rem 0;
+        }
+        .buzzer-btn {
+            width: 100%;
+            max-width: 400px;
+            height: 200px;
+            border: none;
+            border-radius: 24px;
+            font-size: 2.5rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            box-shadow: 0 12px 0 rgba(0,0,0,0.3);
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .buzzer-btn:active:not(:disabled) {
+            transform: translateY(8px);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+        }
+        .buzzer-btn.locked {
+            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+            color: white;
+            cursor: not-allowed;
+        }
+        .buzzer-btn.live {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            animation: pulseBuzzer 1.5s ease-in-out infinite;
+        }
+        .buzzer-btn.buzzed {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            cursor: default;
+        }
+        .buzzer-btn.disqualified {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            cursor: not-allowed;
+        }
+        .buzzer-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        @keyframes pulseBuzzer {
+            0%, 100% { transform: scale(1); box-shadow: 0 12px 0 rgba(0,0,0,0.3), 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            50% { transform: scale(1.02); box-shadow: 0 12px 0 rgba(0,0,0,0.3), 0 0 0 20px rgba(16, 185, 129, 0); }
+        }
+        .buzzer-status {
+            margin: 2rem 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .buzzer-status.locked {
+            color: #64748b;
+        }
+        .buzzer-status.live {
+            color: #10b981;
+        }
+        .buzzer-status.buzzed {
+            color: #3b82f6;
+        }
+        .buzzer-status.disqualified {
+            color: #ef4444;
+        }
+        .buzzer-rank-display {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: #f8fafc;
+            border-radius: 16px;
+            border: 3px solid #e2e8f0;
+        }
+        .buzzer-rank-display.ranked {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        }
+        .buzzer-rank-number {
+            font-size: 5rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+        .buzzer-rank-number.first { color: #fbbf24; }
+        .buzzer-rank-number.second { color: #94a3b8; }
+        .buzzer-rank-number.third { color: #cd7f32; }
+        .buzzer-rank-label {
+            font-size: 1.25rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .buzzer-top-3 {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 12px;
+        }
+        .buzzer-top-3 h3 {
+            margin: 0 0 1rem 0;
+            color: #64748b;
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+        .buzzer-top-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .buzzer-top-item:nth-child(2) { background: #fef3c7; }
+        .buzzer-top-item:nth-child(3) { background: #e5e7eb; }
+        .buzzer-top-item:nth-child(4) { background: #fed7aa; }
+        .buzzer-penalty-notice {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            color: #92400e;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>

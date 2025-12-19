@@ -444,6 +444,176 @@ async function getToolScenarios(toolSlug) {
     }
 }
 
+// ========================================
+// Session Timer & Engagement Tracking
+// ========================================
+
+/**
+ * Session tracking state
+ */
+let sessionStartTime = Date.now();
+let lastActivity = Date.now();
+let engagementMilestones = {
+    scenario_loaded: false,
+    data_uploaded: false,
+    run_attempted: false,
+    run_successful: false,
+    basic_logged: false,
+    advanced_logged: false
+};
+let currentScenario = null;
+let currentDataSource = null;
+let lastToolParams = {};
+let lastResultSummary = '';
+
+/**
+ * Get session duration in minutes
+ * @returns {number} Minutes since session started
+ */
+function getSessionDurationMinutes() {
+    return (Date.now() - sessionStartTime) / 60000;
+}
+
+/**
+ * Update last activity timestamp
+ */
+function updateLastActivity() {
+    lastActivity = Date.now();
+}
+
+/**
+ * Reset session tracking (call when page loads)
+ */
+function resetSessionTracking() {
+    sessionStartTime = Date.now();
+    lastActivity = Date.now();
+    engagementMilestones = {
+        scenario_loaded: false,
+        data_uploaded: false,
+        run_attempted: false,
+        run_successful: false,
+        basic_logged: false,
+        advanced_logged: false
+    };
+    currentScenario = null;
+    currentDataSource = null;
+    lastToolParams = {};
+    lastResultSummary = '';
+}
+
+/**
+ * Mark that a scenario was loaded
+ * @param {string} scenarioName - Name of loaded scenario
+ */
+function markScenarioLoaded(scenarioName) {
+    engagementMilestones.scenario_loaded = true;
+    currentScenario = scenarioName;
+    currentDataSource = 'scenario';
+    console.log(`📊 Scenario loaded: ${scenarioName}`);
+}
+
+/**
+ * Mark that data was uploaded
+ * @param {string} fileName - Name of uploaded file
+ */
+function markDataUploaded(fileName) {
+    engagementMilestones.data_uploaded = true;
+    currentDataSource = 'upload';
+    console.log(`📤 Data uploaded: ${fileName}`);
+}
+
+/**
+ * Mark that analysis was attempted
+ */
+function markRunAttempted() {
+    engagementMilestones.run_attempted = true;
+    console.log('▶️ Analysis run attempted');
+}
+
+/**
+ * Mark that analysis succeeded and store results
+ * @param {object} params - Analysis parameters
+ * @param {string} resultSummary - Brief result description
+ */
+function markRunSuccessful(params, resultSummary) {
+    engagementMilestones.run_successful = true;
+    lastToolParams = params;
+    lastResultSummary = resultSummary;
+    console.log('✅ Analysis run successful');
+}
+
+/**
+ * Check and log engagement milestones
+ * @param {string} toolSlug - Tool identifier
+ */
+function checkEngagementMilestones(toolSlug) {
+    const duration = getSessionDurationMinutes();
+    
+    // BasicEngagement check: scenario + run + success + 0.1 mins (6 seconds for testing)
+    // PRODUCTION: Change back to 5 minutes
+    if (duration >= 0.1 && 
+        engagementMilestones.scenario_loaded && 
+        engagementMilestones.run_attempted && 
+        engagementMilestones.run_successful &&
+        !engagementMilestones.basic_logged) {
+        
+        console.log('🎉 BasicEngagement milestone reached!');
+        logToolUsage(
+            toolSlug + '-basic-engagement', 
+            lastToolParams, 
+            'BasicEngagement: ' + lastResultSummary, 
+            {
+                scenario: currentScenario,
+                dataSource: 'scenario'
+            }
+        );
+        engagementMilestones.basic_logged = true;
+    }
+    
+    // AdvancedEngagement check: upload + run + success + 0.1 mins (6 seconds for testing)
+    // PRODUCTION: Change back to 5 minutes
+    if (duration >= 0.1 && 
+        engagementMilestones.data_uploaded && 
+        engagementMilestones.run_attempted && 
+        engagementMilestones.run_successful &&
+        !engagementMilestones.advanced_logged) {
+        
+        console.log('🎉 AdvancedEngagement milestone reached!');
+        logToolUsage(
+            toolSlug + '-advanced-engagement', 
+            lastToolParams, 
+            'AdvancedEngagement: ' + lastResultSummary, 
+            {
+                scenario: null,
+                dataSource: 'upload'
+            }
+        );
+        engagementMilestones.advanced_logged = true;
+    }
+}
+
+/**
+ * Initialize engagement tracking for a tool
+ * @param {string} toolSlug - Tool identifier
+ */
+function initEngagementTracking(toolSlug) {
+    if (!toolSlug) {
+        console.warn('Cannot init engagement tracking without tool slug');
+        return;
+    }
+    
+    console.log(`🔍 Engagement tracking initialized for: ${toolSlug}`);
+    
+    // Track user activity to keep session "alive"
+    document.addEventListener('click', updateLastActivity);
+    document.addEventListener('keypress', updateLastActivity);
+    document.addEventListener('scroll', updateLastActivity);
+    document.addEventListener('input', updateLastActivity);
+    
+    // Check milestones every 5 seconds (for testing - change to 30000 for production)
+    setInterval(() => checkEngagementMilestones(toolSlug), 5000);
+}
+
 // Export functions for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -466,7 +636,15 @@ if (typeof module !== 'undefined' && module.exports) {
         getToolScenarios,
         initAuthUI,
         logFeatureUsage,
-        getMyFeatureUsage
+        getMyFeatureUsage,
+        // Session tracking
+        resetSessionTracking,
+        markScenarioLoaded,
+        markDataUploaded,
+        markRunAttempted,
+        markRunSuccessful,
+        initEngagementTracking,
+        getSessionDurationMinutes
     };
 }
 

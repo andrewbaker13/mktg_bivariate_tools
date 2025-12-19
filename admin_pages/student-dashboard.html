@@ -15,6 +15,25 @@
             margin: 0 auto;
             padding: 2rem;
         }
+        .course-selector {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+        .course-selector select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+        }
+        .course-selector select:hover {
+            border-color: #9ca3af;
+        }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -328,6 +347,14 @@
             </p>
         </header>
 
+        <!-- Course Selector -->
+        <div class="course-selector" id="course-selector" style="display: none;">
+            <label for="student-course-select" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">My Course:</label>
+            <select id="student-course-select">
+                <option value="">Select a course...</option>
+            </select>
+        </div>
+
         <div id="loading" class="loading">
             <p>Loading your analytics...</p>
         </div>
@@ -468,10 +495,69 @@
             'ps-matching': { path: '../apps/advanced/ps_matching/log_regression.html', name: 'Propensity Score Matching' }
         };
 
+        let selectedCourseId = null;
+        let userCourses = [];
+
+        async function loadPercentileData() {
+            const token = getAuthToken();
+            
+            // Load percentile for selected course
+            let percentile = { enrolled: false };
+            try {
+                // If we have a selected course, use course-specific endpoint
+                let endpoint = `${API_BASE}/analytics/my-percentile/`;
+                if (selectedCourseId) {
+                    endpoint = `${API_BASE}/analytics/course/${selectedCourseId}/my-percentile/`;
+                }
+                
+                const percentileResponse = await fetch(endpoint, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (percentileResponse.ok) {
+                    percentile = await percentileResponse.json();
+                }
+            } catch (e) {
+                console.log('Error loading percentile data:', e);
+            }
+            
+            displayPercentile(percentile);
+        }
+
         async function loadDashboard() {
             const token = getAuthToken();
             
             try {
+                // First, load user profile to get courses
+                const profileResponse = await fetch(`${API_BASE}/auth/profile/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                const profile = await profileResponse.json();
+                userCourses = profile.courses || [];
+                
+                // Populate course selector if user has multiple courses
+                if (userCourses.length > 0) {
+                    const courseSelect = document.getElementById('student-course-select');
+                    courseSelect.innerHTML = userCourses.map(course => 
+                        `<option value="${course.id}">${course.name}</option>`
+                    ).join('');
+                    
+                    // Set default to first course
+                    selectedCourseId = userCourses[0].id;
+                    courseSelect.value = selectedCourseId;
+                    
+                    // Show course selector only if multiple courses
+                    if (userCourses.length > 1) {
+                        document.getElementById('course-selector').style.display = 'block';
+                    }
+                    
+                    // Add change listener
+                    courseSelect.addEventListener('change', (e) => {
+                        selectedCourseId = parseInt(e.target.value);
+                        loadPercentileData();
+                    });
+                }
+                
                 // Load basic stats
                 const statsResponse = await fetch(`${API_BASE}/analytics/my-stats/`, {
                     headers: { 'Authorization': `Token ${token}` }
@@ -496,17 +582,6 @@
                 });
                 const badges = await badgesResponse.json();
                 
-                // Load percentile (may not be enrolled in a course)
-                let percentile = { enrolled: false };
-                try {
-                    const percentileResponse = await fetch(`${API_BASE}/analytics/my-percentile/`, {
-                        headers: { 'Authorization': `Token ${token}` }
-                    });
-                    percentile = await percentileResponse.json();
-                } catch (e) {
-                    console.log('Not enrolled in a course');
-                }
-                
                 // Update UI
                 document.getElementById('username-badge').textContent = stats.user;
                 document.getElementById('total-runs').textContent = stats.total_runs;
@@ -528,9 +603,11 @@
                 // Render recent activity
                 renderRecentActivity(usage.recent_runs);
                 
-                // Display badges and percentile
+                // Display badges
                 displayBadges(badges);
-                displayPercentile(percentile);
+                
+                // Load percentile data for selected course
+                await loadPercentileData();
                 
                 // Load quiz results
                 await loadQuizResults();

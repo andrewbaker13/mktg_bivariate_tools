@@ -3,31 +3,14 @@
  * Analyzes single variables (univariate) with automatic data type detection
  */
 
+const TOOL_SLUG = 'univariate-analyzer';
 const CREATED_DATE = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 const MAX_ROWS = 5000;
 const MAX_CATEGORIES_DISPLAY = 10;
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-univariate-analyzer-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('univariate-analyzer', {}, `Univariate analysis completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Univariate Analyzer');
-  }
-}
+// Debouncing for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 const SCENARIOS = Object.freeze({
     INFLUENCER: 'influencer',
@@ -306,6 +289,11 @@ function parseCSVContent(content) {
 }
 
 function handleFileUpload(file) {
+    // Track file upload for engagement
+    if (typeof markDataUploaded === 'function') {
+        markDataUploaded(file.name);
+    }
+    
     const reader = new FileReader();
     
     reader.onload = function(e) {
@@ -444,6 +432,17 @@ function displayResults() {
     
     // Populate summary tables
     populateSummaryTables();
+    
+    // Mark engagement milestones for auto-run tool
+    if (typeof markRunAttempted === 'function') markRunAttempted();
+    if (typeof markRunSuccessful === 'function') {
+        markRunSuccessful({
+            n_variables: selectedVariables.size,
+            n_observations: uploadedData.length
+        }, `Analyzed ${selectedVariables.size} variables with ${uploadedData.length} observations`);
+    }
+    
+    hasSuccessfulRun = true;
 }
 
 function displayVariableStats(variableName) {
@@ -1309,8 +1308,13 @@ document.addEventListener('DOMContentLoaded', () => {
         selectionTimeout = setTimeout(() => {
             if (selectedVariables.size > 0 && uploadedData.length > 0) {
                 displayResults();
-                hasSuccessfulRun = true;
-                checkAndTrackUsage();
+                
+                // Track engagement with debouncing
+                renderCount++;
+                const now = Date.now();
+                if (renderCount > 1 && (now - lastTrackTime) > 500) {
+                    lastTrackTime = now;
+                }
             }
         }, 300);
     });
@@ -1551,6 +1555,11 @@ async function loadScenarioById(id) {
         return;
     }
     
+    // Track scenario selection for engagement
+    if (typeof markScenarioLoaded === 'function') {
+        markScenarioLoaded(scenario.label);
+    }
+    
     try {
         // Load scenario metadata (.txt file)
         const response = await fetch(scenario.file, { cache: 'no-cache' });
@@ -1671,4 +1680,9 @@ function downloadScenarioDataset(csvFile) {
         .catch(error => {
             alert(`Error downloading scenario: ${error.message}`);
         });
+}
+
+// Initialize engagement tracking on page load
+if (typeof initEngagementTracking === 'function') {
+    initEngagementTracking(TOOL_SLUG);
 }

@@ -691,7 +691,9 @@
             }
 
             container.innerHTML = questions.map(q => {
-                const canEdit = isStaffUser || (q.created_by && q.created_by.username === currentUser);
+                // Support both old and new ownership fields (backward compatible)
+                const owner = q.content_owner || q.created_by;
+                const canEdit = isStaffUser || (owner && owner.username === currentUser);
                 
                 return `
                 <div class="question-card">
@@ -729,10 +731,10 @@
                             <i class="fas fa-eye"></i>
                             ${q.visibility}
                         </div>
-                        ${q.created_by ? `
+                        ${(q.content_owner || q.created_by) ? `
                             <div class="question-meta-item">
                                 <i class="fas fa-user"></i>
-                                ${q.created_by.username}
+                                ${(q.content_owner || q.created_by).username}
                             </div>
                         ` : ''}
                     </div>
@@ -896,7 +898,9 @@
                     visibility: 'private' // Default to private for copies
                 };
                 delete newData.id; // Remove ID to create new
-                delete newData.created_by; // Backend handles this
+                delete newData.created_by; // Backend handles this (legacy)
+                delete newData.content_owner; // Backend handles this
+                delete newData.original_creator; // Backend handles this
                 delete newData.created_at;
                 delete newData.updated_at;
                 

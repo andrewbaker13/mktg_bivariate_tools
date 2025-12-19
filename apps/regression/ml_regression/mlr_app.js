@@ -1,8 +1,11 @@
 // Multiple Linear Regression Tool - rebuilt controller
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
+// Tool identifier for tracking
+const TOOL_SLUG = 'multiple-linear-regression';
+
+// Debouncing for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 // ---------- State ----------
 let selectedOutcome = null;
@@ -61,25 +64,47 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-ml-regression-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('ml-regression', {
-      outcome: selectedOutcome,
-      predictor_count: selectedPredictors.length
-    }, `Multiple linear regression analysis completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Multiple Linear Regression');
-  }
+// Event-based tracking setup
+function setupEventTracking() {
+    // TRACKING: Initialize engagement tracking
+    if (typeof initEngagementTracking === 'function') {
+        initEngagementTracking(TOOL_SLUG);
+        resetSessionTracking();
+        console.log('🔍 Engagement tracking initialized for Multiple Linear Regression');
+    }
+
+    // Track scenario selection
+    const scenarioSelect = document.getElementById('scenario-select');
+    if (scenarioSelect) {
+        scenarioSelect.addEventListener('change', (e) => {
+            if (e.target.value && typeof markScenarioLoaded === 'function') {
+                const option = e.target.options[e.target.selectedIndex];
+                markScenarioLoaded(option.textContent);
+            }
+        });
+    }
+
+    // Track file uploads
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', (e) => {
+            if (e.target.files[0] && typeof markDataUploaded === 'function') {
+                markDataUploaded(e.target.files[0].name);
+            }
+        });
+    });
+
+    // Track analyze button clicks
+    const analyzeButtons = document.querySelectorAll('button[id*="analyze"], button[id*="run"], button[id*="calculate"], button[id*="compute"], button[id*="regress"]');
+    analyzeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (typeof markRunAttempted === 'function') {
+                markRunAttempted();
+            }
+        });
+    });
+    
+    console.log('📊 Event tracking listeners attached');
 }
 
 function clamp(value, min, max) {
@@ -431,6 +456,12 @@ function importRawData(text, { isFromScenario = false, scenarioHints = null } = 
     statusMessage += ` Constant column(s) were detected and excluded from predictor options because they have no variation: <strong>${constantPredictors.join(', ')}</strong>.`;
   }
   setRawUploadStatus(statusMessage, 'success');
+  
+  // Track file upload for engagement
+  if (typeof markDataUploaded === 'function' && !isFromScenario) {
+    markDataUploaded('uploaded_file.csv');
+  }
+  
   renderVariableSelectors();
   updateResults();
 }
@@ -538,6 +569,11 @@ async function loadScenario(id) {
       } else {
         const descContainer = document.getElementById('scenario-description');
         if (descContainer) descContainer.textContent = body || '';
+      }
+      
+      // Track scenario loading for engagement
+      if (typeof markScenarioLoaded === 'function') {
+        markScenarioLoaded(scenario.label);
       }
     } catch {
       if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
@@ -1487,8 +1523,23 @@ function updateResults() {
   renderEffectPlot(model, filtered, predictorsInfo);
   renderActualFitted(model);
   renderCoefInterpretation(model);
-  hasSuccessfulRun = true;
-  checkAndTrackUsage();
+  
+  // Track successful analysis with debouncing
+  renderCount++;
+  const now = Date.now();
+  if (renderCount > 1 && (now - lastTrackTime) > 500 && Number.isFinite(model.modelP)) {
+    lastTrackTime = now;
+    if (typeof markRunAttempted === 'function') {
+      markRunAttempted();
+    }
+    if (typeof markRunSuccessful === 'function') {
+      markRunSuccessful(
+        { outcome: selectedOutcome, predictors: selectedPredictors, n: model.n },
+        `R²=${formatNumber(model.R2, 3)}, p=${formatP(model.modelP)}`
+      );
+    }
+  }
+  
   const modifiedLabel = document.getElementById('modified-date');
   if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();
 }
@@ -1519,6 +1570,8 @@ function updateResults() {
         handleDownloadFittedAndResiduals();
       });
     }
+    
+    if (typeof initEngagementTracking === 'function') { initEngagementTracking(TOOL_SLUG); }
   });
 
   function handleDownloadFittedAndResiduals() {
@@ -1603,4 +1656,13 @@ function updateResults() {
     });
     equationEl.innerHTML = `<strong>${escapeHtml(selectedOutcome)}</strong> = ${parts.join(' ')}`;
   }
+
+// Initialize event tracking when page loads
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupEventTracking);
+    } else {
+        setupEventTracking();
+    }
+}
 

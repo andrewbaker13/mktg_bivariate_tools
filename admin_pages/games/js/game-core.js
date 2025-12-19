@@ -889,7 +889,8 @@ async function loadGameScript(gameType) {
         'push_range': 'game-push-range.js',
         'crowd_wisdom': 'game-crowd-wisdom.js',
         'word_guess': 'game-word-guess.js',
-        'line_fit': 'line-fit.js'
+        'line_fit': 'line-fit.js',
+        'live_buzzer': 'game-buzzer.js'
     };
     
     const scriptFile = gameScriptMap[gameType];

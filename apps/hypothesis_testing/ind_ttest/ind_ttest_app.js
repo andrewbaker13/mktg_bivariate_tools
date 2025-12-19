@@ -1,30 +1,13 @@
 ﻿// Constants and utility functions
+const TOOL_SLUG = 'independent-ttest';
 const CREATED_DATE = new Date('2025-11-06').toLocaleDateString();
 let modifiedDate = new Date().toLocaleDateString();
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
+// Debouncing for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 let selectedConfidenceLevel = 0.95;
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-ind-ttest-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('ind-ttest', {}, `Independent t-test analysis completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Independent t-test');
-  }
-}
 
 const scenarioState = {
     manifest: [],
@@ -287,6 +270,12 @@ function setupSummaryUpload() {
 
       const handleFile = file => {
           if (!file) return;
+          
+          // Track file upload for engagement
+          if (typeof markDataUploaded === 'function') {
+              markDataUploaded(file.name);
+          }
+          
           setUploadStatus(statusId, `Loading ${file.name}...`);
           const reader = new FileReader();
           reader.onload = event => {
@@ -354,6 +343,9 @@ function setupRawUpload() {
 
     const handleFile = file => {
         if (!file) return;
+        if (typeof markDataUploaded === 'function') {
+            markDataUploaded(file.name);
+        }
         setUploadStatus(statusId, `Loading ${file.name}...`);
           const reader = new FileReader();
           reader.onload = event => {
@@ -1346,8 +1338,22 @@ function updateResults() {
     document.getElementById('means-chart-title').textContent = `${group1Name} vs ${group2Name} Means Fan Chart (${sortedLevels.map(l => Math.round(l * 100)).join('% / ')}% intervals)`;
     document.getElementById('diff-chart-title').textContent = `Difference Fan Chart (${group1Name} âˆ’ ${group2Name}; ${sortedLevels.map(l => Math.round(l * 100)).join('% / ')}% intervals)`;
 
-    hasSuccessfulRun = true;
-    checkAndTrackUsage();
+    // Track successful analysis for engagement with debouncing
+    renderCount++;
+    const now = Date.now();
+    if (renderCount > 1 && (now - lastTrackTime) > 500) {
+        lastTrackTime = now;
+        if (typeof markRunAttempted === 'function') {
+            markRunAttempted();
+        }
+        if (typeof markRunSuccessful === 'function') {
+            markRunSuccessful(
+                { group1: group1Name, group2: group2Name, n1, n2 },
+                `t=${t.toFixed(3)}, p=${pValue.toFixed(4)}`
+            );
+        }
+    }
+
     modifiedDate = new Date().toLocaleDateString();
     document.getElementById('modified-date').textContent = modifiedDate;
 }
@@ -1645,6 +1651,12 @@ async function loadScenarioById(id) {
         enableScenarioDownload(null);
         return;
     }
+    
+    // Track scenario selection for engagement
+    if (typeof markScenarioLoaded === 'function') {
+        markScenarioLoaded(scenario.label);
+    }
+    
     try {
         const response = await fetch(scenario.file, { cache: 'no-cache' });
         if (!response.ok) {
@@ -1723,4 +1735,5 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAxisControls();
     initializeScenarios();
     updateResults();
+    initEngagementTracking(TOOL_SLUG);
 });

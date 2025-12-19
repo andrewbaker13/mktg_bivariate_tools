@@ -1,4 +1,5 @@
 // ARIMAX Time Series Forecasting Tool Controller
+const TOOL_SLUG = 'arimax-calculator';
 const CREATED_DATE = '2025-11-30';
 
 // Configuration
@@ -6,10 +7,6 @@ const API_BASE_URL = 'https://drbaker-backend.onrender.com/api';
 const ARIMAX_UPLOAD_LIMIT = typeof window !== 'undefined' && typeof window.MAX_UPLOAD_ROWS === 'number'
   ? window.MAX_UPLOAD_ROWS
   : 2000;
-
-// Usage tracking
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
 
 // Application state
 let arimaxDataset = { headers: [], rows: [] };
@@ -349,6 +346,11 @@ function setupScenarioSelect() {
             feedback.classList.add('success');
           }
           populateColumnSelectors();
+          
+          // Track scenario loading
+          if (typeof markScenarioLoaded === 'function') {
+            markScenarioLoaded(selected.label);
+          }
         })
         .catch(() => {
           if (feedback) {
@@ -417,6 +419,11 @@ function setupDataUpload() {
         arimaxDataset = { headers, rows };
         setFeedback(`Loaded ${rows.length} rows with ${headers.length} columns.`, 'success');
         populateColumnSelectors();
+        
+        // Track file upload
+        if (typeof markDataUploaded === 'function') {
+          markDataUploaded(file.name || 'uploaded_file.csv');
+        }
       } catch (error) {
         setFeedback(error.message || 'Unable to parse file.', 'error');
       }
@@ -1242,6 +1249,11 @@ async function checkStationarity() {
 }
 
 async function runArimaxModel() {
+  // Track button click
+  if (typeof markRunAttempted === 'function') {
+    markRunAttempted();
+  }
+  
   const statusEl = document.getElementById('arimax-run-status');
   
   if (!arimaxOutcomeColumn) {
@@ -1339,6 +1351,21 @@ async function runArimaxModel() {
     
     hasSuccessfulRun = true;
     checkAndTrackUsage();
+    
+    // Track successful run
+    if (typeof markRunSuccessful === 'function') {
+      const order = result.model_spec ? `(${result.model_spec.p},${result.model_spec.d},${result.model_spec.q})` : 'auto';
+      markRunSuccessful(
+        {
+          order: order,
+          has_exog: result.model_spec?.has_exog || false,
+          n_exog: arimaxExogColumns.length,
+          n_obs: result.observed?.values?.length || 0,
+          forecast_steps: result.model_spec?.forecast_steps || 0
+        },
+        `AIC=${result.model_stats.aic?.toFixed(2)}, BIC=${result.model_stats.bic?.toFixed(2)}, RMSE=${result.model_stats.rmse?.toFixed(2)}`
+      );
+    }
     
     if (statusEl) {
       statusEl.textContent = `Model fitted successfully. AIC: ${result.model_stats.aic?.toFixed(2)}, RMSE: ${result.model_stats.rmse?.toFixed(2)}`;
@@ -1811,4 +1838,9 @@ document.addEventListener('DOMContentLoaded', () => {
   setupRunButton();
   setupDownloadButton();
   setupForecastScenarioButton();
+  
+  // Initialize engagement tracking
+  if (typeof initEngagementTracking === 'function') {
+    initEngagementTracking(TOOL_SLUG);
+  }
 });

@@ -1,27 +1,12 @@
 const CREATED_DATE = new Date('2025-11-06').toLocaleDateString();
 let modifiedDate = new Date().toLocaleDateString();
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
+// Tool identifier for engagement tracking
+const TOOL_SLUG = 'paired-ttest';
 
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-paired-ttest-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('paired-ttest', {}, `Paired t-test analysis completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Paired t-test');
-  }
-}
+// Debouncing variables for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 const InputModes = Object.freeze({
     MANUAL: 'manual',
@@ -893,8 +878,17 @@ function updateResults() {
     renderDifferenceChart(data);
     updateNarratives(stats, data);
     updateDiagnostics(stats, data);
-    hasSuccessfulRun = true;
-    checkAndTrackUsage();
+    
+    // Debounced engagement tracking for auto-run tool
+    renderCount++;
+    const now = Date.now();
+    if (now - lastTrackTime > 3000) {
+        lastTrackTime = now;
+        if (typeof markRunSuccessful === 'function' && stats && isFinite(stats.tStatistic) && isFinite(stats.pValue)) {
+            markRunSuccessful({ t: stats.tStatistic, p: stats.pValue });
+        }
+    }
+    
     modifiedDate = new Date().toLocaleDateString();
     const modifiedLabel = document.getElementById('modified-date');
     if (modifiedLabel) {
@@ -1096,6 +1090,12 @@ function importPairedData(text) {
           }
           setFileFeedback(`Loaded ${rows.length} pairs from ${headerNote}.${skippedNote}${statusNote}`, 'success');
           updateUploadStatus(InputModes.PAIRED, `${rows.length} paired observation(s) ready.${skippedNote}${statusNote}`, 'success');
+        
+        // Track data upload
+        if (typeof markDataUploaded === 'function') {
+            markDataUploaded('paired_data.csv');
+        }
+        
         updateResults();
     } catch (error) {
         uploadedPairedData = null;
@@ -1134,6 +1134,12 @@ function importDifferenceData(text) {
         }
         setFileFeedback(`Loaded ${rows.length} differences from column "${column}".${skippedNote}${statusNote}`, 'success');
         updateUploadStatus(InputModes.DIFFERENCE, `${rows.length} difference(s) ready.${skippedNote}${statusNote}`, 'success');
+        
+        // Track data upload
+        if (typeof markDataUploaded === 'function') {
+            markDataUploaded('difference_data.csv');
+        }
+        
         updateResults();
     } catch (error) {
         uploadedDifferenceData = null;
@@ -1396,6 +1402,11 @@ async function loadScenarioById(id) {
         }
         applyScenarioData(parsed);
         enableScenarioDownload(parsed.rawFile);
+        
+        // Track scenario load
+        if (typeof markScenarioLoaded === 'function') {
+            markScenarioLoaded(scenario.label || scenario.id);
+        }
     } catch (error) {
         renderScenarioDescription('', `Unable to load scenario: ${error.message}`);
         resetScenarioDownload();

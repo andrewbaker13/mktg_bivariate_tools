@@ -1,29 +1,8 @@
 // Selection Probability Lab
 
+const TOOL_SLUG = 'selection-probability';
 const SELECTION_LAB_CREATED_DATE = '2025-11-25';
 let selectionLabModifiedDate = new Date().toLocaleDateString();
-
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-selection-probability-lab-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('selection-probability-lab', {}, `Selection probability calculation completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Selection Probability Lab');
-  }
-}
 
 const SelectionScenarios = [
   {
@@ -284,6 +263,17 @@ function drawSampleOnceLab() {
   if (warningEl) warningEl.textContent = '';
   renderPopulationGrid();
   updateMetrics();
+  
+  // Track successful run
+  const specialCount = ids.reduce((acc, id) => (currentPopulation[id]?.isSpecial ? acc + 1 : acc), 0);
+  if (typeof markRunSuccessful === 'function') {
+    markRunSuccessful(TOOL_SLUG, {
+      populationSize: N,
+      sampleSize: n,
+      samplingMode: mode,
+      specialCount: specialCount
+    });
+  }
 }
 
 function simulateManySamplesLab() {
@@ -334,6 +324,18 @@ function simulateManySamplesLab() {
   renderDistribution();
   updateMathPanels();
   updateMetrics();
+  
+  // Track successful batch run
+  if (typeof markRunSuccessful === 'function') {
+    markRunSuccessful(TOOL_SLUG, {
+      populationSize: N,
+      sampleSize: n,
+      samplingMode: mode,
+      specialCount: r,
+      numSimulations: sims,
+      simCounts: simCounts
+    });
+  }
 }
 
 function clearSimulationLab() {
@@ -407,9 +409,6 @@ function renderDistribution() {
     Plotly.purge(container);
     return;
   }
-
-  hasSuccessfulRun = true;
-  checkAndTrackUsage();
 
   const N = currentPopulation.length;
   const n = clamp(parseInt(document.getElementById('sample-size-input').value || '20', 10) || 20, 1, N);
@@ -837,6 +836,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (simOnceBtn) {
     simOnceBtn.addEventListener('click', event => {
       event.preventDefault();
+      if (typeof markRunAttempted === 'function') {
+        markRunAttempted(TOOL_SLUG);
+      }
       drawSampleOnceLab();
     });
   }
@@ -845,6 +847,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (simManyBtn) {
     simManyBtn.addEventListener('click', event => {
       event.preventDefault();
+      if (typeof markRunAttempted === 'function') {
+        markRunAttempted(TOOL_SLUG);
+      }
       simulateManySamplesLab();
     });
   }
@@ -855,6 +860,11 @@ document.addEventListener('DOMContentLoaded', () => {
       event.preventDefault();
       clearSimulationLab();
     });
+  }
+  
+  // Initialize engagement tracking
+  if (typeof InitEngagementTracking === 'function') {
+    InitEngagementTracking(TOOL_SLUG);
   }
 });
 
@@ -873,6 +883,11 @@ function applySelectionScenario(id) {
         '<p>Use these presets to explore selection case studies, or leave this on Manual to configure your own population and event of interest.</p>';
     }
     return;
+  }
+  
+  // Track scenario loaded
+  if (typeof markScenarioLoaded === 'function') {
+    markScenarioLoaded(TOOL_SLUG, id, scenario.label);
   }
 
   if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {

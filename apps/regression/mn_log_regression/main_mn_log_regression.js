@@ -1,9 +1,8 @@
 // Multinomial Logistic Regression Tool controller (initial wiring)
 const CREATED_DATE = '2025-11-15';
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
+// Tool identifier for engagement tracking
+const TOOL_SLUG = 'multinomial-logistic';
 
 // Reuse shared upload cap if provided; otherwise default to 5,000 rows.
 const MNLOG_UPLOAD_LIMIT =
@@ -26,28 +25,6 @@ let mnlogEffectFocal = null;
 let mnlogRangeMode = 'sd';
 let mnlogCustomRange = { min: null, max: null };
 const mnlogSummaryMessage = 'Provide data to see summary statistics.';
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-mn-log-regression-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('mn-log-regression', {
-      outcome: mnlogSelectedOutcome,
-      predictor_count: mnlogSelectedPredictors.length,
-      outcome_levels: mnlogOutcomeLevels.length
-    }, `Multinomial logistic regression analysis completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Multinomial Logistic Regression');
-  }
-}
 
 // Scenario builders: generate moderately large, realistic-looking multinomial datasets
 // We simulate predictors first, then draw outcomes from a softmax over linear scores so there is structure + noise.
@@ -467,6 +444,11 @@ function setupScenarioSelect() {
           feedback.classList.add('success');
         }
         populateOutcomeSelectors();
+        
+        // Track scenario load
+        if (typeof markScenarioLoaded === 'function') {
+            markScenarioLoaded(selected.label || selected.id);
+        }
       })
       .catch(() => {
         if (feedback) {
@@ -544,6 +526,12 @@ function setupMnlogRunButton() {
   if (!runButton) return;
   runButton.addEventListener('click', event => {
     event.preventDefault();
+    
+    // Track run attempt
+    if (typeof markRunAttempted === 'function') {
+        markRunAttempted();
+    }
+    
     runMultinomialModel();
   });
 }
@@ -895,6 +883,11 @@ const handleFile = file => {
         'success'
       );
       populateOutcomeSelectors();
+      
+      // Track data upload
+      if (typeof markDataUploaded === 'function') {
+          markDataUploaded(file.name);
+      }
     } catch (error) {
       setFeedback(error.message || 'Unable to parse file.', 'error');
     }
@@ -1465,8 +1458,11 @@ function runMultinomialModel() {
       updateMnlogResultsPanels(design, fitResult);
       updateMnlogDiagnostics(design);
       renderMnlogEffectChart();
-      hasSuccessfulRun = true;
-      checkAndTrackUsage();
+      
+      // Engagement tracking - mark successful run
+      if (typeof markRunSuccessful === 'function' && fitResult && fitResult.converged) {
+          markRunSuccessful({ converged: fitResult.converged, iterations: fitResult.iterations });
+      }
     } catch (error) {
       if (statusEl) statusEl.textContent = error.message || 'Unable to fit multinomial model.';
     } finally {
@@ -2664,5 +2660,10 @@ document.addEventListener('DOMContentLoaded', () => {
       // Re-render distribution chart after each model run.
       setTimeout(renderMnlogOutcomeDistributionChart, 0);
     });
+  }
+  
+  // Initialize engagement tracking
+  if (typeof initEngagementTracking === 'function') {
+      initEngagementTracking(TOOL_SLUG);
   }
 });

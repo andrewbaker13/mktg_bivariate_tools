@@ -10,27 +10,9 @@
       if(updatedEl) updatedEl.textContent = s;
     })();
 
-    // Usage tracking variables
-    let pageLoadTime = Date.now();
-    let hasSuccessfulRun = false;
-
-    // Usage tracking function
-    function checkAndTrackUsage() {
-      const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-      if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-      if (!hasSuccessfulRun) return;
-      if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-      
-      const today = new Date().toISOString().split('T')[0];
-      const storageKey = `tool-tracked-ab-proportion-${today}`;
-      if (localStorage.getItem(storageKey)) return;
-      
-      if (typeof logToolUsage === 'function') {
-        logToolUsage('ab-proportion', {}, `A/B proportion test completed`);
-        localStorage.setItem(storageKey, 'true');
-        console.log('Usage tracked for A/B Proportion Test');
-      }
-    }
+    // Tool identification for engagement tracking
+    const TOOL_SLUG = 'ab-proportion-test';
+    let renderCount = 0; // Skip tracking the initial page-load/scenario-load calculations
 
     // helpers
     const q = (id)=>document.getElementById(id);
@@ -113,6 +95,12 @@
 
     function handleUploadFile(file, handler, statusId) {
       if (!file) return;
+      
+      // Track file upload for engagement
+      if (typeof markDataUploaded === 'function') {
+        markDataUploaded(file.name);
+      }
+      
       const reader = new FileReader();
       reader.onload = () => {
         try {
@@ -630,6 +618,11 @@
         updateScenarioDownloadButton(null);
         return;
       }
+
+      // Track scenario selection for engagement
+      if (typeof markScenarioLoaded === 'function') {
+        markScenarioLoaded(scenario.label);
+      }
       try{
         const response = await fetch(scenario.file, { cache: 'no-cache' });
         if(!response.ok) throw new Error(response.statusText);
@@ -1089,8 +1082,19 @@
       if (q("sample_size")) q("sample_size").textContent = "";
       if (q("p2_rate")) q("p2_rate").textContent = "";
       
-      hasSuccessfulRun = true;
-      checkAndTrackUsage();
+      // Track successful analysis for engagement (skip initial renders during page/scenario load)
+      renderCount++;
+      if (renderCount > 1) { // Skip first render (page load), track from second onwards (user action)
+        if (typeof markRunAttempted === 'function') {
+          markRunAttempted();
+        }
+        if (typeof markRunSuccessful === 'function') {
+          markRunSuccessful(
+            { control_n: n1, variant_n: n2, control_conv: p1, variant_conv: p2 },
+            `z=${z.toFixed(3)}, p=${p.toFixed(4)}`
+          );
+        }
+      }
     }
 
     // bind controls
@@ -1121,3 +1125,7 @@
     updateScenarioDownloadButton(null);
     initializeScenarios();
     render();
+    // Initialize engagement tracking
+    if (typeof initEngagementTracking === 'function') {
+      initEngagementTracking(TOOL_SLUG);
+    }

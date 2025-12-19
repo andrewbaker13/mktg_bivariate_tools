@@ -1,4 +1,5 @@
 // Conjoint Analysis & Simulation Tool Controller
+const TOOL_SLUG = 'conjoint-analysis';
 const CREATED_DATE = '2025-12-07';
 
 // Configuration
@@ -6,10 +7,6 @@ const API_BASE_URL = 'https://drbaker-backend.onrender.com/api';
 const CONJOINT_UPLOAD_LIMIT = typeof window !== 'undefined' && typeof window.MAX_UPLOAD_ROWS === 'number'
   ? window.MAX_UPLOAD_ROWS
   : 5000;
-
-// Usage tracking
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
 
 // Application state
 let conjointDataset = { headers: [], rows: [] };
@@ -334,6 +331,11 @@ async function handleFileUpload(file) {
     
     feedbackEl.textContent = `✓ Loaded ${parsed.rows.length} rows with ${parsed.headers.length} columns.`;
     
+    // Track file upload
+    if (typeof markDataUploaded === 'function') {
+      markDataUploaded(file.name || 'uploaded_file.csv');
+    }
+    
     // Show column mapping UI
     populateColumnMapping();
     document.getElementById('conjoint-column-mapping').style.display = 'block';
@@ -590,6 +592,11 @@ function setupEstimationControls() {
  * Run model estimation
  */
 async function runEstimation() {
+  // Track button click
+  if (typeof markRunAttempted === 'function') {
+    markRunAttempted();
+  }
+  
   const statusEl = document.getElementById('conjoint-estimation-status');
   const estimateBtn = document.getElementById('conjoint-estimate-model');
   const loadingOverlay = document.getElementById('conjoint-loading-overlay');
@@ -651,6 +658,19 @@ async function runEstimation() {
     loadingOverlay.style.display = 'none';
     
     statusEl.textContent = `✓ Estimated utilities for ${result.respondents.length} respondents in ${result.estimation_time_seconds?.toFixed(1) || '?'} seconds.`;
+    
+    // Track successful run
+    if (typeof markRunSuccessful === 'function') {
+      markRunSuccessful(
+        {
+          n_respondents: result.respondents.length,
+          n_attributes: attributeColumns.length,
+          mean_pseudo_r2: result.mean_pseudo_r2,
+          estimation_time: result.estimation_time_seconds
+        },
+        `n_resp=${result.respondents.length}, n_attr=${attributeColumns.length}, mean_R²=${result.mean_pseudo_r2?.toFixed(3)}, time=${result.estimation_time_seconds?.toFixed(1)}s`
+      );
+    }
     
     // Display results
     displayEstimationResults(result);
@@ -2130,6 +2150,11 @@ async function loadScenario() {
     document.getElementById('conjoint-upload-feedback').textContent = 
       `✓ Loaded scenario: ${scenario.label} (${uniqueRespondents} respondents, ${uniqueTasks} tasks, ${parsed.rows.length} rows)`;
     
+    // Track scenario loading
+    if (typeof markScenarioLoaded === 'function') {
+      markScenarioLoaded(scenario.label);
+    }
+    
     // Auto-proceed to mapping
     populateColumnMapping();
     document.getElementById('conjoint-column-mapping').style.display = 'block';
@@ -2224,3 +2249,12 @@ function escapeHtml(text) {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', initConjointApp);
+
+/**
+ * Initialize engagement tracking after DOM loads
+ */
+if (typeof initEngagementTracking === 'function') {
+  document.addEventListener('DOMContentLoaded', () => {
+    initEngagementTracking(TOOL_SLUG);
+  });
+}

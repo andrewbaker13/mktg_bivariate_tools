@@ -3,6 +3,8 @@
  * Handles text input, API calls, and visualization of discovered themes
  */
 
+const TOOL_SLUG = 'theme-extractor';
+
 // API Configuration - use THEME_API_BASE to avoid conflict with auth_tracking.js
 const THEME_API_BASE = window.location.hostname === 'localhost' || window.location.protocol === 'file:'
     ? 'http://localhost:8001/api'
@@ -105,10 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initErrorHandling();
     initScenarios();
     
-    // Track tool usage
-    if (typeof trackToolRun === 'function') {
-        trackToolRun('theme_extractor', 'page_load');
-    }
+    initEngagementTracking(TOOL_SLUG);
 });
 
 // =====================================================================
@@ -209,6 +208,8 @@ async function loadScenario(id) {
                             elements.textColumnSelect.value = colIndex;
                         }
                     }
+                    
+                    markScenarioLoaded(scenario.name);
                     
                     elements.columnSelector.classList.remove('hidden');
                     updateColumnPreview();
@@ -406,6 +407,8 @@ function processFile(file) {
             elements.uploadFeedback.textContent = `✓ Loaded ${uploadedData.rows.length} rows from "${file.name}"`;
             elements.uploadFeedback.style.color = 'green';
             
+            markDataUploaded(file.name);
+            
             updateRunButtonState();
         } catch (err) {
             showError('Failed to parse file: ' + err.message);
@@ -545,6 +548,8 @@ function updateRunButtonState() {
 }
 
 async function runAnalysis() {
+    markRunAttempted();
+    
     const activeMode = document.querySelector('.mode-button.active').dataset.mode;
     let documents = [];
     let groups = null;
@@ -617,13 +622,10 @@ async function runAnalysis() {
         currentResults = data;
         displayResults(data);
         
-        // Track successful analysis
-        if (typeof trackToolRun === 'function') {
-            trackToolRun('theme_extractor', 'analysis_complete', {
-                documents: documents.length,
-                themes: data.stats.num_themes
-            });
-        }
+        markRunSuccessful({
+            documents: documents.length,
+            themes: data.stats.num_themes
+        });
         
     } catch (err) {
         showError(err.message);

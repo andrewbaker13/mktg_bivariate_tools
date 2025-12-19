@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Live Buzzer Host - Praxis Play</title>
+    <link rel="icon" type="image/svg+xml" href="../../art_assets/svg_logos/praxisplay_notext_logo.svg">
+    <link rel="stylesheet" href="../../shared/css/main.css">
+    <link rel="stylesheet" href="../../shared/css/admin-nav.css">
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+        
+        /* Mobile-first container */
+        .buzzer-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        /* Sticky header with room info */
+        .buzzer-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .room-code-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 0.1em;
+        }
+        .player-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-left: 0.75rem;
+        }
+        
+        /* Current phase indicator - prominent */
+        .phase-indicator {
+            padding: 1.25rem;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-radius: 0;
+            margin: 0;
+            transition: all 0.3s;
+        }
+        .phase-indicator.reset {
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+            color: white;
+        }
+        .phase-indicator.armed {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        .phase-indicator.live {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            animation: pulse 1s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+        
+        /* Round info */
+        .round-info {
+            background: white;
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .round-info .round-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .round-info .round-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Host control buttons - large and thumb-friendly */
+        .host-controls {
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
+        }
+        .control-btn {
+            width: 100%;
+            padding: 1.25rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+        .control-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+        }
+        .control-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .control-btn.btn-arm {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        .control-btn.btn-enable {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        .control-btn.btn-reset {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+        }
+        .control-btn-secondary {
+            width: 100%;
+            padding: 1rem;
+            background: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        
+        /* Buzz order board - scrollable */
+        .buzz-board {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background: rgba(255,255,255,0.95);
+        }
+        .buzz-section {
+            margin-bottom: 1.5rem;
+        }
+        .buzz-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            background: #f1f5f9;
+            border-radius: 6px;
+        }
+        .buzz-section-title .count {
+            float: right;
+            background: #cbd5e1;
+            color: #475569;
+            padding: 0.15rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+        
+        /* Buzz items - large touch targets */
+        .buzz-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 60px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .buzz-item.ranked {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        }
+        .buzz-item.false-start {
+            border-color: #ef4444;
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        }
+        .buzz-rank {
+            font-size: 2rem;
+            font-weight: 900;
+            width: 50px;
+            text-align: center;
+        }
+        .buzz-rank.first { color: #fbbf24; }
+        .buzz-rank.second { color: #94a3b8; }
+        .buzz-rank.third { color: #cd7f32; }
+        .buzz-rank.other { color: #64748b; }
+        .buzz-player-info {
+            flex: 1;
+            padding: 0 0.75rem;
+        }
+        .buzz-player-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .buzz-time {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-family: 'Courier New', monospace;
+        }
+        .buzz-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .buzz-badge.false-start {
+            background: #ef4444;
+            color: white;
+        }
+        .buzz-badge.penalty {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #94a3b8;
+        }
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            width: 90%;
+            max-width: 400px;
+        }
+        .toast {
+            background: #0f172a;
+            color: white;
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease;
+        }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .toast.warning { background: #f59e0b; }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="admin-nav-container"></div>
+    <div class="buzzer-container">
+        <!-- Setup/Waiting Screen -->
+        <div id="setupScreen" style="display: block; padding: 1rem;">
+            <div style="text-align: center; padding: 2rem 1rem;">
+                <img src="../../art_assets/svg_logos/praxisplay_main_logo.svg" alt="Praxis Play" style="width: 180px; margin-bottom: 2rem;">
+                <h1 style="color: white; font-size: 1.5rem; margin-bottom: 1rem;">🔔 Live Buzzer</h1>
+            </div>
+            
+            <!-- Room Code Display -->
+            <div style="background: white; border-radius: 16px; padding: 2rem; margin: 1rem; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <div style="color: #64748b; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem;">Students Join At</div>
+                    <div style="color: #3b82f6; font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem;">drbakermarketing.com/admin_pages/games/game-join.html</div>
+                    <div style="color: #64748b; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem;">Room Code</div>
+                    <div style="font-size: 3rem; font-weight: 900; color: #1e293b; letter-spacing: 0.2em;" id="roomCodeDisplay">----</div>
+                </div>
+                
+                <!-- QR Code -->
+                <div id="qrCodeContainer" style="display: none; text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: 12px; margin-top: 1rem;">
+                    <div id="qrcode" style="display: inline-block;"></div>
+                    <p style="color: #64748b; font-size: 0.875rem; margin-top: 0.75rem;">📱 Scan to join</p>
+                </div>
+            </div>
+            
+            <!-- Player List -->
+            <div style="background: white; border-radius: 16px; padding: 1.5rem; margin: 1rem; box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
+                <h3 style="margin: 0 0 1rem 0; color: #1e293b; font-size: 1.1rem;">
+                    👥 Players Joined
+                    <span style="background: #e2e8f0; color: #475569; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.9rem; margin-left: 0.5rem;" id="setupPlayerCount">0</span>
+                </h3>
+                <div id="setupPlayerList" style="max-height: 300px; overflow-y: auto;">
+                    <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+                        <div style="font-size: 3rem; margin-bottom: 0.5rem;">⏳</div>
+                        <div>Waiting for players to join...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Start Button -->
+            <div style="padding: 1rem;">
+                <button id="startBuzzerBtn" onclick="startBuzzerGame()" class="control-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; width: 100%; padding: 1.5rem; font-size: 1.25rem; border: none; border-radius: 16px; font-weight: 700; cursor: pointer; text-transform: uppercase; box-shadow: 0 8px 0 rgba(0,0,0,0.2);" disabled>
+                    🎮 Start Buzzer Game
+                </button>
+                <button onclick="exitBuzzer()" style="width: 100%; padding: 1rem; margin-top: 1rem; background: #f1f5f9; border: 2px solid #cbd5e1; border-radius: 12px; font-size: 1rem; font-weight: 600; color: #475569; cursor: pointer;">
+                    ← Back to Games
+                </button>
+            </div>
+        </div>
+        
+        <!-- Game Screen (hidden initially) -->
+        <div id="gameScreen" style="display: none;">
+            <!-- Sticky Header -->
+            <div class="buzzer-header">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div class="room-code-badge">
+                            <span>🎯</span>
+                            <span id="roomCode">----</span>
+                        </div>
+                        <span class="player-count">
+                            <span id="playerCount">0</span> players
+                        </span>
+                    </div>
+                    <button class="control-btn-secondary" onclick="exitBuzzer()" style="width: auto; padding: 0.5rem 1rem; margin: 0;">
+                        Exit
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Phase Indicator -->
+            <div class="phase-indicator reset" id="phaseIndicator">
+                <div id="phaseText">⚪ ROUND ENDED</div>
+            </div>
+            
+            <!-- Round Info -->
+            <div class="round-info">
+                <div class="round-label">Round</div>
+                <div class="round-number" id="roundNumber">1</div>
+            </div>
+            
+            <!-- Buzz Order Board (scrollable middle section) -->
+            <div class="buzz-board" id="buzzBoard">
+                <!-- Ranked Buzzers Section -->
+                <div class="buzz-section" id="rankedSection">
+                    <div class="buzz-section-title">
+                        🏆 Buzz Order
+                        <span class="count" id="rankedCount">0</span>
+                    </div>
+                    <div id="rankedList">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⏱️</div>
+                            <div>No buzzes yet</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- False Starts Section -->
+                <div class="buzz-section" id="falseStartSection" style="display: none;">
+                    <div class="buzz-section-title">
+                        ❌ False Starts
+                        <span class="count" id="falseStartCount">0</span>
+                    </div>
+                    <div id="falseStartList"></div>
+                </div>
+                
+                <!-- No Buzz Section -->
+                <div class="buzz-section" id="noBuzzSection">
+                    <div class="buzz-section-title">
+                        💤 No Buzz
+                        <span class="count" id="noBuzzCount">0</span>
+                    </div>
+                    <div id="noBuzzList">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👥</div>
+                            <div>Waiting for players...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Ranked Buzzers Section -->
+            <div class="buzz-section" id="rankedSection">
+                <div class="buzz-section-title">
+                    🏆 Buzz Order
+                    <span class="count" id="rankedCount">0</span>
+                </div>
+                <div id="rankedList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⏱️</div>
+                        <div>No buzzes yet</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- False Starts Section -->
+            <div class="buzz-section" id="falseStartSection" style="display: none;">
+                <div class="buzz-section-title">
+                    ❌ False Starts
+                    <span class="count" id="falseStartCount">0</span>
+                </div>
+                <div id="falseStartList"></div>
+            </div>
+            
+            <!-- No Buzz Section -->
+            <div class="buzz-section" id="noBuzzSection">
+                <div class="buzz-section-title">
+                    💤 No Buzz
+                    <span class="count" id="noBuzzCount">0</span>
+                </div>
+                <div id="noBuzzList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <div>Waiting for players...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sticky Host Controls at Bottom -->
+            <div class="host-controls">
+                <button class="control-btn btn-arm" id="btnArm" onclick="armRound()">
+                    🔶 ARM NEXT ROUND
+                </button>
+                <button class="control-btn btn-enable" id="btnEnable" onclick="enableBuzzer()" disabled>
+                    🟢 ENABLE BUZZER
+                </button>
+                <button class="control-btn btn-reset" id="btnReset" onclick="resetRound()" disabled>
+                    🔵 RESET & VIEW RESULTS
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Scripts -->
+    <script src="../../shared/js/api-config.js"></script>
+    <script>
+        // When loading this page from a static server the path-calculation in admin-nav
+        // may point to /admin_pages/shared/... which doesn't exist. Force the component
+        // to load from the site root's shared folder when present.
+        window.ADMIN_NAV_COMPONENT_PATH = '/shared/components/admin-nav.html';
+    </script>
+    <script src="../../shared/js/admin-nav.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="buzzer-host.js"></script>
+</body>
+</html>

@@ -14,9 +14,10 @@
     const isGamePage = pathParts.includes('games');
     const isQuizPage = pathParts.includes('quiz');
     
-    // Determine path to shared component
-    let sharedPath = '../shared/components/admin-nav.html';
-    if (isGamePage || isQuizPage) {
+    // Determine path to shared component (allow override via global)
+    const ADMIN_NAV_COMPONENT_PATH = window.ADMIN_NAV_COMPONENT_PATH || null;
+    let sharedPath = ADMIN_NAV_COMPONENT_PATH || '../shared/components/admin-nav.html';
+    if (!ADMIN_NAV_COMPONENT_PATH && (isGamePage || isQuizPage)) {
         sharedPath = '../../shared/components/admin-nav.html';
     }
     

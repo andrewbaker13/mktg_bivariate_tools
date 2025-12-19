@@ -3,27 +3,10 @@
 const CREATED_DATE = '2025-11-24';
 let modifiedDate = new Date().toLocaleDateString();
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-sample-size-corr-regression-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('sample-size-corr-regression', {}, `Correlation/regression sample size calculation completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Correlation/Regression Sample Size Calculator');
-  }
-}
+const TOOL_SLUG = 'sample-size-correlation';
+// Debouncing for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 const CorrRegModes = {
   CORRELATION: 'correlation',
@@ -412,8 +395,27 @@ function updateDesign() {
   highlightCurrentOnPowerChart();
   refreshNarrativePanels();
 
-  hasSuccessfulRun = true;
-  checkAndTrackUsage();
+  // Track successful calculation with debouncing
+  renderCount++;
+  const now = Date.now();
+  if (renderCount > 1 && (now - lastTrackTime) > 500 && isFinite(CorrRegState.requiredN)) {
+    lastTrackTime = now;
+    if (typeof markRunAttempted === 'function') {
+      markRunAttempted();
+    }
+    if (typeof markRunSuccessful === 'function') {
+      markRunSuccessful(
+        {
+          rho0: CorrRegState.rho0,
+          rho1: CorrRegState.rho1,
+          alpha: CorrRegState.alpha,
+          power: CorrRegState.power,
+          sidedness: CorrRegState.sidedness
+        },
+        `n=${CorrRegState.requiredN}`
+      );
+    }
+  }
 
   const modifiedLabel = document.getElementById('modified-date');
   if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();
@@ -658,6 +660,9 @@ function applyScenario(id) {
   syncModeButtons();
   applyConfidenceSelection(1 - CorrRegState.alpha, { syncAlpha: true, skipUpdate: true });
   syncRhoInputsFromState();
+  if (typeof markScenarioLoaded === 'function') {
+    markScenarioLoaded(scenario.label);
+  }
   updateDesign();
 }
 
@@ -756,4 +761,8 @@ document.addEventListener('DOMContentLoaded', () => {
   applyConfidenceSelection(0.95, { syncAlpha: true, skipUpdate: true });
   syncRhoInputsFromState();
   updateDesign();
+  
+  if (typeof initEngagementTracking === 'function') {
+    initEngagementTracking(TOOL_SLUG);
+  }
 });

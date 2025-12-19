@@ -1,11 +1,13 @@
 // Bivariate Linear Regression Tool – minimal first version
 
+// Tool identifier for tracking
+const TOOL_SLUG = 'bivariate-regression';
 const CREATED_DATE = new Date('2025-11-16').toLocaleDateString();
 let modifiedDate = new Date().toLocaleDateString();
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
+// Debouncing for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 let selectedConfidenceLevel = 0.95;
 
@@ -80,26 +82,6 @@ function setUploadCategoricalLock(disabled, reason = '') {
     // Fall back to continuous if available, otherwise auto.
     const hasContinuous = Array.from(select.options).some(opt => opt.value === 'continuous' && !opt.disabled);
     select.value = hasContinuous ? 'continuous' : 'auto';
-  }
-}
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-bivariate-regression-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('bivariate-regression', {
-      mode: activeDataEntryMode
-    }, `Bivariate regression analysis completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Bivariate Regression');
   }
 }
 
@@ -375,7 +357,7 @@ function parseRawUploadText(text) {
   return { headers, rows, warnings: errors };
 }
 
-  function importRawData(text, { isFromScenario = false } = {}) {
+  function importRawData(text, { isFromScenario = false, filename = 'uploaded_file.csv' } = {}) {
       try {
           let parsed = parseRawUploadText(text);
           if (typeof detectIdLikeColumns === 'function') {
@@ -464,6 +446,11 @@ function parseRawUploadText(text) {
           }
 
         setRawUploadStatus(finalMessage, 'success');
+        
+        // Track data upload for engagement
+        if (typeof markDataUploaded === 'function' && !isFromScenario) {
+            markDataUploaded(filename || 'uploaded_file.csv');
+        }
 
         // If called from a scenario, force the mode to RAW and update.
         if (isFromScenario || activeDataEntryMode !== DataEntryModes.RAW) {
@@ -483,7 +470,7 @@ function handleRawFile(file) {
   const reader = new FileReader();
   reader.onload = event => {
     try {
-      importRawData(event.target.result);
+      importRawData(event.target.result, { filename: file.name });
     } catch {
       // Errors are surfaced via status text.
     }
@@ -810,6 +797,11 @@ async function loadScenarioById(id) {
     const text = await response.text();
     const parsed = parseScenarioText(text);
     renderScenarioDescription(parsed.title || scenario.label, parsed.description);
+    
+    // Track scenario loading for engagement
+    if (typeof markScenarioLoaded === 'function') {
+        markScenarioLoaded(scenario.label);
+    }
 
     // Default: clear outputs until we successfully interpret a dataset
     clearOutputs('Scenario loaded. If a dataset is attached, results will appear below.');
@@ -2077,9 +2069,7 @@ function updateResults() {
       alpha: stats.alpha,
       residualSE: stats.residualSE
     });
-  hasSuccessfulRun = true;
-  checkAndTrackUsage();
-  modifiedDate = new Date().toLocaleDateString();
+  \n  // Track successful analysis with debouncing\n  renderCount++;\n  const now = Date.now();\n  if (renderCount > 1 && (now - lastTrackTime) > 500 && Number.isFinite(stats.p)) {\n    lastTrackTime = now;\n    if (typeof markRunAttempted === 'function') {\n      markRunAttempted();\n    }\n    if (typeof markRunSuccessful === 'function') {\n      markRunSuccessful(\n        { predictor: finalLabels.x, outcome: finalLabels.y, type: predictorType, n: stats.n },\n        `R²=${stats.rSquared.toFixed(3)}, p=${stats.p < 0.001 ? '<.001' : stats.p.toFixed(4)}`\n      );\n    }\n  }\n  \n  modifiedDate = new Date().toLocaleDateString();
   const modifiedLabel = document.getElementById('modified-date');
   if (modifiedLabel) modifiedLabel.textContent = modifiedDate;
 }
@@ -2281,6 +2271,8 @@ function setupAdvancedSettingsControls() {
       });
     }
     clearOutputs('Enter paired predictor/outcome values or upload a raw file to fit a regression line.');
+    
+    if (typeof initEngagementTracking === 'function') { initEngagementTracking(TOOL_SLUG); }
   });
 
   function handleDownloadBivariateResults() {

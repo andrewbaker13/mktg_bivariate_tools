@@ -1,5 +1,6 @@
 // Sentiment Analysis Lab JS
 
+const TOOL_SLUG = 'sentiment-lab';
 const SENTIMENT_LAB_CREATED_DATE = '2025-11-25';
 let sentimentLabModifiedDate = new Date().toLocaleDateString();
 
@@ -21,28 +22,6 @@ let activeScenarioConfig = null; // Store scenario-specific column mappings
 let histogramViewMode = 'overall'; // 'overall' or 'by-group'
 let boxplotViewMode = 'overall'; // 'overall' or 'by-group'
 let lastStats = null; // Store stats for re-rendering charts
-
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-sentiment-lab-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('sentiment-lab', {}, `Sentiment analysis completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Sentiment Lab');
-  }
-}
 
 // Removed hardcoded SentimentScenarios array - now loads from scenarios/scenario-index.json
 
@@ -289,6 +268,11 @@ function getTextData() {
 
 function runSentimentAnalysis() {
   setStatusMessage('');
+  
+  // Track run attempted
+  if (typeof markRunAttempted === 'function') {
+    markRunAttempted(TOOL_SLUG);
+  }
 
   const data = getTextData();
   if (!data.rows.length) {
@@ -322,8 +306,30 @@ function runSentimentAnalysis() {
     renderAnalysisReport();
     updateChartToggleVisibility();
 
-    hasSuccessfulRun = true;
-    checkAndTrackUsage();
+    // Calculate summary statistics for tracking
+    let sumCompound = 0;
+    let posCount = 0;
+    let neuCount = 0;
+    let negCount = 0;
+    sentimentRows.forEach(row => {
+      sumCompound += row.scores.compound;
+      if (row.label === 'positive') posCount++;
+      else if (row.label === 'neutral') neuCount++;
+      else if (row.label === 'negative') negCount++;
+    });
+    
+    // Track successful run
+    if (typeof markRunSuccessful === 'function') {
+      markRunSuccessful(TOOL_SLUG, {
+        recordCount: sentimentRows.length,
+        avgCompound: (sumCompound / sentimentRows.length).toFixed(4),
+        positiveCount: posCount,
+        neutralCount: neuCount,
+        negativeCount: negCount,
+        groupingEnabled: groupingEnabled,
+        numGroups: groupingEnabled ? uniqueGroups.length : 0
+      });
+    }
 
     const groupNote = groupingEnabled ? ` across ${uniqueGroups.length} groups` : '';
     setStatusMessage(`✓ Analyzed ${sentimentRows.length} text record(s)${groupNote}.`, 'success');
@@ -1719,6 +1725,16 @@ document.addEventListener('DOMContentLoaded', () => {
           activeScenarioConfig = null;
           
           populateColumnSelects(parsed.headers);
+          
+          // Track data uploaded
+          if (typeof markDataUploaded === 'function') {
+            markDataUploaded(TOOL_SLUG, {
+              fileName: file.name,
+              rowCount: parsed.rows.length,
+              columnCount: parsed.headers.length,
+              hasErrors: parsed.errors && parsed.errors.length > 0
+            });
+          }
 
           // Show any parsing errors
           if (parsed.errors && parsed.errors.length > 0) {
@@ -1903,6 +1919,11 @@ document.addEventListener('DOMContentLoaded', () => {
           
           const groupNote = scenario.groupColumn ? ` (grouped by "${scenario.groupColumn}")` : '';
           setStatusMessage(`Loaded ${parsed.rows.length} records${groupNote}. Click "Run sentiment analysis" to analyze.`, 'success');
+          
+          // Track scenario loaded
+          if (typeof markScenarioLoaded === 'function') {
+            markScenarioLoaded(TOOL_SLUG, scenario.id, scenario.label || scenario.id);
+          }
         }
       } catch (err) {
         console.error('Error loading scenario dataset:', err);
@@ -1947,5 +1968,10 @@ document.addEventListener('DOMContentLoaded', () => {
       a.click();
       document.body.removeChild(a);
     });
+  }
+  
+  // Initialize engagement tracking
+  if (typeof InitEngagementTracking === 'function') {
+    InitEngagementTracking(TOOL_SLUG);
   }
 });

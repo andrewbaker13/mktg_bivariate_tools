@@ -2,28 +2,11 @@
 
 const MULTI_CREATED_DATE = '2025-11-24';
 let multiModifiedDate = new Date().toLocaleDateString();
+const TOOL_SLUG = 'multiarm-ab-sample-size';
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-sample-size-multiarm-ab-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('sample-size-multiarm-ab', {}, `Multi-arm A/B test sample size calculation completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Multi-arm A/B Test Sample Size Calculator');
-  }
-}
+// Debouncing for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 const MultiOutcomeModes = {
   PROPORTION: 'proportion',
@@ -256,6 +239,11 @@ function applyMultiScenario(id) {
   if (desc) {
     desc.innerHTML = `<p>${scenario.description}</p>`;
   }
+
+  // Track scenario loaded
+  if (typeof markScenarioLoaded === 'function') {
+    markScenarioLoaded(scenario.label);
+  }
   const s = scenario.settings || {};
   MultiState.mode = s.mode || MultiState.mode;
   MultiState.goal = s.goal || MultiState.goal;
@@ -391,6 +379,8 @@ function updateMultiDesign() {
   MultiState.nPerArm = nPerArm;
   MultiState.nTotal = nTotal;
 
+  renderCount++;
+
   const set = (id, value) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
@@ -457,8 +447,22 @@ function updateMultiDesign() {
   renderMultiEffectChart();
   renderMultiPowerChart();
 
-  hasSuccessfulRun = true;
-  checkAndTrackUsage();
+  // Track tool run with debouncing (auto-run pattern)
+  if (renderCount > 1 && typeof markRunSuccessful === 'function') {
+    const now = Date.now();
+    if (now - lastTrackTime > 500) {
+      lastTrackTime = now;
+      markRunSuccessful({
+        mode: MultiState.mode,
+        goal: MultiState.goal,
+        numArms: arms.length,
+        alpha: MultiState.alpha,
+        power: MultiState.power,
+        nPerArm: Math.round(nPerArm),
+        nTotal: Math.round(nTotal)
+      });
+    }
+  }
 
   const modifiedLabel = document.getElementById('modified-date');
   if (modifiedLabel) modifiedLabel.textContent = new Date().toLocaleDateString();
@@ -670,6 +674,11 @@ function renderMultiPowerChart() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize engagement tracking
+  if (typeof initEngagementTracking === 'function') {
+    initEngagementTracking(TOOL_SLUG);
+  }
+
   const createdLabel = document.getElementById('created-date');
   const modifiedLabel = document.getElementById('modified-date');
   if (createdLabel) createdLabel.textContent = MULTI_CREATED_DATE;

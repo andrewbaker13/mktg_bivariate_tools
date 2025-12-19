@@ -3,27 +3,10 @@
 const CREATED_DATE = '2025-11-21';
 let modifiedDate = new Date().toLocaleDateString();
 
-// Usage tracking variables
-let pageLoadTime = Date.now();
-let hasSuccessfulRun = false;
-
-// Usage tracking function
-function checkAndTrackUsage() {
-  const timeOnPage = (Date.now() - pageLoadTime) / 1000 / 60;
-  if (timeOnPage < 0.167) return; // 10 seconds for testing (change back to 3 for production)
-  if (!hasSuccessfulRun) return;
-  if (typeof isAuthenticated !== 'function' || !isAuthenticated()) return;
-  
-  const today = new Date().toISOString().split('T')[0];
-  const storageKey = `tool-tracked-sample-size-calculator-${today}`;
-  if (localStorage.getItem(storageKey)) return;
-  
-  if (typeof logToolUsage === 'function') {
-    logToolUsage('sample-size-calculator', {}, `Sample size calculation completed`);
-    localStorage.setItem(storageKey, 'true');
-    console.log('Usage tracked for Sample Size Calculator');
-  }
-}
+const TOOL_SLUG = 'sample-size-ttest';
+// Debouncing for auto-run tracking
+let renderCount = 0;
+let lastTrackTime = 0;
 
 const Modes = {
   PROPORTION: 'proportion',
@@ -649,8 +632,26 @@ function updateDesign() {
   renderConfidenceChart();
   highlightCurrentOnConfidenceChart();
 
-  hasSuccessfulRun = true;
-  checkAndTrackUsage();
+  // Track successful calculation with debouncing
+  renderCount++;
+  const now = Date.now();
+  if (renderCount > 1 && (now - lastTrackTime) > 500 && isFinite(SampleSizeState.requiredN)) {
+    lastTrackTime = now;
+    if (typeof markRunAttempted === 'function') {
+      markRunAttempted();
+    }
+    if (typeof markRunSuccessful === 'function') {
+      markRunSuccessful(
+        {
+          mode: SampleSizeState.mode,
+          alpha: SampleSizeState.alpha,
+          margin_of_error: SampleSizeState.mode === Modes.MEAN ? SampleSizeState.marginOfErrorMean : SampleSizeState.marginOfErrorProp,
+          population_size: SampleSizeState.populationSize
+        },
+        `n=${SampleSizeState.requiredN}`
+      );
+    }
+  }
 }
 
 function updateScenarioDownload(dataset) {
@@ -754,6 +755,9 @@ function setupScenarioSelect() {
       filename: `${scenario.id}_notes.txt`,
       content: scenario.description
     });
+    if (typeof markScenarioLoaded === 'function') {
+      markScenarioLoaded(scenario.label);
+    }
     updateDesign();
   });
 }
@@ -766,4 +770,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupScenarioSelect();
   setupScenarioDownload();
   updateDesign();
+  
+  if (typeof initEngagementTracking === 'function') {
+    initEngagementTracking(TOOL_SLUG);
+  }
 });
