@@ -14,17 +14,6 @@
   <link rel="dns-prefetch" href="https://www.clarity.ms">
   <link rel="preconnect" href="https://www.clarity.ms" crossorigin>
   <link rel="stylesheet" href="shared/css/main.css">
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-290ZJ9RE04');
-  </script>
-  <!-- Microsoft Clarity -->
-  <script src="shared/js/tracking.js"></script>
   <style>
     .auth-bar {
       background: #f9fafb;
@@ -805,6 +794,24 @@
       startCarousel();
     }
   </script>
+
+  <!-- Deferred Analytics & Tracking -->
+  <script>
+    // Google Analytics - deferred load
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-290ZJ9RE04');
+    
+    // Load GA script after page load
+    window.addEventListener('load', function() {
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04';
+      document.head.appendChild(script);
+    });
+  </script>
+  <script defer src="shared/js/tracking.js"></script>
 </body>
 
 </html>

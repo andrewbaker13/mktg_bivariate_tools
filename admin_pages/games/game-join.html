@@ -8,10 +8,9 @@
     
     <!-- DNS prefetch and preconnect for faster loading -->
     <link rel="dns-prefetch" href="https://drbaker-backend.onrender.com">
-    <link rel="preconnect" href="https://drbaker-backend.onrender.com">
+    <link rel="preconnect" href="https://drbaker-backend.onrender.com" crossorigin>
     
     <link rel="stylesheet" href="../../shared/css/main.css">
-    <script src="../../shared/js/tracking.js"></script>
     <style>
         .join-container {
             max-width: 500px;
@@ -442,6 +441,10 @@
             successMessage.style.display = 'block';
         }
     </script>
+    
+    <!-- Deferred Tracking -->
+    <script defer src="../../shared/js/tracking.js"></script>
+    
     <footer style="text-align: center; padding: 2rem 1rem; color: rgba(255,255,255,0.8); font-size: 0.9rem;">
         <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
             <img src="../../art_assets/svg_logos/praxisplay_notext_logo.svg" alt="Praxis Play" style="width: 20px; height: 20px; opacity: 0.8;">
