@@ -710,45 +710,17 @@
 
   </main>
   
-  <script src="shared/js/auth_tracking.js" defer></script>
+  <script src="shared/js/api-config.js"></script>
+  <script src="shared/js/auth_tracking.js"></script>
+  <script src="shared/js/auth_bar.js"></script>
+  
   <script>
-    // Update auth bar based on login status
-    document.addEventListener('DOMContentLoaded', function() {
-      const authBarContent = document.getElementById('auth-bar-content');
-      
-      if (isAuthenticated()) {
-        const username = getCurrentUsername();
-        
-        // Defer staff status check to prioritize initial page render
-        setTimeout(async () => {
-          const token = getAuthToken();
-          let isStaff = false;
-          try {
-            const profile = await fetch(`${API_BASE}/auth/profile/`, {
-              headers: { 'Authorization': `Token ${token}` }
-            }).then(r => r.json());
-            isStaff = profile.is_staff || false;
-          } catch (e) {
-            console.error('Error checking staff status:', e);
-          }
-          
-          authBarContent.innerHTML = `
-            <span class="auth-bar__status">✓ Logged in as <strong>${username}</strong></span>
-            <a href="admin_pages/student-dashboard.html">My Dashboard</a>
-            ${isStaff ? '<a href="admin_pages/quiz/quiz-manager.html">Quiz Manager</a>' : ''}
-            ${isStaff ? '<a href="admin_pages/games/game-host.html">Game Host</a>' : ''}
-            ${isStaff ? '<a href="admin_pages/instructor-analytics.html">Course Analytics</a>' : ''}
-            ${isStaff ? '<a href="admin_pages/instructor.html">Manage Courses</a>' : ''}
-            ${isStaff ? '<a href="admin_pages/admin-dashboard.html">System Dashboard</a>' : ''}
-            <button class="auth-bar__logout" onclick="handleLogout()">Logout</button>
-          `;
-        }, 500);
-      }
-    });
-    
+    // Simple logout handler (auth_bar.js handles the auth UI)
     async function handleLogout() {
-      await logout();
-      location.reload();
+      if (typeof logout === 'function') {
+        await logout();
+        location.reload();
+      }
     }
   </script>
 

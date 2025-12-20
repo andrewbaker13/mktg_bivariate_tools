@@ -35,12 +35,20 @@
              apiBase = isLocal ? 'http://localhost:8000/api' : 'https://drbaker-backend.onrender.com/api';
         }
 
+        // Fetch with timeout to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
         const profile = await fetch(`${apiBase}/auth/profile/`, {
-          headers: { 'Authorization': `Token ${token}` }
+          headers: { 'Authorization': `Token ${token}` },
+          signal: controller.signal
         }).then(r => r.json());
+        
+        clearTimeout(timeoutId);
         isStaff = profile.is_staff || false;
       } catch (e) {
         console.error('Error checking staff status:', e);
+        // Continue with isStaff = false if API call fails
       }
 
       authBarContent.innerHTML = `
