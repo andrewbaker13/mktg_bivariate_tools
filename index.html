@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="x-dns-prefetch-control" content="on">
   <title>Marketing Analytics Tools – Student Guide</title>
   <link rel="icon" type="image/svg+xml" href="art_assets/svg_logos/clr_notext_logo.svg">
   <!-- Performance: DNS prefetch and preconnect for external resources -->
@@ -710,9 +711,9 @@
 
   </main>
   
-  <script src="shared/js/api-config.js"></script>
-  <script src="shared/js/auth_tracking.js"></script>
-  <script src="shared/js/auth_bar.js"></script>
+  <script src="shared/js/api-config.js" defer></script>
+  <script src="shared/js/auth_tracking.js" defer></script>
+  <script src="shared/js/auth_bar.js" defer></script>
   
   <script>
     // Simple logout handler (auth_bar.js handles the auth UI)

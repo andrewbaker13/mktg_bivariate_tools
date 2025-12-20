@@ -2,6 +2,10 @@
   for = "/*"
   [headers.values]
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    # Early Hints - speeds up resource loading
+    X-Dns-Prefetch-Control = "on"
+    # Reduce latency for cross-origin requests
+    Timing-Allow-Origin = "*"
 
 # Cache static assets for 1 year
 [[headers]]
