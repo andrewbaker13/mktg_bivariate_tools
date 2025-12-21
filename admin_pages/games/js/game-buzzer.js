@@ -88,10 +88,40 @@ function showBuzzerUI(gameData) {
                 ⚠️ You have a 250ms delay this round (false start penalty)
             </div>
             
-            <div class="buzzer-button-container">
+            <div class="buzzer-button-container" id="buzzerButtonContainer">
                 <button class="buzzer-btn locked" id="buzzerBtn" disabled>
                     DON'T PRESS
                 </button>
+            </div>
+            
+            <div id="buzzerResultsDisplay" style="display: none; padding: 1rem;">
+                <!-- Waiting message -->
+                <div id="waitingMessage" style="text-align: center; padding: 2rem; background: #f8fafc; border-radius: 12px; margin-bottom: 1.5rem;">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⏳</div>
+                    <div style="font-size: 1.1rem; font-weight: 700; color: #475569;">Waiting for host to start next round...</div>
+                </div>
+                
+                <!-- Results sections (same style as host) -->
+                <div id="playerRankedSection" style="display: none; margin-bottom: 1.5rem;">
+                    <div style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #475569; margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-radius: 6px;">
+                        🏆 Buzz Order
+                    </div>
+                    <div id="playerRankedList"></div>
+                </div>
+                
+                <div id="playerFalseStartSection" style="display: none; margin-bottom: 1.5rem;">
+                    <div style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #475569; margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-radius: 6px;">
+                        ❌ False Starts
+                    </div>
+                    <div id="playerFalseStartList"></div>
+                </div>
+                
+                <div id="playerNoBuzzSection" style="display: none; margin-bottom: 1.5rem;">
+                    <div style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #475569; margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-radius: 6px;">
+                        💤 Didn't Buzz
+                    </div>
+                    <div id="playerNoBuzzList"></div>
+                </div>
             </div>
             
             <div id="buzzerRankDisplay" style="display: none;" class="buzzer-rank-display">
@@ -182,6 +212,10 @@ function handleBuzzerArm(data) {
     buzzerState.myRank = null;
     buzzerState.releaseAtServerMs = null;
     
+    // Show button, hide results
+    document.getElementById('buzzerButtonContainer').style.display = 'block';
+    document.getElementById('buzzerResultsDisplay').style.display = 'none';
+    
     // Store penalty setting if provided
     if (data.falseStartPenalty !== undefined) {
         buzzerState.falseStartPenalty = data.falseStartPenalty;
@@ -259,12 +293,15 @@ function handleBuzzerReset(data) {
     
     buzzerState.phase = 'RESET';
     
+    // Hide button, show results
+    document.getElementById('buzzerButtonContainer').style.display = 'none';
+    document.getElementById('buzzerResultsDisplay').style.display = 'block';
+    
     // Show results if available
-    if (data.rankedBuzzers && data.rankedBuzzers.length > 0) {
-        displayBuzzerResults(data);
+    if (data.rankedBuzzers || data.falseStarts || data.allPlayers) {
+        displayFullResults(data);
     }
     
-    updateBuzzerButton('locked', 'ROUND ENDED', true);
     updateBuzzerStatus('locked', '⚪ Round ended - waiting for next round...');
 }
 
@@ -351,6 +388,95 @@ function displayBuzzerResults(data) {
             timeMs: b.timeAfterReleaseMs
         }));
         displayTop3(top3);
+    }
+}
+
+function displayFullResults(data) {
+    console.log('[BUZZER] Displaying full results:', data);
+    
+    const rankedSection = document.getElementById('playerRankedSection');
+    const rankedList = document.getElementById('playerRankedList');
+    const falseStartSection = document.getElementById('playerFalseStartSection');
+    const falseStartList = document.getElementById('playerFalseStartList');
+    const noBuzzSection = document.getElementById('playerNoBuzzSection');
+    const noBuzzList = document.getElementById('playerNoBuzzList');
+    
+    // Get my player ID to highlight my entry
+    const playerSession = JSON.parse(sessionStorage.getItem('playerSession') || '{}');
+    const myPlayerId = playerSession.id;
+    
+    // Display ranked buzzers
+    if (data.rankedBuzzers && data.rankedBuzzers.length > 0) {
+        rankedSection.style.display = 'block';
+        rankedList.innerHTML = data.rankedBuzzers.map(buzz => {
+            const isMe = buzz.playerId === myPlayerId;
+            const rankClass = buzz.rank === 1 ? 'first' : buzz.rank === 2 ? 'second' : buzz.rank === 3 ? 'third' : 'other';
+            const highlightStyle = isMe ? 'background: linear-gradient(90deg, #dbeafe 0%, white 100%); border: 2px solid #3b82f6;' : '';
+            
+            return `
+                <div style="background: white; border: 2px solid #e2e8f0; border-left: 4px solid #10b981; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; ${highlightStyle}">
+                    <div style="font-size: 1.5rem; font-weight: 900; width: 35px; text-align: center; color: ${rankClass === 'first' ? '#fbbf24' : rankClass === 'second' ? '#94a3b8' : rankClass === 'third' ? '#cd7f32' : '#cbd5e1'};">
+                        ${buzz.rank}
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 0.95rem; font-weight: 700; color: #1e293b;">${buzz.playerName}${isMe ? ' (You)' : ''}</div>
+                        <div style="font-size: 0.8rem; color: #64748b; font-family: 'Courier New', monospace; font-weight: 600;">+${buzz.timeAfterReleaseMs.toFixed(0)}ms</div>
+                    </div>
+                    ${buzz.hadPenalty ? '<div style="padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.65rem; font-weight: 800; background: #f59e0b; color: white;">PENALTY</div>' : ''}
+                </div>
+            `;
+        }).join('');
+    } else {
+        rankedSection.style.display = 'none';
+    }
+    
+    // Display false starts
+    if (data.falseStarts && data.falseStarts.length > 0) {
+        falseStartSection.style.display = 'block';
+        falseStartList.innerHTML = data.falseStarts.map(player => {
+            const isMe = player.playerId === myPlayerId;
+            const highlightStyle = isMe ? 'background: linear-gradient(90deg, #fee2e2 0%, white 100%); border: 2px solid #ef4444;' : '';
+            
+            return `
+                <div style="background: white; border: 2px solid #e2e8f0; border-left: 4px solid #ef4444; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; ${highlightStyle}">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.95rem; font-weight: 700; color: #1e293b;">${player.playerName}${isMe ? ' (You)' : ''}</div>
+                        <div style="font-size: 0.8rem; color: #64748b;">Pressed while locked</div>
+                    </div>
+                    <div style="padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.65rem; font-weight: 800; background: #ef4444; color: white;">FALSE START</div>
+                </div>
+            `;
+        }).join('');
+    } else {
+        falseStartSection.style.display = 'none';
+    }
+    
+    // Display no buzz players
+    if (data.rankedBuzzers && data.falseStarts && data.allPlayers) {
+        const buzzedIds = new Set([
+            ...data.rankedBuzzers.map(b => b.playerId),
+            ...data.falseStarts.map(f => f.playerId)
+        ]);
+        
+        const noBuzzPlayers = data.allPlayers.filter(p => !buzzedIds.has(p.id));
+        
+        if (noBuzzPlayers.length > 0) {
+            noBuzzSection.style.display = 'block';
+            noBuzzList.innerHTML = noBuzzPlayers.map(player => {
+                const isMe = player.id === myPlayerId;
+                const playerName = player.display_name || player.guest_name || player.username || `Player ${player.id}`;
+                const highlightStyle = isMe ? 'background: linear-gradient(90deg, #f1f5f9 0%, white 100%); border: 2px solid #94a3b8;' : '';
+                
+                return `
+                    <div style="background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; ${highlightStyle}">
+                        <div style="font-size: 0.95rem; font-weight: 700; color: #1e293b;">${playerName}${isMe ? ' (You)' : ''}</div>
+                        <div style="font-size: 0.8rem; color: #64748b;">No buzz this round</div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            noBuzzSection.style.display = 'none';
+        }
     }
 }
 

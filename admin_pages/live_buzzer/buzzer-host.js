@@ -10,12 +10,14 @@ const JOIN_URL = window.JOIN_URL;
 let websocket = null;
 let roomCode = null;
 let isGameStarted = false;
+let autoResetTimer = null;
 let buzzerState = {
     phase: 'RESET', // RESET, ARMED, LIVE
     roundNumber: 1,
     roundId: null,
     releaseAtServerMs: null,
     leadTimeMs: 250,
+    autoResetMs: 0,
     rankedBuzzers: [],
     falseStarts: [],
     noBuzzPlayers: [],
@@ -163,6 +165,11 @@ function startBuzzerGame() {
     const penaltySelect = document.getElementById('penaltySelect');
     buzzerState.falseStartPenalty = parseInt(penaltySelect.value) || 250;
     console.log(`[BUZZER HOST] False start penalty set to ${buzzerState.falseStartPenalty}ms`);
+    
+    // Capture auto-reset timer setting
+    const autoResetSelect = document.getElementById('autoResetSelect');
+    buzzerState.autoResetMs = parseInt(autoResetSelect.value) || 0;
+    console.log(`[BUZZER HOST] Auto-reset timer set to ${buzzerState.autoResetMs}ms`);
     
     // Hide setup screen, show game screen
     document.getElementById('setupScreen').style.display = 'none';
@@ -367,6 +374,9 @@ function handleBuzzerReset(message) {
 function armRound() {
     console.log('[BUZZER HOST] Arming round...');
     
+    // Clear any active auto-reset timer from previous round
+    clearAutoResetTimer();
+    
     // Generate random lead time between 200ms and 800ms for this round
     buzzerState.leadTimeMs = Math.floor(Math.random() * (800 - 200 + 1)) + 200;
     console.log(`[BUZZER HOST] Random lead time for this round: ${buzzerState.leadTimeMs}ms`);
@@ -399,6 +409,17 @@ function enableBuzzer() {
                 leadTimeMs: buzzerState.leadTimeMs
             }
         }));
+        
+        // Start auto-reset timer if enabled
+        if (buzzerState.autoResetMs > 0) {
+            console.log(`[BUZZER HOST] Starting auto-reset timer: ${buzzerState.autoResetMs}ms`);
+            clearAutoResetTimer();
+            autoResetTimer = setTimeout(() => {
+                console.log('[BUZZER HOST] Auto-reset timer expired, resetting round...');
+                showToast('Round auto-reset', 'warning');
+                resetRound();
+            }, buzzerState.autoResetMs);
+        }
     } else {
         showToast('Not connected', 'error');
     }
@@ -406,6 +427,9 @@ function enableBuzzer() {
 
 function resetRound() {
     console.log('[BUZZER HOST] Resetting round...');
+    
+    // Clear any active auto-reset timer
+    clearAutoResetTimer();
     
     if (websocket && websocket.readyState === WebSocket.OPEN) {
         websocket.send(JSON.stringify({
@@ -416,6 +440,14 @@ function resetRound() {
         }));
     } else {
         showToast('Not connected', 'error');
+    }
+}
+
+function clearAutoResetTimer() {
+    if (autoResetTimer) {
+        console.log('[BUZZER HOST] Clearing auto-reset timer');
+        clearTimeout(autoResetTimer);
+        autoResetTimer = null;
     }
 }
 
