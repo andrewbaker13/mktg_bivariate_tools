@@ -406,7 +406,8 @@ function enableBuzzer() {
             action: 'buzzer_enable',
             data: {
                 roundId: buzzerState.roundId,
-                leadTimeMs: buzzerState.leadTimeMs
+                leadTimeMs: buzzerState.leadTimeMs,
+                autoResetMs: buzzerState.autoResetMs
             }
         }));
         

@@ -15,7 +15,9 @@ const buzzerState = {
     myRank: null,
     clockOffsetMs: 0, // Client time ahead of server by this amount
     syncHistory: [], // Store last 5 sync measurements
-    syncIntervalId: null
+    syncIntervalId: null,
+    countdownIntervalId: null,
+    autoResetMs: 0
 };
 
 // Time sync - track offset between client and server clocks
@@ -92,6 +94,11 @@ function showBuzzerUI(gameData) {
                 <button class="buzzer-btn locked" id="buzzerBtn" disabled>
                     DON'T PRESS
                 </button>
+            </div>
+            
+            <div id="countdownDisplay" style="display: none; text-align: center; margin: 1rem 0; padding: 1rem; background: #fef3c7; border: 2px solid #fbbf24; border-radius: 12px;">
+                <div style="font-size: 0.85rem; font-weight: 700; color: #92400e; margin-bottom: 0.25rem;">Round ends in</div>
+                <div style="font-size: 2rem; font-weight: 900; color: #b45309; font-family: 'Courier New', monospace;" id="countdownTimer">--</div>
             </div>
             
             <div id="buzzerResultsDisplay" style="display: none; padding: 1rem;">
@@ -237,6 +244,9 @@ function handleBuzzerArm(data) {
     document.getElementById('buzzerRankDisplay').style.display = 'none';
     document.getElementById('buzzerTop3').style.display = 'none';
     
+    // Clear countdown
+    clearCountdown();
+    
     // Show penalty notice if applicable
     const penaltyNotice = document.getElementById('buzzerPenaltyNotice');
     if (buzzerState.hasPenalty) {
@@ -261,6 +271,7 @@ function handleBuzzerEnable(data) {
     
     buzzerState.phase = 'LIVE';
     buzzerState.releaseAtServerMs = data.releaseAtServerMs;
+    buzzerState.autoResetMs = data.autoResetMs || 0;
     
     // Store penalty setting
     buzzerState.falseStartPenalty = data.falseStartPenalty || 250;
@@ -286,12 +297,20 @@ function handleBuzzerEnable(data) {
             updateBuzzerStatus('live', '🟢 BUZZ NOW!');
         }
     }, Math.max(0, delayMs));
+    
+    // Start countdown if auto-reset is enabled
+    if (buzzerState.autoResetMs > 0) {
+        startCountdown(buzzerState.autoResetMs);
+    }
 }
 
 function handleBuzzerReset(data) {
     console.log('[BUZZER] Round reset:', data);
     
     buzzerState.phase = 'RESET';
+    
+    // Clear countdown
+    clearCountdown();
     
     // Hide button, show results
     document.getElementById('buzzerButtonContainer').style.display = 'none';
@@ -493,6 +512,62 @@ function updateBuzzerStatus(state, text) {
     status.textContent = text;
 }
 
+// Countdown timer functions
+function startCountdown(durationMs) {
+    console.log('[BUZZER] Starting countdown:', durationMs, 'ms');
+    
+    clearCountdown();
+    
+    const countdownDisplay = document.getElementById('countdownDisplay');
+    const countdownTimer = document.getElementById('countdownTimer');
+    
+    if (!countdownDisplay || !countdownTimer) return;
+    
+    countdownDisplay.style.display = 'block';
+    
+    let endTime = Date.now() + durationMs;
+    
+    function updateTimer() {
+        const remaining = Math.max(0, endTime - Date.now());
+        const seconds = (remaining / 1000).toFixed(1);
+        
+        countdownTimer.textContent = `${seconds}s`;
+        
+        // Change color as time runs out
+        if (remaining <= 3000) {
+            countdownDisplay.style.background = '#fee2e2';
+            countdownDisplay.style.borderColor = '#ef4444';
+            countdownTimer.style.color = '#dc2626';
+        } else if (remaining <= 5000) {
+            countdownDisplay.style.background = '#fef3c7';
+            countdownDisplay.style.borderColor = '#fbbf24';
+            countdownTimer.style.color = '#b45309';
+        }
+        
+        if (remaining <= 0) {
+            clearCountdown();
+        }
+    }
+    
+    // Update immediately
+    updateTimer();
+    
+    // Update every 100ms for smooth countdown
+    buzzerState.countdownIntervalId = setInterval(updateTimer, 100);
+}
+
+function clearCountdown() {
+    if (buzzerState.countdownIntervalId) {
+        clearInterval(buzzerState.countdownIntervalId);
+        buzzerState.countdownIntervalId = null;
+    }
+    
+    const countdownDisplay = document.getElementById('countdownDisplay');
+    if (countdownDisplay) {
+        countdownDisplay.style.display = 'none';
+    }
+}
+
 // Register buzzer message handlers
 if (window.registerGameHandler) {
     window.registerGameHandler('buzzer_arm', handleBuzzerArm);
@@ -512,6 +587,9 @@ if (leaderboard) {
 window.addEventListener('beforeunload', () => {
     if (buzzerState.syncIntervalId) {
         clearInterval(buzzerState.syncIntervalId);
+    }
+    if (buzzerState.countdownIntervalId) {
+        clearInterval(buzzerState.countdownIntervalId);
     }
 });
 
