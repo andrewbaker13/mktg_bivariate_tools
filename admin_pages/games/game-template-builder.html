@@ -956,6 +956,7 @@
                         },
                         body: JSON.stringify({
                             name: name,
+                            description: '',
                             question_ids: selectedQuestions.map(q => q.id)
                         })
                     });
@@ -969,14 +970,24 @@
                         },
                         body: JSON.stringify({
                             name: name,
+                            description: '',
                             question_ids: selectedQuestions.map(q => q.id)
                         })
                     });
                 }
 
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to save template');
+                    let errorMessage = 'Failed to save template';
+                    try {
+                        const error = await response.json();
+                        errorMessage = error.error || errorMessage;
+                    } catch (e) {
+                        // If response isn't JSON, it's likely an HTML error page
+                        const text = await response.text();
+                        console.error('Server error:', text);
+                        errorMessage = `Server error (${response.status}). Check console for details.`;
+                    }
+                    throw new Error(errorMessage);
                 }
 
                 const template = await response.json();
