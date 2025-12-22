@@ -11,6 +11,7 @@ let websocket = null;
 let roomCode = null;
 let isGameStarted = false;
 let autoResetTimer = null;
+let hostCountdownInterval = null;
 let buzzerState = {
     phase: 'RESET', // RESET, ARMED, LIVE
     roundNumber: 1,
@@ -415,6 +416,10 @@ function enableBuzzer() {
         if (buzzerState.autoResetMs > 0) {
             console.log(`[BUZZER HOST] Starting auto-reset timer: ${buzzerState.autoResetMs}ms`);
             clearAutoResetTimer();
+            
+            // Start visual countdown
+            startHostCountdown(buzzerState.autoResetMs);
+            
             autoResetTimer = setTimeout(() => {
                 console.log('[BUZZER HOST] Auto-reset timer expired, resetting round...');
                 showToast('Round auto-reset', 'warning');
@@ -450,6 +455,7 @@ function clearAutoResetTimer() {
         clearTimeout(autoResetTimer);
         autoResetTimer = null;
     }
+    clearHostCountdown();
 }
 
 function exitBuzzer() {
@@ -620,6 +626,62 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         toast.remove();
     }, 3500);
+}
+
+// Host countdown timer functions
+function startHostCountdown(durationMs) {
+    console.log('[BUZZER HOST] Starting visual countdown:', durationMs, 'ms');
+    
+    clearHostCountdown();
+    
+    const countdownDisplay = document.getElementById('hostCountdownDisplay');
+    const countdownTimer = document.getElementById('hostCountdownTimer');
+    
+    if (!countdownDisplay || !countdownTimer) return;
+    
+    countdownDisplay.style.display = 'block';
+    
+    let endTime = Date.now() + durationMs;
+    
+    function updateTimer() {
+        const remaining = Math.max(0, endTime - Date.now());
+        const seconds = (remaining / 1000).toFixed(1);
+        
+        countdownTimer.textContent = `${seconds}s`;
+        
+        // Change color as time runs out
+        if (remaining <= 3000) {
+            countdownDisplay.style.background = '#fee2e2';
+            countdownDisplay.style.borderColor = '#ef4444';
+            countdownDisplay.style.color = '#dc2626';
+        } else if (remaining <= 5000) {
+            countdownDisplay.style.background = '#fef3c7';
+            countdownDisplay.style.borderColor = '#fbbf24';
+            countdownDisplay.style.color = '#92400e';
+        }
+        
+        if (remaining <= 0) {
+            clearHostCountdown();
+        }
+    }
+    
+    // Update immediately
+    updateTimer();
+    
+    // Update every 100ms for smooth countdown
+    hostCountdownInterval = setInterval(updateTimer, 100);
+}
+
+function clearHostCountdown() {
+    if (hostCountdownInterval) {
+        clearInterval(hostCountdownInterval);
+        hostCountdownInterval = null;
+    }
+    
+    const countdownDisplay = document.getElementById('hostCountdownDisplay');
+    if (countdownDisplay) {
+        countdownDisplay.style.display = 'none';
+    }
 }
 
 // Initialize

@@ -96,7 +96,7 @@ function showBuzzerUI(gameData) {
                 </button>
             </div>
             
-            <div id="countdownDisplay" style="display: none; text-align: center; margin: 1rem 0; padding: 1rem; background: #fef3c7; border: 2px solid #fbbf24; border-radius: 12px;">
+            <div id="countdownDisplay" style="display: none; text-align: center; margin: 1rem 0; padding: 1rem; background: #fef3c7; border: 2px solid #fbbf24; border-radius: 12px; position: relative; z-index: 10;">
                 <div style="font-size: 0.85rem; font-weight: 700; color: #92400e; margin-bottom: 0.25rem;">Round ends in</div>
                 <div style="font-size: 2rem; font-weight: 900; color: #b45309; font-family: 'Courier New', monospace;" id="countdownTimer">--</div>
             </div>
@@ -272,6 +272,8 @@ function handleBuzzerEnable(data) {
     buzzerState.phase = 'LIVE';
     buzzerState.releaseAtServerMs = data.releaseAtServerMs;
     buzzerState.autoResetMs = data.autoResetMs || 0;
+    
+    console.log('[BUZZER] Auto-reset value received:', buzzerState.autoResetMs);
     
     // Store penalty setting
     buzzerState.falseStartPenalty = data.falseStartPenalty || 250;
@@ -521,9 +523,15 @@ function startCountdown(durationMs) {
     const countdownDisplay = document.getElementById('countdownDisplay');
     const countdownTimer = document.getElementById('countdownTimer');
     
-    if (!countdownDisplay || !countdownTimer) return;
+    console.log('[BUZZER] Countdown elements:', countdownDisplay, countdownTimer);
+    
+    if (!countdownDisplay || !countdownTimer) {
+        console.error('[BUZZER] Countdown elements not found!');
+        return;
+    }
     
     countdownDisplay.style.display = 'block';
+    console.log('[BUZZER] Countdown display set to visible');
     
     let endTime = Date.now() + durationMs;
     
@@ -554,6 +562,7 @@ function startCountdown(durationMs) {
     
     // Update every 100ms for smooth countdown
     buzzerState.countdownIntervalId = setInterval(updateTimer, 100);
+    console.log('[BUZZER] Countdown interval started');
 }
 
 function clearCountdown() {
