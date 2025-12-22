@@ -149,14 +149,26 @@ function showLineFitGame(message, timeLimit) {
         if (lineFitState.canvas) {
             lineFitState.ctx = lineFitState.canvas.getContext('2d');
             
-            // Set up canvas click handler
-            lineFitState.canvas.addEventListener('click', handleCanvasClick);
+            // Set up canvas interaction handlers for both mouse and touch
+            lineFitState.canvas.addEventListener('click', handleCanvasInteraction);
+            lineFitState.canvas.addEventListener('touchend', handleCanvasTouchEnd);
+            
+            // Prevent default touch behaviors (scroll, zoom, text selection)
+            lineFitState.canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+            });
+            lineFitState.canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+            });
             
             // Style the canvas
             lineFitState.canvas.style.background = '#ffffff';
             lineFitState.canvas.style.borderRadius = '8px';
             lineFitState.canvas.style.cursor = 'crosshair';
             lineFitState.canvas.style.border = '2px solid #d1d5db';
+            lineFitState.canvas.style.touchAction = 'none';
+            lineFitState.canvas.style.webkitUserSelect = 'none';
+            lineFitState.canvas.style.userSelect = 'none';
             
             console.log('[LINE FIT] Canvas initialized, checking for stored data...');
             
@@ -244,19 +256,99 @@ function processScatterData() {
 }
 
 /**
- * Handle canvas click events
+ * Get accurate canvas coordinates from mouse or touch event
+ * Handles coordinate scaling and touch event differences
  */
-function handleCanvasClick(event) {
-    if (lineFitState.mode === 'confirmed' || lineFitState.mode === 'waiting') {
-        return; // Ignore clicks when confirmed or waiting
+function getCanvasCoordinates(event) {
+    try {
+        const rect = lineFitState.canvas.getBoundingClientRect();
+        
+        // Get raw client coordinates from either touch or mouse event
+        let clientX, clientY;
+        
+        if (event.touches && event.touches.length > 0) {
+            // Active touch event
+            clientX = event.touches[0].clientX;
+            clientY = event.touches[0].clientY;
+            console.log('[LINE FIT] Touch coordinates (active):', clientX, clientY);
+        } else if (event.changedTouches && event.changedTouches.length > 0) {
+            // Touch end event
+            clientX = event.changedTouches[0].clientX;
+            clientY = event.changedTouches[0].clientY;
+            console.log('[LINE FIT] Touch coordinates (ended):', clientX, clientY);
+        } else if (event.clientX !== undefined && event.clientY !== undefined) {
+            // Mouse event
+            clientX = event.clientX;
+            clientY = event.clientY;
+            console.log('[LINE FIT] Mouse coordinates:', clientX, clientY);
+        } else {
+            console.error('[LINE FIT] Could not extract coordinates from event:', event);
+            return null;
+        }
+        
+        // Calculate position relative to canvas (CSS pixels)
+        const canvasX = clientX - rect.left;
+        const canvasY = clientY - rect.top;
+        
+        // Scale from CSS pixels to canvas internal pixels
+        // This is crucial when canvas CSS size differs from canvas.width/height
+        const scaleX = lineFitState.canvas.width / rect.width;
+        const scaleY = lineFitState.canvas.height / rect.height;
+        
+        const scaledX = canvasX * scaleX;
+        const scaledY = canvasY * scaleY;
+        
+        console.log('[LINE FIT] Coordinate conversion:', {
+            cssCoords: { x: canvasX, y: canvasY },
+            canvasCoords: { x: scaledX, y: scaledY },
+            scale: { x: scaleX, y: scaleY },
+            canvasSize: { width: lineFitState.canvas.width, height: lineFitState.canvas.height },
+            cssSize: { width: rect.width, height: rect.height }
+        });
+        
+        return { x: scaledX, y: scaledY };
+    } catch (error) {
+        console.error('[LINE FIT] Error getting canvas coordinates:', error);
+        return null;
+    }
+}
+
+/**
+ * Handle touch end events on canvas
+ */
+function handleCanvasTouchEnd(event) {
+    event.preventDefault(); // Prevent synthetic click event from firing
+    console.log('[LINE FIT] Touch end event:', event);
+    
+    if (event.changedTouches.length === 0) {
+        console.warn('[LINE FIT] No touches in touchend event');
+        return;
     }
     
-    const rect = lineFitState.canvas.getBoundingClientRect();
-    const canvasX = event.clientX - rect.left;
-    const canvasY = event.clientY - rect.top;
+    // Process the touch interaction
+    handleCanvasInteraction(event);
+}
+
+/**
+ * Handle canvas interaction events (both mouse clicks and touch)
+ */
+function handleCanvasInteraction(event) {
+    if (lineFitState.mode === 'confirmed' || lineFitState.mode === 'waiting') {
+        console.log('[LINE FIT] Ignoring interaction - mode:', lineFitState.mode);
+        return; // Ignore interactions when confirmed or waiting
+    }
+    
+    // Get accurate canvas coordinates
+    const canvasCoords = getCanvasCoordinates(event);
+    if (!canvasCoords) {
+        console.error('[LINE FIT] Failed to get canvas coordinates');
+        showFeedback('⚠️ Touch detection error - please try again', 'warning');
+        return;
+    }
     
     // Convert canvas coordinates to data coordinates
-    const dataCoords = canvasToData(canvasX, canvasY);
+    const dataCoords = canvasToData(canvasCoords.x, canvasCoords.y);
+    console.log('[LINE FIT] Data coordinates:', dataCoords);
     
     if (lineFitState.mode === 'placing_first') {
         // Place first point
@@ -749,10 +841,14 @@ function drawScatterPlot() {
     if (lineFitState.scatterData && lineFitState.scatterData.points) {
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 2;
+        // Use larger points on mobile for better visibility
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const pointRadius = isMobile ? 8 : 5;
+        
         lineFitState.scatterData.points.forEach(point => {
             const canvasCoords = dataToCanvas(point.x, point.y);
             ctx.beginPath();
-            ctx.arc(canvasCoords.x, canvasCoords.y, 5, 0, 2 * Math.PI);
+            ctx.arc(canvasCoords.x, canvasCoords.y, pointRadius, 0, 2 * Math.PI);
             ctx.stroke();
         });
     }
@@ -772,12 +868,19 @@ function drawScatterPlot() {
     }
     
     // Draw placement points (if in progress)
+    // Use larger touch targets on mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const placementRadius = isMobile ? 10 : 6;
+    
     if (lineFitState.point1 && lineFitState.mode === 'placing_second') {
         const p1Canvas = dataToCanvas(lineFitState.point1.x, lineFitState.point1.y);
         ctx.fillStyle = '#06b6d4';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(p1Canvas.x, p1Canvas.y, 6, 0, 2 * Math.PI);
+        ctx.arc(p1Canvas.x, p1Canvas.y, placementRadius, 0, 2 * Math.PI);
         ctx.fill();
+        ctx.stroke();
     }
     
     if (lineFitState.point1 && lineFitState.point2 && lineFitState.mode === 'proposed') {
@@ -786,13 +889,18 @@ function drawScatterPlot() {
         const p2Canvas = dataToCanvas(lineFitState.point2.x, lineFitState.point2.y);
         
         ctx.fillStyle = '#06b6d4';
-        ctx.beginPath();
-        ctx.arc(p1Canvas.x, p1Canvas.y, 6, 0, 2 * Math.PI);
-        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
         
         ctx.beginPath();
-        ctx.arc(p2Canvas.x, p2Canvas.y, 6, 0, 2 * Math.PI);
+        ctx.arc(p1Canvas.x, p1Canvas.y, placementRadius, 0, 2 * Math.PI);
         ctx.fill();
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.arc(p2Canvas.x, p2Canvas.y, placementRadius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
     }
 }
 
