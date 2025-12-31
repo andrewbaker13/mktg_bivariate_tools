@@ -545,7 +545,33 @@
         // Download CSV of codes
         async function downloadCSV(courseId, courseName) {
             const token = getAuthToken();
-            window.location.href = `${API_BASE}/courses/${courseId}/codes/csv/?token=${token}`;
+            
+            try {
+                const response = await fetch(`${API_BASE}/courses/${courseId}/codes/csv/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to download CSV');
+                }
+                
+                // Get the CSV content as a blob
+                const blob = await response.blob();
+                
+                // Create a temporary download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `codes_${courseName.replace(/[^a-zA-Z0-9]/g, '_')}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                alert('Error downloading CSV: ' + error.message);
+            }
         }
         
         // Edit expiration date
