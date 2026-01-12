@@ -2,6 +2,47 @@
 
 This document provides the standard HTML template and CSS classes for creating styled scenario descriptions across all tools.
 
+## ⚠️ CRITICAL: JavaScript Implementation Pattern
+
+To avoid hoisting issues, **ALWAYS use arrow functions** for the `description` property in scenario arrays:
+
+```javascript
+// ✅ CORRECT - Arrow function delays execution
+const SCENARIOS = [
+  {
+    id: 'scenario-1',
+    label: 'Scenario Name',
+    description: () => generateScenarioHtml(),  // Arrow function!
+    generate: generateScenarioData
+  }
+];
+
+// ❌ WRONG - Executes immediately, causes hoisting error
+const SCENARIOS = [
+  {
+    id: 'scenario-1',
+    label: 'Scenario Name',
+    description: generateScenarioHtml(),  // Executes before function defined!
+    generate: generateScenarioData
+  }
+];
+```
+
+**Why this matters:** When you call the function directly in the array initialization, it executes before the HTML generator functions are defined later in the file. The arrow function wrapper delays execution until the scenario is actually selected.
+
+**When using the description:** Call it as a function in your setup code:
+
+```javascript
+select.addEventListener('change', () => {
+  const selected = SCENARIOS.find(s => s.id === select.value);
+  if (descEl && selected) {
+    descEl.innerHTML = selected.description();  // Call the arrow function
+  }
+});
+```
+
+---
+
 ## Full HTML Template
 
 ```html
@@ -373,6 +414,32 @@ Add this CSS to the tool's stylesheet:
 4. **Context grid**: Aim for 3-4 items that fit the grid nicely
 5. **Questions should be specific**: Tie questions to the actual analysis the tool performs
 6. **Pro tips should be actionable**: Give users something they can immediately try
+7. **ALWAYS use arrow functions**: Wrap description generators in `() => generateHtml()` to avoid hoisting errors
+
+## Common Pitfalls
+
+### ❌ Hoisting Error Example
+```javascript
+// This will fail because generateCustomerSegmentHtml() isn't defined yet
+const SCENARIOS = [
+  { id: 'customers', description: generateCustomerSegmentHtml() }
+];
+
+function generateCustomerSegmentHtml() { return `<div>...</div>`; }
+```
+
+### ✅ Correct Implementation
+```javascript
+// Arrow function delays execution until needed
+const SCENARIOS = [
+  { id: 'customers', description: () => generateCustomerSegmentHtml() }
+];
+
+function generateCustomerSegmentHtml() { return `<div>...</div>`; }
+
+// Call it later when actually needed
+const html = scenarios[0].description();  // Now it works!
+```
 
 ## Tools Using This Template
 

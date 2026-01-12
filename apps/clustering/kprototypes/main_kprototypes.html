@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>k-Prototypes Clustering Tool</title>
+  <!-- Shared design system -->
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <script src="../../../shared/js/tracking.js"></script>
+  <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+  <!-- App-specific overrides -->
+  <link rel="stylesheet" href="main_kprototypes.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="../../../shared/js/csv_utils.js"></script>
+  <script src="../../../shared/js/ui_utils.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-290ZJ9RE04');
+  </script>
+</head>
+
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../../admin_pages/login.html">Login</a>
+        <a href="../../../admin_pages/register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>k-Prototypes Clustering Tool</h1>
+        <div class="hero-context">
+          <span class="badge">Mixed Data Segmentation</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Segment customers, products, or campaigns using k-prototypes clustering—designed specifically for datasets 
+        with both continuous (spend, frequency) and categorical (region, tier) variables. Upload mixed-type data or 
+        explore prebuilt marketing scenarios.
+      </p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="test-overview-heading">
+      <h2 id="test-overview-heading">OVERVIEW &amp; OBJECTIVE</h2>
+      <div class="card">
+        <p>
+          k-prototypes extends k-means to handle mixed data types by combining Euclidean distance for continuous 
+          variables with simple matching for categorical variables. Unlike k-means (continuous only) or k-modes 
+          (categorical only), k-prototypes handles realistic marketing datasets where customers or products have 
+          both numerical metrics (spend, frequency) and descriptive attributes (region, tier, channel).
+        </p>
+        <p class="equation">
+          $$d(X, Q) = \sum_{j \in \text{continuous}} (x_j - q_j)^2 + \gamma \sum_{j \in \text{categorical}} \delta(x_j, q_j)$$
+        </p>
+        <p>
+          where \(\delta(a, b) = 0\) if \(a = b\), else \(1\). The parameter \(\gamma\) balances the influence of 
+          continuous vs. categorical variables. Each cluster center (prototype) contains means for continuous 
+          features and modes (most frequent values) for categorical features.
+        </p>
+        <details class="intro-notes" open>
+          <summary>Additional notes &amp; assumptions</summary>
+          <p>
+            Like k-means, k-prototypes is sensitive to initialization and feature scales. The tool auto-calculates 
+            \(\gamma\) as the average standard deviation of continuous features, but you can override this in 
+            advanced settings. Results are exploratory—validate segments with business knowledge and holdout data.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <section class="scenario-section" aria-labelledby="scenario-heading">
+      <h2 id="scenario-heading">MARKETING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Practical scenario</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Manual inputs (no preset)</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>
+            Use presets to explore realistic segmentation scenarios with mixed data types, such as customer profiles 
+            (spend + demographics), product portfolios (performance + attributes), or lead databases (engagement + 
+            firmographics). Download and customize scenario data in Excel.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="input-card" aria-labelledby="inputs-heading">
+      <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>Load data &amp; assign variable types</h3>
+        </div>
+
+        <div class="mode-toggle" role="tablist" aria-label="Data source">
+          <button type="button" class="mode-button active" data-mode="upload">Upload CSV data</button>
+          <button type="button" class="mode-button" data-mode="demo">Use demo dataset</button>
+        </div>
+
+        <div class="mode-panels">
+          <div class="mode-panel active" data-mode="upload" id="kproto-upload-panel">
+            <div class="data-import-block">
+              <h4>Upload CSV with mixed data types</h4>
+              <p>
+                Include a header row. Columns can be continuous (numeric values) or categorical (text labels). 
+                The tool auto-detects variable types, which you can adjust after upload. Limit: 5,000 rows.
+              </p>
+              <div class="dropzone" id="kproto-raw-dropzone" role="button" tabindex="0">
+                <p class="dropzone-title">Drag &amp; Drop CSV file (.csv, .tsv, .txt)</p>
+                <p class="dropzone-note">Include headers with mixed continuous and categorical columns.</p>
+                <button type="button" id="kproto-raw-browse" class="secondary">Browse files</button>
+              </div>
+              <input type="file" id="kproto-raw-input" 
+                accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,application/vnd.ms-excel" 
+                aria-label="Upload raw CSV" hidden>
+              <p class="upload-status" id="kproto-raw-feedback" aria-live="polite">No file uploaded.</p>
+            </div>
+          </div>
+
+          <div class="mode-panel" data-mode="demo" id="kproto-demo-panel">
+            <div class="data-import-block">
+              <h4>Use a demo segmentation dataset</h4>
+              <p>
+                Load a synthetic customer segmentation dataset with 3 continuous (spend, login frequency, tenure) 
+                and 3 categorical (region, tier, acquisition channel) variables. Includes 500 customers across 
+                4 natural segments.
+              </p>
+              <button type="button" id="kproto-load-demo" class="primary">Load demo dataset</button>
+              <p class="upload-feedback" id="kproto-demo-feedback" aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <div id="variable-assignment-panel" class="variable-assignment-panel hidden">
+          <h4>Variable selection &amp; type assignment</h4>
+          <p class="hint">
+            Select which variables to include in clustering and specify whether each is continuous or categorical. 
+            The tool auto-detects types based on data (numeric = continuous, text = categorical), but you can override.
+          </p>
+          <div id="kproto-variable-list" class="variable-list"></div>
+        </div>
+
+        <hr class="section-divider">
+
+        <div class="input-grid kproto-settings-grid">
+          <div>
+            <h4>Preprocessing &amp; clustering</h4>
+            <label for="kproto-scale-mode">Continuous variable scaling</label>
+            <select id="kproto-scale-mode">
+              <option value="none">None — use original scales</option>
+              <option value="zscore" selected>Standardize (z-scores: mean 0, sd 1)</option>
+              <option value="minmax">Rescale to 0–100 (min/max based)</option>
+            </select>
+            <label for="kproto-k">Number of clusters (k)</label>
+            <input type="number" id="kproto-k" min="2" max="12" step="1" value="3">
+            <label for="kproto-k-min">Range for diagnostics (min–max k)</label>
+            <div class="input-inline">
+              <input type="number" id="kproto-k-min" min="2" max="12" step="1" value="2">
+              <span class="inline-separator">to</span>
+              <input type="number" id="kproto-k-max" min="2" max="12" step="1" value="8">
+            </div>
+            <button type="button" id="kproto-run" class="primary">Run clustering &amp; update charts</button>
+          </div>
+          <div>
+            <h4>Advanced settings</h4>
+            <details class="advanced-settings">
+              <summary>Distance weight parameter (γ)</summary>
+              <p class="muted">
+                Gamma (γ) controls the relative weight of categorical vs. continuous variables in distance 
+                calculations. Auto-mode uses the average standard deviation of continuous features (typically 
+                works well). Increase γ to give categorical variables more influence; decrease to prioritize 
+                continuous variables.
+              </p>
+              <label>
+                <input type="checkbox" id="kproto-gamma-auto" checked> Auto-calculate gamma
+              </label>
+              <div id="kproto-gamma-manual" style="display: none;">
+                <label for="kproto-gamma-value">Gamma value</label>
+                <input type="number" id="kproto-gamma-value" min="0.1" max="100" step="0.1" value="1.0">
+              </div>
+              <p class="muted" id="kproto-gamma-display">Auto: γ = (will be calculated after data load)</p>
+            </details>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <details class="advanced-details">
+            <summary>Additional info &amp; guidance</summary>
+            <p>
+              Start with k=3–4 and run diagnostics for k=2–8. Look for an elbow in the cost plot and high silhouette 
+              values (&gt;0.3) to identify well-separated clusters. Because k-prototypes uses multiple random 
+              initializations, results are generally stable but may vary slightly between runs.
+            </p>
+            <p>
+              Standardization is recommended when continuous variables have very different scales (e.g., age 0–100 
+              vs. spend $0–$10,000). Note: standardization affects auto-calculated gamma by changing variance structure. 
+              If clusters seem overly driven by one variable type, adjust gamma manually.
+            </p>
+          </details>
+        </div>
+      </article>
+    </section>
+
+    <section class="visual-output" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      <div class="card">
+        <article class="chart-card">
+          <h3>Parallel Coordinates Plot</h3>
+          <div id="plot-parallel-coords" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Parallel coordinates plot showing cluster assignments across all variables."></div>
+          <p id="plot-parallel-caption" class="chart-note"></p>
+          <details class="interpretation-aid">
+            <summary>How to read this chart</summary>
+            <p class="muted">
+              Each line represents one observation, colored by cluster. Continuous axes show numeric scales; 
+              categorical axes show discrete levels. Look for line bundles within the same color—these indicate 
+              observations with similar profiles across multiple variables. Diverging patterns suggest different 
+              cluster characteristics.
+            </p>
+          </details>
+        </article>
+
+        <article class="chart-card">
+          <h3>Elbow Plot (Total Cost vs. k)</h3>
+          <div id="plot-elbow" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Elbow plot showing total cost for different cluster counts."></div>
+          <p id="plot-elbow-caption" class="chart-note"></p>
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p class="muted">
+              Total cost combines continuous squared distances and γ-weighted categorical mismatches. Look for an 
+              "elbow" where cost stops dropping significantly—this suggests a natural cluster count. Beyond the elbow, 
+              additional clusters provide diminishing value. Your selected k is highlighted.
+            </p>
+          </details>
+        </article>
+
+        <article class="chart-card">
+          <h3>Silhouette Plot (Average Silhouette vs. k)</h3>
+          <div id="plot-silhouette" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Silhouette plot showing cluster separation quality for different k values."></div>
+          <p id="plot-silhouette-caption" class="chart-note"></p>
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p class="muted">
+              Silhouette values range from -1 to 1. Higher values indicate better-defined clusters (observations 
+              are closer to their own cluster than to others). Values near 0 suggest overlapping clusters; negative 
+              values indicate possible misassignments.
+            </p>
+          </details>
+        </article>
+      </div>
+    </section>
+
+    <section class="results-section" aria-labelledby="results-heading">
+      <h2 id="results-heading">CLUSTER SUMMARY &amp; RESULTS</h2>
+      <div class="card">
+        <h3>Summary metrics</h3>
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="metric-label">k (clusters)</span>
+            <span class="metric-value" id="metric-k">--</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">n (observations)</span>
+            <span class="metric-value" id="metric-n">--</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Total cost</span>
+            <span class="metric-value" id="metric-cost">--</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Avg. silhouette</span>
+            <span class="metric-value" id="metric-silhouette">--</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Gamma (γ)</span>
+            <span class="metric-value" id="metric-gamma">--</span>
+          </div>
+        </div>
+
+        <h3>Cluster profiles</h3>
+        <p class="muted">
+          For continuous variables, values show cluster means. For categorical variables, values show the most 
+          frequent category (mode) in each cluster.
+        </p>
+        <div id="cluster-table-wrapper" class="table-wrapper">
+          <table class="results-table cluster-profile-table">
+            <thead id="cluster-table-head">
+              <tr><th>Cluster</th><th>Size</th></tr>
+            </thead>
+            <tbody id="cluster-table-body">
+              <tr><td colspan="2">Run clustering to see cluster profiles.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <details class="additional-notes">
+          <summary>Interpreting cluster profiles</summary>
+          <p>
+            Each row shows a cluster's prototype. For continuous variables, the table displays the mean value 
+            across all cluster members. For categorical variables, it shows the mode (most common category). Use 
+            these profiles to create business-friendly labels—e.g., a cluster with high spend, "West" region, and 
+            "Enterprise" tier might be "High-Value West Coast Enterprise Customers."
+          </p>
+        </details>
+
+        <div class="action-buttons">
+          <button type="button" id="kproto-download-results" class="secondary" disabled>Download cluster assignments</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="tool-footer">
+      <div class="footer-content">
+        <p class="muted">
+          <strong>Created:</strong> <span id="created-date">2026-01-12</span> | 
+          <strong>Modified:</strong> <span id="modified-date">2026-01-12</span>
+        </p>
+      </div>
+    </footer>
+  </main>
+
+  <script src="../../../shared/js/auth_bar.js"></script>
+  <script src="../../../shared/js/quiz_utils.js"></script>
+  <script>
+    if (typeof initQuizButton === 'function') {
+      document.addEventListener('DOMContentLoaded', () => {
+        initQuizButton('kprototypes');
+      });
+    }
+  </script>
+  <script src="main_kprototypes.js"></script>
+</body>
+
+</html>

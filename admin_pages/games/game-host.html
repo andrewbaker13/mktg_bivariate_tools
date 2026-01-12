@@ -2681,7 +2681,7 @@
         // Confirm and kick selected players
         async function confirmKickPlayers() {
             const checkboxes = document.querySelectorAll('#kickPlayersList input[type="checkbox"]:checked');
-            const playerIds = Array.from(checkboxes).map(cb => cb.value);
+            const playerIds = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
             
             if (playerIds.length === 0) {
                 alert('Please select at least one player to kick');
@@ -2702,7 +2702,10 @@
                     body: JSON.stringify({ player_ids: playerIds })
                 });
                 
-                if (!response.ok) throw new Error('Failed to kick players');
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(errorData.error || 'Failed to kick players');
+                }
                 
                 showToast(`${playerIds.length} player(s) kicked`, 'success');
                 closeKickPlayersModal();

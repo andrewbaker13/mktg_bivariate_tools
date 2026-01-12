@@ -633,6 +633,10 @@ function handleMessage(message) {
             console.log('Player disconnected:', message.player_id);
             break;
             
+        case 'player_kicked':
+            handlePlayerKicked(message);
+            break;
+            
         case 'answer_result':
             // Handle wrong answer feedback for Speed Tap
             if (!message.is_correct) {
@@ -1905,6 +1909,47 @@ function handleGameEnd(message) {
     } else {
         // Final round - show final standings
         showFinalStandings(message, leaderboardVisibility);
+    }
+}
+
+function handlePlayerKicked(message) {
+    console.log('Player kicked:', message);
+    
+    // Get the current player's session ID
+    const playerSession = JSON.parse(sessionStorage.getItem('playerSession'));
+    
+    // Check if this player was kicked (use == for loose comparison to handle type differences)
+    if (playerSession && message.player_id == playerSession.id) {
+        // Close the WebSocket connection
+        if (window.websocket) {
+            window.websocket.close();
+        }
+        
+        // Show kicked message
+        const gameArea = document.getElementById('gameArea');
+        gameArea.innerHTML = `
+            <div class="waiting-state" style="text-align: center;">
+                <div style="font-size: 64px; margin-bottom: 1.5rem;">👢</div>
+                <h2 style="color: #ef4444;">You Have Been Removed</h2>
+                <p style="color: #64748b; font-size: 1.1rem; margin: 1.5rem 0;">
+                    The host has removed you from this game session.
+                </p>
+                <p style="color: #94a3b8; font-size: 0.95rem;">
+                    ${message.reason || 'No reason provided'}
+                </p>
+                <div style="margin-top: 2rem;">
+                    <a href="game-join.html" style="display: inline-block; background: #3b82f6; color: white; padding: 1rem 2rem; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1.1rem;">
+                        Join Another Game
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        // Clear leaderboard
+        const leaderboard = document.getElementById('leaderboard');
+        if (leaderboard) {
+            leaderboard.style.display = 'none';
+        }
     }
 }
 

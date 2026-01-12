@@ -89,9 +89,9 @@
         </div>
         <div id="scenario-description">
           <p>
-            Use presets to load example segmentation datasets (such as customers with revenue and engagement metrics or
-            campaigns with spend and response). You can download the scenario data to tweak it in Excel or Numbers and
-            then re-upload.
+            Use presets to load example segmentation datasets (such as customers with RFM metrics, email campaign 
+            performance, or product portfolio data). You can download the scenario data to tweak it in Excel or 
+            Numbers and then re-upload.
           </p>
         </div>
       </div>
@@ -117,14 +117,15 @@
                 Provide a header row and numeric columns only (up to 5,000 observations). After upload you can choose
                 which variables to include in the clustering and which to plot on the chart.
               </p>
-              <div class="upload-dropzone" id="kmeans-raw-dropzone" tabindex="0">
-                <input id="kmeans-raw-input" type="file"
-                  accept=".csv,.tsv,text/csv,text/tab-separated-values,application/vnd.ms-excel"
-                  aria-label="Upload raw CSV">
-                <p>Drop a CSV/TSV here, or <button type="button" id="kmeans-raw-browse" class="linklike">browse
-                    files</button>.</p>
+              <div class="dropzone" id="kmeans-raw-dropzone" role="button" tabindex="0">
+                <p class="dropzone-title">Drag &amp; Drop CSV file (.csv, .tsv, .txt)</p>
+                <p class="dropzone-note">Include headers with numeric columns for clustering analysis.</p>
+                <button type="button" id="kmeans-raw-browse" class="secondary">Browse files</button>
               </div>
-              <p class="upload-feedback" id="kmeans-raw-feedback" aria-live="polite"></p>
+              <input type="file" id="kmeans-raw-input" 
+                accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,application/vnd.ms-excel" 
+                aria-label="Upload raw CSV" hidden>
+              <p class="upload-status" id="kmeans-raw-feedback" aria-live="polite">No file uploaded.</p>
             </div>
           </div>
 

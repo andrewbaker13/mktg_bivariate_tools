@@ -78,11 +78,22 @@ function stampModified() {
 
 const KMEANS_SCENARIOS = [
   {
-    id: 'customer-value-engagement',
-    label: 'Customer value & engagement (3 segments)',
-    description:
-      'Synthetic dataset with three customer segments varying on annual spend, visits per month, and email open rate.',
-    generate: generateDemoCustomerData
+    id: 'customer-rfm',
+    label: 'Customer RFM Segmentation',
+    description: () => generateRFMScenarioHtml(),
+    generate: generateRFMData
+  },
+  {
+    id: 'email-campaigns',
+    label: 'Email Campaign Performance',
+    description: () => generateEmailCampaignHtml(),
+    generate: generateEmailCampaignData
+  },
+  {
+    id: 'product-portfolio',
+    label: 'Product Portfolio Positioning',
+    description: () => generateProductPortfolioHtml(),
+    generate: generateProductPortfolioData
   }
 ];
 
@@ -102,15 +113,11 @@ function setupScenarioSelect() {
     if (!selected) {
       activeScenario = null;
       activeScenarioCsv = null;
-      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
-        window.UIUtils.renderScenarioDescription({
-          containerId: 'scenario-description',
-          title: '',
-          description: '',
-          defaultHtml:
-            '<p>Use presets to load example segmentation datasets, then adjust the number of clusters and variables.</p>'
-        });
-      }
+      const defaultHtml = `
+        <p>Use presets to load example segmentation datasets (such as customers with RFM metrics, email campaign performance, or product portfolio data). You can download the scenario data to tweak it in Excel or Numbers and then re-upload.</p>
+      `;
+      const descEl = document.getElementById('scenario-description');
+      if (descEl) descEl.innerHTML = defaultHtml;
       updateScenarioDownloadButton();
       return;
     }
@@ -120,13 +127,8 @@ function setupScenarioSelect() {
     activeScenarioCsv = data.csvText || null;
     loadDataset(data.headers, data.rows, { sourceLabel: 'scenario' });
 
-    if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
-      window.UIUtils.renderScenarioDescription({
-        containerId: 'scenario-description',
-        title: selected.label,
-        description: selected.description
-      });
-    }
+    const descEl = document.getElementById('scenario-description');
+    if (descEl) descEl.innerHTML = selected.description();
     updateScenarioDownloadButton();
     
     // Track scenario loading
@@ -165,16 +167,329 @@ function generateDemoCustomerData() {
 
   const addCluster = (n, means, sds) => {
     for (let i = 0; i < n; i++) {
-      rows.push(means.map((m, idx) => m + randomNormal(0, sds[idx])));
+      rows.push(means.map((m, idx) => Math.max(0, m + randomNormal(0, sds[idx]))));
     }
   };
 
-  // Low value / low engagement
-  addCluster(nPerCluster, [250, 1.2, 0.10], [40, 0.3, 0.02]);
-  // Mid value / mid engagement
-  addCluster(nPerCluster, [650, 2.5, 0.22], [60, 0.4, 0.03]);
-  // High value / high engagement
-  addCluster(nPerCluster, [1500, 4.5, 0.38], [120, 0.6, 0.04]);
+  addCluster(nPerCluster, [2000, 8, 0.35], [600, 3, 0.08]);
+  addCluster(nPerCluster, [800, 2, 0.15], [300, 1, 0.05]);
+  addCluster(nPerCluster, [5000, 15, 0.55], [1200, 5, 0.12]);
+
+  return { headers, rows };
+}
+
+// -------------------- Scenario HTML Generators --------------------
+
+function generateRFMScenarioHtml() {
+  return `
+    <div class="scenario-description">
+      <div class="scenario-header">
+        <span class="scenario-icon">👥</span>
+        <h4>Customer RFM Segmentation</h4>
+        <span class="scenario-badge">800 Customers</span>
+      </div>
+      
+      <p class="scenario-intro">
+        You're a CRM analyst at a subscription-based SaaS company. Leadership wants to segment the customer base 
+        to tailor retention campaigns, identify high-value customers for VIP treatment, and flag at-risk accounts 
+        before they churn.
+      </p>
+      
+      <div class="scenario-variables">
+        <h5>📋 Variables</h5>
+        <table class="scenario-var-table">
+          <tr>
+            <td><span class="var-tag predictor">recency_days</span></td>
+            <td>Days since last purchase/activity (lower = more recent)</td>
+          </tr>
+          <tr>
+            <td><span class="var-tag predictor">frequency</span></td>
+            <td>Number of purchases in last 12 months</td>
+          </tr>
+          <tr>
+            <td><span class="var-tag predictor">monetary_value</span></td>
+            <td>Total spending ($) in last 12 months</td>
+          </tr>
+        </table>
+      </div>
+      
+      <div class="scenario-context">
+        <h5>🎯 Business Context</h5>
+        <div class="context-grid">
+          <div class="context-item">
+            <strong>Industry</strong>
+            <span>SaaS B2B</span>
+          </div>
+          <div class="context-item">
+            <strong>Segment Goal</strong>
+            <span>Retention</span>
+          </div>
+          <div class="context-item">
+            <strong>Time Window</strong>
+            <span>12 Months</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="scenario-insights">
+        <h5>💡 What to Look For</h5>
+        <ul>
+          <li>Champions (low recency, high frequency, high value) - your VIP segment</li>
+          <li>At-Risk (high recency, low frequency) - needs win-back campaign</li>
+          <li>Loyal Customers (medium recency, high frequency) - retention focus</li>
+          <li>Lost (very high recency, low value) - consider reactivation vs. churn acceptance</li>
+        </ul>
+      </div>
+      
+      <div class="scenario-tip">
+        <strong>💡 Pro Tip:</strong> Try k=4 clusters to capture Champions, Loyal, At-Risk, and Lost segments. 
+        Examine the cluster profile table to assign actionable names based on RFM characteristics.
+      </div>
+      
+      <div class="scenario-questions">
+        <h5>❓ Analysis Questions</h5>
+        <ol>
+          <li>Which segment has the highest average monetary value and could be targeted for upsell?</li>
+          <li>How many customers fall into the "at-risk" category (high recency, declining frequency)?</li>
+          <li>What campaign strategy would you recommend for each segment?</li>
+        </ol>
+      </div>
+    </div>
+  `;
+}
+
+function generateEmailCampaignHtml() {
+  return `
+    <div class="scenario-description">
+      <div class="scenario-header">
+        <span class="scenario-icon">📧</span>
+        <h4>Email Campaign Performance</h4>
+        <span class="scenario-badge">450 Campaigns</span>
+      </div>
+      
+      <p class="scenario-intro">
+        You're an email marketing manager analyzing 18 months of campaign data. The goal is to identify distinct 
+        campaign performance clusters to optimize resource allocation and replicate high-performing patterns.
+      </p>
+      
+      <div class="scenario-variables">
+        <h5>📋 Variables</h5>
+        <table class="scenario-var-table">
+          <tr>
+            <td><span class="var-tag predictor">open_rate</span></td>
+            <td>Email open rate (0-1 scale)</td>
+          </tr>
+          <tr>
+            <td><span class="var-tag predictor">click_rate</span></td>
+            <td>Click-through rate (0-1 scale)</td>
+          </tr>
+          <tr>
+            <td><span class="var-tag predictor">conversion_rate</span></td>
+            <td>Conversion rate from email (0-1 scale)</td>
+          </tr>
+          <tr>
+            <td><span class="var-tag predictor">unsubscribe_rate</span></td>
+            <td>Unsubscribe rate (0-1 scale, lower is better)</td>
+          </tr>
+        </table>
+      </div>
+      
+      <div class="scenario-context">
+        <h5>🎯 Business Context</h5>
+        <div class="context-grid">
+          <div class="context-item">
+            <strong>Channel</strong>
+            <span>Email</span>
+          </div>
+          <div class="context-item">
+            <strong>Time Period</strong>
+            <span>18 Months</span>
+          </div>
+          <div class="context-item">
+            <strong>Campaign Types</strong>
+            <span>Mixed</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="scenario-insights">
+        <h5>💡 What to Look For</h5>
+        <ul>
+          <li>High performers (high open, click, and conversion; low unsubscribe)</li>
+          <li>Curiosity openers (high open but low click/conversion) - subject line works but content doesn't</li>
+          <li>Underperformers (low engagement across all metrics) - candidates for A/B testing or retirement</li>
+        </ul>
+      </div>
+      
+      <div class="scenario-tip">
+        <strong>💡 Pro Tip:</strong> Start with k=3 to separate winners, mixed performers, and losers. 
+        Check the silhouette plot to see if tighter clusters emerge with different k values.
+      </div>
+      
+      <div class="scenario-questions">
+        <h5>❓ Analysis Questions</h5>
+        <ol>
+          <li>Which cluster represents your best-performing campaigns to replicate?</li>
+          <li>Are there campaigns with high open rates but poor conversions? What might explain this?</li>
+          <li>What percentage of campaigns fall into the underperforming cluster?</li>
+        </ol>
+      </div>
+    </div>
+  `;
+}
+
+function generateProductPortfolioHtml() {
+  return `
+    <div class="scenario-description">
+      <div class="scenario-header">
+        <span class="scenario-icon">📦</span>
+        <h4>Product Portfolio Positioning</h4>
+        <span class="scenario-badge">300 SKUs</span>
+      </div>
+      
+      <p class="scenario-intro">
+        You're a product manager at a consumer goods company with a large SKU portfolio. The executive team wants 
+        to rationalize the product line by identifying strategic groups based on pricing, profitability, and market 
+        performance.
+      </p>
+      
+      <div class="scenario-variables">
+        <h5>📋 Variables</h5>
+        <table class="scenario-var-table">
+          <tr>
+            <td><span class="var-tag predictor">price_point</span></td>
+            <td>Average retail price ($)</td>
+          </tr>
+          <tr>
+            <td><span class="var-tag predictor">gross_margin</span></td>
+            <td>Gross margin percentage (0-1 scale)</td>
+          </tr>
+          <tr>
+            <td><span class="var-tag predictor">sales_volume</span></td>
+            <td>Annual unit sales (thousands)</td>
+          </tr>
+          <tr>
+            <td><span class="var-tag predictor">market_share</span></td>
+            <td>Category market share (0-1 scale)</td>
+          </tr>
+        </table>
+      </div>
+      
+      <div class="scenario-context">
+        <h5>🎯 Business Context</h5>
+        <div class="context-grid">
+          <div class="context-item">
+            <strong>Industry</strong>
+            <span>Consumer Goods</span>
+          </div>
+          <div class="context-item">
+            <strong>Goal</strong>
+            <span>SKU Rationalization</span>
+          </div>
+          <div class="context-item">
+            <strong>Portfolio Size</strong>
+            <span>300 Products</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="scenario-insights">
+        <h5>💡 What to Look For</h5>
+        <ul>
+          <li>Stars (high margin, high volume, strong market share) - protect and invest</li>
+          <li>Cash cows (high margin, moderate volume) - milk for profitability</li>
+          <li>Dogs (low margin, low volume, weak share) - candidates for discontinuation</li>
+        </ul>
+      </div>
+      
+      <div class="scenario-tip">
+        <strong>💡 Pro Tip:</strong> Use k=3 or k=4 to map products into strategic quadrants. 
+        Enable feature scaling (Z-score) to ensure price and margin get equal weight despite different scales.
+      </div>
+      
+      <div class="scenario-questions">
+        <h5>❓ Analysis Questions</h5>
+        <ol>
+          <li>Which cluster represents your "star" products that deserve continued investment?</li>
+          <li>How many SKUs fall into the low-margin, low-volume "dog" category?</li>
+          <li>Are there products with high market share but declining margins that need repricing?</li>
+        </ol>
+      </div>
+    </div>
+  `;
+}
+
+// -------------------- Data Generators --------------------
+
+function generateRFMData() {
+  const headers = ['recency_days', 'frequency', 'monetary_value'];
+  const rows = [];
+  const nPerCluster = 200;
+
+  const addCluster = (n, means, sds) => {
+    for (let i = 0; i < n; i++) {
+      rows.push(means.map((m, idx) => Math.max(0, m + randomNormal(0, sds[idx]))));
+    }
+  };
+
+  // Champions: low recency, high frequency, high value
+  addCluster(nPerCluster, [15, 12, 2400], [8, 3, 400]);
+  // Loyal: medium recency, high frequency, medium value
+  addCluster(nPerCluster, [45, 9, 1200], [15, 2, 300]);
+  // At-Risk: high recency, low frequency, low value
+  addCluster(nPerCluster, [120, 3, 450], [30, 1.5, 150]);
+  // Lost: very high recency, very low frequency, very low value
+  addCluster(nPerCluster, [250, 1.5, 180], [50, 0.8, 80]);
+
+  const csvLines = [headers.join(',')].concat(
+    rows.map(row => row.map(v => v.toFixed(2)).join(','))
+  );
+
+  return { headers, rows, csvText: csvLines.join('\n') };
+}
+
+function generateEmailCampaignData() {
+  const headers = ['open_rate', 'click_rate', 'conversion_rate', 'unsubscribe_rate'];
+  const rows = [];
+  const nPerCluster = 150;
+
+  const addCluster = (n, means, sds) => {
+    for (let i = 0; i < n; i++) {
+      rows.push(means.map((m, idx) => Math.max(0, Math.min(1, m + randomNormal(0, sds[idx])))));
+    }
+  };
+
+  // High performers
+  addCluster(nPerCluster, [0.32, 0.08, 0.025, 0.002], [0.05, 0.015, 0.008, 0.001]);
+  // Mixed performers
+  addCluster(nPerCluster, [0.22, 0.04, 0.012, 0.005], [0.04, 0.01, 0.004, 0.002]);
+  // Underperformers
+  addCluster(nPerCluster, [0.12, 0.015, 0.003, 0.012], [0.03, 0.008, 0.002, 0.004]);
+
+  const csvLines = [headers.join(',')].concat(
+    rows.map(row => row.map(v => v.toFixed(4)).join(','))
+  );
+
+  return { headers, rows, csvText: csvLines.join('\n') };
+}
+
+function generateProductPortfolioData() {
+  const headers = ['price_point', 'gross_margin', 'sales_volume', 'market_share'];
+  const rows = [];
+  const nPerCluster = 100;
+
+  const addCluster = (n, means, sds) => {
+    for (let i = 0; i < n; i++) {
+      rows.push(means.map((m, idx) => Math.max(0, m + randomNormal(0, sds[idx]))));
+    }
+  };
+
+  // Stars: high margin, high volume, strong share
+  addCluster(nPerCluster, [45, 0.42, 850, 0.18], [10, 0.06, 150, 0.04]);
+  // Cash cows: high margin, moderate volume
+  addCluster(nPerCluster, [65, 0.55, 320, 0.08], [15, 0.08, 80, 0.03]);
+  // Dogs: low margin, low volume, weak share
+  addCluster(nPerCluster, [25, 0.22, 120, 0.03], [8, 0.05, 50, 0.015]);
 
   const csvLines = [headers.join(',')].concat(
     rows.map(row => row.map(v => v.toFixed(3)).join(','))
@@ -234,7 +549,7 @@ function setupUpload() {
         const { headers, rows } = parseDelimitedText(text, null, { maxRows: MAX_UPLOAD_ROWS });
         loadDataset(headers, rows, { sourceLabel: 'upload' });
         setFeedback(
-          `Loaded ${rows.length} row(s) with ${headers.length} column(s). All columns are treated as numeric features.`,
+          `✓ Loaded ${rows.length} row(s) with ${headers.length} column(s).`,
           'success'
         );
         
@@ -275,15 +590,20 @@ function setupDemoLoader() {
 
   button.addEventListener('click', event => {
     event.preventDefault();
-    const demo = generateDemoCustomerData();
+    const demo = generateRFMData();
     activeScenario = KMEANS_SCENARIOS[0];
     activeScenarioCsv = demo.csvText;
     loadDataset(demo.headers, demo.rows, { sourceLabel: 'demo' });
     setFeedback(
-      `Loaded demo dataset with ${demo.rows.length} customers and ${demo.headers.length} features.`,
+      `Loaded demo dataset with ${demo.rows.length} customers and ${demo.headers.length} features (RFM segmentation).`,
       'success'
     );
     updateScenarioDownloadButton();
+    
+    // Track demo load
+    if (typeof markScenarioLoaded === 'function') {
+      markScenarioLoaded('Demo: RFM Segmentation');
+    }
   });
 }
 
