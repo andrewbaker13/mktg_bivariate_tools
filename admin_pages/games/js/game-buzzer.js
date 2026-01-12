@@ -12,6 +12,8 @@ const buzzerState = {
     isDisqualified: false,
     hasPenalty: false,
     falseStartPenalty: 250, // Configurable penalty (received from backend)
+    rubberBandingMs: 0, // Rubber-banding handicap for winners
+    wasWinnerLastRound: false, // Track if this player won last round
     myRank: null,
     clockOffsetMs: 0, // Client time ahead of server by this amount
     syncHistory: [], // Store last 5 sync measurements
@@ -20,6 +22,9 @@ const buzzerState = {
     autoResetMs: 0
 };
 
+// Track last press time to prevent duplicate touch/click events
+let lastBuzzerPressTime = 0;
+
 // Time sync - track offset between client and server clocks
 function startTimeSync() {
     console.log('[BUZZER] Starting time sync...');
@@ -27,13 +32,27 @@ function startTimeSync() {
     // Initial sync
     sendTimePing();
     
-    // Periodic sync every 12 seconds
+    // Start with default interval
     if (buzzerState.syncIntervalId) {
         clearInterval(buzzerState.syncIntervalId);
     }
-    buzzerState.syncIntervalId = setInterval(() => {
-        sendTimePing();
-    }, 12000);
+    
+    // Adaptive sync frequency: faster during active gameplay for better fairness
+    function scheduleSyncInterval() {
+        if (buzzerState.syncIntervalId) {
+            clearInterval(buzzerState.syncIntervalId);
+        }
+        
+        // Sync every 3 seconds during active rounds (ARMED/LIVE), every 12 seconds when idle (RESET)
+        const intervalMs = (buzzerState.phase === 'ARMED' || buzzerState.phase === 'LIVE') ? 3000 : 12000;
+        
+        buzzerState.syncIntervalId = setInterval(() => {
+            sendTimePing();
+            scheduleSyncInterval(); // Re-evaluate interval based on current phase
+        }, intervalMs);
+    }
+    
+    scheduleSyncInterval();
 }
 
 function sendTimePing() {
@@ -143,8 +162,9 @@ function showBuzzerUI(gameData) {
         </div>
     `;
     
-    // Attach button event
+    // Attach button events - touchstart for reliable mobile, click for desktop fallback
     const buzzerBtn = document.getElementById('buzzerBtn');
+    buzzerBtn.addEventListener('touchstart', handleBuzzerPress);
     buzzerBtn.addEventListener('click', handleBuzzerPress);
     
     // Start time synchronization
@@ -152,12 +172,24 @@ function showBuzzerUI(gameData) {
 }
 
 // Handle buzzer button press
-function handleBuzzerPress() {
+function handleBuzzerPress(event) {
     const now = Date.now();
+    
+    // Prevent duplicate events within 100ms (touch + synthesized click)
+    if (now - lastBuzzerPressTime < 100) {
+        return;
+    }
+    lastBuzzerPressTime = now;
+    
+    // Prevent synthesized click after touchstart
+    if (event.type === 'touchstart') {
+        event.preventDefault();
+    }
     
     // Check if disqualified
     if (buzzerState.isDisqualified) {
-        console.log('[BUZZER] Ignoring press - disqualified this round');
+        console.log('[BUZZER] ⚠️ PRESS BLOCKED - isDisqualified=true (this may indicate a bug if not in a false-start round)');
+        console.log('[BUZZER] Current phase:', buzzerState.phase, 'roundId:', buzzerState.roundId);
         return;
     }
     
@@ -168,11 +200,53 @@ function handleBuzzerPress() {
     }
     
     // Check current phase
-    if (buzzerState.phase === 'LOCKED' || buzzerState.phase === 'ARMED') {
+    if (buzzerState.phase === 'LOCKED' || buzzerState.phase === 'ARMED' || buzzerState.phase === 'LIVE_SCHEDULED') {
         // FALSE START!
-        console.log('[BUZZER] FALSE START - pressed while locked');
+        console.log('[BUZZER] FALSE START - pressed while locked/armed/scheduled (phase:', buzzerState.phase, ')');
         buzzerState.isDisqualified = true;
         buzzerState.hasBuzzed = true;
+        
+        // Show dramatic punishment overlay
+        const buzzerArea = document.querySelector('.buzzer-area');
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            inset: 0;
+            background: rgba(239, 68, 68, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: redFlash 0.5s ease-out;
+        `;
+        overlay.innerHTML = `
+            <div style="font-size: 5rem; margin-bottom: 1rem; animation: shakeText 0.5s ease-in-out;">⚠️</div>
+            <div style="font-size: 2.5rem; font-weight: 900; color: white; text-transform: uppercase; letter-spacing: 0.1em; text-shadow: 0 4px 8px rgba(0,0,0,0.3); animation: shakeText 0.5s ease-in-out;">TOO EARLY!</div>
+            <div style="font-size: 1.2rem; font-weight: 600; color: white; margin-top: 1rem; opacity: 0.9;">Disqualified this round</div>
+        `;
+        
+        // Add flash animation styles if not already present
+        if (!document.getElementById('falseStartStyles')) {
+            const style = document.createElement('style');
+            style.id = 'falseStartStyles';
+            style.textContent = `
+                @keyframes redFlash {
+                    0% { opacity: 0; }
+                    10% { opacity: 1; background: rgba(239, 68, 68, 0.95); }
+                    100% { opacity: 0; }
+                }
+                @keyframes shakeText {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-15px); }
+                    20%, 40%, 60%, 80% { transform: translateX(15px); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.remove(), 500);
         
         websocket.send(JSON.stringify({
             action: 'buzzer_false_start',
@@ -211,6 +285,7 @@ function handleBuzzerPress() {
 // Handle buzzer state updates from server
 function handleBuzzerArm(data) {
     console.log('[BUZZER] Round armed:', data);
+    console.log('[BUZZER] Previous state - isDisqualified:', buzzerState.isDisqualified, 'hasBuzzed:', buzzerState.hasBuzzed);
     
     buzzerState.phase = 'ARMED';
     buzzerState.roundId = data.roundId;
@@ -218,6 +293,8 @@ function handleBuzzerArm(data) {
     buzzerState.isDisqualified = false;
     buzzerState.myRank = null;
     buzzerState.releaseAtServerMs = null;
+    
+    console.log('[BUZZER] State reset - isDisqualified:', buzzerState.isDisqualified, 'hasBuzzed:', buzzerState.hasBuzzed);
     
     // Show button, hide results
     document.getElementById('buzzerButtonContainer').style.display = 'block';
@@ -228,9 +305,23 @@ function handleBuzzerArm(data) {
         buzzerState.falseStartPenalty = data.falseStartPenalty;
     }
     
-    // Check if this player has a penalty
+    // Store rubber-banding setting and check if this player won last round
+    if (data.rubberBandingMs !== undefined) {
+        buzzerState.rubberBandingMs = data.rubberBandingMs;
+    }
+    
     const playerSession = JSON.parse(sessionStorage.getItem('playerSession') || '{}');
     const myPlayerId = playerSession.id;
+    
+    // Check if this player won last round (gets rubber-banding handicap)
+    if (data.lastRoundWinnerId && data.lastRoundWinnerId === myPlayerId && buzzerState.rubberBandingMs > 0) {
+        buzzerState.wasWinnerLastRound = true;
+        console.log(`[BUZZER] Player won last round - will receive +${buzzerState.rubberBandingMs}ms hidden handicap`);
+    } else {
+        buzzerState.wasWinnerLastRound = false;
+    }
+    
+    // Check if this player has a penalty
     const penalizedPlayerIds = data.penalizedPlayerIds || [];
     
     if (penalizedPlayerIds.includes(myPlayerId)) {
@@ -262,17 +353,27 @@ function handleBuzzerArm(data) {
     updateBuzzerButton('locked', 'DON\'T PRESS', false);
     updateBuzzerStatus('locked', '🔶 Round armed - button will turn green soon...');
     
-    // Refresh time sync right before enable
+    // Refresh time sync immediately when round arms (gives ~200-500ms for response before ENABLE)
+    // This ensures we have a fresh clock offset before the button goes live
     sendTimePing();
 }
 
 function handleBuzzerEnable(data) {
     console.log('[BUZZER] Buzzer enabled:', data);
     
-    buzzerState.phase = 'LIVE';
+    // DEFENSIVE RESET: Additional safeguard in case ARM handler didn't fire
+    // Only reset if not already buzzed in this round
+    if (!buzzerState.hasBuzzed) {
+        buzzerState.isDisqualified = false;
+        console.log('[BUZZER] Enable - defensive reset of isDisqualified flag');
+    }
+    
+    // Set to LIVE_SCHEDULED - not actually live until release time!
+    buzzerState.phase = 'LIVE_SCHEDULED';
     buzzerState.releaseAtServerMs = data.releaseAtServerMs;
     buzzerState.autoResetMs = data.autoResetMs || 0;
     
+    console.log('[BUZZER] Phase set to LIVE_SCHEDULED - will go LIVE at release time');
     console.log('[BUZZER] Auto-reset value received:', buzzerState.autoResetMs);
     
     // Store penalty setting
@@ -282,19 +383,31 @@ function handleBuzzerEnable(data) {
     const serverNow = Date.now() - buzzerState.clockOffsetMs;
     let delayMs = buzzerState.releaseAtServerMs - serverNow;
     
-    // Apply penalty if present
+    // Apply false start penalty if present
     if (buzzerState.hasPenalty) {
         delayMs += buzzerState.falseStartPenalty;
-        console.log(`[BUZZER] Penalty applied: +${buzzerState.falseStartPenalty}ms delay`);
+        console.log(`[BUZZER] False start penalty applied: +${buzzerState.falseStartPenalty}ms delay`);
         // Clear penalty after applying
         buzzerState.hasPenalty = false;
     }
     
+    // Apply rubber-banding handicap if player won last round (hidden from player)
+    if (buzzerState.wasWinnerLastRound) {
+        delayMs += buzzerState.rubberBandingMs;
+        console.log(`[BUZZER] 🎯 Rubber-banding handicap applied: +${buzzerState.rubberBandingMs}ms (hidden)`);
+        // Clear flag after applying
+        buzzerState.wasWinnerLastRound = false;
+    }
+    
     updateBuzzerStatus('locked', '🟡 Get ready...');
     
-    // Schedule button to turn green
+    // Schedule BOTH button UI update AND phase transition to LIVE at the same time
     setTimeout(() => {
         if (!buzzerState.hasBuzzed && !buzzerState.isDisqualified) {
+            // Now it's actually LIVE - button and phase sync!
+            buzzerState.phase = 'LIVE';
+            console.log('[BUZZER] Phase transitioned to LIVE - button is now active!');
+            
             updateBuzzerButton('live', '🟢 BUZZ IN', false);
             updateBuzzerStatus('live', '🟢 BUZZ NOW!');
         }
@@ -310,6 +423,12 @@ function handleBuzzerReset(data) {
     console.log('[BUZZER] Round reset:', data);
     
     buzzerState.phase = 'RESET';
+    
+    // DEFENSIVE RESET: Clear disqualified/buzzed state to prevent permanent lockout
+    // This ensures player can participate in next round even if ARM message is missed
+    buzzerState.isDisqualified = false;
+    buzzerState.hasBuzzed = false;
+    console.log('[BUZZER] Reset - cleared isDisqualified and hasBuzzed flags');
     
     // Clear countdown
     clearCountdown();
@@ -431,17 +550,85 @@ function displayFullResults(data) {
         rankedSection.style.display = 'block';
         rankedList.innerHTML = data.rankedBuzzers.map(buzz => {
             const isMe = buzz.playerId === myPlayerId;
-            const rankClass = buzz.rank === 1 ? 'first' : buzz.rank === 2 ? 'second' : buzz.rank === 3 ? 'third' : 'other';
-            const highlightStyle = isMe ? 'background: linear-gradient(90deg, #dbeafe 0%, white 100%); border: 2px solid #3b82f6;' : '';
+            const rank = buzz.rank;
+            
+            // Dramatic styling based on rank
+            let cardStyle, rankStyle, borderColor, bgGradient;
+            
+            if (rank === 1) {
+                // GOLD PODIUM - Huge and special
+                cardStyle = 'padding: 1.5rem; font-size: 1.1rem; box-shadow: 0 8px 20px rgba(251, 191, 36, 0.4); transform: scale(1.05);';
+                rankStyle = 'font-size: 3rem; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 2px 4px rgba(251, 191, 36, 0.5));';
+                borderColor = '#fbbf24';
+                bgGradient = 'background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, white 100%);';
+            } else if (rank === 2) {
+                // SILVER - Notable
+                cardStyle = 'padding: 1.2rem; box-shadow: 0 4px 12px rgba(148, 163, 184, 0.3);';
+                rankStyle = 'font-size: 2.2rem; background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;';
+                borderColor = '#cbd5e1';
+                bgGradient = 'background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, white 100%);';
+            } else if (rank === 3) {
+                // BRONZE - Respectable
+                cardStyle = 'padding: 1.2rem; box-shadow: 0 4px 12px rgba(180, 83, 9, 0.2);';
+                rankStyle = 'font-size: 2.2rem; color: #cd7f32; filter: drop-shadow(0 1px 2px rgba(180, 83, 9, 0.3));';
+                borderColor = '#d97706';
+                bgGradient = 'background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 50%, white 100%);';
+            } else if (rank <= data.rankedBuzzers.length * 0.25) {
+                // Top 25% - Green (good job)
+                cardStyle = 'padding: 0.9rem;';
+                rankStyle = 'font-size: 1.8rem; color: #10b981;';
+                borderColor = '#10b981';
+                bgGradient = 'background: linear-gradient(90deg, #d1fae5 0%, white 100%);';
+            } else if (rank <= data.rankedBuzzers.length * 0.75) {
+                // Middle 50% - Yellow (okay)
+                cardStyle = 'padding: 0.9rem;';
+                rankStyle = 'font-size: 1.8rem; color: #f59e0b;';
+                borderColor = '#f59e0b';
+                bgGradient = 'background: white;';
+            } else {
+                // Bottom 25% - Red/Pink (room to improve)
+                cardStyle = 'padding: 0.9rem;';
+                rankStyle = 'font-size: 1.8rem; color: #ef4444;';
+                borderColor = '#fecaca';
+                bgGradient = 'background: linear-gradient(90deg, #fee2e2 0%, white 100%);';
+            }
+            
+            // Enhanced YOU highlighting
+            const youHighlight = isMe ? `
+                border: 3px solid #3b82f6 !important;
+                box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), 0 8px 16px rgba(59, 130, 246, 0.3) !important;
+                animation: pulseYou 2s ease-in-out infinite;
+                position: relative;
+            ` : '';
+            
+            const youBadge = isMe ? `
+                <div style="position: absolute; top: -12px; right: 10px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 0.4rem 0.8rem; border-radius: 12px; font-size: 0.75rem; font-weight: 900; box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4); letter-spacing: 0.05em;">
+                    🎯 YOU
+                </div>
+            ` : '';
+            
+            // Add animation style for YOU pulsing
+            if (isMe && !document.getElementById('youPulseStyle')) {
+                const style = document.createElement('style');
+                style.id = 'youPulseStyle';
+                style.textContent = `
+                    @keyframes pulseYou {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.02); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
             
             return `
-                <div style="background: white; border: 2px solid #e2e8f0; border-left: 4px solid #10b981; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; ${highlightStyle}">
-                    <div style="font-size: 1.5rem; font-weight: 900; width: 35px; text-align: center; color: ${rankClass === 'first' ? '#fbbf24' : rankClass === 'second' ? '#94a3b8' : rankClass === 'third' ? '#cd7f32' : '#cbd5e1'};">
-                        ${buzz.rank}
+                <div style="${bgGradient} border: 2px solid ${borderColor}; border-radius: 12px; ${cardStyle} margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; ${youHighlight} transition: all 0.3s ease;">
+                    ${youBadge}
+                    <div style="${rankStyle} font-weight: 900; width: 50px; text-align: center;">
+                        ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}
                     </div>
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-size: 0.95rem; font-weight: 700; color: #1e293b;">${buzz.playerName}${isMe ? ' (You)' : ''}</div>
-                        <div style="font-size: 0.8rem; color: #64748b; font-family: 'Courier New', monospace; font-weight: 600;">+${buzz.timeAfterReleaseMs.toFixed(0)}ms</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">${buzz.playerName}</div>
+                        <div style="font-size: 0.85rem; color: #64748b; font-family: 'Courier New', monospace; font-weight: 600;">+${buzz.timeAfterReleaseMs.toFixed(0)}ms</div>
                     </div>
                     ${buzz.hadPenalty ? '<div style="padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.65rem; font-weight: 800; background: #f59e0b; color: white;">PENALTY</div>' : ''}
                 </div>

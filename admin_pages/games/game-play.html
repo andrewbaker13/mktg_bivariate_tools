@@ -809,7 +809,26 @@
         .buzzer-btn.live {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
-            animation: pulseBuzzer 1.5s ease-in-out infinite;
+            animation: pulseBuzzer 1s ease-in-out infinite, vibrateButton 0.15s ease-in-out infinite;
+            position: relative;
+        }
+        .buzzer-btn.live::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 28px;
+            opacity: 0.5;
+            animation: glowRing 1.5s ease-in-out infinite;
+            z-index: -1;
+        }
+        .buzzer-btn.live::after {
+            content: '✨';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 2rem;
+            animation: sparkle 1s ease-in-out infinite;
         }
         .buzzer-btn.buzzed {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -820,14 +839,45 @@
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: white;
             cursor: not-allowed;
+            animation: shakeButton 0.5s ease-in-out;
+        }
+        @keyframes shakeButton {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
         }
         .buzzer-btn:disabled {
             cursor: not-allowed;
             opacity: 0.7;
         }
         @keyframes pulseBuzzer {
-            0%, 100% { transform: scale(1); box-shadow: 0 12px 0 rgba(0,0,0,0.3), 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            50% { transform: scale(1.02); box-shadow: 0 12px 0 rgba(0,0,0,0.3), 0 0 0 20px rgba(16, 185, 129, 0); }
+            0%, 100% { 
+                transform: scale(1); 
+                box-shadow: 0 12px 0 rgba(0,0,0,0.3), 0 0 0 0 rgba(16, 185, 129, 0.7), 0 0 30px rgba(16, 185, 129, 0.5); 
+            }
+            50% { 
+                transform: scale(1.05); 
+                box-shadow: 0 12px 0 rgba(0,0,0,0.3), 0 0 0 30px rgba(16, 185, 129, 0), 0 0 50px rgba(16, 185, 129, 0.8); 
+            }
+        }
+        @keyframes glowRing {
+            0%, 100% { 
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.6;
+                transform: scale(1.1);
+            }
+        }
+        @keyframes vibrateButton {
+            0%, 100% { transform: translateX(0) scale(1.05); }
+            25% { transform: translateX(-2px) scale(1.05); }
+            75% { transform: translateX(2px) scale(1.05); }
+        }
+        @keyframes sparkle {
+            0%, 100% { opacity: 0.6; transform: scale(1) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
         }
         .buzzer-status {
             margin: 2rem 0;

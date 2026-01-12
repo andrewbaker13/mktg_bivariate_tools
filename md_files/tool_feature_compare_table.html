@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tool Feature Checklist</title>
+  <link rel="stylesheet" href="shared/css/main.css">
+    <script src="../shared/js/tracking.js"></script>
+  <style>
+    .feature-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .feature-group-row th {
+      background: #e0f2fe;
+      font-weight: 600;
+      text-align: left;
+    }
+
+    .feature-name {
+      white-space: nowrap;
+    }
+
+    .tool-header a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .tool-header a:hover,
+    .tool-header a:focus {
+      text-decoration: underline;
+    }
+
+    .feature-note {
+      font-size: 0.8rem;
+      color: var(--app-muted);
+      font-weight: 400;
+    }
+
+    .status-good {
+      background-color: #e6f4ea;
+    }
+
+    .status-gap {
+      background-color: #fde7e7;
+    }
+  </style>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-290ZJ9RE04');
+    </script>
+</head><body>
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Tool Feature Checklist</h1>
+        <div class="hero-context">
+          <span class="badge">Internal harmony map</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Use this table to compare which UI patterns, shared helpers, and visual outputs are implemented across each
+        web app so you can spot gaps and plan harmonization work.
+      </p>
+      <div class="page-timestamps">
+        <strong>Last checked:</strong>
+        <time datetime="2026-01-11">January 11, 2026</time>
+        <br><strong>Tools audited:</strong> 31 functional tools across 9 categories
+      </div>
+    </header>
+
+    <section aria-labelledby="feature-table-heading">
+      <h2 id="feature-table-heading">Feature Coverage by Tool</h2>
+      <div class="card feature-table-wrapper">
+        <p class="timestamp-meta">
+          <strong>31 tools audited.</strong> Focus on key harmonization features. Color coding: <span class="status-good">Green = implemented</span>, <span class="status-gap">Red = missing/should add</span>
+        </p>
+        <table class="data-table" aria-describedby="feature-table-heading">
+          <thead>
+            <tr>
+              <th scope="col" style="min-width: 200px;">Tool</th>
+              <th scope="col">Hero + badge</th>
+              <th scope="col">Overview section</th>
+              <th scope="col">Scenarios</th>
+              <th scope="col">CSV upload</th>
+              <th scope="col">Sample data</th>
+              <th scope="col">Presets</th>
+              <th scope="col">Advanced settings</th>
+              <th scope="col">Plotly</th>
+              <th scope="col">ui_utils</th>
+              <th scope="col">csv_utils</th>
+              <th scope="col">stats_utils</th>
+              <th scope="col">fan_chart</th>
+              <th scope="col">stacked_bar</th>
+              <th scope="col">predictor</th>
+              <th scope="col">MathJax</th>
+              <th scope="col">Timestamps</th>
+              <th scope="col">Cite-as</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- REGRESSION TOOLS (6) -->
+            <tr style="background: #f0f9ff;">
+              <td colspan="18"><strong>REGRESSION</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/regression/bivariate_regression/main_bivariate_regression.html">Bivariate Regression</a></th>
+              <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/regression/ml_regression/ml_regression.html">Multiple Regression</a></th>
+              <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td><td>No (should add)</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/regression/mlr_interactions/main_mlr_interactions.html">MLR Interactions</a></th>
+              <td>Yes</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>No (should add)</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/regression/log_regression/log_regression.html">Logistic Regression</a></th>
+              <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/regression/mn_log_regression/main_mn_log_regression.html">Multinomial Logit</a></th>
+              <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td>
+            </tr>
+            
+            <!-- DESCRIPTIVE TOOLS (2) -->
+            <tr style="background: #f0f9ff;">
+              <td colspan="18"><strong>DESCRIPTIVE</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/descriptive/pearson_correlation/main_pearson.html">Pearson Correlation</a></th>
+              <td>No (should add)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td><td>No (should add)</td><td>No (should add)</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/descriptive/univariate_analyzer/main_univariate_analyzer.html">Univariate Analyzer</a></th>
+              <td>Yes</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td><td>No (should add)</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            
+            <!-- HYPOTHESIS TESTING (6) -->
+            <tr style="background: #f0f9ff;">
+              <td colspan="18"><strong>HYPOTHESIS TESTING</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/hypothesis_testing/ind_ttest/main_ind_ttest.html">Welch t-test</a></th>
+              <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>Yes</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/hypothesis_testing/paired_ttest/main_paired_ttest.html">Paired t-test</a></th>
+              <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>No (should add)</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/hypothesis_testing/onewayanova/main_onewayanova.html">One-Way ANOVA</a></th>
+              <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>Yes</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/hypothesis_testing/ab_proportion/main_ab_proportion.html">A/B Proportion</a></th>
+              <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>Yes</td><td>No (should add)</td><td>Yes</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/hypothesis_testing/mcnemar/main_mcnemar.html">McNemar</a></th>
+              <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/hypothesis_testing/chisquare/main_chisquare.html">Chi-square</a></th>
+              <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>No</td><td>Yes</td><td>No</td><td>Yes</td><td>No</td><td>Yes</td>
+            </tr>
+            
+            <!-- CLUSTERING (1) -->
+            <tr style="background: #f0f9ff;">
+              <td colspan="18"><strong>CLUSTERING</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/clustering/kmeans/main_kmeans.html">K-Means</a></th>
+              <td>Yes</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td><td>No (should add)</td><td>No (should add)</td><td>Yes</td><td>No (should add)</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>Yes</td>
+            </tr>
+            
+            <!-- SAMPLE SIZE (5) -->
+            <tr style="background: #f0f9ff;">
+              <td colspan="18"><strong>SAMPLE SIZE / DESIGN</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/sample_size/sample_size_calculator/main_sample_size_calculator.html">Sample Size Calc</a></th>
+              <td>Yes</td><td>Yes</td><td>No (not needed)</td><td>No (not needed)</td><td>No (not needed)</td><td>No (not needed)</td><td>No (should add)</td><td>Yes</td><td>Yes</td><td>No (not needed)</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/sample_size/sample_size_AB_calculator/main_sample_size_ab_calculator.html">AB Sample Size</a></th>
+              <td>Yes</td><td>Yes</td><td>No (not needed)</td><td>No (not needed)</td><td>No (not needed)</td><td>No (not needed)</td><td>No (should add)</td><td>Yes</td><td>Yes</td><td>No (not needed)</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/sample_size/sample_size_corr_regression/main_sample_size_corr_regression.html">SS Corr/Reg</a></th>
+              <td>Yes</td><td>Yes</td><td>No (not needed)</td><td>No (not needed)</td><td>No (not needed)</td><td>No (not needed)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (not needed)</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/sample_size/sample_size_multiarm_ab/main_sample_size_multiarm_ab.html">SS Multi-arm</a></th>
+              <td>Yes</td><td>Yes</td><td>No (not needed)</td><td>No (not needed)</td><td>No (not needed)</td><td>No (not needed)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (not needed)</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/sample_size/sampling_visualizer/main_sampling_visualizer.html">Sampling Viz</a></th>
+              <td>Yes</td><td>No</td><td>Yes</td><td>No (not needed)</td><td>No (not needed)</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td><td>No (not needed)</td><td>No (not needed)</td><td>No</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td>
+            </tr>
+            
+            <!-- PROBABILITY (3) -->
+            <tr style="background: #f0f9ff;">
+              <td colspan="18"><strong>PROBABILITY</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/probability/compound_event_probability/main_compound_event.html">Compound Event Prob</a></th>
+              <td>Yes</td><td>No</td><td>No</td><td>No (not needed)</td><td>No (not needed)</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>No (not needed)</td><td>No (not needed)</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/probability/selection_probability_lab/main_selection_probability_lab.html">Selection Prob Lab</a></th>
+              <td>Yes</td><td>No</td><td>Yes</td><td>No (not needed)</td><td>No (not needed)</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td><td>No (not needed)</td><td>No (not needed)</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/probability/sentiment_lab/main_sentiment_lab.html">Sentiment Lab</a></th>
+              <td>Yes</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td><td>No (not needed)</td><td>No (not needed)</td><td>No</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td>
+            </tr>
+            
+            <!-- TEXT ANALYSIS (2) -->
+            <tr style="background: #f0f9ff;">
+              <td colspan="18"><strong>TEXT ANALYSIS</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/text_analysis/qualitative_analyzer/main_qualitative_analyzer.html">Qualitative Analyzer</a></th>
+              <td>No (should add)</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td><td>No (not needed)</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/text_analysis/theme_extractor/main_theme_extractor.html">Theme Extractor</a></th>
+              <td>No (should add)</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No</td><td>No (should add)</td><td>Yes</td><td>No (not needed)</td><td>No</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td>
+            </tr>
+            
+            <!-- ADVANCED (5) -->
+            <tr style="background: #f0f9ff;">
+              <td colspan="18"><strong>ADVANCED</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/advanced/ps_matching/log_regression.html">PS Matching</a></th>
+              <td>Yes</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>No (should add)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/advanced/resource_allocation/main_resource_allocation.html">Resource Allocation</a></th>
+              <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td><td>Yes</td><td>No (should add)</td><td>No (not needed)</td><td>Yes</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>No (should add)</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/advanced/neural_network/main_neural_network.html">Neural Network</a></th>
+              <td>No (custom UI)</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>No (custom)</td><td>No (custom)</td><td>No (custom)</td><td>No</td><td>No</td><td>No</td><td>No</td><td>No</td><td>No (should add)</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/advanced/conjoint/main_conjoint.html">Conjoint Analysis</a></th>
+              <td>Yes</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td><td>Yes</td><td>No (should add)</td><td>No (should add)</td><td>No (should add)</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>Yes</td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/advanced/conjoint/main_conjoint_creator.html">Conjoint Creator</a></th>
+              <td>Yes</td><td>No</td><td>No</td><td>No (not needed)</td><td>No (not needed)</td><td>No</td><td>No</td><td>Yes</td><td>No (should add)</td><td>No (not needed)</td><td>No (not needed)</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>No (should add)</td>
+            </tr>
+            
+            <!-- TIME SERIES (1) -->
+            <tr style="background: #f0f9ff;">
+              <td colspan="18"><strong>TIME SERIES</strong></td>
+            </tr>
+            <tr>
+              <th scope="row" class="tool-header"><a href="apps/time_series/arimax/main_arimax.html">ARIMAX</a></th>
+              <td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No (should add)</td><td>No</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script>
+    (function () {
+      const table = document.querySelector('table.data-table tbody');
+      if (!table) return;
+      const cells = table.querySelectorAll('td');
+      cells.forEach(cell => {
+        const text = cell.textContent.trim();
+        if (!text) return;
+        if (text === 'Yes' || text === 'No (not needed)') {
+          cell.classList.add('status-good');
+        } else if (text === 'No (should add)') {
+          cell.classList.add('status-gap');
+        }
+      });
+    })();
+  </script>
+</body>
+
+</html>

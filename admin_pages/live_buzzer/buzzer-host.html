@@ -328,6 +328,20 @@
                     </select>
                     <p style="margin-top: 0.75rem; font-size: 0.85rem; color: #94a3b8;">When enabled, the round will automatically reset after the specified time once you press ENABLE. This ends the buzzing window without manual intervention.</p>
                 </div>
+                
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #e2e8f0;">
+                    <h3 style="margin: 0 0 1rem 0; color: #1e293b; font-size: 1.1rem;">
+                        🎯 Rubber-Banding Handicap
+                    </h3>
+                    <label style="display: block; margin-bottom: 0.5rem; color: #64748b; font-size: 0.9rem; font-weight: 600;">Winner Handicap (Hidden from Players)</label>
+                    <select id="rubberBandingSelect" style="width: 100%; padding: 0.75rem; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; background: white;">
+                        <option value="0" selected>Off (No Handicap)</option>
+                        <option value="20">Small (+20ms next round for 1st place)</option>
+                        <option value="50">Medium (+50ms next round for 1st place)</option>
+                        <option value="100">Large (+100ms next round for 1st place)</option>
+                    </select>
+                    <p style="margin-top: 0.75rem; font-size: 0.85rem; color: #94a3b8;">Keeps gameplay competitive by adding a hidden delay to the winner's button in the next round. Players won't see or know about this handicap.</p>
+                </div>
             </div>
             
             <!-- Player List -->

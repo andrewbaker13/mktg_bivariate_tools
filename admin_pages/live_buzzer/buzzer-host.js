@@ -19,6 +19,9 @@ let buzzerState = {
     releaseAtServerMs: null,
     leadTimeMs: 250,
     autoResetMs: 0,
+    falseStartPenalty: 250,
+    rubberBandingMs: 0,  // Winner handicap setting
+    lastRoundWinnerId: null,  // Track who won last round
     rankedBuzzers: [],
     falseStarts: [],
     noBuzzPlayers: [],
@@ -166,6 +169,11 @@ function startBuzzerGame() {
     const penaltySelect = document.getElementById('penaltySelect');
     buzzerState.falseStartPenalty = parseInt(penaltySelect.value) || 250;
     console.log(`[BUZZER HOST] False start penalty set to ${buzzerState.falseStartPenalty}ms`);
+    
+    // Capture rubber-banding handicap setting
+    const rubberBandingSelect = document.getElementById('rubberBandingSelect');
+    buzzerState.rubberBandingMs = parseInt(rubberBandingSelect.value) || 0;
+    console.log(`[BUZZER HOST] Rubber-banding handicap set to ${buzzerState.rubberBandingMs}ms`);
     
     // Capture auto-reset timer setting
     const autoResetSelect = document.getElementById('autoResetSelect');
@@ -341,6 +349,13 @@ function handleBuzzerStateUpdate(message) {
     // Update buzz lists
     if (message.rankedBuzzers) {
         buzzerState.rankedBuzzers = message.rankedBuzzers;
+        
+        // Track first place winner for rubber-banding handicap
+        if (buzzerState.rubberBandingMs > 0 && message.rankedBuzzers.length > 0) {
+            buzzerState.lastRoundWinnerId = message.rankedBuzzers[0].playerId;
+            console.log(`[BUZZER HOST] Winner tracked for handicap: Player ${buzzerState.lastRoundWinnerId}`);
+        }
+        
         updateRankedList();
     }
     
@@ -390,7 +405,9 @@ function armRound() {
             data: {
                 roundId,
                 roundNumber: buzzerState.roundNumber,
-                falseStartPenalty: buzzerState.falseStartPenalty || 250
+                falseStartPenalty: buzzerState.falseStartPenalty || 250,
+                rubberBandingMs: buzzerState.rubberBandingMs || 0,
+                lastRoundWinnerId: buzzerState.lastRoundWinnerId || null
             }
         }));
     } else {
