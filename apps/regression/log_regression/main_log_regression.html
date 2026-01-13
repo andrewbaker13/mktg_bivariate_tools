@@ -4,11 +4,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Propensity Score Matching Tool</title>
+  <title>Logistic Regression Tool</title>
   <link rel="stylesheet" href="../../../shared/css/main.css">
     <script src="../../../shared/js/tracking.js"></script>
   <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
-  <link rel="stylesheet" href="log_regression.css">
+  <link rel="stylesheet" href="main_log_regression.css">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="../../../shared/js/predictor_utils.js"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -26,53 +26,59 @@
     <div class="auth-bar__container">
       <div></div>
       <div id="auth-bar-content" class="auth-bar__links">
-        <a href="../../login.html">Login</a>
-        <a href="../../register.html">Create Account</a>
+        <a href="../../../admin_pages/login.html">Login</a>
+        <a href="../../../admin_pages/register.html">Create Account</a>
       </div>
     </div>
   </div>
   <header class="intro hero-header">
     <div class="hero-header__top">
-      <h1>Propensity Score Matching</h1>
+      <h1>Logistic Regression Tool</h1>
       <div class="hero-context">
-        <span class="badge">Causal inference</span>
+        <span class="badge">New</span>
       </div>
     </div>
     <p class="hero-header__lede">
-      Estimate and check propensity scores for observational marketing data, then compare treated vs. matched control outcomes. Upload raw rows, pick a treatment indicator and covariates, and the tool will fit a logistic model for treatment, perform nearest-neighbor matching, and report balance diagnostics and treatment effects.
+      Fit and interpret logistic regression models for marketing data with a binary outcome and a mix of continuous and categorical predictors. Upload raw rows, pick your success outcome, and compare the marginal effects of each predictor on conversion probabilities with confidence intervals and diagnostics.
     </p>
   </header>
 
   <main class="app-main">
     <section class="test-overview">
-      <h2>OVERVIEW &amp; APPROACH</h2>
+      <h2>TEST OVERVIEW &amp; EQUATIONS</h2>
       <div class="card">
         <p>
-          Propensity score methods use logistic regression to estimate the <strong>probability of receiving a treatment</strong> (such as being exposed to a campaign) given a set of covariates \(X_1, X_2, \dots, X_p\). By matching treated and control units with similar propensity scores, we aim to compare groups that look similar on observed covariates, mimicking some aspects of a randomized experiment.
+          Logistic regression estimates how the <strong>probability</strong> of a binary outcome (such as convert vs. not convert) changes with several predictors \(X_1, X_2, \dots, X_p\). Each coefficient shows the unique association of a predictor with the log-odds of success, holding the others constant.
         </p>
         <p class="equation">
-          <strong>Propensity score model:</strong>
+          <strong>Model:</strong>
           $$ \log\left(\frac{p_i}{1 - p_i}\right) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \dots + \beta_p X_{pi} $$
-          where \(p_i = \Pr(T_i = 1 \mid X_{1i}, \dots, X_{pi})\) is the probability of treatment for unit \(i\).
+          where \(p_i = \Pr(Y_i = 1 \mid X_{1i}, \dots, X_{pi})\).
         </p>
         <p class="equation">
-          <strong>Matching &amp; balance:</strong>
-          units with similar \(p_i\) but different treatment status are paired (for example, 1:1 nearest-neighbor matching). Balance diagnostics then compare covariate distributions between treated and matched controls; if balance is good, the estimated treatment effect on this matched sample is more credible than a raw, unadjusted comparison.
+          <strong>Coefficient tests:</strong>
+          $$ z_j = \frac{\hat{\beta}_j}{\mathrm{SE}(\hat{\beta}_j)} $$
+          with p-values based on the standard normal distribution.
+        </p>
+        <p class="equation">
+          <strong>Model comparison:</strong>
+          $$ \Delta D = D_{\text{null}} - D_{\text{model}} $$
+          can be compared using a chi-square test to see whether the predictors, as a set, improve fit vs. an intercept-only model.
         </p>
         <details class="additional-notes">
-          <summary>Treatment indicator &amp; covariates</summary>
+          <summary>Binary Outcome &amp; Predictor Types</summary>
           <p>
-            The treatment must be coded as a binary variable (for example, 0/1 or exposed/not exposed). Covariates are variables you believe may influence both treatment assignment and the outcome (for example, prior spend, engagement, or segment). Matching can only adjust for observed covariates, so thoughtful selection and clear causal reasoning are still essential.
+            The outcome must be coded as a binary variable (for example, 0/1 or success/failure). Continuous predictors use their numeric scale. Categorical predictors are dummy-coded with a reference level, so each coefficient compares a category to its reference while holding other predictors constant.
           </p>
         </details>
       </div>
     </section>
 
     <section class="scenario-section">
-      <h2>OBSERVATIONAL STUDY SCENARIOS</h2>
+      <h2>MARKETING SCENARIOS</h2>
       <div class="card">
         <div class="scenario-controls">
-          <label for="scenario-select">Load a matching scenario:</label>
+          <label for="scenario-select">Load a marketing scenario:</label>
           <div class="scenario-controls__input">
             <select id="scenario-select">
               <option value="">Manual inputs (no preset)</option>
@@ -84,8 +90,8 @@
         </div>
         <div id="scenario-description">
           <p>
-            Use presets to explore quasi-experimental setups, such as <em>campaign exposure vs. no exposure</em> or <em>loyalty program enrollment vs. non-enrollment</em>.
-            Each scenario provides a raw data file you can download, inspect in Excel, and re-upload to see how propensity matching changes the comparison.
+            Use presets to explore realistic use cases, such as <em>ad spend vs. revenue</em> or <em>control vs. treatment on order value</em>.
+            Each scenario can expose either a summary CSV of aggregated statistics or a raw data file that you can download, edit in Excel, and re-upload.
           </p>
         </div>
       </div>
@@ -366,23 +372,27 @@
   </main>
 
     <footer class="app-footer">
-        <div class="footer-content">
-            <div class="footer-nav">
-                <a href="../../../index.html" class="back-link">← Back to Tool Selection</a>
-            </div>
-            <div class="footer-meta">
-                <span class="meta-item">Created: 2025-11-15</span>
-                <span class="separator">•</span>
-                <span class="meta-item">Last Updated: 2025-02-23</span>
-            </div>
-            <div class="footer-citation">
-                <div class="citation-label">Cite this tool:</div>
-                <div class="citation-text">Baker, A. (2025). Logistic Regression Tool. <em>Dr. Baker's Marketing Tools</em>. Retrieved from <a href="https://drbakermarketing.com/apps/advanced/ps_matching/log_regression.html" target="_blank">https://drbakermarketing.com/apps/advanced/ps_matching/log_regression.html</a></div>
-            </div>
-            <div class="footer-copyright">
-                &copy; 2025 Andrew Baker. All rights reserved.
-            </div>
+    <div class="footer-content">
+        <div class="footer-nav">
+            <a href="../../../index.html">← Back to Tool Selection</a>
         </div>
+        <div class="footer-meta">
+            <span>Created: <span id="created-date">2025-11-15</span></span>
+            <span class="meta-separator">&bull;</span>
+            <span>Last Updated: <span id="modified-date">2025-12-11</span></span>
+        </div>
+        <div class="footer-citation">
+            <span class="citation-label">Cite this tool</span>
+            <p class="citation-text">
+                Baker, A. (2025). <em>Logistic Regression Tool</em>. Marketing Analysis Tools.
+                <br>
+                <span style="font-size: 0.85em; color: #6b7280;">Retrieved from: https://drbakermarketing.com/apps/regression/log_regression/main_log_regression.html</span>
+            </p>
+        </div>
+        <div class="footer-copyright">
+            &copy; 2025 Andrew Baker. All rights reserved.
+        </div>
+    </div>
     </footer>
 
   <script src="../../../shared/js/csv_utils.js"></script>
@@ -393,10 +403,10 @@
   <script src="../../../shared/js/auth_tracking.js"></script>
   <script src="../../../shared/js/auth_bar.js"></script>
   <script src="../../../shared/js/quiz_utils.js"></script>
-  <script src="log_reg_app.js"></script>
+  <script src="main_log_regression.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      initQuizButton('ps_matching');
+      initQuizButton('log_regression');
     });
   </script>
   <div id="logreg-loading-overlay" class="loading-overlay" aria-hidden="true">
