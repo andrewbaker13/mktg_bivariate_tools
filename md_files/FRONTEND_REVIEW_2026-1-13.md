@@ -466,27 +466,6 @@ Meets students where they are:
 9. ✅ **Accessibility Baseline** - Semantic HTML, ARIA labels, keyboard navigation foundation
 10. ✅ **Modular Architecture** - Shared utilities (`csv_utils.js`, `ui_utils.js`) reduce duplication
 
----
-
-## ⚠️ Areas of Design Drift (Identified from Sample)
-
-
-### 4. Scenario System Maturity Varies
-- **Rich scenarios (new):** kmeans, kprototypes with full HTML templates, icons, tables
-- **Basic scenarios (old):** ind_ttest, ab_proportion with plain text
-- **Missing:** pearson_correlation has no scenario system
-- **Recommendation:** Backfill scenario system to older tools using new arrow function pattern
-
-### 5. Google Analytics Integration
-- **Most tools:** Include gtag.js with config ID `G-290ZJ9RE04`
-- **Some tools:** Missing GA tracking
-- **Recommendation:** Audit all tools for GA presence
-
-### 6. Equation Rendering Inconsistency
-- **Most tools:** Use MathJax 3 with `tex-mml-chtml.js`
-- **Some tools:** Load MathJax but equations not properly formatted
-- **Issue:** Inconsistent use of `<p class="equation">` wrapper
-- **Fix:** Standardize equation markup pattern
 
 ---
 
