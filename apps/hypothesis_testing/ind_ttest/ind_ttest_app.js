@@ -10,7 +10,7 @@ let lastTrackTime = 0;
 let selectedConfidenceLevel = 0.95;
 
 const scenarioState = {
-    manifest: [],
+    activeScenario: null,
     defaultDescription: ''
 };
 
@@ -38,6 +38,295 @@ const RAW_TEMPLATE_CSV = [
 
 let activeDataEntryMode = DataEntryModes.MANUAL;
 let activeScenarioDataset = null;
+
+// ============================================================================
+// INLINE SCENARIO DEFINITIONS (Modern Pattern)
+// ============================================================================
+
+const IND_TTEST_SCENARIOS = [
+    {
+        id: 'holiday_subject_line',
+        label: 'Holiday Email Subject Line Test',
+        description: () => generateHolidaySubjectLineHtml(),
+        alpha: 0.05,
+        mode: 'summary',
+        data: () => ({
+            groups: [
+                { name: 'Optimized Holiday Subject Line', mean: 92.4, sd: 22.1, n: 148 },
+                { name: 'Control Subject Line', mean: 86.7, sd: 21.8, n: 154 }
+            ],
+            settings: {
+                delta0: 5,
+                'means-axis-lock': 'true',
+                'means-axis-min': 40,
+                'means-axis-max': 130,
+                'diff-axis-mode': 'custom',
+                'diff-axis-min': -10,
+                'diff-axis-max': 25
+            }
+        })
+    },
+    {
+        id: 'loyalty_upsell',
+        label: 'Loyalty Email Upsell Test',
+        description: () => generateLoyaltyUpsellHtml(),
+        alpha: 0.05,
+        mode: 'summary',
+        data: () => ({
+            groups: [
+                { name: 'Personalized Loyalty Email', mean: 50.2, sd: 7.4, n: 162 },
+                { name: 'Generic Loyalty Email', mean: 47.1, sd: 6.9, n: 158 }
+            ],
+            settings: {
+                delta0: 2,
+                'means-axis-lock': 'true',
+                'means-axis-min': 30,
+                'means-axis-max': 70,
+                'diff-axis-mode': 'custom',
+                'diff-axis-min': -5,
+                'diff-axis-max': 10
+            }
+        })
+    },
+    {
+        id: 'refer_a_friend',
+        label: 'Refer-a-Friend Revenue Pilot',
+        description: () => generateReferFriendHtml(),
+        alpha: 0.05,
+        mode: 'summary',
+        data: () => ({
+            groups: [
+                { name: 'Refer-a-Friend Incentive', mean: 212.4, sd: 24.1, n: 130 },
+                { name: 'Baseline Control', mean: 198.1, sd: 26.3, n: 133 }
+            ],
+            settings: {
+                delta0: 10,
+                'means-axis-lock': 'true',
+                'means-axis-min': 160,
+                'means-axis-max': 240,
+                'diff-axis-mode': 'custom',
+                'diff-axis-min': -20,
+                'diff-axis-max': 40
+            }
+        })
+    },
+    {
+        id: 'hours_streaming_raw',
+        label: 'Streaming Hours Cohort Experiment',
+        description: () => generateStreamingHoursHtml(),
+        alpha: 0.05,
+        mode: 'raw',
+        data: () => ({
+            rawData: [
+                'group,value',
+                'Monthly Pass Holders,18.2', 'Monthly Pass Holders,17.5', 'Monthly Pass Holders,19.1',
+                'Monthly Pass Holders,16.4', 'Monthly Pass Holders,18.9', 'Monthly Pass Holders,17.8',
+                'Monthly Pass Holders,19.6', 'Monthly Pass Holders,18.4', 'Monthly Pass Holders,17.2',
+                'Monthly Pass Holders,16.9', 'Monthly Pass Holders,18.7', 'Monthly Pass Holders,17.1',
+                'Monthly Pass Holders,19.3', 'Monthly Pass Holders,18.0', 'Monthly Pass Holders,17.6',
+                'Monthly Pass Holders,18.8', 'Monthly Pass Holders,19.4', 'Monthly Pass Holders,17.9',
+                'Monthly Pass Holders,18.5', 'Monthly Pass Holders,16.8', 'Monthly Pass Holders,17.4',
+                'Monthly Pass Holders,18.1', 'Monthly Pass Holders,19.0', 'Monthly Pass Holders,17.0',
+                'Monthly Pass Holders,18.6', 'Monthly Pass Holders,17.7', 'Monthly Pass Holders,19.2',
+                'Monthly Pass Holders,16.7', 'Monthly Pass Holders,18.3', 'Monthly Pass Holders,17.3',
+                'Seasonal Bingers,14.2', 'Seasonal Bingers,15.6', 'Seasonal Bingers,13.9',
+                'Seasonal Bingers,14.8', 'Seasonal Bingers,15.1', 'Seasonal Bingers,14.4',
+                'Seasonal Bingers,16.0', 'Seasonal Bingers,13.7', 'Seasonal Bingers,15.4',
+                'Seasonal Bingers,14.0', 'Seasonal Bingers,15.9', 'Seasonal Bingers,14.5',
+                'Seasonal Bingers,13.8', 'Seasonal Bingers,15.2', 'Seasonal Bingers,14.6',
+                'Seasonal Bingers,15.5', 'Seasonal Bingers,13.6', 'Seasonal Bingers,14.7',
+                'Seasonal Bingers,15.0', 'Seasonal Bingers,13.5', 'Seasonal Bingers,14.9',
+                'Seasonal Bingers,15.3', 'Seasonal Bingers,13.4', 'Seasonal Bingers,14.1',
+                'Seasonal Bingers,15.8', 'Seasonal Bingers,13.3', 'Seasonal Bingers,15.7',
+                'Seasonal Bingers,14.3', 'Seasonal Bingers,13.2', 'Seasonal Bingers,15.6',
+                'Seasonal Bingers,13.9', 'Seasonal Bingers,14.4', 'Seasonal Bingers,15.1',
+                'Seasonal Bingers,13.7', 'Seasonal Bingers,15.0', 'Seasonal Bingers,13.5',
+                'Seasonal Bingers,15.2', 'Seasonal Bingers,13.8', 'Seasonal Bingers,14.6',
+                'Seasonal Bingers,15.5', 'Seasonal Bingers,13.6'
+            ]
+        })
+    },
+    {
+        id: 'warrior_vs_rogue_damage',
+        label: 'D&D: Warrior vs Rogue Damage Output',
+        description: () => generateWarriorRogueHtml(),
+        alpha: 0.05,
+        mode: 'summary',
+        data: () => ({
+            groups: [
+                { name: 'Rogue Attacks', mean: 21.3, sd: 8.7, n: 20 },
+                { name: 'Warrior Attacks', mean: 18.5, sd: 6.2, n: 20 }
+            ],
+            settings: {
+                delta0: 0,
+                'means-axis-lock': 'false',
+                'diff-axis-mode': 'symmetric'
+            }
+        })
+    }
+];
+
+function generateHolidaySubjectLineHtml() {
+    return `
+        <div class="scenario-description">
+            <div class="scenario-header">
+                <span class="scenario-icon">🎄</span>
+                <h4>Holiday Subject Line Lift</h4>
+                <span class="scenario-badge">302 Recipients</span>
+            </div>
+            <p class="scenario-intro">
+                Your ecommerce brand is planning its peak holiday campaign. The CRM team is debating whether it's worth investing extra creative time in a more polished, benefit-led subject line versus reusing the simple control line.
+            </p>
+            <div class="scenario-context">
+                <h5>🧪 Test Design</h5>
+                <div class="context-grid">
+                    <div class="context-item">
+                        <strong>Optimized Holiday Subject Line:</strong> Calls out savings, free shipping, and curated gift ideas in a tighter way
+                    </div>
+                    <div class="context-item">
+                        <strong>Control Subject Line:</strong> Plain-English subject line similar to last year's control
+                    </div>
+                </div>
+                <p class="muted">For each group, you compute <strong>revenue per delivered email</strong> over the full holiday window. The means differ by a few dollars per recipient, with fairly large standard deviations—typical in real email programs.</p>
+            </div>
+            <div class="scenario-insights">
+                <h5>📊 What to Look For</h5>
+                <ul>
+                    <li>Is the mean difference statistically credible?</li>
+                    <li>What's the effect size in revenue per recipient?</li>
+                    <li>Does the lift justify extra creative and QA effort?</li>
+                </ul>
+            </div>
+        </div>
+    `;
+}
+
+function generateLoyaltyUpsellHtml() {
+    return `
+        <div class="scenario-description">
+            <div class="scenario-header">
+                <span class="scenario-icon">⭐</span>
+                <h4>Loyalty Upsell Experiment</h4>
+                <span class="scenario-badge">320 Members</span>
+            </div>
+            <p class="scenario-intro">
+                You manage CRM for a mid-sized retailer with a growing loyalty program. The team suspects that generic "points balance" updates are underperforming, and that a more tailored upsell email could increase short-term spending.
+            </p>
+            <div class="scenario-context">
+                <h5>📧 Email Variants</h5>
+                <div class="context-grid">
+                    <div class="context-item">
+                        <strong>Personalized Loyalty Email:</strong> Shows current tier, points balance, and 1–2 concrete rewards they can claim
+                    </div>
+                    <div class="context-item">
+                        <strong>Generic Loyalty Email:</strong> High-level program benefits and a link to account page, but no personalized offers
+                    </div>
+                </div>
+                <p class="muted">Over 30 days, track <strong>incremental spend per member</strong> attributed to that campaign. The averages differ by a few dollars, with moderate standard deviations.</p>
+            </div>
+            <div class="scenario-insights">
+                <h5>💡 Decision Point</h5>
+                <p>Use an independent t-test to judge whether the personalized upsell genuinely increases average spend. Translate the estimated lift into projected annual revenue to decide whether to scale across additional segments.</p>
+            </div>
+        </div>
+    `;
+}
+
+function generateReferFriendHtml() {
+    return `
+        <div class="scenario-description">
+            <div class="scenario-header">
+                <span class="scenario-icon">🤝</span>
+                <h4>Refer-a-Friend Revenue Pilot</h4>
+                <span class="scenario-badge">263 Customers</span>
+            </div>
+            <p class="scenario-intro">
+                Your growth team is considering a <strong>refer-a-friend incentive</strong> that offers existing customers a small credit when a friend makes their first purchase. Finance wants evidence that this generates enough downstream revenue to cover costs.
+            </p>
+            <div class="scenario-context">
+                <h5>🎁 Test Conditions</h5>
+                <div class="context-grid">
+                    <div class="context-item">
+                        <strong>Refer-a-Friend Incentive:</strong> Personalized email and in-app card explaining reward mechanics with unique referral link
+                    </div>
+                    <div class="context-item">
+                        <strong>Baseline Control:</strong> Usual merchandising and evergreen content, but no referral messaging or credits
+                    </div>
+                </div>
+                <p class="muted">Over 60 days, track <strong>total revenue per existing customer</strong>, including their own purchases and any orders placed by referred friends. A few "super-referrers" generate lots of revenue while many refer zero friends.</p>
+            </div>
+            <div class="scenario-insights">
+                <h5>📈 Analysis Goals</h5>
+                <p>Quantify the mean revenue difference and construct a confidence interval. Interpret both the <em>p-value</em> (evidence that incentive matters) and the <em>effect size</em> (how big the lift is).</p>
+            </div>
+        </div>
+    `;
+}
+
+function generateStreamingHoursHtml() {
+    return `
+        <div class="scenario-description">
+            <div class="scenario-header">
+                <span class="scenario-icon">📺</span>
+                <h4>Streaming Hours Cohort Experiment</h4>
+                <span class="scenario-badge">100 Subscribers • Raw Data</span>
+            </div>
+            <p class="scenario-intro">
+                You work on insights for a subscription streaming platform. Product marketing suspects that "always-on" subscribers behave differently from "seasonal bingers" who reactivate around marquee releases.
+            </p>
+            <div class="scenario-context">
+                <h5>👥 Cohort Comparison</h5>
+                <div class="context-grid">
+                    <div class="context-item">
+                        <strong>Monthly Pass Holders:</strong> Subscribers who stay active most months and rarely churn
+                    </div>
+                    <div class="context-item">
+                        <strong>Seasonal Bingers:</strong> Subscribers who cycle in and out around big tentpole series or sports seasons
+                    </div>
+                </div>
+                <p class="muted">For each sampled account, compute <strong>hours streamed in the most recent week</strong>. Data shows Monthly Pass Holders tend to watch more on average, but there's meaningful overlap and week-to-week variability.</p>
+            </div>
+            <div class="scenario-insights">
+                <h5>🔬 Raw Data Upload Mode</h5>
+                <p>This scenario demonstrates the <strong>raw-data upload mode</strong>. Each row is one account's weekly viewing hours. The app summarizes data by group, checks assumptions, then runs the independent t-test.</p>
+                <p class="scenario-tip">💡 <strong>Welch's t-test</strong> is appropriate if variances differ between groups.</p>
+            </div>
+        </div>
+    `;
+}
+
+function generateWarriorRogueHtml() {
+    return `
+        <div class="scenario-description">
+            <div class="scenario-header">
+                <span class="scenario-icon">⚔️</span>
+                <h4>Warrior vs Rogue Damage Output</h4>
+                <span class="scenario-badge">40 Attacks • D&D</span>
+            </div>
+            <p class="scenario-intro">
+                Your adventuring party is in a heated tavern debate: do warriors or rogues deal more damage per round in combat? The fighter insists that raw strength gives warriors the edge, while the rogue argues that sneak attacks create superior output.
+            </p>
+            <div class="scenario-context">
+                <h5>🎲 Combat Data Collection</h5>
+                <p>
+                    Your party's chronicler tracked damage per attack over the last twenty encounters for both classes. The results show:
+                </p>
+                <div class="context-grid">
+                    <div class="context-item">
+                        <strong>Rogues:</strong> Slightly higher mean damage but greater variability—devastating sneak attacks mixed with complete misses
+                    </div>
+                    <div class="context-item">
+                        <strong>Warriors:</strong> More consistent damage output with lower variance, reflecting steady, reliable combat style
+                    </div>
+                </div>
+            </div>
+            <div class="scenario-insights">
+                <h5>🎯 Statistical Question</h5>
+                <p>Use an independent t-test (specifically <strong>Welch's t-test</strong> for unequal variances) to determine whether rogues <em>significantly</em> outdamage warriors, or whether the difference could be due to random dice rolls.</p>
+            </div>
+        </div>
+    `;
+}
 
 function setUploadStatus(id, message, state) {
     const el = document.getElementById(id);
@@ -1419,23 +1708,6 @@ function setupAxisControls() {
     document.getElementById('reset-axis').addEventListener('click', resetAxisControls);
 }
 
-async function fetchScenarioIndex() {
-    try {
-        const response = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error(`Unable to load scenario index (${response.status})`);
-        }
-        const data = await response.json();
-        if (Array.isArray(data)) {
-            scenarioState.manifest = data;
-        }
-    } catch (error) {
-        console.error('Scenario index error:', error);
-        scenarioState.manifest = [];
-    }
-    populateScenarioOptions();
-}
-
 function populateScenarioOptions() {
     const select = document.getElementById('scenario-select');
     if (!select) {
@@ -1443,209 +1715,39 @@ function populateScenarioOptions() {
     }
     const current = select.value;
     select.innerHTML = '<option value="">Manual inputs (no preset)</option>';
-    scenarioState.manifest.forEach(entry => {
+    
+    IND_TTEST_SCENARIOS.forEach(scenario => {
         const option = document.createElement('option');
-        option.value = entry.id;
-        option.textContent = entry.label || entry.id;
+        option.value = scenario.id;
+        option.textContent = scenario.label || scenario.id;
         select.appendChild(option);
     });
+    
     if (current) {
         select.value = current;
     }
 }
 
 function renderScenarioDescription(title, description) {
-      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
-          const body = Array.isArray(description) ? description.join('\n\n') : description;
-          window.UIUtils.renderScenarioDescription({
-              containerId: 'scenario-description',
-              title,
-              description: body,
-              defaultHtml: scenarioState.defaultDescription
-          });
-          return;
-      }
-      const container = document.getElementById('scenario-description');
-      if (!container) {
-          return;
-      }
-      container.innerHTML = scenarioState.defaultDescription || '';
-  }
-
-function parseScenarioText(text) {
-    const lines = text.replace(/\r/g, '').split('\n');
-    const result = {
-        title: '',
-        description: [],
-        alpha: null,
-        groups: [],
-        settings: {},
-        rawData: []
-    };
-    let section = '';
-    const descriptionLines = [];
-
-    lines.forEach(rawLine => {
-        const trimmed = rawLine.trim();
-        if (!trimmed) {
-            if (section === 'description') {
-                descriptionLines.push('');
-            }
-            return;
-        }
-        if (trimmed.startsWith('#')) {
-            section = trimmed.slice(1).trim().toLowerCase();
-            return;
-        }
-        switch (section) {
-            case 'title':
-                if (!result.title) {
-                    result.title = trimmed;
-                }
-                break;
-            case 'description':
-                descriptionLines.push(trimmed);
-                break;
-            case 'alpha':
-                const alphaValue = parseFloat(trimmed);
-                if (!Number.isNaN(alphaValue)) {
-                    result.alpha = alphaValue;
-                }
-                break;
-            case 'groups':
-                const parts = trimmed.split('|').map(part => part.trim());
-                if (parts.length >= 4) {
-                    const name = parts[0];
-                    const mean = parseFloat(parts[1]);
-                    const sd = parseFloat(parts[2]);
-                    const n = parseInt(parts[3], 10);
-                    if (!Number.isNaN(mean) && !Number.isNaN(sd) && Number.isFinite(n)) {
-                        result.groups.push({ name, mean, sd, n });
-                    }
-                }
-                break;
-            case 'additional inputs':
-            case 'settings':
-                const [key, ...rest] = trimmed.split('=');
-                const value = rest.join('=').trim();
-                if (key) {
-                    result.settings[key.trim().toLowerCase()] = value;
-                }
-                break;
-            case 'raw data':
-                result.rawData.push(trimmed);
-                break;
-        }
-    });
-
-    const paragraphs = [];
-    let buffer = [];
-    descriptionLines.forEach(line => {
-        if (!line) {
-            if (buffer.length) {
-                paragraphs.push(buffer.join(' '));
-                buffer = [];
-            }
-            return;
-        }
-        buffer.push(line);
-    });
-    if (buffer.length) {
-        paragraphs.push(buffer.join(' '));
-    }
-    result.description = paragraphs;
-    return result;
-}
-
-function setInputValue(id, value) {
-    const input = document.getElementById(id);
-    if (!input) {
-        return;
-    }
-    if (value === null || typeof value === 'undefined') {
-        return;
-    }
-    input.value = value;
-}
-
-function applyScenarioPreset(preset, entry) {
-    if (!preset) {
-        return;
-    }
-    setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
-    setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
-
-    const checkboxLock = document.getElementById('means-axis-lock');
-    let scenarioDelta = null;
-    let scenarioAlpha = null;
-    const settings = preset.settings || {};
-    Object.entries(settings).forEach(([key, value]) => {
-        if (!value) return;
-        if (key === 'axis-lock' || key === 'means-axis-lock') {
-            if (checkboxLock) checkboxLock.checked = value.toLowerCase() === 'true';
-            return;
-        }
-        if (key === 'diff-axis-mode') {
-            const radio = document.querySelector(`input[name="diff-axis-mode"][value="${value}"]`);
-            if (radio) radio.checked = true;
-            return;
-        }
-        const element = document.getElementById(key);
-        if (element) element.value = value;
-    });
-
-    if (typeof settings.delta0 !== 'undefined' && settings.delta0 !== '') {
-        setInputValue('delta0', settings.delta0);
-        const parsedDelta = parseFloat(settings.delta0);
-        if (isFinite(parsedDelta)) scenarioDelta = parsedDelta;
-    }
-
-    if (Number.isFinite(preset.alpha)) {
-        setAlphaValue(preset.alpha, { updateResults: false });
-        scenarioAlpha = preset.alpha;
-    } else if (typeof settings.alpha !== 'undefined' && settings.alpha !== '') {
-        const parsedAlpha = parseFloat(settings.alpha);
-        if (isFinite(parsedAlpha)) {
-            setAlphaValue(parsedAlpha, { updateResults: false });
-            scenarioAlpha = parsedAlpha;
-        }
-    }
-
-    let datasetInfo = null;
-    const rawDataText = Array.isArray(preset.rawData) && preset.rawData.length
-        ? preset.rawData.join('\n').trim()
-        : '';
-
-    if (rawDataText) {
-        try {
-            const rawGroups = parseRawUpload(rawDataText);
-            applyGroupStats({ groups: rawGroups, delta: scenarioDelta ?? undefined, alpha: scenarioAlpha ?? undefined }, { mode: DataEntryModes.RAW, update: false });
-            setUploadStatus('raw-upload-status', `Loaded scenario data for ${rawGroups[0].name || 'Group 1'} and ${rawGroups[1].name || 'Group 2'}.`, 'success');
-            datasetInfo = buildScenarioDatasetFromRaw(rawDataText, entry?.id || '');
-        } catch (error) {
-            console.error('Scenario raw data error:', error);
-            setUploadStatus('raw-upload-status', error.message || 'Unable to parse scenario raw data.', 'error');
-        }
-    } else if (Array.isArray(preset.groups) && preset.groups.length >= 2) {
-        applyGroupStats({ groups: preset.groups, delta: scenarioDelta ?? undefined, alpha: scenarioAlpha ?? undefined }, { mode: DataEntryModes.SUMMARY, update: false });
-        const label = `${preset.groups[0].name || 'Group 1'} and ${preset.groups[1].name || 'Group 2'}`;
-        setUploadStatus('summary-upload-status', `Loaded scenario stats for ${label}.`, 'success');
-        const deltaFallback = scenarioDelta !== null ? scenarioDelta : parseFloat(document.getElementById('delta0')?.value);
-        const alphaFallback = scenarioAlpha !== null ? scenarioAlpha : parseFloat(document.getElementById('alpha')?.value);
-        datasetInfo = buildScenarioDatasetFromGroups(preset.groups, entry?.id || '', {
-            delta0: isFinite(deltaFallback) ? deltaFallback : undefined,
-            alpha: isFinite(alphaFallback) ? alphaFallback : undefined
+    if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+        const body = Array.isArray(description) ? description.join('\n\n') : description;
+        window.UIUtils.renderScenarioDescription({
+            containerId: 'scenario-description',
+            title,
+            description: body,
+            defaultHtml: scenarioState.defaultDescription
         });
-    } else {
-        setDataEntryMode(DataEntryModes.MANUAL);
+        return;
     }
-
-    enableScenarioDownload(datasetInfo);
-    updateResults();
+    const container = document.getElementById('scenario-description');
+    if (!container) {
+        return;
+    }
+    container.innerHTML = scenarioState.defaultDescription || '';
 }
 
-async function loadScenarioById(id) {
-    const scenario = scenarioState.manifest.find(entry => entry.id === id);
+function loadScenarioById(id) {
+    const scenario = IND_TTEST_SCENARIOS.find(entry => entry.id === id);
     if (!scenario) {
         renderScenarioDescription('', []);
         enableScenarioDownload(null);
@@ -1658,14 +1760,79 @@ async function loadScenarioById(id) {
     }
     
     try {
-        const response = await fetch(scenario.file, { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error(`Unable to load scenario file (${response.status})`);
+        const htmlContent = scenario.description();
+        renderScenarioDescription(scenario.label, htmlContent);
+        
+        const scenarioData = scenario.data();
+        let datasetInfo = null;
+        
+        // Handle raw data mode
+        if (scenarioData.rawData && scenarioData.rawData.length > 0) {
+            const rawDataText = scenarioData.rawData.join('\n');
+            try {
+                const rawGroups = parseRawUpload(rawDataText);
+                applyGroupStats({ 
+                    groups: rawGroups, 
+                    delta: scenarioData.settings?.delta0,
+                    alpha: scenarioData.settings?.alpha 
+                }, { mode: DataEntryModes.RAW, update: false });
+                setUploadStatus('raw-upload-status', 
+                    `Loaded scenario data for ${rawGroups[0].name || 'Group 1'} and ${rawGroups[1].name || 'Group 2'}.`, 
+                    'success');
+                datasetInfo = buildScenarioDatasetFromRaw(rawDataText, scenario.id);
+            } catch (error) {
+                console.error('Scenario raw data error:', error);
+                setUploadStatus('raw-upload-status', 
+                    error.message || 'Unable to parse scenario raw data.', 
+                    'error');
+            }
         }
-        const text = await response.text();
-        const parsed = parseScenarioText(text);
-        renderScenarioDescription(parsed.title || scenario.label, parsed.description);
-        applyScenarioPreset(parsed, scenario);
+        // Handle summary stats mode
+        else if (scenarioData.groups && scenarioData.groups.length >= 2) {
+            applyGroupStats({ 
+                groups: scenarioData.groups,
+                delta: scenarioData.settings?.delta0,
+                alpha: scenarioData.settings?.alpha
+            }, { mode: DataEntryModes.SUMMARY, update: false });
+            const label = `${scenarioData.groups[0].name || 'Group 1'} and ${scenarioData.groups[1].name || 'Group 2'}`;
+            setUploadStatus('summary-upload-status', `Loaded scenario stats for ${label}.`, 'success');
+            
+            const deltaFallback = scenarioData.settings?.delta0 ?? parseFloat(document.getElementById('delta0')?.value);
+            const alphaFallback = scenarioData.settings?.alpha ?? parseFloat(document.getElementById('alpha')?.value);
+            datasetInfo = buildScenarioDatasetFromGroups(scenarioData.groups, scenario.id, {
+                delta0: isFinite(deltaFallback) ? deltaFallback : undefined,
+                alpha: isFinite(alphaFallback) ? alphaFallback : undefined
+            });
+        }
+        
+        // Apply additional settings
+        if (scenarioData.settings) {
+            const checkboxLock = document.getElementById('means-axis-lock');
+            Object.entries(scenarioData.settings).forEach(([key, value]) => {
+                if (!value && value !== 0) return;
+                if (key === 'axis-lock' || key === 'means-axis-lock') {
+                    if (checkboxLock) checkboxLock.checked = value === true || value === 'true';
+                    return;
+                }
+                if (key === 'diff-axis-mode') {
+                    const radio = document.querySelector(`input[name="diff-axis-mode"][value="${value}"]`);
+                    if (radio) radio.checked = true;
+                    return;
+                }
+                const element = document.getElementById(key);
+                if (element && key !== 'alpha' && key !== 'delta0') {
+                    element.value = value;
+                }
+            });
+            
+            if (scenarioData.settings.alpha !== undefined) {
+                setAlphaValue(scenarioData.settings.alpha, { updateResults: false });
+            }
+        }
+        
+        enableScenarioDownload(datasetInfo);
+        updateResults();
+        
     } catch (error) {
         console.error('Scenario load error:', error);
         enableScenarioDownload(null);
@@ -1709,7 +1876,7 @@ function initializeScenarios() {
         scenarioState.defaultDescription = description.innerHTML;
     }
     setupScenarioSelector();
-    fetchScenarioIndex();
+    populateScenarioOptions();
 }
 
 // Event listeners

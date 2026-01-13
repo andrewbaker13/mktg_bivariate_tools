@@ -1,16 +1,5 @@
 /* Theme Extractor - App-specific styles */
 
-/* Badge colors */
-.badge--text-analysis {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.badge--nlp {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  color: white;
-}
-
 /* Case Study / Scenario Selector */
 .scenario-card {
   background: var(--surface, white);

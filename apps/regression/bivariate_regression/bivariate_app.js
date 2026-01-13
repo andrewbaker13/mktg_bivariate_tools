@@ -1,4 +1,4 @@
-// Bivariate Linear Regression Tool – minimal first version
+// Bivariate Linear Regression Tool - minimal first version
 
 // Tool identifier for tracking
 const TOOL_SLUG = 'bivariate-regression';
@@ -8,6 +8,200 @@ let modifiedDate = new Date().toLocaleDateString();
 // Debouncing for auto-run tracking
 let renderCount = 0;
 let lastTrackTime = 0;
+
+// ========================================
+// SCENARIO DEFINITIONS (Inline)
+// ========================================
+const BIVARIATE_REGRESSION_SCENARIOS = [
+  {
+    id: 'spend_vs_revenue',
+    label: 'Paid Social Spend vs Revenue',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">📱</span>
+          <h3>Paid Social Spend vs. Weekly Revenue</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-regression">Bivariate Regression</span>
+          <span class="badge badge-context">Performance Marketing</span>
+          <span class="badge badge-sample">n = 26 weeks</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> Your ecommerce brand runs paid social campaigns (Instagram, Facebook, TikTok) week over week. Marketing leadership wants to quantify the relationship between <strong>weekly paid social spend</strong> and <strong>weekly revenue</strong> to justify budget allocation and forecast ROI.</p>
+          
+          <p><strong>Dataset Variables:</strong></p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Outcome</div>
+              <div class="context-value">Weekly_Revenue</div>
+              <div class="context-subtext">Total revenue in USD</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Predictor</div>
+              <div class="context-value">Paid_Social_Spend</div>
+              <div class="context-subtext">Weekly spend in USD</div>
+            </div>
+          </div>
+          
+          <p><strong>Research Question:</strong> Use simple linear regression to model how weekly revenue responds to paid social spend. Quantify the marginal return: for every additional $1,000 spent on paid social, how much incremental revenue is generated on average?</p>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Strategic Question</div>
+            <p>Is the spend-to-revenue relationship linear? Should we scale up investment or are we hitting diminishing returns?</p>
+          </div>
+          
+          <p><strong>How to use:</strong> Load the external CSV, set <em>Weekly_Revenue</em> as outcome (Y) and <em>Paid_Social_Spend</em> as predictor (X). Interpret the slope coefficient as marginal revenue per dollar spent.</p>
+        </div>
+      </div>
+    `,
+    data: () => ({
+      file: 'scenarios/continuous_marketing_mix_data.csv',
+      settings: { alpha: 0.05 }
+    })
+  },
+  {
+    id: 'email_segment_performance',
+    label: 'Email Segment Performance',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">📧</span>
+          <h3>Email Segments vs. Average Order Value</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-regression">Bivariate Regression</span>
+          <span class="badge badge-context">Email Marketing</span>
+          <span class="badge badge-sample">n = 30 campaigns</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> Your email marketing team segments subscribers into four tiers: VIP, Engaged, Lapsed, and At-Risk. Leadership wants to know if these segments predict <strong>average order value (AOV)</strong> to justify personalized campaign strategies and incentive structures.</p>
+          
+          <p><strong>Dataset Variables:</strong></p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Outcome</div>
+              <div class="context-value">AOV</div>
+              <div class="context-subtext">Average order value in USD</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Predictor</div>
+              <div class="context-value">Email_Segment</div>
+              <div class="context-subtext">VIP, Engaged, Lapsed, At-Risk</div>
+            </div>
+          </div>
+          
+          <p><strong>Research Question:</strong> Use categorical regression to compare AOV across email segments. Test whether VIP subscribers generate significantly higher AOV than other tiers, justifying premium content and exclusive offers.</p>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Strategic Question</div>
+            <p>Do VIP subscribers justify higher campaign investment? Should Lapsed and At-Risk segments receive different incentive structures?</p>
+          </div>
+          
+          <p><strong>How to use:</strong> Load CSV, set <em>AOV</em> as outcome and <em>Email_Segment</em> as categorical predictor. Compare coefficients to see which segments drive highest AOV.</p>
+        </div>
+      </div>
+    `,
+    data: () => ({
+      file: 'scenarios/four_segment_email_data.csv',
+      settings: { alpha: 0.05 }
+    })
+  },
+  {
+    id: 'likert_brand_rating',
+    label: 'Likert Scale Brand Rating',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">⭐</span>
+          <h3>Likert Reaction vs. Brand Favorability</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-regression">Bivariate Regression</span>
+          <span class="badge badge-context">Brand Research</span>
+          <span class="badge badge-sample">n = 30 respondents</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> Your brand team conducted a focus group where participants rated their immediate reaction to a new product concept on a 5-point Likert scale (1 = Very Negative, 5 = Very Positive). You also collected a continuous <strong>brand favorability score</strong> (0-100). The question: does initial Likert reaction predict deeper brand favorability?</p>
+          
+          <p><strong>Dataset Variables:</strong></p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Outcome</div>
+              <div class="context-value">Brand_Favorability</div>
+              <div class="context-subtext">Continuous score 0-100</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Predictor</div>
+              <div class="context-value">Likert_Reaction</div>
+              <div class="context-subtext">1 to 5 scale</div>
+            </div>
+          </div>
+          
+          <p><strong>Research Question:</strong> Model brand favorability as a function of Likert reaction. Quantify how each 1-point increase in Likert rating translates to change in brand favorability score. Test whether the relationship is statistically significant.</p>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Strategic Question</div>
+            <p>Do initial reactions (measured via Likert) reliably predict deeper brand sentiment? Can we use simple rating scales to forecast brand health?</p>
+          </div>
+          
+          <p><strong>How to use:</strong> Load CSV, set <em>Brand_Favorability</em> as outcome and <em>Likert_Reaction</em> as numeric predictor. Interpret the slope as the favorability gain per Likert point.</p>
+        </div>
+      </div>
+    `,
+    data: () => ({
+      file: 'scenarios/likert_vs_brand_rating.csv',
+      settings: { alpha: 0.05 }
+    })
+  },
+  {
+    id: 'character_level_vs_gold',
+    label: 'Character Level vs Gold Earned',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">🎮</span>
+          <h3>D&D Character Level vs. Gold Earned</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-regression">Bivariate Regression</span>
+          <span class="badge badge-context">Gaming Analytics</span>
+          <span class="badge badge-sample">n = 30 characters</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> You are analyzing player progression data from a D&D-style RPG. The game design team wants to understand if <strong>character level</strong> predicts <strong>total gold earned</strong> to balance reward systems and ensure high-level players have appropriate purchasing power for endgame content.</p>
+          
+          <p><strong>Dataset Variables:</strong></p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Outcome</div>
+              <div class="context-value">Gold_Earned</div>
+              <div class="context-subtext">Total gold accumulated</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Predictor</div>
+              <div class="context-value">Character_Level</div>
+              <div class="context-subtext">Level 1-20</div>
+            </div>
+          </div>
+          
+          <p><strong>Research Question:</strong> Model gold earned as a function of character level. Determine if the progression curve is linear or if certain level ranges generate disproportionate wealth. Use the regression equation to predict expected gold for new endgame content (levels 18-20).</p>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Strategic Question</div>
+            <p>Is the gold-earning curve balanced across all levels? Do high-level players have enough purchasing power for premium gear and consumables?</p>
+          </div>
+          
+          <p><strong>How to use:</strong> Load CSV, set <em>Gold_Earned</em> as outcome and <em>Character_Level</em> as numeric predictor. Interpret the slope as gold gain per level increase.</p>
+        </div>
+      </div>
+    `,
+    data: () => ({
+      file: 'scenarios/character_level_vs_gold.csv',
+      settings: { alpha: 0.05 }
+    })
+  }
+];
 
 let selectedConfidenceLevel = 0.95;
 
@@ -29,7 +223,6 @@ let transformY = false;
 let activeReferenceLevel = null;
 
 let isSwapped = false;
-let scenarioManifest = [];
 let defaultScenarioDescription = '';
 let activeScenarioDataset = null;
 let uploadedRawData = null;
@@ -685,22 +878,6 @@ function renderReferenceSelector(xGroups, reference, labels) {
   };
 }
 
-async function fetchScenarioIndex() {
-  try {
-    const response = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
-    if (!response.ok) {
-      throw new Error(`Unable to load scenario index (${response.status})`);
-    }
-    const data = await response.json();
-    if (Array.isArray(data)) {
-      scenarioManifest = data;
-    }
-  } catch (error) {
-    console.error('Scenario index error:', error);
-    scenarioManifest = [];
-  }
-}
-
 function parseScenarioText(text) {
   const lines = text.replace(/\r/g, '').split('\n');
   const result = {
@@ -783,44 +960,50 @@ function finalizeManualEntry() {
 }
 
 async function loadScenarioById(id) {
-  const scenario = scenarioManifest.find(entry => entry.id === id);
+  const scenario = BIVARIATE_REGRESSION_SCENARIOS.find(entry => entry.id === id);
   if (!scenario) {
     renderScenarioDescription('', []);
     enableScenarioDownload(null);
     return;
   }
   try {
-    const response = await fetch(scenario.file, { cache: 'no-cache' });
-    if (!response.ok) {
-      throw new Error(`Unable to load scenario file (${response.status})`);
-    }
-    const text = await response.text();
-    const parsed = parseScenarioText(text);
-    renderScenarioDescription(parsed.title || scenario.label, parsed.description);
+    const html = typeof scenario.description === 'function' ? scenario.description() : scenario.description;
+    const data = typeof scenario.data === 'function' ? scenario.data() : scenario.data;
+    
+    renderScenarioDescription('', html);
     
     // Track scenario loading for engagement
     if (typeof markScenarioLoaded === 'function') {
         markScenarioLoaded(scenario.label);
     }
 
-    // Default: clear outputs until we successfully interpret a dataset
-    clearOutputs('Scenario loaded. If a dataset is attached, results will appear below.');
+    // Clear outputs until we successfully load the dataset
+    clearOutputs('Scenario loaded. Loading dataset...');
 
-    if (scenario.dataset) {
+    if (data.file) {
       try {
-        const datasetResponse = await fetch(scenario.dataset, { cache: 'no-cache' });
+        const datasetResponse = await fetch(data.file, { cache: 'no-cache' });
         if (!datasetResponse.ok) {
           throw new Error(`Unable to load scenario dataset (${datasetResponse.status})`);
         }
         const csvText = await datasetResponse.text();
-        const filename = scenario.dataset.split('/').pop() || 'scenario_dataset.csv';
+        const filename = data.file.split('/').pop() || 'scenario_dataset.csv';
         enableScenarioDownload({
           filename,
           content: csvText,
           mimeType: 'text/csv'
         });
 
-        // Try to run the analysis directly from the dataset
+        // Apply alpha setting if provided
+        if (data.settings && isFinite(data.settings.alpha)) {
+          const alphaInput = document.getElementById('alpha');
+          if (alphaInput) {
+            alphaInput.value = data.settings.alpha.toFixed(3);
+            syncConfidenceButtonsToAlpha(data.settings.alpha);
+          }
+        }
+
+        // Run analysis from the dataset
         importRawData(csvText, { isFromScenario: true, filename });
       } catch (datasetError) {
         console.error('Scenario dataset load error:', datasetError);
@@ -836,12 +1019,11 @@ async function loadScenarioById(id) {
   }
 }
 
-async function setupScenarioSelector() {
+function setupScenarioSelector() {
   const select = document.getElementById('scenario-select');
   if (!select) return;
 
-  await fetchScenarioIndex();
-  scenarioManifest.forEach(entry => {
+  BIVARIATE_REGRESSION_SCENARIOS.forEach(entry => {
     const option = document.createElement('option');
     option.value = entry.id;
     option.textContent = entry.label;
@@ -2069,7 +2251,24 @@ function updateResults() {
       alpha: stats.alpha,
       residualSE: stats.residualSE
     });
-  \n  // Track successful analysis with debouncing\n  renderCount++;\n  const now = Date.now();\n  if (renderCount > 1 && (now - lastTrackTime) > 500 && Number.isFinite(stats.p)) {\n    lastTrackTime = now;\n    if (typeof markRunAttempted === 'function') {\n      markRunAttempted();\n    }\n    if (typeof markRunSuccessful === 'function') {\n      markRunSuccessful(\n        { predictor: finalLabels.x, outcome: finalLabels.y, type: predictorType, n: stats.n },\n        `R²=${stats.rSquared.toFixed(3)}, p=${stats.p < 0.001 ? '<.001' : stats.p.toFixed(4)}`\n      );\n    }\n  }\n  \n  modifiedDate = new Date().toLocaleDateString();
+
+  // Track successful analysis with debouncing
+  renderCount++;
+  const now = Date.now();
+  if (renderCount > 1 && (now - lastTrackTime) > 500 && Number.isFinite(stats.p)) {
+    lastTrackTime = now;
+    if (typeof markRunAttempted === 'function') {
+      markRunAttempted();
+    }
+    if (typeof markRunSuccessful === 'function') {
+      markRunSuccessful(
+        { predictor: finalLabels.x, outcome: finalLabels.y, type: predictorType, n: stats.n },
+        `R²=${stats.rSquared.toFixed(3)}, p=${stats.p < 0.001 ? '<.001' : stats.p.toFixed(4)}`
+      );
+    }
+  }
+
+  modifiedDate = new Date().toLocaleDateString();
   const modifiedLabel = document.getElementById('modified-date');
   if (modifiedLabel) modifiedLabel.textContent = modifiedDate;
 }

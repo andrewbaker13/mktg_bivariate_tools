@@ -1,11 +1,5 @@
 /* Qualitative Analyzer Specific Styles */
 
-/* Theme distribution badges */
-.badge--qualitative {
-  background-color: #8b5cf6;
-  color: white;
-}
-
 /* How it works grid */
 .how-it-works-grid {
   display: grid;

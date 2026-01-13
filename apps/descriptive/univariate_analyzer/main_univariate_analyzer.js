@@ -12,11 +12,29 @@ const MAX_CATEGORIES_DISPLAY = 10;
 let renderCount = 0;
 let lastTrackTime = 0;
 
-const SCENARIOS = Object.freeze({
-    INFLUENCER: 'influencer',
-    SURVEY: 'survey',
-    ECOMMERCE: 'ecommerce'
-});
+// ========================================
+// SCENARIO DEFINITIONS (Inline)
+// ========================================
+const UNIVARIATE_SCENARIOS = [
+  {
+    id: 'influencer_engagement',
+    label: '📱 Influencer Engagement Metrics',
+    description: () => `<div class="scenario-card"><div class="scenario-header"><span class="scenario-icon">📱</span><h3>Influencer Engagement Metrics</h3></div><div class="scenario-body"><p><strong>Business Context:</strong> Analyze engagement metrics for 30 influencers across multiple variables including followers, engagement rate, and content type.</p></div></div>`,
+    data: () => ({ file: 'scenarios/influencer_engagement.csv' })
+  },
+  {
+    id: 'customer_survey',
+    label: '📊 Customer Survey Responses',
+    description: () => `<div class="scenario-card"><div class="scenario-header"><span class="scenario-icon">📊</span><h3>Customer Survey Responses</h3></div><div class="scenario-body"><p><strong>Business Context:</strong> Explore 30 customer survey responses with demographics, NPS scores, and satisfaction ratings.</p></div></div>`,
+    data: () => ({ file: 'scenarios/customer_survey.csv' })
+  },
+  {
+    id: 'ecommerce_orders',
+    label: '🛒 E-commerce Order Data',
+    description: () => `<div class="scenario-card"><div class="scenario-header"><span class="scenario-icon">🛒</span><h3>E-commerce Order Data</h3></div><div class="scenario-body"><p><strong>Business Context:</strong> Analyze 30 e-commerce transactions across channel, device, and customer segment dimensions.</p></div></div>`,
+    data: () => ({ file: 'scenarios/ecommerce_orders.csv' })
+  }
+];
 
 const DataType = Object.freeze({
     CONTINUOUS: 'continuous',
@@ -1463,7 +1481,6 @@ function downloadCSV(csvContent, filename) {
 
 // ==================== Scenario Support ====================
 
-let scenarioManifest = [];
 let defaultScenarioDescription = '';
 
 function parseScenarioText(text) {
@@ -1548,7 +1565,7 @@ function enableScenarioDownload(csvFile) {
 }
 
 async function loadScenarioById(id) {
-    const scenario = scenarioManifest.find(entry => entry.id === id);
+    const scenario = UNIVARIATE_SCENARIOS.find(entry => entry.id === id);
     if (!scenario) {
         renderScenarioDescription('', '');
         resetScenarioDownload();
@@ -1561,21 +1578,15 @@ async function loadScenarioById(id) {
     }
     
     try {
-        // Load scenario metadata (.txt file)
-        const response = await fetch(scenario.file, { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error(`Unable to load scenario file (${response.status})`);
-        }
+        const html = typeof scenario.description === 'function' ? scenario.description() : scenario.description;
+        const data = typeof scenario.data === 'function' ? scenario.data() : scenario.data;
         
-        const text = await response.text();
-        const parsed = parseScenarioText(text);
+        renderScenarioDescription('', html);
+        enableScenarioDownload(data.file);
         
-        renderScenarioDescription(parsed.title || scenario.label, parsed.description);
-        enableScenarioDownload(parsed.rawDataFile);
-        
-        // Now load the actual CSV data
-        if (parsed.rawDataFile) {
-            const csvResponse = await fetch(parsed.rawDataFile, { cache: 'no-cache' });
+        // Load the CSV data file
+        if (data.file) {
+            const csvResponse = await fetch(data.file, { cache: 'no-cache' });
             if (!csvResponse.ok) {
                 throw new Error(`Unable to load CSV data file (${csvResponse.status})`);
             }
@@ -1623,7 +1634,7 @@ async function loadScenarioById(id) {
     }
 }
 
-async function setupScenarioSelector() {
+function setupScenarioSelector() {
     const select = document.getElementById('scenario-select');
     const description = document.getElementById('scenario-description');
     
@@ -1633,23 +1644,12 @@ async function setupScenarioSelector() {
     
     if (!select) return;
     
-    try {
-        const response = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error('Unable to load scenario manifest.');
-        }
-        
-        scenarioManifest = await response.json();
-        
-        scenarioManifest.forEach(entry => {
-            const option = document.createElement('option');
-            option.value = entry.id;
-            option.textContent = entry.label;
-            select.appendChild(option);
-        });
-    } catch (error) {
-        showFileMessage(`Error loading scenarios: ${error.message}`, 'error');
-    }
+    UNIVARIATE_SCENARIOS.forEach(entry => {
+        const option = document.createElement('option');
+        option.value = entry.id;
+        option.textContent = entry.label;
+        select.appendChild(option);
+    });
     
     select.addEventListener('change', () => {
         const id = select.value;

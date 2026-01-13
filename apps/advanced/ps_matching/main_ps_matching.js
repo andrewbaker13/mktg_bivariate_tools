@@ -3,6 +3,118 @@
 // Tool identifier for engagement tracking
 const TOOL_SLUG = 'propensity-score-matching';
 
+// Scenario definitions
+const PS_MATCHING_SCENARIOS = [
+  {
+    id: 'Influencer Campaign Conversion',
+    label: 'Predict purchase conversion from influencer stories',
+    description: () => `
+      <p>
+        You are the performance marketing analyst for a DTC beauty brand that relies heavily on Instagram and TikTok influencers. The team wants to understand which influencer partnerships are most likely to drive <strong>purchases</strong>, not just impressions and clicks. They are especially interested in whether <em>tier</em> (mega vs. mid-tier vs. micro creators) and <em>story engagement</em> metrics can help predict who actually converts.
+      </p>
+      <p>
+        You have pulled data at the <strong>influencer-post</strong> level for a recent campaign flight. For each sponsored story or short-form video, you track whether it generated at least one verified purchase within a seven-day attribution window. The dataset includes:
+      </p>
+      <ul>
+        <li><strong>Converted:</strong> binary indicator (1 = at least one purchase attributed to this post, 0 = no attributed purchase).</li>
+        <li><strong>Story_Views:</strong> number of unique story impressions.</li>
+        <li><strong>Swipe_Ups:</strong> number of swipe-up or link-tap events to the brand landing page.</li>
+        <li><strong>Influencer_Tier:</strong> creator tier (<em>Mega</em>, <em>Mid</em>, <em>Micro</em>), based on follower count.</li>
+        <li><strong>Audience_Region:</strong> dominant audience region for the creator (<em>US</em>, <em>EU</em>, <em>LATAM</em>, <em>APAC</em>).</li>
+      </ul>
+      <p>
+        The relationships are realistic rather than perfect. Posts with more swipe-ups generally convert more often, but there are influential micro creators whose small but highly engaged audiences convert at surprisingly high rates. Some mega creators deliver huge reach with modest conversion. Regional differences exist but overlap: a few EU and LATAM creators outperform some US creators, even after accounting for impressions and swipe-ups.
+      </p>
+      <p>
+        Your analytical goal is to use <strong>logistic regression</strong> to model the probability that a post converts (<code>Converted = 1</code>) as a function of story engagement and creator characteristics. You are not trying to perfectly predict every post but to quantify patterns such as, "holding engagement constant, how does conversion likelihood change between mid-tier and micro influencers?" and "do certain regions or tiers justify a premium based on higher conversion odds?"
+      </p>
+      <h4>How to use</h4>
+      <ul>
+        <li><strong>Outcome:</strong> set <em>Converted</em> as the binary outcome (1 = converted, 0 = not).</li>
+        <li><strong>Predictors:</strong> include <em>Story_Views</em> and <em>Swipe_Ups</em> as numeric predictors, and treat <em>Influencer_Tier</em> and <em>Audience_Region</em> as categorical.</li>
+        <li><strong>Interpret coefficients:</strong> translate log-odds and odds ratios into statements such as "a post with 20 more swipe-ups multiplies the odds of at least one purchase by about X, holding tier and region constant."</li>
+        <li><strong>Compare tiers:</strong> use the odds ratios for <em>Influencer_Tier</em> to discuss whether mid-tier or micro creators deliver reliably higher conversion odds than mega creators once you control for engagement volume.</li>
+        <li><strong>Connect to strategy:</strong> turn the model into guidance for future budget allocation across tiers and regions, focusing on segments with strong, but not unrealistically perfect, conversion performance.</li>
+      </ul>
+    `,
+    dataset: 'scenarios/influencer_conversion_data.csv',
+    outcome: 'Converted',
+    predictors: ['Story_Views', 'Swipe_Ups', 'Influencer_Tier', 'Audience_Region'],
+    types: { Influencer_Tier: 'categorical', Audience_Region: 'categorical' }
+  },
+  {
+    id: 'B2B Email Outreach Response',
+    label: 'Predict demo responses to email sequences',
+    description: () => `
+      <p>
+        You are supporting a B2B SaaS sales team that runs multi-touch email sequences to generate product demos. Sales leadership wants to know which types of leads are most likely to <strong>respond to outreach</strong> by booking a demo, so they can prioritize reps' time and refine targeting. Rather than relying on simple heuristics like "opened at least once," they want a model that connects engagement metrics and lead attributes to the probability of a response.
+      </p>
+      <p>
+        For each lead that was enrolled in a recent email sequence, you have:
+      </p>
+      <ul>
+        <li><strong>Responded:</strong> binary indicator (1 = booked a demo within 21 days of the first email, 0 = no demo booked).</li>
+        <li><strong>Emails_Sent:</strong> number of emails delivered in the sequence before the lead was exited (due to response, opt-out, or sequence completion).</li>
+        <li><strong>Total_Opens:</strong> total number of opens recorded across the sequence.</li>
+        <li><strong>Lead_Score:</strong> numeric score from marketing automation (0–100) based on firmographics and website behavior.</li>
+        <li><strong>Industry:</strong> lead's primary industry (<em>SaaS</em>, <em>Ecommerce</em>, <em>Manufacturing</em>, <em>Agency</em>).</li>
+      </ul>
+      <p>
+        The patterns are intentionally realistic. Higher lead scores and more opens are associated with a greater likelihood of response, but they are far from perfect predictors: some high-score leads never respond, and a handful of modest-score leads still book demos. Industry matters, but only moderately: SaaS and ecommerce leads respond a bit more often, while manufacturing and agency leads are somewhat less likely, with plenty of overlap.
+      </p>
+      <p>
+        Your analytical goal is to use <strong>logistic regression</strong> to model the probability that a lead responds (<code>Responded = 1</code>) as a function of email volume, engagement, lead score, and industry. The focus is on interpretable effects—for example, "holding industry and emails sent constant, a 10-point increase in lead score multiplies the odds of response by about X"—rather than on building a perfect classifier.
+      </p>
+      <h4>How to use</h4>
+      <ul>
+        <li><strong>Outcome:</strong> set <em>Responded</em> as the binary outcome (1 = yes, 0 = no).</li>
+        <li><strong>Predictors:</strong> include <em>Emails_Sent</em>, <em>Total_Opens</em>, and <em>Lead_Score</em> as numeric predictors, and treat <em>Industry</em> as categorical.</li>
+        <li><strong>Interpret odds ratios:</strong> translate coefficients into odds ratios that describe how the odds of a demo response change with more opens or a higher lead score, holding other variables constant.</li>
+        <li><strong>Compare industries:</strong> use the industry coefficients to discuss which segments are relatively more or less responsive after accounting for engagement and lead quality.</li>
+        <li><strong>Connect to sales strategy:</strong> summarize how the model might inform lead prioritization, SDR territory planning, or adjustments to sequence length for different industries.</li>
+      </ul>
+    `,
+    dataset: 'scenarios/email_outreach_data.csv',
+    outcome: 'Responded',
+    predictors: ['Emails_Sent', 'Total_Opens', 'Lead_Score', 'Industry'],
+    types: { Industry: 'categorical' }
+  },
+  {
+    id: 'Promo Incentive vs Recency',
+    label: 'Conversion by promo incentive strength and visit recency',
+    description: () => `
+      <p>
+        You are analyzing a digital promotion for a retail brand that drives traffic to a limited-time offer landing page. Visitors may or may not see a <strong>high-incentive offer</strong> (for example, 25% off plus free shipping) depending on an A/B test. Marketing leadership wants to understand how strongly this richer incentive changes the <strong>probability of conversion</strong> and whether it is still worth running for visitors who have not been to the site recently.
+      </p>
+      <p>
+        For each unique visitor in the test, you have:
+      </p>
+      <ul>
+        <li><strong>Converted:</strong> binary indicator (1 = completed the promo goal such as email sign-up or first order; 0 = no conversion during the visit).</li>
+        <li><strong>High_Incentive:</strong> 1 if the visitor saw the high-incentive variation of the promo, 0 if they saw the standard offer.</li>
+        <li><strong>Days_Since_Last_Visit:</strong> number of days since the visitor last came to the site before this promo impression.</li>
+      </ul>
+      <p>
+        The data are intentionally realistic and somewhat noisy. Visitors who see the high-incentive promo convert at a meaningfully higher rate on average, but not perfectly: some still do not respond. For the standard offer, a smaller fraction of visitors convert, though a few still do so without the richer incentive. The variable <em>Days_Since_Last_Visit</em> is included as a potential control but was not strongly related to conversion in this campaign; in this dataset it may show a slightly negative coefficient that is <strong>not statistically significant</strong>, reflecting weak and noisy evidence that very stale visitors are a bit less likely to respond.
+      </p>
+      <p>
+        Your analytical goal is to use <strong>logistic regression</strong> to model the probability of conversion (<code>Converted = 1</code>) as a function of whether the visitor saw the high-incentive promo and their visit recency. You should find one clearly positive and statistically reliable effect (the high incentive) and one small, non-significant negative effect (days since last visit), which is typical in real marketing experiments where one lever matters a lot and others matter only modestly or not at all.
+      </p>
+      <h4>How to use</h4>
+      <ul>
+        <li><strong>Outcome:</strong> set <em>Converted</em> as the binary outcome (1 = converted, 0 = did not convert).</li>
+        <li><strong>Predictors:</strong> include <em>High_Incentive</em> (numeric 0/1) and <em>Days_Since_Last_Visit</em> (numeric) as predictors.</li>
+        <li><strong>Interpret coefficients:</strong> focus on how much the high-incentive promo multiplies the odds of conversion and changes the predicted conversion probability, holding visit recency constant.</li>
+        <li><strong>Assess the negative predictor:</strong> interpret the <em>Days_Since_Last_Visit</em> coefficient and its p-value; explain why a small, non-significant negative estimate is common in practice and should be interpreted cautiously.</li>
+        <li><strong>Connect to strategy:</strong> discuss whether the incremental lift from the high incentive appears strong enough to justify its cost and whether there is any compelling evidence to tailor the offer by recency segment.</li>
+      </ul>
+    `,
+    dataset: 'scenarios/incentive_recency_data.csv',
+    outcome: 'Converted',
+    predictors: ['High_Incentive', 'Days_Since_Last_Visit']
+  }
+];
+
 // ---------- State ----------
 let selectedOutcome = null;
 let selectedPredictors = [];
@@ -30,26 +142,6 @@ let lastRawDataset = null;
 let outcomeCoding = { outcomeName: null, mode: 'numeric01', focalLabel: '1', nonFocalLabel: '0' };
 
 const RAW_UPLOAD_LIMIT = typeof MAX_UPLOAD_ROWS === 'number' ? MAX_UPLOAD_ROWS : 5000;
-const FALLBACK_SCENARIOS = [
-  {
-    id: 'Predict EDM event spend',
-    label: 'Predict EDM event spending for patrons',
-    file: 'scenarios/event_spend.txt',
-    dataset: 'scenarios/event_spend_data.csv',
-    outcome: 'event_spend',
-    predictors: ['days_preordered', 'type'],
-    types: { type: 'categorical' }
-  },
-  {
-    id: 'Customer Valuation',
-    label: 'Predict Customer Value based on Recency, Frequency, and Monetary Value',
-    file: 'scenarios/customer_value.txt',
-    dataset: 'scenarios/customer_value_data.csv',
-    outcome: 'CustomerValue',
-    predictors: ['Eecency', 'Frequency', 'MonetaryValue', 'Segment'],
-    types: { Segment: 'categorical' }
-  }
-];
 
 // ---------- Utilities ----------
 function escapeHtml(value) {
@@ -631,17 +723,8 @@ function setupRawUpload() {
 
 // ---------- Scenario handling ----------
 async function fetchScenarioIndex() {
-  try {
-    const resp = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
-    if (!resp.ok) throw new Error(`Unable to load scenario index (${resp.status})`);
-    const data = await resp.json();
-    scenarioManifest = Array.isArray(data) ? data : [];
-    populateScenarioSelect();
-  } catch {
-    scenarioManifest = FALLBACK_SCENARIOS;
-    populateScenarioSelect();
-    setRawUploadStatus('Using built-in scenarios because the scenario index could not be loaded.', 'error', { isHtml: false });
-  }
+  scenarioManifest = PS_MATCHING_SCENARIOS;
+  populateScenarioSelect();
 }
 function populateScenarioSelect() {
   const select = document.getElementById('scenario-select');
@@ -671,35 +754,21 @@ async function loadScenario(id) {
         };
       }
     }
-    try {
-      const resp = await fetch(scenario.file, { cache: 'no-cache' });
-      if (!resp.ok) throw new Error(`Unable to load scenario description (${resp.status})`);
-      const text = await resp.text();
-      const body = text.replace(/^# .*\n?/gm, '').trim();
-      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
-        window.UIUtils.renderScenarioDescription({
-          containerId: 'scenario-description',
-          title: scenario.label || '',
-          description: body,
-          defaultHtml: defaultScenarioDescription
-        });
-      } else {
-        const descContainer = document.getElementById('scenario-description');
-        if (descContainer) descContainer.textContent = body || '';
-      }
-    } catch {
-      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
-        window.UIUtils.renderScenarioDescription({
-          containerId: 'scenario-description',
-          title: '',
-          description: '',
-          defaultHtml: defaultScenarioDescription
-        });
-      } else {
-        const descContainer = document.getElementById('scenario-description');
-        if (descContainer) descContainer.innerHTML = defaultScenarioDescription;
-      }
+    
+    // Load scenario description (inline)
+    const descriptionHTML = typeof scenario.description === 'function' ? scenario.description() : scenario.description;
+    if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+      window.UIUtils.renderScenarioDescription({
+        containerId: 'scenario-description',
+        title: scenario.label || '',
+        description: descriptionHTML,
+        defaultHtml: defaultScenarioDescription
+      });
+    } else {
+      const descContainer = document.getElementById('scenario-description');
+      if (descContainer) descContainer.innerHTML = descriptionHTML || '';
     }
+    
   if (scenario.dataset) {
     try {
       const resp = await fetch(scenario.dataset, { cache: 'no-cache' });

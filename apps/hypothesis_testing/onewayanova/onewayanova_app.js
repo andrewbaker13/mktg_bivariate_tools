@@ -8,6 +8,255 @@ const TOOL_SLUG = 'oneway-anova';
 let renderCount = 0;
 let lastTrackTime = 0;
 
+// ========================================
+// SCENARIO DEFINITIONS (Inline)
+// ========================================
+const ONEWAYANOVA_SCENARIOS = [
+  {
+    id: 'streaming_launch',
+    label: '🎬 Streaming Launch Creative Test',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">🎬</span>
+          <h3>Streaming Launch: Creative Concepts and Revenue Per Household</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">One-Way ANOVA</span>
+          <span class="badge badge-context">Media / Creative Strategy</span>
+          <span class="badge badge-sample">n = 428 markets</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> You are supporting the global launch of a new streaming bundle promoted heavily on connected TV, social video, and digital out-of-home. The brand studio developed three different hero concepts: an emotion-led cinematic film, a promotion-heavy carousel, and an influencer cameo reel.</p>
+          <p><strong>Test Setup:</strong> Each concept was flighted across 14 designated market areas (DMAs). For every market and creative, the team estimated <strong>incremental revenue per household exposure</strong>, normalized for reach and spend. The creative groups differ modestly in their means and variability—no single "magic bullet" concept.</p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Emotion-led Hero Film</div>
+              <div class="context-value">mean = $48.50, sd = $5.40</div>
+              <div class="context-subtext">n = 140 markets</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Promotion-Heavy Carousel</div>
+              <div class="context-value">mean = $45.90, sd = $4.80</div>
+              <div class="context-subtext">n = 150 markets</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Influencer Cameo Reel</div>
+              <div class="context-value">mean = $47.40, sd = $5.00</div>
+              <div class="context-subtext">n = 138 markets</div>
+            </div>
+          </div>
+          <p><strong>Research Question:</strong> Use one-way ANOVA to test whether average revenue per household differs across the three creative concepts at α = 0.05. Follow up with planned comparisons: Hero Film vs. Influencer Reel, and Hero Film vs. Promotion Carousel.</p>
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Strategic Question</div>
+            <p>Is the big-budget hero film truly justifying its cost, or are lighter-weight promos and influencer content competitive alternatives?</p>
+          </div>
+        </div>
+      </div>
+    `,
+    data: () => ({
+      groups: [
+        { name: 'Emotion-led Hero Film', mean: 48.5, sd: 5.4, n: 140 },
+        { name: 'Promotion-Heavy Carousel', mean: 45.9, sd: 4.8, n: 150 },
+        { name: 'Influencer Cameo Reel', mean: 47.4, sd: 5.0, n: 138 }
+      ],
+      plannedComparisons: [
+        { group1: 'Emotion-led Hero Film', group2: 'Influencer Cameo Reel' },
+        { group1: 'Emotion-led Hero Film', group2: 'Promotion-Heavy Carousel' }
+      ],
+      settings: { alpha: 0.05 }
+    })
+  },
+  {
+    id: 'retail_pricing',
+    label: '🛒 Retail Promotions Pricing Test',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">🛒</span>
+          <h3>Flagship Retail Promotions: Pricing Stories and Gross Margin</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">One-Way ANOVA</span>
+          <span class="badge badge-context">Retail Merchandising</span>
+          <span class="badge badge-alpha">α = 0.10</span>
+          <span class="badge badge-sample">n = 333 stores</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> A national apparel chain is rewriting its in-store promotions calendar ahead of back-to-school season. Four regional clusters are piloting distinct <strong>pricing stories</strong> to understand how discount strategy influences weekly gross-margin dollars per store.</p>
+          <p><strong>Test Setup:</strong> Four pricing strategies were tested across regional clusters: Steady 15%, Tiered Promo Calendar, Flash Sale Bursts, and Loyalty Bundle Weekends. Each strategy aims to balance margin stability with upside potential.</p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Steady 15 Percent</div>
+              <div class="context-value">mean = $32.40, sd = $3.90</div>
+              <div class="context-subtext">n = 85 stores</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Tiered Promo Calendar</div>
+              <div class="context-value">mean = $34.10, sd = $4.50</div>
+              <div class="context-subtext">n = 82 stores</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Flash Sale Bursts</div>
+              <div class="context-value">mean = $30.80, sd = $4.20</div>
+              <div class="context-subtext">n = 78 stores</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Loyalty Bundle Weekends</div>
+              <div class="context-value">mean = $33.60, sd = $4.00</div>
+              <div class="context-subtext">n = 88 stores</div>
+            </div>
+          </div>
+          <p><strong>Research Question:</strong> Use one-way ANOVA to determine whether the different pricing stories produce statistically different average gross-margin dollars per store at α = 0.10 (exploratory threshold).</p>
+          <div class="scenario-insights">
+            <div class="insight-title">💡 Strategic Tradeoff</div>
+            <p>Aggressive discounts may erode perceived quality, while perks-based offers can sustain engagement without race-to-the-bottom pricing.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    data: () => ({
+      groups: [
+        { name: 'Steady 15 Percent', mean: 32.4, sd: 3.9, n: 85 },
+        { name: 'Tiered Promo Calendar', mean: 34.1, sd: 4.5, n: 82 },
+        { name: 'Flash Sale Bursts', mean: 30.8, sd: 4.2, n: 78 },
+        { name: 'Loyalty Bundle Weekends', mean: 33.6, sd: 4.0, n: 88 }
+      ],
+      settings: { alpha: 0.10 }
+    })
+  },
+  {
+    id: 'b2b_nurture',
+    label: '📧 B2B Nurture Content Tracks',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">📧</span>
+          <h3>B2B Nurture Tracks: Product Tutorials vs. Executive ROI Stories</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">One-Way ANOVA</span>
+          <span class="badge badge-context">B2B SaaS / Demand Gen</span>
+          <span class="badge badge-alpha">α = 0.01</span>
+          <span class="badge badge-sample">n = 134 leads</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> A B2B SaaS company has accumulated a large pool of dormant enterprise leads. To re-activate these accounts, marketing launched two different nurture tracks: Tutorial Deep Dive Series (hands-on product walkthroughs) and Executive ROI Story Track (business cases and ROI frameworks).</p>
+          <p><strong>Test Setup:</strong> The two tracks target different buyer personas—day-to-day users vs. senior economic buyers. The outcome metric is <strong>qualified pipeline dollars created per contacted lead</strong>, aggregated across several verticals.</p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Tutorial Deep Dive Series</div>
+              <div class="context-value">mean = $56.20, sd = $6.30</div>
+              <div class="context-subtext">n = 64 leads</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Executive ROI Story Track</div>
+              <div class="context-value">mean = $59.70, sd = $5.80</div>
+              <div class="context-subtext">n = 70 leads</div>
+            </div>
+          </div>
+          <p><strong>Research Question:</strong> Use one-way ANOVA (equivalent to a two-sample t-test) to test whether mean pipeline per lead differs reliably between the Tutorial and Executive tracks at α = 0.01 (conservative threshold).</p>
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Nurture Strategy</div>
+            <p>Some verticals respond better to detailed tutorials, while others generate more pipeline when senior leaders receive executive-level ROI narratives.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    data: () => ({
+      groups: [
+        { name: 'Tutorial Deep Dive Series', mean: 56.2, sd: 6.3, n: 64 },
+        { name: 'Executive ROI Story Track', mean: 59.7, sd: 5.8, n: 70 }
+      ],
+      settings: { alpha: 0.01 }
+    })
+  },
+  {
+    id: 'loyalty_lifecycle_raw',
+    label: '💳 Lifecycle Messaging Experiment (Raw Data)',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">💳</span>
+          <h3>Lifecycle Messaging Experiment (Raw Observations)</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">One-Way ANOVA</span>
+          <span class="badge badge-context">Retention / Lifecycle Marketing</span>
+          <span class="badge badge-mode">Raw Data Mode</span>
+          <span class="badge badge-sample">n = 98 customers</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> Lifecycle marketing wants to understand which post-renewal message style best keeps high-value subscribers engaged. Four message variants are currently in market: Always-on Thank-You, Tiered Loyalty Story, Benefit Carousel, and VIP Drop Invite.</p>
+          <p><strong>Test Setup:</strong> Each row in the raw dataset represents an observed <strong>incremental revenue-per-customer</strong> figure captured after the push notification and follow-up email sequence. Differences between groups are intentional but modest, reflecting the messy reality of lifecycle tests.</p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Always-on Thank-You</div>
+              <div class="context-value">Simple appreciation note</div>
+              <div class="context-subtext">24 customers</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Tiered Loyalty Story</div>
+              <div class="context-value">Highlights status milestones</div>
+              <div class="context-subtext">24 customers</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Benefit Carousel</div>
+              <div class="context-value">Rotating perks display</div>
+              <div class="context-subtext">25 customers</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">VIP Drop Invite</div>
+              <div class="context-value">Exclusive limited-time offers</div>
+              <div class="context-subtext">25 customers</div>
+            </div>
+          </div>
+          <p><strong>Research Question:</strong> Use one-way ANOVA with raw data to determine whether any message variant delivers a reliably higher average revenue per customer at α = 0.05.</p>
+          <p><strong>Data Format:</strong> This scenario provides <strong>raw individual-level data</strong> (Group, Value) where each row represents one customer's incremental revenue. Upload the raw data to analyze.</p>
+          <div class="scenario-insights">
+            <div class="insight-title">📊 Planned Comparisons</div>
+            <p>Focus on VIP Drop Invite vs. Benefit Carousel, and Tiered Loyalty Story vs. Benefit Carousel to answer specific strategic questions.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    data: () => ({
+      rawData: [
+        'Group|Value',
+        'Always-on Thank-You|38.2', 'Always-on Thank-You|37.5', 'Always-on Thank-You|39.1', 'Always-on Thank-You|36.8',
+        'Always-on Thank-You|38.9', 'Always-on Thank-You|37.7', 'Always-on Thank-You|39.4', 'Always-on Thank-You|38.1',
+        'Always-on Thank-You|37.9', 'Always-on Thank-You|38.7', 'Always-on Thank-You|39.0', 'Always-on Thank-You|37.1',
+        'Always-on Thank-You|38.4', 'Always-on Thank-You|39.2', 'Always-on Thank-You|37.8', 'Always-on Thank-You|36.9',
+        'Always-on Thank-You|38.5', 'Always-on Thank-You|39.3', 'Always-on Thank-You|37.6', 'Always-on Thank-You|38.0',
+        'Always-on Thank-You|39.1', 'Always-on Thank-You|38.6', 'Always-on Thank-You|37.4', 'Always-on Thank-You|38.8',
+        'Tiered Loyalty Story|41.5', 'Tiered Loyalty Story|42.1', 'Tiered Loyalty Story|43.0', 'Tiered Loyalty Story|41.9',
+        'Tiered Loyalty Story|42.6', 'Tiered Loyalty Story|41.2', 'Tiered Loyalty Story|43.4', 'Tiered Loyalty Story|42.8',
+        'Tiered Loyalty Story|41.7', 'Tiered Loyalty Story|43.1', 'Tiered Loyalty Story|42.0', 'Tiered Loyalty Story|41.3',
+        'Tiered Loyalty Story|43.2', 'Tiered Loyalty Story|42.4', 'Tiered Loyalty Story|41.8', 'Tiered Loyalty Story|43.3',
+        'Tiered Loyalty Story|42.7', 'Tiered Loyalty Story|41.6', 'Tiered Loyalty Story|43.5', 'Tiered Loyalty Story|42.2',
+        'Tiered Loyalty Story|41.4', 'Tiered Loyalty Story|43.6', 'Tiered Loyalty Story|42.9', 'Tiered Loyalty Story|41.1',
+        'Benefit Carousel|45.2', 'Benefit Carousel|46.1', 'Benefit Carousel|44.8', 'Benefit Carousel|45.9',
+        'Benefit Carousel|46.4', 'Benefit Carousel|45.0', 'Benefit Carousel|46.2', 'Benefit Carousel|45.5',
+        'Benefit Carousel|46.0', 'Benefit Carousel|45.1', 'Benefit Carousel|46.3', 'Benefit Carousel|44.9',
+        'Benefit Carousel|45.7', 'Benefit Carousel|46.6', 'Benefit Carousel|45.4', 'Benefit Carousel|46.5',
+        'Benefit Carousel|45.3', 'Benefit Carousel|46.7', 'Benefit Carousel|45.8', 'Benefit Carousel|46.8',
+        'Benefit Carousel|45.6', 'Benefit Carousel|46.9', 'Benefit Carousel|44.7', 'Benefit Carousel|47.0',
+        'VIP Drop Invite|49.5', 'VIP Drop Invite|50.8', 'VIP Drop Invite|51.2', 'VIP Drop Invite|50.1',
+        'VIP Drop Invite|51.5', 'VIP Drop Invite|49.9', 'VIP Drop Invite|52.0', 'VIP Drop Invite|50.6',
+        'VIP Drop Invite|51.8', 'VIP Drop Invite|49.7', 'VIP Drop Invite|51.1', 'VIP Drop Invite|50.3',
+        'VIP Drop Invite|51.6', 'VIP Drop Invite|50.9', 'VIP Drop Invite|49.8', 'VIP Drop Invite|51.3',
+        'VIP Drop Invite|50.5', 'VIP Drop Invite|51.7', 'VIP Drop Invite|50.0', 'VIP Drop Invite|51.4',
+        'VIP Drop Invite|50.7', 'VIP Drop Invite|51.9', 'VIP Drop Invite|49.6', 'VIP Drop Invite|52.1'
+      ],
+      plannedComparisons: [
+        { group1: 'VIP Drop Invite', group2: 'Benefit Carousel' },
+        { group1: 'Tiered Loyalty Story', group2: 'Benefit Carousel' }
+      ],
+      settings: { alpha: 0.05 }
+    })
+  }
+];
+
 const MAX_GROUPS = 10;
 const MIN_GROUPS = 2;
 const DEFAULT_GROUPS = 3;
@@ -16,7 +265,6 @@ const MAX_COMPARISONS = 15;
 let selectedConfidenceLevel = 0.95;
 let groupCounter = 0;
 let comparisonCounter = 0;
-let scenarioManifest = [];
 let defaultScenarioDescription = '';
 let currentScenarioDataset = null;
 const DataEntryModes = {
@@ -1451,21 +1699,6 @@ function updateSummaryTable(groups, intervals, selectedLevel, anovaStats) {
 }
 
 // Axis controls
-async function fetchScenarioIndex() {
-    try {
-        const response = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error(`Unable to load scenario index (${response.status})`);
-        }
-        const data = await response.json();
-        if (Array.isArray(data)) {
-            scenarioManifest = data;
-        }
-    } catch (error) {
-        console.error('Scenario index error:', error);
-        scenarioManifest = [];
-    }
-}
 
 function parseScenarioText(text) {
     const lines = text.replace(/\r/g, '').split('\n');
@@ -1721,42 +1954,59 @@ function setupScenarioDownloadButton() {
     });
 }
 
-async function loadScenarioById(id) {
-    const scenario = scenarioManifest.find(entry => entry.id === id);
+function loadScenarioById(id) {
+    const scenario = ONEWAYANOVA_SCENARIOS.find(entry => entry.id === id);
     if (!scenario) {
         renderScenarioDescription('', '');
         updateScenarioDownloadButton(null);
         return;
     }
     try {
-        const response = await fetch(scenario.file, { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error(`Unable to load scenario file (${response.status})`);
+        const html = typeof scenario.description === 'function' ? scenario.description() : scenario.description;
+        const data = typeof scenario.data === 'function' ? scenario.data() : scenario.data;
+        
+        // Determine if raw data mode
+        let groups = [];
+        let rawData = [];
+        let mode = DataEntryModes.SUMMARY;
+        
+        if (data.rawData && data.rawData.length > 0) {
+            mode = DataEntryModes.RAW;
+            const parsed = parseRawLongFormatData(data.rawData.join('\n'));
+            rawData = parsed;
+            groups = deriveGroupsFromRaw(rawData);
+        } else if (data.groups && data.groups.length > 0) {
+            // Use groups directly without parsing
+            groups = data.groups;
         }
-        const text = await response.text();
-        const parsed = parseScenarioText(text);
-        if ((!parsed.groups || !parsed.groups.length) && parsed.rawData.length) {
-            const derived = deriveGroupsFromRaw(parsed.rawData);
-            if (derived.length) {
-                parsed.groups = derived;
-            }
+        
+        // Set mode first
+        const modeToggle = document.getElementById('data-entry-mode');
+        if (modeToggle && modeToggle.value !== mode) {
+            modeToggle.value = mode;
+            updateDataEntryModeUI(mode);
         }
-        renderScenarioDescription(parsed.title || scenario.label, parsed.description);
-        const nameMap = parsed.groups.length ? applyScenarioGroups(parsed.groups, true) : {};
+        
+        renderScenarioDescription('', html);
+        const nameMap = groups.length ? applyScenarioGroups(groups, true) : {};
+        
+        // Apply alpha setting
         const alphaInput = document.getElementById('alpha');
-        if (alphaInput && isFinite(parsed.alpha)) {
-            alphaInput.value = parsed.alpha.toFixed(3);
-            syncConfidenceButtonsToAlpha(parsed.alpha, { skipUpdate: true });
+        if (alphaInput && data.settings && isFinite(data.settings.alpha)) {
+            alphaInput.value = data.settings.alpha.toFixed(3);
+            syncConfidenceButtonsToAlpha(data.settings.alpha, { skipUpdate: true });
         }
+        
+        // Apply planned comparisons
         const plannedCheckbox = document.getElementById('enable-planned-comparisons');
         if (plannedCheckbox) {
-            if (parsed.plannedComparisons.length) {
+            if (data.plannedComparisons && data.plannedComparisons.length) {
                 plannedCheckbox.checked = true;
                 togglePlannedPanel(true);
                 clearComparisonRows(true);
-                parsed.plannedComparisons.forEach(pair => {
-                    const idA = nameMap[pair.groupA.toLowerCase()];
-                    const idB = nameMap[pair.groupB.toLowerCase()];
+                data.plannedComparisons.forEach(pair => {
+                    const idA = nameMap[(pair.group1 || pair.groupA).toLowerCase()];
+                    const idB = nameMap[(pair.group2 || pair.groupB).toLowerCase()];
                     if (idA && idB && idA !== idB) {
                         addComparisonRowWithSelections(idA, idB, true);
                     }
@@ -1767,7 +2017,12 @@ async function loadScenarioById(id) {
                 clearComparisonRows(true);
             }
         }
-        const datasetInfo = buildScenarioDataset(parsed, scenario.id);
+        
+        // Build dataset for download
+        const datasetInfo = buildScenarioDataset({
+            groups: groups,
+            rawData: rawData
+        }, scenario.id);
         updateScenarioDownloadButton(datasetInfo);
         
         // Track scenario load
@@ -1782,13 +2037,12 @@ async function loadScenarioById(id) {
     }
 }
 
-async function setupScenarioSelector() {
+function setupScenarioSelector() {
     const select = document.getElementById('scenario-select');
     if (!select) {
         return;
     }
-    await fetchScenarioIndex();
-    scenarioManifest.forEach(entry => {
+    ONEWAYANOVA_SCENARIOS.forEach(entry => {
         const option = document.createElement('option');
         option.value = entry.id;
         option.textContent = entry.label;

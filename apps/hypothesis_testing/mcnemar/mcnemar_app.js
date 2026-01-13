@@ -8,8 +8,273 @@ const TOOL_SLUG = 'mcnemar-test';
 let renderCount = 0;
 let lastTrackTime = 0;
 
+// ========================================
+// SCENARIO DEFINITIONS (Inline)
+// ========================================
+const MCNEMAR_SCENARIOS = [
+  {
+    id: 'streaming_launch',
+    label: '🎬 Streaming Creative Test',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">🎬</span>
+          <h3>Streaming Creative Test: Emotional Trailer Swap</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">McNemar Test</span>
+          <span class="badge badge-context">Creative Strategy</span>
+          <span class="badge badge-alpha">α = 0.025</span>
+          <span class="badge badge-sample">n = 1,800</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> You're working with a global streaming platform that's planning a major series launch. The creative team developed two different trailer concepts: an action-focused montage (Treatment A) and a mysterious, slow-burn reveal (Treatment B). Both trailers target the same viewer base, so the test design asks: <strong>if the same person sees both concepts, do they change their intent-to-watch rating?</strong></p>
+          <p><strong>Test Setup:</strong> 1,800 viewers were randomly assigned to watch <strong>both trailers</strong>, and for each trailer they indicated whether they planned to watch the series at launch ("yes" or "no"). This results in a 2×2 table capturing the matched-pairs structure:</p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Both Positive</div>
+              <div class="context-value">512 viewers</div>
+              <div class="context-subtext">Said "yes" to both trailers</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">A Positive, B Negative</div>
+              <div class="context-value">138 viewers</div>
+              <div class="context-subtext">Said "yes" to A, "no" to B</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">A Negative, B Positive</div>
+              <div class="context-value">214 viewers</div>
+              <div class="context-subtext">Said "no" to A, "yes" to B</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Both Negative</div>
+              <div class="context-value">936 viewers</div>
+              <div class="context-subtext">Said "no" to both trailers</div>
+            </div>
+          </div>
+          <p><strong>Research Question:</strong> Use McNemar's test at α = 0.025 to determine whether viewers are more likely to flip their answer in a specific direction. Are they drawn to one concept over the other?</p>
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Strategic Implication</div>
+            <p>If the mystery concept triggers more positive flips than the action concept, it may be the better hero asset for launch day—despite both trailers appealing to overlapping segments.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    data: () => ({
+      conditionALabel: 'Action Trailer',
+      conditionBLabel: 'Mystery Trailer',
+      positiveLabel: 'Intent to Watch',
+      negativeLabel: 'No Intent',
+      counts: {
+        a_yes_b_yes: 512,
+        a_yes_b_no: 138,
+        a_no_b_yes: 214,
+        a_no_b_no: 936
+      },
+      settings: {
+        alpha: 0.025,
+        analysisMethod: 'exact'
+      }
+    })
+  },
+  {
+    id: 'retail_pricing',
+    label: '🛒 Retail Signage Test',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">🛒</span>
+          <h3>Flagship Retail Signage: Price Messaging at Store Level</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">McNemar Test</span>
+          <span class="badge badge-context">Retail Merchandising</span>
+          <span class="badge badge-sample">n = 739 stores</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> A national apparel chain is considering a redesign of its in-store pricing signage. Currently, the chain uses a legacy "discount as percent-off" format (Treatment A). The new concept frames discounts as "new price vs. old price" (Treatment B).</p>
+          <p><strong>Test Setup:</strong> Over an 8-week period, 739 flagship stores alternated between these two signage formats on a weekly basis. Each store reported whether it hit its weekly margin target ("yes" or "no") under each signage format. This yields paired observations: each store contributes a Treatment A outcome and a Treatment B outcome.</p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Both Positive</div>
+              <div class="context-value">188 stores</div>
+              <div class="context-subtext">Hit margin under both formats</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">A Positive, B Negative</div>
+              <div class="context-value">58 stores</div>
+              <div class="context-subtext">Hit margin with A only</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">A Negative, B Positive</div>
+              <div class="context-value">92 stores</div>
+              <div class="context-subtext">Hit margin with B only</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Both Negative</div>
+              <div class="context-value">401 stores</div>
+              <div class="context-subtext">Missed margin under both</div>
+            </div>
+          </div>
+          <p><strong>Research Question:</strong> Use McNemar's test at α = 0.05 to test whether one signage format reliably shifts more stores into the "hit margin" category. The discordant pairs (58 vs. 92) will drive the test.</p>
+          <div class="scenario-insights">
+            <div class="insight-title">💡 Merchandising Tradeoff</div>
+            <p>The new adaptive format may mitigate the "race-to-the-bottom" pricing perception and preserve margins while maintaining shopper engagement.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    data: () => ({
+      conditionALabel: 'Legacy Signage',
+      conditionBLabel: 'Adaptive Signage',
+      positiveLabel: 'Hit Margin Target',
+      negativeLabel: 'Missed Target',
+      counts: {
+        a_yes_b_yes: 188,
+        a_yes_b_no: 58,
+        a_no_b_yes: 92,
+        a_no_b_no: 401
+      },
+      settings: {
+        alpha: 0.05,
+        analysisMethod: 'chi2_nocc'
+      }
+    })
+  },
+  {
+    id: 'b2b_nurture',
+    label: '📧 B2B Content Tracks',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">📧</span>
+          <h3>B2B Nurture Tracks: Paired Tutorial vs. Executive Story</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">McNemar Test</span>
+          <span class="badge badge-context">B2B SaaS / Demand Gen</span>
+          <span class="badge badge-alpha">α = 0.01</span>
+          <span class="badge badge-sample">n = 515 leads</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> A B2B SaaS company tested two email nurture tracks. Track A delivers product tutorials with hands-on walkthroughs. Track B delivers executive-level ROI stories and business cases. Both tracks are delivered to the same lead pool sequentially, and the outcome metric is whether a lead <strong>booked a demo</strong> after completing each track.</p>
+          <p><strong>Test Setup:</strong> 515 dormant enterprise leads received <strong>both tracks</strong>, one after the other (order randomized). After each track, leads could book a demo ("yes") or not ("no"). This creates matched pairs where each lead is compared to itself under two conditions.</p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Both Positive</div>
+              <div class="context-value">142 leads</div>
+              <div class="context-subtext">Booked demo after both tracks</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">A Positive, B Negative</div>
+              <div class="context-value">36 leads</div>
+              <div class="context-subtext">Booked after tutorials only</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">A Negative, B Positive</div>
+              <div class="context-value">74 leads</div>
+              <div class="context-subtext">Booked after executive stories only</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Both Negative</div>
+              <div class="context-value">263 leads</div>
+              <div class="context-subtext">Never booked a demo</div>
+            </div>
+          </div>
+          <p><strong>Research Question:</strong> Use McNemar's test at α = 0.01 (conservative threshold) to test whether one track drives significantly more demo bookings than the other.</p>
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Demand Gen Insight</div>
+            <p>If executive ROI stories trigger more "no → yes" flips (74) than tutorials (36), it suggests senior decision-makers respond better to business cases than product details.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    data: () => ({
+      conditionALabel: 'Tutorial Track',
+      conditionBLabel: 'Executive ROI Track',
+      positiveLabel: 'Booked Demo',
+      negativeLabel: 'No Demo',
+      counts: {
+        a_yes_b_yes: 142,
+        a_yes_b_no: 36,
+        a_no_b_yes: 74,
+        a_no_b_no: 263
+      },
+      settings: {
+        alpha: 0.01,
+        analysisMethod: 'chi2_cc'
+      }
+    })
+  },
+  {
+    id: 'lifecycle_push_raw',
+    label: '💳 Lifecycle Push Pilot (Raw Data)',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">💳</span>
+          <h3>Lifecycle Push Pilot: Paired Observations (Raw CSV Mode)</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">McNemar Test</span>
+          <span class="badge badge-context">Lifecycle Marketing</span>
+          <span class="badge badge-mode">Raw Data Mode</span>
+          <span class="badge badge-sample">n = 90 customers</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> You're leading a lifecycle marketing team at a subscription business. You want to test whether a new journey-personalized push notification performs better than the standard control push. Each high-value customer receives <strong>both push variants</strong> over two consecutive weeks (order randomized), and the outcome is whether they made a purchase that week ("Converted" or "Not converted").</p>
+          <p><strong>Test Setup:</strong> This scenario provides <strong>raw paired data</strong> from 90 customers. Each row in the dataset contains two columns: the outcome after the control push (Condition A) and the outcome after the journey-personalized push (Condition B).</p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Both Positive</div>
+              <div class="context-value">32 customers</div>
+              <div class="context-subtext">Converted after both pushes</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">A Positive, B Negative</div>
+              <div class="context-value">18 customers</div>
+              <div class="context-subtext">Converted with control only</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">A Negative, B Positive</div>
+              <div class="context-value">25 customers</div>
+              <div class="context-subtext">Converted with journey-personalized only</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Both Negative</div>
+              <div class="context-value">15 customers</div>
+              <div class="context-subtext">Never converted</div>
+            </div>
+          </div>
+          <p><strong>Research Question:</strong> Use McNemar's test at α = 0.05 to determine whether the journey-personalized push reliably shifts more customers from "not converted" → "converted" compared to the control push.</p>
+          <p><strong>Data Format:</strong> Upload a CSV file with two columns: "Control Push" and "Journey-Personalized Push". Each row represents one customer's paired outcomes (e.g., "Converted", "Not converted").</p>
+          <div class="scenario-insights">
+            <div class="insight-title">📊 Practical Application</div>
+            <p>If the test shows a significant advantage for the journey-personalized push, it justifies scaling this approach to the full customer base—potentially unlocking millions in incremental revenue.</p>
+          </div>
+        </div>
+      </div>
+    `,
+    data: () => ({
+      conditionALabel: 'Control Push',
+      conditionBLabel: 'Journey-Personalized Push',
+      positiveLabel: 'Converted',
+      negativeLabel: 'Not converted',
+      rawData: [
+        'Control Push,Journey-Personalized Push',
+        ...Array(32).fill('Converted,Converted'),
+        ...Array(18).fill('Converted,Not converted'),
+        ...Array(25).fill('Not converted,Converted'),
+        ...Array(15).fill('Not converted,Not converted')
+      ],
+      settings: {
+        alpha: 0.05
+      }
+    })
+  }
+];
+
 let selectedConfidenceLevel = 0.95;
-let scenarioManifest = [];
 let defaultScenarioDescription = '';
 
 const REQUIRED_COUNT_KEYS = ['a_yes_b_yes', 'a_yes_b_no', 'a_no_b_yes', 'a_no_b_no'];
@@ -1295,22 +1560,6 @@ async function loadScenarioDatasetResource(entry) {
     }
 }
 
-async function fetchScenarioIndex() {
-    try {
-        const response = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error(`Unable to load scenario index (${response.status})`);
-        }
-        const data = await response.json();
-        if (Array.isArray(data)) {
-            scenarioManifest = data;
-        }
-    } catch (error) {
-        console.error('Scenario index error:', error);
-        scenarioManifest = [];
-    }
-}
-
 function parseScenarioText(text) {
     const lines = text.replace(/\r/g, '').split('\n');
     const result = {
@@ -1406,8 +1655,8 @@ function applyScenarioData(parsed) {
     }, { mode: DataEntryModes.MANUAL, update: false });
 }
 
-async function loadScenarioById(id) {
-    const scenario = scenarioManifest.find(entry => entry.id === id);
+function loadScenarioById(id) {
+    const scenario = MCNEMAR_SCENARIOS.find(entry => entry.id === id);
     if (!scenario) {
         renderScenarioDescription('', '');
         enableScenarioDownload(null);
@@ -1416,34 +1665,69 @@ async function loadScenarioById(id) {
     setUploadStatus('summary-upload-status', 'No summary file uploaded.', '');
     setUploadStatus('raw-upload-status', 'No raw file uploaded.', '');
     try {
-        const response = await fetch(scenario.file, { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error(`Unable to load scenario file (${response.status})`);
-        }
-        const text = await response.text();
-        const parsed = parseScenarioText(text);
-        renderScenarioDescription(parsed.title || scenario.label, parsed.description);
+        const html = typeof scenario.description === 'function' ? scenario.description() : scenario.description;
+        const data = typeof scenario.data === 'function' ? scenario.data() : scenario.data;
+        
+        renderScenarioDescription('', html);
+        
+        // Determine mode and apply data
         let datasetInfo = null;
-        let meta = { alphaApplied: false, methodApplied: false };
-        if (scenario.dataset) {
-            try {
-                meta = await loadScenarioDatasetResource(scenario);
-                if (meta.dataset) {
-                    datasetInfo = meta.dataset;
-                }
-            } catch (datasetError) {
-                console.error('Scenario dataset load error:', datasetError);
-                applyScenarioData(parsed);
+        if (data.rawData && data.rawData.length > 0) {
+            // Raw mode
+            const parsed = parseRawUpload(data.rawData.join('\n'));
+            if (parsed.counts) {
+                applySummaryDataset({
+                    labels: {
+                        conditionA: data.conditionALabel || defaultLabels.conditionA,
+                        conditionB: data.conditionBLabel || defaultLabels.conditionB,
+                        positive: data.positiveLabel || defaultLabels.positive,
+                        negative: data.negativeLabel || defaultLabels.negative
+                    },
+                    counts: {
+                        aPosBPos: parsed.counts.a_yes_b_yes,
+                        aPosBNeg: parsed.counts.a_yes_b_no,
+                        aNegBPos: parsed.counts.a_no_b_yes,
+                        aNegBNeg: parsed.counts.a_no_b_no
+                    },
+                    alpha: data.settings?.alpha,
+                    method: data.settings?.analysisMethod || ''
+                }, { mode: DataEntryModes.RAW, update: false });
+                datasetInfo = {
+                    filename: `${scenario.id}_raw_data.csv`,
+                    content: data.rawData.join('\n'),
+                    mimeType: 'text/csv'
+                };
             }
-        } else {
-            applyScenarioData(parsed);
+        } else if (data.counts) {
+            // Summary mode
+            applySummaryDataset({
+                labels: {
+                    conditionA: data.conditionALabel || defaultLabels.conditionA,
+                    conditionB: data.conditionBLabel || defaultLabels.conditionB,
+                    positive: data.positiveLabel || defaultLabels.positive,
+                    negative: data.negativeLabel || defaultLabels.negative
+                },
+                counts: {
+                    aPosBPos: data.counts.a_yes_b_yes,
+                    aPosBNeg: data.counts.a_yes_b_no,
+                    aNegBPos: data.counts.a_no_b_yes,
+                    aNegBNeg: data.counts.a_no_b_no
+                },
+                alpha: data.settings?.alpha,
+                method: data.settings?.analysisMethod || ''
+            }, { mode: DataEntryModes.MANUAL, update: false });
+            
+            const csvLines = [
+                'condition_a_label,condition_b_label,positive_label,negative_label,a_positive_b_positive,a_positive_b_negative,a_negative_b_positive,a_negative_b_negative,alpha,analysis_method',
+                `${data.conditionALabel},${data.conditionBLabel},${data.positiveLabel},${data.negativeLabel},${data.counts.a_yes_b_yes},${data.counts.a_yes_b_no},${data.counts.a_no_b_yes},${data.counts.a_no_b_no},${data.settings?.alpha || 0.05},${data.settings?.analysisMethod || 'chi2_cc'}`
+            ];
+            datasetInfo = {
+                filename: `${scenario.id}_summary.csv`,
+                content: csvLines.join('\n'),
+                mimeType: 'text/csv'
+            };
         }
-        if (!meta.alphaApplied && isFinite(parsed.alpha)) {
-            applyAlphaSetting(parsed.alpha, { skipUpdate: true });
-        }
-        if (!meta.methodApplied && parsed.additionalInputs.analysis_method) {
-            applyMethodSetting(parsed.additionalInputs.analysis_method);
-        }
+        
         enableScenarioDownload(datasetInfo);
         
         // Track scenario load
@@ -1458,13 +1742,12 @@ async function loadScenarioById(id) {
     }
 }
 
-async function setupScenarioSelector() {
+function setupScenarioSelector() {
     const select = document.getElementById('scenario-select');
     if (!select) {
         return;
     }
-    await fetchScenarioIndex();
-    scenarioManifest.forEach(entry => {
+    MCNEMAR_SCENARIOS.forEach(entry => {
         const option = document.createElement('option');
         option.value = entry.id;
         option.textContent = entry.label;

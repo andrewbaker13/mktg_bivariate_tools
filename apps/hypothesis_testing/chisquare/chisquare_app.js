@@ -7,6 +7,268 @@
   let renderCount = 0;
   let lastTrackTime = 0;
 
+  // ========================================
+  // SCENARIO DEFINITIONS (Inline)
+  // ========================================
+  const CHISQUARE_SCENARIOS = [
+    {
+      id: 'holiday_creative',
+      label: '📧 Holiday Email Creative Test',
+      description: () => `
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <span class="scenario-icon">📧</span>
+            <h3>Holiday Email Creative Test</h3>
+          </div>
+          <div class="scenario-badge-row">
+            <span class="badge badge-hypothesis">Chi-Square Test</span>
+            <span class="badge badge-context">Email Marketing</span>
+            <span class="badge badge-sample">2×2 contingency</span>
+          </div>
+          <div class="scenario-body">
+            <p><strong>Business Context:</strong> A retail brand tested two holiday email creatives: one emphasizing product utility ("Practical Gifts for Everyone") and one emphasizing emotional storytelling ("Share Joy This Season"). The goal was to determine if the creative framing influenced click-through behavior.</p>
+            <p><strong>Test Setup:</strong> Subscribers were randomly assigned to receive either the utility-framed email or the story-framed email. Each recipient was tracked for engagement (clicked vs. not clicked).</p>
+            <div class="context-grid">
+              <div class="context-item">
+                <div class="context-label">Utility Creative</div>
+                <div class="context-value">186 clicked, 314 did not</div>
+                <div class="context-subtext">Click rate: 37.2%</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Story Creative</div>
+                <div class="context-value">214 clicked, 286 did not</div>
+                <div class="context-subtext">Click rate: 42.8%</div>
+              </div>
+            </div>
+            <p><strong>Research Question:</strong> Is there a significant association between creative framing (utility vs. story) and click-through behavior at α = 0.05?</p>
+            <div class="scenario-insights">
+              <div class="insight-title">🎁 Creative Strategy</div>
+              <p>The story-framed email shows a 5.6 percentage point lift in click-through rate. Test whether this difference is statistically significant using a chi-square test of independence.</p>
+            </div>
+          </div>
+        </div>
+      `,
+      data: () => ({
+        rows: ['Utility Creative', 'Story Creative'],
+        columns: ['Clicked', 'Not Clicked'],
+        matrix: [[186, 314], [214, 286]],
+        settings: { alpha: 0.05, chartXAxis: 'rows', cellLabelMode: 'counts' }
+      })
+    },
+    {
+      id: 'channel_purchase',
+      label: '🛒 Channel vs. Purchase Behavior Test',
+      description: () => `
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <span class="scenario-icon">🛒</span>
+            <h3>Channel vs. Purchase Behavior Test</h3>
+          </div>
+          <div class="scenario-badge-row">
+            <span class="badge badge-hypothesis">Chi-Square Test</span>
+            <span class="badge badge-context">Multi-Channel Attribution</span>
+            <span class="badge badge-alpha">α = 0.01</span>
+            <span class="badge badge-sample">3×2 contingency</span>
+          </div>
+          <div class="scenario-body">
+            <p><strong>Business Context:</strong> An e-commerce company wants to understand if the marketing channel (Email, Paid Search, Organic Search) is associated with purchase behavior (purchase vs. browse-only). This analysis helps prioritize channel investment.</p>
+            <p><strong>Test Setup:</strong> A sample of 346 sessions was tracked across three marketing channels. Each session was classified as either a purchase or browse-only visit.</p>
+            <div class="context-grid">
+              <div class="context-item">
+                <div class="context-label">Email Channel</div>
+                <div class="context-value">74 purchased, 46 browsed</div>
+                <div class="context-subtext">Purchase rate: 61.7%</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Paid Search Channel</div>
+                <div class="context-value">82 purchased, 38 browsed</div>
+                <div class="context-subtext">Purchase rate: 68.3%</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Organic Search Channel</div>
+                <div class="context-value">54 purchased, 52 browsed</div>
+                <div class="context-subtext">Purchase rate: 50.9%</div>
+              </div>
+            </div>
+            <p><strong>Research Question:</strong> Is there a statistically significant association between marketing channel and purchase behavior? (Use a more conservative α = 0.01 for strategic decision-making.)</p>
+            <div class="scenario-insights">
+              <div class="insight-title">📊 Channel Performance</div>
+              <p>Paid Search shows the highest purchase rate (68.3%), while Organic Search has the lowest (50.9%). Test whether these differences are statistically significant.</p>
+            </div>
+          </div>
+        </div>
+      `,
+      data: () => ({
+        rows: ['Email', 'Paid Search', 'Organic Search'],
+        columns: ['Purchase', 'Browse'],
+        matrix: [[74, 46], [82, 38], [54, 52]],
+        settings: { alpha: 0.01, chartXAxis: 'rows', cellLabelMode: 'counts' }
+      })
+    },
+    {
+      id: 'landing_layout',
+      label: '📱 Landing Page Layout Test',
+      description: () => `
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <span class="scenario-icon">📱</span>
+            <h3>Landing Page Layout Test</h3>
+          </div>
+          <div class="scenario-badge-row">
+            <span class="badge badge-hypothesis">Chi-Square Test</span>
+            <span class="badge badge-context">Conversion Rate Optimization</span>
+            <span class="badge badge-alpha">α = 0.10</span>
+            <span class="badge badge-sample">2×3 contingency</span>
+          </div>
+          <div class="scenario-body">
+            <p><strong>Business Context:</strong> A SaaS company tested a mobile-optimized landing page layout against the standard desktop layout. The goal was to determine if device type (Desktop vs. Mobile) influences user action (Submit Form, Click to Call, or No Action).</p>
+            <p><strong>Test Setup:</strong> A sample of 440 landing page visitors was tracked across desktop and mobile devices. Each visitor's action was categorized into one of three outcomes.</p>
+            <div class="context-grid">
+              <div class="context-item">
+                <div class="context-label">Desktop Visitors</div>
+                <div class="context-value">45 form, 22 call, 133 no action</div>
+                <div class="context-subtext">Conversion rate: 33.5%</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Mobile Visitors</div>
+                <div class="context-value">60 form, 15 call, 125 no action</div>
+                <div class="context-subtext">Conversion rate: 37.5%</div>
+              </div>
+            </div>
+            <p><strong>Research Question:</strong> Is there a significant association between device type and user action? (Use α = 0.10 for this exploratory pilot test.)</p>
+            <div class="scenario-insights">
+              <div class="insight-title">📱 Mobile Optimization</div>
+              <p>Mobile visitors show a 4 percentage point lift in conversion rate, driven primarily by form submissions. Test whether device type significantly influences action distribution.</p>
+            </div>
+          </div>
+        </div>
+      `,
+      data: () => ({
+        rows: ['Desktop', 'Mobile'],
+        columns: ['Form Submission', 'Click to Call', 'No Action'],
+        matrix: [[45, 22, 133], [60, 15, 125]],
+        settings: { alpha: 0.10, chartXAxis: 'rows', cellLabelMode: 'counts' }
+      })
+    },
+    {
+      id: 'loyalty_nudge_raw',
+      label: '💬 Loyalty Nudge Test (Raw Data)',
+      description: () => `
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <span class="scenario-icon">💬</span>
+            <h3>Loyalty Nudge Test (Raw Data)</h3>
+          </div>
+          <div class="scenario-badge-row">
+            <span class="badge badge-hypothesis">Chi-Square Test</span>
+            <span class="badge badge-context">Retention / CRM</span>
+            <span class="badge badge-mode">Raw Data Mode</span>
+            <span class="badge badge-sample">n = 120</span>
+          </div>
+          <div class="scenario-body">
+            <p><strong>Business Context:</strong> A fitness app sends push notifications to encourage loyalty program engagement. The retention team wants to test if loyalty segment (Enrolled Members, In-Store Only, Digital App Only) is associated with subsequent action (Used Coupon, Made Visit, or No Action).</p>
+            <p><strong>Test Setup:</strong> A pilot test tracked 120 users across three loyalty segments. Each user's response to the push notification was recorded as one of three actions.</p>
+            <div class="context-grid">
+              <div class="context-item">
+                <div class="context-label">Enrolled Members</div>
+                <div class="context-value">40 users tracked</div>
+                <div class="context-subtext">High engagement segment</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">In-Store Only</div>
+                <div class="context-value">40 users tracked</div>
+                <div class="context-subtext">Offline-focused segment</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Digital App Only</div>
+                <div class="context-value">40 users tracked</div>
+                <div class="context-subtext">Online-focused segment</div>
+              </div>
+            </div>
+            <p><strong>Research Question:</strong> Is there a significant association between loyalty segment and action taken in response to the push notification at α = 0.05?</p>
+            <p><strong>Data Format:</strong> This scenario provides <strong>raw individual-level data</strong> (Segment, Action) where each row represents one user's response. Upload the raw data file to analyze the contingency table.</p>
+            <div class="scenario-insights">
+              <div class="insight-title">🎯 Segmentation Strategy</div>
+              <p>This pilot test helps determine if loyalty segment predicts engagement with push notifications, informing future targeting strategies.</p>
+            </div>
+          </div>
+        </div>
+      `,
+      data: () => ({
+        rawData: [
+          'Loyalty Segment,Action',
+          'Enrolled','Used Coupon', 'Enrolled','Used Coupon', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit',
+          'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit',
+          'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit',
+          'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit',
+          'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit',
+          'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit',
+          'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit', 'Enrolled','Made Visit',
+          'Enrolled','No Action', 'Enrolled','No Action', 'Enrolled','No Action', 'Enrolled','No Action', 'Enrolled','No Action',
+          'In-Store','Used Coupon', 'In-Store','Used Coupon', 'In-Store','Used Coupon', 'In-Store','Used Coupon', 'In-Store','Used Coupon',
+          'In-Store','Made Visit', 'In-Store','Made Visit', 'In-Store','Made Visit', 'In-Store','Made Visit', 'In-Store','Made Visit',
+          'In-Store','Made Visit', 'In-Store','Made Visit', 'In-Store','Made Visit', 'In-Store','Made Visit', 'In-Store','Made Visit',
+          'In-Store','Made Visit', 'In-Store','Made Visit', 'In-Store','Made Visit', 'In-Store','Made Visit', 'In-Store','Made Visit',
+          'In-Store','No Action', 'In-Store','No Action', 'In-Store','No Action', 'In-Store','No Action', 'In-Store','No Action',
+          'In-Store','No Action', 'In-Store','No Action', 'In-Store','No Action', 'In-Store','No Action', 'In-Store','No Action',
+          'In-Store','No Action', 'In-Store','No Action', 'In-Store','No Action', 'In-Store','No Action', 'In-Store','No Action',
+          'In-Store','No Action', 'In-Store','No Action', 'In-Store','No Action', 'In-Store','No Action', 'In-Store','No Action',
+          'Digital App','Used Coupon', 'Digital App','Used Coupon', 'Digital App','Used Coupon', 'Digital App','Used Coupon', 'Digital App','Used Coupon',
+          'Digital App','Used Coupon', 'Digital App','Used Coupon', 'Digital App','Used Coupon', 'Digital App','Used Coupon', 'Digital App','Used Coupon',
+          'Digital App','Made Visit', 'Digital App','Made Visit', 'Digital App','Made Visit', 'Digital App','Made Visit', 'Digital App','Made Visit',
+          'Digital App','Made Visit', 'Digital App','Made Visit', 'Digital App','Made Visit', 'Digital App','Made Visit', 'Digital App','Made Visit',
+          'Digital App','No Action', 'Digital App','No Action', 'Digital App','No Action', 'Digital App','No Action', 'Digital App','No Action',
+          'Digital App','No Action', 'Digital App','No Action', 'Digital App','No Action', 'Digital App','No Action', 'Digital App','No Action'
+        ],
+        settings: { alpha: 0.05, chartXAxis: 'rows', cellLabelMode: 'counts' }
+      })
+    },
+    {
+      id: 'class_survival_dungeon',
+      label: '⚔️ D&D Class Survival Test',
+      description: () => `
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <span class="scenario-icon">⚔️</span>
+            <h3>D&D Class Survival Test</h3>
+          </div>
+          <div class="scenario-badge-row">
+            <span class="badge badge-hypothesis">Chi-Square Test</span>
+            <span class="badge badge-context">Game Balance / Fun Example</span>
+            <span class="badge badge-sample">2×2 contingency</span>
+          </div>
+          <div class="scenario-body">
+            <p><strong>Game Context:</strong> A Dungeon Master (DM) suspects that Barbarians have better survival rates than Wizards in high-difficulty dungeon encounters. To test this hypothesis, the DM reviewed 100 recent dungeon runs and recorded survival outcomes by character class.</p>
+            <p><strong>Test Setup:</strong> The DM tracked 50 Barbarian encounters and 50 Wizard encounters in Level 10+ dungeons. Each encounter was classified as either "Survived" or "Perished."</p>
+            <div class="context-grid">
+              <div class="context-item">
+                <div class="context-label">Barbarian (Tank)</div>
+                <div class="context-value">45 survived, 5 perished</div>
+                <div class="context-subtext">Survival rate: 90%</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Wizard (Glass Cannon)</div>
+                <div class="context-value">30 survived, 20 perished</div>
+                <div class="context-subtext">Survival rate: 60%</div>
+              </div>
+            </div>
+            <p><strong>Research Question:</strong> Is there a statistically significant association between character class (Barbarian vs. Wizard) and survival outcome in high-difficulty dungeons at α = 0.05?</p>
+            <div class="scenario-insights">
+              <div class="insight-title">🎲 Game Balance</div>
+              <p>Barbarians show a 30 percentage point survival advantage over Wizards. Test whether this difference is statistically significant, which may inform game balance adjustments.</p>
+            </div>
+          </div>
+        </div>
+      `,
+      data: () => ({
+        rows: ['Barbarian', 'Wizard'],
+        columns: ['Survived', 'Perished'],
+        matrix: [[45, 5], [30, 20]],
+        settings: { alpha: 0.05, chartXAxis: 'rows', cellLabelMode: 'counts' }
+      })
+    }
+  ];
+
   var rowsInput = document.getElementById('rows');
   var colsInput = document.getElementById('cols');
   var alphaSelect = document.getElementById('alpha');
@@ -859,29 +1121,113 @@
     if (!select) return;
     var current = select.value;
     select.innerHTML = '<option value="">Manual inputs (no preset)</option>';
-    scenarioState.manifest.forEach(function (entry) {
+    
+    CHISQUARE_SCENARIOS.forEach(function (scenario) {
       var option = document.createElement('option');
-      option.value = entry.id;
-      option.textContent = entry.label || entry.id;
-      if (entry.id === current) option.selected = true;
+      option.value = scenario.id;
+      option.textContent = scenario.label || scenario.id;
+      if (scenario.id === current) option.selected = true;
       select.appendChild(option);
     });
   }
 
-  function fetchScenarioIndex() {
-    fetch('scenarios/scenario-index.json', { cache: 'no-cache' })
-      .then(function (response) {
-        if (!response.ok) throw new Error('Unable to load scenario index (' + response.status + ')');
-        return response.json();
-      })
-      .then(function (data) {
-        if (Array.isArray(data)) scenarioState.manifest = data;
-      })
-      .catch(function (error) {
-        console.error('Scenario index error:', error);
-        scenarioState.manifest = [];
-      })
-      .then(populateScenarioOptions);
+  function loadScenarioById(id) {
+    var scenario = CHISQUARE_SCENARIOS.find(function(entry) { return entry.id === id; });
+    if (!scenario) {
+      renderScenarioDescription('', '');
+      updateScenarioDownload(null);
+      return;
+    }
+
+    // Track scenario selection for engagement
+    if (typeof markScenarioLoaded === 'function') {
+      markScenarioLoaded(scenario.label);
+    }
+
+    try {
+      var htmlContent = scenario.description();
+      renderScenarioDescription(scenario.label, htmlContent);
+      
+      var scenarioData = scenario.data();
+      
+      // Handle raw data mode
+      if (scenarioData.rawData && scenarioData.rawData.length > 0) {
+        var csvText = scenarioData.rawData.join('\n');
+        try {
+          var rawParsed = parseRawDataset(csvText);
+          applyCrosstabMatrix(rawParsed, { alpha: scenarioData.settings.alpha, retainScenario: true });
+          reportRawStatus('Loaded scenario raw data with ' + rawParsed.totalRecords + ' records.', 'success');
+          
+          var safeId = scenario.id.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+          activeScenarioDownload = { 
+            type: 'inline', 
+            filename: safeId + '_raw_data.csv', 
+            content: csvText,
+            mime: 'text/csv'
+          };
+          if (scenarioDownloadBtn) {
+            scenarioDownloadBtn.classList.remove('hidden');
+            scenarioDownloadBtn.disabled = false;
+          }
+        } catch (error) {
+          console.error('Scenario raw data error:', error);
+          reportRawStatus(error.message || 'Unable to parse scenario raw data.', 'error');
+        }
+      }
+      // Handle contingency table mode
+      else if (scenarioData.rows && scenarioData.columns && scenarioData.matrix) {
+        var parsed = {
+          rows: scenarioData.rows,
+          columns: scenarioData.columns,
+          matrix: scenarioData.matrix,
+          rowVarName: rowVarName,
+          colVarName: colVarName
+        };
+        
+        applyCrosstabMatrix(parsed, { 
+          alpha: scenarioData.settings.alpha,
+          yates: scenarioData.settings.yates,
+          retainScenario: true 
+        });
+        
+        // Apply additional settings
+        if (scenarioData.settings) {
+          if (scenarioData.settings.chartXAxis && chartXAxisSelect) {
+            chartXAxisSelect.value = scenarioData.settings.chartXAxis;
+          }
+          if (scenarioData.settings.cellLabelMode && cellLabelModeSelect) {
+            cellLabelModeSelect.value = scenarioData.settings.cellLabelMode;
+          }
+        }
+        
+        reportSummaryStatus('Loaded scenario contingency table (' + scenarioData.rows.length + 'x' + scenarioData.columns.length + ').', 'success');
+        
+        // Create downloadable dataset
+        var safeId = scenario.id.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        var csvLines = [''].concat(scenarioData.columns);
+        for (var i = 0; i < scenarioData.rows.length; i++) {
+          csvLines.push([scenarioData.rows[i]].concat(scenarioData.matrix[i]).join(','));
+        }
+        var csvContent = csvLines.join('\n');
+        
+        activeScenarioDownload = { 
+          type: 'inline', 
+          filename: safeId + '_contingency_table.csv', 
+          content: csvContent,
+          mime: 'text/csv'
+        };
+        if (scenarioDownloadBtn) {
+          scenarioDownloadBtn.classList.remove('hidden');
+          scenarioDownloadBtn.disabled = false;
+        }
+      }
+      
+      recompute();
+      
+    } catch (error) {
+      console.error('Scenario load error:', error);
+      updateScenarioDownload(null);
+    }
   }
 
   function setupScenarioDownload() {
@@ -1257,7 +1603,7 @@
     }
     setupScenarioDownload();
     setupScenarioSelector();
-    fetchScenarioIndex();
+    populateScenarioOptions();
   }
 
   function initializeUploads() {
@@ -1348,62 +1694,7 @@
     recompute();
   }
 
-  function loadScenarioById(id) {
-    var scenario = scenarioState.manifest.find(function (entry) { return entry.id === id; });
-    if (!scenario) {
-      renderScenarioDescription('', '');
-      updateScenarioDownload(null);
-      return;
-    }
-
-    // Track scenario selection for engagement
-    if (typeof markScenarioLoaded === 'function') {
-      markScenarioLoaded(scenario.label);
-    }
-    var scenarioTextPromise = fetch(scenario.file, { cache: 'no-cache' })
-      .then(function (response) {
-        if (!response.ok) throw new Error('Unable to load scenario file (' + response.status + ')');
-        return response.text();
-      })
-      .catch(function (error) {
-        console.error('Scenario copy error:', error);
-        return null;
-      });
-    var datasetPromise = scenario.dataset
-      ? fetch(scenario.dataset, { cache: 'no-cache' })
-          .then(function (response) {
-            if (!response.ok) throw new Error('Unable to load scenario dataset (' + response.status + ')');
-            return response.text();
-          })
-          .catch(function (error) {
-            console.error('Scenario dataset error:', error);
-            return null;
-          })
-      : Promise.resolve(null);
-    Promise.all([scenarioTextPromise, datasetPromise])
-      .then(function (results) {
-        var parsedScenario = results[0] ? parseScenarioText(results[0]) : null;
-        var parsedDataset = null;
-        if (results[1]) {
-          if (scenario.dataType && scenario.dataType.toLowerCase() === 'raw') {
-            parsedDataset = parseRawDataset(results[1]);
-          } else {
-            parsedDataset = parseCrosstabText(results[1]);
-          }
-        }
-        if (!parsedScenario && !parsedDataset) {
-          throw new Error('Scenario data unavailable.');
-        }
-        var datasetText = results[1] || null;
-        applyScenarioPreset(parsedScenario, scenario, parsedDataset, datasetText);
-      })
-      .catch(function (error) {
-        console.error('Scenario load error:', error);
-        renderScenarioDescription('', 'Unable to load scenario: ' + (error && error.message ? error.message : 'unknown error'));
-        updateScenarioDownload(null);
-      });
-  }
-
+  // OLD loadScenarioById function REMOVED - using new inline scenario version at line 1134
 
   function clearTable() {
     var inputs = tableContainer ? tableContainer.querySelectorAll('tbody input') : [];

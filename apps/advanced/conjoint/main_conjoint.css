@@ -424,20 +424,6 @@
   margin-right: 0.25rem;
 }
 
-.badge-secondary {
-  background: var(--app-muted, #5f6b7a) !important;
-  color: white !important;
-  text-decoration: none;
-  padding: 0.35rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  display: inline-block;
-}
-
-.badge-secondary:hover {
-  background: #4a5568 !important;
-}
-
 .input-group {
   margin-bottom: 1.5rem;
 }

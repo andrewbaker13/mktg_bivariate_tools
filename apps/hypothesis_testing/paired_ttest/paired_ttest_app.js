@@ -35,11 +35,193 @@ let activeMode = InputModes.PAIRED;
 let selectedConfidenceLevel = 0.95;
 let manualStructure = ManualStructures.PAIRED;
 let manualRowCount = DEFAULT_MANUAL_ROWS;
-let scenarioManifest = [];
+let activeScenario = null;
 let defaultScenarioDescription = '';
 let scenarioRawFile = '';
 let uploadedPairedData = null;
 let uploadedDifferenceData = null;
+
+// ============================================================================
+// INLINE SCENARIO DEFINITIONS (Modern Pattern)
+// ============================================================================
+
+const PAIRED_TTEST_SCENARIOS = [
+    {
+        id: 'streaming_launch',
+        label: 'Streaming Launch Creative Test',
+        description: () => generateStreamingLaunchHtml(),
+        alpha: 0.05,
+        mode: InputModes.PAIRED,
+        data: () => ({
+            paired: [
+                [48.5, 52.1], [45.9, 49.2], [47.4, 52.4], [46.1, 50.1],
+                [49.3, 53.5], [44.8, 48.6], [45.2, 50.4], [46.7, 51.5],
+                [47.9, 54.2], [48.1, 52.7], [46.4, 49.8], [45.6, 50.0],
+                [47.0, 52.2], [48.7, 53.1], [46.9, 51.7], [45.5, 49.3],
+                [47.8, 52.9], [46.2, 50.8], [48.0, 53.4], [45.7, 49.8]
+            ],
+            headers: ['recall_score', 'conversion_score']
+        }),
+        rawFile: 'scenarios/data/streaming_launch.csv'
+    },
+    {
+        id: 'retail_pricing',
+        label: 'Retail Promotions Pricing Test',
+        description: () => generateRetailPricingHtml(),
+        alpha: 0.04,
+        mode: InputModes.DIFFERENCE,
+        data: () => ({
+            differences: [
+                2.8, 3.1, 1.4, 2.3, 3.6, 2.1, 1.9, 2.5, 3.3, 2.0,
+                1.7, 2.9, 3.4, 2.6, 1.8, 2.2, 3.0, 2.4, 1.5, 2.7
+            ]
+        }),
+        rawFile: 'scenarios/data/retail_pricing_diff.csv'
+    },
+    {
+        id: 'b2b_nurture',
+        label: 'B2B Nurture Content Tracks',
+        description: () => generateB2BNurtureHtml(),
+        alpha: 0.05,
+        mode: InputModes.SUMMARY,
+        data: () => ({
+            summary: {
+                mean: 1.6,
+                sd: 2.4,
+                n: 34
+            }
+        }),
+        rawFile: 'scenarios/data/b2b_nurture_summary.csv'
+    }
+];
+
+function generateStreamingLaunchHtml() {
+    return `
+        <div class="scenario-description">
+            <div class="scenario-header">
+                <span class="scenario-icon">🎬</span>
+                <h4>Global Streaming Launch Creative Test</h4>
+                <span class="scenario-badge">20 DMAs • Paired Observations</span>
+            </div>
+            
+            <p class="scenario-intro">
+                The brand studio is preparing a pitch deck for a multi-continent streaming bundle launch and needs to show how strongly its hero creative directions move both <strong>brand recall</strong> and <strong>conversion</strong> for the same local markets.
+            </p>
+            
+            <div class="scenario-context">
+                <h5>📊 Measurement Design</h5>
+                <div class="context-grid">
+                    <div class="context-item">
+                        <strong>Studio Recall:</strong> Unaided recall of the hero storyline from a quick panel pulse in each DMA
+                    </div>
+                    <div class="context-item">
+                        <strong>Growth Conversion:</strong> Incremental household conversions attributed to the promo bundle offer, scaled to a 0–60 index
+                    </div>
+                </div>
+                <p class="muted">
+                    Both metrics are measured for the same set of DMAs, making each row a <em>paired observation</em> (recall vs. conversion). Most DMAs show slightly higher conversion than recall, but not by the same amount.
+                </p>
+            </div>
+            
+            <div class="scenario-insights">
+                <h5>🎯 Business Question</h5>
+                <p>
+                    Does a DMA that "remembers the story" also tend to "show up in conversions," or would performance-only creative be a better bet for the global roll-out?
+                </p>
+                <p class="scenario-tip">
+                    💡 <strong>Analytical Goal:</strong> Use a <strong>paired t-test</strong> to determine whether growth conversion meaningfully exceeds recall on average, translating that into a creative strategy recommendation.
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+function generateRetailPricingHtml() {
+    return `
+        <div class="scenario-description">
+            <div class="scenario-header">
+                <span class="scenario-icon">🛒</span>
+                <h4>Retail Promotions Pricing Test</h4>
+                <span class="scenario-badge">20 Stores • Difference Scores</span>
+            </div>
+            
+            <p class="scenario-intro">
+                A nationwide retailer alternated its loyalty pricing banners between a shouty <strong>"Compare &amp; Save"</strong> frame and a friendlier <strong>"Bundle Rewards"</strong> promise. The merchandising team wants to know whether the softer framing genuinely nudges shoppers toward bigger baskets.
+            </p>
+            
+            <div class="scenario-context">
+                <h5>🧪 Test Design</h5>
+                <p>
+                    20 matched stores rotate messaging over several weeks while holding regional offers, category mix, and staffing constant. For each store, analysts track <strong>average basket value</strong> under each banner and compute a <em>difference score</em> (Bundle Rewards minus Compare &amp; Save).
+                </p>
+                <div class="context-grid">
+                    <div class="context-item">
+                        <strong>Outcome:</strong> Difference in $ per basket (Bundle Rewards - Compare &amp; Save)
+                    </div>
+                    <div class="context-item">
+                        <strong>Pattern:</strong> Most stores see modest positive lift; a few see almost no change; a couple under-perform
+                    </div>
+                </div>
+            </div>
+            
+            <div class="scenario-insights">
+                <h5>📈 What to Look For</h5>
+                <ul>
+                    <li>Is the mean lift statistically distinguishable from zero at α = 0.04?</li>
+                    <li>What's the effect size in dollars per basket?</li>
+                    <li>Is the signal strong enough to justify rolling out "Bundle Rewards" signage broadly?</li>
+                </ul>
+                <p class="scenario-tip">
+                    💡 <strong>Business Context:</strong> Retail pricing teams deal with noisy signals from week-to-week variability and local quirks. This paired design isolates the framing effect cleanly.
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+function generateB2BNurtureHtml() {
+    return `
+        <div class="scenario-description">
+            <div class="scenario-header">
+                <span class="scenario-icon">📧</span>
+                <h4>B2B Nurture Content Tracks</h4>
+                <span class="scenario-badge">34 Accounts • Crossover Design</span>
+            </div>
+            
+            <p class="scenario-intro">
+                A conversion marketing squad wants to know whether its new <strong>insight-led nurture series</strong> outperforms the long-standing product-spec drip. Instead of splitting different accounts into different tracks, they run a crossover test on the <em>same</em> set of in-market accounts, with a washout period in between.
+            </p>
+            
+            <div class="scenario-context">
+                <h5>🔄 Crossover Test Structure</h5>
+                <p>Each of the 34 target accounts experiences two flights:</p>
+                <div class="context-grid">
+                    <div class="context-item">
+                        <strong>Legacy Product Drip:</strong> Feature-heavy messages, links to spec sheets, integration documentation
+                    </div>
+                    <div class="context-item">
+                        <strong>Insight-Led Series:</strong> Benchmark data, case studies, executive-level stories about value and risk reduction
+                    </div>
+                </div>
+                <p class="muted">
+                    For every account, sales ops summarizes the <strong>number of marketing-qualified opportunities (MQOs)</strong> generated during each flight, then computes a <em>difference score</em> (Insight-led minus Legacy).
+                </p>
+            </div>
+            
+            <div class="scenario-insights">
+                <h5>📊 Summary Statistics Available</h5>
+                <ul>
+                    <li><strong>Mean difference:</strong> 1.6 MQOs (Insight-led creates more opportunities on average)</li>
+                    <li><strong>Standard deviation:</strong> 2.4 (meaningful variation across accounts)</li>
+                    <li><strong>Sample size:</strong> 34 accounts</li>
+                </ul>
+                <p class="scenario-tip">
+                    💡 <strong>Decision Point:</strong> Is this uplift statistically reliable and practically important—strong enough to justify retooling creative, sales enablement, and marketing automation flows?
+                </p>
+            </div>
+        </div>
+    `;
+}
 
 // Utility helpers
 function clamp(value, min, max) {
@@ -1289,156 +1471,103 @@ function renderScenarioDescription(title, description) {
       container.innerHTML = description || defaultScenarioDescription || '';
   }
 
-function parseScenarioText(text) {
-    const result = {
-        title: '',
-        description: '',
-        alpha: NaN,
-        mode: '',
-        pairedData: '',
-        differenceData: '',
-        summaryStats: '',
-        rawFile: ''
-    };
-    let currentSection = '';
-    const lines = text.split(/\r?\n/);
-    const descriptionLines = [];
-    const pairedLines = [];
-    const differenceLines = [];
-    let summaryLine = '';
-    lines.forEach(line => {
-        const trimmed = line.trim();
-        if (!trimmed) {
-            if (currentSection === 'description') {
-                descriptionLines.push('');
-            }
-            return;
-        }
-        if (trimmed.startsWith('#')) {
-            currentSection = trimmed.slice(1).trim().toLowerCase();
-            return;
-        }
-        switch (currentSection) {
-            case 'title':
-                result.title = line.trim();
-                break;
-            case 'description':
-                descriptionLines.push(line);
-                break;
-            case 'alpha':
-                result.alpha = parseFloat(trimmed);
-                break;
-            case 'input mode':
-                result.mode = trimmed.toLowerCase();
-                break;
-            case 'paired columns':
-                pairedLines.push(line);
-                break;
-            case 'difference column':
-                differenceLines.push(line);
-                break;
-            case 'summary stats':
-                summaryLine = trimmed;
-                break;
-            case 'raw data file':
-                if (trimmed.startsWith('file=')) {
-                    result.rawFile = trimmed.split('=').slice(1).join('=').trim();
-                }
-                break;
-            default:
-                break;
-        }
-    });
-    result.description = descriptionLines.join('\n').trim();
-    result.pairedData = pairedLines.join('\n').trim();
-    result.differenceData = differenceLines.join('\n').trim();
-    result.summaryStats = summaryLine;
-    return result;
-}
+function renderScenarioDescription(htmlContent) {
+      if (typeof window.renderScenarioWithTemplate === 'function') {
+          window.renderScenarioWithTemplate({
+              containerId: 'scenario-description',
+              htmlContent,
+              defaultHtml: defaultScenarioDescription
+          });
+          return;
+      }
+      const container = document.getElementById('scenario-description');
+      if (!container) return;
+      container.innerHTML = htmlContent || defaultScenarioDescription || '';
+  }
 
-function applyScenarioData(parsed) {
-    if (parsed.mode === 'paired' && parsed.pairedData) {
-        switchMode(InputModes.PAIRED, { suppressUpdate: true });
-        importPairedData(parsed.pairedData);
-    } else if (parsed.mode === 'difference' && parsed.differenceData) {
-        switchMode(InputModes.DIFFERENCE, { suppressUpdate: true });
-        importDifferenceData(parsed.differenceData);
-    } else if (parsed.mode === 'summary' && parsed.summaryStats) {
-        switchMode(InputModes.SUMMARY, { suppressUpdate: true });
-        const [meanStr, sdStr, nStr] = parsed.summaryStats.split('|').map(part => part.trim());
-        const meanInput = document.getElementById('summary-mean');
-        const sdInput = document.getElementById('summary-sd');
-        const nInput = document.getElementById('summary-n');
-        if (meanInput) meanInput.value = meanStr || '';
-        if (sdInput) sdInput.value = sdStr || '';
-        if (nInput) nInput.value = nStr || '';
-        updateResults();
-    } else {
-        updateResults();
-    }
-}
-
-async function loadScenarioById(id) {
-    const scenario = scenarioManifest.find(entry => entry.id === id);
+function loadScenarioById(id) {
+    const scenario = PAIRED_TTEST_SCENARIOS.find(s => s.id === id);
     if (!scenario) {
-        renderScenarioDescription('', '');
+        renderScenarioDescription('');
         resetScenarioDownload();
         return;
     }
-    try {
-        const response = await fetch(scenario.file, { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error(`Unable to load scenario file (${response.status})`);
+    
+    // Store active scenario
+    activeScenario = scenario;
+    
+    // Render description
+    const htmlContent = scenario.description();
+    renderScenarioDescription(htmlContent);
+    
+    // Set alpha
+    if (isFinite(scenario.alpha)) {
+        const alphaInput = document.getElementById('alpha');
+        if (alphaInput) {
+            alphaInput.value = scenario.alpha.toFixed(3);
+            syncConfidenceToAlpha(scenario.alpha, { skipUpdate: true });
         }
-        const text = await response.text();
-        const parsed = parseScenarioText(text);
-        renderScenarioDescription(parsed.title || scenario.label, parsed.description);
-        if (isFinite(parsed.alpha)) {
-            const alphaInput = document.getElementById('alpha');
-            if (alphaInput) {
-                alphaInput.value = parsed.alpha.toFixed(3);
-                syncConfidenceToAlpha(parsed.alpha, { skipUpdate: true });
-            }
-        }
-        applyScenarioData(parsed);
-        enableScenarioDownload(parsed.rawFile);
-        
-        // Track scenario load
-        if (typeof markScenarioLoaded === 'function') {
-            markScenarioLoaded(scenario.label || scenario.id);
-        }
-    } catch (error) {
-        renderScenarioDescription('', `Unable to load scenario: ${error.message}`);
-        resetScenarioDownload();
+    }
+    
+    // Apply data based on mode
+    const data = scenario.data();
+    if (scenario.mode === InputModes.PAIRED && data.paired) {
+        switchMode(InputModes.PAIRED, { suppressUpdate: true });
+        const csvText = generatePairedCSV(data.paired, data.headers);
+        importPairedData(csvText);
+    } else if (scenario.mode === InputModes.DIFFERENCE && data.differences) {
+        switchMode(InputModes.DIFFERENCE, { suppressUpdate: true });
+        const csvText = data.differences.join('\n');
+        importDifferenceData(csvText);
+    } else if (scenario.mode === InputModes.SUMMARY && data.summary) {
+        switchMode(InputModes.SUMMARY, { suppressUpdate: true });
+        const meanInput = document.getElementById('summary-mean');
+        const sdInput = document.getElementById('summary-sd');
+        const nInput = document.getElementById('summary-n');
+        if (meanInput) meanInput.value = data.summary.mean.toString();
+        if (sdInput) sdInput.value = data.summary.sd.toString();
+        if (nInput) nInput.value = data.summary.n.toString();
+        updateResults();
+    }
+    
+    // Enable download
+    enableScenarioDownload(scenario.rawFile);
+    
+    // Track scenario load
+    if (typeof markScenarioLoaded === 'function') {
+        markScenarioLoaded(scenario.label || scenario.id);
     }
 }
 
-async function setupScenarioSelector() {
+function generatePairedCSV(pairs, headers) {
+    const lines = [headers.join(',')];
+    pairs.forEach(pair => {
+        lines.push(pair.join(','));
+    });
+    return lines.join('\n');
+}
+
+function setupScenarioSelector() {
     const select = document.getElementById('scenario-select');
     const description = document.getElementById('scenario-description');
     if (description) {
         defaultScenarioDescription = description.innerHTML;
     }
     if (!select) return;
-    try {
-        const response = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error('Unable to load scenario manifest.');
-        }
-        scenarioManifest = await response.json();
-        scenarioManifest.forEach(entry => {
-            const option = document.createElement('option');
-            option.value = entry.id;
-            option.textContent = entry.label;
-            select.appendChild(option);
-        });
-    } catch (error) {
-        setFileFeedback(error.message, 'error');
-    }
+    
+    // Populate dropdown with inline scenarios
+    PAIRED_TTEST_SCENARIOS.forEach(entry => {
+        const option = document.createElement('option');
+        option.value = entry.id;
+        option.textContent = entry.label;
+        select.appendChild(option);
+    });
+    
+    // Handle scenario selection
     select.addEventListener('change', () => {
         const id = select.value;
         if (!id) {
-            renderScenarioDescription('', '');
+            renderScenarioDescription('');
             resetScenarioDownload();
             return;
         }

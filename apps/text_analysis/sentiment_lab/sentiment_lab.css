@@ -1,0 +1,433 @@
+.sentiment-grid {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+  gap: 1.25rem;
+}
+
+.sentiment-summary .metric-output span:first-child {
+  font-weight: 600;
+}
+
+.sentiment-label-positive {
+  color: #166534;
+  font-weight: 600;
+}
+
+.sentiment-label-neutral {
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.sentiment-label-negative {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.sentiment-example-text {
+  font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.sentiment-example-line {
+  font-size: 0.9rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background-color: #f9fafb;
+  word-break: break-word;
+}
+
+.sentiment-token-positive {
+  color: #166534;
+  font-weight: 600;
+}
+
+.sentiment-token-negative {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.sentiment-token-neutral {
+  color: #9ca3af;
+}
+
+/* Metrics grid for analysis report */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.metric-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metric-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.metric-hint {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Dual panels for APA / Managerial reports */
+.dual-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.dual-panel {
+  padding: 1.25rem;
+}
+
+.dual-panel h3 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  color: #334155;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.dual-panel p {
+  margin: 0;
+  line-height: 1.6;
+  color: #475569;
+}
+
+/* Summary table styling */
+#sentiment-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+#sentiment-summary-table th,
+#sentiment-summary-table td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+#sentiment-summary-table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #334155;
+}
+
+#sentiment-summary-table td:not(:first-child) {
+  text-align: right;
+  font-family: 'Roboto Mono', monospace;
+}
+
+#sentiment-summary-table tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+/* Chart grid for distribution visualizations */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.chart-card {
+  background: #fff;
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+
+.chart-card .chart-placeholder {
+  min-height: 220px;
+}
+
+.chart-note {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  line-height: 1.4;
+}
+
+/* Grouping options */
+.grouping-options {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  cursor: pointer;
+}
+
+/* Group column in tables */
+/* Grouped summary table */
+#grouped-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+#grouped-summary-table th,
+#grouped-summary-table td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+}
+
+#grouped-summary-table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #334155;
+}
+
+#grouped-summary-table th:first-child,
+#grouped-summary-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+}
+
+#grouped-summary-table td:not(:first-child) {
+  font-family: 'Roboto Mono', monospace;
+}
+
+#grouped-summary-table tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+#grouped-summary-table .group-best {
+  background-color: #dcfce7;
+  color: #166534;
+  font-weight: 600;
+}
+
+#grouped-summary-table .group-worst {
+  background-color: #fee2e2;
+  color: #991b1b;
+  font-weight: 600;
+}
+
+/* Hidden utility class */
+.hidden {
+  display: none !important;
+}
+
+/* Export controls */
+.export-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.export-controls .hint {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+/* Status text feedback styles */
+.status-success {
+  color: #166534 !important;
+  font-weight: 600 !important;
+}
+
+.status-error {
+  color: #dc2626 !important;
+  font-weight: 600 !important;
+}
+
+/* File upload error details */
+.upload-error-details {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.upload-error-details h4 {
+  color: #991b1b;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.upload-error-details ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #7f1d1d;
+}
+
+.upload-error-details li {
+  margin-bottom: 0.25rem;
+}
+
+.upload-error-details code {
+  background-color: #fee2e2;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+
+/* Chart view toggle */
+.chart-view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  justify-content: flex-end;
+}
+
+.chart-view-toggle .toggle-btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  border: 1px solid #cbd5e1;
+  background-color: #fff;
+  color: #475569;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chart-view-toggle .toggle-btn:hover {
+  background-color: #f1f5f9;
+}
+
+.chart-view-toggle .toggle-btn.active {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.chart-view-toggle .toggle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Chart interpretation text */
+.chart-interpretation {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-left: 4px solid #3b82f6;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.chart-interpretation p {
+  margin: 0 0 0.75rem 0;
+}
+
+.chart-interpretation p:last-child {
+  margin-bottom: 0;
+}
+
+.chart-interpretation strong {
+  color: #1e293b;
+}
+
+.chart-interpretation .highlight-positive {
+  color: #166534;
+  font-weight: 600;
+}
+
+.chart-interpretation .highlight-negative {
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.chart-interpretation .highlight-neutral {
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.chart-interpretation .stat-value {
+  font-family: 'Roboto Mono', monospace;
+  background-color: #e2e8f0;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+}
+
+.chart-interpretation ul {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.chart-interpretation li {
+  margin-bottom: 0.35rem;
+}
+
+/* Case study description styling */
+#sentiment-scenario-description h4 {
+  margin: 0 0 0.75rem 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+#sentiment-scenario-description p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+  color: #475569;
+}
+
+#sentiment-scenario-description ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+  color: #475569;
+}
+
+#sentiment-scenario-description li {
+  margin-bottom: 0.35rem;
+  line-height: 1.5;
+}
+
+#sentiment-scenario-description code {
+  background-color: #f1f5f9;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  color: #0f172a;
+}
+
+#sentiment-scenario-description strong {
+  color: #334155;
+}
+
+#sentiment-scenario-description em {
+  color: #64748b;
+}

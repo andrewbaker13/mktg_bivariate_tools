@@ -1,4 +1,4 @@
-// Multinomial Logistic Regression Tool controller (initial wiring)
+﻿// Multinomial Logistic Regression Tool controller (initial wiring)
 const CREATED_DATE = '2025-11-15';
 
 // Tool identifier for engagement tracking
@@ -233,30 +233,229 @@ function buildBrandChoiceScenarioCSV(rowCount = 800) {
 
 const PLACEHOLDER_RAW_TEMPLATE = buildBrandChoiceScenarioCSV();
 
-const PLACEHOLDER_SCENARIOS = [
+// ========================================
+// SCENARIO DEFINITIONS (Inline)
+// ========================================
+const MNLOG_SCENARIOS = [
   {
-    id: 'scenario-1',
-    label: 'Three-stage funnel stage (Awareness / Consideration / Purchase)',
-    file: 'scenarios/funnel_stage.txt',
-    datasetPath: 'scenarios/funnel_stage_data.csv'
+    id: 'funnel-stage',
+    label: '🎯 Three-Stage Marketing Funnel',
+    description: () => `<div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-icon">🎯</span>
+        <h3>Marketing Funnel: Channel, Frequency, and Customer Journey Stage</h3>
+      </div>
+      <div class="scenario-badge-row">
+        <span class="badge badge-hypothesis">Multinomial Logistic</span>
+        <span class="badge badge-context">Marketing / CRM</span>
+        <span class="badge badge-sample">n ≈ 600 survey respondents</span>
+      </div>
+      <div class="scenario-body">
+        <p><strong>Business Context:</strong> A mid-size consumer brand wants to understand how marketing touchpoints move people through the classic purchase funnel. Each survey respondent is coded by which funnel stage they're currently in, along with their marketing exposure.</p>
+        
+        <p><strong>Dataset Variables:</strong></p>
+        <div class="context-grid">
+          <div class="context-item">
+            <div class="context-label">Outcome</div>
+            <div class="context-value">stage</div>
+            <div class="context-subtext">Awareness / Consideration / Purchase</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Channel</div>
+            <div class="context-value">Categorical</div>
+            <div class="context-subtext">Email, Social, Search</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Frequency</div>
+            <div class="context-value">Categorical</div>
+            <div class="context-subtext">Low / Medium / High contact</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Age Band</div>
+            <div class="context-value">Categorical</div>
+            <div class="context-subtext">18-24, 25-34, 35-44, 45-54, 55+</div>
+          </div>
+        </div>
+        
+        <p><strong>Research Question:</strong> Which channels and contact frequencies are most strongly associated with moving customers from Awareness into deeper funnel stages?</p>
+        
+        <div class="scenario-insights">
+          <div class="insight-title">🎯 Strategic Question</div>
+          <p>Which levers most reliably move customers deeper into the funnel? Should we shift from Social-only to multi-channel, or increase frequency for specific age bands?</p>
+        </div>
+        
+        <p><strong>How to use:</strong> Set <em>stage</em> as the multinomial outcome. Include <em>channel</em>, <em>frequency_segment</em>, and <em>age_band</em> as categorical predictors. Experiment with different reference outcomes to see how coefficient interpretation changes.</p>
+      </div>
+    </div>`,
+    datasetPath: 'scenarios/funnel_stage_data.csv',
+    outcome: 'stage',
+    predictors: ['channel', 'frequency_segment', 'age_band']
   },
   {
-    id: 'scenario-2',
-    label: 'Four-brand choice (Brand A / B / C / D)',
-    file: 'scenarios/brand_choice.txt',
-    datasetPath: 'scenarios/brand_choice_data.csv'
+    id: 'brand-choice',
+    label: '🏷️ Four-Brand Choice Model',
+    description: () => `<div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-icon">🏷️</span>
+        <h3>Brand Choice: Price Sensitivity, Demographics, and Channel Preference</h3>
+      </div>
+      <div class="scenario-badge-row">
+        <span class="badge badge-hypothesis">Multinomial Logistic</span>
+        <span class="badge badge-context">Brand Strategy / Consumer Research</span>
+        <span class="badge badge-sample">n ≈ 800 respondents</span>
+      </div>
+      <div class="scenario-body">
+        <p><strong>Business Context:</strong> A category manager is analyzing preference for four competing brands (A, B, C, D) in a mature market. Each respondent indicates their most-preferred brand along with price sensitivity and demographic characteristics.</p>
+        
+        <p><strong>Dataset Variables:</strong></p>
+        <div class="context-grid">
+          <div class="context-item">
+            <div class="context-label">Outcome</div>
+            <div class="context-value">brand_choice</div>
+            <div class="context-subtext">Brand A / B / C / D</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Price Sensitivity</div>
+            <div class="context-value">Categorical</div>
+            <div class="context-subtext">Low / Medium / High</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Age Band</div>
+            <div class="context-value">Categorical</div>
+            <div class="context-subtext">18-24, 25-34, 35-44, 45-54, 55+</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Channel</div>
+            <div class="context-value">Categorical</div>
+            <div class="context-subtext">Email, Search, Social</div>
+          </div>
+        </div>
+        
+        <p><strong>Research Question:</strong> Which segments are most likely to choose each brand? How does price sensitivity shift brand preference?</p>
+        
+        <div class="scenario-insights">
+          <div class="insight-title">🎯 Strategic Question</div>
+          <p>Which segments are vulnerable to switching? Where does each brand have competitive advantage? Should Brand A lean into its value positioning?</p>
+        </div>
+        
+        <p><strong>How to use:</strong> Set <em>brand_choice</em> as the multinomial outcome. Include <em>price_sensitivity</em>, <em>age_band</em>, and <em>channel</em> as categorical predictors. Try switching reference brands to see how relative log-odds change.</p>
+      </div>
+    </div>`,
+    datasetPath: 'scenarios/brand_choice_data.csv',
+    outcome: 'brand_choice',
+    predictors: ['price_sensitivity', 'age_band', 'channel']
   },
   {
-    id: 'scenario-3',
-    label: 'Esports engagement segments (Casual / Core / Competitive)',
-    file: 'scenarios/esports_engagement.txt',
-    datasetPath: 'scenarios/esports_engagement_data.csv'
+    id: 'esports-engagement',
+    label: '🎮 Esports Engagement Segments',
+    description: () => `<div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-icon">🎮</span>
+        <h3>Esports Engagement: Platform, Membership, and Player Behavior</h3>
+      </div>
+      <div class="scenario-badge-row">
+        <span class="badge badge-hypothesis">Multinomial Logistic</span>
+        <span class="badge badge-context">Gaming / Monetization</span>
+        <span class="badge badge-sample">n ≈ 700 players</span>
+      </div>
+      <div class="scenario-body">
+        <p><strong>Business Context:</strong> An esports title publisher wants to understand what predicts player engagement segments: <strong>Casual</strong> (plays occasionally, low spend), <strong>Core</strong> (regular play, moderate spend), and <strong>Competitive</strong> (heavy play, high spend, ranked modes).</p>
+        
+        <p><strong>Dataset Variables:</strong></p>
+        <div class="context-grid">
+          <div class="context-item">
+            <div class="context-label">Outcome</div>
+            <div class="context-value">engagement_segment</div>
+            <div class="context-subtext">Casual / Core / Competitive</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Region</div>
+            <div class="context-value">Categorical</div>
+            <div class="context-subtext">NA, EU, APAC</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Platform</div>
+            <div class="context-value">Categorical</div>
+            <div class="context-subtext">PC, Console, Mobile</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Membership</div>
+            <div class="context-value">Categorical</div>
+            <div class="context-subtext">Free / Standard / Premium</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Hours/Week</div>
+            <div class="context-value">Continuous</div>
+            <div class="context-subtext">Average weekly playtime</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Matches/Week</div>
+            <div class="context-value">Continuous</div>
+            <div class="context-subtext">Matches played per week</div>
+          </div>
+        </div>
+        
+        <p><strong>Research Question:</strong> How do membership tier, platform, and behavioral metrics shift the odds of being Core or Competitive versus Casual?</p>
+        
+        <div class="scenario-insights">
+          <div class="insight-title">🎯 Strategic Question</div>
+          <p>Which combinations of predictors are most associated with high-value Competitive players? Can we identify Casual players with potential to become Core?</p>
+        </div>
+        
+        <p><strong>How to use:</strong> Set <em>engagement_segment</em> as outcome. Include <em>region</em>, <em>platform</em>, <em>membership_tier</em> as categorical, and <em>hours_per_week</em>, <em>matches_per_week</em> as numeric. Try both <em>Casual</em> and <em>Competitive</em> as reference to see how interpretation changes.</p>
+      </div>
+    </div>`,
+    datasetPath: 'scenarios/esports_engagement_data.csv',
+    outcome: 'engagement_segment',
+    predictors: ['region', 'platform', 'membership_tier', 'hours_per_week', 'matches_per_week']
   },
   {
-    id: 'scenario-4',
-    label: 'Single continuous predictor (idealized convergence)',
-    file: 'scenarios/single_continuous.txt',
-    datasetPath: 'scenarios/single_continuous_data.csv'
+    id: 'single-continuous',
+    label: '📊 Single Continuous Predictor (Ideal)',
+    description: () => `<div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-icon">📊</span>
+        <h3>Ideal Convergence: Single Continuous Predictor</h3>
+      </div>
+      <div class="scenario-badge-row">
+        <span class="badge badge-hypothesis">Multinomial Logistic</span>
+        <span class="badge badge-context">Model Testing / Diagnostics</span>
+        <span class="badge badge-sample">n ≈ 300 observations</span>
+      </div>
+      <div class="scenario-body">
+        <p><strong>Technical Context:</strong> This scenario is intentionally simple to demonstrate how the multinomial model behaves under "ideal" conditions. There's a three-level outcome and a single continuous predictor that cleanly separates the segments.</p>
+        
+        <p><strong>Dataset Variables:</strong></p>
+        <div class="context-grid">
+          <div class="context-item">
+            <div class="context-label">Outcome</div>
+            <div class="context-value">segment</div>
+            <div class="context-subtext">Low / Medium / High</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Score</div>
+            <div class="context-value">Continuous</div>
+            <div class="context-subtext">Normally distributed predictor</div>
+          </div>
+        </div>
+        
+        <p><strong>Data Generation:</strong> On the log-odds scale, Medium and High segments are generated as clean, nearly linear functions of <code>score</code>, with Low as baseline. As score increases, <strong>High</strong> probability rises sharply, <strong>Medium</strong> has moderate slope, and <strong>Low</strong> dominates at low score values.</p>
+        
+        <div class="scenario-insights">
+          <div class="insight-title">🔬 Diagnostic Use Cases</div>
+          <ul style="margin: 0.5rem 0; padding-left: 1.2rem;">
+            <li>Verify fast convergence under ideal conditions</li>
+            <li>Experiment with step sizes and momentum settings</li>
+            <li>See how effect plots trace the clean underlying relationship</li>
+          </ul>
+        </div>
+        
+        <p><strong>How to use:</strong> Set <em>segment</em> as outcome and <em>score</em> as numeric predictor. Convergence should be reliable and fast. Use this to benchmark the model before running more complex scenarios.</p>
+      </div>
+    </div>`,
+    datasetPath: 'scenarios/single_continuous_data.csv',
+    outcome: 'segment',
+    predictors: ['score']
   }
 ];
 
@@ -377,7 +576,13 @@ function setupScenarioSelect() {
   const description = document.getElementById('scenario-description');
   if (!select || !description) return;
 
-  PLACEHOLDER_SCENARIOS.forEach(entry => {
+  // Add default "no scenario" option
+  const defaultOpt = document.createElement('option');
+  defaultOpt.value = '';
+  defaultOpt.textContent = 'Select a scenario...';
+  select.appendChild(defaultOpt);
+
+  MNLOG_SCENARIOS.forEach(entry => {
     const option = document.createElement('option');
     option.value = entry.id;
     option.textContent = entry.label;
@@ -385,32 +590,24 @@ function setupScenarioSelect() {
   });
 
   select.addEventListener('change', () => {
-  const selected = PLACEHOLDER_SCENARIOS.find(item => item.id === select.value);
+  const selected = MNLOG_SCENARIOS.find(item => item.id === select.value);
   if (!selected) {
     // existing “no scenario” reset logic...
     updateScenarioDownload(null);
     return;
   }
 
-  // 1) Load scenario text from .txt file
-  if (window.fetch && selected.file) {
-    fetch(selected.file, { cache: 'no-cache' })
-      .then(resp => resp.ok ? resp.text() : Promise.reject())
-      .then(text => {
-        if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
-          window.UIUtils.renderScenarioDescription({
-            containerId: 'scenario-description',
-            title: selected.label,
-            description: text,
-            defaultHtml: text
-          });
-        } else {
-          description.innerHTML = text;
-        }
-      })
-      .catch(() => {
-        // fallback: keep any existing description
-      });
+  // 1) Render inline scenario description
+  const html = typeof selected.description === 'function' ? selected.description() : selected.description;
+  if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+    window.UIUtils.renderScenarioDescription({
+      containerId: 'scenario-description',
+      title: selected.label,
+      description: html,
+      defaultHtml: html
+    });
+  } else {
+    description.innerHTML = html || '';
   }
 
   // 2) Load CSV from scenarios folder and auto-populate dataset
@@ -2667,3 +2864,5 @@ document.addEventListener('DOMContentLoaded', () => {
       initEngagementTracking(TOOL_SLUG);
   }
 });
+
+

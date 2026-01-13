@@ -144,6 +144,73 @@ h1, h2, h3 {
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
+/* Badge System */
+.badge {
+  display: inline-block;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge--success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge--warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge--danger {
+  background: #ffe4e6;
+  color: #be123c;
+}
+
+.badge--text-analysis {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.badge--qualitative {
+  background: #e9d5ff;
+  color: #6b21a8;
+  font-weight: 600;
+}
+
+.badge--nlp {
+  background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+  color: #065f46;
+  font-weight: 600;
+}
+
+.badge-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.badge-secondary:hover {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
 .dual-panels {
   display: flex;
   flex-wrap: wrap;
@@ -204,6 +271,196 @@ h1, h2, h3 {
 .scenario-section span {
   font-weight: 600;
   color: var(--app-accent);
+}
+
+/* Enhanced Scenario Description Styling (for regression/advanced tools) */
+.scenario-description {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  border-left: 4px solid #1d4ed8;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  line-height: 1.6;
+  color: #495057;
+}
+
+.scenario-description h4 {
+  color: #2c3e50;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.05rem;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 0.5rem;
+}
+
+.scenario-description p {
+  margin: 0.75rem 0;
+}
+
+.scenario-description ul {
+  margin: 0.75rem 0;
+  padding-left: 1.75rem;
+}
+
+.scenario-description li {
+  margin-bottom: 0.5rem;
+}
+
+.scenario-description strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Enhanced Scenario Card Styling (for hypothesis testing tools) */
+.scenario-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  border-left: 4px solid #1d4ed8;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.scenario-card .scenario-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.scenario-card .scenario-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.scenario-card .scenario-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.15rem;
+  flex-grow: 1;
+}
+
+.scenario-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.scenario-badge-row .badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white; /* Ensure white text on colored backgrounds */
+}
+
+.scenario-badge-row .badge-hypothesis,
+.badge-hypothesis {
+  background: #1d4ed8;
+  color: white !important;
+}
+
+.scenario-badge-row .badge-context,
+.badge-context {
+  background: #059669;
+  color: white !important;
+}
+
+.scenario-badge-row .badge-sample,
+.badge-sample {
+  background: #dc2626;
+  color: white !important;
+}
+
+.scenario-badge-row .badge-alpha,
+.badge-alpha {
+  background: #7c3aed;
+  color: white !important;
+}
+
+.badge-regression {
+  background: #ea580c;
+  color: white !important;
+}
+
+.scenario-body {
+  color: #495057;
+  line-height: 1.6;
+}
+
+.scenario-body p {
+  margin: 0.75rem 0;
+}
+
+.context-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.context-item {
+  background: white;
+  padding: 0.875rem;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.context-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.context-label {
+  display: block;
+  color: #6c757d;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.context-value {
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.context-subtext {
+  color: #6c757d;
+  font-size: 0.75rem;
+}
+
+.scenario-insights {
+  background: #e7f3ff;
+  border: 1px solid #b8daff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.scenario-insights .insight-title {
+  color: #004085;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.scenario-insights p {
+  color: #004085;
+  margin: 0.5rem 0 0 0;
+  line-height: 1.5;
 }
 
 .scenario-header {
@@ -350,7 +607,8 @@ button.secondary:focus-visible {
   color: var(--app-muted);
 }
 
-.confidence-button.active {
+.confidence-button.active,
+.confidence-button.selected {
   background: var(--confidence-accent, var(--app-accent));
   color: #fff;
   border-color: var(--confidence-accent, var(--app-accent));

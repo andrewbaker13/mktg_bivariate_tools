@@ -471,12 +471,6 @@ Meets students where they are:
 ## ⚠️ Areas of Design Drift (Identified from Sample)
 
 
-### 3. Badge Styling Inconsistency
-- **Standard:** `<span class="badge">Category</span>` (blue)
-- **Variations:** `badge--text-analysis`, `badge--qualitative`, `badge-secondary`
-- **Issue:** Some tools use custom badge classes not documented in main.css
-- **Fix:** Audit and document all badge variants in design system
-
 ### 4. Scenario System Maturity Varies
 - **Rich scenarios (new):** kmeans, kprototypes with full HTML templates, icons, tables
 - **Basic scenarios (old):** ind_ttest, ab_proportion with plain text

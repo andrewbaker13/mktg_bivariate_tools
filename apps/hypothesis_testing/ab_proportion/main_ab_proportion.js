@@ -14,6 +14,198 @@
     const TOOL_SLUG = 'ab-proportion-test';
     let renderCount = 0; // Skip tracking the initial page-load/scenario-load calculations
 
+    // ========================================
+    // SCENARIO DEFINITIONS (Inline)
+    // ========================================
+    const AB_PROPORTION_SCENARIOS = [
+      {
+        id: 'newsletter_cta',
+        label: '📧 StudyFlow Newsletter CTA Test',
+        description: () => `
+          <div class="scenario-card">
+            <div class="scenario-header">
+              <span class="scenario-icon">📧</span>
+              <h3>StudyFlow Newsletter CTA Test</h3>
+            </div>
+            <div class="scenario-badge-row">
+              <span class="badge badge-hypothesis">Two-Prop Z-Test</span>
+              <span class="badge badge-context">Email Marketing</span>
+              <span class="badge badge-sample">n = 2,490</span>
+            </div>
+            <div class="scenario-body">
+              <p><strong>Business Context:</strong> StudyFlow runs a weekly newsletter featuring study tips and productivity hacks for students. The marketing team wants to test whether adding urgency language to the CTA button increases click-through rates.</p>
+              <p><strong>Test Setup:</strong> Subscribers were randomly assigned to receive either the control email (standard CTA: "Browse Resources") or the variant (urgency CTA: "Get Study Tips Now – Limited Access"). Both emails had identical subject lines and body content.</p>
+              <div class="context-grid">
+                <div class="context-item">
+                  <div class="context-label">Control CTA</div>
+                  <div class="context-value">"Browse Resources"</div>
+                  <div class="context-subtext">p̂ = 0.118 (148/1,250)</div>
+                </div>
+                <div class="context-item">
+                  <div class="context-label">Variant CTA</div>
+                  <div class="context-value">"Get Study Tips Now"</div>
+                  <div class="context-subtext">p̂ = 0.138 (171/1,240)</div>
+                </div>
+              </div>
+              <p><strong>Research Question:</strong> Does adding urgency language to the CTA button significantly increase the click-through rate compared to the standard CTA?</p>
+              <div class="scenario-insights">
+                <div class="insight-title">💡 Key Insight</div>
+                <p>The variant CTA with urgency language shows a 2 percentage point lift in click-through rate. Test whether this difference is statistically significant at α = 0.05.</p>
+              </div>
+            </div>
+          </div>
+        `,
+        data: () => ({
+          control: { label: 'Control ("Browse Resources")', p: 0.118, n: 1250 },
+          variant: { label: 'Variant ("Get Study Tips Now")', p: 0.138, n: 1240 },
+          settings: { alpha: 0.05, delta0: 0 }
+        })
+      },
+      {
+        id: 'retargeting_offer',
+        label: '🎯 Retargeting Banner Offer Test',
+        description: () => `
+          <div class="scenario-card">
+            <div class="scenario-header">
+              <span class="scenario-icon">🎯</span>
+              <h3>Retargeting Banner Offer Test</h3>
+            </div>
+            <div class="scenario-badge-row">
+              <span class="badge badge-hypothesis">Two-Prop Z-Test</span>
+              <span class="badge badge-context">Paid Acquisition</span>
+              <span class="badge badge-alpha">α = 0.04</span>
+              <span class="badge badge-sample">n = 2,000</span>
+            </div>
+            <div class="scenario-body">
+              <p><strong>Business Context:</strong> A subscription box company runs retargeting ads to users who abandoned their cart. The team wants to test whether framing the offer as a "bonus bundle" (with extra items) converts better than anchoring on price ("Save $15").</p>
+              <p><strong>Test Setup:</strong> Cart abandoners were randomly assigned to see either the "Price Anchor Banner" (emphasizing the discount) or the "Bonus Bundle Banner" (highlighting additional items included at no extra cost). Both offers had equivalent monetary value.</p>
+              <div class="context-grid">
+                <div class="context-item">
+                  <div class="context-label">Price Anchor Banner</div>
+                  <div class="context-value">"Save $15 Today"</div>
+                  <div class="context-subtext">p̂ = 0.152 (149/980)</div>
+                </div>
+                <div class="context-item">
+                  <div class="context-label">Bonus Bundle Banner</div>
+                  <div class="context-value">"Get 3 Bonus Items"</div>
+                  <div class="context-subtext">p̂ = 0.176 (180/1,020)</div>
+                </div>
+              </div>
+              <p><strong>Research Question:</strong> Does the bonus bundle framing significantly increase conversion rates compared to the price anchor framing? (Use a more conservative α = 0.04 due to multiple tests running this quarter.)</p>
+              <div class="scenario-insights">
+                <div class="insight-title">🎁 Psychological Framing</div>
+                <p>The bonus bundle framing shows a 2.4 percentage point lift. Behavioral economics suggests that "gain framing" (bonus items) may be more persuasive than "loss avoidance" (savings) for cart recovery.</p>
+              </div>
+            </div>
+          </div>
+        `,
+        data: () => ({
+          control: { label: 'Price Anchor Banner', p: 0.152, n: 980 },
+          variant: { label: 'Bonus Bundle Banner', p: 0.176, n: 1020 },
+          settings: { alpha: 0.04, delta0: 0 }
+        })
+      },
+      {
+        id: 'loyalty_partner',
+        label: '🤝 Loyalty Partner Offer Test',
+        description: () => `
+          <div class="scenario-card">
+            <div class="scenario-header">
+              <span class="scenario-icon">🤝</span>
+              <h3>Loyalty Partner Offer Test</h3>
+            </div>
+            <div class="scenario-badge-row">
+              <span class="badge badge-hypothesis">Two-Prop Z-Test</span>
+              <span class="badge badge-context">Retention / CRM</span>
+              <span class="badge badge-sample">n = 1,795</span>
+            </div>
+            <div class="scenario-body">
+              <p><strong>Business Context:</strong> A fitness app launched a partnership with a meal delivery service. The retention team wants to test whether offering tiered loyalty bonuses (based on activity level) drives more signups than a standard flat offer.</p>
+              <p><strong>Test Setup:</strong> Active users received either a standard loyalty reminder ("Link your account for 500 points") or a tiered bonus offer ("Link your account: 500–1,000 points based on your activity"). Both groups had similar engagement histories.</p>
+              <div class="context-grid">
+                <div class="context-item">
+                  <div class="context-label">Standard Loyalty Reminder</div>
+                  <div class="context-value">Flat 500 points</div>
+                  <div class="context-subtext">p̂ = 0.164 (146/890)</div>
+                </div>
+                <div class="context-item">
+                  <div class="context-label">Tiered Bonus Loyalty Offer</div>
+                  <div class="context-value">500–1,000 points</div>
+                  <div class="context-subtext">p̂ = 0.191 (173/905)</div>
+                </div>
+              </div>
+              <p><strong>Research Question:</strong> Does the tiered bonus loyalty offer significantly increase partner program signup rates compared to the standard flat offer at α = 0.05?</p>
+              <div class="scenario-insights">
+                <div class="insight-title">🎯 Gamification Strategy</div>
+                <p>The tiered offer shows a 2.7 percentage point lift. Adding variable rewards based on user behavior may create stronger incentive to link accounts, but requires testing to confirm statistical significance.</p>
+              </div>
+            </div>
+          </div>
+        `,
+        data: () => ({
+          control: { label: 'Standard Loyalty Reminder', p: 0.164, n: 890 },
+          variant: { label: 'Tiered Bonus Loyalty Offer', p: 0.191, n: 905 },
+          settings: { alpha: 0.05, delta0: 0 }
+        })
+      },
+      {
+        id: 'social_cta_raw',
+        label: '📱 Social Post CTA Test (Raw Data)',
+        description: () => `
+          <div class="scenario-card">
+            <div class="scenario-header">
+              <span class="scenario-icon">📱</span>
+              <h3>Social Post CTA Test (Raw Data)</h3>
+            </div>
+            <div class="scenario-badge-row">
+              <span class="badge badge-hypothesis">Two-Prop Z-Test</span>
+              <span class="badge badge-context">Social Media / Engagement</span>
+              <span class="badge badge-mode">Raw Data Mode</span>
+              <span class="badge badge-sample">n = 50 impressions</span>
+            </div>
+            <div class="scenario-body">
+              <p><strong>Business Context:</strong> A brand is testing two versions of an Instagram Story CTA sticker to promote a limited-time product launch. The goal is to maximize swipe-up conversions while collecting individual-level engagement data.</p>
+              <p><strong>Test Setup:</strong> A small pilot test randomly assigned 50 Story impressions (25 per group) to either "Team A" (standard "Shop Now" sticker) or "Team B" (playful "Tap to Unlock Deal" sticker). Each impression was tracked for binary conversion (0 = no swipe-up, 1 = swipe-up).</p>
+              <div class="context-grid">
+                <div class="context-item">
+                  <div class="context-label">Team A (Shop Now)</div>
+                  <div class="context-value">Standard CTA sticker</div>
+                  <div class="context-subtext">25 impressions</div>
+                </div>
+                <div class="context-item">
+                  <div class="context-label">Team B (Unlock Deal)</div>
+                  <div class="context-value">Playful CTA sticker</div>
+                  <div class="context-subtext">25 impressions</div>
+                </div>
+              </div>
+              <p><strong>Research Question:</strong> Based on this pilot dataset, does the playful CTA sticker significantly increase swipe-up rates compared to the standard CTA at α = 0.05?</p>
+              <p><strong>Data Format:</strong> This scenario provides <strong>raw individual-level data</strong> (Group, Outcome) where each row represents one impression. Upload the raw data file to analyze conversion rates.</p>
+              <div class="scenario-insights">
+                <div class="insight-title">🧪 Pilot Test</div>
+                <p>With a small sample size (n = 50), statistical power may be limited. This pilot test helps evaluate whether the effect size is large enough to justify a larger follow-up experiment.</p>
+              </div>
+            </div>
+          </div>
+        `,
+        data: () => ({
+          rawData: [
+            'Group,Outcome',
+            'Team A,1', 'Team A,0', 'Team A,1', 'Team A,0', 'Team A,0',
+            'Team A,1', 'Team A,0', 'Team A,1', 'Team A,0', 'Team A,0',
+            'Team A,1', 'Team A,1', 'Team A,0', 'Team A,0', 'Team A,1',
+            'Team A,0', 'Team A,1', 'Team A,0', 'Team A,1', 'Team A,0',
+            'Team A,0', 'Team A,1', 'Team A,1', 'Team A,0', 'Team A,1',
+            'Team B,1', 'Team B,1', 'Team B,0', 'Team B,1', 'Team B,1',
+            'Team B,0', 'Team B,1', 'Team B,1', 'Team B,0', 'Team B,1',
+            'Team B,1', 'Team B,0', 'Team B,1', 'Team B,0', 'Team B,1',
+            'Team B,1', 'Team B,0', 'Team B,1', 'Team B,1', 'Team B,0',
+            'Team B,1', 'Team B,1', 'Team B,0', 'Team B,1', 'Team B,1'
+          ],
+          settings: { alpha: 0.05, delta0: 0 }
+        })
+      }
+    ];
+
     // helpers
     const q = (id)=>document.getElementById(id);
 
@@ -367,40 +559,21 @@
     // ---- Marketing scenarios ----
     const scenarioState = { manifest: [], defaultDescription: '' };
 
-    async function fetchScenarioIndex(){
-      try{
-        const response = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
-        if(!response.ok) throw new Error(response.statusText);
-        const data = await response.json();
-        if(Array.isArray(data)) scenarioState.manifest = data;
-      }catch(err){
-        console.error('Scenario index error:', err);
-        scenarioState.manifest = [];
-      }
-    }
-
     function populateScenarioOptions(){
       const select = q("scenario-select");
       if(!select) return;
       const current = select.value;
       select.innerHTML = '<option value=\"\">Manual inputs (no preset)</option>';
-      scenarioState.manifest.forEach(entry => {
+      
+      AB_PROPORTION_SCENARIOS.forEach(scenario => {
         const option = document.createElement('option');
-        option.value = entry.id;
-        option.textContent = entry.label || entry.id;
-        if(entry.id === current){
+        option.value = scenario.id;
+        option.textContent = scenario.label || scenario.id;
+        if(scenario.id === current){
           option.selected = true;
         }
         select.appendChild(option);
       });
-    }
-
-    function formatScenarioMarkup(text){
-      return text
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/`(.+?)`/g, '<code>$1</code>')
-        .replace(/\n/g, '<br>');
     }
 
     function renderScenarioDescription(title, description){
@@ -417,50 +590,6 @@
         if(!container) return;
         container.innerHTML = description || scenarioState.defaultDescription || '';
       }
-
-    function parseScenarioText(text){
-      const lines = text.replace(/\r/g,'').split('\n');
-      const result = { title:'', description:[], control:null, variant:null, settings:{}, rawData:[] };
-      let section = '';
-      lines.forEach(line => {
-        const trimmed = line.trim();
-        if(trimmed.startsWith('# ')){
-          section = trimmed.slice(2).toLowerCase();
-          return;
-        }
-        if(!section) return;
-        if(section === 'title' && trimmed){
-          result.title = trimmed;
-        }else if(section === 'description'){
-          result.description.push(line);
-        }else if(section === 'control' || section === 'variant'){
-          const parts = trimmed.split('|').map(part => part.trim());
-          if(parts.length >= 3){
-            const [name, pStr, nStr] = parts;
-            const proportion = parseFloat(pStr);
-            const n = parseInt(nStr, 10);
-            if(name && isFinite(proportion) && Number.isInteger(n)){
-              result[section] = { name, proportion, n };
-            }
-          }
-        }else if(section === 'raw data'){
-          if(!trimmed) return;
-          const parts = trimmed.split('|').map(part => part.trim());
-          if(parts.length >= 2){
-            const [groupLabel, valueStr] = parts;
-            const value = parseFloat(valueStr);
-            if(groupLabel && isFinite(value)){
-              result.rawData.push({ group: groupLabel, value });
-            }
-          }
-        }else if(section === 'settings' && trimmed.includes('=')){
-          const [key, ...rest] = trimmed.split('=');
-          result.settings[key.trim().toLowerCase()] = rest.join('=').trim();
-        }
-      });
-      result.description = result.description.join('\n').trim();
-      return result;
-    }
 
     function parseDatasetRawEntries(text){
       const trimmed = (text || '').trim();
@@ -484,7 +613,6 @@
       });
       return entries;
     }
-
 
     function summarizeRawEntries(entries){
       if(!Array.isArray(entries) || !entries.length) return [];
@@ -516,41 +644,6 @@
       });
     }
 
-    function buildScenarioDataset(preset, scenarioId, datasetOverride){
-      if(datasetOverride){
-        return {
-          type: 'file',
-          path: datasetOverride,
-          filename: datasetOverride.split('/').pop() || 'scenario.csv'
-        };
-      }
-      const safeId = (scenarioId || 'scenario').toLowerCase().replace(/[^a-z0-9]+/g, '_');
-      if(preset.rawData && preset.rawData.length){
-        const lines = ['group,conversion'];
-        preset.rawData.forEach(entry => {
-          if(entry.group && isFinite(entry.value)){
-            const val = entry.value >= 1 ? 1 : (entry.value <= 0 ? 0 : entry.value);
-            lines.push(`${entry.group},${val}`);
-          }
-        });
-        if(lines.length > 1){
-          return { type: 'inline', filename: `${safeId}_raw_data.csv`, content: lines.join('\n') };
-        }
-      }
-      if(preset.control && preset.variant){
-        const rows = ['group,conversions,sample_size,proportion'];
-        [preset.control, preset.variant].forEach(group => {
-          if(!group) return;
-          const wins = Math.max(0, Math.min(group.n || 0, Math.round((group.proportion || 0) * (group.n || 0))));
-          rows.push(`${group.name || 'Group'},${wins},${group.n},${(group.proportion || 0).toFixed(4)}`);
-        });
-        if(rows.length > 1){
-          return { type: 'inline', filename: `${safeId}_summary_inputs.csv`, content: rows.join('\n') };
-        }
-      }
-      return null;
-    }
-
     function updateScenarioDownloadButton(datasetInfo){
       currentScenarioDataset = datasetInfo;
       const button = q('scenario-download');
@@ -564,55 +657,8 @@
       }
     }
 
-    function applyScenarioPreset(preset, entry){
-      if(!preset) return;
-      if((!preset.control || !preset.variant) && preset.rawData && preset.rawData.length){
-        const derived = summarizeRawEntries(preset.rawData);
-        if(derived[0] && !preset.control){
-          preset.control = { name: derived[0].name, proportion: derived[0].proportion, n: derived[0].n };
-        }
-        if(derived[1] && !preset.variant){
-          preset.variant = { name: derived[1].name, proportion: derived[1].proportion, n: derived[1].n };
-        }
-      }
-      if(preset.control){
-        const { name, proportion, n } = preset.control;
-        if(q('g1name')){
-          q('g1name').value = name || 'Control';
-          q('g1name').dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        assignScenarioValues(proportion, ['p1','p1num']);
-        assignScenarioValues(n, ['n1','n1num']);
-      }
-      if(preset.variant){
-        const { name, proportion, n } = preset.variant;
-        if(q('g2name')){
-          q('g2name').value = name || 'Variant';
-          q('g2name').dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        assignScenarioValues(proportion, ['p2','p2num']);
-        assignScenarioValues(n, ['n2','n2num']);
-      }
-      if(preset.settings){
-        if(preset.settings.delta0){
-          assignScenarioValues(parseFloat(preset.settings.delta0), ['delta','deltanum']);
-        }
-        if(preset.settings.alpha){
-          const alphaVal = parseFloat(preset.settings.alpha);
-          if(isFinite(alphaVal)){
-            const ciTarget = parseFloat((1 - alphaVal).toFixed(2));
-            setConfidenceLevel(ciTarget);
-          }
-        }
-      }
-      renderScenarioDescription(preset.title || entry?.label, preset.description);
-      const datasetInfo = buildScenarioDataset(preset, entry?.id, entry?.dataset);
-      updateScenarioDownloadButton(datasetInfo);
-      render();
-    }
-
-    async function loadScenarioById(id){
-      const scenario = scenarioState.manifest.find(entry => entry.id === id);
+    function loadScenarioById(id){
+      const scenario = AB_PROPORTION_SCENARIOS.find(entry => entry.id === id);
       if(!scenario){
         renderScenarioDescription('', '');
         updateScenarioDownloadButton(null);
@@ -623,33 +669,89 @@
       if (typeof markScenarioLoaded === 'function') {
         markScenarioLoaded(scenario.label);
       }
+      
       try{
-        const response = await fetch(scenario.file, { cache: 'no-cache' });
-        if(!response.ok) throw new Error(response.statusText);
-        const text = await response.text();
-        const parsed = parseScenarioText(text);
-        if(scenario.dataset){
-          try{
-            const datasetResponse = await fetch(scenario.dataset, { cache: 'no-cache' });
-            if(datasetResponse.ok){
-              const datasetText = await datasetResponse.text();
-              const datasetEntries = parseDatasetRawEntries(datasetText);
-              if(datasetEntries.length){
-                parsed.rawData = datasetEntries.map(entry => ({
-                  group: entry.group,
-                  value: entry.value
-                }));
-                parsed.control = null;
-                parsed.variant = null;
+        const htmlContent = scenario.description();
+        renderScenarioDescription(scenario.label, htmlContent);
+        
+        const scenarioData = scenario.data();
+        let datasetInfo = null;
+        
+        // Handle raw data mode
+        if (scenarioData.rawData && scenarioData.rawData.length > 0) {
+          const csvText = scenarioData.rawData.join('\n');
+          const entries = parseDatasetRawEntries(csvText);
+          if(entries.length){
+            const derived = summarizeRawEntries(entries);
+            if(derived[0]){
+              const { name, proportion, n } = derived[0];
+              if(q('g1name')){
+                q('g1name').value = name || 'Control';
+                q('g1name').dispatchEvent(new Event('input', { bubbles: true }));
               }
+              assignScenarioValues(proportion, ['p1','p1num']);
+              assignScenarioValues(n, ['n1','n1num']);
             }
-          }catch(datasetErr){
-            console.error('Dataset fetch error:', datasetErr);
+            if(derived[1]){
+              const { name, proportion, n } = derived[1];
+              if(q('g2name')){
+                q('g2name').value = name || 'Variant';
+                q('g2name').dispatchEvent(new Event('input', { bubbles: true }));
+              }
+              assignScenarioValues(proportion, ['p2','p2num']);
+              assignScenarioValues(n, ['n2','n2num']);
+            }
+            const safeId = scenario.id.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+            datasetInfo = { type: 'inline', filename: `${safeId}_raw_data.csv`, content: csvText };
           }
         }
-        applyScenarioPreset(parsed, scenario);
+        // Handle summary stats mode
+        else if(scenarioData.control && scenarioData.variant){
+          const { name: c_name, p: c_p, n: c_n } = scenarioData.control;
+          if(q('g1name')){
+            q('g1name').value = c_name || 'Control';
+            q('g1name').dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          assignScenarioValues(c_p, ['p1','p1num']);
+          assignScenarioValues(c_n, ['n1','n1num']);
+          
+          const { name: v_name, p: v_p, n: v_n } = scenarioData.variant;
+          if(q('g2name')){
+            q('g2name').value = v_name || 'Variant';
+            q('g2name').dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          assignScenarioValues(v_p, ['p2','p2num']);
+          assignScenarioValues(v_n, ['n2','n2num']);
+          
+          const safeId = scenario.id.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+          const rows = ['group,conversions,sample_size,proportion'];
+          const c_wins = Math.max(0, Math.min(c_n, Math.round(c_p * c_n)));
+          const v_wins = Math.max(0, Math.min(v_n, Math.round(v_p * v_n)));
+          rows.push(`${c_name || 'Control'},${c_wins},${c_n},${c_p.toFixed(4)}`);
+          rows.push(`${v_name || 'Variant'},${v_wins},${v_n},${v_p.toFixed(4)}`);
+          datasetInfo = { type: 'inline', filename: `${safeId}_summary_inputs.csv`, content: rows.join('\n') };
+        }
+        
+        // Apply additional settings
+        if(scenarioData.settings){
+          if(scenarioData.settings.delta0 !== undefined){
+            assignScenarioValues(parseFloat(scenarioData.settings.delta0), ['delta','deltanum']);
+          }
+          if(scenarioData.settings.alpha !== undefined){
+            const alphaVal = parseFloat(scenarioData.settings.alpha);
+            if(isFinite(alphaVal)){
+              const ciTarget = parseFloat((1 - alphaVal).toFixed(2));
+              setConfidenceLevel(ciTarget);
+            }
+          }
+        }
+        
+        updateScenarioDownloadButton(datasetInfo);
+        render();
+        
       }catch(err){
         console.error('Scenario load error:', err);
+        updateScenarioDownloadButton(null);
       }
     }
 
@@ -724,7 +826,6 @@
       if(description){
         scenarioState.defaultDescription = description.innerHTML;
       }
-      await fetchScenarioIndex();
       populateScenarioOptions();
       setupScenarioSelector();
     }

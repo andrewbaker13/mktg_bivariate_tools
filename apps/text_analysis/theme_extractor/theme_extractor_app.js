@@ -10,12 +10,79 @@ const THEME_API_BASE = window.location.hostname === 'localhost' || window.locati
     ? 'http://localhost:8001/api'
     : 'https://drbaker-backend.onrender.com/api';
 
+// ========================================
+// SCENARIO DEFINITIONS (Inline)
+// ========================================
+const THEME_EXTRACTOR_SCENARIOS = [
+  {
+    id: 'instagram-influencer',
+    label: 'Instagram Influencer: Comment Analysis (150 comments)',
+    description: () => `
+      <h4>📱 Instagram Influencer Comment Analysis</h4>
+      <p>This dataset contains <strong>150 comments</strong> from a lifestyle influencer's Instagram page. Comments are categorized by the type of post they appeared on:</p>
+      <ul>
+        <li><strong>Sponsored (30 comments)</strong> - Paid brand partnerships and product promotions</li>
+        <li><strong>Organic - Daily (50 comments)</strong> - Regular lifestyle content (routines, outfits, home decor)</li>
+        <li><strong>Organic - Ragebait (70 comments)</strong> - Controversial or provocative posts designed to drive engagement</li>
+      </ul>
+      <p><strong>Research Questions:</strong></p>
+      <ul>
+        <li>What themes emerge in audience reactions to different content types?</li>
+        <li>How does comment sentiment and language differ between sponsored vs organic content?</li>
+        <li>What patterns characterize "ragebait" engagement vs genuine daily interaction?</li>
+      </ul>
+      <p><strong>Columns:</strong> <code>comment</code> (text to analyze), <code>post_type</code> (grouping variable)</p>
+      <p><em>💡 Try enabling "Group by column" and selecting "post_type" to compare themes across content categories!</em></p>
+    `,
+    dataset: 'scenarios/instagram_influencer.csv',
+    textColumn: 'comment',
+    groupColumn: 'post_type'
+  },
+  {
+    id: 'streaming-feedback',
+    label: 'Streaming Service: Subscriber Feedback (75 comments)',
+    description: () => `
+      <h4>Streaming Service: Subscriber Feedback Analysis</h4>
+      <p>A major <strong>video streaming platform</strong> has collected open-ended feedback from subscribers after a recent app update and content expansion. The comments come from a mix of long-time subscribers and new trial users, gathered through in-app surveys and email follow-ups.</p>
+      <p><strong>Dataset details:</strong></p>
+      <ul>
+        <li><strong>Records:</strong> 75 subscriber comments</li>
+        <li><strong>Text column:</strong> <code>comment</code></li>
+        <li><strong>Content:</strong> Feedback about content library, user experience, pricing, technical issues, and content recommendations</li>
+      </ul>
+      <p><strong>Your task:</strong> Use theme extraction to identify the <em>major recurring topics</em> that subscribers discuss. The marketing team wants to understand what matters most to subscribers—is it content variety? App usability? Price-to-value ratio? Technical reliability?</p>
+      <p><strong>Business context:</strong> The platform is planning its next quarter marketing messages and wants to emphasize features that resonate with subscribers while addressing pain points proactively.</p>
+      <p><strong>Themes you might discover:</strong> content library satisfaction, app/interface experience, pricing perceptions, streaming quality, content discovery, family/sharing features.</p>
+    `,
+    dataset: 'scenarios/streaming_feedback.csv',
+    textColumn: 'comment'
+  },
+  {
+    id: 'coffee-reviews',
+    label: 'Premium Coffee Brand: Product Reviews (80 reviews)',
+    description: () => `
+      <h4>Premium Coffee Brand: Customer Reviews Analysis</h4>
+      <p>A <strong>direct-to-consumer premium coffee brand</strong> has gathered customer reviews from their website and email feedback surveys. The brand sells specialty single-origin beans and subscription boxes, targeting coffee enthusiasts who care about quality, sourcing ethics, and brewing experience.</p>
+      <p><strong>Dataset details:</strong></p>
+      <ul>
+        <li><strong>Records:</strong> 80 customer reviews</li>
+        <li><strong>Text column:</strong> <code>review</code></li>
+        <li><strong>Content:</strong> Feedback about coffee quality, flavor profiles, subscription experience, packaging, brewing, and brand values</li>
+      </ul>
+      <p><strong>Your task:</strong> Extract themes from customer reviews to understand what drives customer satisfaction and loyalty. The brand wants to identify which aspects of their product and service resonate most—is it taste quality? The subscription convenience? Ethical sourcing? Packaging and freshness?</p>
+      <p><strong>Business context:</strong> The marketing team is developing messaging for a new ad campaign and wants to emphasize the product attributes that customers mention most positively.</p>
+      <p><strong>Themes you might discover:</strong> flavor/taste quality, freshness and roasting, ethical sourcing, subscription convenience, brewing experience, packaging, customer service, price-to-value.</p>
+    `,
+    dataset: 'scenarios/coffee_reviews.csv',
+    textColumn: 'review'
+  }
+];
+
 // State
 let currentResults = null;
 let uploadedData = null;
 
 // Scenario state
-let scenarioManifest = [];
 let activeScenarioConfig = null;
 let activeScenarioDataset = null;
 
@@ -114,23 +181,14 @@ document.addEventListener('DOMContentLoaded', () => {
 // SCENARIO / CASE STUDY LOADING
 // =====================================================================
 
-async function initScenarios() {
-    try {
-        const resp = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
-        if (!resp.ok) throw new Error(`Unable to load scenario index (${resp.status})`);
-        const data = await resp.json();
-        scenarioManifest = Array.isArray(data) ? data : [];
-        populateScenarioSelect();
-    } catch (err) {
-        console.error('Error loading scenario index:', err);
-        scenarioManifest = [];
-    }
+function initScenarios() {
+    populateScenarioSelect();
 }
 
 function populateScenarioSelect() {
     if (!elements.scenarioSelect) return;
     elements.scenarioSelect.innerHTML = '<option value="">-- Choose a case study --</option>';
-    scenarioManifest.forEach(entry => {
+    THEME_EXTRACTOR_SCENARIOS.forEach(entry => {
         const opt = document.createElement('option');
         opt.value = entry.id;
         opt.textContent = entry.label || entry.id;
@@ -153,35 +211,28 @@ function populateScenarioSelect() {
 }
 
 async function loadScenario(id) {
-    const scenario = scenarioManifest.find(s => s.id === id);
+    const scenario = THEME_EXTRACTOR_SCENARIOS.find(s => s.id === id);
     if (!scenario) return;
     
     activeScenarioConfig = scenario;
     
     // Handle download button visibility
     if (elements.scenarioDownload) {
-        activeScenarioDataset = scenario.dataset ? `scenarios/${scenario.dataset}` : null;
+        activeScenarioDataset = scenario.dataset || null;
         elements.scenarioDownload.classList.toggle('hidden', !scenario.dataset);
     }
     
-    // Load description from .txt file
-    if (scenario.file && elements.scenarioDescription) {
-        try {
-            const resp = await fetch(`scenarios/${scenario.file}`, { cache: 'no-cache' });
-            if (resp.ok) {
-                const text = await resp.text();
-                elements.scenarioDescription.innerHTML = text;
-                elements.scenarioDescription.classList.remove('hidden');
-            }
-        } catch (err) {
-            console.error('Error loading scenario description:', err);
-        }
+    // Load description
+    if (elements.scenarioDescription) {
+        const html = typeof scenario.description === 'function' ? scenario.description() : scenario.description;
+        elements.scenarioDescription.innerHTML = html;
+        elements.scenarioDescription.classList.remove('hidden');
     }
     
     // Load dataset and switch to upload mode
     if (scenario.dataset) {
         try {
-            const resp = await fetch(`scenarios/${scenario.dataset}`, { cache: 'no-cache' });
+            const resp = await fetch(scenario.dataset, { cache: 'no-cache' });
             if (resp.ok) {
                 const csv = await resp.text();
                 const rows = parseCSV(csv);
@@ -209,7 +260,7 @@ async function loadScenario(id) {
                         }
                     }
                     
-                    markScenarioLoaded(scenario.name);
+                    markScenarioLoaded(scenario.label);
                     
                     elements.columnSelector.classList.remove('hidden');
                     updateColumnPreview();

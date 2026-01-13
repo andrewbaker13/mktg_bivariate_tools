@@ -26,26 +26,181 @@ let modifiedDate = new Date().toLocaleDateString();
 
 // Track current scenario
 let currentScenarioName = null;
-let currentDataSource = 'manual';
+// Note: currentDataSource is defined in shared/js/auth_tracking.js
 
-// Scenario definitions
+// ========================================
+// SCENARIO DEFINITIONS (Inline)
+// ========================================
 const CONJOINT_SCENARIOS = [
   {
     id: 'scenario-smartphone',
-    label: 'Smartphone Choice',
-    file: 'scenarios/smartphone_cbc.txt',
+    label: '📱 Smartphone Choice',
+    description: () => `<div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-icon">📱</span>
+        <h3>Smartphone Purchase Decisions: Features, Brand, and Price</h3>
+      </div>
+      <div class="scenario-badge-row">
+        <span class="badge badge-hypothesis">Choice-Based Conjoint</span>
+        <span class="badge badge-context">Consumer Electronics</span>
+        <span class="badge badge-sample">n = 150 respondents × 12 tasks</span>
+      </div>
+      <div class="scenario-body">
+        <p><strong>Business Context:</strong> A smartphone manufacturer wants to understand which product attributes drive purchase intent. They're considering launching a new model and need data on customer preferences to optimize design and pricing strategy.</p>
+        
+        <p><strong>Study Design:</strong></p>
+        <div class="context-grid">
+          <div class="context-item">
+            <div class="context-label">Respondents</div>
+            <div class="context-value">150</div>
+            <div class="context-subtext">Ages 18-55, smartphone owners</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Tasks Each</div>
+            <div class="context-value">12</div>
+            <div class="context-subtext">Choice scenarios</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Alternatives</div>
+            <div class="context-value">3 + None</div>
+            <div class="context-subtext">Plus competitor anchors</div>
+          </div>
+        </div>
+        
+        <p><strong>Attributes Tested:</strong></p>
+        <ul>
+          <li><strong>Brand:</strong> BrandX (new), BrandY (mid-tier), BrandZ (budget)</li>
+          <li><strong>Screen size:</strong> 5.5", 6.0", 6.5"</li>
+          <li><strong>Storage:</strong> 64GB, 128GB, 256GB</li>
+          <li><strong>Battery life:</strong> 12, 18, 24 hours</li>
+          <li><strong>Camera:</strong> Standard (12MP), Enhanced (24MP), Professional (48MP)</li>
+          <li><strong>Price:</strong> $499, $599, $699, $799, $899</li>
+        </ul>
+        
+        <div class="scenario-insights">
+          <div class="insight-title">🎯 Research Questions</div>
+          <ul>
+            <li>Which attributes matter most to customers?</li>
+            <li>What's willingness-to-pay for premium features?</li>
+            <li>Can BrandX compete with established players?</li>
+          </ul>
+        </div>
+      </div>
+    </div>`,
     datasetPath: 'scenarios/smartphone_cbc.csv'
   },
   {
     id: 'scenario-streaming',
-    label: 'Streaming Service',
-    file: 'scenarios/streaming_service_cbc.txt',
+    label: '📺 Streaming Service',
+    description: () => `<div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-icon">📺</span>
+        <h3>Streaming Service Launch: Content, Features, and Pricing</h3>
+      </div>
+      <div class="scenario-badge-row">
+        <span class="badge badge-hypothesis">Choice-Based Conjoint</span>
+        <span class="badge badge-context">Media / Entertainment</span>
+        <span class="badge badge-sample">n = 200 respondents × 10 tasks</span>
+      </div>
+      <div class="scenario-body">
+        <p><strong>Business Context:</strong> A media company is planning to launch a new streaming platform and wants to understand what features, content offerings, and price points will drive subscriptions in a competitive market.</p>
+        
+        <p><strong>Study Design:</strong></p>
+        <div class="context-grid">
+          <div class="context-item">
+            <div class="context-label">Respondents</div>
+            <div class="context-value">200</div>
+            <div class="context-subtext">Current streaming users</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Tasks Each</div>
+            <div class="context-value">10</div>
+            <div class="context-subtext">Choice scenarios</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Competitors</div>
+            <div class="context-value">Netflix, Disney+</div>
+            <div class="context-subtext">Fixed anchors</div>
+          </div>
+        </div>
+        
+        <p><strong>Attributes Tested:</strong></p>
+        <ul>
+          <li><strong>Content library:</strong> Small (5K), Medium (15K), Large (30K titles)</li>
+          <li><strong>Originals:</strong> None, Moderate (5/month), Extensive (15/month)</li>
+          <li><strong>Ad experience:</strong> With ads, Ad-free</li>
+          <li><strong>Streams:</strong> 1, 2, or 4 simultaneous devices</li>
+          <li><strong>Quality:</strong> HD, 4K Ultra HD</li>
+          <li><strong>Price:</strong> $5.99, $9.99, $14.99, $19.99/month</li>
+        </ul>
+        
+        <div class="scenario-insights">
+          <div class="insight-title">🎯 Research Questions</div>
+          <ul>
+            <li>What drives choice: content quantity, quality, or price?</li>
+            <li>How much will customers pay for ad-free?</li>
+            <li>Can a new entrant compete on value vs. originals?</li>
+          </ul>
+        </div>
+      </div>
+    </div>`,
     datasetPath: 'scenarios/streaming_service_cbc.csv'
   },
   {
     id: 'scenario-course-design',
-    label: 'Marketing Research Course Design',
-    file: 'scenarios/course_design_cbc.txt',
+    label: '📚 Marketing Research Course Design',
+    description: () => `<div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-icon">📚</span>
+        <h3>Course Design Preferences: Format, Workload, and Assessment</h3>
+      </div>
+      <div class="scenario-badge-row">
+        <span class="badge badge-hypothesis">Choice-Based Conjoint</span>
+        <span class="badge badge-context">Education / Pedagogy</span>
+        <span class="badge badge-sample">n = 50 students × 30 tasks</span>
+      </div>
+      <div class="scenario-body">
+        <p><strong>Business Context:</strong> A business school is redesigning its Marketing Research course and wants to understand student preferences for different course formats, workload levels, and assessment methods.</p>
+        
+        <p><strong>Study Design:</strong></p>
+        <div class="context-grid">
+          <div class="context-item">
+            <div class="context-label">Respondents</div>
+            <div class="context-value">50</div>
+            <div class="context-subtext">Graduate business students</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Tasks Each</div>
+            <div class="context-value">30</div>
+            <div class="context-subtext">Course design scenarios</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Alternatives</div>
+            <div class="context-value">4 + None</div>
+            <div class="context-subtext">Format options</div>
+          </div>
+        </div>
+        
+        <p><strong>Attributes Tested:</strong></p>
+        <ul>
+          <li><strong>Format:</strong> Traditional Lecture, Flipped Classroom, Project-Based, Hybrid Online</li>
+          <li><strong>Weekly Hours:</strong> 2.5, 3.5, 4.5, 5.5, 6.5, 8.0 hours (linear)</li>
+          <li><strong>Assessment:</strong> Exams, Projects, Mixed, Case Studies</li>
+        </ul>
+        
+        <div class="scenario-insights">
+          <div class="insight-title">🎓 Pedagogical Value</div>
+          <p>Students analyze <em>their own</em> preferences, making results personally relevant. Reveals heterogeneity in learning style preferences.</p>
+          <div class="insight-title" style="margin-top: 0.75rem;">👥 Four Preference Segments</div>
+          <ul>
+            <li>📖 Traditional Learners: Lectures, exams, less time</li>
+            <li>🛠️ Project-Based: Hands-on, more time, project assessment</li>
+            <li>💻 Flexible/Online: Hybrid, moderate time</li>
+            <li>⏱️ Time-Constrained: Efficiency-focused</li>
+          </ul>
+        </div>
+      </div>
+    </div>`,
     datasetPath: 'scenarios/course_design_cbc.csv'
   }
 ];
@@ -2110,7 +2265,7 @@ async function loadScenario() {
   
   const scenarioId = select.value;
   if (!scenarioId) {
-    descEl.innerHTML = '<p>Use presets to auto-load realistic CBC study data.</p>';
+    descEl.innerHTML = '<p class="muted">Select a scenario above to load a preset CBC study dataset with context.</p>';
     downloadBtn.classList.add('hidden');
     return;
   }
@@ -2119,10 +2274,9 @@ async function loadScenario() {
   if (!scenario) return;
   
   try {
-    // Load description (HTML formatted)
-    const descResp = await fetch(scenario.file);
-    const descText = await descResp.text();
-    descEl.innerHTML = `<div class="scenario-text">${descText}</div>`;
+    // Render inline description
+    const html = typeof scenario.description === 'function' ? scenario.description() : scenario.description;
+    descEl.innerHTML = html || '';
     
     // Load dataset
     const dataResp = await fetch(scenario.datasetPath);

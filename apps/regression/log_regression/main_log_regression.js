@@ -3,6 +3,185 @@
 // Tool identifier for tracking
 const TOOL_SLUG = 'logistic-regression';
 
+// Scenario definitions
+const LOG_REGRESSION_SCENARIOS = [
+  {
+    id: 'Influencer Campaign Conversion',
+    label: '📱 Influencer Campaign Conversion',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">📱</span>
+          <h3>Influencer Campaign: Predicting Purchase Conversion</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">Logistic Regression</span>
+          <span class="badge badge-context">DTC / Influencer Marketing</span>
+          <span class="badge badge-sample">n = influencer posts</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> You are the performance marketing analyst for a DTC beauty brand that relies heavily on Instagram and TikTok influencers. The team wants to understand which influencer partnerships drive <strong>purchases</strong>, not just impressions. Specifically, does <em>creator tier</em> (Mega, Mid, Micro) and <em>story engagement</em> predict conversion?</p>
+          
+          <p><strong>Dataset Variables:</strong></p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Outcome</div>
+              <div class="context-value">Converted</div>
+              <div class="context-subtext">Binary: 1 = purchase, 0 = no purchase</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Story Views</div>
+              <div class="context-value">Continuous</div>
+              <div class="context-subtext">Unique story impressions</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Swipe Ups</div>
+              <div class="context-value">Continuous</div>
+              <div class="context-subtext">Link taps to landing page</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Influencer Tier</div>
+              <div class="context-value">Categorical</div>
+              <div class="context-subtext">Mega, Mid, Micro</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Audience Region</div>
+              <div class="context-value">Categorical</div>
+              <div class="context-subtext">US, EU, LATAM, APAC</div>
+            </div>
+          </div>
+          
+          <p><strong>Research Question:</strong> Use logistic regression to model the probability that a post converts (Converted = 1) as a function of engagement metrics and creator characteristics. Quantify patterns like "holding engagement constant, how does conversion likelihood change between mid-tier and micro influencers?"</p>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Strategic Question</div>
+            <p>Do micro creators with highly engaged audiences convert at higher rates than mega creators? Should budget allocation favor specific tiers or regions based on conversion odds?</p>
+          </div>
+          
+          <p><strong>How to use:</strong> Set <em>Converted</em> as the binary outcome. Include <em>Story_Views</em> and <em>Swipe_Ups</em> as numeric predictors. Treat <em>Influencer_Tier</em> and <em>Audience_Region</em> as categorical. Interpret odds ratios to compare conversion probability across tiers and regions.</p>
+        </div>
+      </div>
+    `,
+    dataset: 'scenarios/influencer_conversion_data.csv',
+    outcome: 'Converted',
+    predictors: ['Story_Views', 'Swipe_Ups', 'Influencer_Tier', 'Audience_Region'],
+    types: { Influencer_Tier: 'categorical', Audience_Region: 'categorical' }
+  },
+  {
+    id: 'B2B Email Outreach Response',
+    label: '📧 B2B Email Outreach Response',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">📧</span>
+          <h3>B2B Email Sequences: Predicting Demo Bookings</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">Logistic Regression</span>
+          <span class="badge badge-context">B2B SaaS / Sales</span>
+          <span class="badge badge-sample">n = leads</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> You support a B2B SaaS sales team running multi-touch email sequences. Sales leadership wants to identify which leads are most likely to <strong>book a demo</strong>, enabling better prioritization of rep time and refined targeting strategies.</p>
+          
+          <p><strong>Dataset Variables:</strong></p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Outcome</div>
+              <div class="context-value">Responded</div>
+              <div class="context-subtext">1 = demo booked, 0 = no demo</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Emails Sent</div>
+              <div class="context-value">Continuous</div>
+              <div class="context-subtext">Number of emails delivered</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Total Opens</div>
+              <div class="context-value">Continuous</div>
+              <div class="context-subtext">Opens across sequence</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Lead Score</div>
+              <div class="context-value">Continuous (0-100)</div>
+              <div class="context-subtext">Marketing automation score</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Industry</div>
+              <div class="context-value">Categorical</div>
+              <div class="context-subtext">SaaS, Ecommerce, Manufacturing, Agency</div>
+            </div>
+          </div>
+          
+          <p><strong>Research Question:</strong> Model the probability that a lead responds (Responded = 1) as a function of email volume, engagement, lead score, and industry. Focus on interpretable effects like "a 10-point increase in lead score multiplies the odds of response by X, holding industry constant."</p>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Strategic Question</div>
+            <p>Which industries respond best after controlling for engagement? Should SDRs prioritize high-score SaaS leads over mid-score ecommerce leads?</p>
+          </div>
+          
+          <p><strong>How to use:</strong> Set <em>Responded</em> as binary outcome. Include <em>Emails_Sent</em>, <em>Total_Opens</em>, and <em>Lead_Score</em> as numeric predictors. Treat <em>Industry</em> as categorical. Interpret odds ratios to guide lead prioritization.</p>
+        </div>
+      </div>
+    `,
+    dataset: 'scenarios/email_outreach_data.csv',
+    outcome: 'Responded',
+    predictors: ['Emails_Sent', 'Total_Opens', 'Lead_Score', 'Industry'],
+    types: { Industry: 'categorical' }
+  },
+  {
+    id: 'Promo Incentive vs Recency',
+    label: '🎁 Promo Incentive A/B Test',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">🎁</span>
+          <h3>Digital Promo A/B Test: High Incentive vs Standard Offer</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">Logistic Regression</span>
+          <span class="badge badge-context">Retail / Promo Testing</span>
+          <span class="badge badge-sample">n = visitors</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> You're analyzing a digital promotion A/B test for a retail brand. Visitors see either a <strong>high-incentive offer</strong> (25% off + free shipping) or standard offer. Leadership wants to quantify how strongly the richer incentive changes conversion probability and whether recency matters.</p>
+          
+          <p><strong>Dataset Variables:</strong></p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Outcome</div>
+              <div class="context-value">Converted</div>
+              <div class="context-subtext">1 = completed promo goal, 0 = no conversion</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">High Incentive</div>
+              <div class="context-value">Binary (0/1)</div>
+              <div class="context-subtext">1 = saw high incentive, 0 = standard</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Days Since Last Visit</div>
+              <div class="context-value">Continuous</div>
+              <div class="context-subtext">Visitor recency</div>
+            </div>
+          </div>
+          
+          <p><strong>Research Question:</strong> Model conversion probability (Converted = 1) as a function of incentive level and visit recency. Expect one clearly significant effect (high incentive) and one small, non-significant negative effect (recency)—typical in real experiments where one lever dominates.</p>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Strategic Question</div>
+            <p>Does the high-incentive promo justify its cost through incremental lift? Is there evidence to tailor offers by visitor recency?</p>
+          </div>
+          
+          <p><strong>How to use:</strong> Set <em>Converted</em> as binary outcome. Include <em>High_Incentive</em> and <em>Days_Since_Last_Visit</em> as numeric predictors. Focus on how much the high incentive multiplies conversion odds. Interpret the non-significant recency coefficient carefully.</p>
+        </div>
+      </div>
+    `,
+    dataset: 'scenarios/incentive_recency_data.csv',
+    outcome: 'Converted',
+    predictors: ['High_Incentive', 'Days_Since_Last_Visit']
+  }
+];
+
 // Debouncing for auto-run tracking
 let renderCount = 0;
 let lastTrackTime = 0;
@@ -34,26 +213,6 @@ let lastRawDataset = null;
 let outcomeCoding = { outcomeName: null, mode: 'numeric01', focalLabel: '1', nonFocalLabel: '0' };
 
 const RAW_UPLOAD_LIMIT = typeof MAX_UPLOAD_ROWS === 'number' ? MAX_UPLOAD_ROWS : 5000;
-const FALLBACK_SCENARIOS = [
-  {
-    id: 'Predict EDM event spend',
-    label: 'Predict EDM event spending for patrons',
-    file: 'scenarios/event_spend.txt',
-    dataset: 'scenarios/event_spend_data.csv',
-    outcome: 'event_spend',
-    predictors: ['days_preordered', 'type'],
-    types: { type: 'categorical' }
-  },
-  {
-    id: 'Customer Valuation',
-    label: 'Predict Customer Value based on Recency, Frequency, and Monetary Value',
-    file: 'scenarios/customer_value.txt',
-    dataset: 'scenarios/customer_value_data.csv',
-    outcome: 'CustomerValue',
-    predictors: ['Eecency', 'Frequency', 'MonetaryValue', 'Segment'],
-    types: { Segment: 'categorical' }
-  }
-];
 
 // ---------- Utilities ----------
 function escapeHtml(value) {
@@ -658,17 +817,8 @@ function setupRawUpload() {
 
 // ---------- Scenario handling ----------
 async function fetchScenarioIndex() {
-  try {
-    const resp = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
-    if (!resp.ok) throw new Error(`Unable to load scenario index (${resp.status})`);
-    const data = await resp.json();
-    scenarioManifest = Array.isArray(data) ? data : [];
-    populateScenarioSelect();
-  } catch {
-    scenarioManifest = FALLBACK_SCENARIOS;
-    populateScenarioSelect();
-    setRawUploadStatus('Using built-in scenarios because the scenario index could not be loaded.', 'error', { isHtml: false });
-  }
+  scenarioManifest = LOG_REGRESSION_SCENARIOS;
+  populateScenarioSelect();
 }
 function populateScenarioSelect() {
   const select = document.getElementById('scenario-select');
@@ -698,40 +848,26 @@ async function loadScenario(id) {
         };
       }
     }
-    try {
-      const resp = await fetch(scenario.file, { cache: 'no-cache' });
-      if (!resp.ok) throw new Error(`Unable to load scenario description (${resp.status})`);
-      const text = await resp.text();
-      const body = text.replace(/^# .*\n?/gm, '').trim();
-      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
-        window.UIUtils.renderScenarioDescription({
-          containerId: 'scenario-description',
-          title: scenario.label || '',
-          description: body,
-          defaultHtml: defaultScenarioDescription
-        });
-      } else {
-        const descContainer = document.getElementById('scenario-description');
-        if (descContainer) descContainer.textContent = body || '';
-      }
-      
-      // Track scenario loading for engagement
-      if (typeof markScenarioLoaded === 'function') {
-        markScenarioLoaded(scenario.label);
-      }
-    } catch {
-      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
-        window.UIUtils.renderScenarioDescription({
-          containerId: 'scenario-description',
-          title: '',
-          description: '',
-          defaultHtml: defaultScenarioDescription
-        });
-      } else {
-        const descContainer = document.getElementById('scenario-description');
-        if (descContainer) descContainer.innerHTML = defaultScenarioDescription;
-      }
+    
+    // Load scenario description (inline)
+    const descriptionHTML = typeof scenario.description === 'function' ? scenario.description() : scenario.description;
+    if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+      window.UIUtils.renderScenarioDescription({
+        containerId: 'scenario-description',
+        title: scenario.label || '',
+        description: descriptionHTML,
+        defaultHtml: defaultScenarioDescription
+      });
+    } else {
+      const descContainer = document.getElementById('scenario-description');
+      if (descContainer) descContainer.innerHTML = descriptionHTML || '';
     }
+    
+    // Track scenario loading for engagement
+    if (typeof markScenarioLoaded === 'function') {
+      markScenarioLoaded(scenario.label);
+    }
+    
   if (scenario.dataset) {
     try {
       const resp = await fetch(scenario.dataset, { cache: 'no-cache' });

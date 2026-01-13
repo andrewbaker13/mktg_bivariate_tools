@@ -150,36 +150,6 @@
   border-left: 3px solid #4a90e2;
 }
 
-/* Confidence buttons */
-.confidence-buttons {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.confidence-button {
-  flex: 1;
-  padding: 0.6rem 1rem;
-  background-color: #fff;
-  border: 2px solid #ccc;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.confidence-button:hover {
-  border-color: #4a90e2;
-  background-color: #f8f9fa;
-}
-
-.confidence-button.selected {
-  border-color: #4a90e2;
-  background-color: #4a90e2;
-  color: #fff;
-}
-
 /* Regression equation styling */
 .regression-equation-text {
   font-family: 'Courier New', monospace;
@@ -429,18 +399,6 @@
   line-height: 1.8;
 }
 
-/* Badge styling */
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background-color: #ff6b6b;
-  color: white;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
 /* Hero header enhancements */
 .hero-context {
   margin-top: 0.5rem;
@@ -476,34 +434,6 @@
   margin-bottom: 1rem;
   line-height: 1.6;
   color: #555;
-}
-
-/* Dropzone styling */
-.dropzone {
-  border: 2px dashed #ccc;
-  border-radius: 8px;
-  padding: 2rem;
-  text-align: center;
-  background-color: #fafafa;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.dropzone:hover {
-  border-color: #4a90e2;
-  background-color: #f0f7ff;
-}
-
-.dropzone-title {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #333;
-}
-
-.dropzone-note {
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 1rem;
 }
 
 .upload-status {

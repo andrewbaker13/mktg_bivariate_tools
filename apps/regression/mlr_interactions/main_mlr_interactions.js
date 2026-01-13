@@ -12,6 +12,225 @@
   // Tool identifier for engagement tracking
   const TOOL_SLUG = 'mlr-interactions';
 
+  // Scenario definitions
+  const MLR_INTERACTIONS_SCENARIOS = [
+    {
+      id: 'ad-spend-seasonality',
+      label: '\uD83D\uDCCA Ad Spend \u00d7 Seasonality Interaction',
+      description: () => `
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <span class="scenario-icon">📊</span>
+            <h3>Ad Spend × Seasonality Interaction</h3>
+          </div>
+          <div class="scenario-badge-row">
+            <span class="badge badge-regression">Interaction Effect</span>
+            <span class="badge badge-context">Ecommerce Marketing</span>
+            <span class="badge badge-sample">n = 104 weeks</span>
+          </div>
+          <div class="scenario-body">
+            <p><strong>Business Context:</strong> Your ecommerce brand runs paid digital campaigns year-round, but the marketing team has observed that <strong>the same dollar of ad spend seems to produce different revenue outcomes depending on the season</strong>. Holiday season campaigns appear to generate more revenue per ad dollar than off-season campaigns. Does the relationship between ad spend and revenue <em>differ</em> across seasons?</p>
+            
+            <p><strong>Dataset Variables:</strong></p>
+            <div class="context-grid">
+              <div class="context-item">
+                <div class="context-label">Outcome</div>
+                <div class="context-value">Revenue</div>
+                <div class="context-subtext">Weekly revenue in USD</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Focal Predictor</div>
+                <div class="context-value">Ad_Spend</div>
+                <div class="context-subtext">Continuous, weekly budget</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Moderator</div>
+                <div class="context-value">Season</div>
+                <div class="context-subtext">Q1_Winter, Q2_Spring, Q3_Summer, Q4_Holiday</div>
+              </div>
+            </div>
+            
+            <p><strong>Research Question:</strong> Test for a <strong>continuous × categorical interaction</strong>—does the slope of ad spend vary by season? If significant, one dollar of ad spend has a different marginal effect in Q4 (holidays) versus Q1 (winter lull).</p>
+            
+            <div class="scenario-insights">
+              <div class="insight-title">🎯 Strategic Question</div>
+              <p>Should we allocate more budget to high-ROI seasons? Do we need separate bid strategies for Q4 vs Q1-Q3?</p>
+            </div>
+            
+            <p><strong>How to use:</strong> Select "Continuous × Categorical interaction." Assign Focal = ad_spend, Moderator = season. Interpret the plot showing separate lines for each season. Check the interaction coefficient to test whether slopes differ significantly across seasons.</p>
+          </div>
+        </div>
+      `,
+      dataset: 'scenarios/ad_spend_seasonality_data.csv',
+      outcome: 'revenue',
+      predictors: ['ad_spend', 'season'],
+      interactionType: 'continuous_categorical',
+      focal: 'ad_spend',
+      moderator: 'season'
+    },
+    {
+      id: 'email-frequency-quadratic',
+      label: '\uD83D\uDCE7 Email Frequency Quadratic Effect',
+      description: () => `
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <span class="scenario-icon">📧</span>
+            <h3>Email Frequency Quadratic Effect</h3>
+          </div>
+          <div class="scenario-badge-row">
+            <span class="badge badge-regression">Quadratic (Non-Linear)</span>
+            <span class="badge badge-context">CRM & Email Marketing</span>
+            <span class="badge badge-sample">n = 200 customers</span>
+          </div>
+          <div class="scenario-body">
+            <p><strong>Business Context:</strong> Your CRM team is debating the optimal email frequency for customer engagement. Send too few emails and customers forget about your brand. Send too many and you risk fatigue, unsubscribes, and diminishing engagement. The relationship might be <strong>non-linear</strong>—an inverted U-shape (quadratic) where engagement rises then falls.</p>
+            
+            <p><strong>Dataset Variables:</strong></p>
+            <div class="context-grid">
+              <div class="context-item">
+                <div class="context-label">Outcome</div>
+                <div class="context-value">Engagement_Score</div>
+                <div class="context-subtext">0-100 scale (opens, clicks, purchases)</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Quadratic Predictor</div>
+                <div class="context-value">Email_Frequency</div>
+                <div class="context-subtext">Emails per month</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Control</div>
+                <div class="context-value">Segment</div>
+                <div class="context-subtext">Budget, Standard, Premium</div>
+              </div>
+            </div>
+            
+            <p><strong>Research Question:</strong> Test for a <strong>quadratic effect</strong> using email_frequency². If the quadratic coefficient is negative and significant, it confirms the inverted U-shape. Identify the optimal email frequency—the "sweet spot" where engagement peaks.</p>
+            
+            <div class="scenario-insights">
+              <div class="insight-title">🎯 Strategic Question</div>
+              <p>What's the ideal email cadence to maximize engagement without triggering fatigue? Should we reduce frequency for high-volume segments?</p>
+            </div>
+            
+            <p><strong>How to use:</strong> Select "Quadratic effect (X²)." Assign email_frequency as the quadratic predictor. Interpret the parabola plot showing engagement rising then falling. The tool will calculate the turning point—the email frequency that maximizes engagement.</p>
+          </div>
+        </div>
+      `,
+      dataset: 'scenarios/email_frequency_engagement_data.csv',
+      outcome: 'engagement_score',
+      predictors: ['email_frequency', 'segment'],
+      interactionType: 'quadratic',
+      quadraticVar: 'email_frequency'
+    },
+    {
+      id: 'price-quality',
+      label: '\uD83D\uDCB0 Price \u00d7 Quality Interaction',
+      description: () => `
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <span class="scenario-icon">💰</span>
+            <h3>Price × Quality Interaction</h3>
+          </div>
+          <div class="scenario-badge-row">
+            <span class="badge badge-regression">Continuous × Continuous</span>
+            <span class="badge badge-context">Consumer Psychology</span>
+            <span class="badge badge-sample">n = 180 consumers</span>
+          </div>
+          <div class="scenario-body">
+            <p><strong>Business Context:</strong> A consumer psychology study investigated how <strong>price and perceived quality interact</strong> to drive purchase intent. Classic pricing theory suggests that higher prices signal higher quality, but this relationship may be <em>moderated</em> by actual perceived quality. For low-quality products, higher prices may deter purchase. For high-quality products, higher prices may enhance perceived value (prestige effect).</p>
+            
+            <p><strong>Dataset Variables:</strong></p>
+            <div class="context-grid">
+              <div class="context-item">
+                <div class="context-label">Outcome</div>
+                <div class="context-value">Purchase_Intent</div>
+                <div class="context-subtext">1-10 scale</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Focal Predictor</div>
+                <div class="context-value">Price</div>
+                <div class="context-subtext">$20-$200 range</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Moderator</div>
+                <div class="context-value">Quality_Rating</div>
+                <div class="context-subtext">1-10 scale from user reviews</div>
+              </div>
+            </div>
+            
+            <p><strong>Research Question:</strong> Test whether the effect of price on purchase intent <strong>depends on</strong> perceived quality. A <strong>continuous × continuous interaction</strong> tests whether the slope of price changes at different levels of perceived quality. If significant, price elasticity is not constant—it varies with quality perceptions.</p>
+            
+            <div class="scenario-insights">
+              <div class="insight-title">🎯 Strategic Question</div>
+              <p>Should pricing strategy vary by quality positioning? Do premium brands benefit from higher prices (prestige effect) while budget brands suffer?</p>
+            </div>
+            
+            <p><strong>How to use:</strong> Select "Continuous × Continuous interaction." Assign Focal = price, Moderator = quality_rating. Interpret the plot showing three lines: price effects at low quality (-1SD), average quality (mean), and high quality (+1SD). Test simple slopes at each level.</p>
+          </div>
+        </div>
+      `,
+      dataset: 'scenarios/price_quality_interaction_data.csv',
+      outcome: 'purchase_intent',
+      predictors: ['price', 'quality_rating'],
+      interactionType: 'continuous_continuous',
+      focal: 'price',
+      moderator: 'quality_rating'
+    },
+    {
+      id: 'dnd-level-class',
+      label: '\uD83C\uDFAE D&D: Level \u00d7 Class Interaction',
+      description: () => `
+        <div class="scenario-card">
+          <div class="scenario-header">
+            <span class="scenario-icon">🎮</span>
+            <h3>D&D: Level × Class Interaction</h3>
+          </div>
+          <div class="scenario-badge-row">
+            <span class="badge badge-regression">Interaction Effect</span>
+            <span class="badge badge-context">Gaming Analytics</span>
+            <span class="badge badge-sample">n = 120 encounters</span>
+          </div>
+          <div class="scenario-body">
+            <p><strong>Business Context:</strong> Your adventuring party is engaged in a spirited tavern debate: <strong>do different character classes scale differently with level?</strong> The fighter claims that martial classes gain damage linearly with level, while the wizard insists that spellcasters have exponential damage growth due to higher-level spell slots (Fireball, Lightning Bolt, Meteor Swarm). Time to settle this with data instead of dice-fueled arguments.</p>
+            
+            <p><strong>Dataset Variables:</strong></p>
+            <div class="context-grid">
+              <div class="context-item">
+                <div class="context-label">Outcome</div>
+                <div class="context-value">Avg_Damage_Per_Round</div>
+                <div class="context-subtext">Numeric damage output</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Focal Predictor</div>
+                <div class="context-value">Character_Level</div>
+                <div class="context-subtext">Level 1-20</div>
+              </div>
+              <div class="context-item">
+                <div class="context-label">Moderator</div>
+                <div class="context-value">Class_Type</div>
+                <div class="context-subtext">Fighter, Wizard, Rogue</div>
+              </div>
+            </div>
+            
+            <p><strong>Research Question:</strong> Test whether the <strong>relationship between level and damage differs by class</strong>. A <strong>continuous × categorical interaction</strong> allows the "level slope" to vary by class. Do fighters gain consistent +2 damage per level, while wizards gain +1 at low levels but +5 at high levels?</p>
+            
+            <div class="scenario-insights">
+              <div class="insight-title">🎯 Strategic Question</div>
+              <p>Which classes are strong early-game vs late-game? When does each class "come online" for maximum effectiveness? Should we plan multi-classing builds accordingly?</p>
+            </div>
+            
+            <p><strong>How to use:</strong> Select "Continuous × Categorical interaction." Assign Focal = character_level, Moderator = class_type. Interpret the plot showing separate lines for each class. Check the interaction coefficient to test whether level slopes differ significantly across classes.</p>
+          </div>
+        </div>
+      `,
+      dataset: 'scenarios/dnd_level_class_damage_data.csv',
+      outcome: 'avg_damage_per_round',
+      predictors: ['character_level', 'class_type'],
+      interactionType: 'continuous_categorical',
+      focal: 'character_level',
+      moderator: 'class_type'
+    }
+  ];
+
   // Global state
   const state = {
     rawData: [],
@@ -1431,19 +1650,15 @@
 
   // Initialize
   function init() {
-    // Load scenarios
-    fetch('scenarios/scenario-index.json')
-      .then(r => r.json())
-      .then(scenarios => {
-        state.scenarioData = scenarios;
-        const select = document.getElementById('scenario-select');
-        scenarios.forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.id;
-          opt.textContent = s.label;
-          select.appendChild(opt);
-        });
-      });
+    // Populate scenario dropdown
+    state.scenarioData = MLR_INTERACTIONS_SCENARIOS;
+    const select = document.getElementById('scenario-select');
+    MLR_INTERACTIONS_SCENARIOS.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = s.label;
+      select.appendChild(opt);
+    });
 
     // Event listeners
     document.getElementById('scenario-select').addEventListener('change', loadScenario);
@@ -1925,12 +2140,9 @@
       };
     }
     
-    // Load scenario description
-    fetch(scenario.file)
-      .then(r => r.text())
-      .then(text => {
-        document.getElementById('scenario-description').innerHTML = text;
-      });
+    // Load scenario description (inline)
+    const descriptionHTML = typeof scenario.description === 'function' ? scenario.description() : scenario.description;
+    document.getElementById('scenario-description').innerHTML = descriptionHTML;
     
     // Load dataset
     fetch(scenario.dataset)

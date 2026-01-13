@@ -7,13 +7,128 @@ const TOOL_SLUG = 'multiple-linear-regression';
 let renderCount = 0;
 let lastTrackTime = 0;
 
+// ========================================
+// SCENARIO DEFINITIONS (Inline)
+// ========================================
+const ML_REGRESSION_SCENARIOS = [
+  {
+    id: 'Predict EDM event spend',
+    label: '🎶 EDM Event Spend Prediction',
+    description: () => `<div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-icon">🎶</span>
+        <h3>EDM Events: Lead Time, Ticket Type, and Revenue Per Patron</h3>
+      </div>
+      <div class="scenario-badge-row">
+        <span class="badge badge-hypothesis">Multiple Regression</span>
+        <span class="badge badge-context">Live Events / Ticketing</span>
+        <span class="badge badge-sample">n = patron transactions</span>
+      </div>
+      <div class="scenario-body">
+        <p><strong>Business Context:</strong> You're the marketing analyst for a live events company running electronic dance music (EDM) shows. Leadership wants to understand what drives <strong>total event spend per patron</strong> (tickets, drinks, merch) to forecast revenue and design better offers.</p>
+        
+        <p><strong>Dataset Variables:</strong></p>
+        <div class="context-grid">
+          <div class="context-item">
+            <div class="context-label">Outcome</div>
+            <div class="context-value">event_spend</div>
+            <div class="context-subtext">Total spend in USD</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Days Preordered</div>
+            <div class="context-value">Continuous</div>
+            <div class="context-subtext">Purchase lead time</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Ticket Type</div>
+            <div class="context-value">Categorical</div>
+            <div class="context-subtext">VIP, Early_Bird, General_Admission</div>
+          </div>
+        </div>
+        
+        <p><strong>Research Question:</strong> Use multiple linear regression to quantify how much extra revenue to expect from different ticket types and longer lead times, holding other predictors constant.</p>
+        
+        <div class="scenario-insights">
+          <div class="insight-title">🎯 Strategic Question</div>
+          <p>Do VIP tickets justify their premium? Should we incentivize earlier purchases with dynamic pricing?</p>
+        </div>
+        
+        <p><strong>How to use:</strong> Set <em>event_spend</em> as the outcome. Include <em>days_preordered</em> as numeric and <em>type</em> as categorical predictor.</p>
+      </div>
+    </div>`,
+    dataset: 'scenarios/event_spend_data.csv',
+    outcome: 'event_spend',
+    predictors: ['days_preordered', 'type'],
+    types: { type: 'categorical' }
+  },
+  {
+    id: 'Customer Valuation',
+    label: '💰 Customer Valuation RFM Model',
+    description: () => `<div class="scenario-card">
+      <div class="scenario-header">
+        <span class="scenario-icon">💰</span>
+        <h3>Customer Valuation: RFM Metrics and Segment Labels</h3>
+      </div>
+      <div class="scenario-badge-row">
+        <span class="badge badge-hypothesis">Multiple Regression</span>
+        <span class="badge badge-context">Ecommerce / CRM</span>
+        <span class="badge badge-sample">n = customers</span>
+      </div>
+      <div class="scenario-body">
+        <p><strong>Business Context:</strong> You're working on customer valuation for a subscription-based ecommerce brand. Leadership wants a data-driven approach to identify which customers to prioritize for retention campaigns, win-back offers, and premium upsells.</p>
+        
+        <p><strong>Dataset Variables:</strong></p>
+        <div class="context-grid">
+          <div class="context-item">
+            <div class="context-label">Outcome</div>
+            <div class="context-value">CustomerValue</div>
+            <div class="context-subtext">Value score in USD</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Recency</div>
+            <div class="context-value">Continuous</div>
+            <div class="context-subtext">Days since last order</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Frequency</div>
+            <div class="context-value">Continuous</div>
+            <div class="context-subtext">Orders in last 12 months</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">MonetaryValue</div>
+            <div class="context-value">Continuous</div>
+            <div class="context-subtext">Average basket size</div>
+          </div>
+          <div class="context-item">
+            <div class="context-label">Segment</div>
+            <div class="context-value">Categorical</div>
+            <div class="context-subtext">High Value, Medium, Low, At Risk</div>
+          </div>
+        </div>
+        
+        <p><strong>Research Question:</strong> Build a model that explains meaningful variance in CustomerValue and helps refine how the business uses RFM and segment labels for targeting.</p>
+        
+        <div class="scenario-insights">
+          <div class="insight-title">🎯 Strategic Question</div>
+          <p>Which RFM metrics drive customer value most? Do segment labels add predictive power beyond raw RFM scores?</p>
+        </div>
+        
+        <p><strong>How to use:</strong> Set <em>CustomerValue</em> as outcome. Include <em>Recency</em>, <em>Frequency</em>, <em>MonetaryValue</em> as numeric and <em>Segment</em> as categorical predictor.</p>
+      </div>
+    </div>`,
+    dataset: 'scenarios/customer_value_data.csv',
+    outcome: 'CustomerValue',
+    predictors: ['Recency', 'Frequency', 'MonetaryValue', 'Segment'],
+    types: { Segment: 'categorical' }
+  }
+];
+
 // ---------- State ----------
 let selectedOutcome = null;
 let selectedPredictors = [];
 let predictorSettings = {};
 let dataset = { headers: [], rows: [] };
 let columnMeta = {};
-let scenarioManifest = [];
 let defaultScenarioDescription = '';
 let activeScenarioDataset = null;
 let selectedConfidenceLevel = 0.95;
@@ -33,26 +148,6 @@ let lastModel = null;
 let lastRawDataset = null;
 
 const RAW_UPLOAD_LIMIT = typeof MAX_UPLOAD_ROWS === 'number' ? MAX_UPLOAD_ROWS : 5000;
-const FALLBACK_SCENARIOS = [
-  {
-    id: 'Predict EDM event spend',
-    label: 'Predict EDM event spending for patrons',
-    file: 'scenarios/event_spend.txt',
-    dataset: 'scenarios/event_spend_data.csv',
-    outcome: 'event_spend',
-    predictors: ['days_preordered', 'type'],
-    types: { type: 'categorical' }
-  },
-  {
-    id: 'Customer Valuation',
-    label: 'Predict Customer Value based on Recency, Frequency, and Monetary Value',
-    file: 'scenarios/customer_value.txt',
-    dataset: 'scenarios/customer_value_data.csv',
-    outcome: 'CustomerValue',
-    predictors: ['Eecency', 'Frequency', 'MonetaryValue', 'Segment'],
-    types: { Segment: 'categorical' }
-  }
-];
 
 // ---------- Utilities ----------
 function escapeHtml(value) {
@@ -513,24 +608,11 @@ function setupRawUpload() {
 }
 
 // ---------- Scenario handling ----------
-async function fetchScenarioIndex() {
-  try {
-    const resp = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
-    if (!resp.ok) throw new Error(`Unable to load scenario index (${resp.status})`);
-    const data = await resp.json();
-    scenarioManifest = Array.isArray(data) ? data : [];
-    populateScenarioSelect();
-  } catch {
-    scenarioManifest = FALLBACK_SCENARIOS;
-    populateScenarioSelect();
-    setRawUploadStatus('Using built-in scenarios because the scenario index could not be loaded.', 'error', { isHtml: false });
-  }
-}
 function populateScenarioSelect() {
   const select = document.getElementById('scenario-select');
   if (!select) return;
   select.innerHTML = '<option value="">Manual inputs (no preset)</option>';
-  scenarioManifest.forEach(entry => {
+  ML_REGRESSION_SCENARIOS.forEach(entry => {
     const opt = document.createElement('option');
     opt.value = entry.id;
     opt.textContent = entry.label || entry.id;
@@ -538,7 +620,7 @@ function populateScenarioSelect() {
   });
 }
 async function loadScenario(id) {
-  const scenario = scenarioManifest.find(s => s.id === id);
+  const scenario = ML_REGRESSION_SCENARIOS.find(s => s.id === id);
   if (!scenario) return;
   const downloadButton = document.getElementById('scenario-download');
   if (downloadButton) {
@@ -554,39 +636,22 @@ async function loadScenario(id) {
         };
       }
     }
-    try {
-      const resp = await fetch(scenario.file, { cache: 'no-cache' });
-      if (!resp.ok) throw new Error(`Unable to load scenario description (${resp.status})`);
-      const text = await resp.text();
-      const body = text.replace(/^# .*\n?/gm, '').trim();
-      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
-        window.UIUtils.renderScenarioDescription({
-          containerId: 'scenario-description',
-          title: scenario.label || '',
-          description: body,
-          defaultHtml: defaultScenarioDescription
-        });
-      } else {
-        const descContainer = document.getElementById('scenario-description');
-        if (descContainer) descContainer.textContent = body || '';
-      }
-      
-      // Track scenario loading for engagement
-      if (typeof markScenarioLoaded === 'function') {
-        markScenarioLoaded(scenario.label);
-      }
-    } catch {
-      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
-        window.UIUtils.renderScenarioDescription({
-          containerId: 'scenario-description',
-          title: '',
-          description: '',
-          defaultHtml: defaultScenarioDescription
-        });
-      } else {
-        const descContainer = document.getElementById('scenario-description');
-        if (descContainer) descContainer.innerHTML = defaultScenarioDescription;
-      }
+    const html = typeof scenario.description === 'function' ? scenario.description() : scenario.description;
+    if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
+      window.UIUtils.renderScenarioDescription({
+        containerId: 'scenario-description',
+        title: scenario.label || '',
+        description: html,
+        defaultHtml: defaultScenarioDescription
+      });
+    } else {
+      const descContainer = document.getElementById('scenario-description');
+      if (descContainer) descContainer.innerHTML = html || '';
+    }
+    
+    // Track scenario loading for engagement
+    if (typeof markScenarioLoaded === 'function') {
+      markScenarioLoaded(scenario.label);
     }
   if (scenario.dataset) {
     try {
@@ -612,7 +677,7 @@ function setupScenarioSelector() {
     }
     loadScenario(id);
   });
-  fetchScenarioIndex();
+  populateScenarioSelect();
 }
 
 // ---------- Variable selection UI ----------
@@ -1631,9 +1696,9 @@ function updateResults() {
       baseRow.push(Number.isFinite(lower) ? lower.toFixed(6) : '');
       baseRow.push(Number.isFinite(upper) ? upper.toFixed(6) : '');
       lines.push(baseRow.join(','));
-      }
+    }
 
-      downloadTextFile('ml_regression_fitted_residuals.csv', lines.join('\n'), { mimeType: 'text/csv' });
+    downloadTextFile('ml_regression_fitted_residuals.csv', lines.join('\n'), { mimeType: 'text/csv' });
   }
 
   // Override earlier equation renderer with clearer categorical formatting.

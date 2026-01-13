@@ -37,8 +37,7 @@ const MAX_MANUAL_ROWS = 50;
 let activeMode = InputModes.PAIRED;
 let selectedConfidenceLevel = 0.95;
 let manualRowCount = DEFAULT_MANUAL_ROWS;
-let scenarioManifest = [];
-let defaultScenarioDescription = '';
+let activeScenario = null;
 let activeScenarioDataset = null;
 let uploadedPairedData = null;
 let uploadedMatrixData = null;
@@ -52,6 +51,306 @@ const scatterVisualSettings = {
 };
 let heatmapScaleChoice = 'diverging';
 let latestMatrixStats = null;
+
+// -------------------- Scenario Definitions --------------------
+
+const PEARSON_SCENARIOS = [
+    {
+        id: 'spend-vs-signups',
+        label: 'Paid Social Spend vs Trial Signups',
+        description: () => generateSpendVsSignupsHtml(),
+        alpha: 0.05,
+        mode: InputModes.PAIRED,
+        data: () => ({
+            xLabel: 'spend_k',
+            yLabel: 'signups',
+            pairs: [
+                [40, 305], [43, 332], [45, 318], [47, 350], [50, 338],
+                [52, 360], [55, 365], [58, 382], [60, 370], [63, 398], [66, 410]
+            ]
+        })
+    },
+    {
+        id: 'awareness-vs-consideration',
+        label: 'Awareness vs Consideration (Brand Tracker)',
+        description: () => generateAwarenessVsConsiderationHtml(),
+        alpha: 0.05,
+        mode: InputModes.PAIRED,
+        data: () => ({
+            xLabel: 'awareness',
+            yLabel: 'consideration',
+            pairs: [
+                [52, 39], [54, 42], [56, 41], [57, 45], [59, 46],
+                [61, 48], [63, 50], [65, 52], [68, 55], [70, 54], [73, 58]
+            ]
+        })
+    },
+    {
+        id: 'retention-vs-nps',
+        label: 'Loyalty Retention vs NPS',
+        description: () => generateRetentionVsNpsHtml(),
+        alpha: 0.05,
+        mode: InputModes.PAIRED,
+        data: () => ({
+            xLabel: 'retention_pct',
+            yLabel: 'nps',
+            pairs: [
+                [78, 8], [80, 12], [82, 15], [83, 19], [85, 20], [86, 23],
+                [87, 26], [88, 27], [89, 30], [90, 31], [91, 34], [92, 36]
+            ]
+        })
+    },
+    {
+        id: 'full-funnel-matrix',
+        label: 'Full-Funnel KPI Matrix',
+        description: () => generateFullFunnelMatrixHtml(),
+        alpha: 0.05,
+        mode: InputModes.MATRIX,
+        data: () => ({
+            headers: ['spend_k', 'awareness', 'consideration', 'conversions'],
+            rows: [
+                [38, 45, 31, 285], [40, 47, 32, 300], [42, 46, 33, 295],
+                [45, 49, 34, 318], [48, 52, 35, 325], [50, 51, 36, 332],
+                [53, 54, 37, 342], [55, 55, 38, 350], [58, 57, 39, 358],
+                [60, 59, 40, 368], [63, 60, 41, 377], [65, 62, 42, 386]
+            ]
+        })
+    }
+];
+
+// -------------------- Scenario HTML Generators --------------------
+
+function generateSpendVsSignupsHtml() {
+    return `
+        <div class="scenario-description">
+            <div class="scenario-header">
+                <span class="scenario-icon">📈</span>
+                <h4>Paid Social Spend vs Trial Signups</h4>
+                <span class="scenario-badge">11 Weekly Observations</span>
+            </div>
+            
+            <p class="scenario-intro">
+                A growth squad piloted an always-on paid social program in 10 metro areas. For each week in the pilot, 
+                analysts logged <span class="var-tag predictor">paid social spend</span> (in thousands of dollars) and 
+                the number of <span class="var-tag outcome">free-trial signups</span> attributed to that traffic. The goal 
+                is to understand whether higher weekly spend is associated with more trial signups, and how strong that 
+                association really is.
+            </p>
+            
+            <div class="scenario-context">
+                <h5>🎯 Business Context</h5>
+                <div class="context-grid">
+                    <div class="context-item">
+                        <strong>Stakeholder Debate</strong>
+                        <span>Linear vs. Diminishing Returns</span>
+                    </div>
+                    <div class="context-item">
+                        <strong>Noise Factors</strong>
+                        <span>Auction dynamics, creative fatigue, day-of-week effects</span>
+                    </div>
+                    <div class="context-item">
+                        <strong>Decision</strong>
+                        <span>Scale spend or improve efficiency?</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="scenario-insights">
+                <h5>💡 What to Look For</h5>
+                <ul>
+                    <li>Strength of linear association: Does higher spend reliably predict more signups?</li>
+                    <li>Statistical significance: Is the correlation distinct from zero?</li>
+                    <li>Practical magnitude: Does R² justify increasing budgets?</li>
+                    <li>Residual patterns: Any signs of diminishing returns in the scatterplot?</li>
+                </ul>
+            </div>
+            
+            <div class="scenario-tip">
+                <strong>💡 Pro Tip:</strong> A moderate positive correlation (r = 0.60–0.80) would support the idea that 
+                spend drives signups, but check the confidence interval width and scatterplot curvature before committing 
+                to budget increases.
+            </div>
+        </div>
+    `;
+}
+
+function generateAwarenessVsConsiderationHtml() {
+    return `
+        <div class="scenario-description">
+            <div class="scenario-header">
+                <span class="scenario-icon">🎯</span>
+                <h4>Awareness vs Consideration – Q3 Brand Tracker</h4>
+                <span class="scenario-badge">11 Market Averages</span>
+            </div>
+            
+            <p class="scenario-intro">
+                Your Q3 brand tracker asked 10,000 panelists in multiple markets to rate <span class="var-tag predictor">unprompted 
+                awareness</span> and <span class="var-tag outcome">likelihood to consider</span> the brand on a 0–100 scale. 
+                The table aggregates those results for a set of key markets, each row representing one market's average scores.
+            </p>
+            
+            <div class="scenario-context">
+                <h5>🎯 Business Context</h5>
+                <div class="context-grid">
+                    <div class="context-item">
+                        <strong>Media Strategy</strong>
+                        <span>Upper-funnel bursts (PR, social video, sponsorships)</span>
+                    </div>
+                    <div class="context-item">
+                        <strong>Creative Variance</strong>
+                        <span>Some markets: buzzy but lightweight; Others: product-focused</span>
+                    </div>
+                    <div class="context-item">
+                        <strong>Q4 Decision</strong>
+                        <span>Invest in awareness-driving media or consideration-closing tactics?</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="scenario-insights">
+                <h5>💡 What to Look For</h5>
+                <ul>
+                    <li>How tightly do awareness and consideration move together across markets?</li>
+                    <li>Are there markets that "over-deliver" on consideration relative to awareness?</li>
+                    <li>Does the correlation justify doubling down on awareness media?</li>
+                    <li>Should you shift resources toward messaging that closes the gap?</li>
+                </ul>
+            </div>
+            
+            <div class="scenario-tip">
+                <strong>💡 Pro Tip:</strong> If awareness and consideration are weakly correlated (r < 0.5), it signals that 
+                awareness alone isn't converting to intent—focus Q4 investments on improving messaging and channel mix.
+            </div>
+        </div>
+    `;
+}
+
+function generateRetentionVsNpsHtml() {
+    return `
+        <div class="scenario-description">
+            <div class="scenario-header">
+                <span class="scenario-icon">⭐</span>
+                <h4>Loyalty Retention vs Net Promoter Score</h4>
+                <span class="scenario-badge">12 Strategic Accounts</span>
+            </div>
+            
+            <p class="scenario-intro">
+                Your customer success team has benchmarked a set of strategic accounts in the loyalty program. For each account, 
+                you have two metrics: <span class="var-tag predictor">retention rate</span> (the percentage of members who renewed 
+                or stayed active over the last year) and the most recent <span class="var-tag outcome">Net Promoter Score (NPS)</span> 
+                from a relationship survey.
+            </p>
+            
+            <div class="scenario-context">
+                <h5>🎯 Business Context</h5>
+                <div class="context-grid">
+                    <div class="context-item">
+                        <strong>Leadership Hypothesis</strong>
+                        <span>"Happy members stay longer"</span>
+                    </div>
+                    <div class="context-item">
+                        <strong>Confounding Factors</strong>
+                        <span>Pricing changes, product fit, contract terms</span>
+                    </div>
+                    <div class="context-item">
+                        <strong>Investment Question</strong>
+                        <span>Do experience improvements reduce churn?</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="scenario-insights">
+                <h5>💡 What to Look For</h5>
+                <ul>
+                    <li>Is NPS tightly linked to retention across accounts?</li>
+                    <li>Are there "over-performers" (high retention despite modest NPS)?</li>
+                    <li>Does the correlation magnitude justify CX investment priorities?</li>
+                    <li>Could retention be driven more by structural factors than sentiment?</li>
+                </ul>
+            </div>
+            
+            <div class="scenario-tip">
+                <strong>💡 Pro Tip:</strong> A positive but imperfect correlation (r = 0.50–0.70) is realistic—retention depends on 
+                multiple factors. Use this to justify balanced investments in both service experience and product/pricing fit.
+            </div>
+        </div>
+    `;
+}
+
+function generateFullFunnelMatrixHtml() {
+    return `
+        <div class="scenario-description">
+            <div class="scenario-header">
+                <span class="scenario-icon">🔗</span>
+                <h4>Full-Funnel KPI Matrix</h4>
+                <span class="scenario-badge">12 Weeks × 4 KPIs</span>
+            </div>
+            
+            <p class="scenario-intro">
+                A growth analytics pod has collected 12 weeks of data for four KPIs: <span class="var-tag predictor">paid media 
+                spend</span> (in $K), <span class="var-tag predictor">aided awareness</span> (%), <span class="var-tag predictor">consideration</span> (%), 
+                and <span class="var-tag outcome">free-trial conversions</span>. Each row represents one week's performance across 
+                the full funnel.
+            </p>
+            
+            <div class="scenario-context">
+                <h5>🎯 Business Context</h5>
+                <div class="context-grid">
+                    <div class="context-item">
+                        <strong>Goal</strong>
+                        <span>Understand funnel dependencies before locking Q4 budget</span>
+                    </div>
+                    <div class="context-item">
+                        <strong>Noise Sources</strong>
+                        <span>Creative quality, competitive activity, seasonality</span>
+                    </div>
+                    <div class="context-item">
+                        <strong>Expectation</strong>
+                        <span>Positive relationships but not perfect predictability</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="scenario-insights">
+                <h5>💡 What to Look For</h5>
+                <ul>
+                    <li>Which KPI pairs have the strongest linear relationships?</li>
+                    <li>Does spend → awareness → consideration → conversions flow hold up?</li>
+                    <li>Are any links weaker than expected, suggesting inefficiencies?</li>
+                    <li>Can you use the heatmap to identify funnel bottlenecks?</li>
+                </ul>
+            </div>
+            
+            <div class="scenario-variables">
+                <h5>📋 Variable Details</h5>
+                <table class="scenario-var-table">
+                    <tr>
+                        <td><span class="var-tag predictor">spend_k</span></td>
+                        <td>Weekly paid media spend (thousands of dollars)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="var-tag predictor">awareness</span></td>
+                        <td>Aided awareness percentage (0-100)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="var-tag predictor">consideration</span></td>
+                        <td>Consideration percentage (0-100)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="var-tag outcome">conversions</span></td>
+                        <td>Number of free-trial signups attributed to campaign</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="scenario-tip">
+                <strong>💡 Pro Tip:</strong> Use the correlation heatmap to spot the tightest relationships. If spend → awareness 
+                is strong (r > 0.70) but awareness → conversions is weak (r < 0.40), you may need to improve mid-funnel messaging 
+                before scaling budgets.
+            </div>
+        </div>
+    `;
+}
 
 // Utility helpers
 function clamp(value, min, max) {
@@ -2408,158 +2707,131 @@ function setupScenarioDownloadButton() {
         );
     });
 }
-function renderScenarioDescription(title, description) {
-      if (window.UIUtils && typeof window.UIUtils.renderScenarioDescription === 'function') {
-          window.UIUtils.renderScenarioDescription({
-              containerId: 'scenario-description',
-              title,
-              description,
-              defaultHtml: defaultScenarioDescription
-          });
-          return;
-      }
-      const container = document.getElementById('scenario-description');
-      if (!container) return;
-      container.innerHTML = description || defaultScenarioDescription || '';
-  }
 
-function parseScenarioText(text) {
-    const result = {
-        title: '',
-        description: '',
-        alpha: NaN,
-        mode: '',
-        pairedData: '',
-        rawFile: ''
-    };
-    let currentSection = '';
-    const lines = text.split(/\r?\n/);
-    const descriptionLines = [];
-    const pairedLines = [];
-    lines.forEach(line => {
-        const trimmed = line.trim();
-        if (!trimmed) {
-            if (currentSection === 'description') {
-                descriptionLines.push('');
-            }
-            return;
-        }
-        if (trimmed.startsWith('#')) {
-            currentSection = trimmed.slice(1).trim().toLowerCase();
-            return;
-        }
-        switch (currentSection) {
-            case 'title':
-                result.title = line.trim();
-                break;
-            case 'description':
-                descriptionLines.push(line);
-                break;
-            case 'alpha':
-                result.alpha = parseFloat(trimmed);
-                break;
-            case 'input mode':
-                result.mode = trimmed.toLowerCase();
-                break;
-            case 'paired columns':
-                pairedLines.push(line);
-                break;
-            case 'raw data file':
-                if (trimmed.startsWith('file=')) {
-                    result.rawFile = trimmed.split('=').slice(1).join('=').trim();
-                }
-                break;
-            default:
-                break;
-        }
-    });
-    result.description = descriptionLines.join('\n').trim();
-    result.pairedData = pairedLines.join('\n').trim();
-    return result;
-}
-
-function applyScenarioData(parsed) {
-    if (parsed.mode === 'paired' && parsed.pairedData) {
-        switchMode(InputModes.PAIRED, { suppressUpdate: true });
-        importPairedData(parsed.pairedData);
-    } else if (parsed.mode === 'matrix' && parsed.pairedData) {
-        switchMode(InputModes.MATRIX, { suppressUpdate: true });
-        importMatrixData(parsed.pairedData);
-    } else {
-        updateResults();
+function renderScenarioDescription(html) {
+    const container = document.getElementById('scenario-description');
+    if (!container) return;
+    if (!html || !html.trim()) {
+        container.innerHTML = `
+            <p>Choose a scenario from the dropdown to load a real-world marketing dataset with pre-configured variables 
+            and context. Each scenario provides business context, analytical guidance, and downloadable data.</p>
+        `;
+        return;
     }
+    container.innerHTML = html;
 }
 
-function buildScenarioDatasetFromParsed(parsed, scenarioId) {
-    if (!parsed || !parsed.pairedData) return null;
-    const content = parsed.pairedData.trim();
-    if (!content) return null;
-    const safeId = (scenarioId || 'scenario').replace(/\s+/g, '_').toLowerCase();
-    const suffix = parsed.mode === 'matrix' ? 'matrix' : 'paired';
+function buildScenarioDataset(scenario) {
+    if (!scenario || !scenario.data) return null;
+    
+    const data = scenario.data();
+    let csvContent = '';
+    
+    if (scenario.mode === InputModes.PAIRED && Array.isArray(data.pairs)) {
+        // Build paired CSV
+        const xLabel = data.xLabel || 'x';
+        const yLabel = data.yLabel || 'y';
+        csvContent = `${xLabel},${yLabel}\n`;
+        data.pairs.forEach(pair => {
+            csvContent += `${pair[0]},${pair[1]}\n`;
+        });
+    } else if (scenario.mode === InputModes.MATRIX && Array.isArray(data.headers) && Array.isArray(data.rows)) {
+        // Build matrix CSV
+        csvContent = data.headers.join(',') + '\n';
+        data.rows.forEach(row => {
+            csvContent += row.join(',') + '\n';
+        });
+    }
+    
+    if (!csvContent) return null;
+    
     return {
-        filename: `${safeId}_${suffix}_data.csv`,
-        content,
+        filename: `${scenario.id}_data.csv`,
+        content: csvContent,
         mimeType: 'text/csv'
     };
 }
 
-async function loadScenarioById(id) {
-    const scenario = scenarioManifest.find(entry => entry.id === id);
+function loadScenarioById(id) {
+    const scenario = PEARSON_SCENARIOS.find(s => s.id === id);
     if (!scenario) {
-        renderScenarioDescription('', '');
+        activeScenario = null;
+        renderScenarioDescription('');
         resetScenarioDownload();
         return;
     }
-    try {
-        const response = await fetch(scenario.file, { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error(`Unable to load scenario file (${response.status})`);
+    
+    activeScenario = scenario;
+    renderScenarioDescription(scenario.description());
+    
+    // Set alpha if specified
+    if (isFinite(scenario.alpha)) {
+        const alphaInput = document.getElementById('alpha');
+        if (alphaInput) {
+            alphaInput.value = scenario.alpha.toFixed(3);
+            syncConfidenceToAlpha(scenario.alpha, { skipUpdate: true });
         }
-        const text = await response.text();
-        const parsed = parseScenarioText(text);
-        renderScenarioDescription(parsed.title || scenario.label, parsed.description);
-        if (isFinite(parsed.alpha)) {
-            const alphaInput = document.getElementById('alpha');
-            if (alphaInput) {
-                alphaInput.value = parsed.alpha.toFixed(3);
-                syncConfidenceToAlpha(parsed.alpha, { skipUpdate: true });
-            }
-        }
-        applyScenarioData(parsed);
-        const datasetInfo = buildScenarioDatasetFromParsed(parsed, scenario.id);
-        enableScenarioDownload(datasetInfo);
-    } catch (error) {
-        renderScenarioDescription('', `Unable to load scenario: ${error.message}`);
-        resetScenarioDownload();
+    }
+    
+    // Load data based on mode
+    const data = scenario.data();
+    if (scenario.mode === InputModes.PAIRED && Array.isArray(data.pairs)) {
+        switchMode(InputModes.PAIRED, { suppressUpdate: true });
+        const xValues = data.pairs.map(p => p[0]);
+        const yValues = data.pairs.map(p => p[1]);
+        uploadedPairedData = {
+            xValues,
+            yValues,
+            xLabel: data.xLabel || 'Variable X',
+            yLabel: data.yLabel || 'Variable Y',
+            rowCount: data.pairs.length
+        };
+        updateUploadStatus(InputModes.PAIRED, `${data.pairs.length} paired observations ready (from scenario).`, 'success');
+        updateResults();
+    } else if (scenario.mode === InputModes.MATRIX && Array.isArray(data.headers) && Array.isArray(data.rows)) {
+        switchMode(InputModes.MATRIX, { suppressUpdate: true });
+        // Convert matrix data to the expected format
+        const rawRows = data.rows.map(row => {
+            const obj = {};
+            data.headers.forEach((header, idx) => {
+                obj[header] = String(row[idx]);
+            });
+            return obj;
+        });
+        // Build CSV text and import
+        const csvLines = [data.headers.join(',')];
+        data.rows.forEach(row => {
+            csvLines.push(row.join(','));
+        });
+        const csvText = csvLines.join('\n');
+        importMatrixData(csvText);
+    }
+    
+    // Enable download
+    const datasetInfo = buildScenarioDataset(scenario);
+    enableScenarioDownload(datasetInfo);
+    
+    // Track scenario loading
+    if (typeof markScenarioLoaded === 'function') {
+        markScenarioLoaded(scenario.label);
     }
 }
 
-async function setupScenarioSelector() {
+function setupScenarioSelector() {
     const select = document.getElementById('scenario-select');
-    const description = document.getElementById('scenario-description');
-    if (description) {
-        defaultScenarioDescription = description.innerHTML;
-    }
     if (!select) return;
-    try {
-        const response = await fetch('scenarios/scenario-index.json', { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error('Unable to load scenario manifest.');
-        }
-        scenarioManifest = await response.json();
-        scenarioManifest.forEach(entry => {
-            const option = document.createElement('option');
-            option.value = entry.id;
-            option.textContent = entry.label;
-            select.appendChild(option);
-        });
-    } catch (error) {
-        setFileFeedback(error.message, 'error');
-    }
+    
+    PEARSON_SCENARIOS.forEach(entry => {
+        const option = document.createElement('option');
+        option.value = entry.id;
+        option.textContent = entry.label;
+        select.appendChild(option);
+    });
+    
     select.addEventListener('change', () => {
         const id = select.value;
         if (!id) {
-            renderScenarioDescription('', '');
+            renderScenarioDescription('');
             resetScenarioDownload();
             return;
         }
