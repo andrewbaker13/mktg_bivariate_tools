@@ -800,7 +800,6 @@ function renderAnalysisReport() {
   renderManagerialReport(stats);
   renderGroupedSummaryTable(stats);
   renderSummaryTable(stats);
-  renderDetailedMetrics(stats);
   renderDistributionCharts(stats);
 }
 
@@ -816,15 +815,6 @@ function clearAnalysisReport() {
   // Clear grouped summary
   const groupedSection = document.getElementById('grouped-summary-section');
   if (groupedSection) groupedSection.classList.add('hidden');
-  
-  // Clear metrics
-  const metricIds = ['metric-total-records', 'metric-polarity-index', 'metric-nps-style', 
-                     'metric-subjectivity', 'metric-avg-pos', 'metric-avg-neg', 
-                     'metric-avg-neu', 'metric-compound-std'];
-  metricIds.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = '–';
-  });
   
   // Clear charts
   const histChart = document.getElementById('sentiment-histogram-chart');
@@ -854,8 +844,26 @@ function computeGroupStats(rows) {
     return Math.sqrt(sqDiff.reduce((a, b) => a + b, 0) / (arr.length - 1));
   };
   
+  const median = arr => {
+    const sorted = [...arr].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  };
+  
+  const percentile = (arr, p) => {
+    const sorted = [...arr].sort((a, b) => a - b);
+    const idx = (p / 100) * (sorted.length - 1);
+    const lower = Math.floor(idx);
+    const upper = Math.ceil(idx);
+    if (lower === upper) return sorted[lower];
+    return sorted[lower] + (sorted[upper] - sorted[lower]) * (idx - lower);
+  };
+  
   const avgCompound = mean(compounds);
   const stdCompound = stdDev(compounds);
+  const medianCompound = median(compounds);
+  const q1Compound = percentile(compounds, 25);
+  const q3Compound = percentile(compounds, 75);
   const avgPos = mean(rows.map(r => r.scores.pos));
   const avgNeg = mean(rows.map(r => r.scores.neg));
   const avgNeu = mean(rows.map(r => r.scores.neu));
@@ -869,7 +877,7 @@ function computeGroupStats(rows) {
     n,
     posCount, neuCount, negCount,
     pctPositive, pctNeutral, pctNegative,
-    avgCompound, stdCompound,
+    avgCompound, stdCompound, medianCompound, q1Compound, q3Compound,
     avgPos, avgNeg, avgNeu,
     npsStyle
   };
@@ -1107,6 +1115,17 @@ function renderManagerialReport(stats) {
     `${stats.negCount > 0 ? `Review the ${stats.negCount} negative record${stats.negCount > 1 ? 's' : ''} for improvement opportunities.` : 'No clearly negative records were detected.'}`
   ].join(' ');
   
+  // Add context-specific action recommendations
+  if (stats.pctNegative > 30) {
+    mgrText += ` <strong>ACTION:</strong> With ${stats.pctNegative.toFixed(0)}% negative feedback, prioritize investigating the ${stats.negCount} negative records to identify common complaints or pain points.`;
+  } else if (stats.pctPositive > 60 && stats.pctNegative < 10) {
+    mgrText += ` <strong>ACTION:</strong> Strong positive sentiment suggests you can leverage customer quotes in marketing materials. Review positive records to identify which specific features or attributes customers praise most.`;
+  } else if (stats.pctNeutral > 50) {
+    mgrText += ` <strong>ACTION:</strong> High neutral content (${stats.pctNeutral.toFixed(0)}%) suggests factual/descriptive text. Consider follow-up questions that elicit more emotional responses if sentiment insights are your goal.`;
+  } else if (stats.stdCompound > 0.5) {
+    mgrText += ` <strong>ACTION:</strong> Highly polarized opinions detected. Segment your analysis to understand what drives positive vs. negative experiences—look for patterns in the extreme records.`;
+  }
+  
   // Add subgroup analysis if grouping is enabled
   const hasGroupStats = groupingEnabled && uniqueGroups.length > 0 && stats.groupStats && Object.keys(stats.groupStats).length > 0;
   
@@ -1158,10 +1177,21 @@ function renderManagerialReport(stats) {
                  `while "${worst.group}" trails with the lowest ` +
                  `(avg = ${worst.avg.toFixed(3)}, ${worst.pctNeg.toFixed(0)}% negative). ${gapInterpretation}`;
       
+      // Add business context based on actual patterns
+      if (gap >= 0.3 && worst.avg < -0.05) {
+        mgrText += ` <strong>BUSINESS IMPACT:</strong> The ${gap.toFixed(2)}-point gap between groups suggests systematic differences in customer experience. "${worst.group}" is generating negative sentiment that could harm overall brand perception—this should be a priority investigation area.`;
+      } else if (gap >= 0.2 && worst.avg > 0.05 && best.avg > 0.3) {
+        mgrText += ` <strong>BUSINESS IMPACT:</strong> While all groups show positive sentiment, "${best.group}" significantly outperforms others. Study what makes this group successful and replicate those practices across other segments.`;
+      } else if (gap < 0.15) {
+        mgrText += ` <strong>BUSINESS IMPACT:</strong> Groups show similar sentiment patterns, suggesting consistent delivery across segments. Opportunities for improvement likely apply broadly rather than to specific groups.`;
+      }
+      
       // Add consistency insight if groups differ
       if (mostConsistent.group !== mostPolarized.group && mostPolarized.std - mostConsistent.std > 0.1) {
+        const stdGap = mostPolarized.std - mostConsistent.std;
         mgrText += ` "${mostConsistent.group}" shows the most consistent sentiment, ` +
-                   `while "${mostPolarized.group}" has the most mixed/polarized opinions.`;
+                   `while "${mostPolarized.group}" has the most mixed/polarized opinions. ` +
+                   `The consistency difference (SD gap = ${stdGap.toFixed(2)}) suggests "${mostPolarized.group}" has mixed experiences (some very satisfied, others not), while "${mostConsistent.group}" delivers more predictable outcomes.`;
       }
       
       // Recommendations based on worst group
@@ -1217,6 +1247,9 @@ function renderGroupedSummaryTable(stats) {
   const metrics = [
     { key: 'n', label: 'N (records)', format: v => v.toString(), higherBetter: null },
     { key: 'avgCompound', label: 'Avg Compound', format: v => v.toFixed(3), higherBetter: true },
+    { key: 'medianCompound', label: 'Median Compound', format: v => v.toFixed(3), higherBetter: true },
+    { key: 'q1Compound', label: '25th Percentile (Q1)', format: v => v.toFixed(3), higherBetter: null },
+    { key: 'q3Compound', label: '75th Percentile (Q3)', format: v => v.toFixed(3), higherBetter: null },
     { key: 'stdCompound', label: 'Std Dev (Compound)', format: v => v.toFixed(3), higherBetter: null },
     { key: 'pctPositive', label: '% Positive', format: v => v.toFixed(1) + '%', higherBetter: true },
     { key: 'pctNeutral', label: '% Neutral', format: v => v.toFixed(1) + '%', higherBetter: null },
@@ -1310,22 +1343,6 @@ function renderSummaryTable(stats) {
   });
 }
 
-function renderDetailedMetrics(stats) {
-  const setMetric = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
-  };
-  
-  setMetric('metric-total-records', stats.n.toLocaleString());
-  setMetric('metric-polarity-index', stats.polarityIndex.toFixed(3));
-  setMetric('metric-nps-style', `${stats.npsStyle >= 0 ? '+' : ''}${stats.npsStyle.toFixed(1)}`);
-  setMetric('metric-subjectivity', `${stats.subjectivityRatio.toFixed(1)}%`);
-  setMetric('metric-avg-pos', stats.avgPos.toFixed(4));
-  setMetric('metric-avg-neg', stats.avgNeg.toFixed(4));
-  setMetric('metric-avg-neu', stats.avgNeu.toFixed(4));
-  setMetric('metric-compound-std', stats.stdCompound.toFixed(4));
-}
-
 function renderDistributionCharts(stats) {
   lastStats = stats; // Store for re-rendering on toggle
   
@@ -1338,19 +1355,22 @@ function renderDistributionCharts(stats) {
     renderHistogramInterpretation(stats, 'by-group');
   }
   
-  // Render boxplot based on its view mode
-  if (boxplotViewMode === 'overall' || !groupingEnabled || !uniqueGroups.length) {
-    renderBoxplotChart(stats);
-    renderBoxplotInterpretation(stats, 'overall');
-  } else {
+  // Box plot: Only show for grouped analysis
+  const boxplotSection = document.getElementById('boxplot-section');
+  if (groupingEnabled && uniqueGroups.length > 0) {
+    if (boxplotSection) boxplotSection.classList.remove('hidden');
     renderBoxplotChartByGroup(stats);
     renderBoxplotInterpretation(stats, 'by-group');
+  } else {
+    if (boxplotSection) boxplotSection.classList.add('hidden');
+    // Clear the chart
+    const boxChart = document.getElementById('sentiment-boxplot-chart');
+    if (boxChart && typeof Plotly !== 'undefined') Plotly.purge(boxChart);
   }
 }
 
 function updateChartToggleVisibility() {
   const histogramToggle = document.getElementById('chart-view-toggle-histogram');
-  const boxplotToggle = document.getElementById('chart-view-toggle-boxplot');
   
   const showToggle = groupingEnabled && uniqueGroups.length > 0;
   
@@ -1362,13 +1382,7 @@ function updateChartToggleVisibility() {
     }
   }
   
-  if (boxplotToggle) {
-    boxplotToggle.classList.toggle('hidden', !showToggle);
-    if (!showToggle) {
-      boxplotViewMode = 'overall';
-      updateToggleButtons(boxplotToggle, 'overall');
-    }
-  }
+  // Box plot toggle is removed - box plot only shows for grouped analysis
 }
 
 function updateToggleButtons(container, activeView) {
@@ -1424,9 +1438,9 @@ function renderHistogramInterpretation(stats, mode) {
     if (Math.abs(skewness) < 0.05) {
       skewNote = 'The distribution appears <strong>roughly symmetric</strong> around the center.';
     } else if (skewness > 0) {
-      skewNote = 'The distribution is <strong>left-skewed</strong> (tail extends toward negative values), meaning a few very negative records pull the mean down.';
+      skewNote = 'The distribution is <strong>left-skewed</strong> (a long tail on the negative side), meaning most records are moderate/positive but a few very negative outliers pull the average down. This suggests isolated bad experiences rather than systematic issues.';
     } else {
-      skewNote = 'The distribution is <strong>right-skewed</strong> (tail extends toward positive values), meaning a few very positive records pull the mean up.';
+      skewNote = 'The distribution is <strong>right-skewed</strong> (a long tail on the positive side), meaning most records are moderate/negative but a few very positive outliers pull the average up. This suggests occasional excellent experiences standing out from the norm.';
     }
     
     // Spread interpretation
@@ -1586,26 +1600,45 @@ function renderHistogramChart(stats) {
   const container = document.getElementById('sentiment-histogram-chart');
   if (!container || typeof Plotly === 'undefined') return;
   
+  // First, create a histogram to get the bin edges
+  const nbins = 20;
+  const binWidth = 2.2 / nbins; // Range from -1.1 to 1.1
+  const binEdges = Array.from({length: nbins + 1}, (_, i) => -1.1 + i * binWidth);
+  
+  // Manually bin the data and assign colors based on bin centers
+  const binCounts = new Array(nbins).fill(0);
+  stats.compounds.forEach(val => {
+    const binIndex = Math.floor((val + 1.1) / binWidth);
+    const clampedIndex = Math.max(0, Math.min(nbins - 1, binIndex));
+    binCounts[clampedIndex]++;
+  });
+  
+  // Calculate bin centers and assign colors
+  const binCenters = binEdges.slice(0, -1).map((edge, i) => edge + binWidth / 2);
+  const barColors = binCenters.map(center => {
+    if (center >= 0.05) return '#16a34a';      // Green for positive bins
+    if (center <= -0.05) return '#dc2626';     // Red for negative bins
+    return '#6b7280';                           // Gray for neutral bins
+  });
+  
   const trace = {
-    x: stats.compounds,
-    type: 'histogram',
-    nbinsx: 20,
+    x: binCenters,
+    y: binCounts,
+    type: 'bar',
     marker: {
-      color: stats.compounds.map(c => {
-        if (c >= 0.05) return '#16a34a';
-        if (c <= -0.05) return '#dc2626';
-        return '#6b7280';
-      }),
+      color: barColors,
       line: { color: '#fff', width: 1 }
     },
-    opacity: 0.85
+    opacity: 0.85,
+    width: binWidth * 0.95  // Slight gap between bars
   };
   
-  // Add mean line
+  // Add mean line - scale to maximum bar height
+  const maxCount = Math.max(...binCounts);
   const meanLine = {
     type: 'scatter',
     x: [stats.avgCompound, stats.avgCompound],
-    y: [0, stats.n * 0.3],
+    y: [0, maxCount * 1.05],
     mode: 'lines',
     name: `Mean = ${stats.avgCompound.toFixed(3)}`,
     line: { color: '#1e40af', width: 2, dash: 'dash' }
@@ -1626,7 +1659,8 @@ function renderHistogramChart(stats) {
       yaxis: { title: 'Frequency', rangemode: 'tozero' },
       showlegend: true,
       legend: { x: 0.02, y: 0.98 },
-      bargap: 0.05
+      bargap: 0,
+      bargroupgap: 0
     },
     { responsive: true }
   );

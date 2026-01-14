@@ -114,6 +114,12 @@
             </tr>
           </table>
           <p style="margin-top:0.5rem;"><strong>Note:</strong> Positive + Neutral + Negative always sum to 1.0 (100%), while Compound is calculated separately.</p>
+          <div style="background:#f0f9ff; border-left:3px solid #3b82f6; padding:0.75rem; margin-top:0.75rem;">
+            <p style="margin:0; font-weight:600; color:#1e40af;">💡 Which score should I use?</p>
+            <p style="margin:0.5rem 0 0 0; font-size:0.9rem;">For most marketing analyses, focus on the <strong>Compound score</strong>—it's the overall sentiment. 
+            The pos/neu/neg proportions are useful for understanding <em>why</em> the compound is what it is. For example, 
+            a compound of 0.15 with pos=0.35, neu=0.60, neg=0.05 tells you "moderately positive, but mostly factual text with little emotion."</p>
+          </div>
         </details>
         
         <details class="intro-notes">
@@ -322,6 +328,12 @@
             final numbers arise from the text.
           </p>
         </details>
+        <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:0.75rem; margin-top:0.75rem;">
+          <p style="margin:0; font-weight:600; color:#92400e;">🔗 Connecting Examples to Patterns</p>
+          <p style="margin:0.5rem 0 0 0; font-size:0.9rem;">These examples show how VADER processes individual texts token-by-token. 
+          To understand patterns across <strong>ALL</strong> your records, scroll down to the <strong>Sentiment Distribution (Histogram)</strong> 
+          and <strong>Box Plot</strong>—they reveal whether your entire dataset skews positive/negative or shows mixed opinions across many records.</p>
+        </div>
       </div>
     </section>
 
@@ -375,6 +387,12 @@
 
       <div class="card" style="margin-top:0.75rem;">
         <h3>Sentiment Distribution: Histogram</h3>
+        <div style="background:#f1f5f9; padding:0.75rem; margin-bottom:0.75rem; border-radius:0.25rem; font-size:0.9rem;">
+          <p style="margin:0;"><strong>📊 How to read bar colors:</strong> Each bar represents a <em>range</em> of compound scores (e.g., 0.10 to 0.21). 
+          Bars are colored based on where the bin center falls: <span style="color:#16a34a; font-weight:600;">green</span> for positive territory (≥0.05), 
+          <span style="color:#dc2626; font-weight:600;">red</span> for negative (≤−0.05), and <span style="color:#6b7280; font-weight:600;">gray</span> for neutral. 
+          The bar's height shows how many records fall within that score range.</p>
+        </div>
         <div id="chart-view-toggle-histogram" class="chart-view-toggle hidden">
           <button type="button" class="toggle-btn active" data-view="overall">Overall</button>
           <button type="button" class="toggle-btn" data-view="by-group">By Group</button>
@@ -385,11 +403,13 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top:0.75rem;">
-        <h3>Sentiment Distribution: Box Plot</h3>
-        <div id="chart-view-toggle-boxplot" class="chart-view-toggle hidden">
-          <button type="button" class="toggle-btn active" data-view="overall">Overall</button>
-          <button type="button" class="toggle-btn" data-view="by-group">By Group</button>
+      <div id="boxplot-section" class="card hidden" style="margin-top:0.75rem;">
+        <h3>Sentiment Distribution: Box Plot (By Group)</h3>
+        <div style="background:#f1f5f9; padding:0.75rem; margin-bottom:0.75rem; border-radius:0.25rem; font-size:0.9rem;">
+          <p style="margin:0;"><strong>📦 Box Plot Visual Guide:</strong> The <strong>box</strong> contains the middle 50% of your data. 
+          The <strong>line inside the box</strong> is the median (half above, half below). The <strong>whiskers</strong> (lines extending from the box) 
+          reach to typical extremes. <strong>Dots beyond whiskers</strong> are unusual outliers worth investigating individually. 
+          Q1 and Q3 are the edges of the box (25th and 75th percentiles).</p>
         </div>
         <div id="sentiment-boxplot-chart" class="chart-placeholder" style="min-height:280px;"></div>
         <div id="boxplot-interpretation" class="chart-interpretation">
@@ -397,46 +417,6 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top:0.75rem;">
-        <h3>Detailed Metrics</h3>
-        <div class="metrics-grid">
-          <div class="metric-card">
-            <span class="metric-label">Total Records</span>
-            <span id="metric-total-records" class="metric-value">&ndash;</span>
-          </div>
-          <div class="metric-card">
-            <span class="metric-label">Sentiment Polarity Index</span>
-            <span id="metric-polarity-index" class="metric-value">&ndash;</span>
-            <span class="metric-hint">Range: -1 to +1</span>
-          </div>
-          <div class="metric-card">
-            <span class="metric-label">Net Promoter-Style Score</span>
-            <span id="metric-nps-style" class="metric-value">&ndash;</span>
-            <span class="metric-hint">%Positive − %Negative</span>
-          </div>
-          <div class="metric-card">
-            <span class="metric-label">Subjectivity Ratio</span>
-            <span id="metric-subjectivity" class="metric-value">&ndash;</span>
-            <span class="metric-hint">%Non-neutral records</span>
-          </div>
-          <div class="metric-card">
-            <span class="metric-label">Avg Positive Score</span>
-            <span id="metric-avg-pos" class="metric-value">&ndash;</span>
-          </div>
-          <div class="metric-card">
-            <span class="metric-label">Avg Negative Score</span>
-            <span id="metric-avg-neg" class="metric-value">&ndash;</span>
-          </div>
-          <div class="metric-card">
-            <span class="metric-label">Avg Neutral Score</span>
-            <span id="metric-avg-neu" class="metric-value">&ndash;</span>
-          </div>
-          <div class="metric-card">
-            <span class="metric-label">Compound Std. Dev.</span>
-            <span id="metric-compound-std" class="metric-value">&ndash;</span>
-          </div>
-        </div>
-      </div>
     </section>
   </main>
 
