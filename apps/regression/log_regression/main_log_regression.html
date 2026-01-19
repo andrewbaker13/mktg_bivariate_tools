@@ -43,6 +43,20 @@
     </p>
   </header>
 
+  <!-- Professor Mode Banner -->
+  <div class="professor-mode-banner">
+    <div class="professor-mode-content">
+      <div class="professor-mode-info">
+        <h3>👨‍🏫 Professor Mode: Guided Learning Experience</h3>
+        <p>New to logistic regression? Enable Professor Mode for step-by-step guidance through building and interpreting your first model!</p>
+      </div>
+      <label class="professor-mode-toggle">
+        <input type="checkbox" id="professorMode">
+        <span>Enable Professor Mode</span>
+      </label>
+    </div>
+  </div>
+
   <main class="app-main">
     <section class="test-overview">
       <h2>TEST OVERVIEW &amp; EQUATIONS</h2>
@@ -168,14 +182,62 @@
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       <div class="card">
         <article class="chart-card">
-          <h3>Actual vs. Fitted</h3>
-          <div id="plot-actual-fitted" class="chart-placeholder" role="img" aria-live="polite"
-            aria-label="Plot of actual versus fitted outcome values."></div>
-          <p id="plot-actual-fitted-caption" class="chart-note"></p>
+          <h3>Confusion Matrix</h3>
+          <details class="confusion-advanced-options">
+            <summary>Advanced Options</summary>
+            <div class="confusion-controls">
+              <label for="confusion-threshold">Classification threshold:</label>
+              <input type="number" id="confusion-threshold" min="0" max="1" step="0.05" value="0.5">
+              <span class="hint">(Pr ≥ threshold → predict 1)</span>
+            </div>
+          </details>
+          <div id="plot-confusion-matrix" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Confusion matrix showing classification performance."></div>
+          <p id="plot-confusion-caption" class="chart-note"></p>
           <details class="interpretation-aid">
             <summary>Interpretation Aid</summary>
             <p class="muted">
-              Each point plots a fitted probability on the horizontal axis and the observed 0/1 outcome (with a small amount of vertical jitter for visibility) on the vertical axis. Points clustered near 0 or 1 on the x-axis indicate confident predictions; a mix of 0s and 1s at similar fitted probabilities indicates uncertainty. Strong patterns or obvious outliers can signal model misspecification or influential cases to review.
+              The confusion matrix shows how well the model classifies observations into the two outcome categories. The rows represent the actual outcomes (0 or 1) and columns represent the predicted outcomes. Diagonal cells (true positives and true negatives) indicate correct predictions; off-diagonal cells show errors. Adjust the classification threshold to balance sensitivity (correctly identifying 1s) versus specificity (correctly identifying 0s) based on your business priorities.
+            </p>
+            <p class="muted">
+              <strong>Classification Metrics:</strong> <strong>Accuracy</strong> = overall % correct. <strong>Sensitivity (Recall)</strong> = % of actual 1s correctly identified. <strong>Specificity</strong> = % of actual 0s correctly identified. <strong>Precision (PPV)</strong> = % of predicted 1s that are actually 1. <strong>F1 Score</strong> = harmonic mean of precision and recall (balances both). <strong>NPV</strong> = % of predicted 0s that are actually 0.
+            </p>
+          </details>
+          <div class="metrics-panel" style="margin-top: 1rem;">
+            <h4>Classification Performance (at threshold = <span id="cm-threshold-display">0.5</span>)</h4>
+            <div class="metric-output"><span>Accuracy:</span><span id="metric-accuracy" class="dynamic-value">&ndash;</span></div>
+            <div class="metric-output"><span>Sensitivity (Recall):</span><span id="metric-sensitivity" class="dynamic-value">&ndash;</span></div>
+            <div class="metric-output"><span>Specificity:</span><span id="metric-specificity" class="dynamic-value">&ndash;</span></div>
+            <div class="metric-output"><span>Precision (PPV):</span><span id="metric-precision" class="dynamic-value">&ndash;</span></div>
+            <div class="metric-output"><span>F1 Score:</span><span id="metric-f1" class="dynamic-value">&ndash;</span></div>
+            <div class="metric-output"><span>Negative Predictive Value:</span><span id="metric-npv" class="dynamic-value">&ndash;</span></div>
+          </div>
+        </article>
+        <article class="chart-card">
+          <h3>ROC Curve</h3>
+          <div id="plot-roc" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="ROC curve showing model discrimination."></div>
+          <p id="plot-roc-caption" class="chart-note"></p>
+          <div class="metric-output" style="margin-top: 0.5rem;"><span>AUC (Area Under Curve):</span><span id="metric-auc" class="dynamic-value">&ndash;</span></div>
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p class="muted">
+              The ROC curve plots the True Positive Rate (sensitivity) against the False Positive Rate (1 - specificity) across all possible classification thresholds. A curve closer to the top-left corner indicates better discrimination. The Area Under Curve (AUC) summarizes overall performance: 1.0 = perfect discrimination, 0.5 = no better than random guessing, < 0.5 = worse than random. AUC > 0.7 is often considered acceptable, > 0.8 good, > 0.9 excellent.
+            </p>
+            <p class="muted">
+              <strong>Reading the curve:</strong> Each point on the curve represents a different classification threshold. <strong>Hover over any point to see which threshold it represents</strong> (along with its TPR and FPR). Key thresholds (0.3, 0.5, 0.7) are marked with red dots and labeled. Moving right along the curve means lowering the threshold (classifying more cases as positive), which increases both true positives (good) and false positives (bad). The caption shows specific threshold examples for easy reference.
+            </p>
+          </details>
+        </article>
+        <article class="chart-card">
+          <h3>Predicted Probability Distribution</h3>
+          <div id="plot-prob-distribution" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Histogram of predicted probabilities by actual outcome."></div>
+          <p id="plot-prob-caption" class="chart-note"></p>
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p class="muted">
+              These overlapping histograms show the distribution of predicted probabilities for cases where the outcome was actually 0 (blue) versus actually 1 (red). Good model discrimination means the distributions are well-separated—cases with outcome = 1 should cluster at higher predicted probabilities. Heavy overlap suggests the model has difficulty distinguishing the two groups. This complements the confusion matrix by showing the full probability spectrum before thresholding.
             </p>
           </details>
         </article>
@@ -214,6 +276,21 @@
             </p>
           </details>
         </article>
+        <article class="chart-card">
+          <h3>Variable Importance (Odds Ratios)</h3>
+          <div id="plot-variable-importance" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Forest plot of odds ratios with confidence intervals."></div>
+          <p id="plot-importance-caption" class="chart-note"></p>
+          <details class="interpretation-aid">
+            <summary>Interpretation Aid</summary>
+            <p class="muted">
+              This forest plot displays odds ratios (OR) with 95% confidence intervals for each predictor. <strong>Odds ratios show multiplicative effects:</strong> OR > 1 means the predictor increases odds of the focal outcome, OR < 1 decreases odds, OR = 1 (dashed reference line) means no effect. For example, OR = 2.0 means doubling the odds (100% increase), OR = 0.5 means halving the odds (50% decrease), OR = 1.5 means 50% increase.
+            </p>
+            <p class="muted">
+              <strong>The horizontal bars are 95% confidence intervals</strong> showing statistical uncertainty. If a bar crosses the 1.0 line, the effect is not statistically significant (could be no effect). Longer bars = more uncertainty. Variables are sorted by distance from 1.0 to show strongest effects first. The x-axis is log-scaled so equal distances represent equal multiplicative effects.
+            </p>
+          </details>
+        </article>
       </div>
     </section>
 
@@ -223,7 +300,26 @@
         <h3>Summary Statistics</h3>
         <div class="summary-stats-grid">
           <div>
-            <h4>Outcome &amp; Continuous Predictors</h4>
+            <h4>Outcome Variable</h4>
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>% Focal Outcome</th>
+                  <th>Count Focal</th>
+                  <th>Count Non-Focal</th>
+                  <th>Total n</th>
+                </tr>
+              </thead>
+              <tbody id="outcome-summary-body">
+                <tr><td colspan="5">Provide data to see outcome summary.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="summary-stats-grid">
+          <div>
+            <h4>Continuous Predictors</h4>
             <table class="summary-table">
               <thead>
                 <tr>
@@ -279,7 +375,12 @@
         </p>
       </div>
 
-      <div class="card metrics-panel">
+      <div id="separation-warning" class="card" style="display:none; border-left: 4px solid #f59e0b; background-color: #fffbeb;">
+        <h3 style="color: #d97706;">⚠️ Separation Detected</h3>
+        <p id="separation-message" class="muted"></p>
+      </div>
+
+      <div id="model-metrics-panel" class="card metrics-panel">
         <div class="metric-output"><span>Log-likelihood:</span><span id="metric-loglik" class="dynamic-value">&ndash;</span></div>
         <div class="metric-output"><span>Null deviance:</span><span id="metric-null-dev" class="dynamic-value">&ndash;</span></div>
         <div class="metric-output"><span>Residual deviance:</span><span id="metric-resid-dev" class="dynamic-value">&ndash;</span></div>
@@ -288,6 +389,9 @@
         <div class="metric-output"><span>Pseudo R-squared:</span><span id="metric-r2" class="dynamic-value">&ndash;</span></div>
         <div class="metric-output"><span>Sample size (n):</span><span id="metric-n" class="dynamic-value">&ndash;</span></div>
         <div class="metric-output"><span>Alpha:</span><span id="metric-alpha" class="dynamic-value">&ndash;</span></div>
+        <div id="sample-size-warning" style="display:none; margin-top: 1rem; padding: 0.75rem; background-color: #fef3c7; border-left: 3px solid #f59e0b; border-radius: 0.25rem;">
+          <p class="muted" style="margin: 0; color: #92400e;"><strong>⚠️ Sample Size Advisory:</strong> <span id="sample-size-message"></span></p>
+        </div>
         <details class="interpretation-aid">
           <summary>Interpretation Aid</summary>
           <p class="muted">
@@ -297,7 +401,7 @@
             <strong>Model chi-square &amp; p-value:</strong> Compares the fitted model to an intercept-only (null) model using the difference in deviance. A small p-value (&lt; alpha) means the predictors, as a set, improve the ability to predict success vs. failure.
           </p>
           <p class="muted">
-            <strong>Pseudo R-squared:</strong> A rough analogue of R-squared that summarizes how much the model improves fit relative to the null model. It is useful as a descriptive measure but should not be overinterpreted as “percent of variance explained.”
+            <strong>Pseudo R-squared:</strong> A rough analogue of R-squared that summarizes how much the model improves fit relative to the null model. It is useful as a descriptive measure but should not be overinterpreted as "percent of variance explained."
           </p>
           <p class="muted">
             <strong>n:</strong> Sample size and available information for estimating effects. Very small n can make estimates unstable or produce separation issues where a predictor perfectly predicts the outcome.
@@ -308,18 +412,18 @@
         </details>
       </div>
 
-      <div class="dual-panels">
-        <article class="card dual-panel">
-          <h3>APA-Style Statistical Reporting</h3>
-          <p id="apa-report"></p>
-        </article>
-        <article class="card dual-panel">
+      <div class="narrative-columns">
+        <article class="card narrative-card">
           <h3>Managerial Interpretation</h3>
           <p id="managerial-report"></p>
         </article>
+        <article class="card narrative-card">
+          <h3>APA-Style Report</h3>
+          <p id="apa-report"></p>
+        </article>
       </div>
 
-      <div class="card summary-section">
+      <div id="coefficient-estimates-card" class="card summary-section">
         <h3>Coefficient Estimates (Log-odds and Odds Ratios)</h3>
         <table class="summary-table">
           <thead>
@@ -331,7 +435,6 @@
               <th>z</th>
               <th>p-value</th>
               <th>Odds Ratio</th>
-              <th>Partial &eta;<sup>2</sup></th>
               <th id="coef-ci-lower-header">Lower Bound</th>
               <th id="coef-ci-upper-header">Upper Bound</th>
             </tr>
@@ -359,6 +462,28 @@
             <div id="diag-rare-levels" class="diagnostic-block"></div>
             <div id="diag-collinearity" class="diagnostic-block"></div>
             <div id="diag-residuals" class="diagnostic-block"></div>
+            <div id="diag-hosmer-lemeshow" class="diagnostic-block">
+              <h4>Hosmer-Lemeshow Goodness-of-Fit Test</h4>
+              <p class="muted"><span id="hl-test-result">Run the analysis to see calibration test.</span></p>
+              <details class="interpretation-aid" style="margin-top: 0.5rem;">
+                <summary>What does this test?</summary>
+                <p class="muted">
+                  The Hosmer-Lemeshow test checks if predicted probabilities are well-calibrated—i.e., do cases with predicted probability ≈ 70% actually have the outcome 70% of the time? The test groups observations by predicted probability and compares observed vs. expected frequencies. A <strong>large p-value (> 0.05)</strong> suggests good calibration (no evidence of poor fit). A <strong>small p-value (< 0.05)</strong> suggests the model's probability estimates may be systematically biased, even if classification accuracy is high.
+                </p>
+              </details>
+            </div>
+            <div class="chart-card">
+              <h4>Actual vs. Fitted</h4>
+              <div id="plot-actual-fitted" class="chart-placeholder" role="img" aria-live="polite"
+                aria-label="Plot of actual versus fitted outcome values."></div>
+              <p id="plot-actual-fitted-caption" class="chart-note"></p>
+              <details class="interpretation-aid">
+                <summary>Interpretation Aid</summary>
+                <p class="muted">
+                  Each point plots a fitted probability on the horizontal axis and the observed 0/1 outcome (with a small amount of vertical jitter for visibility) on the vertical axis. Points clustered near 0 or 1 on the x-axis indicate confident predictions; a mix of 0s and 1s at similar fitted probabilities indicates uncertainty. Strong patterns or obvious outliers can signal model misspecification or influential cases to review.
+                </p>
+              </details>
+            </div>
             <div class="chart-card">
               <h4>Residuals vs. Fitted</h4>
               <div id="plot-residuals" class="chart-placeholder" role="img" aria-live="polite"
@@ -404,6 +529,7 @@
   <script src="../../../shared/js/auth_bar.js"></script>
   <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="main_log_regression.js"></script>
+  <script src="logreg_tutorial.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       initQuizButton('log_regression');

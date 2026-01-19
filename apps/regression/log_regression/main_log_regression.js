@@ -212,6 +212,12 @@ let lastModel = null;
 let lastRawDataset = null;
 let outcomeCoding = { outcomeName: null, mode: 'numeric01', focalLabel: '1', nonFocalLabel: '0' };
 
+// Expose for tutorial (Professor Mode) - AFTER all variables are declared
+window.selectedOutcome = selectedOutcome;
+window.selectedPredictors = selectedPredictors;
+window.predictorSettings = predictorSettings;
+window.lastModel = lastModel;
+
 const RAW_UPLOAD_LIMIT = typeof MAX_UPLOAD_ROWS === 'number' ? MAX_UPLOAD_ROWS : 5000;
 
 // ---------- Utilities ----------
@@ -426,7 +432,7 @@ function setRawUploadStatus(message, status = '', { isHtml = true } = {}) {
   if (status) statusEl.classList.add(status);
 }
 function clearOutputs(message = 'Provide data to see results.') {
-  const metrics = ['metric-loglik', 'metric-null-dev', 'metric-resid-dev', 'metric-chi2', 'metric-pmodel', 'metric-r2', 'metric-n', 'metric-alpha'];
+  const metrics = ['metric-loglik', 'metric-null-dev', 'metric-resid-dev', 'metric-chi2', 'metric-pmodel', 'metric-r2', 'metric-n', 'metric-alpha', 'metric-auc'];
   metrics.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '--'; });
   const apa = document.getElementById('apa-report');
   const mgr = document.getElementById('managerial-report');
@@ -440,7 +446,7 @@ function clearOutputs(message = 'Provide data to see results.') {
   if (coefBody) coefBody.innerHTML = `<tr><td colspan="9">${escapeHtml(message)}</td></tr>`;
   if (numBody) numBody.innerHTML = `<tr><td colspan="6">${escapeHtml(message)}</td></tr>`;
   if (catBody) catBody.innerHTML = `<tr><td colspan="3">${escapeHtml(message)}</td></tr>`;
-  ['plot-actual-fitted', 'plot-residuals', 'plot-coefficients', 'plot-effect'].forEach(id => {
+  ['plot-actual-fitted', 'plot-residuals', 'plot-coefficients', 'plot-effect', 'plot-roc', 'plot-variable-importance', 'plot-prob-distribution'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = '';
   });
@@ -448,6 +454,20 @@ function clearOutputs(message = 'Provide data to see results.') {
   if (coefInterp) coefInterp.textContent = 'Run the model to see column descriptions and examples.';
   const constantsNote = document.getElementById('effect-constants-note');
   if (constantsNote) constantsNote.textContent = '';
+  
+  // Clear new diagnostic elements
+  const separationWarning = document.getElementById('separation-warning');
+  if (separationWarning) {
+    separationWarning.style.display = 'none';
+    separationWarning.innerHTML = '';
+  }
+  const sampleSizeWarning = document.getElementById('sample-size-warning');
+  if (sampleSizeWarning) {
+    sampleSizeWarning.style.display = 'none';
+    sampleSizeWarning.innerHTML = '';
+  }
+  const hlResult = document.getElementById('hl-test-result');
+  if (hlResult) hlResult.textContent = '';
 }
 
 async function logToolRunToBackend(params, summaryText) {
@@ -592,12 +612,23 @@ function updateOutcomeCodingFromData() {
   }
   // Text-coded binary (two levels)
   if (!meta.isNumeric && distinct.length === 2) {
-    let focal = outcomeCoding.outcomeName === selectedOutcome &&
+    let focal;
+    if (outcomeCoding.outcomeName === selectedOutcome &&
       outcomeCoding.mode === 'textBinary' &&
       outcomeCoding.focalLabel &&
-      distinct.includes(outcomeCoding.focalLabel)
-      ? outcomeCoding.focalLabel
-      : distinct[0];
+      distinct.includes(outcomeCoding.focalLabel)) {
+      // Preserve existing choice if already set
+      focal = outcomeCoding.focalLabel;
+    } else {
+      // Default to less prevalent outcome (minority class)
+      const counts = new Map();
+      values.forEach(v => {
+        const str = String(v);
+        counts.set(str, (counts.get(str) || 0) + 1);
+      });
+      const sorted = Array.from(counts.entries()).sort((a, b) => a[1] - b[1]);
+      focal = sorted[0][0]; // Least common
+    }
     const nonFocal = distinct.find(v => v !== focal) || null;
     outcomeCoding = {
       outcomeName: selectedOutcome,
@@ -634,14 +665,34 @@ function renderOutcomeFocalControl() {
       select.appendChild(opt);
     });
     select.value = outcomeCoding.focalLabel;
-    note.textContent = `Treating "${outcomeCoding.focalLabel}" as the focal outcome (coded as 1) and "${outcomeCoding.nonFocalLabel}" as the comparison outcome (coded as 0).`;
+    
+    // Calculate prevalence for helper text
+    const focalCount = dataset.rows.filter(r => String(r[selectedOutcome]) === outcomeCoding.focalLabel).length;
+    const totalCount = dataset.rows.filter(r => {
+      const val = r[selectedOutcome];
+      return val !== null && val !== undefined && val !== '';
+    }).length;
+    const prevalence = totalCount > 0 ? ((focalCount / totalCount) * 100).toFixed(1) : '0.0';
+    
+    note.innerHTML = `<strong>Focal outcome:</strong> "${escapeHtml(outcomeCoding.focalLabel)}" is coded as 1 (${prevalence}% of cases), "${escapeHtml(outcomeCoding.nonFocalLabel)}" as 0. The model predicts the probability of ${escapeHtml(outcomeCoding.focalLabel)}. Odds ratios show how predictors increase/decrease the odds of ${escapeHtml(outcomeCoding.focalLabel)} occurring.`;
+    
     select.onchange = () => {
       const chosen = select.value;
       if (chosen === outcomeCoding.focalLabel) return;
       const other = chosen === outcomeCoding.nonFocalLabel ? outcomeCoding.focalLabel : outcomeCoding.nonFocalLabel;
       outcomeCoding.focalLabel = chosen;
       outcomeCoding.nonFocalLabel = other;
-      note.textContent = `Treating "${outcomeCoding.focalLabel}" as the focal outcome (coded as 1) and "${outcomeCoding.nonFocalLabel}" as the comparison outcome (coded as 0).`;
+      
+      // Recalculate prevalence for updated choice
+      const focalCount = dataset.rows.filter(r => String(r[selectedOutcome]) === outcomeCoding.focalLabel).length;
+      const totalCount = dataset.rows.filter(r => {
+        const val = r[selectedOutcome];
+        return val !== null && val !== undefined && val !== '';
+      }).length;
+      const prevalence = totalCount > 0 ? ((focalCount / totalCount) * 100).toFixed(1) : '0.0';
+      
+      note.innerHTML = `<strong>Focal outcome:</strong> "${escapeHtml(outcomeCoding.focalLabel)}" is coded as 1 (${prevalence}% of cases), "${escapeHtml(outcomeCoding.nonFocalLabel)}" as 0. The model predicts the probability of ${escapeHtml(outcomeCoding.focalLabel)}. Odds ratios show how predictors increase/decrease the odds of ${escapeHtml(outcomeCoding.focalLabel)} occurring.`;
+      
       updateResults();
     };
   } else {
@@ -728,6 +779,8 @@ function importRawData(text, { isFromScenario = false, scenarioHints = null } = 
   const defaults = inferDefaults(columnMeta, dataset.headers);
   selectedOutcome = hints?.outcome || defaults.outcome;
   selectedPredictors = (hints?.predictors && hints.predictors.length) ? hints.predictors : defaults.predictors;
+  window.selectedOutcome = selectedOutcome;  // Sync for tutorial
+  window.selectedPredictors = selectedPredictors;  // Sync for tutorial
   predictorSettings = {};
   if (hints?.types) {
     Object.entries(hints.types).forEach(([col, type]) => {
@@ -737,6 +790,7 @@ function importRawData(text, { isFromScenario = false, scenarioHints = null } = 
       }
     });
   }
+  window.predictorSettings = predictorSettings;  // Sync for tutorial
 
   const constantPredictors = dataset.headers.filter(h => columnMeta[h]?.isConstant);
   const headerDescriptions = dataset.headers.map(h => {
@@ -941,8 +995,10 @@ function renderVariableSelectors() {
     renderOutcomeFocalControl();
     outcomeSelect.onchange = () => {
       selectedOutcome = outcomeSelect.value;
+      window.selectedOutcome = selectedOutcome;  // Sync for tutorial
       if (selectedPredictors.includes(selectedOutcome)) {
         selectedPredictors = selectedPredictors.filter(p => p !== selectedOutcome);
+        window.selectedPredictors = selectedPredictors;  // Sync for tutorial
       }
       updateOutcomeCodingFromData();
       renderOutcomeFocalControl();
@@ -1039,12 +1095,14 @@ function renderVariableSelectors() {
         } else {
           selectedPredictors = selectedPredictors.filter(p => p !== header);
         }
+        window.selectedPredictors = selectedPredictors;  // Sync for tutorial
         updateResults();
       });
       typeSelect.addEventListener('change', () => {
         const newType = typeSelect.value;
         predictorSettings[header] = predictorSettings[header] || {};
         predictorSettings[header].type = newType;
+        window.predictorSettings = predictorSettings;  // Sync for tutorial
         const isCat = predictorSettings[header].type === 'categorical';
         refSelect.disabled = !isCat;
         refWrapper.style.display = isCat ? 'block' : 'none';
@@ -1053,6 +1111,7 @@ function renderVariableSelectors() {
       refSelect.addEventListener('change', () => {
         predictorSettings[header] = predictorSettings[header] || {};
         predictorSettings[header].reference = refSelect.value;
+        window.predictorSettings = predictorSettings;  // Sync for tutorial
         updateResults();
       });
     }
@@ -1508,10 +1567,48 @@ function renderEquation(model) {
 }
 
 function renderSummaryStats(model, rows, predictorsInfo) {
+  const outcomeBody = document.getElementById('outcome-summary-body');
   const numericBody = document.getElementById('numeric-summary-body');
   const catBody = document.getElementById('categorical-summary-body');
+  
+  // Render outcome summary separately
+  if (outcomeBody && selectedOutcome) {
+    const focalLabel = model.outcomeFocalLabel != null ? String(model.outcomeFocalLabel) : '1';
+    const nonFocalLabel = model.outcomeNonFocalLabel != null ? String(model.outcomeNonFocalLabel) : '0';
+    
+    const focalCount = rows.filter(r => {
+      const val = r[selectedOutcome];
+      if (outcomeCoding.mode === 'numeric01') {
+        return parseFloat(val) === 1;
+      } else {
+        return String(val) === focalLabel;
+      }
+    }).length;
+    
+    const nonFocalCount = rows.filter(r => {
+      const val = r[selectedOutcome];
+      if (outcomeCoding.mode === 'numeric01') {
+        return parseFloat(val) === 0;
+      } else {
+        return String(val) === nonFocalLabel;
+      }
+    }).length;
+    
+    const totalCount = focalCount + nonFocalCount;
+    const pctFocal = totalCount > 0 ? (focalCount / totalCount * 100).toFixed(1) : '0.0';
+    
+    outcomeBody.innerHTML = `<tr>
+      <td>${escapeHtml(selectedOutcome)}</td>
+      <td>${pctFocal}%</td>
+      <td>${focalCount}</td>
+      <td>${nonFocalCount}</td>
+      <td>${totalCount}</td>
+    </tr>`;
+  }
+  
+  // Render continuous predictors (excluding outcome)
   if (numericBody) {
-    const numericVars = [selectedOutcome, ...predictorsInfo.filter(p => p.type !== 'categorical').map(p => p.name)];
+    const numericVars = predictorsInfo.filter(p => p.type !== 'categorical').map(p => p.name);
     const rowsOut = [];
     numericVars.forEach(varName => {
       const values = rows.map(r => parseFloat(r[varName])).filter(v => Number.isFinite(v));
@@ -1532,8 +1629,10 @@ function renderSummaryStats(model, rows, predictorsInfo) {
         <td>${formatNumber(max, 3)}</td>
       </tr>`);
     });
-    numericBody.innerHTML = rowsOut.length ? rowsOut.join('') : '<tr><td colspan="6">No numeric variables to summarize.</td></tr>';
+    numericBody.innerHTML = rowsOut.length ? rowsOut.join('') : '<tr><td colspan="6">No continuous predictors to summarize.</td></tr>';
   }
+  
+  // Render categorical predictors
   if (catBody) {
     const catPredictors = predictorsInfo.filter(p => p.type === 'categorical');
     const rowsOut = [];
@@ -1552,7 +1651,7 @@ function renderSummaryStats(model, rows, predictorsInfo) {
         </tr>`);
       });
     });
-    catBody.innerHTML = rowsOut.length ? rowsOut.join('') : '<tr><td colspan="3">No categorical variables to summarize.</td></tr>';
+    catBody.innerHTML = rowsOut.length ? rowsOut.join('') : '<tr><td colspan="3">No categorical predictors to summarize.</td></tr>';
   }
 }
 
@@ -1981,30 +2080,132 @@ function renderNarratives(model) {
 
   const strongest = bestContinuous || bestCategorical || null;
 
+  // Calculate outcome prevalence
+  const outcomeCounts = model.y.filter(y => y === 1).length;
+  const prevalence = model.y.length > 0 ? outcomeCounts / model.y.length : 0;
+
+  // Get confusion matrix metrics at default threshold
+  const confusionData = calculateConfusionMatrix(model, 0.5);
+
   if (strongest) {
     const or = Math.exp(strongest.estimate || 0);
     let orPhrase = 'roughly similar odds';
-    if (or > 1.05) orPhrase = `about ${fmt(or, 2)} times higher odds`;
-    else if (or < 0.95) orPhrase = `about ${fmt(1 / or, 2)} times lower odds`;
+    let orDirection = 'neutral';
+    if (or > 1.05) {
+      orPhrase = `about ${fmt(or, 2)} times higher odds`;
+      orDirection = 'positive';
+    } else if (or < 0.95) {
+      orPhrase = `about ${fmt(1 / or, 2)} times lower odds`;
+      orDirection = 'negative';
+    }
 
+    // Calculate probability shift context
+    const baselineLogOdds = model.terms[0].estimate; // intercept
+    const baselineProb = 1 / (1 + Math.exp(-baselineLogOdds));
+    
+    let report = '';
+
+    // Section 1: Outcome Context
+    report += `<strong>Outcome Context:</strong> In your dataset, ${escapeHtml(selectedOutcome || 'the outcome')} = 1 occurs in ${fmt(prevalence * 100, 1)}% of cases (${outcomeCounts} of ${model.y.length})`;
+    if (prevalence < 0.15) {
+      report += ' (low base rate—focus on identifying rare positives)';
+    } else if (prevalence > 0.85) {
+      report += ' (high base rate—focus on identifying rare negatives)';
+    } else if (prevalence >= 0.40 && prevalence <= 0.60) {
+      report += ' (balanced outcome)';
+    }
+    report += '.';
+
+    // Section 2: Key Finding
+    report += '<br><br><strong>Key Finding:</strong> ';
     if (strongest.type === 'continuous') {
-      mgr.textContent =
-        `For each one-unit increase in ${escapeHtml(strongest.predictor)}, the odds that ` +
-        `${escapeHtml(selectedOutcome || 'the outcome')} = 1 are ${orPhrase}, holding other predictors constant. ` +
-        `Overall model fit vs. the null model is summarized by χ²(${model.dfModel}) = ${fmt(model.modelChi2, 3)}, ` +
-        `p = ${formatP(modelPVal)}, pseudo R\u00b2 ≈ ${fmt(model.pseudoR2 * 100, 1)}%.`;
+      report += `For each one-unit increase in ${escapeHtml(strongest.predictor)}, the odds that ` +
+        `${escapeHtml(selectedOutcome || 'the outcome')} = 1 are ${orPhrase}`;
     } else {
       const ref = strongest.reference != null ? String(strongest.reference) : 'reference level';
-      mgr.textContent =
-        `Compared to ${escapeHtml(ref)}, cases with ${escapeHtml(strongest.predictor)} = ${escapeHtml(strongest.term)} ` +
-        `have ${orPhrase} that ${escapeHtml(selectedOutcome || 'the outcome')} = 1, controlling for other predictors. ` +
-        `Overall model fit vs. the null model is summarized by χ²(${model.dfModel}) = ${fmt(model.modelChi2, 3)}, ` +
-        `p = ${formatP(modelPVal)}, pseudo R\u00b2 ≈ ${fmt(model.pseudoR2 * 100, 1)}%.`;
+      report += `Compared to ${escapeHtml(ref)}, cases with ${escapeHtml(strongest.predictor)} = ${escapeHtml(strongest.term)} ` +
+        `have ${orPhrase} that ${escapeHtml(selectedOutcome || 'the outcome')} = 1`;
     }
+    report += `, holding other predictors constant.`;
+
+    // Add probability translation
+    if (or > 1.1 || or < 0.9) {
+      const shiftedLogOdds = baselineLogOdds + (strongest.estimate || 0);
+      const shiftedProb = 1 / (1 + Math.exp(-shiftedLogOdds));
+      const probLift = ((shiftedProb - baselineProb) / baselineProb) * 100;
+      if (Number.isFinite(probLift) && Math.abs(probLift) > 5) {
+        report += ` In practical terms, this represents approximately a ${fmt(Math.abs(probLift), 0)}% ${probLift > 0 ? 'increase' : 'decrease'} in probability relative to baseline.`;
+      }
+    }
+
+    // Section 3: Model Performance
+    if (confusionData) {
+      report += `<br><br><strong>Model Performance:</strong> At the default 0.5 threshold, the model achieves ${fmt(confusionData.accuracy * 100, 1)}% overall accuracy`;
+      if (prevalence < 0.30 || prevalence > 0.70) {
+        // For imbalanced outcomes, emphasize sensitivity/specificity
+        report += `, with ${fmt(confusionData.sensitivity * 100, 1)}% sensitivity (correctly identifies ${fmt(confusionData.sensitivity * 100, 1)}% of actual positives)`;
+        report += ` and ${fmt(confusionData.specificity * 100, 1)}% specificity (correctly identifies ${fmt(confusionData.specificity * 100, 1)}% of actual negatives)`;
+      } else {
+        // For balanced outcomes, mention precision
+        report += `, ${fmt(confusionData.sensitivity * 100, 1)}% sensitivity, and ${fmt(confusionData.precision * 100, 1)}% precision`;
+      }
+      report += '.';
+    }
+
+    // Section 4: Actionable Recommendations
+    report += `<br><br><strong>Action:</strong>`;
+    report += '<ul style="margin-top: 0.5rem; margin-bottom: 0;">';
+    
+    if (orDirection === 'positive') {
+      if (strongest.type === 'continuous') {
+        report += `<li><strong>Prioritize high ${escapeHtml(strongest.predictor)} cases:</strong> Resources or interventions targeting cases with elevated ${escapeHtml(strongest.predictor)} should yield higher rates of ${escapeHtml(selectedOutcome || 'the outcome')} = 1.</li>`;
+        report += `<li><strong>Consider thresholds:</strong> If ${escapeHtml(strongest.predictor)} is actionable, determine the optimal level needed to meaningfully increase conversion probability.</li>`;
+      } else {
+        report += `<li><strong>Focus on ${escapeHtml(strongest.term)} segment:</strong> Cases with ${escapeHtml(strongest.predictor)} = ${escapeHtml(strongest.term)} show substantially higher odds—allocate resources accordingly.</li>`;
+        report += `<li><strong>Differentiate strategy:</strong> Consider separate campaigns or offers for high-odds versus low-odds ${escapeHtml(strongest.predictor)} categories.</li>`;
+      }
+    } else if (orDirection === 'negative') {
+      if (strongest.type === 'continuous') {
+        report += `<li><strong>Mitigate ${escapeHtml(strongest.predictor)}:</strong> Higher values of ${escapeHtml(strongest.predictor)} are associated with <em>lower</em> odds of ${escapeHtml(selectedOutcome || 'the outcome')} = 1. If controllable, reducing ${escapeHtml(strongest.predictor)} may improve outcomes.</li>`;
+        report += `<li><strong>Target low-${escapeHtml(strongest.predictor)} cases:</strong> Focus efforts where ${escapeHtml(strongest.predictor)} is minimal to maximize conversion potential.</li>`;
+      } else {
+        const ref = strongest.reference != null ? String(strongest.reference) : 'reference level';
+        report += `<li><strong>Avoid ${escapeHtml(strongest.term)} segment:</strong> Compared to ${escapeHtml(ref)}, the ${escapeHtml(strongest.term)} category shows <em>reduced</em> odds—consider alternative targeting.</li>`;
+      }
+    } else {
+      report += `<li><strong>Review other predictors:</strong> ${escapeHtml(strongest.predictor)} shows a statistically significant but modest effect. Examine secondary predictors for additional leverage.</li>`;
+    }
+
+    // Threshold guidance for imbalanced outcomes
+    if (confusionData && (prevalence < 0.25 || prevalence > 0.75)) {
+      report += `<li><strong>Adjust classification threshold:</strong> For a ${prevalence < 0.25 ? 'rare' : 'common'} outcome, consider ${prevalence < 0.25 ? 'lowering' : 'raising'} the threshold below 0.5 to ${prevalence < 0.25 ? 'increase sensitivity (catch more positives)' : 'increase specificity (reduce false alarms)'}.</li>`;
+    }
+
+    report += '</ul>';
+
+    // Overall model fit summary
+    report += `<br><strong>Overall Model Fit:</strong> χ²(${model.dfModel}) = ${fmt(model.modelChi2, 3)}, p = ${formatP(modelPVal)}, pseudo R² ≈ ${fmt(model.pseudoR2 * 100, 1)}%.`;
+
+    mgr.innerHTML = report;
   } else {
-    mgr.textContent =
-      `The logistic model provides limited clear evidence that individual predictors meaningfully shift the odds ` +
-      `that ${escapeHtml(selectedOutcome || 'the outcome')} = 1. Consider reviewing diagnostics and exploring alternative specifications.`;
+    // Enhanced fallback for weak models
+    let report = `<strong>Outcome Context:</strong> In your dataset, ${escapeHtml(selectedOutcome || 'the outcome')} = 1 occurs in ${fmt(prevalence * 100, 1)}% of cases.`;
+    
+    if (confusionData) {
+      report += `<br><br><strong>Model Performance:</strong> The model achieves ${fmt(confusionData.accuracy * 100, 1)}% accuracy at the 0.5 threshold.`;
+    }
+    
+    report += `<br><br><strong>Finding:</strong> Individual predictors show weak or non-significant effects on the odds of ${escapeHtml(selectedOutcome || 'the outcome')} = 1.`;
+    
+    report += '<br><br><strong>Action:</strong>';
+    report += '<ul style="margin-top: 0.5rem;">';
+    report += '<li><strong>Collect additional predictors:</strong> The current variables may not capture key drivers of the outcome.</li>';
+    report += '<li><strong>Explore interactions:</strong> Effects may be contingent on combinations of predictors (e.g., ad spend × season).</li>';
+    report += '<li><strong>Check for non-linearity:</strong> Consider transformations (log, quadratic) if relationships are curved.</li>';
+    report += '<li><strong>Verify data quality:</strong> Review for missing values, coding errors, or insufficient sample size.</li>';
+    report += '</ul>';
+    
+    mgr.innerHTML = report;
   }
 }
 
@@ -2267,7 +2468,7 @@ function renderCoefInterpretation(model) {
     'Estimate (log-odds): change in log-odds that the focal outcome (coded as 1) occurs when the predictor increases by one unit or moves to a given category, holding other predictors constant.',
     'Standard Error: uncertainty of the log-odds estimate.',
     'z and p-value: test of whether the coefficient differs from zero (no change in log-odds of the focal outcome).',
-    'Odds Ratio: multiplicative change in the odds that the focal outcome (coded as 1) occurs for a one-unit increase or category change (vs. reference).',
+    'Odds Ratio: multiplicative change in the odds that the focal outcome (coded as 1) occurs for a one-unit increase or category change (vs. reference). This is the primary effect size measure for logistic regression.',
     `${Math.round((1 - model.alpha) * 100)}% CI: confidence interval for the log-odds estimate (and the corresponding odds ratio) for the focal outcome.`
   ];
   const continuous = model.terms.find(t => t.type === 'continuous');
@@ -2290,6 +2491,507 @@ function renderCoefInterpretation(model) {
     <p><strong>Columns:</strong> ${explainColumns.join(' ')}</p>
     <p><strong>Examples:</strong><br>${examples.join('<br>')}</p>
   `;
+}
+
+// ---------- ROC Curve & AUC ----------
+
+function calculateROC(model) {
+  if (!model || !Array.isArray(model.fitted) || !Array.isArray(model.y)) {
+    return null;
+  }
+  
+  // Get all unique thresholds from fitted probabilities
+  const thresholds = [0, ...Array.from(new Set(model.fitted)).sort((a, b) => a - b), 1];
+  const rocPoints = [];
+  
+  thresholds.forEach(threshold => {
+    let TP = 0, FP = 0, TN = 0, FN = 0;
+    
+    for (let i = 0; i < model.y.length; i++) {
+      const actual = model.y[i];
+      const predicted = model.fitted[i] >= threshold ? 1 : 0;
+      
+      if (actual === 1 && predicted === 1) TP++;
+      else if (actual === 0 && predicted === 0) TN++;
+      else if (actual === 0 && predicted === 1) FP++;
+      else if (actual === 1 && predicted === 0) FN++;
+    }
+    
+    const TPR = (TP + FN) > 0 ? TP / (TP + FN) : 0; // Sensitivity
+    const FPR = (FP + TN) > 0 ? FP / (FP + TN) : 0; // 1 - Specificity
+    
+    rocPoints.push({ threshold, TPR, FPR });
+  });
+  
+  return rocPoints;
+}
+
+function calculateAUC(rocPoints) {
+  if (!rocPoints || rocPoints.length < 2) return NaN;
+  
+  // Sort by FPR to ensure proper integration
+  const sorted = [...rocPoints].sort((a, b) => a.FPR - b.FPR);
+  
+  let auc = 0;
+  for (let i = 1; i < sorted.length; i++) {
+    const width = sorted[i].FPR - sorted[i - 1].FPR;
+    const height = (sorted[i].TPR + sorted[i - 1].TPR) / 2;
+    auc += width * height;
+  }
+  
+  return auc;
+}
+
+function renderROCCurve(model) {
+  const plot = document.getElementById('plot-roc');
+  const caption = document.getElementById('plot-roc-caption');
+  const aucDisplay = document.getElementById('metric-auc');
+  
+  if (!plot) return;
+
+  if (!model || !window.Plotly) {
+    plot.innerHTML = '<p class="muted">Run an analysis to see the ROC curve.</p>';
+    if (caption) caption.textContent = '';
+    if (aucDisplay) aucDisplay.textContent = '–';
+    return;
+  }
+
+  const rocPoints = calculateROC(model);
+  if (!rocPoints) {
+    plot.innerHTML = '<p class="muted">Unable to calculate ROC curve.</p>';
+    return;
+  }
+  
+  const auc = calculateAUC(rocPoints);
+
+  const fpr = rocPoints.map(p => p.FPR);
+  const tpr = rocPoints.map(p => p.TPR);
+  const thresholds = rocPoints.map(p => p.threshold);
+
+  // Find key threshold points to highlight (0.3, 0.5, 0.7)
+  const keyThresholds = [0.3, 0.5, 0.7];
+  const keyPoints = keyThresholds.map(t => {
+    // Find closest threshold point
+    let closest = rocPoints[0];
+    let minDiff = Math.abs(rocPoints[0].threshold - t);
+    for (const pt of rocPoints) {
+      const diff = Math.abs(pt.threshold - t);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = pt;
+      }
+    }
+    return closest;
+  }).filter(pt => pt != null);
+
+  const traces = [
+    {
+      x: fpr,
+      y: tpr,
+      mode: 'lines',
+      name: 'ROC Curve',
+      line: { color: '#2563eb', width: 2 },
+      customdata: thresholds,
+      hovertemplate: 'Threshold: %{customdata:.2f}<br>FPR: %{x:.3f}<br>TPR: %{y:.3f}<extra></extra>'
+    },
+    {
+      x: [0, 1],
+      y: [0, 1],
+      mode: 'lines',
+      name: 'Random (AUC=0.5)',
+      line: { color: '#9ca3af', dash: 'dash', width: 1 },
+      hoverinfo: 'skip'
+    }
+  ];
+
+  // Add key threshold markers if we have them
+  if (keyPoints.length > 0) {
+    traces.push({
+      x: keyPoints.map(p => p.FPR),
+      y: keyPoints.map(p => p.TPR),
+      mode: 'markers+text',
+      name: 'Key Thresholds',
+      marker: { size: 8, color: '#dc2626', symbol: 'circle' },
+      text: keyPoints.map(p => ` ${formatNumber(p.threshold, 2)}`),
+      textposition: 'top right',
+      textfont: { size: 10, color: '#dc2626' },
+      customdata: keyPoints.map(p => p.threshold),
+      hovertemplate: 'Threshold: %{customdata:.2f}<br>FPR: %{x:.3f}<br>TPR: %{y:.3f}<extra></extra>',
+      showlegend: false
+    });
+  }
+
+  Plotly.newPlot(plot, traces, {
+    margin: { t: 20, r: 20, b: 60, l: 60 },
+    xaxis: { title: 'False Positive Rate (1 - Specificity)', range: [0, 1] },
+    yaxis: { title: 'True Positive Rate (Sensitivity)', range: [0, 1] },
+    showlegend: true,
+    legend: { x: 0.6, y: 0.1 }
+  }, { responsive: true });
+
+  if (caption) {
+    let interpretation = '';
+    if (auc >= 0.9) interpretation = 'excellent discrimination';
+    else if (auc >= 0.8) interpretation = 'good discrimination';
+    else if (auc >= 0.7) interpretation = 'acceptable discrimination';
+    else if (auc >= 0.6) interpretation = 'poor discrimination';
+    else interpretation = 'very poor discrimination (barely better than random)';
+
+    // Pick two example points from the middle of the curve for concrete interpretation
+    let exampleText = '';
+    if (rocPoints.length > 4) {
+      const midIdx1 = Math.floor(rocPoints.length * 0.4);
+      const midIdx2 = Math.floor(rocPoints.length * 0.6);
+      const pt1 = rocPoints[midIdx1];
+      const pt2 = rocPoints[midIdx2];
+      
+      exampleText = ` For example: at threshold ≈${formatNumber(pt1.threshold, 2)}, the model catches ${formatNumber(pt1.TPR * 100, 0)}% of actual positives but misclassifies ${formatNumber(pt1.FPR * 100, 0)}% of actual negatives; at threshold ≈${formatNumber(pt2.threshold, 2)}, it catches ${formatNumber(pt2.TPR * 100, 0)}% of positives with ${formatNumber(pt2.FPR * 100, 0)}% false positives.`;
+    }
+
+    caption.textContent = `ROC curve with AUC = ${formatNumber(auc, 3)} (${interpretation}). The curve shows trade-offs between sensitivity and specificity across all possible thresholds.${exampleText}`;
+  }
+
+  if (aucDisplay) {
+    aucDisplay.textContent = formatNumber(auc, 3);
+  }
+}
+
+// ---------- Variable Importance (Forest Plot) ----------
+
+function renderVariableImportance(model) {
+  const plot = document.getElementById('plot-variable-importance');
+  const caption = document.getElementById('plot-importance-caption');
+
+  if (!plot) return;
+
+  if (!model || !window.Plotly || !model.terms) {
+    plot.innerHTML = '<p class="muted">Run an analysis to see variable importance.</p>';
+    if (caption) caption.textContent = '';
+    return;
+  }
+  
+  // Get all non-intercept terms with finite estimates
+  const terms = model.terms
+    .filter(t => t.type !== 'intercept' && Number.isFinite(t.estimate) && Number.isFinite(t.lower) && Number.isFinite(t.upper))
+    .map(t => ({
+      label: t.type === 'categorical' ? `${t.predictor}=${t.term}` : t.predictor,
+      or: Math.exp(t.estimate),
+      orLower: Math.exp(t.lower),
+      orUpper: Math.exp(t.upper),
+      significant: t.p < model.alpha
+    }));
+
+  if (!terms.length) {
+    plot.innerHTML = '<p class="muted">No predictors to display.</p>';
+    return;
+  }
+  
+  // Sort by distance from 1.0 (strongest effects first)
+  terms.sort((a, b) => Math.abs(Math.log(b.or)) - Math.abs(Math.log(a.or)));
+
+  const labels = terms.map(t => t.label);
+  const ors = terms.map(t => t.or);
+  const errors = terms.map(t => [t.or - t.orLower, t.orUpper - t.or]);
+  const colors = terms.map(t => t.significant ? '#2563eb' : '#9ca3af');
+
+  Plotly.newPlot(plot, [{
+    y: labels,
+    x: ors,
+    error_x: {
+      type: 'data',
+      symmetric: false,
+      array: errors.map(e => e[1]),
+      arrayminus: errors.map(e => e[0])
+    },
+    type: 'scatter',
+    mode: 'markers',
+    marker: { size: 10, color: colors },
+    hovertemplate: '%{y}<br>OR: %{x:.3f}<extra></extra>'
+  }], {
+    margin: { t: 20, r: 20, b: 60, l: 150 },
+    xaxis: {
+      title: 'Odds Ratio (95% CI) — log scale',
+      type: 'log',
+      tickmode: 'array',
+      tickvals: [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 5, 10, 20],
+      ticktext: ['0.25', '0.5', '0.75', '1.0', '1.5', '2.0', '3.0', '5.0', '10', '20'],
+      range: [Math.log10(Math.min(...ors, ...terms.map(t => t.orLower)) * 0.8), Math.log10(Math.max(...ors, ...terms.map(t => t.orUpper)) * 1.2)]
+    },
+    yaxis: { automargin: true },
+    shapes: [{
+      type: 'line',
+      x0: 1,
+      x1: 1,
+      y0: -0.5,
+      y1: labels.length - 0.5,
+      line: { color: '#000', width: 1, dash: 'dash' }
+    }]
+  }, { responsive: true });
+
+  if (caption) {
+    const sigCount = terms.filter(t => t.significant).length;
+    let captionText = `Forest plot of odds ratios with 95% confidence intervals. ${sigCount} of ${terms.length} predictors show statistically significant effects (colored blue). Variables sorted by effect strength.`;
+    
+    // Add a concrete example from the strongest effect
+    if (terms.length > 0) {
+      const strongest = terms[0];
+      const pctChange = ((strongest.or - 1) * 100).toFixed(0);
+      const direction = strongest.or > 1 ? 'increases' : 'decreases';
+      captionText += ` Example: ${strongest.label} has OR=${formatNumber(strongest.or, 2)}, meaning it ${direction} the odds by ${Math.abs(pctChange)}% (multiplies by ${formatNumber(strongest.or, 2)}).`;
+    }
+    
+    caption.textContent = captionText;
+  }
+}
+
+// ---------- Predicted Probability Distribution ----------
+
+function renderProbabilityDistribution(model) {
+  const plot = document.getElementById('plot-prob-distribution');
+  const caption = document.getElementById('plot-prob-caption');
+
+  if (!plot) return;
+
+  if (!model || !window.Plotly || !Array.isArray(model.fitted) || !Array.isArray(model.y)) {
+    plot.innerHTML = '<p class="muted">Run an analysis to see probability distribution.</p>';
+    if (caption) caption.textContent = '';
+    return;
+  }
+
+  const focalLabel = model.outcomeFocalLabel != null ? String(model.outcomeFocalLabel) : '1';
+  const nonFocalLabel = model.outcomeNonFocalLabel != null ? String(model.outcomeNonFocalLabel) : '0';
+
+  const probs0 = [];
+  const probs1 = [];
+
+  for (let i = 0; i < model.y.length; i++) {
+    if (model.y[i] === 0) {
+      probs0.push(model.fitted[i]);
+    } else {
+      probs1.push(model.fitted[i]);
+    }
+  }
+
+  Plotly.newPlot(plot, [
+    {
+      x: probs0,
+      type: 'histogram',
+      name: `Actual = ${nonFocalLabel}`,
+      opacity: 0.6,
+      marker: { color: '#3b82f6' },
+      xbins: { size: 0.05 }
+    },
+    {
+      x: probs1,
+      type: 'histogram',
+      name: `Actual = ${focalLabel}`,
+      opacity: 0.6,
+      marker: { color: '#ef4444' },
+      xbins: { size: 0.05 }
+    }
+  ], {
+    margin: { t: 20, r: 20, b: 60, l: 60 },
+    xaxis: { title: 'Predicted Probability', range: [0, 1] },
+    yaxis: { title: 'Frequency' },
+    barmode: 'overlay',
+    showlegend: true,
+    legend: { x: 0.7, y: 0.95 }
+  }, { responsive: true });
+
+  if (caption) {
+    const overlap = probs0.length > 0 && probs1.length > 0;
+    caption.textContent = overlap
+      ? `Distribution of predicted probabilities by actual outcome. Good separation indicates strong discrimination.`
+      : `Distribution of predicted probabilities.`;
+  }
+}
+
+// ---------- Separation Detection ----------
+
+function detectSeparation(model) {
+  if (!model || !model.terms) return null;
+
+  const issues = [];
+
+  model.terms.forEach(term => {
+    if (term.type === 'intercept') return;
+
+    // Check for very large coefficients
+    if (Math.abs(term.estimate) > 10) {
+      issues.push({
+        predictor: term.type === 'categorical' ? `${term.predictor}=${term.term}` : term.predictor,
+        coefficient: term.estimate,
+        se: term.se,
+        type: 'large_coefficient'
+      });
+    }
+
+    // Check for very large standard errors
+    if (term.se > 5) {
+      issues.push({
+        predictor: term.type === 'categorical' ? `${term.predictor}=${term.term}` : term.predictor,
+        coefficient: term.estimate,
+        se: term.se,
+        type: 'large_se'
+      });
+    }
+  });
+
+  return issues.length > 0 ? issues : null;
+}
+
+function renderSeparationWarning(model) {
+  const warningDiv = document.getElementById('separation-warning');
+  const messageEl = document.getElementById('separation-message');
+
+  if (!warningDiv || !messageEl) return;
+
+  const issues = detectSeparation(model);
+
+  if (!issues) {
+    warningDiv.style.display = 'none';
+    return;
+  }
+
+  warningDiv.style.display = 'block';
+
+  const predictors = [...new Set(issues.map(i => i.predictor))];
+
+  let message = `The following predictor(s) show signs of separation or quasi-separation: <strong>${predictors.join(', ')}</strong>. `;
+  message += `This occurs when a predictor (nearly) perfectly predicts the outcome, leading to inflated coefficients and standard errors. `;
+  message += `<strong>Recommendations:</strong> (1) Check if any predictor level has 100% or 0% of the focal outcome; (2) Consider removing the problematic predictor(s); (3) Collect more data; (4) Use penalized regression (ridge/lasso).`;
+  
+  messageEl.innerHTML = message;
+}
+
+// ---------- Sample Size Adequacy Check ----------
+
+function checkSampleSizeAdequacy(model) {
+  if (!model || !Array.isArray(model.y)) return null;
+
+  const focalCount = model.y.filter(y => y === 1).length;
+  const nonFocalCount = model.y.filter(y => y === 0).length;
+  const minEvents = Math.min(focalCount, nonFocalCount);
+
+  // Count number of predictors (excluding intercept)
+  const numPredictors = model.terms ? model.terms.filter(t => t.type !== 'intercept').length : 0;
+
+  if (numPredictors === 0) return null;
+
+  const epv = minEvents / numPredictors; // Events per variable
+
+  return {
+    minEvents,
+    numPredictors,
+    epv,
+    adequate: epv >= 10
+  };
+}
+
+function renderSampleSizeWarning(model) {
+  const warningDiv = document.getElementById('sample-size-warning');
+  const messageEl = document.getElementById('sample-size-message');
+
+  if (!warningDiv || !messageEl) return;
+
+  const check = checkSampleSizeAdequacy(model);
+
+  if (!check || check.adequate) {
+    warningDiv.style.display = 'none';
+    return;
+  }
+
+  warningDiv.style.display = 'block';
+
+  let message = `With ${check.minEvents} events (minority class) and ${check.numPredictors} predictor(s), you have ${formatNumber(check.epv, 1)} events per variable (EPV). `;
+
+  if (check.epv < 5) {
+    message += `<strong>This is critically low</strong> (EPV < 5). Model estimates are likely unreliable. Strongly consider: (1) reducing the number of predictors, (2) collecting more data, or (3) combining this with external data.`;
+  } else if (check.epv < 10) {
+    message += `The rule of thumb is EPV ≥ 10 for stable estimates. Consider simplifying your model by removing less important predictors or collecting additional data.`;
+  }
+
+  messageEl.innerHTML = message;
+}
+
+// ---------- Hosmer-Lemeshow Test ----------
+
+function hosmerLemeshowTest(model, groups = 10) {
+  if (!model || !Array.isArray(model.fitted) || !Array.isArray(model.y)) {
+    return null;
+  }
+
+  const n = model.y.length;
+  if (n < groups * 2) groups = Math.max(2, Math.floor(n / 5)); // Reduce groups for small samples
+
+  // Create groups based on predicted probabilities
+  const data = model.fitted.map((p, i) => ({ prob: p, outcome: model.y[i] }));
+  data.sort((a, b) => a.prob - b.prob);
+
+  const groupSize = Math.ceil(n / groups);
+  let chiSq = 0;
+
+  for (let g = 0; g < groups; g++) {
+    const start = g * groupSize;
+    const end = Math.min((g + 1) * groupSize, n);
+    const groupData = data.slice(start, end);
+
+    if (groupData.length === 0) continue;
+
+    const observed1 = groupData.filter(d => d.outcome === 1).length;
+    const observed0 = groupData.length - observed1;
+
+    const expected1 = groupData.reduce((sum, d) => sum + d.prob, 0);
+    const expected0 = groupData.length - expected1;
+
+    // Pearson chi-square contribution
+    if (expected1 > 0) {
+      chiSq += Math.pow(observed1 - expected1, 2) / expected1;
+    }
+    if (expected0 > 0) {
+      chiSq += Math.pow(observed0 - expected0, 2) / expected0;
+    }
+  }
+
+  const df = groups - 2; // Degrees of freedom
+  const pValue = df > 0 ? (1 - chiSquareCdf(chiSq, df)) : NaN;
+
+  return {
+    chiSq,
+    df,
+    pValue,
+    groups
+  };
+}
+
+function renderHosmerLemeshow(model) {
+  const resultEl = document.getElementById('hl-test-result');
+
+  if (!resultEl) return;
+
+  if (!model) {
+    resultEl.textContent = 'Run the analysis to see calibration test.';
+    return;
+  }
+
+  const test = hosmerLemeshowTest(model);
+
+  if (!test) {
+    resultEl.textContent = 'Unable to compute Hosmer-Lemeshow test (insufficient data).';
+    return;
+  }
+
+  let interpretation = '';
+  if (test.pValue >= 0.05) {
+    interpretation = '(good calibration - no evidence of poor fit)';
+  } else if (test.pValue >= 0.01) {
+    interpretation = '(marginal calibration - some concern about fit)';
+  } else {
+    interpretation = '(poor calibration - predicted probabilities may be biased)';
+  }
+  
+  resultEl.innerHTML = `<strong>χ²(${test.df}) = ${formatNumber(test.chiSq, 3)}, p = ${formatP(test.pValue)}</strong> ${interpretation}. ` +
+    `The test divided observations into ${test.groups} groups by predicted probability and compared observed vs. expected frequencies.`;
 }
 
 // ---------- Main update ----------
@@ -2318,6 +3020,7 @@ function updateResults() {
     const model = buildDesignMatrixAndFit(filtered, predictorsInfo, selectedOutcome, alpha);
     if (model.error) { clearOutputs(model.error); return; }
     lastModel = model;
+    window.lastModel = lastModel;  // Sync for tutorial
 
     // ---------- NEW: log this run to the Django backend (fire-and-forget) ----------
     const scenarioSelect = document.getElementById('scenario-select');
@@ -2362,6 +3065,20 @@ function updateResults() {
     renderActualFitted(model);
     renderCoefInterpretation(model);
     
+    // Render confusion matrix and classification metrics
+    const thresholdInput = document.getElementById('confusion-threshold');
+    const threshold = thresholdInput ? parseFloat(thresholdInput.value) : 0.5;
+    renderConfusionMatrix(model, Number.isFinite(threshold) ? threshold : 0.5);
+    populateClassificationMetrics(model, Number.isFinite(threshold) ? threshold : 0.5);
+    
+    // Render new diagnostic features
+    renderSeparationWarning(model);
+    renderSampleSizeWarning(model);
+    renderROCCurve(model);
+    renderVariableImportance(model);
+    renderProbabilityDistribution(model);
+    renderHosmerLemeshow(model);
+    
     // Track successful analysis with debouncing
     renderCount++;
     const now = Date.now();
@@ -2392,6 +3109,7 @@ function updateResults() {
   if (scenarioContainer) defaultScenarioDescription = scenarioContainer.innerHTML;
   setupRawUpload();
   setupScenarioSelector();
+  setupConfusionMatrixControls();
     const alphaInput = document.getElementById('alpha');
   if (alphaInput) {
     alphaInput.addEventListener('input', () => syncConfidenceButtonsToAlpha(parseFloat(alphaInput.value)));
@@ -2454,3 +3172,155 @@ function updateResults() {
     downloadTextFile('logistic_regression_predicted_probabilities.csv', lines.join('\n'), { mimeType: 'text/csv' });
   }
 
+// ---------- Confusion Matrix Functions ----------
+
+function calculateConfusionMatrix(model, threshold = 0.5) {
+  if (!model || !Array.isArray(model.fitted) || !Array.isArray(model.y)) {
+    return null;
+  }
+  
+  let TP = 0, TN = 0, FP = 0, FN = 0;
+  
+  for (let i = 0; i < model.y.length; i++) {
+    const actual = model.y[i];
+    const predicted = model.fitted[i] >= threshold ? 1 : 0;
+    
+    if (actual === 1 && predicted === 1) TP++;
+    else if (actual === 0 && predicted === 0) TN++;
+    else if (actual === 0 && predicted === 1) FP++;
+    else if (actual === 1 && predicted === 0) FN++;
+  }
+  
+  const total = TP + TN + FP + FN;
+  const accuracy = total > 0 ? (TP + TN) / total : NaN;
+  const sensitivity = (TP + FN) > 0 ? TP / (TP + FN) : NaN;
+  const specificity = (TN + FP) > 0 ? TN / (TN + FP) : NaN;
+  const precision = (TP + FP) > 0 ? TP / (TP + FP) : NaN;
+  const npv = (TN + FN) > 0 ? TN / (TN + FN) : NaN;
+  const f1 = (precision + sensitivity) > 0 ? 2 * (precision * sensitivity) / (precision + sensitivity) : NaN;
+  
+  return {
+    TP, TN, FP, FN,
+    accuracy, sensitivity, specificity, precision, npv, f1,
+    threshold
+  };
+}
+
+function renderConfusionMatrix(model, threshold = 0.5) {
+  const plot = document.getElementById('plot-confusion-matrix');
+  const caption = document.getElementById('plot-confusion-caption');
+  const thresholdDisplay = document.getElementById('cm-threshold-display');
+  
+  if (!plot) return;
+  
+  if (!model || !window.Plotly) {
+    plot.innerHTML = '<p class="muted">Run an analysis to see the confusion matrix.</p>';
+    if (caption) caption.textContent = '';
+    return;
+  }
+  
+  const cm = calculateConfusionMatrix(model, threshold);
+  if (!cm) {
+    plot.innerHTML = '<p class="muted">Unable to calculate confusion matrix.</p>';
+    return;
+  }
+  
+  if (thresholdDisplay) {
+    thresholdDisplay.textContent = threshold.toFixed(2);
+  }
+  
+  const focalLabel = model.outcomeFocalLabel != null ? String(model.outcomeFocalLabel) : '1';
+  const nonFocalLabel = model.outcomeNonFocalLabel != null ? String(model.outcomeNonFocalLabel) : '0';
+  
+  const total = cm.TN + cm.FP + cm.FN + cm.TP;
+  
+  // Create heatmap visualization
+  const z = [
+    [cm.TN, cm.FP],  // Actual 0
+    [cm.FN, cm.TP]   // Actual 1
+  ];
+  
+  // Calculate percentages and format as "XX.X% (count)"
+  const labels = [
+    [
+      { type: 'True Negative', pct: total > 0 ? (cm.TN / total * 100).toFixed(1) : '0.0', count: cm.TN },
+      { type: 'False Positive', pct: total > 0 ? (cm.FP / total * 100).toFixed(1) : '0.0', count: cm.FP }
+    ],
+    [
+      { type: 'False Negative', pct: total > 0 ? (cm.FN / total * 100).toFixed(1) : '0.0', count: cm.FN },
+      { type: 'True Positive', pct: total > 0 ? (cm.TP / total * 100).toFixed(1) : '0.0', count: cm.TP }
+    ]
+  ];
+  
+  const annotations = [];
+  for (let i = 0; i < 2; i++) {
+    for (let j = 0; j < 2; j++) {
+      const label = labels[i][j];
+      annotations.push({
+        x: j,
+        y: i,
+        text: `<b>${label.type}</b><br>${label.pct}% (${label.count})`,
+        showarrow: false,
+        font: { size: 14, color: z[i][j] > total / 4 ? 'white' : 'black' }
+      });
+    }
+  }
+  
+  Plotly.newPlot(plot, [{
+    z: z,
+    x: [`Predicted<br>${escapeHtml(nonFocalLabel)}`, `Predicted<br>${escapeHtml(focalLabel)}`],
+    y: [`Actual<br>${escapeHtml(nonFocalLabel)}`, `Actual<br>${escapeHtml(focalLabel)}`],
+    type: 'heatmap',
+    colorscale: [
+      [0, '#f0f9ff'],
+      [0.5, '#3b82f6'],
+      [1, '#1e40af']
+    ],
+    showscale: false,
+    hovertemplate: '%{x}<br>%{y}<br>Count: %{z}<extra></extra>'
+  }], {
+    margin: { t: 40, r: 20, b: 80, l: 120 },
+    xaxis: { side: 'bottom', tickfont: { size: 12 } },
+    yaxis: { autorange: 'reversed', tickfont: { size: 12 } },
+    annotations: annotations
+  }, { responsive: true });
+  
+  if (caption) {
+    caption.textContent = `Confusion matrix at threshold = ${threshold.toFixed(2)}. ` +
+      `Diagonal cells show correct predictions (TN=${cm.TN}, TP=${cm.TP}). ` +
+      `Off-diagonal cells show errors (FP=${cm.FP}, FN=${cm.FN}).`;
+  }
+}
+
+function populateClassificationMetrics(model, threshold = 0.5) {
+  if (!model) return;
+  
+  const cm = calculateConfusionMatrix(model, threshold);
+  if (!cm) return;
+  
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = Number.isFinite(value) ? (value * 100).toFixed(2) + '%' : '--';
+  };
+  
+  set('metric-accuracy', cm.accuracy);
+  set('metric-sensitivity', cm.sensitivity);
+  set('metric-specificity', cm.specificity);
+  set('metric-precision', cm.precision);
+  set('metric-f1', cm.f1);
+  set('metric-npv', cm.npv);
+}
+
+function setupConfusionMatrixControls() {
+  const thresholdInput = document.getElementById('confusion-threshold');
+  if (!thresholdInput) return;
+  
+  thresholdInput.addEventListener('input', () => {
+    const threshold = parseFloat(thresholdInput.value);
+    if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) return;
+    if (lastModel) {
+      renderConfusionMatrix(lastModel, threshold);
+      populateClassificationMetrics(lastModel, threshold);
+    }
+  });
+}
