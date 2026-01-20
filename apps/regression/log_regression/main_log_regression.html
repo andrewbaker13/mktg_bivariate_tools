@@ -181,7 +181,7 @@
     <section class="visual-output" aria-labelledby="visual-output-heading">
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       <div class="card">
-        <article class="chart-card">
+        <article class="chart-card" id="confusion-matrix-card">
           <h3>Confusion Matrix</h3>
           <details class="confusion-advanced-options">
             <summary>Advanced Options</summary>
@@ -203,7 +203,7 @@
               <strong>Classification Metrics:</strong> <strong>Accuracy</strong> = overall % correct. <strong>Sensitivity (Recall)</strong> = % of actual 1s correctly identified. <strong>Specificity</strong> = % of actual 0s correctly identified. <strong>Precision (PPV)</strong> = % of predicted 1s that are actually 1. <strong>F1 Score</strong> = harmonic mean of precision and recall (balances both). <strong>NPV</strong> = % of predicted 0s that are actually 0.
             </p>
           </details>
-          <div class="metrics-panel" style="margin-top: 1rem;">
+          <div class="metrics-panel" id="classification-metrics-panel" style="margin-top: 1rem;">
             <h4>Classification Performance (at threshold = <span id="cm-threshold-display">0.5</span>)</h4>
             <div class="metric-output"><span>Accuracy:</span><span id="metric-accuracy" class="dynamic-value">&ndash;</span></div>
             <div class="metric-output"><span>Sensitivity (Recall):</span><span id="metric-sensitivity" class="dynamic-value">&ndash;</span></div>
@@ -241,7 +241,7 @@
             </p>
           </details>
         </article>
-        <article class="chart-card">
+        <article class="chart-card" id="predicted-probabilities-section">
           <h3>Predicted probabilities vs. focal predictor</h3>
           <div class="effect-controls">
             <label for="effect-focal-select">Focal predictor</label>

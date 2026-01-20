@@ -2035,9 +2035,11 @@ function renderNarratives(model) {
 
   const fmt = (v, d = 3) => formatNumber(v, d);
 
-  const modelPVal = Number.isFinite(model.modelChi2) && model.dfModel > 0
-    ? 1 - chiSquareCdf(model.modelChi2, model.dfModel)
-    : NaN;
+  // Use pre-calculated modelPValue if available, else calculate
+  const modelPVal = model.modelPValue !== undefined ? model.modelPValue :
+    (Number.isFinite(model.modelChi2) && model.dfModel > 0
+      ? 1 - chiSquareCdf(model.modelChi2, model.dfModel)
+      : NaN);
 
   let text =
     `A logistic regression was fitted predicting ${escapeHtml(selectedOutcome || 'the outcome')} from ` +
@@ -3019,8 +3021,37 @@ function updateResults() {
   try {
     const model = buildDesignMatrixAndFit(filtered, predictorsInfo, selectedOutcome, alpha);
     if (model.error) { clearOutputs(model.error); return; }
+    
+    // Calculate and attach additional properties for tutorial
+    const modelPVal = Number.isFinite(model.modelChi2) && model.dfModel > 0
+      ? 1 - chiSquareCdf(model.modelChi2, model.dfModel)
+      : NaN;
+    model.modelPValue = modelPVal;
+    
+    // Calculate confusion matrix at default threshold and attach
+    const cmData = calculateConfusionMatrix(model, 0.5);
+    if (cmData) {
+      // Attach as 2D array: [[TN, FP], [FN, TP]]
+      model.confusionMatrix = [
+        [cmData.TN, cmData.FP],  // actual = 0
+        [cmData.FN, cmData.TP]   // actual = 1
+      ];
+      model.accuracy = cmData.accuracy;
+      model.sensitivity = cmData.sensitivity;
+      model.specificity = cmData.specificity;
+      model.precision = cmData.precision;
+      model.f1 = cmData.f1;
+    }
+    
     lastModel = model;
     window.lastModel = lastModel;  // Sync for tutorial
+    
+    console.log('✅ Model fitted and synced to window.lastModel');
+    console.log('   modelPValue:', model.modelPValue);
+    console.log('   pseudoR2:', model.pseudoR2);
+    console.log('   confusionMatrix:', model.confusionMatrix);
+    console.log('   accuracy:', model.accuracy);
+    console.log('   terms count:', model.terms ? model.terms.length : 0);
 
     // ---------- NEW: log this run to the Django backend (fire-and-forget) ----------
     const scenarioSelect = document.getElementById('scenario-select');
@@ -3039,15 +3070,11 @@ function updateResults() {
       standardize_continuous: standardize
     };
 
-    const modelPVal = Number.isFinite(model.modelChi2) && model.dfModel > 0
-      ? 1 - chiSquareCdf(model.modelChi2, model.dfModel)
-      : NaN;
-
     const summaryText =
       `Logistic regression run: outcome=${selectedOutcome}, ` +
       `${selectedPredictors.length} predictor(s), n=${model.n}, ` +
       `chi2(${model.dfModel})=${formatNumber(model.modelChi2, 3)}, ` +
-      `p=${formatP(modelPVal)}, pseudoR2=${formatNumber(model.pseudoR2, 3)}, ` +
+      `p=${formatP(model.modelPValue)}, pseudoR2=${formatNumber(model.pseudoR2, 3)}, ` +
       `alpha=${formatAlpha(alpha)}.`;
 
     // Fire-and-forget; we don't await so UI stays snappy.

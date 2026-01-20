@@ -21,7 +21,7 @@ const LogregTutorial = {
             title: "🎓 Welcome to Logistic Regression for Marketing",
             targetId: null,
             content: `
-                <p>Welcome, student! Today we're going to master <strong>Logistic Regression</strong> to solve a real marketing problem.</p>
+                <p>Welcome! Today we're going to build a foundational understanding of <strong>Logistic Regression</strong> by working through a real marketing problem.</p>
                 <p><strong>The Mission:</strong> Your company is testing <strong>promotional incentives</strong> (discounts) to increase conversion rates. We need to predict <strong>WHO will convert</strong> based on promo amount, email engagement, and purchase history.</p>
                 <p>I'll guide you through each step:</p>
                 <ol>
@@ -33,9 +33,6 @@ const LogregTutorial = {
                     <li>Making Business Decisions</li>
                 </ol>
                 <p><strong>Why Logistic Regression?</strong> Unlike regular regression, logistic regression predicts <em>probabilities</em> for binary outcomes (convert/don't convert, click/don't click). It's perfect for marketing questions!</p>
-                <div style="margin-top: 20px;">
-                    <button class="btn-secondary full-width" onclick="LogregTutorial.stop()">Skip Tutorial (Expert Mode)</button>
-                </div>
             `,
             quizzes: [
                 {
@@ -91,15 +88,15 @@ const LogregTutorial = {
                     <li><strong>Outcome (Y):</strong> What we're trying to predict - MUST be binary (two categories like yes/no, 0/1)</li>
                     <li><strong>Predictors (X):</strong> Variables we think influence the outcome (can be numeric or categorical)</li>
                 </ul>
+                <p><strong>Good news:</strong> Predictors are already selected by default for this scenario, so you can focus on understanding how to configure them for proper interpretation.</p>
                 <p><strong>Critical for A/B Tests:</strong> The <strong>high_incentive</strong> variable represents your treatment (1 = high promo, 0 = standard). Even though it's coded as 0/1, it should be treated as <strong>categorical</strong> (not numeric) because it represents two distinct groups, not a continuous scale.</p>
                 <p class="task">👉 <strong>Task:</strong></p>
                 <ol>
-                    <li>Select <strong>"converted"</strong> as your Outcome variable</li>
-                    <li>Check that outcome shows "2 unique values" in the preview</li>
-                    <li>Select <strong>high_incentive</strong> as a predictor</li>
+                    <li>Verify <strong>"converted"</strong> is selected as your Outcome variable</li>
+                    <li>Confirm <strong>high_incentive</strong> is selected as a predictor</li>
                     <li><strong>Change high_incentive from "numeric" to "categorical"</strong> using the dropdown next to it</li>
                     <li>Set the <strong>reference level to "0"</strong> (this is your control/baseline group)</li>
-                    <li>Add at least one more predictor (e.g., prior_purchases, days_since_visit)</li>
+                    <li>Verify at least one more predictor is selected (e.g., prior_purchases, days_since_visit)</li>
                 </ol>
                 <p style="background: #fef3c7; padding: 10px; border-left: 3px solid #f59e0b; border-radius: 4px; margin-top: 10px;">⚠️ <strong>Why this matters:</strong> Setting reference=0 means coefficients will show the effect of the HIGH incentive compared to the STANDARD offer. This makes interpretation intuitive for business decisions!</p>
             `,
@@ -156,27 +153,83 @@ const LogregTutorial = {
             content: `
                 <p>Now comes the magic! We fit the model using <strong>Maximum Likelihood Estimation (MLE)</strong>.</p>
                 <p><strong>How it works:</strong> The algorithm tries millions of coefficient combinations to find the ones that best explain who converted vs. who didn't in your data.</p>
+                <p><strong>Understanding the metrics:</strong> There are many different metrics used to evaluate model fit in logistic regression. The metrics shown here represent some of the most common ones. While they differ in formulation and emphasis, they are all attempting to answer a similar question: <em>How well does the model fit the observed data, based on different criteria?</em></p>
                 <p>Watch for these key metrics in the highlighted panel:</p>
                 <ul>
-                    <li><strong>Log-likelihood:</strong> How well the model fits the data (higher is better)</li>
-                    <li><strong>Null/Residual Deviance:</strong> Comparison of model fit to baseline</li>
-                    <li><strong>Model chi-square & p-value:</strong> Is your model statistically significant?</li>
+                    <li><strong>Log-likelihood:</strong> Measures how well the model fits the data. Values are typically negative; higher values (closer to zero) indicate better fit.</li>
+                    <li><strong>Model chi-square & p-value:</strong> Tests whether your model is statistically significant</li>
                     <li><strong>Pseudo R²:</strong> Rough measure of model fit (0-1 scale, ~0.2-0.4 is often good)</li>
                 </ul>
                 <p class="task">👉 <strong>Task:</strong> The model should fit automatically. Look at the highlighted <strong>Model Metrics</strong> panel and verify that values appear for Model p-value and Pseudo R².</p>
             `,
+            getDynamicQuizzes: () => {
+                const model = window.lastModel;
+                
+                // If no model, return fallback questions
+                if (!model) return null;
+                
+                // Try to get p-value - check multiple possible property names
+                const pValue = model.modelPValue ?? model.pValue ?? model.p_value ?? model.modelP ?? model.chiSquarePValue;
+                
+                // Try to get pseudo R2 - check multiple possible property names  
+                const pseudoR2 = model.pseudoR2 ?? model.mcFaddenR2 ?? model.pseudo_r2 ?? model.r2_mcfadden;
+                
+                // If we don't have the required data, use fallback
+                if (pValue === undefined || pseudoR2 === undefined) return null;
+                
+                const pValueDisplay = pValue < 0.001 ? "< 0.001" : pValue.toFixed(3);
+                const isSignificant = pValue < 0.05;
+                const pseudoR2Display = pseudoR2.toFixed(3);
+                
+                return [
+                    {
+                        question: `Look at the 'Model p-value' in the metrics panel. What value do you see?`,
+                        options: ["Greater than 0.10", pValueDisplay, "Exactly 1.0"],
+                        answer: 1,
+                        feedback: `Correct! The model p-value is ${pValueDisplay}.`
+                    },
+                    {
+                        question: `With a model p-value of ${pValueDisplay}, is this model statistically significant at α=0.05?`,
+                        options: [
+                            isSignificant ? "Yes, p < 0.05 means the model is significant" : "No, p ≥ 0.05 means not significant",
+                            isSignificant ? "No, it's not significant" : "Yes, it's significant",
+                            "Can't tell from p-value"
+                        ],
+                        answer: 0,
+                        feedback: isSignificant ? 
+                            "Perfect! A significant model p-value means your predictors significantly improve predictions vs. random guessing." :
+                            "Correct. With p ≥ 0.05, we cannot conclude the model performs better than a baseline."
+                    },
+                    {
+                        question: `What is the Pseudo R² value shown in the metrics panel?`,
+                        options: [
+                            `About ${(pseudoR2 * 0.5).toFixed(3)}`,
+                            `About ${pseudoR2Display}`,
+                            `About ${(pseudoR2 * 2).toFixed(3)}`
+                        ],
+                        answer: 1,
+                        feedback: `Correct! The Pseudo R² is ${pseudoR2Display}. ${pseudoR2 >= 0.4 ? "This indicates strong model fit." : pseudoR2 >= 0.2 ? "This is considered a reasonable fit for logistic regression." : "This is relatively low, but still may indicate meaningful effects."}`
+                    }
+                ];
+            },
             quizzes: [
                 {
-                    question: "Look at the 'Model p-value' metric. If it's < 0.05, what does that mean?",
-                    options: ["The model is broken", "The predictors significantly improve predictions vs. guessing", "The data is random"],
-                    answer: 1,
-                    feedback: "Perfect! A significant model p-value means your predictors add real predictive power."
+                    question: "Look at the Model Metrics panel. Which metric tests whether the model is statistically significant?",
+                    options: ["Model p-value", "Log-likelihood", "Number of observations"],
+                    answer: 0,
+                    feedback: "Correct! The model p-value tests whether your predictors significantly improve predictions compared to random guessing. If p < 0.05, the model is statistically significant."
                 },
                 {
-                    question: "What does 'Pseudo R²' represent?",
-                    options: ["Exact variance explained", "A rough measure of model fit (higher is better)", "The number of predictors"],
-                    answer: 1,
-                    feedback: "Correct! Pseudo R² is like R² in linear regression but adapted for logistic models. Values around 0.2-0.4 are often considered good."
+                    question: "What does Pseudo R² measure?",
+                    options: ["Approximate model fit quality (0-1 scale, higher is better)", "The exact number of correct predictions", "The model runtime"],
+                    answer: 0,
+                    feedback: "Correct! Pseudo R² is analogous to R² in linear regression. Values around 0.2-0.4 are often considered good for logistic regression."
+                },
+                {
+                    question: "Log-likelihood values are typically negative. What indicates better model fit?",
+                    options: ["Values closer to zero (e.g., -50 is better than -100)", "More negative values", "Positive values"],
+                    answer: 0,
+                    feedback: "Correct! Since log-likelihood is negative, values closer to zero indicate better fit. For example, -50 is better than -100."
                 }
             ],
             check: () => {
@@ -207,48 +260,72 @@ const LogregTutorial = {
             targetId: 'coefficient-estimates-card',
             content: `
                 <p>Great! Your model is fitted. Now let's interpret what it means for your business.</p>
-                <p>Look at the <strong>Coefficient Estimates</strong> table. Each row shows one predictor:</p>
+                <p>Look at the <strong>Coefficient Estimates</strong> table. Each row shows one predictor with several statistics:</p>
+                <p><strong>Estimate (Log-Odds):</strong> The raw coefficient from the model.</p>
                 <ul>
-                    <li><strong>Estimate (log-odds):</strong> The raw coefficient. Positive = increases conversion, negative = decreases.</li>
-                    <li><strong>Odds Ratio:</strong> MUCH easier to interpret! OR = 1.25 means a 25% increase in odds. OR = 0.80 means a 20% decrease.</li>
-                    <li><strong>p-value:</strong> Is this effect real or just noise? p < 0.05 = statistically significant (reliable).</li>
-                    <li><strong>Confidence Interval:</strong> The range where the true effect likely lies.</li>
+                    <li>A <strong>positive</strong> estimate indicates that increases in this predictor are associated with an <strong>increased likelihood of conversion</strong>.</li>
+                    <li>A <strong>negative</strong> estimate indicates that increases in this predictor are associated with a <strong>decreased likelihood of conversion</strong>.</li>
+                    <li>The interpretation references the <strong>specific variable</strong> being examined (e.g., "days_since_visit").</li>
                 </ul>
-                <p><strong>Business Translation:</strong> If a predictor has OR = 1.15 with p = 0.02, you can confidently say it multiplies conversion odds by 1.15 (15% increase).</p>
-                <p class="task">👉 <strong>Task:</strong> Look at the highlighted table and find the predictor with the LARGEST odds ratio (furthest from 1.0).</p>
+                <p><strong>Odds Ratio (OR):</strong> Much easier to interpret than log-odds!</p>
+                <ul>
+                    <li>An OR > 1.0 means this predictor <strong>increases odds of conversion</strong>.</li>
+                    <li>An OR < 1.0 means this predictor <strong>decreases odds of conversion</strong>.</li>
+                    <li>Example: OR = 1.25 means the odds increase by 25%. OR = 0.80 means the odds decrease by 20%.</li>
+                    <li>The percent change is calculated directly from the actual odds ratio shown in the table.</li>
+                </ul>
+                <p><strong>p-value:</strong> Statistical significance for this specific predictor.</p>
+                <ul>
+                    <li>Tests whether the observed effect for <strong>this predictor</strong> likely reflects a real relationship vs. random noise.</li>
+                    <li>p < 0.05 generally indicates the predictor has a statistically reliable effect.</li>
+                    <li>This is about <strong>variable-level inference</strong>, not overall model fit.</li>
+                </ul>
+                <p class="task">👉 <strong>Task:</strong> Look at the highlighted table and locate the row for <strong>"days_since_visit"</strong> (or "days_since_last_visit"). Note its Odds Ratio and p-value.</p>
             `,
             getDynamicQuizzes: () => {
                 const model = window.lastModel;
                 if (!model || !model.terms) return [];
                 
-                // Find strongest predictor (non-intercept, furthest from OR=1)
-                const nonIntercept = model.terms.filter(t => t.predictor !== 'Intercept');
-                if (nonIntercept.length === 0) return [];
+                // Find days_since_visit term
+                const daysTerm = model.terms.find(t => 
+                    (t.predictor && t.predictor.toLowerCase().includes('days')) ||
+                    (t.term && t.term.toLowerCase().includes('days'))
+                );
                 
-                const strongest = nonIntercept.reduce((max, term) => {
-                    const or = Math.exp(term.estimate);
-                    const maxOr = Math.exp(max.estimate);
-                    return Math.abs(Math.log(or)) > Math.abs(Math.log(maxOr)) ? term : max;
-                });
+                if (!daysTerm) return [];
                 
-                const strongestOR = Math.exp(strongest.estimate).toFixed(2);
-                const strongestName = strongest.term || strongest.predictor;
-                const isSig = strongest.p < 0.05;
+                const daysOR = Math.exp(daysTerm.estimate);
+                const daysORDisplay = daysOR.toFixed(3);
+                const daysPValue = daysTerm.p;
+                const daysPDisplay = daysPValue < 0.001 ? "< 0.001" : daysPValue.toFixed(3);
+                const isSig = daysPValue < 0.05;
+                const daysName = daysTerm.term || daysTerm.predictor;
+                
+                const direction = daysOR > 1.0 ? "increase" : "decrease";
+                const pctChange = Math.abs((daysOR - 1.0) * 100).toFixed(1);
                 
                 return [
                     {
-                        question: `Look at the table. What is the Odds Ratio for '${strongestName}'?`,
-                        options: [`About ${(parseFloat(strongestOR) * 0.5).toFixed(2)}`, `About ${strongestOR}`, `About ${(parseFloat(strongestOR) * 2).toFixed(2)}`],
+                        question: `Look at the table. What is the Odds Ratio for '${daysName}'?`,
+                        options: [
+                            `About ${(daysOR * 0.5).toFixed(3)}`, 
+                            `About ${daysORDisplay}`, 
+                            `About ${(daysOR * 1.5).toFixed(3)}`
+                        ],
                         answer: 1,
-                        feedback: `Correct! The OR is ${strongestOR}. ${parseFloat(strongestOR) > 1 ? `This means the odds increase by ${((parseFloat(strongestOR) - 1) * 100).toFixed(0)}%` : `This means the odds decrease by ${((1 - parseFloat(strongestOR)) * 100).toFixed(0)}%`}.`
+                        feedback: `Correct! The OR is ${daysORDisplay}. This means each additional day since last visit is associated with a ${pctChange}% ${direction} in the odds of conversion.`
                     },
                     {
-                        question: `Is '${strongestName}' statistically significant at α=0.05?`,
-                        options: [`Yes, p < 0.05`, `No, p ≥ 0.05`, `Can't tell from the table`],
-                        answer: isSig ? 0 : 1,
-                        feedback: isSig ? 
-                            `Correct! The p-value is < 0.05, so this effect is statistically reliable.` :
-                            `Correct! The p-value is ≥ 0.05, so we can't confidently say this predictor matters at the 5% significance level.`
+                        question: `What does the OR for '${daysName}' tell you about the direction of the effect?`,
+                        options: [
+                            daysOR > 1.0 ? "More days since visit → higher conversion odds" : "More days since visit → lower conversion odds",
+                            daysOR > 1.0 ? "More days since visit → lower conversion odds" : "More days since visit → higher conversion odds",
+                            "It has no effect on conversion"
+                        ],
+                        answer: 0,
+                        feedback: daysOR > 1.0 ? 
+                            `Correct! OR > 1.0 means increases in days_since_visit are associated with increased conversion likelihood.` :
+                            `Correct! OR < 1.0 means increases in days_since_visit are associated with decreased conversion likelihood (more recent visitors are more likely to convert).`
                     }
                 ];
             },
@@ -270,7 +347,7 @@ const LogregTutorial = {
         {
             id: 'classification_performance',
             title: "✅ Step 5: How Good Are Our Predictions?",
-            targetId: 'plot-confusion-matrix',
+            targetId: 'confusion-matrix-card',
             content: `
                 <p>Coefficients tell us WHAT matters. But how ACCURATE is the model at actually predicting conversions?</p>
                 <p><strong>The Confusion Matrix</strong> shows classification results:</p>
@@ -280,129 +357,204 @@ const LogregTutorial = {
                     <li><strong>False Negatives:</strong> Missed a conversion (Type II error)</li>
                     <li><strong>True Negatives:</strong> Correctly predicted non-conversion</li>
                 </ul>
-                <p><strong>The ROC Curve</strong> shows discrimination ability. The <strong>AUC (Area Under Curve)</strong> metric is displayed below the plot.</p>
-                <p class="task">👉 <strong>Task:</strong> Look at the <strong>AUC metric</strong> value. Is your model better than random (AUC > 0.5)?</p>
+                <p><strong>Classification Performance Metrics:</strong> Below the confusion matrix, you'll see key performance metrics including accuracy, sensitivity, specificity, and precision.</p>
+                <p class="task">👉 <strong>Task:</strong> Look at the highlighted <strong>Confusion Matrix</strong> and the <strong>Classification Performance</strong> metrics below it. Note the values for accuracy and false negatives.</p>
             `,
             getDynamicQuizzes: () => {
                 const model = window.lastModel;
-                if (!model || !model.auc) return [];
                 
-                const auc = model.auc;
-                const aucDisplay = auc.toFixed(2);
-                const aucPct = (auc * 100).toFixed(0);
+                if (!model || !model.confusionMatrix) return null;
                 
-                let aucQuality = "acceptable";
-                if (auc >= 0.9) aucQuality = "excellent";
-                else if (auc >= 0.8) aucQuality = "good";
-                else if (auc >= 0.7) aucQuality = "acceptable";
-                else if (auc >= 0.6) aucQuality = "fair";
-                else aucQuality = "poor";
+                const cm = model.confusionMatrix;
+                // Confusion matrix structure: cm[actual][predicted]
+                // cm[0][0] = True Negatives, cm[0][1] = False Positives
+                // cm[1][0] = False Negatives, cm[1][1] = True Positives
+                
+                const trueNeg = cm[0] && cm[0][0] !== undefined ? cm[0][0] : 0;
+                const falsePos = cm[0] && cm[0][1] !== undefined ? cm[0][1] : 0;
+                const falseNeg = cm[1] && cm[1][0] !== undefined ? cm[1][0] : 0;
+                const truePos = cm[1] && cm[1][1] !== undefined ? cm[1][1] : 0;
+                
+                const total = trueNeg + falsePos + falseNeg + truePos;
+                const falseNegPercent = total > 0 ? ((falseNeg / total) * 100).toFixed(1) : 0;
+                
+                const accuracy = model.accuracy !== undefined ? model.accuracy : 
+                                 (total > 0 ? (truePos + trueNeg) / total : 0);
+                const accuracyPercent = (accuracy * 100).toFixed(1);
                 
                 return [
                     {
-                        question: `Look at the AUC metric below the ROC curve. What value do you see?`,
-                        options: [`About ${(auc - 0.1).toFixed(2)}`, `About ${aucDisplay}`, `About ${(auc + 0.1).toFixed(2)}`],
+                        question: `Looking at the confusion matrix, what percentage of all predictions are False Negatives (missed conversions)?`,
+                        options: [
+                            `About ${(parseFloat(falseNegPercent) * 0.5).toFixed(1)}%`,
+                            `About ${falseNegPercent}%`,
+                            `About ${(parseFloat(falseNegPercent) * 1.5).toFixed(1)}%`
+                        ],
                         answer: 1,
-                        feedback: `Correct! The AUC is ${aucDisplay}, which is considered ${aucQuality}. ${auc > 0.5 ? `This means the model has predictive power.` : `This is no better than random guessing.`}`
+                        feedback: `Correct! False Negatives represent ${falseNegPercent}% of all predictions. These are the cases where we predicted no conversion (0) but the customer actually converted (1).`
                     },
                     {
-                        question: `With AUC = ${aucDisplay}, is this model better than random guessing?`,
-                        options: [auc > 0.5 ? "Yes, AUC > 0.5 means better than random" : "No, AUC ≤ 0.5 means no better than random", auc > 0.5 ? "No, it's the same as random" : "Yes, it's better", "Can't tell from AUC"],
-                        answer: 0,
-                        feedback: auc > 0.5 ? 
-                            `Correct! AUC > 0.5 means the model can distinguish between converters and non-converters better than chance.` :
-                            `Correct! AUC ≤ 0.5 means the model is no better than randomly guessing outcomes.`
+                        question: `What is the overall accuracy rate shown in the Classification Performance metrics?`,
+                        options: [
+                            `About ${(parseFloat(accuracyPercent) - 10).toFixed(1)}%`,
+                            `About ${accuracyPercent}%`,
+                            `About ${(parseFloat(accuracyPercent) + 10).toFixed(1)}%`
+                        ],
+                        answer: 1,
+                        feedback: `Correct! The model achieves ${accuracyPercent}% accuracy, meaning it correctly classifies ${accuracyPercent}% of all cases.`
                     }
                 ];
             },
-            quizzes: [], // Will be populated dynamically
+            quizzes: [
+                {
+                    question: "What does the Confusion Matrix show?",
+                    options: [
+                        "How the model's predictions compare to actual outcomes (correct vs. incorrect classifications)",
+                        "The correlation between all variables",
+                        "The model coefficients"
+                    ],
+                    answer: 0,
+                    feedback: "Correct! The confusion matrix shows true positives, true negatives, false positives, and false negatives - giving you a complete picture of classification accuracy."
+                },
+                {
+                    question: "In the Classification Performance metrics, what does 'Accuracy' measure?",
+                    options: [
+                        "The percentage of all predictions that are correct",
+                        "Only the percentage of positive predictions",
+                        "The model's p-value"
+                    ],
+                    answer: 0,
+                    feedback: "Correct! Accuracy = (True Positives + True Negatives) / Total Predictions. It tells you what proportion of all cases were classified correctly."
+                }
+            ],
             check: () => {
                 return window.lastModel !== null && window.lastModel !== undefined;
             },
             onEnter: () => {
-                const visual = document.querySelector('.visual-output');
-                if (visual) visual.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const card = document.getElementById('confusion-matrix-card');
+                if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         },
         {
             id: 'business_insights',
-            title: "💡 Step 6: Making Business Decisions",
-            targetId: 'plot-effect',
+            title: "💡 Step 6: Visualizing Predicted Probabilities",
+            targetId: 'predicted-probabilities-section',
             content: `
-                <p>This is where statistics become STRATEGY! Let's translate model outputs into actionable business recommendations.</p>
-                <p><strong>The Effect Plot</strong> shows how changing one predictor (while holding others constant) affects conversion probability:</p>
+                <p>This is where statistics become actionable insights! The <strong>Predicted Probabilities vs. Focal Predictor</strong> visualization shows how changing one predictor (while holding others constant) affects conversion probability.</p>
+                <p><strong>How to use this chart:</strong></p>
                 <ul>
-                    <li>Select a predictor as "focal" (e.g., promo_amount)</li>
-                    <li>See how conversion probability changes across its range</li>
-                    <li>Confidence bands show statistical uncertainty</li>
+                    <li>Use the dropdown to select a predictor as "focal" (the variable you want to examine)</li>
+                    <li>The chart shows how predicted conversion probability changes across that predictor's range</li>
+                    <li>Shaded confidence bands show statistical uncertainty</li>
+                    <li>You can toggle between different focal predictors to compare their effects</li>
                 </ul>
-                <p><strong>The Variable Importance plot</strong> (Odds Ratios forest plot) ranks predictors by effect strength. This tells you WHERE to focus marketing resources.</p>
-                <p><strong>Business Application:</strong> If promo_amount has a strong positive effect but email_opened doesn't, you should focus budget on discounts rather than email campaigns!</p>
-                <p class="task">👉 <strong>Task:</strong> Use the Effect Plot controls. Select <strong>'promo_amount'</strong> (or your strongest continuous predictor) as the focal predictor and observe how conversion probability changes.</p>
+                <p><strong>Part 1: Examining the Treatment Effect</strong></p>
+                <p class="task">👉 <strong>Task:</strong> Set the focal predictor to <strong>"high_incentive"</strong> using the dropdown menu in the highlighted section. Observe how predicted conversion probability differs between the two incentive levels.</p>
             `,
             quizzes: [
                 {
-                    question: "Look at the Effect Plot for 'promo_amount'. Does conversion probability increase as promo increases?",
-                    options: ["Yes, higher promos → higher conversion probability", "No, they're unrelated", "The plot is broken"],
+                    question: "Looking at the predicted probabilities chart with 'high_incentive' as the focal predictor, what does the chart show?",
+                    options: [
+                        "The difference in conversion probability between high incentive (1) and standard offer (0)",
+                        "The total number of conversions",
+                        "The correlation between all variables"
+                    ],
                     answer: 0,
-                    feedback: "Good observation! This positive relationship means offering bigger discounts drives more conversions."
+                    feedback: "Correct! The chart compares predicted conversion probability for the two treatment groups, showing the effect of the incentive offer."
                 },
                 {
-                    question: "Check the Variable Importance (Odds Ratios) plot. Which predictor has the STRONGEST effect (furthest from the 1.0 line)?",
-                    options: ["They're all the same", "The one with the highest OR or lowest OR", "The first one listed"],
-                    answer: 1,
-                    feedback: "Correct! The predictor furthest from 1.0 (whether above or below) has the strongest multiplicative effect on odds."
+                    question: "Why do we examine predicted probabilities instead of just looking at coefficients?",
+                    options: [
+                        "Predicted probabilities are easier to communicate to business stakeholders than log-odds",
+                        "Coefficients are always wrong",
+                        "It looks more impressive"
+                    ],
+                    answer: 0,
+                    feedback: "Exactly! Predicted probabilities translate statistical results into intuitive percentages that business teams can use for decision-making."
                 }
             ],
             check: () => {
-                // Check if effect plot has been interacted with (focal predictor selected)
+                // Check if focal predictor has been set (any value)
                 const focalSelect = document.getElementById('effect-focal-select');
                 return focalSelect && focalSelect.value && focalSelect.value !== '';
             },
             onEnter: () => {
-                const effectCard = document.getElementById('plot-effect')?.closest('.chart-card');
-                if (effectCard) effectCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const section = document.getElementById('predicted-probabilities-section') || document.getElementById('plot-effect')?.closest('.chart-card');
+                if (section) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        },
+        {
+            id: 'days_since_visit_focal',
+            title: "📅 Step 7: Examining Time-Based Effects",
+            targetId: 'predicted-probabilities-section',
+            content: `
+                <p>Now let's explore how the time since last visit affects conversion probability.</p>
+                <p><strong>Part 2: Understanding Customer Recency</strong></p>
+                <p class="task">👉 <strong>Task:</strong> Change the focal predictor to <strong>"days_since_visit"</strong> (or "days_since_last_visit") using the dropdown menu. Observe how predicted conversion probability changes as time since last visit increases.</p>
+            `,
+            quizzes: [
+                {
+                    question: "When examining 'days_since_visit' as the focal predictor, what does the slope of the line tell you?",
+                    options: [
+                        "Whether conversion probability increases or decreases as time passes since last visit",
+                        "The total number of visits",
+                        "The exact date of the last visit"
+                    ],
+                    answer: 0,
+                    feedback: "Correct! A downward slope means recent visitors are more likely to convert; an upward slope would suggest customers who haven't visited recently are more likely to convert."
+                },
+                {
+                    question: "Why is understanding the 'days_since_visit' effect valuable for marketing strategy?",
+                    options: [
+                        "It helps determine optimal timing for re-engagement campaigns",
+                        "It's not valuable at all",
+                        "It only matters for email design"
+                    ],
+                    answer: 0,
+                    feedback: "Exactly! If recent visitors are more likely to convert, you should prioritize timely follow-up. If lapsed customers show higher conversion probability, you may need re-engagement campaigns."
+                }
+            ],
+            check: () => {
+                // Check if days_since_visit has been selected as focal
+                const focalSelect = document.getElementById('effect-focal-select');
+                return focalSelect && focalSelect.value && focalSelect.value.toLowerCase().includes('days');
+            },
+            onEnter: () => {
+                const section = document.getElementById('predicted-probabilities-section') || document.getElementById('plot-effect')?.closest('.chart-card');
+                if (section) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         },
         {
             id: 'conclusion',
-            title: "🎉 You're Now a Logistic Regression Expert!",
+            title: "🎓 Professor Mode: Foundations Complete",
             targetId: null,
             content: `
-                <p>Congratulations! You successfully built, interpreted, and validated a logistic regression model for marketing!</p>
+                <p>Well done! You've worked through the foundational steps of building and interpreting a logistic regression model for marketing.</p>
                 
-                <h4>📊 What You Learned</h4>
+                <h4>📊 What You've Learned</h4>
                 <ul>
                     <li><strong>Logistic Regression</strong> predicts probabilities for binary outcomes</li>
-                    <li><strong>Odds Ratios</strong> show HOW MUCH each factor matters (multiplicative effects)</li>
-                    <li><strong>p-values</strong> tell you which effects are statistically reliable</li>
-                    <li><strong>AUC/ROC</strong> measures overall predictive accuracy</li>
-                    <li><strong>Effect Plots</strong> translate stats into business scenarios</li>
+                    <li><strong>Model Significance</strong> tests whether predictors improve predictions vs. random guessing</li>
+                    <li><strong>Odds Ratios</strong> quantify how much each factor influences conversion likelihood</li>
+                    <li><strong>p-values</strong> help assess which effects are statistically reliable</li>
+                    <li><strong>Confusion Matrix</strong> shows how well the model classifies actual outcomes</li>
+                    <li><strong>Predicted Probability Plots</strong> show how different predictors influence conversion</li>
                 </ul>
                 
-                <h4>🚀 Real-World Applications</h4>
-                <p>Logistic regression powers:</p>
-                <ul>
-                    <li>Email campaign targeting (who will click?)</li>
-                    <li>Churn prediction (who will cancel?)</li>
-                    <li>Lead scoring (who will convert?)</li>
-                    <li>A/B test analysis (which treatment works better?)</li>
-                </ul>
+                <h4>🔍 Important Note</h4>
+                <p>This tutorial provides an <strong>introductory understanding</strong> of logistic regression. Additional topics like ROC curves, model comparison, interaction effects, and advanced diagnostics are available in the tool but not yet covered in Professor Mode.</p>
                 
-                <h4>💼 Business Impact</h4>
-                <p>By targeting high-probability converters and optimizing promo amounts, you can <strong>increase ROI by 20-50%</strong> vs. blanket campaigns.</p>
-                
-                <h4>🎓 Next Steps</h4>
+                <h4>🎓 Continue Exploring</h4>
                 <ul>
-                    <li>Try different predictor combinations</li>
-                    <li>Experiment with confidence levels (90% vs 95% vs 99%)</li>
-                    <li>Download predictions to share with stakeholders</li>
-                    <li>Review the Diagnostics section for assumption checks</li>
+                    <li>Experiment with different predictor combinations</li>
+                    <li>Try adjusting confidence levels (90% vs 95% vs 99%)</li>
+                    <li>Explore the ROC curve, variable importance plot, and other visualizations</li>
+                    <li>Review the interpretation aids throughout the interface for deeper insights</li>
                 </ul>
                 
                 <p style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 6px;">
-                    <strong>📚 Want to Learn More?</strong><br>
-                    Explore other marketing analytics tools on the site, or dive deeper into the interpretation aids throughout this tool!
+                    <strong>📚 Keep Learning</strong><br>
+                    This is just the beginning of your journey with logistic regression. Explore other marketing analytics tools on the site to continue building your skillset!
                 </p>
             `,
             check: () => true,
@@ -442,6 +594,17 @@ const LogregTutorial = {
         document.getElementById('tutorial-sidebar').classList.remove('active');
         this.hideOverlay();
         
+        // Track completion if student finished all steps (reached final step)
+        if (this.currentStep === this.steps.length - 1) {
+            // Log tutorial completion for analytics
+            if (typeof logToolRunToBackend === 'function') {
+                logToolRunToBackend(
+                    { action: 'tutorial_completed', tool: 'log_regression' },
+                    'Professor Mode tutorial completed for logistic regression'
+                );
+            }
+        }
+        
         // Uncheck the box
         const checkbox = document.getElementById('professorMode');
         if (checkbox) checkbox.checked = false;
@@ -467,6 +630,9 @@ const LogregTutorial = {
                 quizzes = dynamicQuizzes;
             }
         }
+        
+        // Store the current quizzes on the step for consistency
+        step.currentQuizzes = quizzes;
         
         // Update Sidebar
         const sidebarContent = document.getElementById('tutorial-content');
@@ -509,7 +675,7 @@ const LogregTutorial = {
         }
 
         const isTaskComplete = step.check ? step.check() : true;
-        const areQuizzesComplete = !step.quizzes || step.quizState.every(q => q.completed);
+        const areQuizzesComplete = !quizzes || quizzes.length === 0 || (step.quizState && step.quizState.every(q => q.completed));
         const canProceed = isTaskComplete && areQuizzesComplete;
 
         sidebarContent.innerHTML = `
@@ -521,7 +687,7 @@ const LogregTutorial = {
 
             <div class="tutorial-progress-container" style="background: #f8f9fa; padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #e5e7eb;">
                 ${step.check ? `
-                    <div class="tutorial-progress-item" style="display: flex; align-items: center; gap: 8px; margin-bottom: ${step.quizzes ? '8px' : '0'};">
+                    <div class="tutorial-progress-item" style="display: flex; align-items: center; gap: 8px; margin-bottom: ${quizzes && quizzes.length > 0 ? '8px' : '0'};">
                         ${this.getCheckmark(isTaskComplete)} 
                         <span style="${isTaskComplete ? 'color: #10b981; font-weight: 600;' : 'color: #9ca3af;'}">
                             ${isTaskComplete ? "Task Complete" : "Pending Task Completion..."}
@@ -529,7 +695,7 @@ const LogregTutorial = {
                     </div>
                 ` : ''}
                 
-                ${step.quizzes ? `
+                ${quizzes && quizzes.length > 0 ? `
                     <div class="tutorial-progress-item" style="display: flex; align-items: center; gap: 8px;">
                         ${this.getCheckmark(areQuizzesComplete)} 
                         <span style="${areQuizzesComplete ? 'color: #10b981; font-weight: 600;' : 'color: #9ca3af;'}">
@@ -564,14 +730,8 @@ const LogregTutorial = {
     checkQuiz(qIndex, selectedIndex) {
         const step = this.steps[this.currentStep];
         
-        // Get the current quizzes (might be dynamic)
-        let quizzes = step.quizzes || [];
-        if (step.getDynamicQuizzes && typeof step.getDynamicQuizzes === 'function') {
-            const dynamicQuizzes = step.getDynamicQuizzes();
-            if (dynamicQuizzes && dynamicQuizzes.length > 0) {
-                quizzes = dynamicQuizzes;
-            }
-        }
+        // Use the stored currentQuizzes to ensure consistency
+        const quizzes = step.currentQuizzes || step.quizzes || [];
         
         const quiz = quizzes[qIndex];
         if (!quiz) return;
