@@ -473,6 +473,10 @@ function handleMessage(message) {
             handleTimerSync(message);
             break;
             
+        case 'timer_update':
+            handleTimerUpdate(message);
+            break;
+            
         case 'game_started':
             handleGameStart(message);
             break;
@@ -874,6 +878,53 @@ async function handleCountdownStart(message) {
     if (message.game_data) {
         handleGameStart(message.game_data);
     }
+}
+
+// Handle server-authoritative timer updates
+function handleTimerUpdate(message) {
+    // Server sends authoritative time_remaining every 500ms
+    // We use this to keep client timers in sync
+    
+    const serverTimeRemaining = message.time_remaining;
+    
+    // Update the timer display elements if they exist
+    const timerEl = document.getElementById('timer');
+    if (timerEl) {
+        // Round to whole seconds for display
+        const displayTime = Math.ceil(serverTimeRemaining);
+        timerEl.textContent = displayTime;
+        
+        // Update color based on time remaining (red when < 10 seconds)
+        if (displayTime <= 10 && displayTime > 0) {
+            timerEl.style.color = '#ef4444'; // Red
+        } else if (displayTime <= 0) {
+            timerEl.textContent = '0';
+            timerEl.style.color = '#ef4444';
+        } else {
+            timerEl.style.color = '#1e293b'; // Default dark
+        }
+    }
+    
+    // Store server time for any game-specific sync needs
+    window.lastServerTimeUpdate = {
+        time_remaining: serverTimeRemaining,
+        timestamp: Date.now()
+    };
+    
+    // Handle timeout (server says time's up)
+    if (serverTimeRemaining <= 0) {
+        // Game-specific cleanup will be handled by game_ended message
+        // This just ensures the display shows 0
+        if (timerEl) {
+            timerEl.textContent = '0';
+        }
+    }
+}
+
+// Placeholder for timer_sync (legacy - can be removed later)
+function handleTimerSync(message) {
+    // This was the old approach - now handled by timer_update
+    console.log('Legacy timer_sync received, use timer_update instead');
 }
 
 // Lazy load game-specific JavaScript modules
