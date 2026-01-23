@@ -77,7 +77,7 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <label style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-cube" style="color: var(--primary);"></i> Variables (Dynamic Content)
-                            <button type="button" class="btn btn-sm btn-text" onclick="toggleVariableHelp(event)" style="font-weight: normal; font-size: 0.85rem;">
+                            <button type="button" class="btn btn-sm" onclick="toggleVariableHelp(event)" style="font-weight: normal; font-size: 0.85rem; background: transparent; color: var(--primary); border: 1px solid var(--primary); padding: 0.25rem 0.5rem;">
                                 <i class="fas fa-chevron-down"></i> <span id="helpToggleText">Show</span> Help
                             </button>
                         </label>
@@ -98,6 +98,7 @@
                             <li>Use them in Question Text or Answers as <code>{{x}}</code> or <code>{{company}}</code>.</li>
                             <li>Each student gets different random values!</li>
                             <li>Use <strong>Formulas</strong> to calculate answers based on other variables (e.g., <code>{{x}} * 2</code>).</li>
+                            <li><strong>Arrays:</strong> Store tied data in rows/columns. Each student gets one random column. Access values with <code>{{PRODUCTS[0]}}</code>, <code>{{PRODUCTS[1]}}</code>, etc. (row index).</li>
                         </ul>
                     </div>
 
@@ -111,7 +112,7 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <label style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-chart-bar" style="color: #10b981;"></i> Charts & Graphs
-                            <button type="button" class="btn btn-sm btn-text" onclick="toggleChartHelp(event)" style="font-weight: normal; font-size: 0.85rem;">
+                            <button type="button" class="btn btn-sm" onclick="toggleChartHelp(event)" style="font-weight: normal; font-size: 0.85rem; background: transparent; color: #10b981; border: 1px solid #10b981; padding: 0.25rem 0.5rem;">
                                 <i class="fas fa-chevron-down"></i> <span id="chartHelpToggleText">Show</span> Help
                             </button>
                         </label>

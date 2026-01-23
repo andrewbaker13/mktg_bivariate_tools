@@ -745,7 +745,13 @@ function saveVariable(event) {
     const varName = document.getElementById('varName').value.trim();
     const varType = document.getElementById('varType').value;
     
-    let varDef = { type: varType.replace('formula_', '') };
+    // Determine the actual type to store
+    let actualType = varType;
+    if (varType === 'formula_calculate' || varType === 'formula_display') {
+        actualType = 'formula';
+    }
+    
+    let varDef = { type: actualType };
     
     if (varType === 'uniform') {
         varDef.min = parseFloat(document.getElementById('varMin').value);
@@ -950,8 +956,9 @@ function previewVariables() {
 function generateSampleVariables() {
     const values = {};
     const formulas = [];
+    const arrayColumns = {}; // Store selected column for each array
 
-    // 1. Generate base values (Uniform, Discrete)
+    // 1. Generate base values (Uniform, Discrete, Array)
     for (const [name, def] of Object.entries(questionVariables)) {
         if (def.type === 'uniform') {
             const range = def.max - def.min;
@@ -959,9 +966,43 @@ function generateSampleVariables() {
             values[name] = def.decimals === 0 ? Math.round(value) : parseFloat(value.toFixed(def.decimals));
         } else if (def.type === 'discrete') {
             values[name] = def.values[Math.floor(Math.random() * def.values.length)];
+        } else if (def.type === 'array') {
+            // Select a random column for this array
+            const data = def.data || [];
+            if (data.length > 0 && data[0].length > 0) {
+                const numCols = data[0].length;
+                const selectedCol = Math.floor(Math.random() * numCols);
+                arrayColumns[name] = selectedCol;
+                
+                // Store array values as an object for display
+                const arrayValues = {};
+                for (let row = 0; row < data.length; row++) {
+                    arrayValues[row] = data[row][selectedCol];
+                }
+                values[`${name}_ARRAY`] = arrayValues; // Store for display in preview
+            }
         } else if (def.type === 'formula') {
             formulas.push({ name, def });
         }
+    }
+
+    // Helper function to substitute array references
+    function substituteArrays(text) {
+        // Replace {{ARRAYNAME[index]}} with actual values
+        return text.replace(/\{\{(\w+)\[(\d+)\]\}\}/g, (match, arrayName, index) => {
+            if (questionVariables[arrayName]?.type === 'array' && arrayColumns[arrayName] !== undefined) {
+                const data = questionVariables[arrayName].data;
+                const rowIndex = parseInt(index);
+                const colIndex = arrayColumns[arrayName];
+                if (data && data[rowIndex] && data[rowIndex][colIndex] !== undefined) {
+                    const value = data[rowIndex][colIndex];
+                    // If it's a number, return it directly; if string, wrap in quotes
+                    return typeof value === 'number' ? value : `"${value}"`;
+                }
+            }
+            console.log(`Array reference not found: ${match}`);
+            return match; // Leave unchanged if not found
+        });
     }
 
     // 2. Evaluate formulas (simple multi-pass to handle dependencies)
@@ -972,13 +1013,22 @@ function generateSampleVariables() {
 
         for (const item of formulas) {
             try {
+                // Parse the expression to replace {{var}} and {{ARRAY[index]}} with actual variable references
+                let expression = item.def.expression;
+                
+                // First substitute array references with their values
+                expression = substituteArrays(expression);
+                
+                // Then replace {{varname}} with just varname for evaluation
+                expression = expression.replace(/\{\{(\w+)\}\}/g, '$1');
+                
                 // Create a function with variables as arguments
-                const varNames = Object.keys(values);
-                const varValues = Object.values(values);
+                const varNames = Object.keys(values).filter(k => !k.endsWith('_ARRAY'));
+                const varValues = varNames.map(k => values[k]);
                 
                 // Safe-ish evaluation using Function constructor
                 // Note: This is client-side preview only. Backend has strict security.
-                const formulaFn = new Function(...varNames, `return ${item.def.formula};`);
+                const formulaFn = new Function(...varNames, `return ${expression};`);
                 const result = formulaFn(...varValues);
                 
                 if (item.def.mode === 'display') {
@@ -990,6 +1040,7 @@ function generateSampleVariables() {
                 }
             } catch (e) {
                 // Dependency might be missing, try next pass
+                console.log(`Formula ${item.name} evaluation pending:`, e.message);
                 nextFormulas.push(item);
             }
         }
@@ -1154,11 +1205,26 @@ function previewCharts() {
 function substituteVariables(text, variables) {
     if (!text) return '';
     let result = text;
+    
+    // First, handle array indexing: {{ARRAYNAME[index]}}
+    result = result.replace(/\{\{(\w+)\[(\d+)\]\}\}/g, (match, arrayName, index) => {
+        const arrayKey = `${arrayName}_ARRAY`;
+        if (variables[arrayKey] && variables[arrayKey][index] !== undefined) {
+            return variables[arrayKey][index];
+        }
+        return match; // Leave unchanged if not found
+    });
+    
+    // Then, handle regular variables: {{name}}
     for (const [name, value] of Object.entries(variables)) {
+        // Skip _ARRAY entries (already handled above)
+        if (name.endsWith('_ARRAY')) continue;
+        
         // Replace {{name}} with value
         const regex = new RegExp(`\\{\\{\\s*${name}\\s*\\}\\}`, 'g');
         result = result.replace(regex, value);
     }
+    
     return result;
 }
 
@@ -1347,7 +1413,7 @@ function renderPreviewInputs(question) {
         return `
             <div class="options-list">
                 ${(config.options || []).map((opt, idx) => `
-                    <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 0.5rem; cursor: pointer;">
+                    <label class="preview-option" data-is-correct="${opt.is_correct || false}" style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;">
                         <input type="radio" name="preview_mc" style="margin-top: 0.25rem;">
                         <span>${opt.text}</span>
                     </label>
@@ -1358,7 +1424,7 @@ function renderPreviewInputs(question) {
         return `
             <div class="options-list">
                 ${(config.options || []).map((opt, idx) => `
-                    <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 0.5rem; cursor: pointer;">
+                    <label class="preview-option" data-is-correct="${opt.is_correct || false}" style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;">
                         <input type="checkbox" name="preview_sa">
                         <span>${opt.text}</span>
                     </label>

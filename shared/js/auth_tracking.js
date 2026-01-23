@@ -378,7 +378,7 @@ function initAuthUI() {
         const username = getCurrentUsername();
         authDiv.innerHTML = `
             <span style="color: #10b981;">✓ Logged in as <strong>${username}</strong></span>
-            <button id="logout-btn" style="margin-left: 1rem; padding: 0.25rem 0.75rem; border: 1px solid #ccc; background: white; border-radius: 4px; cursor: pointer;">Logout</button>
+            <button id="logout-btn" style="margin-left: 1rem; padding: 0.25rem 0.75rem; border: 1px solid #ccc; background: transparent; color: #3b82f6; border-radius: 4px; cursor: pointer; text-decoration: underline;">Logout</button>
         `;
         heroHeader.appendChild(authDiv);
         

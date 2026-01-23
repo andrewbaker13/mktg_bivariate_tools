@@ -39,38 +39,21 @@
   font-weight: 500;
 }
 
-/* Logout button - override ALL button styles */
-button.auth-bar__logout,
-.auth-bar__logout {
-  color: #6b7280 !important;
+/* Logout button - style as link */
+button.auth-bar__logout {
+  color: #3b82f6 !important;
   background: transparent !important;
-  background-color: transparent !important;
   border: none !important;
   cursor: pointer;
-  font-size: 0.9rem !important;
+  font-size: 0.95rem;
   text-decoration: underline;
-  padding: 0.25rem 0.5rem !important;
+  padding: 0;
   margin-left: 0.75rem;
-  box-shadow: none !important;
-  font-family: inherit !important;
-  font-weight: normal !important;
+  font-family: inherit;
+  font-weight: 500;
 }
 
-button.auth-bar__logout:hover,
-button.auth-bar__logout:focus,
-button.auth-bar__logout:active,
-.auth-bar__logout:hover,
-.auth-bar__logout:focus,
-.auth-bar__logout:active {
-  color: #374151 !important;
-  background: transparent !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-}
-
-button.auth-bar__logout:focus-visible,
-.auth-bar__logout:focus-visible {
-  outline: 2px dotted #6b7280;
-  outline-offset: 2px;
-  background: transparent !important;
+button.auth-bar__logout:hover {
+  text-decoration: underline;
+  color: #2563eb !important;
 }

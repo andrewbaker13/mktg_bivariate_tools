@@ -455,7 +455,7 @@
 </head>
 <body>
     <div id="admin-nav-container"></div>
-    <script src="../shared/js/admin-nav.js"></script>
+    <script src="../../shared/js/admin-nav.js"></script>
 
     <div class="container">
         <div class="header">
@@ -1197,6 +1197,126 @@
             }
         }
 
+        // Helper functions for variable preview
+        function generateQuickSampleVars(varConfig) {
+            const values = {};
+            const arrayColumns = {};
+            const formulas = [];
+            
+            for (const [name, def] of Object.entries(varConfig)) {
+                if (def.type === 'uniform') {
+                    const value = def.min + Math.random() * (def.max - def.min);
+                    values[name] = def.decimals === 0 ? Math.round(value) : parseFloat(value.toFixed(def.decimals));
+                } else if (def.type === 'discrete') {
+                    values[name] = def.values[Math.floor(Math.random() * def.values.length)];
+                } else if (def.type === 'array') {
+                    const data = def.data || [];
+                    if (data.length > 0 && data[0].length > 0) {
+                        const selectedCol = Math.floor(Math.random() * data[0].length);
+                        arrayColumns[name] = selectedCol;
+                        const arrayValues = {};
+                        for (let row = 0; row < data.length; row++) {
+                            arrayValues[row] = data[row][selectedCol];
+                        }
+                        values[`${name}_ARRAY`] = arrayValues;
+                    }
+                } else if (def.type === 'formula') {
+                    formulas.push({ name, def });
+                }
+            }
+            
+            // Evaluate formulas
+            for (let pass = 0; pass < 5 && formulas.length > 0; pass++) {
+                const remaining = [];
+                for (const item of formulas) {
+                    try {
+                        let expr = item.def.expression || '';
+                        // Substitute arrays
+                        expr = expr.replace(/\{\{(\w+)\[(\d+)\]\}\}/g, (match, arrayName, index) => {
+                            if (varConfig[arrayName]?.type === 'array' && arrayColumns[arrayName] !== undefined) {
+                                const data = varConfig[arrayName].data;
+                                return data[parseInt(index)][arrayColumns[arrayName]];
+                            }
+                            return match;
+                        });
+                        // Substitute vars
+                        expr = expr.replace(/\{\{(\w+)\}\}/g, '$1');
+                        const varNames = Object.keys(values).filter(k => !k.endsWith('_ARRAY'));
+                        const varValues = varNames.map(k => values[k]);
+                        const fn = new Function(...varNames, `return ${expr};`);
+                        const result = fn(...varValues);
+                        values[item.name] = item.def.decimals === 0 ? Math.round(result) : parseFloat(result.toFixed(item.def.decimals || 2));
+                    } catch (e) {
+                        remaining.push(item);
+                    }
+                }
+                formulas.length = 0;
+                formulas.push(...remaining);
+            }
+            
+            return values;
+        }
+        
+        function substituteVarsInText(text, values, varConfig) {
+            if (!text) return '';
+            let result = text;
+            
+            // Arrays first
+            result = result.replace(/\{\{(\w+)\[(\d+)\]\}\}/g, (match, arrayName, index) => {
+                const arrayKey = `${arrayName}_ARRAY`;
+                if (values[arrayKey] && values[arrayKey][index] !== undefined) {
+                    return values[arrayKey][index];
+                }
+                return match;
+            });
+            
+            // Regular vars
+            for (const [name, value] of Object.entries(values)) {
+                if (name.endsWith('_ARRAY')) continue;
+                const regex = new RegExp(`\\{\\{\\s*${name}\\s*\\}\\}`, 'g');
+                result = result.replace(regex, value);
+            }
+            
+            return result;
+        }
+        
+        function togglePreviewAnswer() {
+            const isChecked = document.getElementById('showAnswerToggle').checked;
+            const modal = document.querySelector('.modal.active');
+            
+            if (isChecked) {
+                // Highlight correct answers
+                const options = modal.querySelectorAll('.preview-option');
+                options.forEach(option => {
+                    const isCorrect = option.dataset.isCorrect === 'true';
+                    if (isCorrect) {
+                        option.style.background = '#d1fae5';
+                        option.style.borderColor = '#10b981';
+                        option.style.borderWidth = '2px';
+                        
+                        // Add checkmark
+                        if (!option.querySelector('.correct-indicator')) {
+                            const indicator = document.createElement('span');
+                            indicator.className = 'correct-indicator';
+                            indicator.innerHTML = '<i class="fas fa-check-circle" style="color: #10b981; margin-left: 0.5rem;"></i>';
+                            option.appendChild(indicator);
+                        }
+                    }
+                });
+            } else {
+                // Remove highlights
+                const options = modal.querySelectorAll('.preview-option');
+                options.forEach(option => {
+                    option.style.background = '';
+                    option.style.borderColor = '';
+                    option.style.borderWidth = '';
+                    
+                    const indicator = option.querySelector('.correct-indicator');
+                    if (indicator) indicator.remove();
+                });
+            }
+        }
+
         async function previewQuestion(id) {
             try {
                 const response = await fetch(`${API_BASE}/quiz-questions/${id}/`, {
@@ -1206,6 +1326,28 @@
                 if (!response.ok) throw new Error('Failed to load question');
                 
                 const question = await response.json();
+                
+                // Generate sample variables if question has them
+                let renderedQuestionText = question.question_text;
+                let renderedOptions = question.answer_config?.options || [];
+                
+                if (question.answer_config && question.answer_config.variables) {
+                    // Use the question editor's variable generation (it's in window scope)
+                    const tempVars = question.answer_config.variables;
+                    const sampleVars = window.generateSampleVariablesFromConfig ? 
+                        window.generateSampleVariablesFromConfig(tempVars) : 
+                        generateQuickSampleVars(tempVars);
+                    
+                    renderedQuestionText = substituteVarsInText(question.question_text, sampleVars, tempVars);
+                    
+                    // Substitute in options too
+                    if (renderedOptions.length > 0) {
+                        renderedOptions = renderedOptions.map(opt => ({
+                            ...opt,
+                            text: substituteVarsInText(opt.text, sampleVars, tempVars)
+                        }));
+                    }
+                }
                 
                 // Create a temporary modal for preview
                 const modal = document.createElement('div');
@@ -1220,16 +1362,22 @@
                             <button class="close-modal" onclick="this.closest('.modal').remove()">&times;</button>
                         </div>
                         <div class="modal-body">
-                            <div class="preview-banner" style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #1e40af;">
-                                <i class="fas fa-info-circle"></i> This is how the question will appear to students.
+                            <div class="preview-banner" style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #1e40af; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <i class="fas fa-info-circle"></i> This is how the question will appear to students (with random sample values).
+                                </div>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin: 0;">
+                                    <input type="checkbox" id="showAnswerToggle" onchange="togglePreviewAnswer()" style="cursor: pointer;">
+                                    <span style="font-weight: 600;">Show Answer</span>
+                                </label>
                             </div>
                             
                             <div class="question-card" style="box-shadow: none; border: 1px solid #e5e7eb;">
-                                <div class="question-text" style="font-size: 1.1rem; margin-bottom: 1.5rem;">
-                                    ${question.question_text}
+                                <div class="question-text" style="font-size: 1.1rem; margin-bottom: 1.5rem; white-space: pre-line;">
+                                    ${renderedQuestionText}
                                 </div>
                                 
-                                ${renderPreviewInputs(question)}
+                                ${renderPreviewInputs({...question, answer_config: {...question.answer_config, options: renderedOptions}})}
                             </div>
                             
                             ${question.explanation ? `
