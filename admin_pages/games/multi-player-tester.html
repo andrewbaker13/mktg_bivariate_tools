@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Player Game Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="number"] {
+            width: 100px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 101, 101, 0.4);
+        }
+
+        button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.info {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status.warning {
+            background: #feebc8;
+            color: #7c2d12;
+            border: 1px solid #fbd38d;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .player-count {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-count span {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Multi-Player Tester</h1>
+        <p class="subtitle">Launch multiple players for game testing</p>
+
+        <div class="form-group">
+            <label for="numPlayers">Number of Players</label>
+            <div class="player-count">
+                <input type="number" id="numPlayers" min="2" max="20" value="5">
+                <span id="playerCountDisplay">5 players</span>
+            </div>
+            <p class="hint">Range: 2-20 players</p>
+        </div>
+
+        <div class="form-group">
+            <label for="roomCode">Room Code</label>
+            <input type="text" id="roomCode" placeholder="e.g., ABCD" required>
+            <p class="hint">4-letter game room code</p>
+        </div>
+
+        <div class="form-group">
+            <label for="baseUsername">Base Username</label>
+            <input type="text" id="baseUsername" placeholder="e.g., TestPlayer" value="Player" required>
+            <p class="hint">Will create Player1, Player2, Player3, etc.</p>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password (optional)</label>
+            <input type="password" id="password" placeholder="Leave blank if no password">
+        </div>
+
+        <div class="button-group">
+            <button class="btn-primary" id="launchBtn" onclick="launchPlayers()">
+                🚀 Launch Players
+            </button>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-success" id="joinBtn" onclick="joinAllPlayers()" disabled>
+                ✅ Join All
+            </button>
+            <button class="btn-danger" id="closeBtn" onclick="closeAllPlayers()" disabled>
+                ❌ Close All
+            </button>
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        // Store references to player windows
+        let playerWindows = [];
+
+        // Update player count display
+        document.getElementById('numPlayers').addEventListener('input', function() {
+            const count = this.value;
+            document.getElementById('playerCountDisplay').textContent = `${count} player${count > 1 ? 's' : ''}`;
+        });
+
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status show ${type}`;
+        }
+
+        function launchPlayers() {
+            const numPlayers = parseInt(document.getElementById('numPlayers').value);
+            const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
+            const baseUsername = document.getElementById('baseUsername').value.trim();
+
+            // Validation
+            if (!roomCode || roomCode.length !== 4) {
+                showStatus('⚠️ Please enter a valid 4-letter room code', 'warning');
+                return;
+            }
+
+            if (!baseUsername) {
+                showStatus('⚠️ Please enter a base username', 'warning');
+                return;
+            }
+
+            if (numPlayers < 2 || numPlayers > 20) {
+                showStatus('⚠️ Number of players must be between 2 and 20', 'warning');
+                return;
+            }
+
+            // Close any existing windows
+            closeAllPlayers();
+
+            showStatus(`🚀 Launching ${numPlayers} player windows...`, 'info');
+
+            // Launch player windows (use game-join.html for players, not game-host.html)
+            const gameUrl = 'http://127.0.0.1:5500/admin_pages/games/game-join.html';
+            
+            for (let i = 1; i <= numPlayers; i++) {
+                const windowFeatures = `width=600,height=700,left=${50 + (i * 20)},top=${50 + (i * 20)}`;
+                const playerWindow = window.open(gameUrl, `Player${i}`, windowFeatures);
+                
+                if (playerWindow) {
+                    playerWindows.push({
+                        window: playerWindow,
+                        username: `${baseUsername}${i}`,
+                        number: i
+                    });
+                } else {
+                    showStatus('⚠️ Pop-up blocked! Please allow pop-ups for this site.', 'warning');
+                    return;
+                }
+            }
+
+            // Enable control buttons
+            document.getElementById('joinBtn').disabled = false;
+            document.getElementById('closeBtn').disabled = false;
+            document.getElementById('launchBtn').disabled = true;
+
+            showStatus(`✅ Launched ${numPlayers} players successfully!`, 'success');
+        }
+
+        function joinAllPlayers() {
+            const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
+            const password = document.getElementById('password').value;
+
+            if (playerWindows.length === 0) {
+                showStatus('⚠️ No player windows open. Launch players first.', 'warning');
+                return;
+            }
+
+            showStatus(`⏳ Joining ${playerWindows.length} players to room ${roomCode}...`, 'info');
+
+            let joinedCount = 0;
+            
+            // Wait a bit for pages to load
+            setTimeout(() => {
+                playerWindows.forEach((player, index) => {
+                    const playerWindow = player.window;
+                    
+                    if (playerWindow && !playerWindow.closed) {
+                        try {
+                            // Fill in the form in each window
+                            setTimeout(() => {
+                                playerWindow.postMessage({
+                                    action: 'joinGame',
+                                    roomCode: roomCode,
+                                    username: player.username,
+                                    password: password
+                                }, '*');
+                                joinedCount++;
+                            }, index * 100); // Stagger joins by 100ms
+                        } catch (e) {
+                            console.error(`Failed to join player ${player.number}:`, e);
+                        }
+                    }
+                });
+
+                setTimeout(() => {
+                    showStatus(`✅ Sent join commands to ${joinedCount} players!`, 'success');
+                }, playerWindows.length * 100 + 500);
+            }, 2000); // Wait 2 seconds for pages to load
+        }
+
+        function closeAllPlayers() {
+            playerWindows.forEach(player => {
+                if (player.window && !player.window.closed) {
+                    player.window.close();
+                }
+            });
+
+            playerWindows = [];
+            
+            document.getElementById('joinBtn').disabled = true;
+            document.getElementById('closeBtn').disabled = true;
+            document.getElementById('launchBtn').disabled = false;
+
+            showStatus('🗑️ All player windows closed', 'info');
+        }
+
+        // Warn before closing if windows are open
+        window.addEventListener('beforeunload', function(e) {
+            if (playerWindows.length > 0) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+        });
+
+        // Listen for window closes
+        setInterval(() => {
+            playerWindows = playerWindows.filter(player => 
+                player.window && !player.window.closed
+            );
+
+            if (playerWindows.length === 0 && !document.getElementById('joinBtn').disabled) {
+                document.getElementById('joinBtn').disabled = true;
+                document.getElementById('closeBtn').disabled = true;
+                document.getElementById('launchBtn').disabled = false;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

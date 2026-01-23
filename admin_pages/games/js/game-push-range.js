@@ -402,6 +402,11 @@ function handlePushRangeUpdate(message) {
         Object.entries(message.player_presses).forEach(([playerId, playerData]) => {
             const team = playerData.team;
             const roster = teamRosters[team];
+            // Safety check: roster may be undefined during game transitions
+            if (!roster) {
+                console.log('[PUSH RANGE] Roster undefined for team:', team, '(likely game transitioning)');
+                return;
+            }
             const player = roster.find(p => p.id === parseInt(playerId));
             if (player) {
                 player.presses = playerData.presses;

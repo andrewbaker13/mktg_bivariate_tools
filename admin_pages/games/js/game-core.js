@@ -621,6 +621,18 @@ function handleMessage(message) {
             updateLeaderboard(message.leaderboard);
             break;
             
+        case 'ping':
+            // Respond to server heartbeat ping with proper message format
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    action: 'pong',  // Backend expects 'action' not 'type'
+                    data: {
+                        timestamp: message.timestamp || Date.now()
+                    }
+                }));
+            }
+            break;
+            
         case 'game_ended':
             handleGameEnd(message);
             break;
@@ -881,11 +893,28 @@ async function handleCountdownStart(message) {
 }
 
 // Handle server-authoritative timer updates
+// Throttle timer updates to prevent flickering from rapid broadcasts
+let lastTimerUpdateTime = 0;
+const TIMER_UPDATE_THROTTLE = 200; // Only update display every 200ms max
+
 function handleTimerUpdate(message) {
     // Server sends authoritative time_remaining every 500ms
     // We use this to keep client timers in sync
     
     const serverTimeRemaining = message.time_remaining;
+    const now = Date.now();
+    
+    // Throttle visual updates to prevent flickering
+    if (now - lastTimerUpdateTime < TIMER_UPDATE_THROTTLE) {
+        // Too soon, skip this update (but still store the value for accuracy)
+        window.lastServerTimeUpdate = {
+            time_remaining: serverTimeRemaining,
+            timestamp: now
+        };
+        return;
+    }
+    
+    lastTimerUpdateTime = now;
     
     // Update the timer display elements if they exist
     const timerEl = document.getElementById('timer');

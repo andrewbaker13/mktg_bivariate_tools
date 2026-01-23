@@ -440,6 +440,45 @@
             successMessage.textContent = message;
             successMessage.style.display = 'block';
         }
+
+        // Listen for auto-join commands from multi-player-tester
+        window.addEventListener('message', function(event) {
+            // Only accept messages from same origin for security
+            if (event.origin !== window.location.origin) return;
+
+            const data = event.data;
+            if (data.action === 'joinGame') {
+                console.log('Received auto-join command:', data);
+                
+                // Fill in the form
+                const roomCodeInput = document.getElementById('roomCode');
+                const guestModeCheckbox = document.getElementById('guestMode');
+                const guestNameInput = document.getElementById('guestName');
+                const guestPasswordInput = document.getElementById('guestPassword');
+                
+                if (roomCodeInput) roomCodeInput.value = data.roomCode || '';
+                
+                // Enable guest mode
+                if (guestModeCheckbox && !guestModeCheckbox.checked) {
+                    guestModeCheckbox.checked = true;
+                    guestModeCheckbox.dispatchEvent(new Event('change'));
+                }
+                
+                // Fill guest fields
+                setTimeout(() => {
+                    if (guestNameInput) guestNameInput.value = data.username || '';
+                    if (guestPasswordInput && data.password) guestPasswordInput.value = data.password;
+                    
+                    // Auto-submit after a brief delay
+                    setTimeout(() => {
+                        const joinForm = document.getElementById('joinForm');
+                        if (joinForm) {
+                            joinForm.dispatchEvent(new Event('submit'));
+                        }
+                    }, 200);
+                }, 100);
+            }
+        });
     </script>
     
     <!-- Deferred Tracking -->

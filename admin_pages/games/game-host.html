@@ -1495,6 +1495,13 @@
         document.getElementById('nextRoundBtn').addEventListener('click', async function() {
             if (!gameSession) return;
             
+            //防御: Prevent double-clicks by checking if button is already disabled
+            const nextBtn = this;
+            if (nextBtn.disabled) {
+                console.warn('Next Round button clicked while disabled - ignoring double-click');
+                return;
+            }
+            
             // Check for disconnected players (>10% threshold)
             if (currentPlayers.length > 0) {
                 const disconnectedPlayers = currentPlayers.filter(p => !p.ws_connected);
@@ -1510,10 +1517,16 @@
                 }
             }
             
-            console.log('Next Round button clicked');
-            const nextBtn = this;
+            //防御: Disable button IMMEDIATELY to prevent race conditions
             nextBtn.disabled = true;
             nextBtn.textContent = 'Advancing...';
+            
+            // VALIDATION: Log current state before advancing
+            console.log('🔄 Next Round clicked - Current state:', {
+                current: gameSession.current_round,
+                total: gameSession.total_rounds,
+                status: gameSession.status
+            });
             
             try {
                 const response = await fetch(`${API_BASE}/game/${gameSession.room_code}/advance-round/`, {
@@ -1526,8 +1539,22 @@
                     throw new Error(error.error || 'Failed to advance round');
                 }
                 
-                gameSession = await response.json();
-                console.log('Round advanced, new gameSession:', gameSession);
+                const newGameSession = await response.json();
+                
+                // VALIDATION: Check that round incremented by exactly 1
+                if (newGameSession.current_round !== gameSession.current_round + 1) {
+                    console.error('⚠️ ROUND DESYNC DETECTED!', {
+                        expected: gameSession.current_round + 1,
+                        received: newGameSession.current_round,
+                        old: gameSession.current_round
+                    });
+                }
+                
+                gameSession = newGameSession;
+                console.log('✅ Round advanced successfully:', {
+                    newRound: gameSession.current_round,
+                    total: gameSession.total_rounds
+                });
                 
                 showToast(`Advanced to Round ${gameSession.current_round}`, 'success');
                 setStatusIndicator('paused', `Round ${gameSession.current_round} Ready`);
@@ -1610,7 +1637,7 @@
         let autoAdvanceTimeout = null; // Track timeout for cancellation
         
         function handleGameEnded(message) {
-            console.log('Game ended event received:', message);
+            console.log('🏁 Game ended event received:', message);
             
             // Clear safety timeout
             if (roundTimeout) {
@@ -1636,7 +1663,27 @@
             const isMultiRound = totalRounds > 1;
             const hasMoreRounds = isMultiRound && currentRound < totalRounds;
             
-            console.log(`Multi-round check: total=${totalRounds}, current=${currentRound}, hasMore=${hasMoreRounds}`);
+            // VALIDATION: Log detailed state for debugging false "Game Over"
+            console.log('🔍 Round completion check:', {
+                message_current: message.current_round,
+                message_total: message.total_rounds,
+                session_current: gameSession?.current_round,
+                session_total: gameSession?.total_rounds,
+                computed_current: currentRound,
+                computed_total: totalRounds,
+                hasMoreRounds: hasMoreRounds,
+                decision: hasMoreRounds ? 'Show Next Round' : 'Show Game Over'
+            });
+            
+            // DEFENSIVE: Sanity check - if currentRound > totalRounds, something is wrong
+            if (currentRound > totalRounds) {
+                console.error('🚨 CRITICAL: Round counter exceeded total rounds!', {
+                    current: currentRound,
+                    total: totalRounds,
+                    message: message
+                });
+                showToast('⚠️ Round sync error detected - check console', 'error');
+            }
             
             if (hasMoreRounds) {
                 // Show Next Round button
@@ -1920,7 +1967,26 @@
         
         // Handle round changed event from WebSocket
         function handleRoundChanged(message) {
+            // VALIDATION: Log round change for debugging
+            console.log('🔄 Round changed event:', {
+                old_round: gameSession?.current_round,
+                new_round: message.current_round,
+                total: message.total_rounds
+            });
+            
             if (gameSession) {
+                // DEFENSIVE: Validate round increment makes sense
+                if (message.current_round && gameSession.current_round) {
+                    const expectedRound = gameSession.current_round + 1;
+                    if (message.current_round !== expectedRound && message.current_round !== gameSession.current_round) {
+                        console.warn('⚠️ Unexpected round jump:', {
+                            expected: expectedRound,
+                            received: message.current_round,
+                            previous: gameSession.current_round
+                        });
+                    }
+                }
+                
                 gameSession.current_round = message.current_round;
                 gameSession.total_rounds = message.total_rounds;
             }
@@ -2040,6 +2106,13 @@
             websocket.onopen = function() {
                 console.log('WebSocket connected');
                 setConnectionStatus('connected');
+                
+                // Identify as host to backend
+                websocket.send(JSON.stringify({
+                    action: 'identify',
+                    is_host: true
+                }));
+                
                 if (!hasShownConnectionToast) {
                     showToast('Live updates connected', 'success');
                     hasShownConnectionToast = true;
@@ -2067,6 +2140,8 @@
                     handleCountdownStart(message);
                 } else if (message.type === 'participation_update') {
                     updateParticipationDisplay(message);
+                } else if (message.type === 'ping') {
+                    websocket.send(JSON.stringify({ type: 'pong' }));
                 }
             };
             
@@ -2805,6 +2880,38 @@
                 cleanupBtn.textContent = '🗑️ End Old Games';
             }
         }
+
+        // Listen for auto-join commands from multi-player-tester
+        window.addEventListener('message', function(event) {
+            // Only accept messages from same origin for security
+            if (event.origin !== window.location.origin) return;
+
+            const data = event.data;
+            if (data.action === 'joinGame') {
+                console.log('Received auto-join command:', data);
+                
+                // Fill in the form
+                const roomCodeInput = document.getElementById('roomCode');
+                const usernameInput = document.getElementById('username');
+                const passwordInput = document.getElementById('password');
+                
+                if (roomCodeInput) roomCodeInput.value = data.roomCode || '';
+                if (usernameInput) usernameInput.value = data.username || '';
+                if (passwordInput && data.password) passwordInput.value = data.password;
+                
+                // Auto-submit after a brief delay
+                setTimeout(() => {
+                    const joinForm = document.getElementById('joinForm');
+                    if (joinForm) {
+                        joinForm.dispatchEvent(new Event('submit'));
+                    } else {
+                        // Try to find and click the join button
+                        const joinBtn = document.querySelector('button[type="submit"]');
+                        if (joinBtn) joinBtn.click();
+                    }
+                }, 200);
+            }
+        });
     </script>
     <script src="../../shared/js/admin-nav.js"></script>
     <footer style="text-align: center; padding: 2rem 1rem; color: rgba(255,255,255,0.8); font-size: 0.9rem;">
