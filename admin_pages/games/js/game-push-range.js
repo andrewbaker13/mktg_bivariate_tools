@@ -15,11 +15,23 @@ let localRightBoundary = 100;
 let totalPlayers = 10;
 let teamRosters = {left: [], right: []};
 
+// Performance optimization: throttle roster rendering for 100-player scalability
+let latestRosterUpdate = null;
+let rosterRenderInterval = null;
+const ROSTER_RENDER_HZ = 10;  // Update other players' counts at 10 Hz instead of 20 Hz
+
 function showPushRangeGame(message, timeLimit) {
     const imageHTML = message.image_url ? `<img src="${message.image_url}" alt="Question image" style="max-width: 100%; max-height: 25vh; margin: 0.5rem auto; border-radius: 8px; display: block; object-fit: contain;">` : '';
     
     // Check if we're in projector mode
     const isProjector = window.isProjectorMode || false;
+    
+    // Clean up any existing throttled render interval from previous round
+    if (rosterRenderInterval) {
+        clearInterval(rosterRenderInterval);
+        rosterRenderInterval = null;
+        latestRosterUpdate = null;
+    }
     
     // Get team assignment (only for players, not projector)
     myTeam = !isProjector && message.team_assignments?.[playerSession?.id] ? message.team_assignments[playerSession.id].team : 'left';
@@ -207,7 +219,7 @@ function registerPress() {
     pendingPresses++;
     myPressCount++;
     
-    // Update local display
+    // INSTANT feedback for YOUR button press (no throttle)
     document.getElementById('myPressCount').textContent = myPressCount;
     
     // OPTIMISTIC UPDATE: Move bar locally for instant feedback
@@ -397,8 +409,9 @@ function handlePushRangeUpdate(message) {
         }
     }
     
-    // Update team rosters with press counts
+    // Update team rosters with press counts (THROTTLED for performance with 100 players)
     if (message.player_presses) {
+        // Always update the data model immediately
         Object.entries(message.player_presses).forEach(([playerId, playerData]) => {
             const team = playerData.team;
             const roster = teamRosters[team];
@@ -412,7 +425,19 @@ function handlePushRangeUpdate(message) {
                 player.presses = playerData.presses;
             }
         });
-        updateTeamRosters();
+        
+        // Store latest roster state for throttled rendering
+        latestRosterUpdate = true;
+        
+        // Start throttled render loop if not already running
+        if (!rosterRenderInterval) {
+            rosterRenderInterval = setInterval(() => {
+                if (latestRosterUpdate) {
+                    updateTeamRosters();
+                    latestRosterUpdate = null;
+                }
+            }, 1000 / ROSTER_RENDER_HZ);  // 10 Hz = 100ms
+        }
     }
 }
 
