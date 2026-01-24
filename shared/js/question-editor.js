@@ -1322,7 +1322,13 @@ function previewUnsavedQuestion() {
                     <div class="preview-banner" style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #1e40af;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span><i class="fas fa-info-circle"></i> This is how the question will appear to students.</span>
-                            <button class="btn btn-sm btn-text" onclick="alert(JSON.stringify(${JSON.stringify(variables).replace(/"/g, '&quot;')}, null, 2))">View Variables</button>
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin: 0;">
+                                    <input type="checkbox" id="showAnswerToggle" onchange="toggleAnswerPreview()" style="cursor: pointer;">
+                                    <span style="font-size: 0.9rem;">Show Answer</span>
+                                </label>
+                                <button class="btn btn-sm btn-text" onclick="alert(JSON.stringify(${JSON.stringify(variables).replace(/"/g, '&quot;')}, null, 2))">View Variables</button>
+                            </div>
                         </div>
                     </div>
                     
@@ -1492,6 +1498,45 @@ function renderPreviewInputs(question) {
     }
     
     return '<div style="color: #6b7280; font-style: italic;">Preview not available for this question type yet.</div>';
+}
+
+function toggleAnswerPreview() {
+    const isChecked = document.getElementById('showAnswerToggle').checked;
+    const options = document.querySelectorAll('.preview-option');
+    
+    options.forEach(opt => {
+        if (isChecked) {
+            opt.classList.add('show-answer');
+        } else {
+            opt.classList.remove('show-answer');
+        }
+    });
+}
+
+// Add CSS styles for answer preview
+if (!document.getElementById('answer-preview-styles')) {
+    const style = document.createElement('style');
+    style.id = 'answer-preview-styles';
+    style.textContent = `
+        .preview-option.show-answer[data-is-correct="true"] {
+            background-color: #d1fae5 !important;
+            border-color: #10b981 !important;
+        }
+        
+        .preview-option.show-answer[data-is-correct="true"]::after {
+            content: "\\2713";
+            color: #10b981;
+            font-weight: bold;
+            margin-left: auto;
+            font-size: 1.25rem;
+        }
+        
+        .preview-option.show-answer[data-is-correct="true"] {
+            display: flex !important;
+            align-items: center !important;
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 // Close modal on background click (Event Delegation)

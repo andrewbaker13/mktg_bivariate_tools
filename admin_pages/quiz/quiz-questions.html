@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Questions - Dr. Baker Marketing</title>
     <link rel="icon" type="image/svg+xml" href="../../art_assets/svg_logos/clr_notext_logo.svg">
-    <link rel="stylesheet" href="../shared/css/main.css">
-    <script src="../shared/js/tracking.js"></script>
-    <link rel="stylesheet" href="../shared/css/admin-nav.css">
+    <link rel="stylesheet" href="../../shared/css/main.css">
+    <script src="../../shared/js/tracking.js"></script>
+    <link rel="stylesheet" href="../../shared/css/admin-nav.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js for previews -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -457,8 +457,8 @@
         <span id="toast-message">Success!</span>
     </div>
 
-    <script src="../shared/js/auth_tracking.js"></script>
-    <script src="../shared/js/question-editor.js"></script>
+    <script src="../../shared/js/auth_tracking.js"></script>
+    <script src="../../shared/js/question-editor.js"></script>
     <script>
         // API_BASE is defined in auth_tracking.js
         let quizId = null;
@@ -501,7 +501,7 @@
 
             // Load Shared Editor HTML
             try {
-                const response = await fetch('../shared/components/question-editor-modal.html');
+                const response = await fetch('../../shared/components/question-editor-modal.html');
                 if (response.ok) {
                     const html = await response.text();
                     document.getElementById('question-editor-container').innerHTML = html;
@@ -746,6 +746,6 @@
         };
 
     </script>
-    <script src="../shared/js/admin-nav.js"></script>
+    <script src="../../shared/js/admin-nav.js"></script>
 </body>
 </html>
