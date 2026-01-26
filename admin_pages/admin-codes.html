@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Codes - Admin Dashboard</title>
+    <link rel="stylesheet" href="../shared/css/global.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-header h1 {
+            font-size: 2rem;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .back-btn {
+            padding: 0.75rem 1.5rem;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        .back-btn:hover {
+            background: #4b5563;
+        }
+        .codes-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .search-filter-group {
+            display: flex;
+            gap: 1rem;
+            flex: 1;
+        }
+        .search-input, .filter-select {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+        }
+        .filter-select {
+            background: white;
+            min-width: 150px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #059669;
+        }
+        .btn-secondary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #2563eb;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .count-badge {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        .codes-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .codes-table th {
+            background: #f9fafb;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+        }
+        .codes-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .codes-table tr:hover {
+            background: #f9fafb;
+        }
+        .code-badge {
+            display: inline-block;
+            font-family: 'Courier New', monospace;
+            background: #f3f4f6;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .status-badge.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-badge.used {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .status-badge.expired {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .action-btn {
+            padding: 0.375rem 0.75rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            margin-right: 0.25rem;
+            transition: all 0.2s;
+        }
+        .action-btn.deactivate {
+            background: #f59e0b;
+            color: white;
+        }
+        .action-btn.deactivate:hover {
+            background: #d97706;
+        }
+        .action-btn.copy {
+            background: #3b82f6;
+            color: white;
+        }
+        .action-btn.copy:hover {
+            background: #2563eb;
+        }
+        #loading {
+            text-align: center;
+            padding: 3rem;
+            color: white;
+            font-size: 1.25rem;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            animation: fadeIn 0.2s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 600px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideDown 0.3s;
+        }
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .modal-header h2 {
+            color: #1f2937;
+        }
+        .close-btn {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            background: none;
+            border: none;
+        }
+        .close-btn:hover {
+            color: #1f2937;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .form-group small {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+        .btn-cancel {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        .btn-cancel:hover {
+            background: #d1d5db;
+        }
+        .generated-codes-display {
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+        .generated-code-item {
+            font-family: 'Courier New', monospace;
+            padding: 0.5rem;
+            background: white;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <p>🔐 Verifying admin access...</p>
+    </div>
+
+    <div class="admin-container" id="content" style="display: none;">
+        <div class="page-header">
+            <h1>🎟️ Registration Codes</h1>
+            <a href="admin-dashboard.html" class="back-btn">← Back to Dashboard</a>
+        </div>
+
+        <div class="codes-container">
+            <div class="controls-bar">
+                <div class="search-filter-group">
+                    <input type="text" id="code-search" class="search-input" placeholder="Search codes...">
+                    <select id="course-filter" class="filter-select">
+                        <option value="all">All Courses</option>
+                    </select>
+                    <select id="status-filter" class="filter-select">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="used">Used</option>
+                        <option value="expired">Expired</option>
+                    </select>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="showGenerateModal()">+ Generate Codes</button>
+                    <button class="btn btn-secondary" onclick="exportCodes()">📥 Export CSV</button>
+                    <button class="btn btn-danger" onclick="bulkDeactivate()">⚠️ Bulk Deactivate</button>
+                </div>
+            </div>
+
+            <div class="count-badge" id="code-count">Loading...</div>
+
+            <table class="codes-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Course</th>
+                        <th>Status</th>
+                        <th>Used By</th>
+                        <th>Created</th>
+                        <th>Expires</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="codes-table-body">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                            <p style="color: #6b7280;">Loading codes...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Generate Codes Modal -->
+    <div id="generateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Generate Registration Codes</h2>
+                <button class="close-btn" onclick="closeGenerateModal()">×</button>
+            </div>
+            <form id="generateForm">
+                <div class="form-group">
+                    <label for="generate-course">Course *</label>
+                    <select id="generate-course" required>
+                        <option value="">Select course...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="code-count">Number of Codes *</label>
+                    <input type="number" id="code-count" min="1" max="100" value="10" required>
+                    <small>Maximum 100 codes per batch</small>
+                </div>
+                <div class="form-group">
+                    <label for="expiration-date">Expiration Date (Optional)</label>
+                    <input type="date" id="expiration-date">
+                    <small>Leave empty for no expiration</small>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeGenerateModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Generate Codes</button>
+                </div>
+            </form>
+            <div id="generated-codes-display" style="display: none;">
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Generated Codes:</h3>
+                <div class="generated-codes-display" id="generated-codes-list"></div>
+                <button class="btn btn-secondary" onclick="copyAllCodes()" style="margin-top: 1rem;">📋 Copy All Codes</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/js/auth_tracking.js"></script>
+    <script src="../shared/js/admin-nav.js"></script>
+    <script>
+        // API_BASE is already defined in auth_tracking.js
+        let allCodes = [];
+        let allCourses = [];
+        let generatedCodes = [];
+
+        async function checkSuperuserAccess() {
+            const token = getAuthToken();
+            if (!token) {
+                window.location.href = 'login.html';
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/profile/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to verify permissions');
+                }
+
+                const userData = await response.json();
+                if (!userData.is_superuser) {
+                    document.getElementById('loading').innerHTML = 
+                        '<p style="color: #fef3c7;">⚠️ Access Denied: Superuser privileges required.</p><p><a href="instructor.html" style="color: white;">Return to Instructor Dashboard</a></p>';
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                console.error('Error checking permissions:', error);
+                document.getElementById('loading').innerHTML = 
+                    '<p style="color: #dc2626;">Error verifying permissions. Please try again.</p>';
+                return false;
+            }
+        }
+
+        async function loadCodes() {
+            const token = getAuthToken();
+            const tbody = document.getElementById('codes-table-body');
+            
+            try {
+                // Get course ID from URL if navigating from course management
+                const urlParams = new URLSearchParams(window.location.search);
+                const courseId = urlParams.get('course');
+                
+                const response = await fetch(`${API_BASE}/courses/codes/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to load codes');
+                }
+                
+                allCodes = await response.json();
+                
+                // If course ID provided, filter to that course
+                if (courseId) {
+                    document.getElementById('course-filter').value = courseId;
+                }
+                
+                renderCodes(allCodes);
+                
+            } catch (error) {
+                console.error('Error loading codes:', error);
+                tbody.innerHTML = `
+                    <tr><td colspan="7" style="text-align: center; padding: 2rem;">
+                        <div style="color: #dc2626; font-weight: 600; margin-bottom: 0.5rem;">Error loading codes</div>
+                        <div style="color: #6b7280; font-size: 0.9rem;">${error.message}</div>
+                    </td></tr>
+                `;
+            }
+        }
+
+        function renderCodes(codes) {
+            const tbody = document.getElementById('codes-table-body');
+            const searchTerm = document.getElementById('code-search').value.toLowerCase();
+            const courseFilter = document.getElementById('course-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+            
+            // Filter codes
+            let filteredCodes = codes.filter(code => {
+                const matchesSearch = code.code.toLowerCase().includes(searchTerm) || 
+                                    (code.used_by && code.used_by.toLowerCase().includes(searchTerm));
+                
+                const matchesCourse = courseFilter === 'all' || code.course_id == courseFilter;
+                
+                let matchesStatus = true;
+                if (statusFilter === 'active') {
+                    matchesStatus = code.is_active && !code.used_by;
+                } else if (statusFilter === 'used') {
+                    matchesStatus = code.used_by !== null;
+                } else if (statusFilter === 'expired') {
+                    matchesStatus = code.expiration_date && new Date(code.expiration_date) < new Date();
+                }
+                
+                return matchesSearch && matchesCourse && matchesStatus;
+            });
+            
+            // Update count badge
+            const activeCount = filteredCodes.filter(c => c.is_active && !c.used_by).length;
+            const usedCount = filteredCodes.filter(c => c.used_by).length;
+            document.getElementById('code-count').textContent = 
+                `${filteredCodes.length} codes (${activeCount} active, ${usedCount} used)`;
+            
+            // Render table
+            tbody.innerHTML = '';
+            
+            if (filteredCodes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #6b7280;">No codes found.</td></tr>';
+                return;
+            }
+            
+            filteredCodes.forEach(code => {
+                const tr = document.createElement('tr');
+                
+                // Status badge
+                let statusBadge = '';
+                if (code.used_by) {
+                    statusBadge = '<span class="status-badge used">✓ Used</span>';
+                } else if (code.expiration_date && new Date(code.expiration_date) < new Date()) {
+                    statusBadge = '<span class="status-badge expired">⏰ Expired</span>';
+                } else if (code.is_active) {
+                    statusBadge = '<span class="status-badge active">● Active</span>';
+                } else {
+                    statusBadge = '<span class="status-badge expired">⊗ Inactive</span>';
+                }
+                
+                // Actions
+                let actions = `<button class="action-btn copy" onclick="copyCode('${code.code}')" title="Copy Code">📋 Copy</button>`;
+                
+                if (code.is_active && !code.used_by) {
+                    actions += `<button class="action-btn deactivate" onclick="deactivateCode(${code.id}, '${code.code}')" title="Deactivate">⊗ Deactivate</button>`;
+                }
+                
+                tr.innerHTML = `
+                    <td><span class="code-badge">${code.code}</span></td>
+                    <td>${code.course_name || '-'}</td>
+                    <td>${statusBadge}</td>
+                    <td>${code.used_by || '-'}</td>
+                    <td>${new Date(code.created_at).toLocaleDateString()}</td>
+                    <td>${code.expiration_date ? new Date(code.expiration_date).toLocaleDateString() : 'Never'}</td>
+                    <td>${actions}</td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadCourses() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/courses/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load courses');
+                
+                allCourses = await response.json();
+                
+                // Populate dropdowns
+                const courseFilterSelect = document.getElementById('course-filter');
+                const generateCourseSelect = document.getElementById('generate-course');
+                
+                courseFilterSelect.innerHTML = '<option value="all">All Courses</option>';
+                generateCourseSelect.innerHTML = '<option value="">Select course...</option>';
+                
+                allCourses.forEach(course => {
+                    const option1 = document.createElement('option');
+                    option1.value = course.id;
+                    option1.textContent = course.name;
+                    courseFilterSelect.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = course.id;
+                    option2.textContent = course.name;
+                    generateCourseSelect.appendChild(option2);
+                });
+                
+            } catch (error) {
+                console.error('Error loading courses:', error);
+            }
+        }
+
+        function showGenerateModal() {
+            document.getElementById('generateForm').reset();
+            document.getElementById('generated-codes-display').style.display = 'none';
+            document.getElementById('generateModal').style.display = 'block';
+        }
+
+        function closeGenerateModal() {
+            document.getElementById('generateModal').style.display = 'none';
+        }
+
+        document.getElementById('generateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const courseId = document.getElementById('generate-course').value;
+            const count = document.getElementById('code-count').value;
+            const expirationDate = document.getElementById('expiration-date').value;
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/courses/${courseId}/generate-codes/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        count: parseInt(count),
+                        expiration_date: expirationDate || null
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to generate codes');
+                }
+                
+                const result = await response.json();
+                generatedCodes = result.codes;
+                
+                // Display generated codes
+                const displayDiv = document.getElementById('generated-codes-display');
+                const listDiv = document.getElementById('generated-codes-list');
+                
+                listDiv.innerHTML = generatedCodes.map(code => 
+                    `<div class="generated-code-item">
+                        <span>${code}</span>
+                        <button class="action-btn copy" onclick="copyCode('${code}')">📋</button>
+                    </div>`
+                ).join('');
+                
+                displayDiv.style.display = 'block';
+                
+                alert(`✓ Successfully generated ${count} codes!`);
+                await loadCodes();
+                
+            } catch (error) {
+                alert(`Error generating codes: ${error.message}`);
+                console.error(error);
+            }
+        });
+
+        function copyCode(code) {
+            navigator.clipboard.writeText(code).then(() => {
+                alert(`✓ Code copied: ${code}`);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy code');
+            });
+        }
+
+        function copyAllCodes() {
+            const allCodesText = generatedCodes.join('\n');
+            navigator.clipboard.writeText(allCodesText).then(() => {
+                alert(`✓ All ${generatedCodes.length} codes copied to clipboard!`);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy codes');
+            });
+        }
+
+        async function deactivateCode(codeId, codeString) {
+            if (!confirm(`Deactivate code: ${codeString}?\n\nThis code will no longer be usable for registration.`)) {
+                return;
+            }
+            
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/registration-codes/${codeId}/deactivate/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to deactivate code');
+                }
+                
+                alert('✓ Code deactivated successfully!');
+                await loadCodes();
+                
+            } catch (error) {
+                alert(`Error deactivating code: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        async function bulkDeactivate() {
+            const courseFilter = document.getElementById('course-filter').value;
+            
+            if (courseFilter === 'all') {
+                alert('Please select a specific course first to bulk deactivate codes.');
+                return;
+            }
+            
+            const courseName = allCourses.find(c => c.id == courseFilter)?.name;
+            const activeCount = allCodes.filter(c => c.course_id == courseFilter && c.is_active && !c.used_by).length;
+            
+            if (activeCount === 0) {
+                alert('No active codes to deactivate for this course.');
+                return;
+            }
+            
+            if (!confirm(`⚠️ WARNING: Deactivate ALL ${activeCount} active codes for ${courseName}?\n\nThis action cannot be undone.`)) {
+                return;
+            }
+            
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/courses/${courseFilter}/bulk-deactivate-codes/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to bulk deactivate');
+                }
+                
+                const result = await response.json();
+                alert(`✓ Successfully deactivated ${result.deactivated_count} codes!`);
+                await loadCodes();
+                
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        async function exportCodes() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/courses/codes/export/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to export codes');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `registration_codes_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                alert(`Error exporting codes: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        // Search and filter event listeners
+        document.getElementById('code-search').addEventListener('input', () => {
+            if (allCodes.length > 0) renderCodes(allCodes);
+        });
+        
+        document.getElementById('course-filter').addEventListener('change', () => {
+            if (allCodes.length > 0) renderCodes(allCodes);
+        });
+        
+        document.getElementById('status-filter').addEventListener('change', () => {
+            if (allCodes.length > 0) renderCodes(allCodes);
+        });
+
+        // Close modals on outside click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Initialize page
+        async function initPage() {
+            const hasAccess = await checkSuperuserAccess();
+            if (!hasAccess) return;
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            
+            await Promise.all([loadCodes(), loadCourses()]);
+        }
+
+        initPage();
+    </script>
+</body>
+</html>

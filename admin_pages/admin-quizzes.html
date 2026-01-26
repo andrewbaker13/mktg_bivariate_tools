@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Management - Admin Dashboard</title>
+    <link rel="stylesheet" href="../shared/css/global.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-header h1 {
+            font-size: 2rem;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .back-btn {
+            padding: 0.75rem 1.5rem;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        .back-btn:hover {
+            background: #4b5563;
+        }
+        .quiz-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .search-filter-group {
+            display: flex;
+            gap: 1rem;
+            flex: 1;
+        }
+        .search-input, .filter-select {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+        }
+        .filter-select {
+            background: white;
+            min-width: 150px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .btn-secondary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #2563eb;
+        }
+        .count-badge {
+            background: #ede9fe;
+            color: #5b21b6;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        .quiz-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .quiz-table th {
+            background: #f9fafb;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+        }
+        .quiz-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .quiz-table tr:hover {
+            background: #f9fafb;
+        }
+        .visibility-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .visibility-badge.visible {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .visibility-badge.hidden {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        .action-btn {
+            padding: 0.375rem 0.75rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            margin-right: 0.25rem;
+            transition: all 0.2s;
+        }
+        .action-btn.view {
+            background: #3b82f6;
+            color: white;
+        }
+        .action-btn.view:hover {
+            background: #2563eb;
+        }
+        .action-btn.analytics {
+            background: #10b981;
+            color: white;
+        }
+        .action-btn.analytics:hover {
+            background: #059669;
+        }
+        .action-btn.toggle {
+            background: #f59e0b;
+            color: white;
+        }
+        .action-btn.toggle:hover {
+            background: #d97706;
+        }
+        .action-btn.danger {
+            background: #ef4444;
+            color: white;
+        }
+        .action-btn.danger:hover {
+            background: #dc2626;
+        }
+        #loading {
+            text-align: center;
+            padding: 3rem;
+            color: white;
+            font-size: 1.25rem;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            animation: fadeIn 0.2s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideDown 0.3s;
+        }
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .modal-header h2 {
+            color: #1f2937;
+        }
+        .close-btn {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            background: none;
+            border: none;
+        }
+        .close-btn:hover {
+            color: #1f2937;
+        }
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #8b5cf6;
+            margin-bottom: 0.5rem;
+        }
+        .stat-card .label {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        .question-list {
+            margin-top: 2rem;
+        }
+        .question-item {
+            background: #f9fafb;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            border-left: 4px solid #8b5cf6;
+        }
+        .question-item strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+        .question-stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <p>🔐 Verifying admin access...</p>
+    </div>
+
+    <div class="admin-container" id="content" style="display: none;">
+        <div class="page-header">
+            <h1>📝 Quiz Management</h1>
+            <a href="admin-dashboard.html" class="back-btn">← Back to Dashboard</a>
+        </div>
+
+        <div class="quiz-container">
+            <div class="controls-bar">
+                <div class="search-filter-group">
+                    <input type="text" id="quiz-search" class="search-input" placeholder="Search quizzes...">
+                    <select id="course-filter" class="filter-select">
+                        <option value="all">All Courses</option>
+                    </select>
+                    <select id="visibility-filter" class="filter-select">
+                        <option value="all">All Visibility</option>
+                        <option value="visible">Visible</option>
+                        <option value="hidden">Hidden</option>
+                    </select>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="exportQuizAnalytics()">📥 Export Analytics</button>
+                </div>
+            </div>
+
+            <div class="count-badge" id="quiz-count">Loading...</div>
+
+            <table class="quiz-table">
+                <thead>
+                    <tr>
+                        <th>Quiz Title</th>
+                        <th>Course</th>
+                        <th>Questions</th>
+                        <th>Attempts</th>
+                        <th>Avg Score</th>
+                        <th>Visibility</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="quiz-table-body">
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 2rem;">
+                            <p style="color: #6b7280;">Loading quizzes...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Quiz Analytics Modal -->
+    <div id="analyticsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="analytics-title">Quiz Analytics</h2>
+                <button class="close-btn" onclick="closeAnalyticsModal()">×</button>
+            </div>
+            <div id="analytics-content">
+                <div class="analytics-grid">
+                    <div class="stat-card">
+                        <div class="value" id="total-attempts">-</div>
+                        <div class="label">Total Attempts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="avg-score">-</div>
+                        <div class="label">Average Score</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="completion-rate">-</div>
+                        <div class="label">Completion Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value" id="unique-students">-</div>
+                        <div class="label">Unique Students</div>
+                    </div>
+                </div>
+                <div class="question-list" id="question-performance">
+                    <h3>Question Performance</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/js/auth_tracking.js"></script>
+    <script src="../shared/js/admin-nav.js"></script>
+    <script>
+        // API_BASE is already defined in auth_tracking.js
+        let allQuizzes = [];
+        let allCourses = [];
+
+        async function checkSuperuserAccess() {
+            const token = getAuthToken();
+            if (!token) {
+                window.location.href = 'login.html';
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/profile/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to verify permissions');
+                }
+
+                const userData = await response.json();
+                if (!userData.is_superuser) {
+                    document.getElementById('loading').innerHTML = 
+                        '<p style="color: #fef3c7;">⚠️ Access Denied: Superuser privileges required.</p><p><a href="instructor.html" style="color: white;">Return to Instructor Dashboard</a></p>';
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                console.error('Error checking permissions:', error);
+                document.getElementById('loading').innerHTML = 
+                    '<p style="color: #dc2626;">Error verifying permissions. Please try again.</p>';
+                return false;
+            }
+        }
+
+        async function loadQuizzes() {
+            const token = getAuthToken();
+            const tbody = document.getElementById('quiz-table-body');
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz/all/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to load quizzes');
+                }
+                
+                allQuizzes = await response.json();
+                renderQuizzes(allQuizzes);
+                
+            } catch (error) {
+                console.error('Error loading quizzes:', error);
+                tbody.innerHTML = `
+                    <tr><td colspan="8" style="text-align: center; padding: 2rem;">
+                        <div style="color: #dc2626; font-weight: 600; margin-bottom: 0.5rem;">Error loading quizzes</div>
+                        <div style="color: #6b7280; font-size: 0.9rem;">${error.message}</div>
+                    </td></tr>
+                `;
+            }
+        }
+
+        function renderQuizzes(quizzes) {
+            const tbody = document.getElementById('quiz-table-body');
+            const searchTerm = document.getElementById('quiz-search').value.toLowerCase();
+            const courseFilter = document.getElementById('course-filter').value;
+            const visibilityFilter = document.getElementById('visibility-filter').value;
+            
+            // Filter quizzes
+            let filteredQuizzes = quizzes.filter(quiz => {
+                const matchesSearch = quiz.title.toLowerCase().includes(searchTerm);
+                const matchesCourse = courseFilter === 'all' || quiz.course_id == courseFilter;
+                
+                let matchesVisibility = true;
+                if (visibilityFilter === 'visible') {
+                    matchesVisibility = quiz.is_visible;
+                } else if (visibilityFilter === 'hidden') {
+                    matchesVisibility = !quiz.is_visible;
+                }
+                
+                return matchesSearch && matchesCourse && matchesVisibility;
+            });
+            
+            // Update count badge
+            document.getElementById('quiz-count').textContent = 
+                `${filteredQuizzes.length} quizzes ${courseFilter !== 'all' || visibilityFilter !== 'all' ? `(filtered from ${quizzes.length} total)` : ''}`;
+            
+            // Render table
+            tbody.innerHTML = '';
+            
+            if (filteredQuizzes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #6b7280;">No quizzes found.</td></tr>';
+                return;
+            }
+            
+            filteredQuizzes.forEach(quiz => {
+                const tr = document.createElement('tr');
+                
+                // Visibility badge
+                const visibilityBadge = quiz.is_visible 
+                    ? '<span class="visibility-badge visible">👁️ Visible</span>'
+                    : '<span class="visibility-badge hidden">🔒 Hidden</span>';
+                
+                // Actions
+                let actions = `<button class="action-btn view" onclick="viewQuiz(${quiz.id})" title="View Questions">📄 View</button>`;
+                actions += `<button class="action-btn analytics" onclick="viewAnalytics(${quiz.id}, '${quiz.title.replace(/'/g, "\\'")}')" title="View Analytics">📊 Analytics</button>`;
+                actions += `<button class="action-btn toggle" onclick="toggleVisibility(${quiz.id}, ${quiz.is_visible})" title="Toggle Visibility">${quiz.is_visible ? '🔒 Hide' : '👁️ Show'}</button>`;
+                actions += `<button class="action-btn danger" onclick="deleteQuiz(${quiz.id}, '${quiz.title.replace(/'/g, "\\'")}')" title="Delete Quiz">🗑️ Delete</button>`;
+                
+                tr.innerHTML = `
+                    <td><strong>${quiz.title}</strong></td>
+                    <td>${quiz.course_name || '-'}</td>
+                    <td>${quiz.question_count || 0}</td>
+                    <td>${quiz.attempt_count || 0}</td>
+                    <td>${quiz.avg_score !== null ? quiz.avg_score.toFixed(1) + '%' : '-'}</td>
+                    <td>${visibilityBadge}</td>
+                    <td>${new Date(quiz.created_at).toLocaleDateString()}</td>
+                    <td>${actions}</td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadCourses() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/courses/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load courses');
+                
+                allCourses = await response.json();
+                
+                // Populate dropdown
+                const courseFilterSelect = document.getElementById('course-filter');
+                courseFilterSelect.innerHTML = '<option value="all">All Courses</option>';
+                
+                allCourses.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course.id;
+                    option.textContent = course.name;
+                    courseFilterSelect.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Error loading courses:', error);
+            }
+        }
+
+        function viewQuiz(quizId) {
+            window.open(`quiz-preview.html?id=${quizId}`, '_blank');
+        }
+
+        async function viewAnalytics(quizId, quizTitle) {
+            document.getElementById('analytics-title').textContent = `Analytics: ${quizTitle}`;
+            document.getElementById('analyticsModal').style.display = 'block';
+            
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz/${quizId}/analytics/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load analytics');
+                
+                const data = await response.json();
+                
+                // Update stats
+                document.getElementById('total-attempts').textContent = data.total_attempts || 0;
+                document.getElementById('avg-score').textContent = data.avg_score ? data.avg_score.toFixed(1) + '%' : '-';
+                document.getElementById('completion-rate').textContent = data.completion_rate ? data.completion_rate.toFixed(1) + '%' : '-';
+                document.getElementById('unique-students').textContent = data.unique_students || 0;
+                
+                // Render question performance
+                const questionDiv = document.getElementById('question-performance');
+                if (data.questions && data.questions.length > 0) {
+                    questionDiv.innerHTML = '<h3>Question Performance</h3>' + 
+                        data.questions.map((q, i) => `
+                            <div class="question-item">
+                                <strong>Q${i + 1}: ${q.question_text}</strong>
+                                <div class="question-stats">
+                                    <span>Correct: ${q.correct_count}/${q.total_attempts} (${q.correct_percentage}%)</span>
+                                    <span>Difficulty: ${q.difficulty || 'N/A'}</span>
+                                </div>
+                            </div>
+                        `).join('');
+                } else {
+                    questionDiv.innerHTML = '<p style="color: #6b7280;">No question data available</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                alert(`Error loading analytics: ${error.message}`);
+            }
+        }
+
+        function closeAnalyticsModal() {
+            document.getElementById('analyticsModal').style.display = 'none';
+        }
+
+        async function toggleVisibility(quizId, currentVisibility) {
+            const action = currentVisibility ? 'hide' : 'show';
+            if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} this quiz ${currentVisibility ? 'from' : 'to'} students?`)) {
+                return;
+            }
+            
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz/${quizId}/visibility/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        is_visible: !currentVisibility
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to update visibility');
+                }
+                
+                alert(`✓ Quiz ${action === 'hide' ? 'hidden' : 'shown'} successfully!`);
+                await loadQuizzes();
+                
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        async function deleteQuiz(quizId, quizTitle) {
+            if (!confirm(`⚠️ WARNING: Delete quiz "${quizTitle}"?\n\nThis will delete:\n- All questions\n- All student attempts\n- All analytics data\n\nThis action CANNOT be undone!`)) {
+                return;
+            }
+            
+            const confirmText = prompt('Type DELETE to confirm:');
+            if (confirmText !== 'DELETE') {
+                alert('Deletion cancelled');
+                return;
+            }
+            
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz/${quizId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Token ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to delete quiz');
+                }
+                
+                alert('✓ Quiz deleted successfully!');
+                await loadQuizzes();
+                
+            } catch (error) {
+                alert(`Error deleting quiz: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        async function exportQuizAnalytics() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz/analytics/export/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to export analytics');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `quiz_analytics_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                alert(`Error exporting analytics: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        // Search and filter event listeners
+        document.getElementById('quiz-search').addEventListener('input', () => {
+            if (allQuizzes.length > 0) renderQuizzes(allQuizzes);
+        });
+        
+        document.getElementById('course-filter').addEventListener('change', () => {
+            if (allQuizzes.length > 0) renderQuizzes(allQuizzes);
+        });
+        
+        document.getElementById('visibility-filter').addEventListener('change', () => {
+            if (allQuizzes.length > 0) renderQuizzes(allQuizzes);
+        });
+
+        // Close modals on outside click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Initialize page
+        async function initPage() {
+            const hasAccess = await checkSuperuserAccess();
+            if (!hasAccess) return;
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            
+            await Promise.all([loadQuizzes(), loadCourses()]);
+        }
+
+        initPage();
+    </script>
+</body>
+</html>

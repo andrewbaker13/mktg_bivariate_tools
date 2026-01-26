@@ -118,6 +118,60 @@
             color: #1f2937;
             margin: 2rem 0 1rem 0;
         }
+        /* Admin Navigation Cards */
+        .admin-nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .nav-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .nav-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .nav-card.users:hover {
+            border-color: #3b82f6;
+        }
+        .nav-card.courses:hover {
+            border-color: #10b981;
+        }
+        .nav-card.codes:hover {
+            border-color: #f59e0b;
+        }
+        .nav-card.quizzes:hover {
+            border-color: #8b5cf6;
+        }
+        .nav-card.games:hover {
+            border-color: #ec4899;
+        }
+        .nav-card.system:hover {
+            border-color: #6b7280;
+        }
+        .nav-card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .nav-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0.5rem 0;
+        }
+        .nav-card p {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin: 0.5rem 0 0 0;
+        }
         @media (max-width: 1200px) {
             .chart-grid {
                 grid-template-columns: 1fr;
@@ -186,6 +240,41 @@
                 <canvas id="toolsRankingChart"></canvas>
             </div>
 
+            <!-- Admin Pages Navigation -->
+            <h2 class="section-title">🛠️ Admin Tools</h2>
+            <div class="admin-nav-grid">
+                <a href="admin-users.html" class="nav-card users">
+                    <div class="nav-card-icon">👥</div>
+                    <h3>User Management</h3>
+                    <p>Manage user accounts, roles, and permissions</p>
+                </a>
+                <a href="admin-courses.html" class="nav-card courses">
+                    <div class="nav-card-icon">📚</div>
+                    <h3>Course Management</h3>
+                    <p>Create courses, manage ownership, and view all enrollments</p>
+                </a>
+                <a href="admin-codes.html" class="nav-card codes">
+                    <div class="nav-card-icon">🎟️</div>
+                    <h3>Registration Codes</h3>
+                    <p>System-wide code management and bulk operations</p>
+                </a>
+                <a href="admin-quizzes.html" class="nav-card quizzes">
+                    <div class="nav-card-icon">📝</div>
+                    <h3>Quiz Management</h3>
+                    <p>View all quizzes, analytics, and question performance</p>
+                </a>
+                <a href="admin-games.html" class="nav-card games">
+                    <div class="nav-card-icon">🎮</div>
+                    <h3>Game Management</h3>
+                    <p>Manage game sessions, templates, and questions</p>
+                </a>
+                <a href="admin-system.html" class="nav-card system">
+                    <div class="nav-card-icon">⚙️</div>
+                    <h3>System Monitoring</h3>
+                    <p>Server health, logs, and system administration</p>
+                </a>
+            </div>
+
             <!-- Course Comparison -->
             <h2 class="section-title">Course Performance Comparison</h2>
             <div class="comparison-table">
@@ -214,9 +303,28 @@
         let usageChart = null;
         let toolsRankingChart = null;
 
-        // Check authentication and staff status
-        if (!isAuthenticated()) {
-            window.location.href = 'login.html?redirect=admin-dashboard.html';
+        // Check authentication and SUPERUSER status
+        async function checkSuperuserAccess() {
+            if (!isAuthenticated()) {
+                window.location.href = 'login.html?redirect=admin-dashboard.html';
+                return false;
+            }
+            
+            try {
+                const profile = await getUserProfile();
+                if (!profile.is_superuser) {
+                    document.getElementById('loading').innerHTML = 
+                        '<p style="color: #dc2626;">⚠️ Access Denied: This dashboard requires superuser privileges.</p>' +
+                        '<p style="color: #6b7280;">Contact a system administrator if you need access.</p>';
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                console.error('Error checking permissions:', error);
+                document.getElementById('loading').innerHTML = 
+                    '<p style="color: #dc2626;">Error verifying permissions. Please try again.</p>';
+                return false;
+            }
         }
 
         function handleLogout() {
@@ -224,6 +332,12 @@
         }
 
         async function loadSystemDashboard() {
+            // Check superuser access first
+            const hasAccess = await checkSuperuserAccess();
+            if (!hasAccess) {
+                return;
+            }
+            
             const token = getAuthToken();
             
             try {

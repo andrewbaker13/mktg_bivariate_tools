@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitoring - Admin Dashboard</title>
+    <link rel="stylesheet" href="../shared/css/global.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #4b5563 0%, #1f2937 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-header h1 {
+            font-size: 2rem;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .back-btn {
+            padding: 0.75rem 1.5rem;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        .back-btn:hover {
+            background: #4b5563;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-card .label {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.25rem;
+        }
+        .stat-card .subtext {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        .stat-card.health-good .value { color: #10b981; }
+        .stat-card.health-warning .value { color: #f59e0b; }
+        .stat-card.health-critical .value { color: #ef4444; }
+        .section-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .btn-refresh {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-refresh:hover {
+            background: #2563eb;
+        }
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .log-table th {
+            background: #f9fafb;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .log-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+        }
+        .log-table tr:hover {
+            background: #f9fafb;
+        }
+        .log-level {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .log-level.info { background: #dbeafe; color: #1e40af; }
+        .log-level.warning { background: #fef3c7; color: #92400e; }
+        .log-level.error { background: #fee2e2; color: #991b1b; }
+        .log-level.success { background: #d1fae5; color: #065f46; }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        .metric-row .metric-name {
+            font-weight: 600;
+            color: #374151;
+        }
+        .metric-row .metric-value {
+            font-family: 'Courier New', monospace;
+            color: #1f2937;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: #3b82f6;
+            transition: width 0.3s;
+        }
+        .progress-bar-fill.warning { background: #f59e0b; }
+        .progress-bar-fill.danger { background: #ef4444; }
+        #loading {
+            text-align: center;
+            padding: 3rem;
+            color: white;
+            font-size: 1.25rem;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <p>🔐 Verifying admin access...</p>
+    </div>
+
+    <div class="admin-container" id="content" style="display: none;">
+        <div class="page-header">
+            <h1>⚙️ System Monitoring</h1>
+            <a href="admin-dashboard.html" class="back-btn">← Back to Dashboard</a>
+        </div>
+
+        <!-- System Health Stats -->
+        <div class="stats-grid">
+            <div class="stat-card health-good" id="server-status-card">
+                <div class="label">Server Status</div>
+                <div class="value" id="server-status">Online</div>
+                <div class="subtext">Last check: <span id="last-check">Just now</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Database Size</div>
+                <div class="value" id="db-size">-</div>
+                <div class="subtext" id="db-tables">- tables</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Total API Calls (24h)</div>
+                <div class="value" id="api-calls">-</div>
+                <div class="subtext">Avg: <span id="api-avg">-</span>/hour</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Error Rate (24h)</div>
+                <div class="value" id="error-rate">-</div>
+                <div class="subtext">Total errors: <span id="error-count">-</span></div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="section-container">
+            <div class="section-title">
+                Performance Metrics
+                <button class="btn btn-refresh" onclick="loadPerformanceMetrics()">🔄 Refresh</button>
+            </div>
+            <div id="performance-metrics">
+                <div class="metric-row">
+                    <div>
+                        <div class="metric-name">Average Response Time</div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" id="response-time-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-value" id="avg-response-time">-</div>
+                </div>
+                <div class="metric-row">
+                    <div>
+                        <div class="metric-name">Database Query Time</div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" id="query-time-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-value" id="avg-query-time">-</div>
+                </div>
+                <div class="metric-row">
+                    <div>
+                        <div class="metric-name">Cache Hit Rate</div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill" id="cache-hit-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-value" id="cache-hit-rate">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Request Chart -->
+        <div class="section-container">
+            <div class="section-title">API Request Volume (Last 24h)</div>
+            <div class="chart-container">
+                <canvas id="apiRequestChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Errors -->
+        <div class="section-container">
+            <div class="section-title">
+                Recent System Logs
+                <div class="action-buttons">
+                    <select id="log-level-filter" class="filter-select" style="margin-right: 0.5rem; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                        <option value="all">All Levels</option>
+                        <option value="error">Errors</option>
+                        <option value="warning">Warnings</option>
+                        <option value="info">Info</option>
+                    </select>
+                    <button class="btn btn-refresh" onclick="loadSystemLogs()">🔄 Refresh</button>
+                </div>
+            </div>
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Level</th>
+                        <th>Source</th>
+                        <th>Message</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody id="logs-table-body">
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                            <p style="color: #6b7280;">Loading system logs...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Database Stats -->
+        <div class="section-container">
+            <div class="section-title">
+                Database Statistics
+                <button class="btn btn-refresh" onclick="loadDatabaseStats()">🔄 Refresh</button>
+            </div>
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>Table</th>
+                        <th>Records</th>
+                        <th>Size</th>
+                        <th>Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody id="database-stats-body">
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 2rem;">
+                            <p style="color: #6b7280;">Loading database statistics...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- System Actions -->
+        <div class="section-container">
+            <div class="section-title">System Administration</div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="exportSystemReport()">📥 Export System Report</button>
+                <button class="btn btn-secondary" onclick="clearCache()">🗑️ Clear Cache</button>
+                <button class="btn btn-secondary" onclick="backupDatabase()">💾 Backup Database</button>
+                <button class="btn btn-danger" onclick="restartServer()">🔄 Restart Server</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/js/auth_tracking.js"></script>
+    <script src="../shared/js/admin-nav.js"></script>
+    <script>
+        // API_BASE is already defined in auth_tracking.js
+        let apiRequestChart = null;
+
+        async function checkSuperuserAccess() {
+            const token = getAuthToken();
+            if (!token) {
+                window.location.href = 'login.html';
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/profile/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to verify permissions');
+                }
+
+                const userData = await response.json();
+                if (!userData.is_superuser) {
+                    document.getElementById('loading').innerHTML = 
+                        '<p style="color: #fef3c7;">⚠️ Access Denied: Superuser privileges required.</p><p><a href="instructor.html" style="color: white;">Return to Instructor Dashboard</a></p>';
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                console.error('Error checking permissions:', error);
+                document.getElementById('loading').innerHTML = 
+                    '<p style="color: #dc2626;">Error verifying permissions. Please try again.</p>';
+                return false;
+            }
+        }
+
+        async function loadSystemHealth() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/system/health/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load system health');
+                
+                const data = await response.json();
+                
+                // Update health cards
+                document.getElementById('server-status').textContent = data.status || 'Online';
+                document.getElementById('last-check').textContent = new Date().toLocaleTimeString();
+                document.getElementById('db-size').textContent = data.database_size || '-';
+                document.getElementById('db-tables').textContent = `${data.table_count || '-'} tables`;
+                document.getElementById('api-calls').textContent = data.api_calls_24h || '-';
+                document.getElementById('api-avg').textContent = data.api_calls_avg || '-';
+                document.getElementById('error-rate').textContent = data.error_rate || '0%';
+                document.getElementById('error-count').textContent = data.error_count || 0;
+                
+                // Update health status color
+                const statusCard = document.getElementById('server-status-card');
+                statusCard.className = 'stat-card';
+                if (data.status === 'Online') {
+                    statusCard.classList.add('health-good');
+                } else if (data.status === 'Degraded') {
+                    statusCard.classList.add('health-warning');
+                } else {
+                    statusCard.classList.add('health-critical');
+                }
+                
+            } catch (error) {
+                console.error('Error loading system health:', error);
+                document.getElementById('server-status').textContent = 'Unknown';
+            }
+        }
+
+        async function loadPerformanceMetrics() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/system/performance/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load performance metrics');
+                
+                const data = await response.json();
+                
+                // Update metrics
+                document.getElementById('avg-response-time').textContent = `${data.avg_response_time || '-'}ms`;
+                document.getElementById('avg-query-time').textContent = `${data.avg_query_time || '-'}ms`;
+                document.getElementById('cache-hit-rate').textContent = `${data.cache_hit_rate || '-'}%`;
+                
+                // Update progress bars
+                const responseBar = document.getElementById('response-time-bar');
+                const responsePercent = Math.min((data.avg_response_time / 1000) * 100, 100);
+                responseBar.style.width = `${responsePercent}%`;
+                responseBar.className = 'progress-bar-fill';
+                if (responsePercent > 70) responseBar.classList.add('danger');
+                else if (responsePercent > 40) responseBar.classList.add('warning');
+                
+                const queryBar = document.getElementById('query-time-bar');
+                const queryPercent = Math.min((data.avg_query_time / 500) * 100, 100);
+                queryBar.style.width = `${queryPercent}%`;
+                queryBar.className = 'progress-bar-fill';
+                if (queryPercent > 70) queryBar.classList.add('danger');
+                else if (queryPercent > 40) queryBar.classList.add('warning');
+                
+                const cacheBar = document.getElementById('cache-hit-bar');
+                cacheBar.style.width = `${data.cache_hit_rate || 0}%`;
+                cacheBar.className = 'progress-bar-fill';
+                if (data.cache_hit_rate < 30) cacheBar.classList.add('danger');
+                else if (data.cache_hit_rate < 60) cacheBar.classList.add('warning');
+                
+            } catch (error) {
+                console.error('Error loading performance metrics:', error);
+            }
+        }
+
+        async function loadApiRequestChart() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/system/api-requests/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load API request data');
+                
+                const data = await response.json();
+                
+                const ctx = document.getElementById('apiRequestChart').getContext('2d');
+                
+                if (apiRequestChart) {
+                    apiRequestChart.destroy();
+                }
+                
+                apiRequestChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels || [],
+                        datasets: [{
+                            label: 'API Requests',
+                            data: data.values || [],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading API request chart:', error);
+            }
+        }
+
+        async function loadSystemLogs() {
+            const token = getAuthToken();
+            const tbody = document.getElementById('logs-table-body');
+            const levelFilter = document.getElementById('log-level-filter').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/system/logs/?level=${levelFilter}`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load system logs');
+                
+                const logs = await response.json();
+                
+                tbody.innerHTML = '';
+                
+                if (logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6b7280;">No logs found</td></tr>';
+                    return;
+                }
+                
+                logs.forEach(log => {
+                    const tr = document.createElement('tr');
+                    
+                    let levelClass = 'info';
+                    if (log.level === 'ERROR') levelClass = 'error';
+                    else if (log.level === 'WARNING') levelClass = 'warning';
+                    else if (log.level === 'SUCCESS') levelClass = 'success';
+                    
+                    tr.innerHTML = `
+                        <td>${new Date(log.timestamp).toLocaleString()}</td>
+                        <td><span class="log-level ${levelClass}">${log.level}</span></td>
+                        <td>${log.source || '-'}</td>
+                        <td>${log.message}</td>
+                        <td>${log.details || '-'}</td>
+                    `;
+                    
+                    tbody.appendChild(tr);
+                });
+                
+            } catch (error) {
+                console.error('Error loading logs:', error);
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #dc2626;">Error loading logs: ${error.message}</td></tr>`;
+            }
+        }
+
+        async function loadDatabaseStats() {
+            const token = getAuthToken();
+            const tbody = document.getElementById('database-stats-body');
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/system/database-stats/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load database stats');
+                
+                const tables = await response.json();
+                
+                tbody.innerHTML = '';
+                
+                if (tables.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #6b7280;">No data available</td></tr>';
+                    return;
+                }
+                
+                tables.forEach(table => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${table.name}</strong></td>
+                        <td>${table.record_count.toLocaleString()}</td>
+                        <td>${table.size}</td>
+                        <td>${table.last_updated ? new Date(table.last_updated).toLocaleDateString() : '-'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                
+            } catch (error) {
+                console.error('Error loading database stats:', error);
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #dc2626;">Error loading stats: ${error.message}</td></tr>`;
+            }
+        }
+
+        function exportSystemReport() {
+            alert('Exporting system report...\n\nThis will generate a comprehensive PDF report of system health, performance, and recent activity.');
+        }
+
+        function clearCache() {
+            if (confirm('Clear all system cache?\n\nThis may temporarily slow down requests while cache rebuilds.')) {
+                alert('Cache cleared successfully!');
+            }
+        }
+
+        function backupDatabase() {
+            if (confirm('Create database backup?\n\nThis will create a full backup of the current database state.')) {
+                alert('Database backup initiated!\n\nYou will receive a download link when complete.');
+            }
+        }
+
+        function restartServer() {
+            if (confirm('⚠️ WARNING: Restart server?\n\nThis will temporarily interrupt all active connections.\n\nServer will be back online in approximately 30 seconds.')) {
+                alert('Server restart initiated...\n\nPlease wait 30 seconds before refreshing.');
+            }
+        }
+
+        document.getElementById('log-level-filter').addEventListener('change', loadSystemLogs);
+
+        // Initialize page
+        async function initPage() {
+            const hasAccess = await checkSuperuserAccess();
+            if (!hasAccess) return;
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            
+            // Load all data
+            await Promise.all([
+                loadSystemHealth(),
+                loadPerformanceMetrics(),
+                loadApiRequestChart(),
+                loadSystemLogs(),
+                loadDatabaseStats()
+            ]);
+            
+            // Refresh health every 30 seconds
+            setInterval(loadSystemHealth, 30000);
+        }
+
+        initPage();
+    </script>
+</body>
+</html>

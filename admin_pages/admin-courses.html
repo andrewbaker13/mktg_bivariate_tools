@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Management - Admin Dashboard</title>
+    <link rel="stylesheet" href="../shared/css/global.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-header h1 {
+            font-size: 2rem;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .back-btn {
+            padding: 0.75rem 1.5rem;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        .back-btn:hover {
+            background: #4b5563;
+        }
+        .courses-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .search-filter-group {
+            display: flex;
+            gap: 1rem;
+            flex: 1;
+        }
+        .search-input, .filter-select {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+        }
+        .filter-select {
+            background: white;
+            min-width: 150px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #059669;
+        }
+        .btn-secondary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #2563eb;
+        }
+        .count-badge {
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        .courses-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .courses-table th {
+            background: #f9fafb;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+        }
+        .courses-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .courses-table tr:hover {
+            background: #f9fafb;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .status-badge.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-badge.archived {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        .status-badge.orphaned {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .action-btn {
+            padding: 0.375rem 0.75rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            margin-right: 0.25rem;
+            transition: all 0.2s;
+        }
+        .action-btn.edit {
+            background: #3b82f6;
+            color: white;
+        }
+        .action-btn.edit:hover {
+            background: #2563eb;
+        }
+        .action-btn.transfer {
+            background: #f59e0b;
+            color: white;
+        }
+        .action-btn.transfer:hover {
+            background: #d97706;
+        }
+        .action-btn.archive {
+            background: #6b7280;
+            color: white;
+        }
+        .action-btn.archive:hover {
+            background: #4b5563;
+        }
+        .action-btn.codes {
+            background: #8b5cf6;
+            color: white;
+        }
+        .action-btn.codes:hover {
+            background: #7c3aed;
+        }
+        .action-btn.danger {
+            background: #ef4444;
+            color: white;
+        }
+        .action-btn.danger:hover {
+            background: #dc2626;
+        }
+        #loading {
+            text-align: center;
+            padding: 3rem;
+            color: white;
+            font-size: 1.25rem;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            animation: fadeIn 0.2s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 600px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideDown 0.3s;
+        }
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .modal-header h2 {
+            color: #1f2937;
+        }
+        .close-btn {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            background: none;
+            border: none;
+        }
+        .close-btn:hover {
+            color: #1f2937;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .form-group small {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+        .btn-cancel {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        .btn-cancel:hover {
+            background: #d1d5db;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <p>🔐 Verifying admin access...</p>
+    </div>
+
+    <div class="admin-container" id="content" style="display: none;">
+        <div class="page-header">
+            <h1>📚 Course Management</h1>
+            <a href="admin-dashboard.html" class="back-btn">← Back to Dashboard</a>
+        </div>
+
+        <div class="courses-container">
+            <div class="controls-bar">
+                <div class="search-filter-group">
+                    <input type="text" id="course-search" class="search-input" placeholder="Search courses...">
+                    <select id="status-filter" class="filter-select">
+                        <option value="all">All Courses</option>
+                        <option value="active">Active</option>
+                        <option value="archived">Archived</option>
+                        <option value="orphaned">Orphaned (No Owner)</option>
+                    </select>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="showCreateCourseModal()">+ Create Course</button>
+                    <button class="btn btn-secondary" onclick="exportCourses()">📥 Export CSV</button>
+                </div>
+            </div>
+
+            <div class="count-badge" id="course-count">Loading...</div>
+
+            <table class="courses-table">
+                <thead>
+                    <tr>
+                        <th>Course Name</th>
+                        <th>Owner</th>
+                        <th>Students</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Last Activity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="courses-table-body">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem;">
+                            <p style="color: #6b7280;">Loading courses...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Create/Edit Course Modal -->
+    <div id="courseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Create New Course</h2>
+                <button class="close-btn" onclick="closeCourseModal()">×</button>
+            </div>
+            <form id="courseForm">
+                <input type="hidden" id="course-id">
+                <div class="form-group">
+                    <label for="course-name">Course Name *</label>
+                    <input type="text" id="course-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="course-owner">Course Owner</label>
+                    <select id="course-owner">
+                        <option value="">Select instructor...</option>
+                    </select>
+                    <small>Leave empty for orphaned course (admin-only management)</small>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeCourseModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Transfer Ownership Modal -->
+    <div id="transferModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Transfer Course Ownership</h2>
+                <button class="close-btn" onclick="closeTransferModal()">×</button>
+            </div>
+            <div id="transfer-course-info" style="background: #f9fafb; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem;"></div>
+            <div class="form-group">
+                <label for="new-owner">New Owner *</label>
+                <select id="new-owner">
+                    <option value="">Select instructor...</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-cancel" onclick="closeTransferModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmTransfer()">Transfer Ownership</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/js/auth_tracking.js"></script>
+    <script src="../shared/js/admin-nav.js"></script>
+    <script>
+        // API_BASE is already defined in auth_tracking.js
+        let allCourses = [];
+        let allInstructors = [];
+        let currentCourseId = null;
+
+        async function checkSuperuserAccess() {
+            const token = getAuthToken();
+            if (!token) {
+                window.location.href = 'login.html';
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/profile/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to verify permissions');
+                }
+
+                const userData = await response.json();
+                if (!userData.is_superuser) {
+                    document.getElementById('loading').innerHTML = 
+                        '<p style="color: #fef3c7;">⚠️ Access Denied: Superuser privileges required.</p><p><a href="instructor.html" style="color: white;">Return to Instructor Dashboard</a></p>';
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                console.error('Error checking permissions:', error);
+                document.getElementById('loading').innerHTML = 
+                    '<p style="color: #dc2626;">Error verifying permissions. Please try again.</p>';
+                return false;
+            }
+        }
+
+        async function loadCourses() {
+            const token = getAuthToken();
+            const tbody = document.getElementById('courses-table-body');
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/courses/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to load courses');
+                }
+                
+                allCourses = await response.json();
+                renderCourses(allCourses);
+                
+            } catch (error) {
+                console.error('Error loading courses:', error);
+                tbody.innerHTML = `
+                    <tr><td colspan="7" style="text-align: center; padding: 2rem;">
+                        <div style="color: #dc2626; font-weight: 600; margin-bottom: 0.5rem;">Error loading courses</div>
+                        <div style="color: #6b7280; font-size: 0.9rem;">${error.message}</div>
+                    </td></tr>
+                `;
+            }
+        }
+
+        function renderCourses(courses) {
+            const tbody = document.getElementById('courses-table-body');
+            const searchTerm = document.getElementById('course-search').value.toLowerCase();
+            const statusFilter = document.getElementById('status-filter').value;
+            
+            // Filter courses
+            let filteredCourses = courses.filter(course => {
+                const matchesSearch = course.name.toLowerCase().includes(searchTerm) || 
+                                    (course.owner_name && course.owner_name.toLowerCase().includes(searchTerm));
+                
+                let matchesStatus = true;
+                if (statusFilter === 'orphaned') {
+                    matchesStatus = !course.owner;
+                } else if (statusFilter === 'active') {
+                    matchesStatus = course.owner !== null;
+                }
+                // Note: Add is_archived field support if backend supports it
+                
+                return matchesSearch && matchesStatus;
+            });
+            
+            // Update count badge
+            document.getElementById('course-count').textContent = 
+                `${filteredCourses.length} courses ${statusFilter !== 'all' ? `(filtered from ${courses.length} total)` : ''}`;
+            
+            // Render table
+            tbody.innerHTML = '';
+            
+            if (filteredCourses.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #6b7280;">No courses found.</td></tr>';
+                return;
+            }
+            
+            filteredCourses.forEach(course => {
+                const tr = document.createElement('tr');
+                
+                // Status badge
+                let statusBadge = '';
+                if (!course.owner) {
+                    statusBadge = '<span class="status-badge orphaned">⚠️ Orphaned</span>';
+                } else {
+                    statusBadge = '<span class="status-badge active">✓ Active</span>';
+                }
+                
+                // Actions
+                let actions = `<button class="action-btn edit" onclick="editCourse(${course.id})" title="Edit Course">✏️ Edit</button>`;
+                
+                if (course.owner) {
+                    actions += `<button class="action-btn transfer" onclick="showTransferModal(${course.id}, '${course.name.replace(/'/g, "\\'")}', '${course.owner_name ? course.owner_name.replace(/'/g, "\\'") : ''}')" title="Transfer Ownership">🔄 Transfer</button>`;
+                } else {
+                    actions += `<button class="action-btn transfer" onclick="showTransferModal(${course.id}, '${course.name.replace(/'/g, "\\'")}', null)" title="Assign Owner">👤 Assign</button>`;
+                }
+                
+                actions += `<button class="action-btn codes" onclick="manageCodes(${course.id})" title="Manage Registration Codes">🎟️ Codes</button>`;
+                
+                tr.innerHTML = `
+                    <td><strong>${course.name}</strong></td>
+                    <td>${course.owner_name || '<em style="color: #6b7280;">No owner</em>'}</td>
+                    <td>${course.student_count || 0}</td>
+                    <td>${statusBadge}</td>
+                    <td>${new Date(course.created_at).toLocaleDateString()}</td>
+                    <td>${course.last_activity ? new Date(course.last_activity).toLocaleDateString() : '-'}</td>
+                    <td>${actions}</td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadInstructors() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/users/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load instructors');
+                
+                const users = await response.json();
+                allInstructors = users.filter(u => u.is_staff);
+                
+                // Populate dropdowns
+                const courseOwnerSelect = document.getElementById('course-owner');
+                const newOwnerSelect = document.getElementById('new-owner');
+                
+                courseOwnerSelect.innerHTML = '<option value="">Select instructor...</option>';
+                newOwnerSelect.innerHTML = '<option value="">Select instructor...</option>';
+                
+                allInstructors.forEach(instructor => {
+                    const option1 = document.createElement('option');
+                    option1.value = instructor.id;
+                    option1.textContent = `${instructor.username}${instructor.is_superuser ? ' ⚡' : ''}`;
+                    courseOwnerSelect.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = instructor.id;
+                    option2.textContent = `${instructor.username}${instructor.is_superuser ? ' ⚡' : ''}`;
+                    newOwnerSelect.appendChild(option2);
+                });
+                
+            } catch (error) {
+                console.error('Error loading instructors:', error);
+            }
+        }
+
+        function showCreateCourseModal() {
+            document.getElementById('modal-title').textContent = 'Create New Course';
+            document.getElementById('course-id').value = '';
+            document.getElementById('course-name').value = '';
+            document.getElementById('course-owner').value = '';
+            document.getElementById('courseModal').style.display = 'block';
+        }
+
+        function closeCourseModal() {
+            document.getElementById('courseModal').style.display = 'none';
+        }
+
+        async function editCourse(courseId) {
+            const course = allCourses.find(c => c.id === courseId);
+            if (!course) return;
+            
+            document.getElementById('modal-title').textContent = 'Edit Course';
+            document.getElementById('course-id').value = course.id;
+            document.getElementById('course-name').value = course.name;
+            document.getElementById('course-owner').value = course.owner || '';
+            document.getElementById('courseModal').style.display = 'block';
+        }
+
+        document.getElementById('courseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const courseId = document.getElementById('course-id').value;
+            const courseName = document.getElementById('course-name').value;
+            const courseOwner = document.getElementById('course-owner').value;
+            const token = getAuthToken();
+            
+            try {
+                const url = courseId 
+                    ? `${API_BASE}/courses/${courseId}/`
+                    : `${API_BASE}/courses/create/`;
+                
+                const method = courseId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: courseName,
+                        course_owner: courseOwner || null
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to save course');
+                }
+                
+                alert(`✓ Course ${courseId ? 'updated' : 'created'} successfully!`);
+                closeCourseModal();
+                await loadCourses();
+                
+            } catch (error) {
+                alert(`Error saving course: ${error.message}`);
+                console.error(error);
+            }
+        });
+
+        function showTransferModal(courseId, courseName, currentOwner) {
+            currentCourseId = courseId;
+            const infoDiv = document.getElementById('transfer-course-info');
+            infoDiv.innerHTML = `
+                <strong>Course:</strong> ${courseName}<br>
+                <strong>Current Owner:</strong> ${currentOwner || '<em>No owner (orphaned)</em>'}
+            `;
+            document.getElementById('new-owner').value = '';
+            document.getElementById('transferModal').style.display = 'block';
+        }
+
+        function closeTransferModal() {
+            document.getElementById('transferModal').style.display = 'none';
+            currentCourseId = null;
+        }
+
+        async function confirmTransfer() {
+            const newOwnerId = document.getElementById('new-owner').value;
+            if (!newOwnerId) {
+                alert('Please select a new owner');
+                return;
+            }
+            
+            const newOwner = allInstructors.find(i => i.id == newOwnerId);
+            if (!confirm(`Transfer ownership to ${newOwner.username}?`)) {
+                return;
+            }
+            
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/courses/${currentCourseId}/transfer-ownership/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        new_owner_id: newOwnerId
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to transfer ownership');
+                }
+                
+                alert('✓ Ownership transferred successfully!');
+                closeTransferModal();
+                await loadCourses();
+                
+            } catch (error) {
+                alert(`Error transferring ownership: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        function manageCodes(courseId) {
+            window.location.href = `admin-codes.html?course=${courseId}`;
+        }
+
+        async function exportCourses() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/courses/export/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to export courses');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `courses_export_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                alert(`Error exporting courses: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        // Search and filter event listeners
+        document.getElementById('course-search').addEventListener('input', () => {
+            if (allCourses.length > 0) renderCourses(allCourses);
+        });
+        
+        document.getElementById('status-filter').addEventListener('change', () => {
+            if (allCourses.length > 0) renderCourses(allCourses);
+        });
+
+        // Close modals on outside click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Initialize page
+        async function initPage() {
+            const hasAccess = await checkSuperuserAccess();
+            if (!hasAccess) return;
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            
+            await Promise.all([loadCourses(), loadInstructors()]);
+        }
+
+        initPage();
+    </script>
+</body>
+</html>
