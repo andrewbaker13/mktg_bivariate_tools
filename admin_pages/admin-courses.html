@@ -366,7 +366,7 @@
                     <label for="course-name">Course Name *</label>
                     <input type="text" id="course-name" required>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="course-owner-group">
                     <label for="course-owner">Course Owner</label>
                     <select id="course-owner">
                         <option value="">Select instructor...</option>
@@ -418,7 +418,7 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE}/profile/`, {
+                const response = await fetch(`${API_BASE}/auth/profile/`, {
                     headers: { 'Authorization': `Token ${token}` }
                 });
 
@@ -455,7 +455,8 @@
                     throw new Error(error.error || 'Failed to load courses');
                 }
                 
-                allCourses = await response.json();
+                const data = await response.json();
+                allCourses = data.courses;
                 renderCourses(allCourses);
                 
             } catch (error) {
@@ -514,7 +515,7 @@
                 }
                 
                 // Actions
-                let actions = `<button class="action-btn edit" onclick="editCourse(${course.id})" title="Edit Course">✏️ Edit</button>`;
+                let actions = `<button class="action-btn edit" onclick="renameCourse(${course.id})" title="Rename Course">✏️ Rename</button>`;
                 
                 if (course.owner) {
                     actions += `<button class="action-btn transfer" onclick="showTransferModal(${course.id}, '${course.name.replace(/'/g, "\\'")}', '${course.owner_name ? course.owner_name.replace(/'/g, "\\'") : ''}')" title="Transfer Ownership">🔄 Transfer</button>`;
@@ -579,22 +580,23 @@
             document.getElementById('modal-title').textContent = 'Create New Course';
             document.getElementById('course-id').value = '';
             document.getElementById('course-name').value = '';
-            document.getElementById('course-owner').value = '';
-            document.getElementById('courseModal').style.display = 'block';
+            document.getElementById('course-owner').value = '';            // Show owner field for create
+            document.getElementById('course-owner-group').style.display = 'block';            document.getElementById('courseModal').style.display = 'block';
         }
 
         function closeCourseModal() {
             document.getElementById('courseModal').style.display = 'none';
         }
 
-        async function editCourse(courseId) {
+        async function renameCourse(courseId) {
             const course = allCourses.find(c => c.id === courseId);
             if (!course) return;
             
-            document.getElementById('modal-title').textContent = 'Edit Course';
+            document.getElementById('modal-title').textContent = 'Rename Course';
             document.getElementById('course-id').value = course.id;
             document.getElementById('course-name').value = course.name;
-            document.getElementById('course-owner').value = course.owner || '';
+            // Hide owner field for rename
+            document.getElementById('course-owner-group').style.display = 'none';
             document.getElementById('courseModal').style.display = 'block';
         }
 
@@ -611,7 +613,12 @@
                     ? `${API_BASE}/courses/${courseId}/`
                     : `${API_BASE}/courses/create/`;
                 
-                const method = courseId ? 'PUT' : 'POST';
+                const method = courseId ? 'PATCH' : 'POST';
+                
+                // For rename (existing course), only send name. For create, send both.
+                const payload = courseId 
+                    ? { name: courseName }
+                    : { name: courseName, course_owner: courseOwner || null };
                 
                 const response = await fetch(url, {
                     method: method,
@@ -619,10 +626,7 @@
                         'Authorization': `Token ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        name: courseName,
-                        course_owner: courseOwner || null
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 if (!response.ok) {
@@ -672,13 +676,13 @@
             
             try {
                 const response = await fetch(`${API_BASE}/courses/${currentCourseId}/transfer-ownership/`, {
-                    method: 'PATCH',
+                    method: 'POST',
                     headers: {
                         'Authorization': `Token ${token}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        new_owner_id: newOwnerId
+                        new_owner_username: newOwner.username
                     })
                 });
                 

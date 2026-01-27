@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Dashboard - Marketing Analytics Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .instructor-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .page-header h1 {
+            font-size: 2rem;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        .course-selector {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .course-selector > div > div > label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .course-selector select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 1rem;
+            background: white;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-card .label {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.25rem;
+        }
+        .stat-card .subtext {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        .stat-card.primary .value { color: #667eea; }
+        .stat-card.success .value { color: #10b981; }
+        .stat-card.warning .value { color: #f59e0b; }
+        .stat-card.danger .value { color: #ef4444; }
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .section-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .student-list {
+            list-style: none;
+        }
+        .student-item {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .student-item:last-child {
+            border-bottom: none;
+        }
+        .student-name {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .student-stats {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .activity-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .activity-badge.active {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .activity-badge.inactive {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .activity-badge.moderate {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .quiz-list {
+            list-style: none;
+        }
+        .quiz-item {
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .quiz-title {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .quiz-stats {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .codes-section {
+            margin-bottom: 2rem;
+        }
+        .codes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        .code-card {
+            background: #f0f9ff;
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+            border: 1px solid #e0f2fe;
+        }
+        .code-card.used {
+            background: #f9fafb;
+            opacity: 0.6;
+        }
+        .code-value {
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1e40af;
+            margin-bottom: 0.25rem;
+        }
+        .code-status {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .timeline-item {
+            padding: 1rem;
+            border-left: 3px solid #667eea;
+            margin-bottom: 1rem;
+            background: #f9fafb;
+            border-radius: 0 4px 4px 0;
+        }
+        .timeline-time {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+        .timeline-content {
+            color: #1f2937;
+        }
+        #loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: white;
+            font-size: 1.2rem;
+        }
+        .no-courses-message {
+            background: white;
+            padding: 3rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .no-courses-message h2 {
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        .no-courses-message p {
+            color: #6b7280;
+            margin-bottom: 2rem;
+        }
+        .student-item {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .student-item:hover {
+            background: #f9fafb;
+        }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: #1f2937;
+        }
+        .close-btn {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #6b7280;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            line-height: 1;
+        }
+        .close-btn:hover {
+            color: #1f2937;
+        }
+        .student-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .detail-card {
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 4px;
+        }
+        .detail-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+        .detail-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .activity-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .activity-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <p>🔐 Loading instructor dashboard...</p>
+    </div>
+
+    <div class="instructor-container" id="content" style="display: none;">
+        <div class="page-header">
+            <h1>👨‍🏫 Instructor Dashboard</h1>
+            <div class="header-actions">
+                <a href="instructor.html" class="btn btn-secondary">Course Setup</a>
+                <button onclick="handleLogout()" class="btn btn-secondary">Logout</button>
+            </div>
+        </div>
+
+        <!-- Course Selector -->
+        <div class="course-selector" id="course-selector-section" style="display: none;">
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 300px;">
+                    <label for="course-select">Select Course:</label>
+                    <select id="course-select" onchange="loadCourseData()">
+                        <option value="">Select a course...</option>
+                    </select>
+                </div>
+                <label for="show-inactive" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: #374151; font-size: 0.95rem; font-weight: 500;">
+                    <input type="checkbox" id="show-inactive" onchange="populateCourseDropdown()" style="cursor: pointer; width: 18px; height: 18px;">
+                    <span style="user-select: none;">Show inactive courses</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- No Courses Message -->
+        <div id="no-courses-message" class="no-courses-message" style="display: none;">
+            <h2>Welcome to Your Instructor Dashboard!</h2>
+            <p>You don't have any courses yet. Create your first course to get started.</p>
+            <a href="instructor.html" class="btn btn-primary">Create Your First Course</a>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid" id="stats-section" style="display: none;">
+            <div class="stat-card primary">
+                <div class="label">Total Students</div>
+                <div class="value" id="total-students">-</div>
+                <div class="subtext" id="active-students-text">-</div>
+            </div>
+            <div class="stat-card success">
+                <div class="label">Engagement Rate</div>
+                <div class="value" id="engagement-rate">-</div>
+                <div class="subtext">Last 7 days</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="label">Quiz Attempts</div>
+                <div class="value" id="quiz-attempts">-</div>
+                <div class="subtext" id="quiz-avg-text">-</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="label">At-Risk Students</div>
+                <div class="value" id="at-risk-count">-</div>
+                <div class="subtext">Needs attention</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-grid" id="main-content" style="display: none;">
+            <!-- Left Column -->
+            <div>
+                <!-- Student List -->
+                <div class="section-container" style="margin-bottom: 2rem;">
+                    <div class="section-title">
+                        Students
+                        <span style="font-size: 1rem; font-weight: 400; color: #6b7280;" id="student-count">-</span>
+                    </div>
+                    <ul class="student-list" id="student-list">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
+
+                <!-- Registration Codes -->
+                <div class="section-container codes-section">
+                    <div class="section-title">
+                        Registration Codes
+                        <button class="btn btn-primary btn-sm" onclick="generateCodes()">+ Generate</button>
+                    </div>
+                    <div class="codes-grid" id="codes-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div>
+                <!-- Quizzes -->
+                <div class="section-container" style="margin-bottom: 2rem;">
+                    <div class="section-title">
+                        My Quizzes
+                        <a href="quiz/quiz-create.html" class="btn btn-primary btn-sm" style="font-size: 0.875rem; padding: 0.5rem 1rem;">+ New Quiz</a>
+                    </div>
+                    <ul class="quiz-list" id="quiz-list">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="section-container">
+                    <div class="section-title">Recent Activity</div>
+                    <div id="activity-timeline">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Detail Modal -->
+        <div id="studentModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="studentModalTitle">Student Details</h2>
+                    <button class="close-btn" onclick="closeStudentModal()">&times;</button>
+                </div>
+                <div id="studentModalBody">
+                    <div class="student-detail-grid">
+                        <div class="detail-card">
+                            <div class="detail-label">Total Runs</div>
+                            <div class="detail-value" id="studentTotalRuns">-</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Unique Tools</div>
+                            <div class="detail-value" id="studentUniqueTools">-</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Active Days</div>
+                            <div class="detail-value" id="studentActiveDays">-</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Last Activity</div>
+                            <div class="detail-value" id="studentLastActivity">-</div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 2rem 0 1rem;">Tool Usage</h3>
+                    <div id="toolUsageContainer"></div>
+
+                    <h3 style="margin: 2rem 0 1rem;">Recent Activity</h3>
+                    <ul id="recentActivityList" class="activity-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/js/auth_tracking.js"></script>
+    <script>
+        // API_BASE is already defined in auth_tracking.js
+        let currentCourseId = null;
+        let allCourses = [];
+        let courseStudentCounts = {};
+
+        async function checkInstructorAccess() {
+            if (!isAuthenticated()) {
+                window.location.href = 'login.html?redirect=instructor-dashboard.html';
+                return false;
+            }
+            
+            try {
+                const profile = await getUserProfile();
+                if (!profile.is_staff && !profile.is_superuser) {
+                    document.getElementById('loading').innerHTML = 
+                        '<p style="color: #fee2e2;">⚠️ Access Denied: Instructor privileges required.</p>';
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                console.error('Error checking permissions:', error);
+                document.getElementById('loading').innerHTML = 
+                    '<p style="color: #fee2e2;">Error verifying permissions.</p>';
+                return false;
+            }
+        }
+
+        function handleLogout() {
+            logout();
+        }
+
+        async function loadInstructorDashboard() {
+            const hasAccess = await checkInstructorAccess();
+            if (!hasAccess) return;
+
+            await loadCourses();
+        }
+
+        async function loadCourses() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/courses/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load courses');
+                
+                const data = await response.json();
+                // Handle both array response and {courses: [...]} response
+                allCourses = Array.isArray(data) ? data : (data.courses || []);
+                
+                if (allCourses.length === 0) {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('content').style.display = 'block';
+                    document.getElementById('no-courses-message').style.display = 'block';
+                    return;
+                }
+                
+                // Load student counts for all courses (non-blocking)
+                loadStudentCounts().catch(err => console.error('Error loading student counts:', err));
+                
+                // Populate course dropdown immediately
+                populateCourseDropdown();
+                
+                // Auto-select first visible course
+                const select = document.getElementById('course-select');
+                const firstOption = select.options[1]; // Skip the "Select a course..." option
+                if (firstOption) {
+                    select.value = firstOption.value;
+                    currentCourseId = parseInt(firstOption.value);
+                    await loadCourseData();
+                }
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                document.getElementById('course-selector-section').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading courses:', error);
+                document.getElementById('loading').innerHTML = 
+                    '<p style="color: #fee2e2;">Error loading courses. Please refresh.</p>';
+            }
+        }
+
+        async function loadStudentCounts() {
+            const token = getAuthToken();
+            
+            // Load student counts for all courses in parallel
+            const countPromises = allCourses.map(async (course) => {
+                try {
+                    const response = await fetch(`${API_BASE}/analytics/course/${course.id}/students/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        courseStudentCounts[course.id] = data.students?.length || 0;
+                        // Update dropdown after loading counts
+                        populateCourseDropdown();
+                    } else {
+                        courseStudentCounts[course.id] = 0;
+                    }
+                } catch (error) {
+                    console.error(`Error loading students for course ${course.id}:`, error);
+                    courseStudentCounts[course.id] = 0;
+                }
+            });
+            
+            await Promise.all(countPromises);
+        }
+
+        function populateCourseDropdown() {
+            const select = document.getElementById('course-select');
+            const showInactive = document.getElementById('show-inactive').checked;
+            const currentValue = select.value;
+            
+            console.log('Populating dropdown, total courses:', allCourses.length);
+            
+            // Clear existing options except first
+            select.innerHTML = '<option value="">Select a course...</option>';
+            
+            // Separate active and inactive courses (is_active defaults to true if not set)
+            const activeCourses = allCourses.filter(c => c.is_active !== false);
+            const inactiveCourses = allCourses.filter(c => c.is_active === false);
+            
+            console.log('Active courses:', activeCourses.length, 'Inactive:', inactiveCourses.length);
+            
+            // Sort both arrays alphabetically by name
+            activeCourses.sort((a, b) => a.name.localeCompare(b.name));
+            inactiveCourses.sort((a, b) => a.name.localeCompare(b.name));
+            
+            // Add active courses
+            activeCourses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course.id;
+                const instructor = course.instructor || 'No Instructor';
+                const studentCount = courseStudentCounts[course.id] || 0;
+                option.textContent = `${course.name} - Instructor: ${instructor} - Students: ${studentCount}`;
+                select.appendChild(option);
+            });
+            
+            // Add inactive courses if checkbox is checked
+            if (showInactive && inactiveCourses.length > 0) {
+                // Add separator
+                const separator = document.createElement('option');
+                separator.disabled = true;
+                separator.textContent = '──────────────────────────────';
+                select.appendChild(separator);
+                
+                inactiveCourses.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course.id;
+                    const instructor = course.instructor || 'No Instructor';
+                    const studentCount = courseStudentCounts[course.id] || 0;
+                    option.textContent = `${course.name} - Instructor: ${instructor} - Students: ${studentCount} [INACTIVE]`;
+                    option.style.color = '#9ca3af';
+                    select.appendChild(option);
+                });
+            }
+            
+            // Restore selection if it still exists
+            if (currentValue && Array.from(select.options).some(opt => opt.value === currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        async function loadCourseData() {
+            const select = document.getElementById('course-select');
+            currentCourseId = parseInt(select.value);
+            
+            if (!currentCourseId) {
+                document.getElementById('stats-section').style.display = 'none';
+                document.getElementById('main-content').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('stats-section').style.display = 'grid';
+            document.getElementById('main-content').style.display = 'grid';
+            
+            const token = getAuthToken();
+            
+            try {
+                // Load all data in parallel
+                await Promise.all([
+                    loadCourseStats(),
+                    loadStudents(),
+                    loadRegistrationCodes(),
+                    loadQuizzes(),
+                    loadRecentActivity()
+                ]);
+            } catch (error) {
+                console.error('Error loading course data:', error);
+            }
+        }
+
+        async function loadCourseStats() {
+            const token = getAuthToken();
+            
+            try {
+                const [engagement, students] = await Promise.all([
+                    fetch(`${API_BASE}/analytics/course/${currentCourseId}/engagement/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    }).then(r => r.json()),
+                    fetch(`${API_BASE}/analytics/course/${currentCourseId}/students/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    }).then(r => r.json())
+                ]);
+                
+                // Total students
+                document.getElementById('total-students').textContent = engagement.students?.total || 0;
+                const activeCount = engagement.students?.with_activity || 0;
+                document.getElementById('active-students-text').textContent = `${activeCount} active`;
+                
+                // Engagement rate - use 7-day active rate
+                const totalStudents = engagement.students?.total || 0;
+                const active7Days = engagement.students?.active_last_7_days || 0;
+                const engagementRate = totalStudents > 0 ? (active7Days / totalStudents * 100) : 0;
+                document.getElementById('engagement-rate').textContent = `${engagementRate.toFixed(1)}%`;
+                
+                // Quiz attempts - we'll get this from quiz data
+                const totalRuns = engagement.usage?.total_runs || 0;
+                document.getElementById('quiz-attempts').textContent = totalRuns;
+                const avgPerStudent = engagement.usage?.avg_runs_per_student || 0;
+                document.getElementById('quiz-avg-text').textContent = `${avgPerStudent.toFixed(1)} avg per student`;
+                
+                // At-risk students
+                try {
+                    const atRisk = await fetch(`${API_BASE}/analytics/course/${currentCourseId}/at-risk/`, {
+                        headers: { 'Authorization': `Token ${token}` }
+                    }).then(r => r.json());
+                    document.getElementById('at-risk-count').textContent = atRisk.students ? atRisk.students.length : 0;
+                } catch (e) {
+                    document.getElementById('at-risk-count').textContent = '0';
+                }
+                
+            } catch (error) {
+                console.error('Error loading course stats:', error);
+            }
+        }
+
+        async function loadStudents() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/analytics/course/${currentCourseId}/students/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load students');
+                
+                const data = await response.json();
+                const students = data.students || [];
+                const list = document.getElementById('student-list');
+                document.getElementById('student-count').textContent = `${students.length} students`;
+                
+                if (students.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><p>No students enrolled yet</p></div>';
+                    return;
+                }
+                
+                list.innerHTML = students.map(student => {
+                    const totalRuns = student.total_runs || 0;
+                    const isActive = totalRuns > 0;
+                    const activityClass = isActive ? 'active' : 'inactive';
+                    const activityText = isActive ? 'Active' : 'No Activity';
+                    const lastActive = student.last_activity ? new Date(student.last_activity).toLocaleDateString() : 'Never';
+                    
+                    return `
+                        <li class="student-item" onclick="viewStudentDetail(${student.id}, '${student.username}')">
+                            <div>
+                                <div class="student-name">${student.username}</div>
+                                <div class="student-stats">${totalRuns} runs • Last active: ${lastActive}</div>
+                            </div>
+                            <span class="activity-badge ${activityClass}">${activityText}</span>
+                        </li>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading students:', error);
+                document.getElementById('student-list').innerHTML = 
+                    '<div class="empty-state"><p>Error loading students</p></div>';
+            }
+        }
+
+        async function loadRegistrationCodes() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/courses/${currentCourseId}/codes/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load codes');
+                
+                const codes = await response.json();
+                const grid = document.getElementById('codes-grid');
+                
+                if (codes.length === 0) {
+                    grid.innerHTML = '<div style="grid-column: 1/-1;" class="empty-state"><p>No codes generated yet</p></div>';
+                    return;
+                }
+                
+                // Show only first 12 codes
+                const displayCodes = codes.slice(0, 12);
+                grid.innerHTML = displayCodes.map(code => {
+                    const usedClass = code.is_used ? 'used' : '';
+                    const status = code.is_used ? `Used by ${code.used_by_username || 'student'}` : 'Available';
+                    
+                    return `
+                        <div class="code-card ${usedClass}">
+                            <div class="code-value">${code.code}</div>
+                            <div class="code-status">${status}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+                if (codes.length > 12) {
+                    grid.innerHTML += `<div class="code-card" style="background: #e5e7eb;"><div class="code-value">+${codes.length - 12}</div><div class="code-status">more</div></div>`;
+                }
+                
+            } catch (error) {
+                console.error('Error loading codes:', error);
+            }
+        }
+
+        async function loadQuizzes() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz/manage/my-quizzes/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load quizzes');
+                
+                const data = await response.json();
+                const quizzes = data.quizzes || [];
+                const list = document.getElementById('quiz-list');
+                
+                // Filter quizzes for current course
+                const courseQuizzes = quizzes.filter(q => 
+                    q.courses && q.courses.some(c => c.id === currentCourseId)
+                );
+                
+                if (courseQuizzes.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📝</div><p>No quizzes created yet</p></div>';
+                    return;
+                }
+                
+                list.innerHTML = courseQuizzes.map(quiz => {
+                    return `
+                        <li class="quiz-item">
+                            <div>
+                                <div class="quiz-title">${quiz.title}</div>
+                                <div class="quiz-stats">${quiz.attempt_count || 0} attempts • ${quiz.question_count || 0} questions</div>
+                            </div>
+                            <button class="btn btn-sm btn-secondary" onclick="viewQuizAnalytics(${quiz.id}, '${quiz.title.replace(/'/g, "\\'")}')">📊 View</button>
+                        </li>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading quizzes:', error);
+                document.getElementById('quiz-list').innerHTML = 
+                    '<div class="empty-state"><p>Error loading quizzes</p></div>';
+            }
+        }
+
+        async function loadRecentActivity() {
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/analytics/course/${currentCourseId}/timeline/?days=7`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load activity');
+                
+                const data = await response.json();
+                const timeline = document.getElementById('activity-timeline');
+                
+                if (!data.timeline || data.timeline.length === 0) {
+                    timeline.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><p>No recent activity</p></div>';
+                    return;
+                }
+                
+                // Show last 7 days with activity
+                const recentDays = data.timeline.slice(-7).reverse().filter(day => day.count > 0);
+                
+                if (recentDays.length === 0) {
+                    timeline.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><p>No activity in the last 7 days</p></div>';
+                    return;
+                }
+                
+                timeline.innerHTML = recentDays.map(day => {
+                    const date = new Date(day.date).toLocaleDateString();
+                    const runs = day.count === 1 ? '1 tool run' : `${day.count} tool runs`;
+                    return `
+                        <div class="timeline-item">
+                            <div class="timeline-time">${date}</div>
+                            <div class="timeline-content">${runs}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading activity:', error);
+                document.getElementById('activity-timeline').innerHTML = 
+                    '<div class="empty-state"><p>Error loading activity</p></div>';
+            }
+        }
+
+        function generateCodes() {
+            const count = prompt('How many codes would you like to generate?', '5');
+            if (!count || isNaN(count) || count < 1) return;
+            
+            // Redirect to instructor.html with course selected
+            window.location.href = `instructor.html?course=${currentCourseId}&generate=${count}`;
+        }
+
+        function viewQuizAnalytics(quizId, quizTitle) {
+            // Redirect to quiz analytics or open modal
+            window.location.href = `quiz/quiz-analytics.html?id=${quizId}`;
+        }
+
+        async function viewStudentDetail(studentId, username) {
+            const token = getAuthToken();
+            const modal = document.getElementById('studentModal');
+            document.getElementById('studentModalTitle').textContent = `${username} - Detailed Analytics`;
+            
+            try {
+                const response = await fetch(`${API_BASE}/analytics/student/${studentId}/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load student details');
+                
+                const data = await response.json();
+                
+                // Update stats
+                document.getElementById('studentTotalRuns').textContent = data.total_runs || 0;
+                document.getElementById('studentUniqueTools').textContent = data.unique_tools || 0;
+                document.getElementById('studentActiveDays').textContent = data.unique_days || 0;
+                
+                const daysSince = data.days_since_activity;
+                if (daysSince === 0) {
+                    document.getElementById('studentLastActivity').textContent = 'Today';
+                } else if (daysSince === 1) {
+                    document.getElementById('studentLastActivity').textContent = '1 day ago';
+                } else if (daysSince !== null) {
+                    document.getElementById('studentLastActivity').textContent = `${daysSince} days ago`;
+                } else {
+                    document.getElementById('studentLastActivity').textContent = 'Never';
+                }
+                
+                // Tool usage breakdown
+                const toolUsage = data.tool_usage || [];
+                const toolUsageContainer = document.getElementById('toolUsageContainer');
+                if (toolUsage.length === 0) {
+                    toolUsageContainer.innerHTML = '<p style="color: #6b7280;">No tool usage yet</p>';
+                } else {
+                    toolUsageContainer.innerHTML = toolUsage.map(tool => `
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid #e5e7eb;">
+                            <span>${tool.tool}</span>
+                            <span style="font-weight: 600;">${tool.count} runs</span>
+                        </div>
+                    `).join('');
+                }
+                
+                // Recent activity
+                const recentActivity = data.recent_activity || [];
+                const activityList = document.getElementById('recentActivityList');
+                if (recentActivity.length === 0) {
+                    activityList.innerHTML = '<li style="text-align: center; color: #6b7280; padding: 2rem;">No recent activity</li>';
+                } else {
+                    activityList.innerHTML = recentActivity.map(activity => {
+                        const date = new Date(activity.timestamp);
+                        const dateStr = date.toLocaleDateString();
+                        const timeStr = date.toLocaleTimeString();
+                        
+                        return `
+                            <li class="activity-item">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                    <strong>${activity.tool}</strong>
+                                    <span style="color: #6b7280; font-size: 0.875rem;">${dateStr} ${timeStr}</span>
+                                </div>
+                                ${activity.scenario ? `<div style="color: #6b7280; font-size: 0.875rem;">${activity.scenario}</div>` : ''}
+                            </li>
+                        `;
+                    }).join('');
+                }
+                
+                modal.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading student details:', error);
+                alert('Failed to load student details');
+            }
+        }
+
+        function closeStudentModal() {
+            document.getElementById('studentModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('studentModal');
+            if (event.target === modal) {
+                closeStudentModal();
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', loadInstructorDashboard);
+    </script>
+</body>
+</html>

@@ -244,6 +244,186 @@
         .game-btn-secondary:hover {
             background: #e5e7eb;
         }
+        /* Registration Codes Styling */
+        .code-card {
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+            text-align: center;
+        }
+        .code-card code {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+            display: block;
+            margin: 0.5rem 0;
+        }
+        .code-status {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        /* Quiz List Styling */
+        #quiz-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        #quiz-list li {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #quiz-list li:last-child {
+            border-bottom: none;
+        }
+        .quiz-title {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .quiz-meta {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        /* Student Detail Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: #1f2937;
+        }
+        .close-btn {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #6b7280;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            line-height: 1;
+        }
+        .close-btn:hover {
+            color: #1f2937;
+        }
+        .student-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .detail-card {
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 4px;
+        }
+        .detail-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+        .detail-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .activity-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 0;
+        }
+        .activity-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        /* Tooltip styles */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+        }
+        .info-icon {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            background: #6b7280;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 18px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: help;
+            margin-left: 0.25rem;
+            vertical-align: middle;
+        }
+        .info-icon:hover {
+            background: #374151;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 280px;
+            background-color: #1f2937;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 0.75rem;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -140px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #1f2937 transparent transparent transparent;
+        }
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -277,27 +457,63 @@
             <!-- Engagement Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">Total Students</div>
+                    <div class="stat-label">
+                        Total Students
+                        <span class="tooltip-container">
+                            <span class="info-icon">?</span>
+                            <span class="tooltip-text">Total number of students currently enrolled in this course with active enrollment status.</span>
+                        </span>
+                    </div>
                     <div class="stat-number" id="total-students">0</div>
                 </div>
                 <div class="stat-card green">
-                    <div class="stat-label">Active Students</div>
+                    <div class="stat-label">
+                        Active Students
+                        <span class="tooltip-container">
+                            <span class="info-icon">?</span>
+                            <span class="tooltip-text">Number of students who have used at least one statistical tool or analysis feature in the course.</span>
+                        </span>
+                    </div>
                     <div class="stat-number" id="active-students">0</div>
                 </div>
                 <div class="stat-card orange">
-                    <div class="stat-label">Engagement Rate</div>
+                    <div class="stat-label">
+                        Engagement Rate
+                        <span class="tooltip-container">
+                            <span class="info-icon">?</span>
+                            <span class="tooltip-text">Percentage of students who have been active in the last 7 days. Calculated as (students active in last 7 days / total students) × 100.</span>
+                        </span>
+                    </div>
                     <div class="stat-number" id="engagement-rate">0%</div>
                 </div>
                 <div class="stat-card purple">
-                    <div class="stat-label">Total Tool Runs</div>
+                    <div class="stat-label">
+                        Total Tool Runs
+                        <span class="tooltip-container">
+                            <span class="info-icon">?</span>
+                            <span class="tooltip-text">Total number of times students have executed statistical analysis tools across all features in this course.</span>
+                        </span>
+                    </div>
                     <div class="stat-number" id="total-runs">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Avg Runs/Student</div>
+                    <div class="stat-label">
+                        Avg Runs/Student
+                        <span class="tooltip-container">
+                            <span class="info-icon">?</span>
+                            <span class="tooltip-text">Average number of tool executions per student. Calculated as total tool runs divided by total enrolled students.</span>
+                        </span>
+                    </div>
                     <div class="stat-number" id="avg-runs">0</div>
                 </div>
                 <div class="stat-card green">
-                    <div class="stat-label">Tools Adopted</div>
+                    <div class="stat-label">
+                        Tools Adopted
+                        <span class="tooltip-container">
+                            <span class="info-icon">?</span>
+                            <span class="tooltip-text">Number of unique statistical tools that have been used by students out of 22 available tools. Higher adoption indicates broader exploration of course materials.</span>
+                        </span>
+                    </div>
                     <div class="stat-number" id="tools-adopted">0/22</div>
                 </div>
             </div>
@@ -359,10 +575,35 @@
                             <th>Most Used Tool</th>
                             <th>Last Active</th>
                             <th>Engagement</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="student-table-body"></tbody>
                 </table>
+            </div>
+
+            <!-- Management Links -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0;">
+                <!-- Registration Codes Link -->
+                <div class="chart-container">
+                    <h3 style="margin: 0 0 1rem 0;">🎫 Registration Codes</h3>
+                    <p style="color: #6b7280; margin-bottom: 1rem;">Manage student registration codes for this course</p>
+                    <a href="instructor.html" class="btn" style="background: #3b82f6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; text-decoration: none; display: inline-block; font-weight: 500;">
+                        Manage Registration Codes →
+                    </a>
+                </div>
+
+                <!-- Quizzes -->
+                <div class="chart-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">📝 My Quizzes</h3>
+                        <a href="quiz/quiz-create.html" class="btn" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; display: inline-block;">+ New Quiz</a>
+                    </div>
+                    <ul id="quiz-list" style="list-style: none; padding: 0;"></ul>
+                    <div id="no-quizzes" style="display: none; text-align: center; padding: 2rem; color: #6b7280;">
+                        <p>📝 No quizzes created yet.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Hosted Games Section -->
@@ -506,6 +747,9 @@
                 
                 // Load hosted games
                 loadHostedGames(courseId);
+                
+                // Load quizzes
+                loadQuizzes();
                 
                 // Show dashboard
                 document.getElementById('loading').style.display = 'none';
@@ -756,19 +1000,20 @@
                 }
                 
                 tr.innerHTML = `
-                    <td><strong><a href="#" onclick="loadStudentDetail(${student.student_id}); return false;" style="color: #3b82f6; text-decoration: none;">${student.username}</a></strong></td>
+                    <td><strong>${student.username}</strong></td>
                     <td>${student.email || '-'}</td>
                     <td>${student.total_runs}</td>
                     <td>${student.tools_used}</td>
                     <td>${student.most_used_tool || '-'}</td>
                     <td>${lastActive}</td>
                     <td>${engagementBadge}</td>
+                    <td><button class="btn" onclick="viewStudentDetail(${student.id}, '${student.username}')" style="background: #3b82f6; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">View</button></td>
                 `;
                 tbody.appendChild(tr);
             });
             
             if (students.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #6b7280;">No students enrolled yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #6b7280;">No students enrolled yet.</td></tr>';
             }
         }
 
@@ -1011,8 +1256,168 @@
             window.URL.revokeObjectURL(url);
         }
 
+        // Registration Codes functions
+        // Quiz functions
+        async function loadQuizzes() {
+            if (!currentCourseId) return;
+            
+            const token = getAuthToken();
+            
+            try {
+                const response = await fetch(`${API_BASE}/quiz/manage/my-quizzes/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) {
+                    document.getElementById('quiz-list').innerHTML = '<li style="color: #ef4444;">Unable to load quizzes</li>';
+                    return;
+                }
+                
+                const data = await response.json();
+                const quizzes = data.quizzes || [];
+                
+                // Filter by current course
+                const courseQuizzes = quizzes.filter(q => q.course_id === currentCourseId);
+                
+                const list = document.getElementById('quiz-list');
+                const noQuizzesDiv = document.getElementById('no-quizzes');
+                
+                if (courseQuizzes.length === 0) {
+                    list.style.display = 'none';
+                    noQuizzesDiv.style.display = 'block';
+                    return;
+                }
+                
+                list.style.display = 'block';
+                noQuizzesDiv.style.display = 'none';
+                
+                list.innerHTML = courseQuizzes.map(quiz => `
+                    <li>
+                        <div>
+                            <div class="quiz-title">${quiz.title}</div>
+                            <div class="quiz-meta">${quiz.questions_count} questions • ${quiz.attempts_count || 0} attempts</div>
+                        </div>
+                        <button class="btn" onclick="viewQuizAnalytics(${quiz.id}, '${quiz.title}')" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">View</button>
+                    </li>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading quizzes:', error);
+            }
+        }
+
+        function viewQuizAnalytics(quizId, quizTitle) {
+            window.location.href = `quiz/quiz-analytics.html?id=${quizId}`;
+        }
+
+        // Student Detail functions
+        async function viewStudentDetail(studentId, username) {
+            const token = getAuthToken();
+            const modal = document.getElementById('student-modal');
+            document.getElementById('modal-student-name').textContent = `${username} - Detailed Analytics`;
+            
+            try {
+                const response = await fetch(`${API_BASE}/analytics/student/${studentId}/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load student details');
+                
+                const data = await response.json();
+                
+                const content = document.getElementById('modal-student-content');
+                
+                // Summary stats
+                const daysSince = data.days_since_activity;
+                let lastActivityText = 'Never';
+                if (daysSince === 0) lastActivityText = 'Today';
+                else if (daysSince === 1) lastActivityText = '1 day ago';
+                else if (daysSince !== null) lastActivityText = `${daysSince} days ago`;
+                
+                content.innerHTML = `
+                    <div class="student-detail-grid">
+                        <div class="detail-card">
+                            <div class="detail-label">Total Runs</div>
+                            <div class="detail-value">${data.total_runs || 0}</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Unique Tools</div>
+                            <div class="detail-value">${data.unique_tools || 0}</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Active Days</div>
+                            <div class="detail-value">${data.unique_days || 0}</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Last Activity</div>
+                            <div class="detail-value" style="font-size: 1.1rem;">${lastActivityText}</div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin: 2rem 0 1rem;">Tool Usage</h3>
+                    ${(data.tool_usage || []).length === 0 ? 
+                        '<p style="color: #6b7280;">No tool usage yet</p>' :
+                        data.tool_usage.map(tool => `
+                            <div style="display: flex; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid #e5e7eb;">
+                                <span>${tool.tool}</span>
+                                <span style="font-weight: 600;">${tool.count} runs</span>
+                            </div>
+                        `).join('')
+                    }
+
+                    <h3 style="margin: 2rem 0 1rem;">Recent Activity</h3>
+                    <ul class="activity-list">
+                        ${(data.recent_activity || []).length === 0 ?
+                            '<li style="text-align: center; color: #6b7280; padding: 2rem;">No recent activity</li>' :
+                            data.recent_activity.map(activity => {
+                                const date = new Date(activity.timestamp);
+                                const dateStr = date.toLocaleDateString();
+                                const timeStr = date.toLocaleTimeString();
+                                
+                                return `
+                                    <li class="activity-item">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                            <strong>${activity.tool}</strong>
+                                            <span style="color: #6b7280; font-size: 0.875rem;">${dateStr} ${timeStr}</span>
+                                        </div>
+                                        ${activity.scenario ? `<div style="color: #6b7280; font-size: 0.875rem;">${activity.scenario}</div>` : ''}
+                                    </li>
+                                `;
+                            }).join('')
+                        }
+                    </ul>
+                `;
+                
+                modal.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading student details:', error);
+                alert('Failed to load student details');
+            }
+        }
+
+        function closeStudentModal() {
+            document.getElementById('student-modal').style.display = 'none';
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const studentModal = document.getElementById('student-modal');
+            const gameModal = document.getElementById('game-results-modal');
+            if (event.target === studentModal) {
+                closeStudentModal();
+            }
+            if (event.target === gameModal) {
+                closeGameResultsModal();
+            }
+        }
+
         // Load courses on page load
-        loadCourses();
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadCourses);
+        } else {
+            loadCourses();
+        }
     </script>
     <script src="../shared/js/admin-nav.js"></script>
 </body>

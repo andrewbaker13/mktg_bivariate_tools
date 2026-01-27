@@ -398,7 +398,7 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE}/profile/`, {
+                const response = await fetch(`${API_BASE}/auth/profile/`, {
                     headers: { 'Authorization': `Token ${token}` }
                 });
 
@@ -426,7 +426,7 @@
             const tbody = document.getElementById('quiz-table-body');
             
             try {
-                const response = await fetch(`${API_BASE}/quiz/all/`, {
+                const response = await fetch(`${API_BASE}/admin/quizzes/`, {
                     headers: { 'Authorization': `Token ${token}` }
                 });
                 
@@ -435,7 +435,8 @@
                     throw new Error(error.error || 'Failed to load quizzes');
                 }
                 
-                allQuizzes = await response.json();
+                const data = await response.json();
+                allQuizzes = data.quizzes;
                 renderQuizzes(allQuizzes);
                 
             } catch (error) {
@@ -458,13 +459,13 @@
             // Filter quizzes
             let filteredQuizzes = quizzes.filter(quiz => {
                 const matchesSearch = quiz.title.toLowerCase().includes(searchTerm);
-                const matchesCourse = courseFilter === 'all' || quiz.course_id == courseFilter;
+                const matchesCourse = courseFilter === 'all' || quiz.courses.some(c => c.id == courseFilter);
                 
                 let matchesVisibility = true;
                 if (visibilityFilter === 'visible') {
-                    matchesVisibility = quiz.is_visible;
+                    matchesVisibility = quiz.is_active;
                 } else if (visibilityFilter === 'hidden') {
-                    matchesVisibility = !quiz.is_visible;
+                    matchesVisibility = !quiz.is_active;
                 }
                 
                 return matchesSearch && matchesCourse && matchesVisibility;
@@ -486,22 +487,22 @@
                 const tr = document.createElement('tr');
                 
                 // Visibility badge
-                const visibilityBadge = quiz.is_visible 
+                const visibilityBadge = quiz.is_active 
                     ? '<span class="visibility-badge visible">👁️ Visible</span>'
                     : '<span class="visibility-badge hidden">🔒 Hidden</span>';
                 
                 // Actions
                 let actions = `<button class="action-btn view" onclick="viewQuiz(${quiz.id})" title="View Questions">📄 View</button>`;
                 actions += `<button class="action-btn analytics" onclick="viewAnalytics(${quiz.id}, '${quiz.title.replace(/'/g, "\\'")}')" title="View Analytics">📊 Analytics</button>`;
-                actions += `<button class="action-btn toggle" onclick="toggleVisibility(${quiz.id}, ${quiz.is_visible})" title="Toggle Visibility">${quiz.is_visible ? '🔒 Hide' : '👁️ Show'}</button>`;
+                actions += `<button class="action-btn toggle" onclick="toggleVisibility(${quiz.id}, ${quiz.is_active})" title="Toggle Visibility">${quiz.is_active ? '🔒 Hide' : '👁️ Show'}</button>`;
                 actions += `<button class="action-btn danger" onclick="deleteQuiz(${quiz.id}, '${quiz.title.replace(/'/g, "\\'")}')" title="Delete Quiz">🗑️ Delete</button>`;
                 
                 tr.innerHTML = `
                     <td><strong>${quiz.title}</strong></td>
-                    <td>${quiz.course_name || '-'}</td>
+                    <td>${quiz.courses.map(c => c.name).join(', ') || 'None'}</td>
                     <td>${quiz.question_count || 0}</td>
                     <td>${quiz.attempt_count || 0}</td>
-                    <td>${quiz.avg_score !== null ? quiz.avg_score.toFixed(1) + '%' : '-'}</td>
+                    <td>-</td>
                     <td>${visibilityBadge}</td>
                     <td>${new Date(quiz.created_at).toLocaleDateString()}</td>
                     <td>${actions}</td>
@@ -521,7 +522,8 @@
                 
                 if (!response.ok) throw new Error('Failed to load courses');
                 
-                allCourses = await response.json();
+                const data = await response.json();
+                allCourses = data.courses || [];
                 
                 // Populate dropdown
                 const courseFilterSelect = document.getElementById('course-filter');
@@ -539,8 +541,13 @@
             }
         }
 
-        function viewQuiz(quizId) {
-            window.open(`quiz-preview.html?id=${quizId}`, '_blank');
+        async function viewQuiz(quizId) {
+            // For now, show analytics since we don't have a preview page
+            // You could create a preview page later or show questions in a modal
+            const quiz = allQuizzes.find(q => q.id === quizId);
+            if (quiz) {
+                await viewAnalytics(quizId, quiz.title);
+            }
         }
 
         async function viewAnalytics(quizId, quizTitle) {
@@ -559,21 +566,21 @@
                 const data = await response.json();
                 
                 // Update stats
-                document.getElementById('total-attempts').textContent = data.total_attempts || 0;
-                document.getElementById('avg-score').textContent = data.avg_score ? data.avg_score.toFixed(1) + '%' : '-';
+                document.getElementById('total-attempts').textContent = data.attempt_count || 0;
+                document.getElementById('avg-score').textContent = data.average_score ? data.average_score.toFixed(1) + '%' : '-';
                 document.getElementById('completion-rate').textContent = data.completion_rate ? data.completion_rate.toFixed(1) + '%' : '-';
-                document.getElementById('unique-students').textContent = data.unique_students || 0;
+                document.getElementById('unique-students').textContent = data.completed_count || 0;
                 
                 // Render question performance
                 const questionDiv = document.getElementById('question-performance');
-                if (data.questions && data.questions.length > 0) {
+                if (data.question_performance && data.question_performance.length > 0) {
                     questionDiv.innerHTML = '<h3>Question Performance</h3>' + 
-                        data.questions.map((q, i) => `
+                        data.question_performance.map((q, i) => `
                             <div class="question-item">
                                 <strong>Q${i + 1}: ${q.question_text}</strong>
                                 <div class="question-stats">
-                                    <span>Correct: ${q.correct_count}/${q.total_attempts} (${q.correct_percentage}%)</span>
-                                    <span>Difficulty: ${q.difficulty || 'N/A'}</span>
+                                    <span>Correct: ${q.correct_count}/${q.total_responses} (${q.accuracy}%)</span>
+                                    <span>Type: ${q.question_type}</span>
                                 </div>
                             </div>
                         `).join('');
@@ -605,10 +612,7 @@
                     headers: {
                         'Authorization': `Token ${token}`,
                         'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        is_visible: !currentVisibility
-                    })
+                    }
                 });
                 
                 if (!response.ok) {
@@ -616,7 +620,8 @@
                     throw new Error(error.error || 'Failed to update visibility');
                 }
                 
-                alert(`✓ Quiz ${action === 'hide' ? 'hidden' : 'shown'} successfully!`);
+                const result = await response.json();
+                alert(`✓ ${result.message}`);
                 await loadQuizzes();
                 
             } catch (error) {
@@ -639,7 +644,7 @@
             const token = getAuthToken();
             
             try {
-                const response = await fetch(`${API_BASE}/quiz/${quizId}/`, {
+                const response = await fetch(`${API_BASE}/quiz/manage/${quizId}/delete/`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Token ${token}`

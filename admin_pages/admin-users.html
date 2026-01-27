@@ -146,6 +146,98 @@
             padding: 3rem;
             color: #6b7280;
         }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .close-btn:hover {
+            color: #374151;
+        }
+        .modal-body {
+            padding: 1.5rem;
+        }
+        .role-option {
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .role-option:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .role-option.current {
+            background: #f3f4f6;
+            cursor: default;
+        }
+        .role-option.current:hover {
+            border-color: #e5e7eb;
+            background: #f3f4f6;
+        }
+        .role-option.danger {
+            border-color: #fecaca;
+        }
+        .role-option.danger:hover {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        .role-icon {
+            font-size: 2rem;
+        }
+        .role-details h3 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1rem;
+        }
+        .role-details p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .action-btn.edit {
+            background: #3b82f6;
+            color: white;
+        }
+        .action-btn.edit:hover {
+            background: #2563eb;
+        }
     </style>
 </head>
 <body>
@@ -209,6 +301,22 @@
                             <tr><td colspan="7" style="text-align: center; padding: 2rem; color: #6b7280;">Loading users...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Role Modal -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="edit-user-title">Edit User Roles</h2>
+                <button class="close-btn" onclick="closeEditUserModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-user-id">
+                <div id="role-options-container">
+                    <!-- Role options populated by JS -->
                 </div>
             </div>
         </div>
@@ -331,20 +439,8 @@
                     roleBadges += '<span class="role-badge student">👤 Student</span>';
                 }
                 
-                // Action buttons
-                let actions = '';
-                if (!user.is_superuser) {
-                    actions += `<button class="action-btn promote" onclick="promoteToSuperuser(${user.id}, '${user.username.replace(/'/g, "\\'")}')" title="Promote to Superuser">⚡ Superuser</button>`;
-                }
-                if (!user.is_staff && !user.is_superuser) {
-                    actions += `<button class="action-btn promote" onclick="promoteToStaff(${user.id}, '${user.username.replace(/'/g, "\\'")}')" title="Promote to Staff/Instructor">👔 Staff</button>`;
-                }
-                if (user.is_staff && !user.is_superuser) {
-                    actions += `<button class="action-btn demote" onclick="demoteFromStaff(${user.id}, '${user.username.replace(/'/g, "\\'")}', ${user.courses_owned_count || 0})" title="Demote to Student">⬇️ Demote</button>`;
-                }
-                if (user.courses_owned_count > 0) {
-                    actions += `<button class="action-btn info" onclick="viewUserCourses(${user.id}, '${user.username.replace(/'/g, "\\'")}')" title="View/Transfer Courses">📚 Courses (${user.courses_owned_count})</button>`;
-                }
+                // Single Edit button
+                const actions = `<button class="action-btn edit" onclick="showEditUserModal(${user.id})" title="Edit User Roles">✏️ Edit</button>`;
                 
                 tr.innerHTML = `
                     <td><strong>${user.username}</strong></td>
@@ -361,6 +457,106 @@
         }
         
         // User action functions
+        function showEditUserModal(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+            
+            document.getElementById('edit-user-title').textContent = `Edit Roles: ${user.username}`;
+            document.getElementById('edit-user-id').value = userId;
+            
+            const container = document.getElementById('role-options-container');
+            let optionsHTML = '';
+            
+            // Current role indicator
+            let currentRole = 'student';
+            if (user.is_superuser) currentRole = 'superuser';
+            else if (user.is_staff) currentRole = 'staff';
+            
+            // Student option
+            if (currentRole === 'student') {
+                optionsHTML += `
+                    <div class="role-option current">
+                        <div class="role-icon">👤</div>
+                        <div class="role-details">
+                            <h3>Student (Current)</h3>
+                            <p>Basic access to courses and tools</p>
+                        </div>
+                    </div>
+                `;
+            } else if (user.is_staff && !user.is_superuser) {
+                optionsHTML += `
+                    <div class="role-option" onclick="demoteFromStaff(${userId}, '${user.username.replace(/'/g, "\\'")}', ${user.courses_owned_count || 0}); closeEditUserModal();">
+                        <div class="role-icon">👤</div>
+                        <div class="role-details">
+                            <h3>Demote to Student</h3>
+                            <p>Remove instructor privileges${user.courses_owned_count > 0 ? ` (owns ${user.courses_owned_count} courses)` : ''}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Staff option
+            if (currentRole === 'staff') {
+                optionsHTML += `
+                    <div class="role-option current">
+                        <div class="role-icon">👔</div>
+                        <div class="role-details">
+                            <h3>Staff/Instructor (Current)</h3>
+                            <p>Can create and manage courses</p>
+                        </div>
+                    </div>
+                `;
+            } else if (!user.is_staff && !user.is_superuser) {
+                optionsHTML += `
+                    <div class="role-option" onclick="promoteToStaff(${userId}, '${user.username.replace(/'/g, "\\'")}'); closeEditUserModal();">
+                        <div class="role-icon">👔</div>
+                        <div class="role-details">
+                            <h3>Promote to Staff/Instructor</h3>
+                            <p>Grant course creation and management privileges</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Superuser option (dangerous, shown last)
+            if (currentRole === 'superuser') {
+                optionsHTML += `
+                    <div class="role-option current danger">
+                        <div class="role-icon">⚡</div>
+                        <div class="role-details">
+                            <h3>Superuser (Current)</h3>
+                            <p>Full system administrator access</p>
+                        </div>
+                    </div>
+                `;
+            } else if (!user.is_superuser) {
+                optionsHTML += `
+                    <div class="role-option danger" onclick="promoteToSuperuser(${userId}, '${user.username.replace(/'/g, "\\'")}'); closeEditUserModal();">
+                        <div class="role-icon">⚡</div>
+                        <div class="role-details">
+                            <h3>⚠️ Promote to Superuser</h3>
+                            <p style="color: #dc2626; font-weight: 600;">DANGER: Grants full system control. Use with extreme caution!</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = optionsHTML;
+            document.getElementById('editUserModal').style.display = 'block';
+        }
+        
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('editUserModal');
+            if (event.target === modal) {
+                closeEditUserModal();
+            }
+        }
+
         async function promoteToSuperuser(userId, username) {
             if (!confirm(`Are you sure you want to promote ${username} to SUPERUSER?\n\nThis will grant full system administrator privileges.`)) {
                 return;
