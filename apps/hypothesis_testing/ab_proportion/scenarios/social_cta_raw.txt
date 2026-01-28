@@ -1,0 +1,78 @@
+# Title
+Social CTA Refresh (Raw Dataset)
+
+# Description
+<p>
+The social team is refreshing story creative for a limited-time campaign microsite. Historically, swipe-up CTAs have been static text and an arrow icon. A new concept uses short looping <strong>reaction stickers</strong> and a subtle countdown bar over the swipe CTA to make the action feel more immediate and fun.
+</p>
+<p>
+Because organic reach and auction dynamics can be noisy, the team runs a focused test on a single day with matched lookalike audiences. Each eligible viewer sees one of two story treatments:
+</p>
+<ul>
+  <li><strong>Team A (Static CTA):</strong> evergreen story frame with static "Learn more" text and a simple swipe-up arrow.</li>
+  <li><strong>Team B (Reaction CTA):</strong> the same core frame, but with animated reaction badges and a countdown-style progress bar above the swipe area.</li>
+</ul>
+<p>
+Every impression is logged as either a <em>conversion</em> (1 = swipe to the microsite and a meaningful page view) or <em>non-conversion</em> (0 = no swipe or immediate bounce). The data below show one row per impression with the assigned team and a 0/1 outcome. Conversion rates differ by several percentage points, but with far from perfect separation—exactly the kind of messy, real-world pattern you expect on social.
+</p>
+<p>
+Your analytical goal is to use the raw data to estimate the conversion proportion in each arm and then run a two-proportion test to see whether the reaction CTA is reliably better than the static CTA. You can then translate the estimated lift into incremental visits (and downstream sign-ups) if the concept is rolled out across more inventory.
+</p>
+
+# Settings
+alpha=0.05
+delta0=0
+
+# Raw Data
+Team A|1
+Team A|1
+Team A|1
+Team A|1
+Team A|0
+Team A|0
+Team A|1
+Team A|0
+Team A|1
+Team A|0
+Team A|1
+Team A|0
+Team A|1
+Team A|1
+Team A|0
+Team A|1
+Team A|0
+Team A|0
+Team A|1
+Team A|0
+Team A|1
+Team A|0
+Team A|1
+Team A|0
+Team A|1
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|1
+Team B|0
+Team B|1
+Team B|1
+Team B|0
+

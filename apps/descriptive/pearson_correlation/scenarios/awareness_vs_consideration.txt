@@ -1,0 +1,40 @@
+# Title
+Awareness vs Consideration – Q3 Brand Tracker
+
+# Description
+<p>
+Your Q3 brand tracker asked 10,000 panelists in multiple markets to rate <strong>unprompted awareness</strong> and <strong>likelihood to consider</strong> the brand on a 0–100 scale. The table below aggregates those results for a set of key markets, each row representing one market’s average scores.
+</p>
+<p>
+Media planners believe that upper-funnel bursts (PR, social video, sponsorships) are doing a good job of lifting awareness, but they are less sure whether that awareness translates into meaningful <em>consideration</em>. In some markets, creative feels buzzy but lightweight; in others, messaging is more product- and value-focused. The team wants to quantify how tightly awareness and consideration move together before locking Q4 brand investments.
+</p>
+<p>
+The pattern in the data is realistic: markets with higher awareness tend to have higher consideration, but the association is far from perfect. A few markets “over-deliver” on consideration relative to awareness, while others lag despite solid awareness scores. This is exactly the kind of noisy brand-tracking relationship analysts see in practice.
+</p>
+<p>
+Your analytical goal is to use the <strong>Pearson correlation</strong> between awareness and consideration to summarize how strongly these two stages of the funnel are linked across markets. You will interpret both the <em>size</em> of the correlation (weak, moderate, strong) and its <em>significance</em>, and then translate that into practical guidance: should Q4 budgets lean more into awareness-driving media, or is it time to shift resources toward messaging and channels that close the gap between awareness and active consideration?
+</p>
+
+# Alpha
+0.05
+
+# Input Mode
+paired
+
+# Paired Columns
+awareness,consideration
+52,39
+54,42
+56,41
+57,45
+59,46
+61,48
+63,50
+65,52
+68,55
+70,54
+73,58
+
+# Raw Data File
+file=scenarios/data/awareness_vs_consideration.csv
+

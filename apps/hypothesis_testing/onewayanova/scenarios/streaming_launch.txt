@@ -1,0 +1,43 @@
+# Title
+Streaming Launch: Creative Concepts and Revenue Per Household
+
+# Description
+<p>
+You are supporting the global launch of a new streaming bundle that will be promoted heavily on connected TV, social video, and digital out-of-home. The brand studio has developed three very different hero concepts:
+</p>
+<ul>
+  <li><strong>Emotion-led Hero Film:</strong> a cinematic, story-driven spot designed to build long-term brand equity.</li>
+  <li><strong>Promotion-Heavy Carousel:</strong> a performance-style execution focused on price, trial offers, and limited-time discounts.</li>
+  <li><strong>Influencer Cameo Reel:</strong> a creator-led montage that mixes product shots with quick, authentic reactions from familiar influencers.</li>
+</ul>
+<p>
+Each concept has been flighted across 14 designated market areas (DMAs). For every market and creative, the team has estimated <strong>incremental revenue per household exposure</strong>, normalized for reach and spend. The creative groups differ modestly in their means and variability; there is no single "magic bullet" concept, which reflects the real-world tradeoffs between brand building and performance efficiency.
+</p>
+<p>
+Your objective is to use one-way ANOVA to test whether average revenue per household differs across the three creative concepts, and to follow up with focused comparisons that answer the question: "Is the big-budget hero film truly justifying its cost, or are lighter-weight promos and influencer content competitive alternatives?"
+</p>
+
+# How to use
+<ul>
+  <li><strong>Fit the ANOVA model:</strong> Treat creative concept as the factor and incremental revenue per household as the outcome.</li>
+  <li><strong>Interpret the F-test:</strong> Use the overall F-test to decide whether average revenue differs across concepts at the chosen alpha level.</li>
+  <li><strong>Review group means and intervals:</strong> Compare means and confidence intervals to understand which concepts are directionally higher or lower, and how much overlap exists.</li>
+  <li><strong>Use planned comparisons:</strong> Focus on pre-specified contrasts (e.g., Hero Film vs. Influencer Reel, Hero Film vs. Promotion Carousel) to answer concrete creative strategy questions.</li>
+</ul>
+
+# Alpha
+0.05
+
+# Groups
+Emotion-led Hero Film|48.5|5.4|140
+Promotion-Heavy Carousel|45.9|4.8|150
+Influencer Cameo Reel|47.4|5.0|138
+
+# Planned Comparisons
+Emotion-led Hero Film|Influencer Cameo Reel
+Emotion-led Hero Film|Promotion-Heavy Carousel
+
+# Additional Inputs
+axis_min=
+axis_max=
+mean_reference=

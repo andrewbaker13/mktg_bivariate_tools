@@ -1,0 +1,31 @@
+# Title
+Channel Partner Loyalty Push
+
+# Description
+<p>
+The <strong>Partnership Marketing</strong> team works with several channel partners who resell your SaaS product to small businesses. These partners regularly send co-branded emails to their own lists, and your team wants to understand whether a richer loyalty incentive will actually move the needle on end-customer purchases.
+</p>
+<p>
+You set up a test for one large partner list, splitting eligible small-business contacts into two email experiences:
+</p>
+<ul>
+  <li><strong>Standard Loyalty Reminder (Control):</strong> reminds customers of the existing points program, highlights a generic benefit overview, and links to the account portal.</li>
+  <li><strong>Tiered Bonus Loyalty Offer (Variant):</strong> introduces a new tiered bonus: extra points multipliers for partner purchases made in the next 30 days, plus access to a dedicated customer success hotline for top-tier accounts.</li>
+</ul>
+<p>
+The partner sends both emails under their own brand, with your content slotted into the body. Over the test window, you track <strong>email-to-purchase conversion</strong>: the proportion of recipients in each arm who place a qualifying order with the channel partner tied to your product. The conversion proportions are directionally higher in the tiered-bonus arm, but the difference is moderate and sample sizes are under 1,000 per group—a realistic scenario for B2B email.
+</p>
+<p>
+Your analytical goal is to use a test of two independent proportions to assess whether the tiered bonus loyalty push generates a credible increase in purchase conversion compared to the standard reminder. You will interpret both the statistical evidence (p-value and confidence interval on the difference) and the managerial implications: does the estimated lift justify rolling out the more complex tiered structure to additional partners and maintaining it in the CRM system?
+</p>
+
+# Control
+Standard Loyalty Reminder|0.164|890
+
+# Variant
+Tiered Bonus Loyalty Offer|0.191|905
+
+# Settings
+alpha=0.05
+delta0=0
+

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "newsletter_cta",
+    "label": "Newsletter CTA Optimization",
+    "file": "scenarios/newsletter_cta.txt"
+  },
+  {
+    "id": "retargeting_offer",
+    "label": "Retargeting Offer Test",
+    "file": "scenarios/retargeting_offer.txt"
+  },
+  {
+    "id": "loyalty_partner",
+    "label": "Channel Partner Loyalty Push",
+    "file": "scenarios/loyalty_partner.txt"
+  },
+  {
+    "id": "social_cta_raw",
+    "label": "Social CTA Raw Dataset",
+    "file": "scenarios/social_cta_raw.txt",
+    "dataset": "social_cta_raw_data.csv"
+  }
+]
