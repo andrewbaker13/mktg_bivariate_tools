@@ -220,7 +220,7 @@
               </div>
               <div>
                 <label for="arimax-D">Seasonal Diff (D)</label>
-                <input type="number" id="arimax-D" min="0" max="2" step="1" value="1">
+                <input type="number" id="arimax-D" min="0" max="2" step="1" value="0">
               </div>
               <div>
                 <label for="arimax-Q">Seasonal MA (Q)</label>
@@ -254,6 +254,8 @@
                 </ul>
                 
                 <p><strong>How to identify s from ACF:</strong> Look at the ACF chart after fitting a non-seasonal model. Significant spikes at regular intervals (e.g., lags 12, 24, 36...) reveal your seasonal period.</p>
+                
+                <p class="performance-warning">⚠️ <strong>Performance note:</strong> Large seasonal periods (s ≥ 24) can be slow to fit. Start with <strong>(P=1, D=0, Q=1)</strong> — seasonal differencing (D=1) adds significant computation time. Only increase D if the seasonal pattern's amplitude changes over time.</p>
               </div>
             </details>
           </div>
@@ -737,8 +739,12 @@
 
   <div id="arimax-loading-overlay" class="loading-overlay" aria-hidden="true">
     <div class="loading-content">
-      <p><strong>Fitting ARIMAX model…</strong></p>
-      <p class="muted">This may take a few seconds. Please wait.</p>
+      <div class="loading-spinner"></div>
+      <p><strong>Fitting model…</strong></p>
+      <p class="muted" id="loading-message">This may take a few seconds. Please wait.</p>
+      <p class="time-estimate" id="time-estimate"></p>
+      <p class="elapsed-time" id="elapsed-time">Elapsed: 0s</p>
+      <button type="button" id="cancel-fitting" class="cancel-button">Cancel</button>
     </div>
   </div>
 

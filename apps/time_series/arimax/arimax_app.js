@@ -211,7 +211,7 @@ const ARIMAX_SCENARIOS = [
             </ul>
           </div>
           
-          <p><strong>Suggested Settings:</strong> Enable <strong>"Include Seasonality"</strong> and try <strong>SARIMAX(1,1,1)(1,1,1,52)</strong> with seasonal period <strong>s=52</strong> to capture the yearly cycle. The forecast should now show the seasonal ups and downs!</p>
+          <p><strong>Suggested Settings:</strong> Enable <strong>"Include Seasonality"</strong> and try <strong>SARIMAX(1,1,1)(1,0,1)[52]</strong> with seasonal period <strong>s=52</strong>. Use D=0 (no seasonal differencing) for faster fitting — the seasonal pattern here is fairly stable.</p>
           
           <div class="scenario-insights">
             <div class="insight-title">🎯 Business Questions to Explore</div>
@@ -417,15 +417,119 @@ function getConfidenceLevel() {
   return 1 - alpha;
 }
 
+// AbortController for cancelling fetch requests
+let currentFetchController = null;
+let elapsedTimerInterval = null;
+let loadingStartTime = null;
+
+// Frontend timeout (3 minutes) - matches backend daphne timeout
+const FETCH_TIMEOUT_MS = 180000;
+
+/**
+ * Get complexity level and warning message based on model parameters.
+ * We avoid specific time estimates since they're unreliable.
+ */
+function getModelComplexityInfo(nObs, order, seasonalOrder) {
+  const [p, d, q] = order;
+  const [P, D, Q, s] = seasonalOrder;
+  
+  // Determine complexity level
+  let level = 'fast';
+  let message = 'Should complete quickly.';
+  
+  if (s === 0) {
+    // Non-seasonal ARIMA - usually fast
+    level = 'fast';
+    message = 'Non-seasonal model — should complete quickly.';
+  } else if (s < 12) {
+    level = 'moderate';
+    message = `Seasonal model (s=${s}) — may take 10-30 seconds.`;
+  } else if (s < 24) {
+    level = 'slow';
+    message = `Seasonal model (s=${s}) — may take 30-60 seconds.`;
+  } else if (s >= 24 && D === 0) {
+    level = 'slow';
+    message = `Large seasonal period (s=${s}) — may take 1-2 minutes.`;
+  } else if (s >= 24 && D > 0) {
+    level = 'very-slow';
+    message = `⚠️ Large seasonal period with seasonal differencing — may take several minutes. Consider using D=0 for faster results.`;
+  }
+  
+  // Warn about potential timeout
+  if (level === 'very-slow') {
+    message += ' Request may timeout after 3 minutes.';
+  }
+  
+  return { level, message };
+}
+
+function startElapsedTimer() {
+  loadingStartTime = Date.now();
+  const elapsedEl = document.getElementById('elapsed-time');
+  
+  if (elapsedTimerInterval) {
+    clearInterval(elapsedTimerInterval);
+  }
+  
+  elapsedTimerInterval = setInterval(() => {
+    if (elapsedEl && loadingStartTime) {
+      const elapsed = Math.floor((Date.now() - loadingStartTime) / 1000);
+      if (elapsed < 60) {
+        elapsedEl.textContent = `Elapsed: ${elapsed}s`;
+      } else {
+        const mins = Math.floor(elapsed / 60);
+        const secs = elapsed % 60;
+        elapsedEl.textContent = `Elapsed: ${mins}m ${secs}s`;
+      }
+    }
+  }, 1000);
+}
+
+function stopElapsedTimer() {
+  if (elapsedTimerInterval) {
+    clearInterval(elapsedTimerInterval);
+    elapsedTimerInterval = null;
+  }
+  loadingStartTime = null;
+}
+
 // Loading overlay
-function showLoading() {
+function showLoading(nObs = 100, order = [1,1,1], seasonalOrder = [0,0,0,0]) {
   const overlay = document.getElementById('arimax-loading-overlay');
   if (overlay) overlay.classList.add('active');
+  
   const runButton = document.getElementById('arimax-run-model');
   if (runButton) {
     runButton.disabled = true;
     runButton.textContent = 'Fitting model...';
   }
+  
+  // Show complexity-based message
+  const estimateEl = document.getElementById('time-estimate');
+  if (estimateEl) {
+    const { level, message } = getModelComplexityInfo(nObs, order, seasonalOrder);
+    estimateEl.textContent = message;
+    estimateEl.className = `time-estimate complexity-${level}`;
+  }
+  
+  // Start elapsed timer
+  startElapsedTimer();
+  
+  // Setup cancel button
+  const cancelBtn = document.getElementById('cancel-fitting');
+  if (cancelBtn) {
+    cancelBtn.onclick = cancelFitting;
+  }
+}
+
+function cancelFitting() {
+  if (currentFetchController) {
+    currentFetchController.abort();
+    currentFetchController = null;
+  }
+  hideLoading();
+  const statusEl = document.getElementById('arimax-run-status');
+  if (statusEl) statusEl.textContent = 'Model fitting cancelled.';
 }
 
 function hideLoading() {
@@ -434,8 +538,12 @@ function hideLoading() {
   const runButton = document.getElementById('arimax-run-model');
   if (runButton) {
     runButton.disabled = false;
-    runButton.textContent = 'Fit ARIMAX Model';
+    runButton.textContent = isSeasonalityEnabled() ? 'Fit SARIMAX Model' : 'Fit ARIMAX Model';
   }
+  // Stop the elapsed timer
+  stopElapsedTimer();
+  // Clear the abort controller
+  currentFetchController = null;
 }
 
 // Timestamp hydration
@@ -1493,7 +1601,14 @@ async function runArimaxModel() {
     return;
   }
   
-  showLoading();
+  // Get model settings for time estimation
+  const order = getModelOrder();
+  const seasonalOrder = getSeasonalOrder();
+  
+  showLoading(rows.length, order, seasonalOrder);
+  
+  // Create abort controller for this request
+  currentFetchController = new AbortController();
   
   try {
     // Prepare data
@@ -1524,8 +1639,6 @@ async function runArimaxModel() {
       exogNames = arimaxExogColumns;
     }
     
-    const order = getModelOrder();
-    const seasonalOrder = getSeasonalOrder();
     const forecastSteps = parseInt(document.getElementById('arimax-forecast-periods')?.value) || 6;
     const confidenceLevel = getConfidenceLevel();
     
@@ -1555,7 +1668,8 @@ async function runArimaxModel() {
     const response = await fetch(`${API_BASE_URL}/arimax/fit/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: currentFetchController?.signal
     });
     
     const result = await response.json();
@@ -1600,6 +1714,11 @@ async function runArimaxModel() {
     }
     
   } catch (error) {
+    // Don't show error message if user cancelled
+    if (error.name === 'AbortError') {
+      console.log('Model fitting cancelled by user');
+      return;
+    }
     console.error('ARIMAX model error:', error);
     if (statusEl) statusEl.textContent = `Error: ${error.message}`;
   } finally {
