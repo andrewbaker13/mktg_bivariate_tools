@@ -18,6 +18,9 @@ const Tutorial = {
     arimaxRun: null,
     sarimaxRun: null,
     
+    // Track if user downloaded the dataset
+    downloadedDataset: false,
+    
     // Configuration
     config: {
         targetScenario: 'scenario-mobile-game',
@@ -105,7 +108,50 @@ const Tutorial = {
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 3: Understand Variables
+        // STEP 3: Explore the Raw Data
+        // ═══════════════════════════════════════════════════════════════
+        {
+            id: 'explore_data',
+            title: "Explore the Raw Data",
+            targetId: 'scenario-download',
+            content: `
+                <p><strong>Before we model, let's actually LOOK at the data.</strong></p>
+                
+                <p>Good analysts always inspect their data before running any analysis. What does 72 months of mobile game signups actually look like?</p>
+                
+                <p class="task">👉 <strong>Task:</strong> Click the <strong>"Download scenario dataset"</strong> button, then <strong>open the CSV file</strong>.</p>
+                
+                <p>It will open in Excel, Google Sheets, or even as a text file. Take 30 seconds to scroll through and notice:</p>
+                <ul>
+                    <li>The <code>month</code> column (2020-01 through 2025-12)</li>
+                    <li>The <code>monthly_signups</code> values — do any months look higher?</li>
+                    <li>The <code>mobile_ad_spend</code> and <code>new_feature</code> columns</li>
+                </ul>
+                
+                <p class="hint">This is YOUR data now. Understanding it deeply makes you a better analyst.</p>
+            `,
+            quizzes: [
+                {
+                    question: "After opening the CSV, look at the monthly_signups column. Roughly what range do the values fall in?",
+                    options: [
+                        "0 to 100",
+                        "1,000 to 10,000",
+                        "100,000 to 1,000,000"
+                    ],
+                    answer: 1,
+                    feedback: "Correct! The signups range from roughly 2,000-8,000+ per month. This gives you intuition for what 'normal' looks like."
+                }
+            ],
+            check: () => {
+                return Tutorial.downloadedDataset === true;
+            },
+            onEnter: () => {
+                document.getElementById('scenario-download')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        },
+
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 4: Understand Variables
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'understand_variables',
@@ -833,6 +879,7 @@ const Tutorial = {
         this.currentStep = 0;
         this.arimaxRun = null;
         this.sarimaxRun = null;
+        this.downloadedDataset = false;
         
         document.body.classList.add('tutorial-active');
         document.getElementById('tutorial-sidebar')?.classList.add('active');
@@ -1079,6 +1126,17 @@ const Tutorial = {
                     this.start();
                 } else {
                     this.stop();
+                }
+            });
+        }
+        
+        // Listen for scenario dataset download button
+        const downloadBtn = document.getElementById('scenario-download');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                this.downloadedDataset = true;
+                if (this.isActive) {
+                    setTimeout(() => this.updateView(), 100);
                 }
             });
         }
