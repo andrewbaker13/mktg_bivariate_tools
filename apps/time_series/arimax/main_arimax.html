@@ -209,14 +209,16 @@
             </div>
           </div>
           
-          <!-- Seasonality Toggle -->
-          <div class="seasonality-toggle">
-            <label class="checkbox-label">
-              <input type="checkbox" id="arimax-include-seasonality">
-              <span>Include Seasonality (SARIMAX)</span>
-            </label>
-            <p class="hint">Enable this if your data shows repeating patterns at regular intervals (e.g., weekly cycles, monthly patterns).</p>
-          </div>
+          <!-- Seasonality Section (toggle + params) -->
+          <div id="seasonality-section" class="seasonality-section">
+            <!-- Seasonality Toggle -->
+            <div class="seasonality-toggle">
+              <label class="checkbox-label">
+                <input type="checkbox" id="arimax-include-seasonality">
+                <span>Include Seasonality (SARIMAX)</span>
+              </label>
+              <p class="hint">Enable this if your data shows repeating patterns at regular intervals (e.g., weekly cycles, monthly patterns).</p>
+            </div>
           
           <!-- Seasonal Parameters (hidden by default) -->
           <div id="seasonal-params-container" class="seasonal-params hidden">
@@ -274,6 +276,7 @@
               </div>
             </details>
           </div>
+          </div><!-- /seasonality-section -->
           
           <div class="input-grid forecast-settings-grid">
             <div>

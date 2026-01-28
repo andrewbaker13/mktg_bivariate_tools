@@ -1486,11 +1486,13 @@ async function applyForecastScenario() {
     }
     
     const order = getModelOrder();
+    const seasonalOrder = getSeasonalOrder();
     
     // Build request payload
     const payload = {
       endog: endog,
       order: order,
+      seasonal_order: seasonalOrder,
       forecast_steps: forecastSteps,
       confidence_level: confidenceLevel,
       date_labels: dateLabels,

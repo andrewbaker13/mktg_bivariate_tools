@@ -222,7 +222,13 @@ const Tutorial = {
                 
                 <p>A classic starting point is <strong>(1, 1, 1)</strong> — one lag of memory, one level of differencing, one error term.</p>
                 
-                <p class="task">👉 <strong>Task:</strong> Set <strong>p=1</strong>, <strong>d=1</strong>, <strong>q=1</strong> in the Model Specification section.</p>
+                <div class="task">
+                    <p>👉 <strong>Task:</strong></p>
+                    <ol>
+                        <li>Set <strong>p=1</strong>, <strong>d=1</strong>, <strong>q=1</strong></li>
+                        <li>Make sure <strong>"Include Seasonality"</strong> is <strong>UNCHECKED</strong> (we'll add it later!)</li>
+                    </ol>
+                </div>
             `,
             quizzes: [
                 {
@@ -250,7 +256,8 @@ const Tutorial = {
                 const p = parseInt(document.getElementById('arimax-p')?.value, 10);
                 const d = parseInt(document.getElementById('arimax-d')?.value, 10);
                 const q = parseInt(document.getElementById('arimax-q')?.value, 10);
-                return p === 1 && d === 1 && q === 1;
+                const seasonalityUnchecked = !document.getElementById('arimax-include-seasonality')?.checked;
+                return p === 1 && d === 1 && q === 1 && seasonalityUnchecked;
             },
             onEnter: () => {
                 // Scroll to model specification area (matches targetId)
@@ -364,42 +371,42 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'check_residuals',
-            title: "The Residuals Tell the Story",
+            title: "Understanding Residuals & ACF",
             targetId: 'chart-acf',
             content: `
-                <p><strong>The ACF chart reveals patterns the model MISSED.</strong></p>
+                <p><strong>What are residuals?</strong></p>
+                <p><em>Residuals</em> are the "leftover" errors — the difference between what the model <strong>predicted</strong> and what <strong>actually happened</strong>. If the model is good, residuals should look like random noise with no pattern.</p>
                 
-                <p>ACF (Autocorrelation Function) shows how correlated the residuals are at different lags.</p>
-                
+                <p><strong>The ACF (Autocorrelation Function) chart</strong> checks if residuals have hidden patterns:</p>
                 <ul>
-                    <li><strong>Bars inside red dashed lines:</strong> No significant pattern (good!)</li>
-                    <li><strong>Bars outside red lines:</strong> Leftover pattern the model didn't capture (bad!)</li>
+                    <li><strong>Bars inside red dashed lines:</strong> No significant pattern — good!</li>
+                    <li><strong>Bars outside red lines:</strong> Leftover pattern the model missed — needs fixing!</li>
                 </ul>
                 
-                <p class="task">👉 <strong>Task:</strong> Look at the ACF chart. Are there significant spikes at lags 12, 24, 36...?</p>
+                <p class="task">👉 <strong>Task:</strong> Look at the ACF of Residuals chart. Focus on whether bars extend beyond the red confidence bands, especially around <strong>lag 12</strong> (one year in monthly data).</p>
                 
-                <p class="hint">Spikes at multiples of 12 in monthly data = yearly seasonal pattern!</p>
+                <p class="hint">Even small patterns in residuals suggest the model is missing something. The chart shows lags 0-20, so look for any spike near lag 12.</p>
             `,
             quizzes: [
                 {
-                    question: "Look at the ACF chart. Are there significant spikes (bars outside the red dashed lines) at regular intervals?",
+                    question: "What are 'residuals' in time series analysis?",
                     options: [
-                        "No, all bars are safely inside the red lines",
-                        "Yes, there are spikes around lags 12, 24, etc.",
-                        "The ACF chart is blank"
+                        "The raw data values",
+                        "The prediction errors — actual values minus predicted values",
+                        "The seasonal adjustments"
                     ],
                     answer: 1,
-                    feedback: "Correct! Those spikes at seasonal lags are screaming: 'You forgot to model seasonality!'"
+                    feedback: "Correct! Residuals are the 'leftovers' after the model makes its predictions. Ideally they should be random noise."
                 },
                 {
-                    question: "Spikes at lags 12, 24, 36 in MONTHLY data suggest a pattern that repeats every...",
+                    question: "Look at the ACF chart. If you see ANY bars extending beyond the red dashed lines (besides lag 0), what does this suggest?",
                     options: [
-                        "Week",
-                        "Month",
-                        "Year"
+                        "The model is perfect",
+                        "The model is missing some pattern in the data",
+                        "The data is too noisy to analyze"
                     ],
-                    answer: 2,
-                    feedback: "Exactly! 12 months = 1 year. The pattern is annual seasonality."
+                    answer: 1,
+                    feedback: "Exactly! Significant spikes in the ACF mean the residuals aren't random — there's a pattern the model didn't capture. For monthly data, a spike near lag 12 suggests yearly seasonality."
                 }
             ],
             check: () => true,
@@ -414,7 +421,7 @@ const Tutorial = {
         {
             id: 'enable_seasonality',
             title: "Enable Seasonality (SARIMAX)",
-            targetId: 'arimax-include-seasonality',
+            targetId: 'seasonality-section',
             content: `
                 <p><strong>Time to fix the forecast!</strong></p>
                 
@@ -462,10 +469,7 @@ const Tutorial = {
                 return seasonalityChecked && s === 12;
             },
             onEnter: () => {
-                const toggle = document.getElementById('arimax-include-seasonality');
-                if (toggle) {
-                    toggle.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
+                document.getElementById('seasonality-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         },
 
@@ -479,16 +483,24 @@ const Tutorial = {
             content: `
                 <p><strong>Now let's run the seasonal model!</strong></p>
                 
-                <p class="task">👉 <strong>Task:</strong> Click <strong>"Fit ARIMAX Model"</strong> again.</p>
+                <p>To see a full year of seasonal forecasting, we'll extend the forecast horizon.</p>
                 
-                <p>This time, watch for:</p>
+                <div class="task">
+                    <p>👉 <strong>Task:</strong></p>
+                    <ol>
+                        <li>Set <strong>Forecast Periods</strong> slider to <strong>12</strong> (one full year)</li>
+                        <li>Click <strong>"Fit ARIMAX Model"</strong></li>
+                    </ol>
+                </div>
+                
+                <p>Watch for:</p>
                 <ul>
                     <li>The model spec will show <strong>(p,d,q)(P,D,Q)[s]</strong> format</li>
-                    <li>Computation takes a bit longer (seasonal models are more complex)</li>
                     <li>New seasonal coefficients (ar.S.L12, ma.S.L12) in results</li>
+                    <li>The forecast will show a full year of seasonal ups and downs!</li>
                 </ul>
                 
-                <p class="hint">The [12] at the end confirms yearly seasonality is being modeled!</p>
+                <p class="hint">The [12] at the end of the model spec confirms yearly seasonality is being modeled.</p>
             `,
             quizzes: [
                 {
@@ -507,8 +519,9 @@ const Tutorial = {
                 const specEl = document.getElementById('arimax-spec-value');
                 const spec = specEl?.textContent || '';
                 const hasSeasonal = spec.includes('[') && spec.includes(']');
+                const forecastPeriods = parseInt(document.getElementById('arimax-forecast-periods')?.value, 10);
                 
-                if (hasSeasonal && seasonalityChecked) {
+                if (hasSeasonal && seasonalityChecked && forecastPeriods === 12) {
                     Tutorial.sarimaxRun = {
                         aic: document.getElementById('arimax-aic-value')?.textContent,
                         spec: spec
@@ -1164,6 +1177,7 @@ const Tutorial = {
             'arimax-P', 'arimax-D', 'arimax-Q', 'arimax-s',
             'arimax-include-seasonality',
             'arimax-outcome-select',
+            'arimax-forecast-periods',
             'scenario-select'
         ];
         
