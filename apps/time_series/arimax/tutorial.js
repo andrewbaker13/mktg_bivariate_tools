@@ -110,7 +110,7 @@ const Tutorial = {
         {
             id: 'understand_variables',
             title: "Know Your Variables",
-            targetId: 'arimax-raw-panel',
+            targetId: 'column-selection-group',
             content: `
                 <p>The data is loaded! Now let's understand what we're working with.</p>
                 
