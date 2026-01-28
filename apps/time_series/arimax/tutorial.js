@@ -213,7 +213,7 @@ const Tutorial = {
         {
             id: 'arima_basics',
             title: "ARIMA Parameters (p, d, q)",
-            targetId: 'inputs-heading',
+            targetId: 'model-specification-group',
             content: `
                 <p>Now we configure the model's "memory" using three parameters:</p>
                 
@@ -272,12 +272,14 @@ const Tutorial = {
                 
                 <p>This teaches an important lesson: if you don't tell the model about seasonal patterns, it won't capture them!</p>
                 
-                <p class="task">👉 <strong>Task:</strong></p>
-                <ol>
-                    <li>Make sure <strong>"Include Seasonality"</strong> is <strong>UNCHECKED</strong></li>
-                    <li>Click <strong>"Fit ARIMAX Model"</strong></li>
-                    <li>Wait for results (usually 5-15 seconds)</li>
-                </ol>
+                <div class="task">
+                    <p>👉 <strong>Task:</strong></p>
+                    <ol>
+                        <li>Make sure <strong>"Include Seasonality"</strong> is <strong>UNCHECKED</strong></li>
+                        <li>Click <strong>"Fit ARIMAX Model"</strong></li>
+                        <li>Wait for results (usually 5-15 seconds)</li>
+                    </ol>
+                </div>
                 
                 <p class="hint">Watch the timer — the model is crunching numbers on the server!</p>
             `,
@@ -425,12 +427,14 @@ const Tutorial = {
                     <li><strong>P, D, Q:</strong> Seasonal versions of p, d, q. Start with <strong>(1, 0, 1)</strong></li>
                 </ul>
                 
-                <p class="task">👉 <strong>Task:</strong></p>
-                <ol>
-                    <li>Check the <strong>"Include Seasonality (SARIMAX)"</strong> checkbox</li>
-                    <li>Set seasonal period <strong>s = 12</strong></li>
-                    <li>Keep P=1, D=0, Q=1 (the defaults)</li>
-                </ol>
+                <div class="task">
+                    <p>👉 <strong>Task:</strong></p>
+                    <ol>
+                        <li>Check the <strong>"Include Seasonality (SARIMAX)"</strong> checkbox</li>
+                        <li>Set seasonal period <strong>s = 12</strong></li>
+                        <li>Keep P=1, D=0, Q=1 (the defaults)</li>
+                    </ol>
+                </div>
             `,
             quizzes: [
                 {
@@ -730,13 +734,15 @@ const Tutorial = {
                 
                 <p><strong>Your Mission:</strong> It's October and leadership is planning Q1 budget. They want to know: "If we increase ad spend to $70,000/month (above recent average), what happens to signups?"</p>
                 
-                <p class="task">👉 <strong>Task:</strong></p>
-                <ol>
-                    <li>Find the forecast scenario controls below the chart</li>
-                    <li>Set <strong>mobile_ad_spend</strong> to <strong>70000</strong></li>
-                    <li>Click <strong>"Apply & Update Forecast"</strong></li>
-                    <li>Watch how the forecast changes!</li>
-                </ol>
+                <div class="task">
+                    <p>👉 <strong>Task:</strong></p>
+                    <ol>
+                        <li>Find the forecast scenario controls below the chart</li>
+                        <li>Set <strong>mobile_ad_spend</strong> to <strong>70000</strong></li>
+                        <li>Click <strong>"Apply & Update Forecast"</strong></li>
+                        <li>Watch how the forecast changes!</li>
+                    </ol>
+                </div>
             `,
             quizzes: [
                 {
