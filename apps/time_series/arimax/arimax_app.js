@@ -27,21 +27,202 @@ let currentScenarioName = null;
 const ARIMAX_SCENARIOS = [
   {
     id: 'scenario-ad-spend',
-    label: 'Monthly Sales with Ad Spend (36 months)',
-    file: 'scenarios/ad_spend_sales.txt',
-    datasetPath: 'scenarios/ad_spend_sales.csv'
+    label: '📈 Monthly Sales with Ad Spend (36 months)',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">📈</span>
+          <h3>Monthly Sales with Advertising Spend</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">ARIMAX Forecasting</span>
+          <span class="badge badge-context">Retail Marketing</span>
+          <span class="badge badge-sample">n = 36 months</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> A classic marketing analytics scenario: understand how <strong>advertising investment</strong> drives <strong>monthly sales revenue</strong> for a retail business.</p>
+          
+          <p><strong>Dataset Variables:</strong></p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Outcome</div>
+              <div class="context-value">sales</div>
+              <div class="context-subtext">Monthly revenue in dollars</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Predictor</div>
+              <div class="context-value">ad_spend</div>
+              <div class="context-subtext">Monthly advertising expenditure ($)</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Predictor</div>
+              <div class="context-value">promotion</div>
+              <div class="context-subtext">Promotional month indicator (0/1)</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Time Index</div>
+              <div class="context-value">date</div>
+              <div class="context-subtext">Month (YYYY-MM format)</div>
+            </div>
+          </div>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🔍 What You'll Discover</div>
+            <ul>
+              <li><strong>Seasonal patterns:</strong> Clear December peaks from holiday shopping</li>
+              <li><strong>Ad effectiveness:</strong> Positive ROI on advertising spend</li>
+              <li><strong>Promotion lift:</strong> Measurable impact of promotional months</li>
+            </ul>
+          </div>
+          
+          <p><strong>Suggested Settings:</strong> Start with <strong>ARIMA(1,1,1)</strong> and include both <code>ad_spend</code> and <code>promotion</code> as exogenous predictors. Compare AIC with a model that excludes predictors to see the improvement.</p>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Business Questions to Explore</div>
+            <ul>
+              <li>What's the expected sales lift per $1,000 in ad spend?</li>
+              <li>How much do promotions boost monthly sales?</li>
+              <li>What would Q1 sales look like if we increase ad budget by 20%?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    `,
+    dataset: 'scenarios/ad_spend_sales.csv'
   },
   {
     id: 'scenario-instagram',
-    label: 'Instagram Health Supplement Shop (300 days)',
-    file: 'scenarios/instagram_supplement_sales.txt',
-    datasetPath: 'scenarios/instagram_supplement_sales.csv'
+    label: '📱 Instagram Health Supplement Shop (300 days)',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">📱</span>
+          <h3>Instagram Health Supplement Shop</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">ARIMAX Forecasting</span>
+          <span class="badge badge-context">DTC / Influencer Marketing</span>
+          <span class="badge badge-sample">n = 300 days</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> A <strong>direct-to-consumer health supplement brand</strong> sells exclusively through Instagram, partnering with three fitness/wellness influencers who create sponsored content.</p>
+          
+          <p><strong>Dataset Variables:</strong></p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Outcome</div>
+              <div class="context-value">daily_sales</div>
+              <div class="context-subtext">Units sold that day</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Predictor</div>
+              <div class="context-value">influencer_A</div>
+              <div class="context-subtext">Fitness personality (850K) posted (0/1)</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Predictor</div>
+              <div class="context-value">influencer_B</div>
+              <div class="context-subtext">Nutrition expert (1.2M) posted (0/1)</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Predictor</div>
+              <div class="context-value">influencer_C</div>
+              <div class="context-subtext">Wellness lifestyle (600K) posted (0/1)</div>
+            </div>
+          </div>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🔍 Expected Findings</div>
+            <ul>
+              <li><strong>Influencer B</strong> (nutrition expert): Strongest effect (~300-400 unit lift)</li>
+              <li><strong>Influencer A</strong> (fitness): Moderate effect (~250-350 unit lift)</li>
+              <li><strong>Influencer C</strong> (lifestyle): Smaller but significant (~150-250 unit lift)</li>
+            </ul>
+          </div>
+          
+          <p><strong>Suggested Settings:</strong> Try <strong>ARIMA(1,0,1)</strong> or <strong>ARIMA(2,0,1)</strong> — daily sales data is likely stationary (no differencing needed). Include all three influencer dummies as predictors. Forecast 7-14 days ahead for inventory planning.</p>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Business Questions to Explore</div>
+            <ul>
+              <li>Which influencer provides the best ROI?</li>
+              <li>How many days does each influencer's effect last?</li>
+              <li>What's expected sales next week with no influencer posts?</li>
+              <li>Should we coordinate posts or space them out?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    `,
+    dataset: 'scenarios/instagram_supplement_sales.csv'
   },
   {
     id: 'scenario-mobile-game',
-    label: 'Mobile Game Weekly Signups (100 weeks)',
-    file: 'scenarios/mobile_game_signups.txt',
-    datasetPath: 'scenarios/mobile_game_signups.csv'
+    label: '🎮 Mobile Game Weekly Signups (100 weeks)',
+    description: () => `
+      <div class="scenario-card">
+        <div class="scenario-header">
+          <span class="scenario-icon">🎮</span>
+          <h3>Mobile Game Weekly Signups</h3>
+        </div>
+        <div class="scenario-badge-row">
+          <span class="badge badge-hypothesis">ARIMAX Forecasting</span>
+          <span class="badge badge-context">Mobile Gaming / UA</span>
+          <span class="badge badge-sample">n = 100 weeks</span>
+        </div>
+        <div class="scenario-body">
+          <p><strong>Business Context:</strong> A <strong>free-to-play mobile puzzle game</strong> in its second year of operation. The game relies on continuous new user acquisition to maintain revenue through in-app purchases and ads.</p>
+          
+          <p><strong>Dataset Variables:</strong></p>
+          <div class="context-grid">
+            <div class="context-item">
+              <div class="context-label">Outcome</div>
+              <div class="context-value">weekly_signups</div>
+              <div class="context-subtext">New user accounts created</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Predictor</div>
+              <div class="context-value">mobile_ad_spend</div>
+              <div class="context-subtext">Weekly ad budget ($14K-$22K)</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Predictor</div>
+              <div class="context-value">new_feature</div>
+              <div class="context-subtext">Major feature release that week (0/1)</div>
+            </div>
+            <div class="context-item">
+              <div class="context-label">Time Index</div>
+              <div class="context-value">week</div>
+              <div class="context-subtext">Week number (1-100)</div>
+            </div>
+          </div>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🔍 Expected Findings</div>
+            <ul>
+              <li><strong>Feature releases:</strong> +10-15% signup lift, decays over 3-4 weeks</li>
+              <li><strong>Ad spend elasticity:</strong> ~0.3-0.5 (10% more spend → 3-5% more signups)</li>
+              <li><strong>Diminishing returns:</strong> Ad effectiveness plateaus at high spend levels</li>
+              <li><strong>Word-of-mouth:</strong> Some autocorrelation from viral/social effects</li>
+            </ul>
+          </div>
+          
+          <p><strong>Suggested Settings:</strong> Try <strong>ARIMA(1,1,1)</strong> or <strong>ARIMA(2,1,1)</strong> — the slight downward trend suggests differencing (d=1). Include both <code>new_feature</code> and <code>mobile_ad_spend</code> as exogenous predictors. Forecast 4-8 weeks for budget planning.</p>
+          
+          <div class="scenario-insights">
+            <div class="insight-title">🎯 Business Questions to Explore</div>
+            <ul>
+              <li>What's the ROI on mobile ad spend?</li>
+              <li>How much do new features boost signups?</li>
+              <li>How long does a feature release effect last?</li>
+              <li>Should we increase ad spend during feature releases?</li>
+              <li>What's the forecast if we maintain baseline spending with no new features?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    `,
+    dataset: 'scenarios/mobile_game_signups.csv'
   }
 ];
 
@@ -306,6 +487,7 @@ function setupScenarioSelect() {
       updateScenarioDownload(null);
       currentScenarioName = null;
       currentDataSource = 'manual';
+      if (description) description.innerHTML = '';
       return;
     }
 
@@ -313,31 +495,26 @@ function setupScenarioSelect() {
     currentScenarioName = selected.label;
     currentDataSource = 'scenario';
 
-    // Load scenario description
-    if (window.fetch && selected.file) {
-      fetch(selected.file, { cache: 'no-cache' })
-        .then(resp => resp.ok ? resp.text() : Promise.reject())
-        .then(text => {
-          if (description) description.innerHTML = text;
-        })
-        .catch(() => {});
+    // Load scenario description (inline)
+    if (description && typeof selected.description === 'function') {
+      description.innerHTML = selected.description();
     }
 
     // Load dataset
-    if (window.fetch && selected.datasetPath) {
+    if (window.fetch && selected.dataset) {
       const feedback = document.getElementById('arimax-upload-feedback');
       if (feedback) {
         feedback.textContent = 'Loading scenario dataset…';
         feedback.classList.remove('success', 'error');
       }
 
-      fetch(selected.datasetPath, { cache: 'no-cache' })
+      fetch(selected.dataset, { cache: 'no-cache' })
         .then(resp => resp.ok ? resp.text() : Promise.reject())
         .then(text => {
           const { headers, rows } = parseMixedDelimitedText(text, ARIMAX_UPLOAD_LIMIT);
           arimaxDataset = { headers, rows };
           updateScenarioDownload({
-            filename: selected.datasetPath.split('/').pop(),
+            filename: selected.dataset.split('/').pop(),
             content: text,
             mimeType: 'text/csv'
           });
