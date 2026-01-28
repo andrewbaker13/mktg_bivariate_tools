@@ -199,16 +199,13 @@ const Tutorial = {
                 return outcome === 'monthly_signups';
             },
             onEnter: () => {
-                // Scroll to column selection area
-                const panel = document.getElementById('arimax-raw-panel');
-                if (panel) {
-                    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
+                // Scroll to column selection area (matches targetId)
+                document.getElementById('column-selection-group')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 4: ARIMA Parameters Basics
+        // STEP 5: ARIMA Parameters Basics
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'arima_basics',
@@ -256,12 +253,13 @@ const Tutorial = {
                 return p === 1 && d === 1 && q === 1;
             },
             onEnter: () => {
-                document.getElementById('inputs-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Scroll to model specification area (matches targetId)
+                document.getElementById('model-specification-group')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 5: First Model Run (ARIMAX without seasonality)
+        // STEP 6: First Model Run (ARIMAX without seasonality)
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'first_run',
@@ -317,7 +315,7 @@ const Tutorial = {
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 6: Examine the Forecast — Something's Missing
+        // STEP 7: Examine the Forecast — Something's Missing
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'examine_forecast',
@@ -362,7 +360,7 @@ const Tutorial = {
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 7: Check Residual Diagnostics
+        // STEP 8: Check Residual Diagnostics
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'check_residuals',
@@ -411,7 +409,7 @@ const Tutorial = {
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 8: Enable Seasonality
+        // STEP 9: Enable Seasonality
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'enable_seasonality',
@@ -472,7 +470,7 @@ const Tutorial = {
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 9: Second Model Run (SARIMAX)
+        // STEP 10: Second Model Run (SARIMAX)
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'second_run',
@@ -525,7 +523,7 @@ const Tutorial = {
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 10: Compare Forecasts
+        // STEP 11: Compare Forecasts
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'compare_forecasts',
@@ -574,7 +572,7 @@ const Tutorial = {
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 11: Understand Coefficients
+        // STEP 12: Understand Coefficients
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'understand_coefficients',
@@ -622,12 +620,12 @@ const Tutorial = {
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 12: Model Warnings
+        // STEP 13: Model Warnings
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'check_warnings',
             title: "Check for Warnings",
-            targetId: 'arimax-run-status',
+            targetId: 'test-results-heading',
             content: `
                 <p><strong>Good analysts always check for model warnings.</strong></p>
                 
@@ -662,7 +660,7 @@ const Tutorial = {
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 13a: Managerial Interpretation — Deep Dive
+        // STEP 14a: Managerial Interpretation — Deep Dive
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'managerial_interpretation',
@@ -721,7 +719,7 @@ const Tutorial = {
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 13b: Scenario Planning — Hands-On
+        // STEP 14b: Scenario Planning — Hands-On
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'scenario_planning',
@@ -788,7 +786,7 @@ const Tutorial = {
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 14: APA Report
+        // STEP 15: APA Report
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'apa_report',
@@ -827,7 +825,7 @@ const Tutorial = {
         },
 
         // ═══════════════════════════════════════════════════════════════
-        // STEP 15: Conclusion
+        // STEP 16: Conclusion
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'conclusion',
