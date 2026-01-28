@@ -16,6 +16,10 @@ let arimaxExogColumns = [];
 let arimaxLastResult = null;
 let modifiedDate = new Date().toLocaleDateString();
 
+// Tracking state
+const pageLoadTime = Date.now();
+let hasSuccessfulRun = false;
+
 // Forecast scenario settings - stores user's chosen values for exog predictors during forecast
 let forecastExogSettings = {};
 
