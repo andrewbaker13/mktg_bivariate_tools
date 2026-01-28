@@ -231,13 +231,37 @@
                 <input type="number" id="arimax-s" min="2" max="52" step="1" value="12" title="e.g., 12 for monthly data with yearly seasonality, 4 for quarterly, 7 for daily with weekly patterns">
               </div>
             </div>
-            <p class="hint"><strong>Common periods:</strong> 12 (monthly→yearly), 4 (quarterly), 7 (daily→weekly), 52 (weekly→yearly).</p>
+            <details class="sarimax-guide">
+              <summary>How to Choose Seasonal Parameters</summary>
+              <div class="guide-content">
+                <p><strong>Seasonal Period (s):</strong> The number of time periods in one complete cycle.</p>
+                <table class="guide-table compact">
+                  <thead><tr><th>Your Data</th><th>Cycle</th><th>s =</th></tr></thead>
+                  <tbody>
+                    <tr><td>Monthly data</td><td>Yearly pattern</td><td><strong>12</strong></td></tr>
+                    <tr><td>Weekly data</td><td>Yearly pattern</td><td><strong>52</strong></td></tr>
+                    <tr><td>Daily data</td><td>Weekly pattern</td><td><strong>7</strong></td></tr>
+                    <tr><td>Quarterly data</td><td>Yearly pattern</td><td><strong>4</strong></td></tr>
+                    <tr><td>Hourly data</td><td>Daily pattern</td><td><strong>24</strong></td></tr>
+                  </tbody>
+                </table>
+                
+                <p><strong>Seasonal P, D, Q:</strong> Usually start with (1,1,1) and simplify if coefficients are non-significant.</p>
+                <ul>
+                  <li><strong>P (Seasonal AR):</strong> Try 1. Use 0 if ar.S coefficient is non-significant.</li>
+                  <li><strong>D (Seasonal Diff):</strong> Use 1 if the seasonal pattern's amplitude changes over time. Use 0 if the pattern is stable.</li>
+                  <li><strong>Q (Seasonal MA):</strong> Try 1. Use 0 if ma.S coefficient is non-significant.</li>
+                </ul>
+                
+                <p><strong>How to identify s from ACF:</strong> Look at the ACF chart after fitting a non-seasonal model. Significant spikes at regular intervals (e.g., lags 12, 24, 36...) reveal your seasonal period.</p>
+              </div>
+            </details>
           </div>
           
           <div class="input-grid forecast-settings-grid">
             <div>
-              <label for="arimax-forecast-periods">Forecast Periods (0-10)</label>
-              <input type="range" id="arimax-forecast-periods" min="0" max="10" step="1" value="6">
+              <label for="arimax-forecast-periods">Forecast Periods (0-12)</label>
+              <input type="range" id="arimax-forecast-periods" min="0" max="12" step="1" value="6">
               <output id="forecast-periods-display" class="range-output">6 periods</output>
             </div>
             <div>
@@ -300,6 +324,12 @@
               The solid blue line shows historical values, while the red dashed line shows forecasts.
               The shaded area represents the confidence interval &mdash; wider bands indicate more uncertainty
               in future predictions. Forecasts depend on the assumed values for exogenous predictors above.
+            </p>
+            <p class="muted sarimax-note">
+              <strong>🔄 SARIMAX forecasts:</strong> If you enabled seasonality, the forecast should show the expected seasonal 
+              pattern (ups and downs) based on where you are in the cycle. If the forecast looks "flat" despite obvious 
+              historical patterns, check: (1) Is the pattern truly seasonal (fixed calendar cycles) or event-driven? 
+              (2) Is your seasonal period (s) correct? (3) Do you have enough data (at least 2 full cycles)?
             </p>
           </details>
         </article>
@@ -371,9 +401,9 @@
                     <td>Increase d (differencing)</td>
                   </tr>
                   <tr>
-                    <td>Spikes at seasonal lags (12, 24...)</td>
-                    <td>Seasonal pattern</td>
-                    <td>Add seasonal dummies as exogenous</td>
+                    <td>Spikes at seasonal lags (12, 24, 52...)</td>
+                    <td>Seasonal pattern not captured</td>
+                    <td>Enable "Include Seasonality" and set s to the lag with spikes</td>
                   </tr>
                 </tbody>
               </table>
@@ -433,9 +463,10 @@
         <div class="metric-output">MAE: <span id="arimax-mae-value">&ndash;</span></div>
         <details class="interpretation-aid">
           <summary>Interpretation Aid</summary>
-          <p class="muted"><strong>AIC/BIC:</strong> Lower values indicate better model fit relative to complexity. Use these to compare different (p,d,q) specifications.</p>
+          <p class="muted"><strong>AIC/BIC:</strong> Lower values indicate better model fit relative to complexity. Use these to compare different (p,d,q) or (P,D,Q,s) specifications. Try fitting ARIMA vs SARIMAX and compare!</p>
           <p class="muted"><strong>RMSE:</strong> Root Mean Square Error &mdash; average magnitude of prediction errors in the same units as the outcome.</p>
           <p class="muted"><strong>MAE:</strong> Mean Absolute Error &mdash; average absolute deviation, less sensitive to outliers than RMSE.</p>
+          <p class="muted"><strong>Tip:</strong> If adding seasonality <em>increases</em> AIC/BIC, the seasonal pattern may not be strong enough to justify the extra complexity.</p>
         </details>
       </div>
       <div class="dual-panels">
@@ -508,6 +539,17 @@
                 <h6>Sigma² (sigma2)</h6>
                 <p><strong>What it means:</strong> The estimated variance of the random error term. Larger values = more unexplained variability.</p>
               </div>
+              
+              <div class="coef-type sarimax-coef">
+                <h6>🔄 Seasonal Coefficients (ar.S.L*, ma.S.L*) — SARIMAX Only</h6>
+                <p><strong>What they mean:</strong> These appear when you enable seasonality. They capture how values from the <em>same season last cycle</em> influence the current value.</p>
+                <ul>
+                  <li><strong>ar.S.L52:</strong> How this week's value relates to the same week <em>last year</em> (for s=52)</li>
+                  <li><strong>ma.S.L12:</strong> Adjustment based on forecast errors from the same month <em>last year</em> (for s=12)</li>
+                </ul>
+                <p class="example"><em>Example:</em> ar.S.L52 = 0.8 means "80% of the deviation we saw in the same week last year carries over to this week."</p>
+                <p class="hint">If seasonal coefficients are non-significant, the seasonal pattern may be weak or you may have chosen the wrong period (s).</p>
+              </div>
             </div>
             
             <div class="guide-section">
@@ -517,7 +559,7 @@
                 <li><strong>p-value > 0.05:</strong> Cannot rule out that the true effect is zero</li>
                 <li><strong>Confidence Interval:</strong> If it doesn't include 0, the coefficient is significant</li>
               </ul>
-              <p class="hint">Non-significant AR or MA terms might indicate you've over-specified the model. Try reducing p or q.</p>
+              <p class="hint">Non-significant AR or MA terms might indicate you've over-specified the model. Try reducing p or q (or P/Q for seasonal terms).</p>
             </div>
             
             <div class="guide-section">
@@ -526,6 +568,8 @@
                 <li><strong>Very large standard errors:</strong> Possible multicollinearity or insufficient data</li>
                 <li><strong>AR coefficient > 1:</strong> Model may be unstable; try increasing d (differencing)</li>
                 <li><strong>All exogenous coefficients non-significant:</strong> External variables may not help; try a simpler ARIMA model</li>
+                <li><strong>Seasonal coefficients non-significant:</strong> You may have the wrong seasonal period (s), or the pattern isn't truly seasonal</li>
+                <li><strong>Model takes very long to fit:</strong> Large seasonal periods (s=52) with high P/D/Q can be slow — try reducing to (1,0,1)</li>
               </ul>
             </div>
           </div>

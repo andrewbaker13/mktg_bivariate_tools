@@ -162,7 +162,7 @@ const ARIMAX_SCENARIOS = [
   },
   {
     id: 'scenario-mobile-game',
-    label: '🎮 Mobile Game Weekly Signups (100 weeks)',
+    label: '🎮 Mobile Game Weekly Signups (3 years)',
     description: () => `
       <div class="scenario-card">
         <div class="scenario-header">
@@ -170,12 +170,12 @@ const ARIMAX_SCENARIOS = [
           <h3>Mobile Game Weekly Signups</h3>
         </div>
         <div class="scenario-badge-row">
-          <span class="badge badge-hypothesis">ARIMAX Forecasting</span>
+          <span class="badge badge-hypothesis">SARIMAX Forecasting</span>
           <span class="badge badge-context">Mobile Gaming / UA</span>
-          <span class="badge badge-sample">n = 100 weeks</span>
+          <span class="badge badge-sample">n = 156 weeks (3 years)</span>
         </div>
         <div class="scenario-body">
-          <p><strong>Business Context:</strong> A <strong>free-to-play mobile puzzle game</strong> in its second year of operation. The game relies on continuous new user acquisition to maintain revenue through in-app purchases and ads.</p>
+          <p><strong>Business Context:</strong> A <strong>free-to-play mobile puzzle game</strong> tracking weekly new user signups over 3 years. The game experiences <strong>true seasonal patterns</strong> tied to the calendar.</p>
           
           <p><strong>Dataset Variables:</strong></p>
           <div class="context-grid">
@@ -187,7 +187,7 @@ const ARIMAX_SCENARIOS = [
             <div class="context-item">
               <div class="context-label">Predictor</div>
               <div class="context-value">mobile_ad_spend</div>
-              <div class="context-subtext">Weekly ad budget ($14K-$22K)</div>
+              <div class="context-subtext">Weekly ad budget ($12K-$18K)</div>
             </div>
             <div class="context-item">
               <div class="context-label">Predictor</div>
@@ -197,30 +197,30 @@ const ARIMAX_SCENARIOS = [
             <div class="context-item">
               <div class="context-label">Time Index</div>
               <div class="context-value">week</div>
-              <div class="context-subtext">Week number (1-100)</div>
+              <div class="context-subtext">Week number (1-156)</div>
             </div>
           </div>
           
           <div class="scenario-insights">
-            <div class="insight-title">🔍 Expected Findings</div>
+            <div class="insight-title">🔍 Seasonal Patterns in This Data</div>
             <ul>
-              <li><strong>Feature releases:</strong> +10-15% signup lift, decays over 3-4 weeks</li>
-              <li><strong>Ad spend elasticity:</strong> ~0.3-0.5 (10% more spend → 3-5% more signups)</li>
-              <li><strong>Diminishing returns:</strong> Ad effectiveness plateaus at high spend levels</li>
-              <li><strong>Cyclical patterns:</strong> ~10-week cycles visible in the data (try SARIMAX!)</li>
+              <li><strong>Post-holiday surge (Weeks 1-4):</strong> ~25% lift from holiday gift cards, new devices, and free time</li>
+              <li><strong>Summer bump (Weeks 22-27):</strong> ~15% lift when school gets out and kids have more screen time</li>
+              <li><strong>Fall/Winter lull:</strong> Back-to-school and pre-holiday spending dip</li>
+              <li><strong>Yearly cycle:</strong> s=52 weeks captures the annual pattern</li>
             </ul>
           </div>
           
-          <p><strong>Suggested Settings:</strong> Start with <strong>ARIMA(1,1,1)</strong>. Notice the <em>cyclical patterns</em> in the chart? Enable <strong>"Include Seasonality"</strong> and try <strong>SARIMAX(1,1,1)(1,1,1,10)</strong> with seasonal period s=10 to capture those ~10-week cycles in your forecast!</p>
+          <p><strong>Suggested Settings:</strong> Enable <strong>"Include Seasonality"</strong> and try <strong>SARIMAX(1,1,1)(1,1,1,52)</strong> with seasonal period <strong>s=52</strong> to capture the yearly cycle. The forecast should now show the seasonal ups and downs!</p>
           
           <div class="scenario-insights">
             <div class="insight-title">🎯 Business Questions to Explore</div>
             <ul>
-              <li>What's the ROI on mobile ad spend?</li>
-              <li>How much do new features boost signups?</li>
-              <li>How long does a feature release effect last?</li>
-              <li>Should we increase ad spend during feature releases?</li>
-              <li>What's the forecast if we maintain baseline spending with no new features?</li>
+              <li>How do post-holiday and summer seasonality affect signups?</li>
+              <li>What's the forecast for next quarter's signups?</li>
+              <li>How much lift do feature releases provide on top of seasonal trends?</li>
+              <li>Should we time feature releases with seasonal peaks or troughs?</li>
+              <li>What if we increase ad spend during the summer bump?</li>
             </ul>
           </div>
         </div>
@@ -1620,7 +1620,16 @@ function updateModelResults(result) {
   
   if (specEl) {
     const exogText = spec.has_exog ? ` with exog: ${spec.exog_names.join(', ')}` : '';
-    specEl.textContent = `ARIMA(${spec.order.join(',')})${exogText}`;
+    // Check if seasonal order is non-trivial (any non-zero values)
+    const seasonalOrder = spec.seasonal_order || [0, 0, 0, 0];
+    const hasSeasonal = seasonalOrder.some((v, i) => i < 3 ? v > 0 : false) || seasonalOrder[3] > 0;
+    
+    if (hasSeasonal && seasonalOrder[3] > 0) {
+      // SARIMAX notation: ARIMA(p,d,q)(P,D,Q)[s]
+      specEl.textContent = `SARIMAX(${spec.order.join(',')})(${seasonalOrder[0]},${seasonalOrder[1]},${seasonalOrder[2]})[${seasonalOrder[3]}]${exogText}`;
+    } else {
+      specEl.textContent = `ARIMA(${spec.order.join(',')})${exogText}`;
+    }
   }
   if (aicEl) aicEl.textContent = formatNumber(stats.aic, 2);
   if (bicEl) bicEl.textContent = formatNumber(stats.bic, 2);

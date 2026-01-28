@@ -111,6 +111,58 @@
   display: none;
 }
 
+/* SARIMAX Guide within seasonal params */
+.sarimax-guide {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1px solid #bae6fd;
+}
+
+.sarimax-guide summary {
+  font-weight: 500;
+  color: #0369a1;
+  cursor: pointer;
+}
+
+.sarimax-guide .guide-content {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.sarimax-guide .guide-table.compact {
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
+
+.sarimax-guide .guide-table.compact th,
+.sarimax-guide .guide-table.compact td {
+  padding: 0.35rem 0.5rem;
+}
+
+/* SARIMAX coefficient styling */
+.coef-type.sarimax-coef {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid #0ea5e9;
+  margin-top: 0.5rem;
+}
+
+.coef-type.sarimax-coef h6 {
+  color: #0369a1;
+}
+
+/* SARIMAX note in interpretation aid */
+.sarimax-note {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: #f0f9ff;
+  border-radius: 4px;
+  border-left: 3px solid #0ea5e9;
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
