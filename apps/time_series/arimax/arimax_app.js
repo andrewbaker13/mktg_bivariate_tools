@@ -162,65 +162,66 @@ const ARIMAX_SCENARIOS = [
   },
   {
     id: 'scenario-mobile-game',
-    label: '🎮 Mobile Game Weekly Signups (3 years)',
+    label: '🎮 Mobile Game Monthly Signups (6 years)',
     description: () => `
       <div class="scenario-card">
         <div class="scenario-header">
           <span class="scenario-icon">🎮</span>
-          <h3>Mobile Game Weekly Signups</h3>
+          <h3>Mobile Game Monthly Signups</h3>
         </div>
         <div class="scenario-badge-row">
           <span class="badge badge-hypothesis">SARIMAX Forecasting</span>
           <span class="badge badge-context">Mobile Gaming / UA</span>
-          <span class="badge badge-sample">n = 156 weeks (3 years)</span>
+          <span class="badge badge-sample">n = 72 months (6 years)</span>
         </div>
         <div class="scenario-body">
-          <p><strong>Business Context:</strong> A <strong>free-to-play mobile puzzle game</strong> tracking weekly new user signups over 3 years. The game experiences <strong>true seasonal patterns</strong> tied to the calendar.</p>
+          <p><strong>Business Context:</strong> A <strong>free-to-play mobile puzzle game</strong> tracking monthly new user signups from 2020-2025. The game experiences a <strong>clear post-holiday seasonal surge</strong> every January/February.</p>
           
           <p><strong>Dataset Variables:</strong></p>
           <div class="context-grid">
             <div class="context-item">
               <div class="context-label">Outcome</div>
-              <div class="context-value">weekly_signups</div>
-              <div class="context-subtext">New user accounts created</div>
+              <div class="context-value">monthly_signups</div>
+              <div class="context-subtext">New user accounts created per month</div>
             </div>
             <div class="context-item">
               <div class="context-label">Predictor</div>
               <div class="context-value">mobile_ad_spend</div>
-              <div class="context-subtext">Weekly ad budget ($12K-$18K)</div>
+              <div class="context-subtext">Monthly ad budget ($44K-$84K)</div>
             </div>
             <div class="context-item">
               <div class="context-label">Predictor</div>
               <div class="context-value">new_feature</div>
-              <div class="context-subtext">Major feature release that week (0/1)</div>
+              <div class="context-subtext">Major feature release that month (0/1)</div>
             </div>
             <div class="context-item">
               <div class="context-label">Time Index</div>
-              <div class="context-value">week</div>
-              <div class="context-subtext">Week number (1-156)</div>
+              <div class="context-value">month</div>
+              <div class="context-subtext">YYYY-MM format (2020-01 to 2025-12)</div>
             </div>
           </div>
           
           <div class="scenario-insights">
-            <div class="insight-title">🔍 Seasonal Patterns in This Data</div>
+            <div class="insight-title">🔍 Seasonal Pattern in This Data</div>
             <ul>
-              <li><strong>Post-holiday surge (Weeks 1-4):</strong> ~25% lift from holiday gift cards, new devices, and free time</li>
-              <li><strong>Summer bump (Weeks 22-27):</strong> ~15% lift when school gets out and kids have more screen time</li>
-              <li><strong>Fall/Winter lull:</strong> Back-to-school and pre-holiday spending dip</li>
-              <li><strong>Yearly cycle:</strong> s=52 weeks captures the annual pattern</li>
+              <li><strong>January peak:</strong> ~30-40% above trend — holiday gift cards, new devices, New Year's resolutions</li>
+              <li><strong>February carryover:</strong> ~15-20% above trend — lingering holiday effect</li>
+              <li><strong>Summer trough (May-July):</strong> Lowest signups as outdoor activities compete</li>
+              <li><strong>Q4 buildup:</strong> Gradual rise heading into the holiday season</li>
+              <li><strong>Overall trend:</strong> Steady growth of ~7-8% per year</li>
             </ul>
           </div>
           
-          <p><strong>Suggested Settings:</strong> Enable <strong>"Include Seasonality"</strong> and try <strong>SARIMAX(1,1,1)(1,0,1)[52]</strong> with seasonal period <strong>s=52</strong>. Use D=0 (no seasonal differencing) for faster fitting — the seasonal pattern here is fairly stable.</p>
+          <p><strong>Suggested Settings:</strong> Enable <strong>"Include Seasonality"</strong> and try <strong>SARIMAX(1,1,1)(1,0,1)[12]</strong>. With monthly data and yearly seasonality, <strong>s=12</strong> captures the annual pattern efficiently.</p>
           
           <div class="scenario-insights">
             <div class="insight-title">🎯 Business Questions to Explore</div>
             <ul>
-              <li>How do post-holiday and summer seasonality affect signups?</li>
-              <li>What's the forecast for next quarter's signups?</li>
-              <li>How much lift do feature releases provide on top of seasonal trends?</li>
-              <li>Should we time feature releases with seasonal peaks or troughs?</li>
-              <li>What if we increase ad spend during the summer bump?</li>
+              <li>How much does the post-holiday surge boost signups vs. baseline?</li>
+              <li>What's the forecast for next year given the seasonal pattern?</li>
+              <li>The 2023 feature release in Jan/Feb — did it amplify the seasonal peak?</li>
+              <li>Is it better to launch features during seasonal peaks or to boost troughs?</li>
+              <li>How does ad spend interact with seasonality?</li>
             </ul>
           </div>
         </div>
