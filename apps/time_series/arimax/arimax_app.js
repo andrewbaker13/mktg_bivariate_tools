@@ -23,8 +23,9 @@ let hasSuccessfulRun = false;
 // Forecast scenario settings - stores user's chosen values for exog predictors during forecast
 let forecastExogSettings = {};
 
-// Track current scenario for analytics
+// Track current scenario for analytics (exposed to window for tutorial access)
 let currentScenarioName = null;
+window.currentScenarioName = null; // Tutorial reads this
 // Note: currentDataSource is defined in shared/js/auth_tracking.js
 
 // Scenario definitions
@@ -661,13 +662,15 @@ function setupScenarioSelect() {
     if (!selected) {
       updateScenarioDownload(null);
       currentScenarioName = null;
+      window.currentScenarioName = null; // Tutorial access
       currentDataSource = 'manual';
       if (description) description.innerHTML = '';
       return;
     }
 
     // Track scenario selection
-    currentScenarioName = selected.label;
+    currentScenarioName = selected.id; // Use ID for tutorial matching
+    window.currentScenarioName = selected.id; // Tutorial access
     currentDataSource = 'scenario';
 
     // Load scenario description (inline)
@@ -703,6 +706,11 @@ function setupScenarioSelect() {
           if (typeof markScenarioLoaded === 'function') {
             markScenarioLoaded(selected.label);
           }
+          
+          // Dispatch custom event for tutorial integration
+          document.dispatchEvent(new CustomEvent('arimax-scenario-loaded', { 
+            detail: { scenarioId: selected.id, scenarioLabel: selected.label } 
+          }));
         })
         .catch(() => {
           if (feedback) {
@@ -761,6 +769,7 @@ function setupDataUpload() {
     
     // Track as file upload
     currentScenarioName = null;
+    window.currentScenarioName = null; // Tutorial access
     currentDataSource = 'upload';
 
     const reader = new FileReader();
@@ -1889,6 +1898,14 @@ function updateModelResults(result) {
   
   // Update model warnings section
   updateModelWarnings(modelWarnings);
+  
+  // Dispatch custom event for tutorial integration
+  document.dispatchEvent(new CustomEvent('arimax-model-fitted', { 
+    detail: { 
+      modelSpec: result.model_spec,
+      hasSeasonal: result.model_spec.seasonal_order && result.model_spec.seasonal_order[3] > 0
+    } 
+  }));
 }
 
 /**

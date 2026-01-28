@@ -47,6 +47,15 @@
         Upload time series data, select external predictors like ad spend or seasonality indicators, and generate
         forecasts with confidence intervals.
       </p>
+      
+      <!-- Professor Mode Toggle -->
+      <div class="guided-mode-toggle">
+        <label>
+          <input type="checkbox" id="guidedMode">
+          <span>🎓 Professor Mode</span>
+        </label>
+        <span class="toggle-hint">New to ARIMAX? Get step-by-step guidance!</span>
+      </div>
     </header>
 
     <section class="test-overview" aria-labelledby="test-overview-heading">
@@ -93,7 +102,7 @@
       </div>
     </section>
 
-    <section class="scenario-section" aria-labelledby="scenario-heading">
+    <section id="scenario-section" class="scenario-section" aria-labelledby="scenario-heading">
       <h2 id="scenario-heading">MARKETING SCENARIOS</h2>
       <div class="card">
         <div class="scenario-controls">
@@ -759,6 +768,7 @@
   <script src="../../../shared/js/auth_tracking.js"></script>
   <script src="../../../shared/js/auth_bar.js"></script>
   <script src="arimax_app.js"></script>
+  <script src="tutorial.js"></script>
 </body>
 
 </html>
