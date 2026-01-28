@@ -371,21 +371,23 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'check_residuals',
-            title: "Understanding Residuals & ACF",
-            targetId: 'chart-acf',
+            title: "Diagnosing What the Model Missed",
+            targetId: 'residuals-diagnostics-section',
             content: `
                 <p><strong>What are residuals?</strong></p>
-                <p><em>Residuals</em> are the "leftover" errors — the difference between what the model <strong>predicted</strong> and what <strong>actually happened</strong>. If the model is good, residuals should look like random noise with no pattern.</p>
+                <p><em>Residuals</em> are the "leftover" errors — the difference between what the model <strong>predicted</strong> and what <strong>actually happened</strong>. If the model captured everything important, residuals should look like random noise.</p>
                 
-                <p><strong>The ACF (Autocorrelation Function) chart</strong> checks if residuals have hidden patterns:</p>
+                <p><strong>👁️ First, look at "Residuals Over Time" (left chart):</strong></p>
+                <p>Do you see the residuals cycling up and down in a <em>wave pattern</em>? That repeating structure means the model is systematically wrong at certain times of year — it's missing seasonality!</p>
+                
+                <p><strong>📊 Then check the "ACF of Residuals" (right chart):</strong></p>
+                <p>ACF = <strong>A</strong>uto<strong>C</strong>orrelation <strong>F</strong>unction. It measures whether residuals from one period are correlated with residuals from earlier periods.</p>
                 <ul>
-                    <li><strong>Bars inside red dashed lines:</strong> No significant pattern — good!</li>
-                    <li><strong>Bars outside red lines:</strong> Leftover pattern the model missed — needs fixing!</li>
+                    <li>Bars <strong>inside</strong> red dashed lines = no significant pattern (good)</li>
+                    <li>Bars <strong>outside</strong> red lines = leftover pattern (needs fixing)</li>
                 </ul>
                 
-                <p class="task">👉 <strong>Task:</strong> Look at the ACF of Residuals chart. Focus on whether bars extend beyond the red confidence bands, especially around <strong>lag 12</strong> (one year in monthly data).</p>
-                
-                <p class="hint">Even small patterns in residuals suggest the model is missing something. The chart shows lags 0-20, so look for any spike near lag 12.</p>
+                <p class="hint"><strong>Key insight:</strong> The ACF might look "clean" while the Residuals Over Time shows an obvious wave! This is why good analysts check <em>multiple</em> diagnostics — statistical tests can miss patterns that are visually obvious.</p>
             `,
             quizzes: [
                 {
@@ -396,22 +398,22 @@ const Tutorial = {
                         "The seasonal adjustments"
                     ],
                     answer: 1,
-                    feedback: "Correct! Residuals are the 'leftovers' after the model makes its predictions. Ideally they should be random noise."
+                    feedback: "Correct! Residuals are the 'leftovers' after the model makes its predictions. Ideally they should be random noise with no pattern."
                 },
                 {
-                    question: "Look at the ACF chart. If you see ANY bars extending beyond the red dashed lines (besides lag 0), what does this suggest?",
+                    question: "Look at the 'Residuals Over Time' chart. Do you see a repeating wave pattern (residuals cycling up and down)?" ,
                     options: [
-                        "The model is perfect",
-                        "The model is missing some pattern in the data",
-                        "The data is too noisy to analyze"
+                        "No, residuals are randomly scattered with no pattern",
+                        "Yes, there's a clear repeating cycle in the residuals",
+                        "The chart is blank"
                     ],
                     answer: 1,
-                    feedback: "Exactly! Significant spikes in the ACF mean the residuals aren't random — there's a pattern the model didn't capture. For monthly data, a spike near lag 12 suggests yearly seasonality."
+                    feedback: "Exactly! That wave pattern is the seasonal cycle the model missed. Even though the ACF may look 'clean,' the visual pattern tells us we need to add seasonality."
                 }
             ],
             check: () => true,
             onEnter: () => {
-                document.getElementById('chart-acf')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                document.getElementById('residuals-diagnostics-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         },
 
@@ -479,7 +481,7 @@ const Tutorial = {
         {
             id: 'second_run',
             title: "Fit the SARIMAX Model",
-            targetId: 'arimax-run-model',
+            targetId: 'run-model-section',
             content: `
                 <p><strong>Now let's run the seasonal model!</strong></p>
                 
@@ -531,7 +533,7 @@ const Tutorial = {
                 return false;
             },
             onEnter: () => {
-                document.getElementById('arimax-run-model')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                document.getElementById('run-model-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         },
 
@@ -638,7 +640,7 @@ const Tutorial = {
         {
             id: 'check_warnings',
             title: "Check for Warnings",
-            targetId: 'test-results-heading',
+            targetId: 'model-metrics-panel',
             content: `
                 <p><strong>Good analysts always check for model warnings.</strong></p>
                 
@@ -667,8 +669,8 @@ const Tutorial = {
             ],
             check: () => true,
             onEnter: () => {
-                // Scroll to results area where warnings appear
-                document.getElementById('test-results-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Scroll to model results metrics area
+                document.getElementById('model-metrics-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         },
 

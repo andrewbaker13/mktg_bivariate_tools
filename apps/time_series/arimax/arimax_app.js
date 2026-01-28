@@ -2154,7 +2154,7 @@ function generateManagerialReport(result, forecastLabels, warnings) {
 }
 
 /**
- * Generate scaled coefficient interpretation for better readability
+ * Generate coefficient interpretation - uses raw coefficient values without assumptions
  */
 function getScaledCoefficientInterpretation(coef, endogName, result) {
   const name = coef.name;
@@ -2162,44 +2162,10 @@ function getScaledCoefficientInterpretation(coef, endogName, result) {
   const direction = estimate > 0 ? 'increase' : 'decrease';
   const absEstimate = Math.abs(estimate);
   
-  // Try to find the variable's scale from the data
-  // For continuous variables, scale to meaningful units (e.g., per $10K)
-  const isBinary = name.toLowerCase().includes('feature') || 
-                   name.toLowerCase().includes('promotion') ||
-                   name.toLowerCase().includes('holiday') ||
-                   name.toLowerCase().includes('event');
+  // Format the effect size appropriately based on magnitude
+  const formattedEffect = formatNumberShort(absEstimate);
   
-  if (isBinary) {
-    // Binary variable: interpret as "when X is present"
-    return `When <strong>${name}</strong> is active, ${endogName} ${direction}s by approximately <strong>${formatNumberShort(absEstimate)}</strong> units (p < .05).`;
-  } else {
-    // Continuous variable: scale appropriately
-    // Determine a sensible scaling factor based on coefficient magnitude
-    let scaleFactor = 1;
-    let scaleLabel = 'unit';
-    
-    if (absEstimate < 1) {
-      // Small coefficient - likely high-magnitude variable (e.g., spend in dollars)
-      if (absEstimate < 0.01) {
-        scaleFactor = 100000;
-        scaleLabel = '$100K';
-      } else if (absEstimate < 0.1) {
-        scaleFactor = 10000;
-        scaleLabel = '$10K';
-      } else {
-        scaleFactor = 1000;
-        scaleLabel = '$1K';
-      }
-    }
-    
-    const scaledEffect = absEstimate * scaleFactor;
-    
-    if (scaleFactor > 1) {
-      return `Each <strong>${scaleLabel} increase</strong> in ${name} is associated with a <strong>${formatNumberShort(scaledEffect)} ${direction}</strong> in ${endogName} (p < .05).`;
-    } else {
-      return `Each unit increase in <strong>${name}</strong> is associated with a <strong>${formatNumberShort(scaledEffect)} ${direction}</strong> in ${endogName} (p < .05).`;
-    }
-  }
+  return `A 1-unit increase in <strong>${name}</strong> is associated with a <strong>${formattedEffect} ${direction}</strong> in ${endogName} (p < .05).`;
 }
 
 /**

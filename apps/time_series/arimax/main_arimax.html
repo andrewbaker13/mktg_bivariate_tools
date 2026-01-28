@@ -278,31 +278,33 @@
           </div>
           </div><!-- /seasonality-section -->
           
-          <div class="input-grid forecast-settings-grid">
-            <div>
-              <label for="arimax-forecast-periods">Forecast Periods (0-12)</label>
-              <input type="range" id="arimax-forecast-periods" min="0" max="12" step="1" value="6">
-              <output id="forecast-periods-display" class="range-output">6 periods</output>
-            </div>
-            <div>
-              <label>Confidence Level</label>
-              <div class="confidence-buttons inline" role="group" aria-label="Select forecast confidence level">
-                <button type="button" class="confidence-button" data-level="0.90">90%</button>
-                <button type="button" class="confidence-button active" data-level="0.95">95%</button>
-                <button type="button" class="confidence-button" data-level="0.99">99%</button>
+          <!-- Run Model Section (forecast settings + buttons) -->
+          <div id="run-model-section">
+            <div class="input-grid forecast-settings-grid">
+              <div>
+                <label for="arimax-forecast-periods">Forecast Periods (0-12)</label>
+                <input type="range" id="arimax-forecast-periods" min="0" max="12" step="1" value="6">
+                <output id="forecast-periods-display" class="range-output">6 periods</output>
+              </div>
+              <div>
+                <label>Confidence Level</label>
+                <div class="confidence-buttons inline" role="group" aria-label="Select forecast confidence level">
+                  <button type="button" class="confidence-button" data-level="0.90">90%</button>
+                  <button type="button" class="confidence-button active" data-level="0.95">95%</button>
+                  <button type="button" class="confidence-button" data-level="0.99">99%</button>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div class="input-group">
-          <button type="button" id="arimax-check-stationarity" class="secondary">Check Stationarity (ADF Test)</button>
-          <button type="button" id="arimax-run-model" class="primary">Fit ARIMAX Model</button>
-          <button type="button" id="arimax-update-forecast" class="secondary" disabled title="Re-run forecast with new horizon or confidence level (without refitting the model)">Update Forecast</button>
-          <p id="arimax-run-status" class="upload-status" aria-live="polite"></p>
-          <p class="hint button-hint"><strong>Update Forecast</strong> re-generates predictions using a new forecast horizon or confidence level without re-fitting the model.</p>
-        </div>
-      </article>
+            <div class="input-group">
+              <button type="button" id="arimax-check-stationarity" class="secondary">Check Stationarity (ADF Test)</button>
+              <button type="button" id="arimax-run-model" class="primary">Fit ARIMAX Model</button>
+              <button type="button" id="arimax-update-forecast" class="secondary" disabled title="Re-run forecast with new horizon or confidence level (without refitting the model)">Update Forecast</button>
+              <p id="arimax-run-status" class="upload-status" aria-live="polite"></p>
+              <p class="hint button-hint"><strong>Update Forecast</strong> re-generates predictions using a new forecast horizon or confidence level without re-fitting the model.</p>
+            </div>
+          </div><!-- /run-model-section -->
+        </article>
 
       <article class="card analysis-settings test-options">
         <h3>Analysis Settings</h3>
@@ -358,7 +360,7 @@
       <!-- Residuals Section - Residuals Chart + ACF/PACF -->
       <div class="card">
         <h3>Residuals Diagnostics</h3>
-        <div class="residuals-diagnostics-grid">
+        <div id="residuals-diagnostics-section" class="residuals-diagnostics-grid">
           <article class="chart-card">
             <h4>Residuals Over Time</h4>
             <div class="chart-placeholder" id="chart-residuals"></div>
@@ -475,7 +477,7 @@
 
     <section class="test-results" aria-labelledby="test-results-heading">
       <h2 id="test-results-heading">MODEL RESULTS</h2>
-      <div class="card metrics-panel">
+      <div id="model-metrics-panel" class="card metrics-panel">
         <div class="metric-output">Model specification: <span id="arimax-spec-value">&ndash;</span></div>
         <div class="metric-output">AIC: <span id="arimax-aic-value">&ndash;</span></div>
         <div class="metric-output">BIC: <span id="arimax-bic-value">&ndash;</span></div>
