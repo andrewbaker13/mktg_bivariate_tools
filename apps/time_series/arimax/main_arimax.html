@@ -228,34 +228,40 @@
               </div>
               <div>
                 <label for="arimax-s">Seasonal Period (s)</label>
-                <input type="number" id="arimax-s" min="2" max="52" step="1" value="12" title="e.g., 12 for monthly data with yearly seasonality, 4 for quarterly, 7 for daily with weekly patterns">
+                <input type="number" id="arimax-s" min="2" max="24" step="1" value="12" title="Max 24 on this platform. For weekly→yearly (s=52), aggregate to monthly first.">
               </div>
+            </div>
+            <div class="seasonal-limit-note">
+              <p><strong>📊 Platform Limitation (s ≤ 24):</strong></p>
+              <p>Statistically, SARIMAX can handle any seasonal period — modeling weekly data with yearly cycles (s=52) is mathematically valid. However, computation time grows <em>exponentially</em> with s. On this shared educational server, s=52 would take 10+ minutes and risks crashing the system.</p>
+              <p><strong>Real-world solution:</strong> Aggregate your data! Weekly → Monthly reduces s from 52 to 12, cutting computation by ~95% with minimal information loss. This is standard practice in industry.</p>
             </div>
             <details class="sarimax-guide">
               <summary>How to Choose Seasonal Parameters</summary>
               <div class="guide-content">
                 <p><strong>Seasonal Period (s):</strong> The number of time periods in one complete cycle.</p>
                 <table class="guide-table compact">
-                  <thead><tr><th>Your Data</th><th>Cycle</th><th>s =</th></tr></thead>
+                  <thead><tr><th>Your Data</th><th>Cycle</th><th>s =</th><th>Platform</th></tr></thead>
                   <tbody>
-                    <tr><td>Monthly data</td><td>Yearly pattern</td><td><strong>12</strong></td></tr>
-                    <tr><td>Weekly data</td><td>Yearly pattern</td><td><strong>52</strong></td></tr>
-                    <tr><td>Daily data</td><td>Weekly pattern</td><td><strong>7</strong></td></tr>
-                    <tr><td>Quarterly data</td><td>Yearly pattern</td><td><strong>4</strong></td></tr>
-                    <tr><td>Hourly data</td><td>Daily pattern</td><td><strong>24</strong></td></tr>
+                    <tr><td>Monthly data</td><td>Yearly pattern</td><td><strong>12</strong></td><td>✅ Supported</td></tr>
+                    <tr><td>Quarterly data</td><td>Yearly pattern</td><td><strong>4</strong></td><td>✅ Supported</td></tr>
+                    <tr><td>Daily data</td><td>Weekly pattern</td><td><strong>7</strong></td><td>✅ Supported</td></tr>
+                    <tr><td>Hourly data</td><td>Daily pattern</td><td><strong>24</strong></td><td>✅ Supported</td></tr>
+                    <tr><td>Weekly data</td><td>Yearly pattern</td><td><strong>52</strong></td><td>⚠️ Aggregate to monthly</td></tr>
+                    <tr><td>Daily data</td><td>Yearly pattern</td><td><strong>365</strong></td><td>⚠️ Aggregate to weekly/monthly</td></tr>
                   </tbody>
                 </table>
                 
-                <p><strong>Seasonal P, D, Q:</strong> Usually start with (1,1,1) and simplify if coefficients are non-significant.</p>
+                <p><strong>Seasonal P, D, Q:</strong> Usually start with (1,0,1) and adjust based on results.</p>
                 <ul>
                   <li><strong>P (Seasonal AR):</strong> Try 1. Use 0 if ar.S coefficient is non-significant.</li>
-                  <li><strong>D (Seasonal Diff):</strong> Use 1 if the seasonal pattern's amplitude changes over time. Use 0 if the pattern is stable.</li>
+                  <li><strong>D (Seasonal Diff):</strong> Use 0 first (faster). Use 1 only if the seasonal pattern's amplitude changes over time.</li>
                   <li><strong>Q (Seasonal MA):</strong> Try 1. Use 0 if ma.S coefficient is non-significant.</li>
                 </ul>
                 
                 <p><strong>How to identify s from ACF:</strong> Look at the ACF chart after fitting a non-seasonal model. Significant spikes at regular intervals (e.g., lags 12, 24, 36...) reveal your seasonal period.</p>
                 
-                <p class="performance-warning">⚠️ <strong>Performance note:</strong> Large seasonal periods (s ≥ 24) can be slow to fit. Start with <strong>(P=1, D=0, Q=1)</strong> — seasonal differencing (D=1) adds significant computation time. Only increase D if the seasonal pattern's amplitude changes over time.</p>
+                <p class="performance-warning">💡 <strong>Pro tip:</strong> Start with <strong>(P=1, D=0, Q=1)</strong>. Seasonal differencing (D=1) dramatically increases computation time — only use it if your seasonal amplitude changes over time. In production environments with dedicated compute, you'd have more flexibility.</p>
               </div>
             </details>
           </div>

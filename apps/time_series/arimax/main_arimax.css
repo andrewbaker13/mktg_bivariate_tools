@@ -111,6 +111,30 @@
   display: none;
 }
 
+/* Seasonal period limit explanation */
+.seasonal-limit-note {
+  margin: 0.75rem 0 0 0;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fcd34d;
+  border-left: 4px solid #f59e0b;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #78350f;
+}
+
+.seasonal-limit-note p {
+  margin: 0 0 0.5rem 0;
+}
+
+.seasonal-limit-note p:last-child {
+  margin-bottom: 0;
+}
+
+.seasonal-limit-note em {
+  font-style: italic;
+}
+
 /* SARIMAX Guide within seasonal params */
 .sarimax-guide {
   margin-top: 1rem;

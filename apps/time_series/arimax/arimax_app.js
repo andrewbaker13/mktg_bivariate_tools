@@ -406,11 +406,32 @@ function getSeasonalOrder() {
     return [0, 0, 0, 0]; // No seasonality
   }
   const P = parseInt(document.getElementById('arimax-P')?.value) || 1;
-  const D = parseInt(document.getElementById('arimax-D')?.value) || 1;
+  const D = parseInt(document.getElementById('arimax-D')?.value) || 0;
   const Q = parseInt(document.getElementById('arimax-Q')?.value) || 1;
-  const s = parseInt(document.getElementById('arimax-s')?.value) || 12;
+  let s = parseInt(document.getElementById('arimax-s')?.value) || 12;
+  
+  // HARD CAP: s > 24 can crash the server
+  // This is a platform limitation, not a statistical one - SARIMAX can handle any s,
+  // but computation time grows exponentially and s=52 would take 10+ minutes
+  if (s > MAX_SEASONAL_PERIOD) {
+    s = MAX_SEASONAL_PERIOD;
+    const sInput = document.getElementById('arimax-s');
+    if (sInput) sInput.value = MAX_SEASONAL_PERIOD;
+    
+    // Show educational message to user
+    const statusEl = document.getElementById('arimax-run-status');
+    if (statusEl) {
+      statusEl.textContent = `Seasonal period capped at ${MAX_SEASONAL_PERIOD} on this platform. Statistically, higher values are valid — but computation time grows exponentially. For weekly→yearly patterns (s=52), aggregate your data to monthly (s=12).`;
+    }
+  }
+  
   return [P, D, Q, s];
 }
+
+// Maximum seasonal period allowed (protects server from resource exhaustion)
+// Note: This is a server limitation, not a statistical one. In production with
+// dedicated compute resources, higher values would be feasible.
+const MAX_SEASONAL_PERIOD = 24;
 
 function getConfidenceLevel() {
   const alpha = parseFloat(document.getElementById('arimax-alpha')?.value) || 0.05;
@@ -522,6 +543,9 @@ function showLoading(nObs = 100, order = [1,1,1], seasonalOrder = [0,0,0,0]) {
   }
 }
 
+// Track if a cancel just happened (to prevent immediate retry issues)
+let recentlyCancelled = false;
+
 function cancelFitting() {
   if (currentFetchController) {
     currentFetchController.abort();
@@ -530,6 +554,10 @@ function cancelFitting() {
   hideLoading();
   const statusEl = document.getElementById('arimax-run-status');
   if (statusEl) statusEl.textContent = 'Model fitting cancelled.';
+  
+  // Set a brief cooldown to prevent CORS issues from rapid retry after cancel
+  recentlyCancelled = true;
+  setTimeout(() => { recentlyCancelled = false; }, 1000);
 }
 
 function hideLoading() {
@@ -1589,6 +1617,18 @@ async function runArimaxModel() {
   
   const statusEl = document.getElementById('arimax-run-status');
   
+  // Check if we recently cancelled - brief cooldown prevents CORS issues
+  if (recentlyCancelled) {
+    if (statusEl) statusEl.textContent = 'Please wait a moment after cancelling...';
+    return;
+  }
+  
+  // If there's still a pending request, abort it first
+  if (currentFetchController) {
+    currentFetchController.abort();
+    currentFetchController = null;
+  }
+  
   if (!arimaxOutcomeColumn) {
     if (statusEl) statusEl.textContent = 'Please select an outcome variable.';
     return;
@@ -1667,6 +1707,7 @@ async function runArimaxModel() {
     
     const response = await fetch(`${API_BASE_URL}/arimax/fit/`, {
       method: 'POST',
+      mode: 'cors',  // Explicit CORS mode
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
       signal: currentFetchController?.signal
