@@ -404,19 +404,37 @@ function isSeasonalityEnabled() {
 
 function getSeasonalOrder() {
   if (!isSeasonalityEnabled()) {
+    console.log('SARIMAX: Seasonality not enabled, returning [0,0,0,0]');
     return [0, 0, 0, 0]; // No seasonality
   }
-  const P = parseInt(document.getElementById('arimax-P')?.value) || 1;
-  const D = parseInt(document.getElementById('arimax-D')?.value) || 0;
-  const Q = parseInt(document.getElementById('arimax-Q')?.value) || 1;
-  let s = parseInt(document.getElementById('arimax-s')?.value) || 12;
+  
+  // Read seasonal parameters with explicit parsing and logging
+  const pInput = document.getElementById('arimax-P');
+  const dInput = document.getElementById('arimax-D');
+  const qInput = document.getElementById('arimax-Q');
+  const sInput = document.getElementById('arimax-s');
+  
+  const P = pInput ? parseInt(pInput.value, 10) : 1;
+  const D = dInput ? parseInt(dInput.value, 10) : 0;
+  const Q = qInput ? parseInt(qInput.value, 10) : 1;
+  let s = sInput ? parseInt(sInput.value, 10) : 12;
+  
+  // Handle NaN cases (if parsing failed)
+  const finalP = isNaN(P) ? 1 : P;
+  const finalD = isNaN(D) ? 0 : D;
+  const finalQ = isNaN(Q) ? 1 : Q;
+  let finalS = isNaN(s) ? 12 : s;
+  
+  console.log('SARIMAX: Raw input values:', {
+    P: pInput?.value, D: dInput?.value, Q: qInput?.value, s: sInput?.value
+  });
+  console.log('SARIMAX: Parsed seasonal order:', [finalP, finalD, finalQ, finalS]);
   
   // HARD CAP: s > 24 can crash the server
   // This is a platform limitation, not a statistical one - SARIMAX can handle any s,
   // but computation time grows exponentially and s=52 would take 10+ minutes
-  if (s > MAX_SEASONAL_PERIOD) {
-    s = MAX_SEASONAL_PERIOD;
-    const sInput = document.getElementById('arimax-s');
+  if (finalS > MAX_SEASONAL_PERIOD) {
+    finalS = MAX_SEASONAL_PERIOD;
     if (sInput) sInput.value = MAX_SEASONAL_PERIOD;
     
     // Show educational message to user
@@ -426,7 +444,7 @@ function getSeasonalOrder() {
     }
   }
   
-  return [P, D, Q, s];
+  return [finalP, finalD, finalQ, finalS];
 }
 
 // Maximum seasonal period allowed (protects server from resource exhaustion)
@@ -1693,6 +1711,15 @@ async function runArimaxModel() {
       date_labels: dateLabels,
       endog_name: arimaxOutcomeColumn
     };
+    
+    // Debug logging - what are we sending to the backend?
+    console.log('ARIMAX Request Payload:', {
+      order: order,
+      seasonal_order: seasonalOrder,
+      forecast_steps: forecastSteps,
+      n_obs: endog.length,
+      has_exog: arimaxExogColumns.length > 0
+    });
     
     if (exog) {
       payload.exog = exog;
