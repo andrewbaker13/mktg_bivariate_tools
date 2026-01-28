@@ -207,11 +207,11 @@ const ARIMAX_SCENARIOS = [
               <li><strong>Feature releases:</strong> +10-15% signup lift, decays over 3-4 weeks</li>
               <li><strong>Ad spend elasticity:</strong> ~0.3-0.5 (10% more spend → 3-5% more signups)</li>
               <li><strong>Diminishing returns:</strong> Ad effectiveness plateaus at high spend levels</li>
-              <li><strong>Word-of-mouth:</strong> Some autocorrelation from viral/social effects</li>
+              <li><strong>Cyclical patterns:</strong> ~10-week cycles visible in the data (try SARIMAX!)</li>
             </ul>
           </div>
           
-          <p><strong>Suggested Settings:</strong> Try <strong>ARIMA(1,1,1)</strong> or <strong>ARIMA(2,1,1)</strong> — the slight downward trend suggests differencing (d=1). Include both <code>new_feature</code> and <code>mobile_ad_spend</code> as exogenous predictors. Forecast 4-8 weeks for budget planning.</p>
+          <p><strong>Suggested Settings:</strong> Start with <strong>ARIMA(1,1,1)</strong>. Notice the <em>cyclical patterns</em> in the chart? Enable <strong>"Include Seasonality"</strong> and try <strong>SARIMAX(1,1,1)(1,1,1,10)</strong> with seasonal period s=10 to capture those ~10-week cycles in your forecast!</p>
           
           <div class="scenario-insights">
             <div class="insight-title">🎯 Business Questions to Explore</div>
@@ -394,6 +394,22 @@ function getModelOrder() {
   const d = parseInt(document.getElementById('arimax-d')?.value) || 1;
   const q = parseInt(document.getElementById('arimax-q')?.value) || 1;
   return [p, d, q];
+}
+
+function isSeasonalityEnabled() {
+  const checkbox = document.getElementById('arimax-include-seasonality');
+  return checkbox?.checked || false;
+}
+
+function getSeasonalOrder() {
+  if (!isSeasonalityEnabled()) {
+    return [0, 0, 0, 0]; // No seasonality
+  }
+  const P = parseInt(document.getElementById('arimax-P')?.value) || 1;
+  const D = parseInt(document.getElementById('arimax-D')?.value) || 1;
+  const Q = parseInt(document.getElementById('arimax-Q')?.value) || 1;
+  const s = parseInt(document.getElementById('arimax-s')?.value) || 12;
+  return [P, D, Q, s];
 }
 
 function getConfidenceLevel() {
@@ -948,6 +964,24 @@ function enableUpdateForecastIfReady() {
   }
 }
 
+function setupSeasonalityToggle() {
+  const checkbox = document.getElementById('arimax-include-seasonality');
+  const paramsContainer = document.getElementById('seasonal-params-container');
+  const runButton = document.getElementById('arimax-run-model');
+  
+  if (checkbox && paramsContainer) {
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        paramsContainer.classList.remove('hidden');
+        if (runButton) runButton.textContent = 'Fit SARIMAX Model';
+      } else {
+        paramsContainer.classList.add('hidden');
+        if (runButton) runButton.textContent = 'Fit ARIMAX Model';
+      }
+    });
+  }
+}
+
 function setupUpdateForecastButton() {
   const updateBtn = document.getElementById('arimax-update-forecast');
   if (updateBtn) {
@@ -968,6 +1002,9 @@ function setupRunButton() {
   
   // Setup the update forecast button
   setupUpdateForecastButton();
+  
+  // Setup seasonality toggle
+  setupSeasonalityToggle();
 }
 
 /**
@@ -1024,11 +1061,13 @@ async function updateForecast() {
     }
     
     const order = getModelOrder();
+    const seasonalOrder = getSeasonalOrder();
     
     // Build request payload
     const payload = {
       endog: endog,
       order: order,
+      seasonal_order: seasonalOrder,
       forecast_steps: forecastSteps,
       confidence_level: confidenceLevel,
       date_labels: dateLabels,
@@ -1420,7 +1459,12 @@ async function checkStationarity() {
       }
     }
     
-    if (statusEl) statusEl.textContent = 'Stationarity test complete.';
+    // Provide quick feedback in status with the key result
+    if (statusEl) {
+      const adf = result.original.adf_test;
+      const verdict = adf.is_stationary ? '✅ Stationary' : '⚠️ Non-stationary (consider d > 0)';
+      statusEl.textContent = `ADF Test: p=${adf.p_value.toFixed(4)} → ${verdict}. See details in Diagnostics section below.`;
+    }
     
   } catch (error) {
     console.error('Stationarity test error:', error);
@@ -1481,6 +1525,7 @@ async function runArimaxModel() {
     }
     
     const order = getModelOrder();
+    const seasonalOrder = getSeasonalOrder();
     const forecastSteps = parseInt(document.getElementById('arimax-forecast-periods')?.value) || 6;
     const confidenceLevel = getConfidenceLevel();
     
@@ -1488,6 +1533,7 @@ async function runArimaxModel() {
     const payload = {
       endog: endog,
       order: order,
+      seasonal_order: seasonalOrder,
       forecast_steps: forecastSteps,
       confidence_level: confidenceLevel,
       date_labels: dateLabels,
@@ -1503,7 +1549,8 @@ async function runArimaxModel() {
       payload.exog_forecast = Array(forecastSteps).fill(lastExog);
     }
     
-    if (statusEl) statusEl.textContent = 'Fitting model...';
+    const modelType = isSeasonalityEnabled() ? 'SARIMAX' : 'ARIMAX';
+    if (statusEl) statusEl.textContent = `Fitting ${modelType} model...`;
     
     const response = await fetch(`${API_BASE_URL}/arimax/fit/`, {
       method: 'POST',

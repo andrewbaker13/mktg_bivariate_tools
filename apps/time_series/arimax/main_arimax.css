@@ -43,9 +43,82 @@
   gap: 1rem;
 }
 
+/* Expand to 4 columns when showing seasonal params */
+.seasonal-params .arimax-order-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 @media (max-width: 600px) {
   .arimax-order-grid {
     grid-template-columns: 1fr;
+  }
+  .seasonal-params .arimax-order-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Seasonality Toggle */
+.seasonality-toggle {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.seasonality-toggle .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.seasonality-toggle .checkbox-label input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--arimax-accent);
+}
+
+.seasonality-toggle .hint {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+}
+
+/* Seasonal Parameters Panel */
+.seasonal-params {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #7dd3fc;
+  border-radius: 8px;
+  animation: slideDown 0.2s ease-out;
+}
+
+.seasonal-params h4 {
+  margin: 0 0 0.5rem 0;
+  color: #0369a1;
+  font-size: 1rem;
+}
+
+.seasonal-params .hint {
+  font-size: 0.85rem;
+  color: #0c4a6e;
+}
+
+.seasonal-params.hidden {
+  display: none;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

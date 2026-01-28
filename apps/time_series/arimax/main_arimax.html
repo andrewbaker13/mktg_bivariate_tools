@@ -200,6 +200,40 @@
             </div>
           </div>
           
+          <!-- Seasonality Toggle -->
+          <div class="seasonality-toggle">
+            <label class="checkbox-label">
+              <input type="checkbox" id="arimax-include-seasonality">
+              <span>Include Seasonality (SARIMAX)</span>
+            </label>
+            <p class="hint">Enable this if your data shows repeating patterns at regular intervals (e.g., weekly cycles, monthly patterns).</p>
+          </div>
+          
+          <!-- Seasonal Parameters (hidden by default) -->
+          <div id="seasonal-params-container" class="seasonal-params hidden">
+            <h4>Seasonal Parameters</h4>
+            <p class="hint">Set seasonal order (P, D, Q) and the seasonal period <strong>s</strong> (number of time periods in one complete cycle).</p>
+            <div class="input-grid arimax-order-grid">
+              <div>
+                <label for="arimax-P">Seasonal AR (P)</label>
+                <input type="number" id="arimax-P" min="0" max="3" step="1" value="1">
+              </div>
+              <div>
+                <label for="arimax-D">Seasonal Diff (D)</label>
+                <input type="number" id="arimax-D" min="0" max="2" step="1" value="1">
+              </div>
+              <div>
+                <label for="arimax-Q">Seasonal MA (Q)</label>
+                <input type="number" id="arimax-Q" min="0" max="3" step="1" value="1">
+              </div>
+              <div>
+                <label for="arimax-s">Seasonal Period (s)</label>
+                <input type="number" id="arimax-s" min="2" max="52" step="1" value="12" title="e.g., 12 for monthly data with yearly seasonality, 4 for quarterly, 7 for daily with weekly patterns">
+              </div>
+            </div>
+            <p class="hint"><strong>Common periods:</strong> 12 (monthly→yearly), 4 (quarterly), 7 (daily→weekly), 52 (weekly→yearly).</p>
+          </div>
+          
           <div class="input-grid forecast-settings-grid">
             <div>
               <label for="arimax-forecast-periods">Forecast Periods (0-10)</label>
@@ -220,8 +254,9 @@
         <div class="input-group">
           <button type="button" id="arimax-check-stationarity" class="secondary">Check Stationarity (ADF Test)</button>
           <button type="button" id="arimax-run-model" class="primary">Fit ARIMAX Model</button>
-          <button type="button" id="arimax-update-forecast" class="secondary" disabled>Update Forecast</button>
+          <button type="button" id="arimax-update-forecast" class="secondary" disabled title="Re-run forecast with new horizon or confidence level (without refitting the model)">Update Forecast</button>
           <p id="arimax-run-status" class="upload-status" aria-live="polite"></p>
+          <p class="hint button-hint"><strong>Update Forecast</strong> re-generates predictions using a new forecast horizon or confidence level without re-fitting the model.</p>
         </div>
       </article>
 
@@ -250,7 +285,9 @@
           <!-- Forecast Scenario Controls -->
           <div id="forecast-exog-controls" class="forecast-scenario-controls hidden">
             <h4>📊 Forecast Scenario: Set Exogenous Predictor Values</h4>
-            <p class="hint">Define what values the exogenous predictors will have during the forecast period. These settings affect the forecast values.</p>
+            <p class="hint">Define what values the exogenous predictors will have during the forecast period. 
+              <strong>These values are held constant across all forecast periods.</strong> 
+              For example, if you set ad_spend to $5,000 and forecast 6 periods, all 6 periods will assume ad_spend = $5,000.</p>
             <div id="forecast-exog-inputs" class="forecast-exog-grid">
               <!-- Dynamically populated -->
             </div>
