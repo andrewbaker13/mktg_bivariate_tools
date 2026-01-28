@@ -55,14 +55,14 @@ const Tutorial = {
             `,
             quizzes: [
                 {
-                    question: "A mobile game company needs to forecast next quarter's signups. Why would this matter for marketing planning?",
+                    question: "This tutorial focuses on MARKETING applications. Which question can time series forecasting help a marketing team answer?",
                     options: [
-                        "To decide how much server capacity to buy",
-                        "To plan advertising budget and campaign timing",
-                        "To determine employee salaries"
+                        "How many engineers should we hire next year?",
+                        "When should we run our biggest ad campaigns?",
+                        "What programming language should we use?"
                     ],
                     answer: 1,
-                    feedback: "Exactly! Forecasting helps marketers allocate budget to the right months and plan campaigns around expected high/low periods."
+                    feedback: "Exactly! Forecasting helps marketers time their campaigns — spending more when demand is naturally high, or boosting weak periods."
                 }
             ],
             check: () => true
@@ -73,7 +73,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'select_scenario',
-            title: "Step 1: Load the Data",
+            title: "Load the Data",
             targetId: 'scenario-section',
             content: `
                 <p>First, let's load a realistic marketing dataset.</p>
@@ -109,7 +109,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'understand_variables',
-            title: "Step 2: Know Your Variables",
+            title: "Know Your Variables",
             targetId: 'arimax-raw-panel',
             content: `
                 <p>The data is loaded! Now let's understand what we're working with.</p>
@@ -166,7 +166,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'arima_basics',
-            title: "Step 3: ARIMA Parameters (p, d, q)",
+            title: "ARIMA Parameters (p, d, q)",
             targetId: 'inputs-heading',
             content: `
                 <p>Now we configure the model's "memory" using three parameters:</p>
@@ -219,7 +219,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'first_run',
-            title: "Step 4: First Model — ARIMAX (No Seasonality)",
+            title: "First Model — ARIMAX (No Seasonality)",
             targetId: 'arimax-run-model',
             content: `
                 <p><strong>Before we add seasonality, let's see what happens without it.</strong></p>
@@ -273,7 +273,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'examine_forecast',
-            title: "Step 5: Examine the Forecast",
+            title: "Examine the Forecast",
             targetId: 'chart-forecast',
             content: `
                 <p><strong>Look at the forecast chart carefully.</strong></p>
@@ -318,7 +318,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'check_residuals',
-            title: "Step 6: The Residuals Tell the Story",
+            title: "The Residuals Tell the Story",
             targetId: 'chart-acf',
             content: `
                 <p><strong>The ACF chart reveals patterns the model MISSED.</strong></p>
@@ -367,7 +367,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'enable_seasonality',
-            title: "Step 7: Enable Seasonality (SARIMAX)",
+            title: "Enable Seasonality (SARIMAX)",
             targetId: 'arimax-include-seasonality',
             content: `
                 <p><strong>Time to fix the forecast!</strong></p>
@@ -426,7 +426,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'second_run',
-            title: "Step 8: Fit the SARIMAX Model",
+            title: "Fit the SARIMAX Model",
             targetId: 'arimax-run-model',
             content: `
                 <p><strong>Now let's run the seasonal model!</strong></p>
@@ -479,7 +479,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'compare_forecasts',
-            title: "Step 9: The Improved Forecast",
+            title: "The Improved Forecast",
             targetId: 'chart-forecast',
             content: `
                 <p><strong>Now look at the new forecast!</strong></p>
@@ -528,7 +528,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'understand_coefficients',
-            title: "Step 10: Reading the Coefficients",
+            title: "Reading the Coefficients",
             targetId: 'arimax-coef-table-body',
             content: `
                 <p><strong>The coefficient table shows what the model learned.</strong></p>
@@ -576,7 +576,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'check_warnings',
-            title: "Step 11: Check for Warnings",
+            title: "Check for Warnings",
             targetId: 'arimax-run-status',
             content: `
                 <p><strong>Good analysts always check for model warnings.</strong></p>
@@ -616,7 +616,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'managerial_interpretation',
-            title: "Step 12a: Translating Stats to Strategy",
+            title: "Translating Stats to Strategy",
             targetId: 'arimax-managerial-report',
             content: `
                 <p><strong>Statistics are only valuable if they change decisions.</strong></p>
@@ -675,7 +675,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'scenario_planning',
-            title: "Step 12b: What-If Scenario Planning",
+            title: "What-If Scenario Planning",
             targetId: 'forecast-exog-controls',
             content: `
                 <p><strong>Now let's use the model to answer a real business question!</strong></p>
@@ -740,7 +740,7 @@ const Tutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'apa_report',
-            title: "Step 13: The APA-Style Report",
+            title: "The APA-Style Report",
             targetId: 'arimax-apa-report',
             content: `
                 <p><strong>For academic work, you need proper citations.</strong></p>
