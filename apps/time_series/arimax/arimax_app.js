@@ -1811,7 +1811,10 @@ function updateModelResults(result) {
     `).join('');
   }
   
-  // Update forecast table
+  // Generate smart forecast labels FIRST (continue date sequence if possible)
+  const smartForecastLabels = generateSmartForecastLabels(result.observed.labels, result.forecasts.mean.length);
+  
+  // Update forecast table with smart labels
   const forecastBody = document.getElementById('arimax-forecast-table-body');
   if (forecastBody) {
     const forecasts = result.forecasts;
@@ -1819,7 +1822,7 @@ function updateModelResults(result) {
       const confPct = Math.round(result.model_spec.confidence_level * 100);
       forecastBody.innerHTML = forecasts.mean.map((val, i) => `
         <tr>
-          <td>${forecasts.labels[i] || `t+${i + 1}`}</td>
+          <td>${smartForecastLabels[i] || `Forecast ${i + 1}`}</td>
           <td>${formatNumber(val, 2)}</td>
           <td>${formatNumber(forecasts.ci_lower[i], 2)}</td>
           <td>${formatNumber(forecasts.ci_upper[i], 2)}</td>
@@ -1842,59 +1845,377 @@ function updateModelResults(result) {
     }
   }
   
+  // Detect model warnings
+  const modelWarnings = detectModelWarnings(result);
+  
   // Update APA report
   const apaEl = document.getElementById('arimax-apa-report');
   if (apaEl) {
-    const n = stats.n_obs;
-    const orderStr = `(${spec.order.join(', ')})`;
-    const exogCount = spec.exog_names?.length || 0;
-    
-    let apaText = `An ARIMA${orderStr} model`;
-    if (exogCount > 0) {
-      apaText += ` with ${exogCount} exogenous predictor${exogCount > 1 ? 's' : ''} (${spec.exog_names.join(', ')})`;
-    }
-    apaText += ` was fitted to ${n} observations of ${spec.endog_name}.`;
-    apaText += ` The model achieved AIC = ${stats.aic?.toFixed(2)}, BIC = ${stats.bic?.toFixed(2)}, `;
-    apaText += `with RMSE = ${stats.rmse?.toFixed(2)} and MAE = ${stats.mae?.toFixed(2)}.`;
-    
-    // Add significant coefficient info
-    const sigCoefs = result.coefficients.filter(c => c.is_significant && !c.name.includes('sigma'));
-    if (sigCoefs.length > 0) {
-      apaText += ` Significant coefficients included: `;
-      apaText += sigCoefs.map(c => `${c.name} (β = ${c.estimate?.toFixed(3)}, p < .05)`).join('; ');
-      apaText += '.';
-    }
-    
-    apaEl.innerHTML = apaText;
+    apaEl.innerHTML = generateAPAReport(result, smartForecastLabels);
   }
   
   // Update managerial report
   const mgrEl = document.getElementById('arimax-managerial-report');
   if (mgrEl) {
-    const forecastMean = result.forecasts.mean;
-    const lastObserved = result.observed.values[result.observed.values.length - 1];
-    const forecastTrend = forecastMean[forecastMean.length - 1] > forecastMean[0] ? 'upward' : 'downward';
+    mgrEl.innerHTML = generateManagerialReport(result, smartForecastLabels, modelWarnings);
+  }
+  
+  // Update model warnings section
+  updateModelWarnings(modelWarnings);
+}
+
+/**
+ * Generate smart forecast labels by continuing the date sequence
+ */
+function generateSmartForecastLabels(observedLabels, forecastCount) {
+  if (!observedLabels || observedLabels.length < 2 || forecastCount === 0) {
+    return Array.from({length: forecastCount}, (_, i) => `Forecast ${i + 1}`);
+  }
+  
+  const lastLabel = observedLabels[observedLabels.length - 1];
+  const secondLastLabel = observedLabels[observedLabels.length - 2];
+  
+  // Try to detect date format and continue sequence
+  // Format: YYYY-MM (monthly)
+  const monthlyMatch = lastLabel.match(/^(\d{4})-(\d{2})$/);
+  if (monthlyMatch) {
+    let year = parseInt(monthlyMatch[1]);
+    let month = parseInt(monthlyMatch[2]);
+    const labels = [];
+    for (let i = 0; i < forecastCount; i++) {
+      month++;
+      if (month > 12) { month = 1; year++; }
+      labels.push(`${year}-${String(month).padStart(2, '0')}`);
+    }
+    return labels;
+  }
+  
+  // Format: YYYY-Qn (quarterly)
+  const quarterlyMatch = lastLabel.match(/^(\d{4})-Q(\d)$/i);
+  if (quarterlyMatch) {
+    let year = parseInt(quarterlyMatch[1]);
+    let quarter = parseInt(quarterlyMatch[2]);
+    const labels = [];
+    for (let i = 0; i < forecastCount; i++) {
+      quarter++;
+      if (quarter > 4) { quarter = 1; year++; }
+      labels.push(`${year}-Q${quarter}`);
+    }
+    return labels;
+  }
+  
+  // Format: Week N or just numbers
+  const weekMatch = lastLabel.match(/^(?:Week\s*)?(\d+)$/i);
+  if (weekMatch) {
+    let weekNum = parseInt(weekMatch[1]);
+    const hasPrefix = lastLabel.toLowerCase().includes('week');
+    const labels = [];
+    for (let i = 0; i < forecastCount; i++) {
+      weekNum++;
+      labels.push(hasPrefix ? `Week ${weekNum}` : `${weekNum}`);
+    }
+    return labels;
+  }
+  
+  // Fallback to generic labels
+  return Array.from({length: forecastCount}, (_, i) => `Forecast ${i + 1}`);
+}
+
+/**
+ * Detect model warnings and issues
+ */
+function detectModelWarnings(result) {
+  const warnings = [];
+  const spec = result.model_spec;
+  const coefs = result.coefficients || [];
+  const seasonalOrder = spec.seasonal_order || [0, 0, 0, 0];
+  const hasSeasonal = seasonalOrder[3] > 0;
+  
+  // Check for AR coefficient >= 1 (instability)
+  coefs.forEach(c => {
+    if ((c.name.startsWith('ar.') || c.name.startsWith('ar.S')) && Math.abs(c.estimate) >= 1) {
+      warnings.push({
+        type: 'instability',
+        severity: 'warning',
+        message: `${c.name} coefficient (${c.estimate.toFixed(3)}) has absolute value ≥ 1, which may indicate model instability.`,
+        suggestion: 'Consider increasing differencing (d) or simplifying the model.'
+      });
+    }
+  });
+  
+  // Check for counterintuitive coefficient signs (negative for positive-sounding variables)
+  const positiveExpectedPatterns = ['spend', 'budget', 'feature', 'promotion', 'investment', 'advertising'];
+  coefs.forEach(c => {
+    if (c.is_significant && c.estimate < 0) {
+      const nameLC = c.name.toLowerCase();
+      if (positiveExpectedPatterns.some(p => nameLC.includes(p))) {
+        warnings.push({
+          type: 'counterintuitive',
+          severity: 'info',
+          message: `${c.name} has a significant negative effect (${c.estimate.toFixed(2)}), which may be counterintuitive.`,
+          suggestion: 'This could indicate: (1) collinearity with other variables, (2) timing artifacts, or (3) reverse causality. Investigate the data context.'
+        });
+      }
+    }
+  });
+  
+  // Check for non-significant core AR/MA terms (suggest simplification)
+  const nonSigCore = coefs.filter(c => 
+    (c.name === 'ar.L1' || c.name === 'ma.L1') && 
+    !c.is_significant
+  );
+  if (nonSigCore.length > 0) {
+    warnings.push({
+      type: 'simplification',
+      severity: 'info',
+      message: `Non-seasonal ${nonSigCore.map(c => c.name).join(' and ')} term${nonSigCore.length > 1 ? 's are' : ' is'} not statistically significant (p > 0.05).`,
+      suggestion: hasSeasonal 
+        ? `Consider simplifying to SARIMAX(0,${spec.order[1]},0)(${seasonalOrder[0]},${seasonalOrder[1]},${seasonalOrder[2]})[${seasonalOrder[3]}] if seasonal terms are sufficient.`
+        : 'Consider reducing p and/or q to create a more parsimonious model.'
+    });
+  }
+  
+  // Check for non-significant seasonal terms
+  if (hasSeasonal) {
+    const nonSigSeasonal = coefs.filter(c => 
+      (c.name.includes('.S.L') || c.name.includes('ar.S') || c.name.includes('ma.S')) && 
+      !c.is_significant
+    );
+    if (nonSigSeasonal.length > 0) {
+      warnings.push({
+        type: 'seasonal',
+        severity: 'info',
+        message: `Seasonal term${nonSigSeasonal.length > 1 ? 's' : ''} ${nonSigSeasonal.map(c => c.name).join(', ')} not statistically significant.`,
+        suggestion: `The seasonal pattern may be weak, or the period (s=${seasonalOrder[3]}) may not match the true cycle. Consider simplifying seasonal terms or trying a different period.`
+      });
+    }
+  }
+  
+  // Check for impossible confidence intervals (sigma2 with negative lower bound)
+  const sigma2 = coefs.find(c => c.name === 'sigma2');
+  if (sigma2 && sigma2.ci_lower < 0) {
+    warnings.push({
+      type: 'estimation',
+      severity: 'warning',
+      message: 'The variance estimate (sigma²) has a negative lower confidence bound, which is mathematically impossible.',
+      suggestion: 'This may indicate estimation difficulties. Results should be interpreted with caution.'
+    });
+  }
+  
+  return warnings;
+}
+
+/**
+ * Generate APA-style report
+ */
+function generateAPAReport(result, forecastLabels) {
+  const spec = result.model_spec;
+  const stats = result.model_stats;
+  const n = stats.n_obs;
+  const seasonalOrder = spec.seasonal_order || [0, 0, 0, 0];
+  const hasSeasonal = seasonalOrder[3] > 0;
+  const exogCount = spec.exog_names?.length || 0;
+  
+  // Build proper model name (SARIMAX vs ARIMA)
+  let modelName;
+  if (hasSeasonal) {
+    modelName = `SARIMAX(${spec.order.join(',')})(${seasonalOrder[0]},${seasonalOrder[1]},${seasonalOrder[2]})[${seasonalOrder[3]}]`;
+  } else {
+    modelName = `ARIMA(${spec.order.join(',')})`;
+  }
+  
+  let apaText = `A ${modelName} model`;
+  if (exogCount > 0) {
+    apaText += ` with ${exogCount} exogenous predictor${exogCount > 1 ? 's' : ''} (${spec.exog_names.join(', ')})`;
+  }
+  apaText += ` was fitted to ${n} observations of ${spec.endog_name}.`;
+  apaText += ` The model achieved AIC = ${stats.aic?.toFixed(2)}, BIC = ${stats.bic?.toFixed(2)}, `;
+  apaText += `with RMSE = ${stats.rmse?.toFixed(2)} and MAE = ${stats.mae?.toFixed(2)}.`;
+  
+  // Add significant coefficient info
+  const sigCoefs = result.coefficients.filter(c => c.is_significant && !c.name.includes('sigma'));
+  if (sigCoefs.length > 0) {
+    apaText += ` Significant coefficients included: `;
+    apaText += sigCoefs.map(c => `${c.name} (β = ${c.estimate?.toFixed(3)}, p < .05)`).join('; ');
+    apaText += '.';
+  }
+  
+  return apaText;
+}
+
+/**
+ * Generate managerial interpretation with seasonal awareness
+ */
+function generateManagerialReport(result, forecastLabels, warnings) {
+  const spec = result.model_spec;
+  const forecasts = result.forecasts.mean;
+  const lastObserved = result.observed.values[result.observed.values.length - 1];
+  const seasonalOrder = spec.seasonal_order || [0, 0, 0, 0];
+  const hasSeasonal = seasonalOrder[3] > 0;
+  const s = seasonalOrder[3];
+  
+  let mgrText = `<strong>Forecast Overview:</strong> `;
+  
+  // For seasonal models, describe the cycle instead of "trend"
+  if (hasSeasonal && forecasts.length >= s / 2) {
+    // Find peaks and troughs in forecast
+    const forecastWithIdx = forecasts.map((v, i) => ({value: v, idx: i, label: forecastLabels[i]}));
+    const maxForecast = forecastWithIdx.reduce((a, b) => a.value > b.value ? a : b);
+    const minForecast = forecastWithIdx.reduce((a, b) => a.value < b.value ? a : b);
     
-    let mgrText = `Based on historical ${spec.endog_name} data, the model predicts an ${forecastTrend} trend over the next ${spec.forecast_steps} periods. `;
+    mgrText += `The model captures seasonal patterns with period s=${s}. `;
+    mgrText += `Over the ${forecasts.length}-period forecast horizon, values range from a <strong>low of ${formatNumberShort(minForecast.value)}</strong> (${minForecast.label}) `;
+    mgrText += `to a <strong>high of ${formatNumberShort(maxForecast.value)}</strong> (${maxForecast.label}). `;
     
-    const avgForecast = forecastMean.reduce((a, b) => a + b, 0) / forecastMean.length;
+    // Compare to last observed
+    const avgForecast = forecasts.reduce((a, b) => a + b, 0) / forecasts.length;
+    const pctFromLast = lastObserved ? ((avgForecast - lastObserved) / lastObserved * 100) : 0;
+    mgrText += `The average forecast (${formatNumberShort(avgForecast)}) is ${Math.abs(pctFromLast).toFixed(1)}% ${pctFromLast >= 0 ? 'above' : 'below'} the last observed value. `;
+  } else {
+    // Non-seasonal: use simpler trend description
+    const forecastTrend = forecasts[forecasts.length - 1] > forecasts[0] ? 'upward' : 'downward';
+    const avgForecast = forecasts.reduce((a, b) => a + b, 0) / forecasts.length;
     const pctChange = lastObserved ? ((avgForecast - lastObserved) / lastObserved * 100) : 0;
     
-    mgrText += `The average forecasted value is ${avgForecast.toFixed(2)}, representing a ${Math.abs(pctChange).toFixed(1)}% ${pctChange >= 0 ? 'increase' : 'decrease'} from the last observed value. `;
+    mgrText += `The model projects a <strong>${forecastTrend} trend</strong> over the next ${spec.forecast_steps} periods. `;
+    mgrText += `The average forecast is ${formatNumberShort(avgForecast)}, representing a ${Math.abs(pctChange).toFixed(1)}% ${pctChange >= 0 ? 'increase' : 'decrease'} from the last observed value. `;
+  }
+  
+  // Add scaled coefficient interpretations for exogenous variables
+  if (spec.has_exog) {
+    const exogCoefs = result.coefficients.filter(c => 
+      spec.exog_names.some(name => c.name.toLowerCase() === name.toLowerCase())
+    );
+    const sigExog = exogCoefs.filter(c => c.is_significant);
     
-    // Comment on exogenous variables
-    if (spec.has_exog) {
-      const exogCoefs = result.coefficients.filter(c => spec.exog_names.some(name => c.name.toLowerCase().includes(name.toLowerCase())));
-      if (exogCoefs.length > 0) {
-        const sigExog = exogCoefs.filter(c => c.is_significant);
-        if (sigExog.length > 0) {
-          mgrText += `Among the external factors, ${sigExog.map(c => c.name).join(' and ')} show${sigExog.length === 1 ? 's' : ''} a statistically significant relationship with ${spec.endog_name}. `;
-        }
+    if (sigExog.length > 0) {
+      mgrText += `<br><br><strong>Key Drivers:</strong> `;
+      sigExog.forEach((coef, i) => {
+        const scaledInterpretation = getScaledCoefficientInterpretation(coef, spec.endog_name, result);
+        mgrText += scaledInterpretation;
+        if (i < sigExog.length - 1) mgrText += ' ';
+      });
+    }
+    
+    // Note non-significant exog variables
+    const nonSigExog = exogCoefs.filter(c => !c.is_significant);
+    if (nonSigExog.length > 0) {
+      mgrText += ` Note: ${nonSigExog.map(c => c.name).join(', ')} did not show a statistically significant relationship.`;
+    }
+  }
+  
+  return mgrText;
+}
+
+/**
+ * Generate scaled coefficient interpretation for better readability
+ */
+function getScaledCoefficientInterpretation(coef, endogName, result) {
+  const name = coef.name;
+  const estimate = coef.estimate;
+  const direction = estimate > 0 ? 'increase' : 'decrease';
+  const absEstimate = Math.abs(estimate);
+  
+  // Try to find the variable's scale from the data
+  // For continuous variables, scale to meaningful units (e.g., per $10K)
+  const isBinary = name.toLowerCase().includes('feature') || 
+                   name.toLowerCase().includes('promotion') ||
+                   name.toLowerCase().includes('holiday') ||
+                   name.toLowerCase().includes('event');
+  
+  if (isBinary) {
+    // Binary variable: interpret as "when X is present"
+    return `When <strong>${name}</strong> is active, ${endogName} ${direction}s by approximately <strong>${formatNumberShort(absEstimate)}</strong> units (p < .05).`;
+  } else {
+    // Continuous variable: scale appropriately
+    // Determine a sensible scaling factor based on coefficient magnitude
+    let scaleFactor = 1;
+    let scaleLabel = 'unit';
+    
+    if (absEstimate < 1) {
+      // Small coefficient - likely high-magnitude variable (e.g., spend in dollars)
+      if (absEstimate < 0.01) {
+        scaleFactor = 100000;
+        scaleLabel = '$100K';
+      } else if (absEstimate < 0.1) {
+        scaleFactor = 10000;
+        scaleLabel = '$10K';
+      } else {
+        scaleFactor = 1000;
+        scaleLabel = '$1K';
       }
     }
     
-    mgrEl.innerHTML = mgrText;
+    const scaledEffect = absEstimate * scaleFactor;
+    
+    if (scaleFactor > 1) {
+      return `Each <strong>${scaleLabel} increase</strong> in ${name} is associated with a <strong>${formatNumberShort(scaledEffect)} ${direction}</strong> in ${endogName} (p < .05).`;
+    } else {
+      return `Each unit increase in <strong>${name}</strong> is associated with a <strong>${formatNumberShort(scaledEffect)} ${direction}</strong> in ${endogName} (p < .05).`;
+    }
   }
+}
+
+/**
+ * Format number in short readable format
+ */
+function formatNumberShort(val) {
+  if (val === null || val === undefined || !isFinite(val)) return '—';
+  const absVal = Math.abs(val);
+  if (absVal >= 1000000) return (val / 1000000).toFixed(2) + 'M';
+  if (absVal >= 1000) return (val / 1000).toFixed(1) + 'K';
+  if (absVal >= 1) return val.toFixed(1);
+  return val.toFixed(3);
+}
+
+/**
+ * Update model warnings display
+ */
+function updateModelWarnings(warnings) {
+  // Find or create warnings container
+  let warningsEl = document.getElementById('arimax-model-warnings');
+  if (!warningsEl) {
+    // Create warnings section if it doesn't exist
+    const mgrSection = document.getElementById('arimax-managerial-report')?.closest('.apa-box');
+    if (mgrSection) {
+      warningsEl = document.createElement('div');
+      warningsEl.id = 'arimax-model-warnings';
+      warningsEl.className = 'model-warnings-section';
+      mgrSection.parentNode.insertBefore(warningsEl, mgrSection.nextSibling);
+    }
+  }
+  
+  if (!warningsEl) return;
+  
+  if (warnings.length === 0) {
+    warningsEl.innerHTML = '';
+    warningsEl.style.display = 'none';
+    return;
+  }
+  
+  warningsEl.style.display = 'block';
+  
+  const warningsByType = {
+    warning: warnings.filter(w => w.severity === 'warning'),
+    info: warnings.filter(w => w.severity === 'info')
+  };
+  
+  let html = '<div class="warnings-header"><strong>⚠️ Model Diagnostics & Suggestions</strong></div>';
+  html += '<div class="warnings-list">';
+  
+  warnings.forEach(w => {
+    const icon = w.severity === 'warning' ? '⚠️' : '💡';
+    const cssClass = w.severity === 'warning' ? 'warning-item-warning' : 'warning-item-info';
+    html += `
+      <div class="warning-item ${cssClass}">
+        <div class="warning-message">${icon} ${w.message}</div>
+        <div class="warning-suggestion">→ ${w.suggestion}</div>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  warningsEl.innerHTML = html;
 }
 
 function renderForecastChart(result) {
@@ -1912,6 +2233,9 @@ function renderForecastChart(result) {
   // Check if we have forecast data
   const hasForecast = forecasts && forecasts.mean && forecasts.mean.length > 0;
   
+  // Generate smart forecast labels
+  const smartForecastLabels = generateSmartForecastLabels(observed.labels, hasForecast ? forecasts.mean.length : 0);
+  
   // Create a unified x-axis using indices, with custom tick labels
   const numObserved = observed.values.length;
   const numForecast = hasForecast ? forecasts.mean.length : 0;
@@ -1923,14 +2247,14 @@ function renderForecastChart(result) {
   // X values for forecast (n, n+1, n+2, ...)
   const forecastX = hasForecast ? forecasts.mean.map((_, i) => numObserved + i) : [];
   
-  // Create tick labels
+  // Create tick labels using smart labels for forecast period
   const allTickVals = [...observedX];
   const allTickText = [...observed.labels];
   
   if (hasForecast) {
     forecastX.forEach((x, i) => {
       allTickVals.push(x);
-      allTickText.push(`+${i + 1}`);
+      allTickText.push(smartForecastLabels[i] || `+${i + 1}`);
     });
   }
   
@@ -2003,11 +2327,11 @@ function renderForecastChart(result) {
       tickvals.push(numObserved - 1);
       ticktext.push(observed.labels[numObserved - 1]);
     }
-    // Add forecast ticks
+    // Add forecast ticks with smart labels
     if (hasForecast) {
       forecastX.forEach((x, i) => {
         tickvals.push(x);
-        ticktext.push(`+${i + 1}`);
+        ticktext.push(smartForecastLabels[i] || `+${i + 1}`);
       });
     }
   }
@@ -2209,6 +2533,9 @@ function downloadForecasts() {
   const forecasts = arimaxLastResult.forecasts;
   const observed = arimaxLastResult.observed;
   
+  // Generate smart forecast labels for CSV
+  const smartForecastLabels = generateSmartForecastLabels(observed.labels, forecasts.mean.length);
+  
   // Build CSV content
   let csv = 'type,period,value,ci_lower,ci_upper\n';
   
@@ -2217,9 +2544,9 @@ function downloadForecasts() {
     csv += `observed,${observed.labels[i]},${val},,\n`;
   });
   
-  // Add forecasts
+  // Add forecasts with smart labels
   forecasts.mean.forEach((val, i) => {
-    csv += `forecast,${forecasts.labels[i]},${val},${forecasts.ci_lower[i]},${forecasts.ci_upper[i]}\n`;
+    csv += `forecast,${smartForecastLabels[i]},${val},${forecasts.ci_lower[i]},${forecasts.ci_upper[i]}\n`;
   });
   
   downloadTextFile('arimax_forecasts.csv', csv, { mimeType: 'text/csv' });
