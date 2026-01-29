@@ -40,6 +40,17 @@ function handleCaseStudySelection(caseId) {
   
   loadCaseStudy(caseId);
   
+  // Track scenario load
+  const caseNames = {
+    'coffee': 'Coffee Shop Selection',
+    'streaming': 'Streaming Service',
+    'smartphone': 'Smartphone Purchase',
+    'auto': 'Auto Insurance'
+  };
+  if (typeof markScenarioLoaded === 'function') {
+    markScenarioLoaded(caseNames[caseId] || caseId);
+  }
+  
   // Reset dropdown
   setTimeout(() => {
     document.getElementById('case-study-select').value = '';
@@ -355,6 +366,11 @@ function setupDesignGeneration() {
 function generateDesign() {
   const feedback = document.getElementById('design-generation-feedback');
   
+  // Track run attempt
+  if (typeof markRunAttempted === 'function') {
+    markRunAttempted();
+  }
+  
   try {
     // Gather config
     designConfig.numTasks = parseInt(document.getElementById('num-tasks').value);
@@ -412,6 +428,16 @@ function generateDesign() {
       successMsg += ` Synthetic data created for ${designConfig.numRespondents} respondents.`;
     }
     feedback.innerHTML = `<div class="success-message">${successMsg}</div>`;
+    
+    // Track successful run
+    if (typeof markRunSuccessful === 'function') {
+      markRunSuccessful({
+        attributes: attributes.length,
+        tasks: designConfig.numTasks,
+        alternatives: designConfig.numAlternatives,
+        profiles: generatedDesign?.profiles?.length || 0
+      });
+    }
     
     // Show review section
     document.getElementById('section-review-design').classList.remove('hidden');

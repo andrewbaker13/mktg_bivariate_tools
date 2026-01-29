@@ -944,6 +944,11 @@ function runClustering() {
     return;
   }
   
+  // Track run attempt
+  if (typeof markRunAttempted === 'function') {
+    markRunAttempted();
+  }
+  
   const k = parseInt(document.getElementById('kproto-k')?.value) || 3;
   const kMin = parseInt(document.getElementById('kproto-k-min')?.value) || 2;
   const kMax = parseInt(document.getElementById('kproto-k-max')?.value) || 8;
@@ -998,6 +1003,16 @@ function runClustering() {
   renderElbowPlot();
   renderSilhouettePlot();
   updateSummaryMetrics();
+  
+  // Track successful run
+  if (typeof markRunSuccessful === 'function') {
+    markRunSuccessful({
+      k: k,
+      variables: selectedVariables.length,
+      rows: currentRows.length,
+      silhouette: lastClusteringState?.diagnostics?.find(d => d.k === k)?.silhouette?.toFixed(3) || 'N/A'
+    });
+  }
   renderClusterTable();
   
   // Enable download

@@ -279,6 +279,11 @@
     reader.onload = (e) => {
       try {
         parseUploadedData(e.target.result);
+        
+        // Track file upload
+        if (typeof markDataUploaded === 'function') {
+          markDataUploaded(file.name || 'uploaded_file.csv');
+        }
       } catch (error) {
         setUploadStatus(error.message, 'error');
       }
@@ -965,6 +970,11 @@
       alert('Please fit models first');
       return;
     }
+    
+    // Track run attempt
+    if (typeof markRunAttempted === 'function') {
+      markRunAttempted();
+    }
 
     updateConstraints();
 
@@ -982,6 +992,15 @@
       displayDiagnostics(result);
       hasSuccessfulRun = true;
       checkAndTrackUsage();
+      
+      // Track successful run
+      if (typeof markRunSuccessful === 'function') {
+        markRunSuccessful({
+          resources: Object.keys(state.fittedModels).length,
+          budget: state.constraints.totalBudget,
+          totalOutput: result.totalOutput?.toFixed(0) || 'N/A'
+        });
+      }
     } catch (error) {
       alert(`Optimization failed: ${error.message}`);
       console.error(error);
@@ -3015,6 +3034,11 @@
       .then(csv => {
         // Parse the data
         parseUploadedData(csv);
+        
+        // Track scenario load
+        if (typeof markScenarioLoaded === 'function') {
+          markScenarioLoaded(scenario.label || scenario.id);
+        }
         
         // Apply suggested constraints
         applySuggestedConstraints(scenario.suggestedConstraints);
