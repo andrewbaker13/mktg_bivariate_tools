@@ -21,6 +21,10 @@ const Tutorial = {
     // Track if user downloaded the dataset
     downloadedDataset: false,
     
+    // Track tutorial completion for engagement logging
+    tutorialStartTime: null,
+    tutorialCompleted: false,
+    
     // Configuration
     config: {
         targetScenario: 'scenario-mobile-game',
@@ -873,6 +877,7 @@ const Tutorial = {
             check: () => true,
             onEnter: () => {
                 Tutorial.hideOverlay();
+                Tutorial.logTutorialCompletion();
             }
         }
     ],
@@ -899,6 +904,8 @@ const Tutorial = {
         this.arimaxRun = null;
         this.sarimaxRun = null;
         this.downloadedDataset = false;
+        this.tutorialStartTime = Date.now();
+        this.tutorialCompleted = false;
         
         document.body.classList.add('tutorial-active');
         document.getElementById('tutorial-sidebar')?.classList.add('active');
@@ -915,6 +922,50 @@ const Tutorial = {
         // Uncheck the box
         const checkbox = document.getElementById('guidedMode');
         if (checkbox) checkbox.checked = false;
+    },
+
+    /**
+     * Log tutorial completion for engagement tracking
+     * Only logs once per session to prevent spam
+     */
+    logTutorialCompletion() {
+        // Prevent duplicate logging
+        if (this.tutorialCompleted) {
+            console.log('Tutorial completion already logged this session');
+            return;
+        }
+        
+        // Check if tracking functions are available
+        if (typeof logToolUsage !== 'function') {
+            console.log('logToolUsage not available, skipping tutorial completion tracking');
+            return;
+        }
+        
+        // Check if user is authenticated
+        if (typeof isAuthenticated === 'function' && !isAuthenticated()) {
+            console.log('User not authenticated, skipping tutorial completion tracking');
+            return;
+        }
+        
+        // Calculate duration
+        const durationMinutes = this.tutorialStartTime 
+            ? ((Date.now() - this.tutorialStartTime) / 60000).toFixed(1)
+            : null;
+        
+        // Log the completion
+        logToolUsage('arimax-tutorial-complete', {
+            steps_completed: this.steps.length,
+            total_steps: this.steps.length,
+            duration_minutes: parseFloat(durationMinutes) || null,
+            ran_arimax: !!this.arimaxRun,
+            ran_sarimax: !!this.sarimaxRun
+        }, `Tutorial completed in ${durationMinutes} minutes`, {
+            scenario: 'Mobile Game Marketing (Tutorial)',
+            dataSource: 'scenario'
+        });
+        
+        this.tutorialCompleted = true;
+        console.log('🎓 Tutorial completion logged!');
     },
 
     nextStep() {
