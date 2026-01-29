@@ -9,6 +9,7 @@
   // ============================================================================
 
   const CREATED_DATE = '2025-12-07';
+  const TOOL_SLUG = 'resource-allocation';
   const MAX_UPLOAD_ROWS = 500;
   const MIN_DATA_POINTS = 3; // Minimum observations needed to fit models
 
@@ -98,6 +99,11 @@
     setupEventListeners();
     setupDropzone();
     loadScenarioManifest();
+    
+    // Initialize engagement tracking
+    if (typeof initEngagementTracking === 'function') {
+        initEngagementTracking(TOOL_SLUG);
+    }
     console.log('Resource Allocation Optimizer initialized');
   }
 

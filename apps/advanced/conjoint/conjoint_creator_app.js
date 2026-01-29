@@ -1,5 +1,6 @@
 // Conjoint Study Design Generator
 const CREATED_DATE = '2025-12-07';
+const TOOL_SLUG = 'conjoint-creator';
 
 // State
 let attributes = [];
@@ -23,6 +24,11 @@ function initCreatorApp() {
   
   const modifiedEl = document.getElementById('modified-date');
   if (modifiedEl) modifiedEl.textContent = CREATED_DATE;
+  
+  // Initialize engagement tracking
+  if (typeof initEngagementTracking === 'function') {
+      initEngagementTracking(TOOL_SLUG);
+  }
 }
 
 // ========================================

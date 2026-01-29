@@ -1591,4 +1591,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setupScenarioDownloadButton();
     switchMode(activeMode, { suppressUpdate: true });
     refreshScenarioDownloadVisibility();
+    
+    // Initialize engagement tracking
+    if (typeof initEngagementTracking === 'function') {
+        initEngagementTracking(TOOL_SLUG);
+    }
 });
