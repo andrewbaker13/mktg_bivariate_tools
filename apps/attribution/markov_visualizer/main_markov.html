@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Markov Chain Attribution Lab</title>
+  
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+  <!-- Reusing Shapley styling for consistency -->
+  <link rel="stylesheet" href="../shapley_visualizer/main_shapley.css">
+  <link rel="stylesheet" href="../shapley_visualizer/paths.css">
+  
+  <script src="../../../shared/js/tracking.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  
+  <!-- Reuse Math/Logic from Shapley if useful effectively -->
+  <style>
+      .matrix-container {
+          overflow-x: auto;
+          margin: 1rem 0;
+      }
+      .node-viz-box {
+          height: 400px;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          background: #fff;
+      }
+      .removal-lab-panel {
+          background: #fdf2f8; 
+          border: 1px solid #fbcfe8;
+          border-radius: 8px;
+          padding: 1.5rem;
+          margin-top: 1rem;
+      }
+  </style>
+</head>
+
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../../admin_pages/login.html">Login</a>
+        <a href="../../../admin_pages/register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Markov Chain Attribution Lab</h1>
+        <div class="hero-context">
+          <span class="badge" style="background:#8b5cf6;">Advanced Analytics</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Unlike game theory, <strong>Markov Chains</strong> care about <em>Sequence</em>. 
+        Analyze the "Customer Journey" as a network of probabilities, determining which steps act as the critical bridges to conversion.
+      </p>
+    </header>
+
+    <section class="test-overview">
+      <h2 id="overview-heading">Concept: The Removal Effect</h2>
+      <div class="card">
+        <p>
+          <strong>The Problem:</strong> Shapley told us <em>who</em> was on the team. But it didn't tell us <em>when</em> they played.
+          Did "Social" start the play, or score the goal?
+        </p>
+        <p>
+          <strong>The Markov Solution:</strong> We calculate the probability of moving from 
+          <code>Start</code> &rarr; <code>Search</code> &rarr; <code>Buy</code>.
+          Then, we simulate <strong>Removing a Node</strong> (e.g. Delete "Social"). 
+          If the global conversion rate drops by 20%, then Social gets 20% of the credit.
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 1: DATA GEN & RAW TABLE -->
+    <section class="card" style="margin-bottom: 1.5rem;">
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+                 <label for="scenario-select" style="font-weight:bold; font-size:1.1rem; block; color:#475569;">
+                    🏢 Select Client Scenario
+                 </label>
+                 <select id="scenario-select" class="full-width-select" style="max-width: 500px;">
+                    <option value="linear">Case A: Simple Widget Co. (Independent)</option>
+                    <option value="synergy" selected>Case B: Luxury Vacation Inc. (Complex Paths)</option>
+                    <option value="overlap">Case C: Fast Fashion Outlet (Retargeting loops)</option>
+                 </select>
+            </div>
+            <button onclick="window.location.reload()" class="btn-secondary">🔄 Reroll Data</button>
+        </div>
+        <p class="text-sm muted" style="margin-top:0.5rem;">Generating 12,000 User Journeys...</p>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2rem;">
+          <h2 style="margin:0;">1. The Raw Data: Customer Journeys</h2>
+          <span style="font-size: 0.9rem; color: #64748b;">Showing first 15 of 12,000 paths</span>
+      </div>
+      <p style="margin-bottom:1rem;">Before building the network, we must look at the raw sequences. Markov cares deeply about the <strong>order</strong> of these steps (e.g., does Search come before Social?).</p>
+      
+      <!-- Replaced Table with Div Container for Aggregated View (Matches Shapley) -->
+      <div id="path-list-display" class="path-list-container" style="max-height: 400px; overflow-y: auto; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <!-- JS will inject rows here -->
+      </div>
+    </section>
+
+    <!-- SECTION 2: SANKEY -->
+    <section class="card" style="margin-bottom: 1.5rem;">
+      <h2>2. Visualizing the Flow (Sankey Diagram)</h2>
+      <p>The table above is hard to read. A <strong>Sankey Diagram</strong> aggregates all those 12,000 paths into a single "River of Traffic".</p>
+      <div style="background:#ecfdf5; border:1px solid #6ee7b7; padding:0.8rem; margin-bottom:1rem; border-radius:4px; font-size:0.9rem; color:#064e3b;">
+          <strong>Tip for Reading:</strong> 
+          <br>The width of the line represents the <strong>volume of users</strong> moving between steps. 
+          <br>Hover over any grey link to see exactly what % of traffic flows from A to B.
+      </div>
+      
+      <div id="sankey-diagram" class="node-viz-box"></div>
+    </section>
+
+    <!-- SECTION 3: THE TRANSITION MATRIX -->
+    <section class="card" style="margin-bottom: 1.5rem;">
+      <h2>3. The Transition Matrix</h2>
+      <p class="text-sm muted">The core brain of the Markov model. Probability of moving from Row (Left) to Column (Top).</p>
+      
+      <div style="background: #ffffff; border-left: 4px solid #3b82f6; padding: 1rem; margin-bottom: 1rem; font-size: 0.9rem; color: #334155;">
+          <strong>How to read this:</strong>
+          <ul style="margin: 0.5rem 0 0 1.2rem; line-height: 1.5;">
+              <li><strong>Rows</strong> = "From" state. <strong>Columns</strong> = "To" state.</li>
+              <li>Example: Find Row <strong>"Start"</strong> and Column <strong>"Search"</strong>. The number (e.g., 40%) means <em>"40% of users go immediately from Start &rarr; Search"</em>.</li>
+              <li>Rows sum to 100% (everyone has to go <em>somewhere</em> next).</li>
+          </ul>
+      </div>
+
+      <div id="heatmap-container" style="height: 500px; width:100%;"></div>
+    </section>
+
+    <!-- SECTION 4: REMOVAL EFFECT LAB -->
+    <section class="card">
+      <h2>4. The "Removal Effect" Lab</h2>
+      <p class="text-sm muted">How we calculate attribution: Simulate a "Blackout" of one channel and measure the panic.</p>
+
+      <div class="removal-lab-panel">
+         <h3 style="margin-top:0;">🧪 Impact Simulator: Removing a Node</h3>
+         <p style="margin-bottom: 1.5rem;">Select a channel to simulate a total outage. If the channel is critical (a bridge), conversions will crash.</p>
+         
+         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 2rem;">
+            <button class="channel-toggle" data-remove="search">Remove Search 🔍</button>
+            <button class="channel-toggle" data-remove="social">Remove Social 📱</button>
+            <button class="channel-toggle" data-remove="displayA">Remove Display A 🖼️</button>
+            <button class="channel-toggle" data-remove="displayB">Remove Display B 🖼️</button>
+            <button class="channel-toggle" data-remove="email">Remove Email 📧</button>
+         </div>
+
+         <!-- New Visual Result Container -->
+         <div id="removal-result-box" style="display:none;">
+            
+            <div style="display:flex; gap: 2rem; align-items: flex-end; margin-bottom: 1.5rem;">
+                <!-- Bar 1: BAU -->
+                <div style="flex:1; text-align:center;">
+                    <div style="font-weight:bold; color:#64748b; margin-bottom: 5px;">Business As Usual</div>
+                    <div style="height: 150px; position:relative; display:flex; align-items:flex-end; justify-content:center;">
+                        <div id="viz-bar-base" style="width: 60px; background: #94a3b8; border-radius: 4px 4px 0 0; transition: height 0.5s;"></div>
+                    </div>
+                    <div id="viz-val-base" style="font-weight:bold; font-size:1.2rem; margin-top:5px;">5.2%</div>
+                </div>
+
+                <!-- Arrow -->
+                <div style="padding-bottom: 40px; color: #ef4444; font-size: 2rem; font-weight:bold;">&rarr;</div>
+
+                <!-- Bar 2: Removed -->
+                <div style="flex:1; text-align:center;">
+                    <div style="font-weight:bold; color:#ef4444; margin-bottom: 5px;">Without <span id="removed-channel-name">Social</span></div>
+                    <div style="height: 150px; position:relative; display:flex; align-items:flex-end; justify-content:center;">
+                        <div id="viz-bar-new" style="width: 60px; background: #ef4444; border-radius: 4px 4px 0 0; transition: height 0.5s;"></div>
+                    </div>
+                    <div id="viz-val-new" style="font-weight:bold; font-size:1.2rem; margin-top:5px; color:#ef4444;">1.2%</div>
+                </div>
+            </div>
+
+            <div style="background: #fff; padding: 1.5rem; border-radius: 6px; border-top: 3px solid #3b82f6;">
+                 <h4 style="margin:0 0 0.5rem 0;">Analysis:</h4>
+                 <p id="removal-analysis-text" style="font-size:1.1rem; line-height:1.5; color:#334155; margin-bottom: 1.5rem;">
+                    <!-- JS Injected -->
+                 </p>
+                 
+                 <!-- New Section: Under the Hood -->
+                 <div style="background: #f1f5f9; padding: 1rem; border-radius: 6px; border: 1px dashed #94a3b8;">
+                    <strong style="display:block; margin-bottom:0.5rem; color:#475569;">🔧 Under the Hood: Matrix Surgery</strong>
+                    <p class="text-sm" style="margin-bottom:0.5rem;">
+                        To simulate this removal, the model scanned the Transition Matrix and <strong>intercepted</strong> all traffic heading to <span id="removed-viz-name" style="font-weight:bold;">--</span>.
+                        Instead of landing on the channel, that traffic was rerouted to "Lost / Null".
+                    </p>
+                    <div id="broken-links-list" style="max-height: 150px; overflow-y: auto; font-size: 0.9rem;">
+                        <!-- JS injected list of impacts -->
+                    </div>
+                 </div>
+            </div>
+
+         </div>
+      </div>
+      
+      <h3 style="margin-top:2rem;">Final Markov Attribution Results</h3>
+      <div id="markov-bar-chart" style="height:400px;"></div>
+    </section>
+
+  </main>
+
+  <script src="markov_math.js"></script>
+  <script src="main_markov.js"></script>
+</body>
+</html>

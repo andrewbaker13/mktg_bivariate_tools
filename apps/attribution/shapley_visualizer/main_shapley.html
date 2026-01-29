@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shapley Attribution Visualizer</title>
+  
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+  <link rel="stylesheet" href="main_shapley.css">
+  <link rel="stylesheet" href="paths.css">
+  
+  <script src="../../../shared/js/tracking.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-290ZJ9RE04');
+  </script>
+</head>
+
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../../admin_pages/login.html">Login</a>
+        <a href="../../../admin_pages/register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Shapley Attribution Visualizer</h1>
+        <div class="hero-context">
+          <span class="badge">Marketing Analytics</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Understand how cooperative game theory assigns "fair credit" to marketing channels by analyzing their marginal contribution 
+        across every possible coalition combination.
+      </p>
+    </header>
+
+    <section class="test-overview" aria-labelledby="overview-heading">
+      <h2 id="overview-heading">Concept & Intuition</h2>
+      <div class="card">
+        <p>
+          <strong>The Problem:</strong> In multi-channel marketing, channels work together. If a user sees a Search Ad 
+          and then a Social Post before buying, who gets the credit?
+        </p>
+        <p>
+          <strong>The Shapley Solution:</strong> Instead of guessing, we use data. We look at every unique 
+          <strong>"Coalition"</strong> (or 'Channel Mix') that appears in your data. By comparing the conversion rate of 
+          users who saw <em>{Search + Social}</em> vs. users who saw <em>{Search + Social + Email}</em>, we can mathematically 
+          isolate the value of adding Email to that mix.
+        </p>
+        
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 1rem; margin: 1rem 0; border-radius: 4px;">
+            <strong style="color: #b45309;">🎓 Analyst Note: Sets vs. Sequences</strong>
+            <p style="margin: 0.5rem 0 0; font-size: 0.95rem; color: #78350f;">
+                This tool focuses on <strong>Cooperative Game Theory (Shapley)</strong>, which treats marketing as a "Team Sport" (Who was on the field?). 
+                <br><br>
+                <strong>Real World Nuance:</strong> Advanced engines (like GA4 Data-Driven Attribution) often combine this with <strong>Markov Chains</strong> to account for <em>order</em> (e.g., "Search <em>then</em> Email" might be worth more than "Email <em>then</em> Search"). 
+                While Shapley isolates the value of <em>presence</em>, Sequence models isolate the value of <em>timing</em>.
+            </p>
+        </div>
+
+        <details class="intro-notes">
+          <summary>Key Terms</summary>
+          <div style="margin-top: 1rem;">
+            <ul style="padding-left: 1.5rem; line-height: 1.6;">
+              <li><strong>Media Mix (or Coalition):</strong> The set of unique channels a user interacted with, ignoring order. (e.g., A user who did <em>Search → Email → Search</em> has the mix <em>{Search, Email}</em>).</li>
+              <li><strong>Marginal Contribution:</strong> The difference in Conversion Rate made by adding a specific channel to an existing mix.</li>
+              <li style="margin-top:0.5rem; border-top:1px dashed #ccc; padding-top:0.5rem; color:#475569;">
+                <strong>Note on Sequence:</strong> Classic Shapley ignores the <em>timestamp order</em> of exposure (unlike Markov Chains). It treats marketing as a "Team Sport" where the presence of the player matters more than when they arrived.
+              </li>
+            </ul>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- NEW SECTION: Raw Data Visualization -->
+    <section class="card" style="margin-bottom: 1.5rem;">
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 0.5rem;">
+            <div>
+                 <label for="scenario-select" style="font-weight:bold; font-size:1.1rem; display:block; margin-bottom:0.5rem; color:#1e40af;">
+                    🏢 Select Client Scenario (The Business Context)
+                 </label>
+                 <select id="scenario-select" class="full-width-select" style="max-width: 500px; font-size:1rem; padding:0.5rem;">
+                    <option value="linear">Case A: Simple Widget Co. (Testing for Independence)</option>
+                    <option value="synergy" selected>Case B: Luxury Vacation Inc. (Testing for Multi-Touch Synergy)</option>
+                    <option value="overlap">Case C: Fast Fashion Outlet (Testing for Saturation/Cannibalization)</option>
+                    <option value="dominance">Case D: Emergency Plumber (Testing for Search Dominance)</option>
+                  </select>
+            </div>
+            <div style="text-align:right;">
+                <button onclick="window.location.reload()" style="font-size:0.8rem; padding:6px 12px; cursor:pointer; background:#fff; border:1px solid #ccc; border-radius:4px;" title="Reroll Data">🔄 Generate New Users</button>
+            </div>
+        </div>
+        <div id="scenario-description" style="font-style: italic; color: #1e3a8a; font-size: 0.95rem; border-top: 1px dashed #bfdbfe; padding-top: 0.5rem; margin-top: 0.5rem;">
+            <!-- Injected by JS -->
+            Loading scenario details...
+        </div>
+        <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem; background: #fff; padding: 0.5rem; border-radius: 4px;">
+            <strong>Simulation Note:</strong> This generates 1200 raw user journeys typical for this type of business. 
+            Notice how some businesses define "complex" paths (repeating channels) while others are simple. 
+            The <strong>Shapley Math</strong> below is calculated strictly from this generated table.
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0;">1. The Raw User Journeys</h2>
+        <div class="text-sm muted">Simulating 1200 tracked users based on Scenario above</div>
+      </div>
+      <p>Before any math happens, we just have paths. The <strong>Scenario</strong> selected above determines the probability that users convert.</p>
+      
+      <div class="path-stats-summary">
+        <div class="stat-card">
+            <div class="text-sm muted">Total Paths</div>
+            <div style="font-size:1.5rem; font-weight:bold;">1200</div>
+        </div>
+        <div class="stat-card">
+            <div class="text-sm muted">Total Conversions</div>
+            <div style="font-size:1.5rem; font-weight:bold; color:var(--app-success);" id="total-conv-display">?</div>
+        </div>
+        <div class="stat-card">
+            <div class="text-sm muted">Overall Conv. Rate</div>
+            <div style="font-size:1.5rem; font-weight:bold;" id="total-rate-display">?</div>
+        </div>
+        <div style="flex:2; padding-left:20px; color:#64748b; font-size:0.9rem; align-self:center; border-left:1px solid #e2e8f0;">
+            <span style="display:block; font-weight:bold; margin-bottom:2px;">How this connects:</span>
+            These raw path counts (e.g. "search, social") are the direct input for the Media Mix Lab and Shapley Math below.
+        </div>
+      </div>
+
+      <div class="path-vis-container">
+        <div id="path-list-display" class="path-list">
+            <!-- Injected by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Coalition Lab (Full Width) -->
+    <section class="card" style="margin-bottom: 1.5rem;">
+      <h2>2. "The Media Mix Lab" (Coalition Analysis) <span title="Shapley treats a mix as a 'Set' (e.g. {Search, Social}). The math ignores who clicked first, focusing instead on who was present in the converting mix." style="cursor:help; font-size:1rem;">ℹ️</span></h2>
+      <p class="text-sm muted">Explore the Conversion Rate for specific definitions of "Channel Mix".</p>
+      
+      <!-- Scenario Selector moved to top -->
+
+      <div id="coalition-builder-panel">
+        <h3>Current "Mix" Selection</h3>
+        <p class="explanation-text">Toggle channels to filter for this specific mix and see its performance.</p>
+        
+        <div class="channel-grid" style="max-width: 600px; margin: 0 auto 2rem auto;">
+          <button class="channel-toggle" data-channel="search" aria-pressed="true">
+            <span class="icon">🔍</span> Paid Search
+          </button>
+          <button class="channel-toggle" data-channel="social" aria-pressed="false">
+            <span class="icon">📱</span> Social
+          </button>
+          <button class="channel-toggle" data-channel="displayA" aria-pressed="false">
+            <span class="icon">🖼️</span> Display A
+          </button>
+          <button class="channel-toggle" data-channel="displayB" aria-pressed="false">
+            <span class="icon">🖼️</span> Display B
+          </button>
+          <button class="channel-toggle" data-channel="email" aria-pressed="false">
+            <span class="icon">📧</span> Email
+          </button>
+        </div>
+
+        <div class="team-value-display">
+          <div class="value-label">Observed Conversion Rate for this Media Mix:</div>
+          <div style="display:flex; align-items:center; gap:1rem;">
+             <div class="value-number" id="team-cv-display">0.0%</div>
+             <!-- NEW: Synergy Badge -->
+             <div id="synergy-badge" style="display:none; padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">
+                <!-- Injected by JS: e.g. "🚀 Synergy Bonus: +2.5%" -->
+             </div>
+          </div>
+          <div class="value-slider-container">
+            <input type="range" id="team-value-slider" min="0" max="25" step="0.5" value="0">
+            <p class="hint">Adjust to simulate data for this specific combo</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: The Calculation (Full Width) -->
+    <section class="card" style="margin-bottom: 1.5rem;">
+      <h2>3. Inside the Math (The Calculation)</h2>
+      <p class="text-sm muted">See how we derive the value for a specific channel.</p>
+
+      <div id="calculation-details">
+          <div style="background: #fafafa; padding: 1rem; border-left: 4px solid #3b82f6; margin-bottom: 1rem;">
+            <div class="channel-selector-row">
+                <label for="detail-channel-select" style="font-weight:bold;">Inspect Math for:</label>
+                <select id="detail-channel-select">
+                  <option value="search">Paid Search</option>
+                  <option value="social">Social</option>
+                  <option value="displayA">Display A</option>
+                  <option value="displayB">Display B</option>
+                  <option value="email">Email</option>
+                </select>
+            </div>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #555;">
+                This table mimics the loop the algorithm runs. It asks: <em>"If we take every possible <strong>Media Mix</strong> that DOES NOT have this Channel, and then we ADD this Channel, how much does the Conversion Rate improve?"</em>
+            </p>
+          </div>
+
+          <div id="calc-table-container" style="overflow-x: auto; margin-top: 1rem; margin-bottom: 2rem;">
+            <table class="data-table" style="font-size: 0.9rem;">
+              <thead>
+                <tr style="background: #f1f5f9;">
+                  <th style="width:30%;">
+                      Existing Mix <span title="The combination of marketing channels present BEFORE adding the one we are inspecting." style="cursor:help; font-size:1em;">ℹ️</span>
+                      <div style="font-weight:normal; font-size:0.8em; color:#64748b;">(Baseline channels)</div>
+                  </th>
+                  <th>
+                      Base Conv. Rate
+                      <div style="font-weight:normal; font-size:0.8em; color:#64748b;">(Rate WITHOUT this channel)</div>
+                  </th>
+                  <th style="background:#f0fdfa;">
+                      New Conv. Rate
+                      <div style="font-weight:normal; font-size:0.8em; color:#065f46;">(Rate WITH this channel)</div>
+                  </th>
+                  <th>
+                      Marginal Impact
+                      <div style="font-weight:normal; font-size:0.8em; color:#64748b;">(The 'Lift' provided)</div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="calc-table-body">
+                <!-- filled via JS -->
+              </tbody>
+              <tfoot>
+                <tr style="background:#fff7ed; font-weight:bold; border-top: 2px solid #fdba74;">
+                  <td colspan="3" style="text-align:right;">Final Shapley Value (Weighted Average Impact):</td>
+                  <td style="color:var(--app-accent); font-size:1.1rem;" id="calc-final-value">--</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Results (Full Width) -->
+    <section class="card">
+      <h2>4. Final Attribution Results</h2>
+      <p class="text-sm muted">Aggregating the Shapley Values for ALL channels.</p>
+
+      <div id="shapley-results-container">
+        <div id="marginal-value-display" class="marginal-stat-box hidden">
+          <!-- Dynamic content injected by JS -->
+          Added <strong>+<span id="marginal-delta">0</span>%</strong> to the mix
+        </div>
+
+        <div id="plotly-waterfall" style="width:100%; height:400px;"></div>
+        
+        <div id="comparison-chart-wrapper" style="margin-top: 3rem; border-top: 1px dashed #cbd5e1; padding-top: 2rem;">
+          <h3>Model Comparison: Accuracy vs. Ego</h3>
+          <p class="text-sm muted">Comparing Shapley (Colored Bars) against traditional Heuristic models (Grey Bars).</p>
+          
+          <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:1rem;">
+             <div style="flex:1; min-width:300px; font-size:0.95rem; color:#475569; background:#f8fafc; padding:1rem; border-radius:6px; border-left:4px solid #94a3b8;">
+                <strong>Why the Grey Bars matter:</strong>
+                <ul style="margin:0.5rem 0 0.5rem 1.2rem; padding:0;">
+                    <li style="margin-bottom:0.5rem;"><strong>Last Touch (Dark Grey):</strong> Often over-credits the "Closer" (Search) and ignores the "Assists" (Social).</li>
+                    <li><strong>Linear (Light Grey):</strong> Spreads credit like peanut butter. It assumes a cheap banner ad did as much work as a high-intent search.</li>
+                </ul>
+             </div>
+             <div style="flex:1; min-width:300px; font-size:0.95rem; color:#0f172a; background:#f0fdf4; padding:1rem; border-radius:6px; border-left:4px solid #10b981;">
+                <strong>💡 The Teaching Insight:</strong>
+                 <p style="margin:0.5rem 0;">
+                    Junior analysts often look for the model that gives their team the <em>biggest numbers</em>. 
+                    <strong>Don't do this.</strong>
+                </p>
+                <p style="margin:0;">
+                    The goal of attribution isn't to be "Right" or "high", it's to be <strong>Accurate</strong>. 
+                    Shapley is valuable because it reveals the true contributions that Last Touch models (Google Analytics default) often hide.
+                </p>
+             </div>
+          </div>
+
+          <div id="plotly-comparison" style="width:100%; height:400px;"></div>
+          
+          <!-- NEW: Narrative Verdict Block -->
+          <div id="analyst-verdict-box" style="margin-top:1rem; padding:1rem; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; display:none;">
+             <h4 style="margin:0 0 0.5rem 0; color:#0f172a;">🤖 The Automated Analyst's Verdict:</h4>
+             <p id="analyst-verdict-text" style="font-size:1rem; line-height:1.6; margin:0; color:#334155;">
+                <!-- JS will inject analysis here -->
+             </p>
+          </div>
+        </div>
+      </div>
+    </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="shapley_math.js"></script>
+  <script src="main_shapley.js"></script>
+</body>
+</html>

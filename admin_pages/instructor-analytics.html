@@ -450,9 +450,14 @@
                         <option value="">Loading courses...</option>
                     </select>
                 </div>
-                <button id="customize-tools-btn" class="btn" style="background: #6366f1; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; display: none;">
-                    ⚙️ Customize Tools
-                </button>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button id="customize-tools-btn" class="btn" style="background: #6366f1; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; display: none;">
+                        ⚙️ Customize Tools
+                    </button>
+                    <span id="hidden-tools-badge" style="display: none; background: #fef3c7; color: #92400e; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.875rem; font-weight: 600;">
+                        <span id="hidden-tools-count">0</span> tools hidden
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -496,6 +501,7 @@
                 <div class="stat-card purple">
                     <div class="stat-label">
                         Total Tool Runs
+                        <span id="total-runs-filtered-badge" style="display: none; background: #dbeafe; color: #1e40af; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.65rem; margin-left: 0.25rem;">FILTERED</span>
                         <span class="tooltip-container">
                             <span class="info-icon">?</span>
                             <span class="tooltip-text">Total number of times students have executed statistical analysis tools across all features in this course.</span>
@@ -506,6 +512,7 @@
                 <div class="stat-card">
                     <div class="stat-label">
                         Avg Runs/Student
+                        <span id="avg-runs-filtered-badge" style="display: none; background: #dbeafe; color: #1e40af; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.65rem; margin-left: 0.25rem;">FILTERED</span>
                         <span class="tooltip-container">
                             <span class="info-icon">?</span>
                             <span class="tooltip-text">Average number of tool executions per student. Calculated as total tool runs divided by total enrolled students.</span>
@@ -516,6 +523,7 @@
                 <div class="stat-card green">
                     <div class="stat-label">
                         Tools Adopted
+                        <span id="tools-adopted-filtered-badge" style="display: none; background: #dbeafe; color: #1e40af; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.65rem; margin-left: 0.25rem;">FILTERED</span>
                         <span class="tooltip-container">
                             <span class="info-icon">?</span>
                             <span class="tooltip-text">Number of unique statistical tools that have been used by students out of 22 available tools. Higher adoption indicates broader exploration of course materials.</span>
@@ -557,19 +565,43 @@
             <!-- Charts -->
             <div class="chart-grid">
                 <div class="chart-container">
-                    <h3>📈 Course Activity Timeline (30 Days)</h3>
-                    <canvas id="timelineChart"></canvas>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <h3 style="margin: 0;">📈 Course Activity Timeline</h3>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <select id="timeline-range" style="padding: 0.35rem 0.5rem; border-radius: 4px; border: 1px solid #d1d5db; font-size: 0.85rem;">
+                                <option value="7">Last 7 Days</option>
+                                <option value="30" selected>Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                                <option value="all">All Time</option>
+                            </select>
+                            <select id="timeline-view" style="padding: 0.35rem 0.5rem; border-radius: 4px; border: 1px solid #d1d5db; font-size: 0.85rem;">
+                                <option value="aggregate" selected>Overall Activity</option>
+                                <option value="by_tool">By Tool</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="height: 280px;">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
                 </div>
                 <div class="chart-container">
-                    <h3>🔥 Most Used Tools</h3>
-                    <canvas id="toolsChart"></canvas>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0;">🔥 Most Used Tools</h3>
+                        <span id="tools-chart-filter-badge" style="display: none; background: #dbeafe; color: #1e40af; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">Filtered</span>
+                    </div>
+                    <div style="height: 320px;">
+                        <canvas id="toolsChart"></canvas>
+                    </div>
                 </div>
             </div>
 
             <!-- Student Activity Table -->
             <div class="student-table">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h3 style="margin: 0;">Student Activity</h3>
+                    <div>
+                        <h3 style="margin: 0;">Student Activity</h3>
+                        <p id="student-table-filter-note" style="display: none; margin: 0.25rem 0 0 0; font-size: 0.8rem; color: #6b7280;">⚠️ Note: Totals include all tools. Use tool chart for filtered view.</p>
+                    </div>
                     <button class="btn" onclick="exportStudentData()">⬇ Export CSV</button>
                 </div>
                 <table>
@@ -712,14 +744,46 @@
     <script>
         let currentCourseId = null;
         let studentData = [];
+        let allToolsData = []; // Store all tools data for filtering calculations
         let timelineChart = null;
         let toolsChart = null;
         let toolVisibilityData = []; // Store current tool visibility settings
         let visibleToolIds = null; // Set of visible tool IDs for filtering
+        let lastTimelineData = null; // Cache timeline data for re-rendering
 
         // Check authentication
         if (!isAuthenticated()) {
             window.location.href = 'login.html?redirect=instructor-analytics.html';
+        }
+        
+        // Timeline control event listeners
+        document.getElementById('timeline-range').addEventListener('change', () => refreshTimeline());
+        document.getElementById('timeline-view').addEventListener('change', () => refreshTimeline());
+        
+        async function refreshTimeline() {
+            if (!currentCourseId) return;
+            
+            const token = getAuthToken();
+            const days = document.getElementById('timeline-range').value;
+            const view = document.getElementById('timeline-view').value;
+            const byTool = view === 'by_tool';
+            
+            try {
+                const url = `${API_BASE}/courses/${currentCourseId}/timeline/?days=${days}&by_tool=${byTool}`;
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                const data = await response.json();
+                lastTimelineData = data;
+                
+                if (byTool && data.tool_series) {
+                    renderTimelineChartByTool(data);
+                } else {
+                    renderTimelineChart(data.timeline || []);
+                }
+            } catch (error) {
+                console.error('Failed to refresh timeline:', error);
+            }
         }
 
         async function loadCourses() {
@@ -785,22 +849,45 @@
                 
                 // Filter tools by visibility
                 const filteredTools = filterToolsByVisibility(tools.tools);
+                const allTools = tools.tools || [];
                 
-                // Update stats
+                // Calculate filtered stats
+                const hasFilter = visibleToolIds && toolVisibilityData.some(t => !t.is_visible);
+                let displayStats = {
+                    totalRuns: engagement.usage.total_runs,
+                    avgRuns: engagement.usage.avg_runs_per_student,
+                    toolsUsed: engagement.usage.tools_used
+                };
+                
+                if (hasFilter) {
+                    // Recalculate stats based on filtered tools only
+                    const filteredTotalRuns = filteredTools.reduce((sum, t) => sum + t.total_runs, 0);
+                    const totalStudents = engagement.students.total || 1;
+                    displayStats = {
+                        totalRuns: filteredTotalRuns,
+                        avgRuns: Math.round(filteredTotalRuns / totalStudents * 10) / 10,
+                        toolsUsed: filteredTools.length
+                    };
+                }
+                
+                // Update stats (with filtered values if applicable)
                 document.getElementById('total-students').textContent = engagement.students.total;
                 document.getElementById('active-students').textContent = engagement.students.with_activity;
                 document.getElementById('engagement-rate').textContent = engagement.students.engagement_rate + '%';
-                document.getElementById('total-runs').textContent = engagement.usage.total_runs;
-                document.getElementById('avg-runs').textContent = engagement.usage.avg_runs_per_student;
-                document.getElementById('tools-adopted').textContent = `${engagement.usage.tools_used}/22`;
+                document.getElementById('total-runs').textContent = displayStats.totalRuns;
+                document.getElementById('avg-runs').textContent = displayStats.avgRuns;
+                document.getElementById('tools-adopted').textContent = `${displayStats.toolsUsed}/${hasFilter ? filteredTools.length + toolVisibilityData.filter(t => !t.is_visible).length : 22}`;
                 
                 // Render charts (with filtered tools)
                 renderTimelineChart(timeline.timeline);
                 renderToolsChart(filteredTools);
                 
-                // Render student table
+                // Store all tools data for student filtering
+                allToolsData = allTools;
+                
+                // Render student table (pass filtering info)
                 studentData = students.students;
-                renderStudentTable(studentData);
+                renderStudentTable(studentData, hasFilter);
                 
                 // Load advanced analytics
                 loadAtRiskStudents(courseId);
@@ -836,16 +923,52 @@
                     const data = await response.json();
                     toolVisibilityData = data.tools;
                     visibleToolIds = new Set(data.tools.filter(t => t.is_visible).map(t => t.id));
+                    
+                    // Update hidden tools badge
+                    const hiddenCount = data.tools.filter(t => !t.is_visible).length;
+                    updateHiddenToolsBadge(hiddenCount);
                 } else {
                     // If endpoint fails, show all tools
                     toolVisibilityData = [];
                     visibleToolIds = null;
+                    updateHiddenToolsBadge(0);
                 }
             } catch (error) {
                 console.error('Error loading tool visibility:', error);
                 toolVisibilityData = [];
                 visibleToolIds = null;
+                updateHiddenToolsBadge(0);
             }
+        }
+        
+        function updateHiddenToolsBadge(count) {
+            const badge = document.getElementById('hidden-tools-badge');
+            const countSpan = document.getElementById('hidden-tools-count');
+            const filterNote = document.getElementById('student-table-filter-note');
+            const chartBadge = document.getElementById('tools-chart-filter-badge');
+            
+            if (count > 0) {
+                badge.style.display = 'inline-block';
+                countSpan.textContent = count;
+                filterNote.style.display = 'block';
+                if (chartBadge) chartBadge.style.display = 'inline-block';
+                // Show stat card badges
+                showStatFilterBadges(true);
+            } else {
+                badge.style.display = 'none';
+                filterNote.style.display = 'none';
+                if (chartBadge) chartBadge.style.display = 'none';
+                // Hide stat card badges
+                showStatFilterBadges(false);
+            }
+        }
+        
+        function showStatFilterBadges(show) {
+            const badgeIds = ['total-runs-filtered-badge', 'avg-runs-filtered-badge', 'tools-adopted-filtered-badge'];
+            badgeIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = show ? 'inline' : 'none';
+            });
         }
         
         function filterToolsByVisibility(tools) {
@@ -963,6 +1086,16 @@
                 });
                 
                 if (response.ok) {
+                    // Update local visibility data immediately
+                    tools.forEach(t => {
+                        const tool = toolVisibilityData.find(td => td.id === t.tool_id);
+                        if (tool) tool.is_visible = t.is_visible;
+                    });
+                    
+                    // Update badge
+                    const hiddenCount = toolVisibilityData.filter(t => !t.is_visible).length;
+                    updateHiddenToolsBadge(hiddenCount);
+                    
                     closeToolVisibilityModal();
                     // Reload analytics with new visibility settings
                     loadCourseAnalytics(currentCourseId);
@@ -985,10 +1118,19 @@
             
             if (timelineChart) timelineChart.destroy();
             
-            const labels = timelineData.map(d => {
-                const date = new Date(d.date);
+            // Format dates based on range
+            const days = document.getElementById('timeline-range').value;
+            const formatDate = (dateStr) => {
+                const date = new Date(dateStr);
+                if (days === 'all' || days === '90') {
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                } else if (days === '7') {
+                    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                }
                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            });
+            };
+            
+            const labels = timelineData.map(d => formatDate(d.date));
             const data = timelineData.map(d => d.count);
             
             timelineChart = new Chart(ctx, {
@@ -1000,22 +1142,133 @@
                         data: data,
                         backgroundColor: 'rgba(59, 130, 246, 0.6)',
                         borderColor: '#3b82f6',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        borderRadius: 3
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
                             display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return context[0].label;
+                                }
+                            }
                         }
                     },
                     scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: days === '7' ? 7 : (days === '30' ? 15 : 20)
+                            }
+                        },
                         y: {
                             beginAtZero: true,
                             ticks: {
                                 stepSize: 1
+                            },
+                            title: {
+                                display: true,
+                                text: 'Tool Runs'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderTimelineChartByTool(data) {
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            
+            if (timelineChart) timelineChart.destroy();
+            
+            const days = document.getElementById('timeline-range').value;
+            const formatDate = (dateStr) => {
+                const date = new Date(dateStr);
+                if (days === 'all' || days === '90') {
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                } else if (days === '7') {
+                    return date.toLocaleDateString('en-US', { weekday: 'short' });
+                }
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            };
+            
+            const labels = data.dates.map(d => formatDate(d));
+            
+            // Color palette for tools (distinct colors)
+            const toolColors = [
+                '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+                '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
+                '#14b8a6', '#f43f5e', '#a855f7', '#22c55e', '#eab308'
+            ];
+            
+            const datasets = data.tool_series.map((tool, index) => ({
+                label: tool.tool_name.length > 20 ? tool.tool_name.substring(0, 18) + '...' : tool.tool_name,
+                data: tool.data,
+                borderColor: toolColors[index % toolColors.length],
+                backgroundColor: toolColors[index % toolColors.length] + '20',
+                fill: false,
+                tension: 0.3,
+                borderWidth: 2,
+                pointRadius: days === '7' ? 4 : (days === '30' ? 2 : 1),
+                pointHoverRadius: 5
+            }));
+            
+            timelineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 10 },
+                                padding: 8
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return context[0].label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: days === '7' ? 7 : (days === '30' ? 15 : 20)
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            },
+                            title: {
+                                display: true,
+                                text: 'Tool Runs'
                             }
                         }
                     }
@@ -1028,33 +1281,68 @@
             
             if (toolsChart) toolsChart.destroy();
             
+            // Show top 10 tools as horizontal bar chart
             const top10 = toolsData.slice(0, 10);
-            const labels = top10.map(t => t.tool__name.substring(0, 20));
+            const labels = top10.map(t => {
+                // Truncate long names but keep readable
+                const name = t.tool__name || t.name || 'Unknown';
+                return name.length > 25 ? name.substring(0, 22) + '...' : name;
+            });
             const data = top10.map(t => t.total_runs);
+            const uniqueUsers = top10.map(t => t.unique_users || 0);
+            
+            // Color gradient based on position (darker = more used)
+            const colors = [
+                '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd',
+                '#a5b4fc', '#c4b5fd', '#d8b4fe', '#e9d5ff', '#f3e8ff'
+            ];
             
             toolsChart = new Chart(ctx, {
-                type: 'doughnut',
+                type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
+                        label: 'Total Runs',
                         data: data,
-                        backgroundColor: [
-                            '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-                            '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
-                        ]
+                        backgroundColor: colors.slice(0, top10.length),
+                        borderColor: colors.slice(0, top10.length).map(c => c),
+                        borderWidth: 1,
+                        borderRadius: 4
                     }]
                 },
                 options: {
+                    indexAxis: 'y', // Horizontal bars
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 12,
-                                font: {
-                                    size: 10
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const idx = context.dataIndex;
+                                    const users = uniqueUsers[idx];
+                                    return users ? `${users} unique students` : '';
                                 }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Total Runs',
+                                font: { size: 11 }
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                font: { size: 11 }
                             }
                         }
                     }
@@ -1139,47 +1427,79 @@
                 const response = await fetch(`${API_BASE}/analytics/student/${studentId}/`, {
                     headers: { 'Authorization': `Token ${getAuthToken()}` }
                 });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to load student');
+                }
+                
                 const data = await response.json();
                 
-                document.getElementById('modal-student-name').textContent = 
-                    `${data.student.first_name} ${data.student.last_name} (${data.student.username})`;
+                // Build student name from response
+                const studentName = data.student ? 
+                    `${data.student.first_name || ''} ${data.student.last_name || ''} (${data.student.username})` :
+                    'Student Details';
+                
+                document.getElementById('modal-student-name').textContent = studentName;
+                
+                // Filter tool usage by visibility if enabled
+                let filteredToolUsage = data.tool_usage || [];
+                if (visibleToolIds && toolVisibilityData.length > 0) {
+                    filteredToolUsage = filteredToolUsage.filter(tool => {
+                        const matchingTool = toolVisibilityData.find(t => t.name === tool.tool);
+                        return !matchingTool || matchingTool.is_visible;
+                    });
+                }
+                
+                // Filter recent activity by visibility if enabled
+                let filteredActivity = data.recent_activity || [];
+                if (visibleToolIds && toolVisibilityData.length > 0) {
+                    filteredActivity = filteredActivity.filter(activity => {
+                        const matchingTool = toolVisibilityData.find(t => t.name === activity.tool);
+                        return !matchingTool || matchingTool.is_visible;
+                    });
+                }
+                
+                // Calculate filtered totals
+                const filteredTotalRuns = filteredToolUsage.reduce((sum, t) => sum + t.count, 0);
+                const filteredUniqueTools = filteredToolUsage.length;
                 
                 document.getElementById('modal-student-content').innerHTML = `
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
                         <div style="background: #f9fafb; padding: 1rem; border-radius: 8px;">
-                            <div style="font-size: 0.875rem; color: #6b7280;">Total Runs</div>
-                            <div style="font-size: 2rem; font-weight: 700;">${data.summary.total_runs}</div>
+                            <div style="font-size: 0.875rem; color: #6b7280;">Total Runs${visibleToolIds ? ' (filtered)' : ''}</div>
+                            <div style="font-size: 2rem; font-weight: 700;">${visibleToolIds ? filteredTotalRuns : (data.total_runs || 0)}</div>
                         </div>
                         <div style="background: #f9fafb; padding: 1rem; border-radius: 8px;">
-                            <div style="font-size: 0.875rem; color: #6b7280;">Unique Tools</div>
-                            <div style="font-size: 2rem; font-weight: 700;">${data.summary.unique_tools}</div>
+                            <div style="font-size: 0.875rem; color: #6b7280;">Unique Tools${visibleToolIds ? ' (filtered)' : ''}</div>
+                            <div style="font-size: 2rem; font-weight: 700;">${visibleToolIds ? filteredUniqueTools : (data.unique_tools || 0)}</div>
                         </div>
                         <div style="background: #f9fafb; padding: 1rem; border-radius: 8px;">
                             <div style="font-size: 0.875rem; color: #6b7280;">Active Days</div>
-                            <div style="font-size: 2rem; font-weight: 700;">${data.summary.unique_days_active}</div>
+                            <div style="font-size: 2rem; font-weight: 700;">${data.unique_days || 0}</div>
                         </div>
                         <div style="background: #f9fafb; padding: 1rem; border-radius: 8px;">
                             <div style="font-size: 0.875rem; color: #6b7280;">Days Since Activity</div>
-                            <div style="font-size: 2rem; font-weight: 700;">${data.summary.days_since_activity || 0}</div>
+                            <div style="font-size: 2rem; font-weight: 700;">${data.days_since_activity !== null ? data.days_since_activity : 'Never'}</div>
                         </div>
                     </div>
                     
-                    <h4>Tool Usage:</h4>
+                    <h4>Tool Usage:${visibleToolIds ? ' <span style="font-size: 0.75rem; color: #6b7280;">(filtered)</span>' : ''}</h4>
                     <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;">
-                        ${data.tool_usage.slice(0, 10).map(tool => `
+                        ${filteredToolUsage.length > 0 ? filteredToolUsage.slice(0, 10).map(tool => `
                             <div style="background: #dbeafe; padding: 0.5rem 1rem; border-radius: 4px;">
-                                ${tool.tool__name}: ${tool.count}
+                                ${tool.tool}: ${tool.count}
                             </div>
-                        `).join('')}
+                        `).join('') : '<p style="color: #6b7280;">No tool usage recorded</p>'}
                     </div>
                     
-                    <h4>Recent Activity:</h4>
+                    <h4>Recent Activity:${visibleToolIds ? ' <span style="font-size: 0.75rem; color: #6b7280;">(filtered)</span>' : ''}</h4>
                     <div style="max-height: 300px; overflow-y: auto;">
-                        ${data.recent_activity.length > 0 ? data.recent_activity.map(activity => `
+                        ${filteredActivity.length > 0 ? filteredActivity.map(activity => `
                             <div style="padding: 0.75rem; border-bottom: 1px solid #e5e7eb;">
                                 <div style="font-weight: 600;">${activity.tool}</div>
                                 <div style="font-size: 0.875rem; color: #6b7280;">
-                                    ${new Date(activity.timestamp).toLocaleString()} • ${activity.scenario}
+                                    ${new Date(activity.timestamp).toLocaleString()} • ${activity.scenario || 'Custom data'}
                                 </div>
                             </div>
                         `).join('') : '<p style="color: #6b7280; text-align: center;">No recent activity</p>'}
@@ -1189,7 +1509,7 @@
                 document.getElementById('student-modal').style.display = 'block';
             } catch (error) {
                 console.error('Error loading student details:', error);
-                alert('Failed to load student details');
+                alert('Failed to load student details: ' + error.message);
             }
         }
 
@@ -1197,9 +1517,12 @@
             document.getElementById('student-modal').style.display = 'none';
         }
 
-        function renderStudentTable(students) {
+        function renderStudentTable(students, isFiltered = false) {
             const tbody = document.getElementById('student-table-body');
             tbody.innerHTML = '';
+            
+            // Get visible tool slugs for note
+            const hiddenToolCount = toolVisibilityData.filter(t => !t.is_visible).length;
             
             students.forEach(student => {
                 const tr = document.createElement('tr');
@@ -1207,6 +1530,8 @@
                 const lastActive = student.last_activity ? 
                     new Date(student.last_activity).toLocaleDateString() : 'Never';
                 
+                // Note: total_runs and tools_used come from the API which doesn't filter
+                // We show the unfiltered data with a note that it's unfiltered
                 let engagementBadge = '';
                 if (student.total_runs === 0) {
                     engagementBadge = '<span class="badge badge-low">Inactive</span>';
@@ -1218,12 +1543,23 @@
                     engagementBadge = '<span class="badge badge-low">Low</span>';
                 }
                 
+                // Show most used tool, but add indicator if it's a hidden tool
+                let mostUsedDisplay = student.most_used_tool || '-';
+                if (student.most_used_tool && isFiltered) {
+                    const isHidden = toolVisibilityData.find(t => 
+                        t.name === student.most_used_tool && !t.is_visible
+                    );
+                    if (isHidden) {
+                        mostUsedDisplay = `<span style="color: #9ca3af;" title="This tool is hidden">${student.most_used_tool} 👁️‍🗨️</span>`;
+                    }
+                }
+                
                 tr.innerHTML = `
                     <td><strong>${student.username}</strong></td>
                     <td>${student.email || '-'}</td>
-                    <td>${student.total_runs}</td>
-                    <td>${student.tools_used}</td>
-                    <td>${student.most_used_tool || '-'}</td>
+                    <td>${student.total_runs}${isFiltered ? '*' : ''}</td>
+                    <td>${student.tools_used}${isFiltered ? '*' : ''}</td>
+                    <td>${mostUsedDisplay}</td>
                     <td>${lastActive}</td>
                     <td>${engagementBadge}</td>
                     <td><button class="btn" onclick="viewStudentDetail(${student.id}, '${student.username}')" style="background: #3b82f6; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">View</button></td>
@@ -1234,6 +1570,15 @@
             if (students.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #6b7280;">No students enrolled yet.</td></tr>';
             }
+            
+            // Add footnote if filtered
+            if (isFiltered && students.length > 0) {
+                const footerRow = document.createElement('tr');
+                footerRow.innerHTML = `<td colspan="8" style="font-size: 0.75rem; color: #6b7280; font-style: italic; padding-top: 0.5rem;">
+                    * Totals include all tools. Click "View" for filtered breakdown. ${hiddenToolCount} tool(s) hidden.
+                </td>`;
+                tbody.appendChild(footerRow);
+            }
         }
 
         function exportStudentData() {
@@ -1242,8 +1587,20 @@
                 return;
             }
             
+            // Check if filtering is active
+            const isFiltered = visibleToolIds && toolVisibilityData.some(t => !t.is_visible);
+            const hiddenTools = toolVisibilityData.filter(t => !t.is_visible).map(t => t.name);
+            
             // Create CSV content
-            const headers = ['Username', 'Email', 'Total Runs', 'Tools Used', 'Most Used Tool', 'Last Active', 'First Active'];
+            let csv = '';
+            
+            // Add filter note if applicable
+            if (isFiltered) {
+                csv += `"NOTE: Tool visibility filter is active. ${hiddenTools.length} tool(s) hidden: ${hiddenTools.join(', ')}"\n`;
+                csv += `"Student totals below include ALL tools. Use student detail view for filtered counts."\n\n`;
+            }
+            
+            const headers = ['Username', 'Email', 'Total Runs (All Tools)', 'Tools Used (All)', 'Most Used Tool', 'Last Active', 'First Active'];
             const rows = studentData.map(s => [
                 s.username,
                 s.email || '',
@@ -1254,7 +1611,7 @@
                 s.first_activity ? new Date(s.first_activity).toLocaleString() : 'Never'
             ]);
             
-            let csv = headers.join(',') + '\n';
+            csv += headers.join(',') + '\n';
             rows.forEach(row => {
                 csv += row.map(cell => `"${cell}"`).join(',') + '\n';
             });
@@ -1264,7 +1621,8 @@
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `course_${currentCourseId}_students_${new Date().toISOString().split('T')[0]}.csv`;
+            const filterSuffix = isFiltered ? '_filtered' : '';
+            a.download = `course_${currentCourseId}_students${filterSuffix}_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
             window.URL.revokeObjectURL(url);
         }

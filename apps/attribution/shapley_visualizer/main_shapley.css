@@ -1,0 +1,123 @@
+/* Scoped Styles for Shapley Visualizer */
+
+.coaliton-lab {
+    display: flex;
+    flex-direction: column;
+}
+
+.scenario-selector {
+    margin-bottom: 1.5rem;
+}
+
+.full-width-select {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--app-border);
+    font-size: 1rem;
+    margin-top: 0.5rem;
+}
+
+.divider {
+    border: 0;
+    border-top: 1px solid var(--app-border);
+    margin: 1.5rem 0;
+}
+
+.explanation-text {
+    font-size: 0.9rem;
+    color: var(--app-muted);
+    margin-bottom: 1rem;
+}
+
+/* Channel Grid */
+.channel-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.channel-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border: 2px solid var(--app-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 600;
+    color: var(--app-text);
+    text-align: left;
+}
+
+.channel-toggle:hover {
+    border-color: var(--app-accent);
+    background: #eff6ff;
+}
+
+.channel-toggle[aria-pressed="true"] {
+    border-color: var(--app-accent);
+    background: #e0f2fe;
+    color: var(--app-accent-dark);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.channel-toggle .icon {
+    font-size: 1.5rem;
+}
+
+/* Team Value Display */
+.team-value-display {
+    background: #1e293b;
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.value-label {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+}
+
+.value-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #38bdf8; /* Light blue accent */
+    margin-bottom: 1rem;
+}
+
+.value-slider-container {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #334155;
+    text-align: left;
+}
+
+.value-slider-container input[type="range"] {
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+.value-slider-container .hint {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin: 0;
+    text-align: center;
+}
+
+/* Utility */
+.text-sm {
+    font-size: 0.85rem;
+}
+
+.muted {
+    color: var(--app-muted);
+}
