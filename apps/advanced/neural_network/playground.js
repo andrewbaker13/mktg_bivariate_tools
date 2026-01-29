@@ -4,7 +4,10 @@
  */
 
 // API_BASE is already defined in auth_tracking.js
-const TOOL_SLUG = 'neural_network';
+const TOOL_SLUG = 'neural-network';
+
+// Engagement tracking state
+let hasLoggedSuccess = false;
 
 // Global state
 let network = null;
@@ -661,9 +664,31 @@ function setupEventListeners() {
         if (isTraining) {
             btn.innerHTML = '<span id="playPauseIcon">⏸</span> Pause Training';
             trainingInterval = setInterval(trainStep, 10);
+            
+            // Track training start
+            if (typeof markRunAttempted === 'function') {
+                markRunAttempted();
+            }
         } else {
             btn.innerHTML = '<span id="playPauseIcon">▶</span> Resume Training';
             clearInterval(trainingInterval);
+            
+            // Track successful training when paused (user completed a training session)
+            if (iteration > 50 && !hasLoggedSuccess && typeof markRunSuccessful === 'function') {
+                const testAcc = network ? network.calculateAccuracy(
+                    testData.map(d => d.input), 
+                    testData.map(d => d.output)
+                ) : 0;
+                markRunSuccessful({
+                    dataset: config.dataset,
+                    hidden_layers: config.hiddenLayers,
+                    neurons: config.neuronsPerLayer,
+                    activation: config.activation,
+                    iterations: iteration,
+                    test_accuracy: testAcc.toFixed(1)
+                }, `Trained ${iteration} iterations, ${testAcc.toFixed(1)}% accuracy`);
+                hasLoggedSuccess = true;
+            }
         }
     });
 
@@ -698,6 +723,18 @@ function setupEventListeners() {
             document.querySelectorAll('.dataset-card').forEach(c => c.classList.remove('active'));
             card.classList.add('active');
             config.dataset = card.dataset.dataset;
+            
+            // Track scenario selection
+            if (typeof markScenarioLoaded === 'function') {
+                const scenarioNames = {
+                    'churn': 'Customer Churn',
+                    'segment': 'Market Segmentation',
+                    'abtest': 'A/B Test Analysis',
+                    'affinity': 'Product Affinity'
+                };
+                markScenarioLoaded(scenarioNames[config.dataset] || config.dataset);
+            }
+            
             updateScenarioDescription();
             generateData();
             initializeNetwork();
@@ -1329,43 +1366,19 @@ function drawScatterPlot(canvas, data) {
     ctx.restore();
 }
 
-// Log tool usage
-async function logToolRun() {
-    const token = localStorage.getItem('authToken');
-
-    const data = {
-        tool_slug: TOOL_SLUG,
-        page_url: window.location.href,
-        params_json: {
-            dataset: config.dataset,
-            features: config.features.length,
-            hidden_layers: config.hiddenLayers,
-            neurons: config.neuronsPerLayer,
-            activation: config.activation,
-            iterations: iteration
-        },
-        result_summary: `Trained ${iteration} iterations, Test accuracy: ${network ? network.calculateAccuracy(testData.map(d => d.input), testData.map(d => d.output)).toFixed(1) : 0}%`,
-        data_source: 'interactive'
-    };
-
-    try {
-        await fetch(`${API_BASE}/tool-run/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token ? `Token ${token}` : ''
-            },
-            body: JSON.stringify(data)
-        });
-    } catch (error) {
-        console.log('Tool tracking failed:', error);
-    }
-}
+// Note: Using standard engagement tracking from auth_tracking.js
+// Old logToolRun function removed - now uses markScenarioLoaded, markDataUploaded, 
+// markRunAttempted, markRunSuccessful from auth_tracking.js
 
 // Handle File Upload
 async function handleFileUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Track file upload
+    if (typeof markDataUploaded === 'function') {
+        markDataUploaded(file.name);
+    }
 
     try {
         const text = await file.text();
@@ -1596,14 +1609,17 @@ window.addEventListener('load', () => {
         });
         console.log('✓ Guided mode enabled');
         
+        // Initialize standard engagement tracking
+        if (typeof initEngagementTracking === 'function') {
+            initEngagementTracking(TOOL_SLUG);
+            console.log('✓ Engagement tracking initialized');
+        }
+        
         console.log('🎉 Neural Network Playground Ready!');
     } catch (error) {
         console.error('❌ Error during initialization:', error);
     }
-
-    // Log usage after 30 seconds
-    setTimeout(logToolRun, 30000);
 });
 
-// Log usage when leaving page
-window.addEventListener('beforeunload', logToolRun);
+// Note: Old setTimeout(logToolRun, 30000) and beforeunload removed
+// Now using milestone-based tracking via auth_tracking.js
