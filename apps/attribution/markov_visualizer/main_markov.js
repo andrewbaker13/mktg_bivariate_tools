@@ -125,13 +125,16 @@ function runRemovalExperiment(channel) {
     }, 50);
 
     const dropPct = (impact * 100).toFixed(1);
+    const finalShare = (res.attribution[channel] * 100).toFixed(1);
     
     analysis.innerHTML = `
         If we lose <strong>${CHANNEL_NAMES[channel]}</strong>, our conversion rate drops by 
-        <span style="color:#ef4444; font-weight:bold;">${dropPct}%</span>.
+        <span style="color:#ef4444; font-weight:bold;">${dropPct}%</span> (Removal Effect).
         <br><br>
-        In the Markov model, "Attribution Value" is exactly equal to this "Removal Effect".
-        Therefore, we award ${CHANNEL_NAMES[channel]} <strong>${dropPct}% of the credit</strong>.
+        Because multiple channels can be critical, the sum of valid "Removal Effects" often exceeds 100%. 
+        <br>
+        After <em>normalizing</em> these effects, ${CHANNEL_NAMES[channel]} receives 
+        <strong>${finalShare}% of the final credit</strong>.
     `;
     
     // --- Update Matrix Surgery Details ---
