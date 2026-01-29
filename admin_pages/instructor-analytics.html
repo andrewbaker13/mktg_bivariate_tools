@@ -443,10 +443,17 @@
 
         <!-- Course Selector -->
         <div class="course-selector">
-            <label for="course-select" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Select Course:</label>
-            <select id="course-select">
-                <option value="">Loading courses...</option>
-            </select>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label for="course-select" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Select Course:</label>
+                    <select id="course-select">
+                        <option value="">Loading courses...</option>
+                    </select>
+                </div>
+                <button id="customize-tools-btn" class="btn" style="background: #6366f1; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; display: none;">
+                    ⚙️ Customize Tools
+                </button>
+            </div>
         </div>
 
         <div id="loading" class="loading" style="display: none;">
@@ -646,6 +653,49 @@
             </div>
         </div>
 
+        <!-- Tool Customization Modal -->
+        <div id="tool-visibility-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+            <div style="background: white; margin: 2rem auto; max-width: 700px; border-radius: 8px; padding: 2rem; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2>⚙️ Customize Visible Tools</h2>
+                    <button onclick="closeToolVisibilityModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                </div>
+                <p style="color: #6b7280; margin-bottom: 1.5rem;">
+                    Select which tools appear in your course analytics. Hidden tools will not show in charts, tables, or reports.
+                </p>
+                
+                <!-- Quick Actions -->
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <button onclick="selectAllTools(true)" class="btn" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">
+                        ✓ Show All
+                    </button>
+                    <button onclick="selectAllTools(false)" class="btn" style="background: #6b7280; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.875rem;">
+                        ✗ Hide All
+                    </button>
+                </div>
+                
+                <!-- Tool List -->
+                <div id="tool-visibility-list" style="border: 1px solid #e5e7eb; border-radius: 8px; max-height: 400px; overflow-y: auto;">
+                    <p style="padding: 1rem; color: #6b7280;">Loading tools...</p>
+                </div>
+                
+                <!-- Summary -->
+                <div id="visibility-summary" style="margin-top: 1rem; padding: 1rem; background: #f9fafb; border-radius: 8px; display: none;">
+                    <span id="visible-count">0</span> of <span id="total-tools-count">0</span> tools visible
+                </div>
+                
+                <!-- Actions -->
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end;">
+                    <button onclick="closeToolVisibilityModal()" class="btn" style="background: #e5e7eb; color: #374151; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button onclick="saveToolVisibility()" class="btn" style="background: #3b82f6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer;">
+                        💾 Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Student Detail Modal -->
         <div id="student-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
             <div style="background: white; margin: 2rem auto; max-width: 1200px; border-radius: 8px; padding: 2rem; max-height: 90vh; overflow-y: auto;">
@@ -664,6 +714,8 @@
         let studentData = [];
         let timelineChart = null;
         let toolsChart = null;
+        let toolVisibilityData = []; // Store current tool visibility settings
+        let visibleToolIds = null; // Set of visible tool IDs for filtering
 
         // Check authentication
         if (!isAuthenticated()) {
@@ -709,6 +761,12 @@
             const token = getAuthToken();
             
             try {
+                // First load tool visibility settings
+                await loadToolVisibilitySettings(courseId);
+                
+                // Show the customize tools button
+                document.getElementById('customize-tools-btn').style.display = 'block';
+                
                 // Load all analytics data in parallel
                 const [engagement, students, tools, timeline] = await Promise.all([
                     fetch(`${API_BASE}/analytics/course/${courseId}/engagement/`, {
@@ -725,6 +783,9 @@
                     }).then(r => r.json())
                 ]);
                 
+                // Filter tools by visibility
+                const filteredTools = filterToolsByVisibility(tools.tools);
+                
                 // Update stats
                 document.getElementById('total-students').textContent = engagement.students.total;
                 document.getElementById('active-students').textContent = engagement.students.with_activity;
@@ -733,9 +794,9 @@
                 document.getElementById('avg-runs').textContent = engagement.usage.avg_runs_per_student;
                 document.getElementById('tools-adopted').textContent = `${engagement.usage.tools_used}/22`;
                 
-                // Render charts
+                // Render charts (with filtered tools)
                 renderTimelineChart(timeline.timeline);
-                renderToolsChart(tools.tools);
+                renderToolsChart(filteredTools);
                 
                 // Render student table
                 studentData = students.students;
@@ -760,6 +821,164 @@
                 document.getElementById('loading').innerHTML = '<p style="color: #dc2626;">Error loading analytics. Please try again.</p>';
             }
         }
+        
+        // =================================================================
+        // TOOL VISIBILITY MANAGEMENT
+        // =================================================================
+        
+        async function loadToolVisibilitySettings(courseId) {
+            const token = getAuthToken();
+            try {
+                const response = await fetch(`${API_BASE}/analytics/course/${courseId}/tool-visibility/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    toolVisibilityData = data.tools;
+                    visibleToolIds = new Set(data.tools.filter(t => t.is_visible).map(t => t.id));
+                } else {
+                    // If endpoint fails, show all tools
+                    toolVisibilityData = [];
+                    visibleToolIds = null;
+                }
+            } catch (error) {
+                console.error('Error loading tool visibility:', error);
+                toolVisibilityData = [];
+                visibleToolIds = null;
+            }
+        }
+        
+        function filterToolsByVisibility(tools) {
+            if (!visibleToolIds) return tools; // No filter if visibility not loaded
+            return tools.filter(tool => {
+                // Match by slug or name
+                const matchingTool = toolVisibilityData.find(t => 
+                    t.slug === tool.tool__slug || t.name === tool.tool__name
+                );
+                return !matchingTool || matchingTool.is_visible;
+            });
+        }
+        
+        function openToolVisibilityModal() {
+            renderToolVisibilityList();
+            document.getElementById('tool-visibility-modal').style.display = 'block';
+        }
+        
+        function closeToolVisibilityModal() {
+            document.getElementById('tool-visibility-modal').style.display = 'none';
+        }
+        
+        function renderToolVisibilityList() {
+            const list = document.getElementById('tool-visibility-list');
+            
+            if (toolVisibilityData.length === 0) {
+                list.innerHTML = '<p style="padding: 1rem; color: #6b7280;">No tools with tracking found. Tools will appear here once they have usage data.</p>';
+                return;
+            }
+            
+            // Group tools by category (if we can infer from slug)
+            const groupedTools = {};
+            toolVisibilityData.forEach(tool => {
+                const category = inferToolCategory(tool.slug);
+                if (!groupedTools[category]) groupedTools[category] = [];
+                groupedTools[category].push(tool);
+            });
+            
+            let html = '';
+            Object.keys(groupedTools).sort().forEach(category => {
+                html += `<div style="border-bottom: 1px solid #e5e7eb; padding: 0.75rem 1rem; background: #f9fafb; font-weight: 600; color: #374151;">
+                    ${category}
+                </div>`;
+                groupedTools[category].forEach(tool => {
+                    const checked = tool.is_visible ? 'checked' : '';
+                    html += `
+                        <label style="display: flex; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background 0.15s;"
+                               onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
+                            <input type="checkbox" data-tool-id="${tool.id}" ${checked} 
+                                   style="width: 18px; height: 18px; margin-right: 0.75rem; cursor: pointer;"
+                                   onchange="updateVisibilitySummary()">
+                            <span style="flex: 1;">${tool.name}</span>
+                            <span style="color: #9ca3af; font-size: 0.875rem;">${tool.slug}</span>
+                        </label>
+                    `;
+                });
+            });
+            
+            list.innerHTML = html;
+            updateVisibilitySummary();
+            document.getElementById('visibility-summary').style.display = 'block';
+        }
+        
+        function inferToolCategory(slug) {
+            const categories = {
+                'regression': ['bivariate-regression', 'multiple-linear-regression', 'logistic-regression', 'multinomial-logistic', 'mlr-interactions'],
+                'hypothesis-testing': ['chi-square', 'independent-ttest', 'paired-ttest', 'oneway-anova', 'ab-proportion', 'mcnemar'],
+                'clustering': ['kmeans', 'kprototypes'],
+                'time-series': ['arimax'],
+                'probability': ['compound-probability', 'selection-probability'],
+                'sample-size': ['sample-size'],
+                'text-analysis': ['sentiment', 'theme', 'qualitative'],
+                'descriptive': ['pearson', 'univariate'],
+                'advanced': ['neural-network', 'conjoint', 'propensity', 'resource-allocation']
+            };
+            
+            for (const [category, keywords] of Object.entries(categories)) {
+                if (keywords.some(kw => slug.toLowerCase().includes(kw))) {
+                    return category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ');
+                }
+            }
+            return 'Other';
+        }
+        
+        function updateVisibilitySummary() {
+            const checkboxes = document.querySelectorAll('#tool-visibility-list input[type="checkbox"]');
+            const visibleCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            document.getElementById('visible-count').textContent = visibleCount;
+            document.getElementById('total-tools-count').textContent = checkboxes.length;
+        }
+        
+        function selectAllTools(visible) {
+            const checkboxes = document.querySelectorAll('#tool-visibility-list input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = visible);
+            updateVisibilitySummary();
+        }
+        
+        async function saveToolVisibility() {
+            const token = getAuthToken();
+            const checkboxes = document.querySelectorAll('#tool-visibility-list input[type="checkbox"]');
+            
+            const tools = Array.from(checkboxes).map(cb => ({
+                tool_id: parseInt(cb.dataset.toolId),
+                is_visible: cb.checked
+            }));
+            
+            try {
+                const response = await fetch(`${API_BASE}/analytics/course/${currentCourseId}/tool-visibility/update/`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tools })
+                });
+                
+                if (response.ok) {
+                    closeToolVisibilityModal();
+                    // Reload analytics with new visibility settings
+                    loadCourseAnalytics(currentCourseId);
+                    alert('✓ Tool visibility settings saved!');
+                } else {
+                    const error = await response.json();
+                    alert('Failed to save: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error saving tool visibility:', error);
+                alert('Failed to save tool visibility settings');
+            }
+        }
+        
+        // Hook up the customize button
+        document.getElementById('customize-tools-btn').addEventListener('click', openToolVisibilityModal);
 
         function renderTimelineChart(timelineData) {
             const ctx = document.getElementById('timelineChart').getContext('2d');
