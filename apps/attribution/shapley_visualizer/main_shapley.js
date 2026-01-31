@@ -1,54 +1,8 @@
 // main_shapley.js
 
-const CHANNELS = ['search', 'social', 'displayA', 'displayB', 'email'];
-const CHANNEL_NAMES = {
-    'search': 'Paid Search',
-    'social': 'Social',
-    'displayA': 'Display (Ad A)',
-    'displayB': 'Display (Ad B)',
-    'email': 'Email'
-};
-const COLORS = {
-    'search': '#3b82f6',
-    'social': '#ec4899',
-    'displayA': '#f59e0b',
-    'displayB': '#d97706',
-    'email': '#10b981'
-};
+// Shared constants (CHANNELS, SCENARIOS) are now loaded from assignment_data.js
 
-// --- Scenarios ---
-// Each scenario defines the "Value Function" v(S) for subsets
-// Base underlying patterns that the calculator will use
-const SCENARIOS = {
-    'linear': {
-        // Case A
-        baseWeights: { 'search': 5, 'social': 3, 'displayA': 0.6, 'displayB': 0.4, 'email': 2 },
-        synergyFactor: 1.0,
-        maxPathLength: 3,
-        description: "<strong>Client: Simple Widget Co.</strong><br><em>Management Intuition:</em> \"Our product is cheap and simple. We think people just see an ad and buy it. We don't think showing them ads on multiple channels really increases the odds much—it just costs more. <strong>Let's test if channels are operating independently.</strong>\""
-    },
-    'synergy': {
-        // Case B
-        baseWeights: { 'search': 3, 'social': 4, 'displayA': 1, 'displayB': 1, 'email': 3 },
-        synergyFactor: 1.5, 
-        maxPathLength: 6, // Longer paths for complexity
-        description: "<strong>Client: Luxury Vacation Inc.</strong><br><em>Management Intuition:</em> \"Nobody books a $5k trip on a whim. We believe Social inspires them, Email nurtures them, and Search closes the deal. We suspect the <strong>Combination</strong> of channels is far more powerful than any single channel alone. <strong>Let's test for Multi-Touch Synergy.</strong>\""
-    },
-    'overlap': {
-        // Case C
-        baseWeights: { 'search': 8, 'social': 6, 'displayA': 3, 'displayB': 3, 'email': 6 },
-        synergyFactor: 0.6, // Heavy diminishing returns
-        maxPathLength: 5, // Lots of retargeting
-        description: "<strong>Client: Fast Fashion Outlet</strong><br><em>Management Intuition:</em> \"We are blasting ads everywhere! But the CFO thinks we might be over-spending. Does a user who sees 5 Retargeting ads really convert better than one who sees 2, or are we just cannibalizing our own budget? <strong>Let's check for Saturation/Overlap.</strong>\""
-    },
-    'dominance': {
-        // Case D
-        baseWeights: { 'search': 20, 'social': 1, 'displayA': 0.3, 'displayB': 0.2, 'email': 0.5 },
-        synergyFactor: 1.05,
-        maxPathLength: 2, // Quick urgency
-        description: "<strong>Client: Emergency Plumber</strong><br><em>Management Intuition:</em> \"When a pipe bursts, people search for a plumber and call. We're spending money on Social and Display for 'Branding', but we suspect Search is doing 99% of the work. <strong>Let's see if the data supports cutting the other channels.</strong>\""
-    }
-};
+const TOOL_SLUG = 'shapley-attribution';
 
 // Global State
 let appState = {
@@ -62,10 +16,64 @@ let appState = {
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     initUI();
+    // Initialize Seed from UI or Generate Random
+    handleSeedInit();
     loadScenario('synergy'); // This triggers generation & UI update
+
+    // PROFESSOR MODE: Expose state for tutorial
+    window.appState = appState;
+    
+    // Initialize engagement tracking
+    if (typeof initEngagementTracking === 'function') {
+        initEngagementTracking(TOOL_SLUG);
+    }
 });
 
+function handleSeedInit() {
+    const seedInput = document.getElementById('random-seed');
+    const rerollText = document.getElementById('reroll-btn-text');
+    
+    // If input is empty, generate one
+    if (seedInput && !seedInput.value) {
+        const randomSeed = Math.floor(Math.random() * 100000);
+        seedInput.value = randomSeed;
+    }
+    // Update PRNG
+    if(seedInput) {
+        prng = new SeededRNG(seedInput.value);
+        if(rerollText) {
+            rerollText.textContent = `Generate New Data (Using Seed: ${seedInput.value})`;
+        }
+    }
+}
+
 function initUI() {
+    // Reroll Button
+    const rerollBtn = document.getElementById('reroll-btn');
+    if(rerollBtn) {
+        rerollBtn.addEventListener('click', () => {
+            // Should we generate a NEW random seed if they click this button?
+            // If they manually set a seed, clicking "Generate New Data" with the SAME seed 
+            // will result in the same data. 
+            // To be helpful, let's assume if they click the big button they want NEW randomness generally,
+            // UNLESS they just explicitly set a seed. 
+            // BUT, to keep it simple and consistent:
+            // "Generate" with a locked seed = Re-run deterministic simulation (useful if they changed other params? or just to confirm)
+            // Actually, for "Professor Mode", we want them to see that the seed CONTROLS the data.
+            // So if they click it 10 times with Seed 123, they get the same data 10 times. That's the lesson.
+            
+            // Just re-run:
+            loadScenario(appState.currentScenario);
+            
+            // Optional: visual feedback
+            const originalText = rerollBtn.querySelector('strong').textContent;
+            rerollBtn.querySelector('strong').textContent = "Regenerating...";
+            setTimeout(() => {
+                rerollBtn.querySelector('strong').textContent = originalText;
+            }, 600);
+        });
+    }
+
     // Channel Toggles
     document.querySelectorAll('.channel-toggle').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -92,6 +100,25 @@ function initUI() {
         const val = parseFloat(e.target.value);
         updateCurrentCoalitionValue(val);
     });
+
+    // Seed "Set" Button
+    const applySeedBtn = document.getElementById('apply-seed-btn');
+    if(applySeedBtn) {
+        applySeedBtn.addEventListener('click', () => {
+             // 1. Lock in the seed (updates the PRNG object)
+             handleSeedInit();
+             
+             // 2. Run the simulation immediately (so they don't have to click twice)
+             loadScenario(appState.currentScenario);
+             
+             // 3. Visual feedback 
+             const originalText = applySeedBtn.textContent;
+             applySeedBtn.textContent = "Running...";
+             setTimeout(() => {
+                 applySeedBtn.textContent = "Set";
+             }, 800);
+        });
+    }
 }
 
 // --- Logic ---
@@ -156,8 +183,47 @@ function loadScenario(scenarioKey) {
     appState.currentScenario = scenarioKey;
     const config = SCENARIOS[scenarioKey];
     
+    // -- Handle Custom Channel Labels (B2B Case) --
+    const DEFAULT_NAMES = {
+        'search': 'Paid Search', 'social': 'Social', 'displayA': 'Display (Ad A)',
+        'displayB': 'Display (Ad B)', 'email': 'Email',
+        '(start)': 'Start', '(conversion)': 'Converted', '(null)': 'Lost / Null'
+    };
+    // Reset first
+    Object.assign(CHANNEL_NAMES, DEFAULT_NAMES);
+    // Override if config has labels
+    if(config.channelLabels) {
+        Object.assign(CHANNEL_NAMES, config.channelLabels);
+    }
+    
+    // Update Button Labels in UI
+    document.querySelectorAll('.channel-toggle').forEach(btn => {
+        const ch = btn.dataset.channel;
+        if (CHANNEL_NAMES[ch]) {
+            // Shapley buttons have <span class="icon">...</span> TEXT
+            const icon = btn.querySelector('.icon');
+            if (icon) {
+                 btn.innerHTML = '';
+                 btn.appendChild(icon);
+                 btn.appendChild(document.createTextNode(' ' + CHANNEL_NAMES[ch]));
+            } else {
+                btn.textContent = CHANNEL_NAMES[ch];
+            }
+        }
+    });
+
     // Step 1: Generate Synthetic Data
-    appState.rawPaths = generateSyntheticData(config, 1200);
+    // Use config sampleSize if available, otherwise default to 4000
+    const sampleSize = config.sampleSize || 4000;
+    
+    // Update Dynamic Texts
+    const countStr = sampleSize.toLocaleString();
+    ['sim-note-count', 'sim-sub-count', 'stat-total-paths'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.textContent = countStr;
+    });
+
+    appState.rawPaths = generateSyntheticData(config, sampleSize);
 
     // Step 2: Aggregate Data to get Coalition Values (Conversion Rates)
     const aggregatedValues = {}; // key: "sorted,ids" -> { users: n, conv: k }
@@ -186,6 +252,21 @@ function loadScenario(scenarioKey) {
     // Store for UI access
     appState.aggregatedStats = aggregatedValues;
 
+    // Check for sparse data
+    let hasSparseData = false;
+    for (const key in aggregatedValues) {
+        if (aggregatedValues[key].coalition.length > 0 && aggregatedValues[key].users === 0) {
+            hasSparseData = true;
+            break;
+        }
+    }
+    
+    // Show warning if sparse
+    const warningEl = document.getElementById('sparse-data-warning');
+    if (warningEl) {
+        warningEl.style.display = hasSparseData ? 'block' : 'none';
+    }
+
     // UPDATE DESCRIPTION TEXT
     const descEl = document.getElementById('scenario-description');
     if(descEl) descEl.innerHTML = config.description || "";
@@ -212,9 +293,27 @@ function loadScenario(scenarioKey) {
         appState.calc.setCoalitionValue(data.coalition, rate);
     }
     
+    // Track scenario load and successful run
+    if (typeof markScenarioLoaded === 'function') {
+        markScenarioLoaded(config.name || scenarioKey);
+    }
+    if (typeof markRunAttempted === 'function') {
+        markRunAttempted();
+    }
+    if (typeof markRunSuccessful === 'function') {
+        const convCount = appState.rawPaths.filter(p => p.converted).length;
+        markRunSuccessful({
+            scenario: scenarioKey,
+            sample_size: sampleSize,
+            channels: CHANNELS.length,
+            conversion_rate: (convCount / sampleSize * 100).toFixed(1)
+        }, `Shapley model: ${sampleSize} paths, ${(convCount / sampleSize * 100).toFixed(1)}% conversion`);
+    }
+    
     renderPathStats();
     updateChannelToggles();
     updateUI();
+    renderSynergyMatrix(); // NEW
 }
 
 /**
@@ -227,11 +326,11 @@ function generateSyntheticData(config, count) {
     const maxLen = config.maxPathLength || 3;
 
     for(let i=0; i<count; i++) {
-        // 1. Determine Path Length (Random 1 to Max)
+        // 1. Determine Path Length (Seed controlled)
         // Skew slightly towards shorter paths
-        const roll = Math.random();
+        const roll = prng.next(); // Use SeededRNG
         let pathLen = 1;
-        if (roll > 0.3) pathLen = Math.ceil(Math.random() * maxLen);
+        if (roll > 0.3) pathLen = Math.ceil(prng.next() * maxLen);
         
         // 2. Pick Channels
         const pathChannels = [];
@@ -245,7 +344,7 @@ function generateSyntheticData(config, count) {
         const theoreticalRate = getTheoreticalRate(uniqueSet, config);
         
         // Random roll
-        const converted = (Math.random() * 100) < theoreticalRate;
+        const converted = (prng.next() * 100) < theoreticalRate;
         
         paths.push({
             id: i,
@@ -258,7 +357,7 @@ function generateSyntheticData(config, count) {
 
 function pickWeightedChannel(weights) {
     const totalW = Object.values(weights).reduce((a,b)=>a+b, 0);
-    let r = Math.random() * totalW;
+    let r = prng.next() * totalW; // Use SeededRNG
     for (const ch of CHANNELS) {
         r -= weights[ch];
         if (r <= 0) return ch;
@@ -279,11 +378,35 @@ function getTheoreticalRate(coalition, config) {
             finalValue += 5; 
         }
     }
+    
+    // Global Suppression for Realism (Target ~5-8% overall rate instead of 20%+)
+    finalValue = finalValue * 0.45;
+
     // Cap
     return Math.min(finalValue, 80);
 }
 
 // Rendering Path Stats
+function exportToCSV() {
+    let csv = 'Path_ID,Channel_Sequence,Unique_Channels,Converted\n';
+    
+    appState.rawPaths.forEach(p => {
+        const pathSeq = p.path.join(' -> ');
+        const uniqueSet = [...new Set(p.path)].sort().join('+');
+        const conv = p.converted ? '1' : '0';
+        csv += `${p.id},"${pathSeq}","${uniqueSet}",${conv}\n`;
+    });
+    
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `shapley_paths_${appState.currentScenario}_${Date.now()}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
 function renderPathStats() {
     const listContainer = document.getElementById('path-list-display');
     const totalConvDisplay = document.getElementById('total-conv-display');
@@ -590,8 +713,8 @@ function renderCharts(attribution) {
         y: linearVals,
         name: 'Linear (Equal)',
         type: 'bar',
-        marker: { color: '#94a3b8' },
-        opacity: 0.5
+        marker: { color: '#e2e8f0' }, // Very Light Grey (Slate 200)
+        opacity: 0.8
     };
 
     const traceCompLast = {
@@ -599,17 +722,26 @@ function renderCharts(attribution) {
         y: lastClickVals,
         name: 'Last Touch',
         type: 'bar',
-        marker: { color: '#475569' },
-        opacity: 0.3
+        marker: { color: '#94a3b8' }, // Medium Light Grey (Slate 400)
+        opacity: 0.6
     };
 
     const layoutComp = {
         barmode: 'group',
-        margin: { t: 10, b: 30, l: 30, r: 10 },
+        yaxis: { title: 'Contribution to CR (%)' },
+        margin: { t: 10, b: 30, l: 60, r: 10 },
         legend: { orientation: 'h', y: -0.2 }
     };
 
     Plotly.newPlot('plotly-comparison', [traceCompShapley, traceCompLinear, traceCompLast], layoutComp, {displayModeBar: false});
+
+    // PROFESSOR MODE: Store comparison data for tutorial
+    appState.comparisonData = {
+        channels: sortedChannels,
+        shapleyVals: yValuesAbs,
+        lastTouchVals: lastClickVals,
+        linearVals: linearVals
+    };
 
     generateAnalystVerdict(sortedChannels, yValuesAbs, lastClickVals);
 }
@@ -668,3 +800,93 @@ function generateAnalystVerdict(channels, shapleyVals, lastTouchVals) {
         verdictBox.style.background = '#f8fafc';
     }
 }
+
+// --- NEW VISUALIZATION ---
+
+function renderSynergyMatrix() {
+    // 1. Calculate Pairwise Synergies (Lower Triangle Only - matrix is symmetric)
+    const axis = CHANNELS; // ['search', 'social', ...]
+    const labels = axis.map(c => CHANNEL_NAMES[c]);
+    
+    // zValues[row][col] represents Synergy(Row, Col)
+    // Only show lower triangle (where row > col) since matrix is symmetric
+    const zValues = [];
+    const textValues = [];
+
+    // Find min/max for symmetrical color scale
+    let maxAbs = 0.5; // default floor to avoid range collapse
+
+    axis.forEach((rowCh, r) => {
+        const row = [];
+        const txtRow = [];
+        axis.forEach((colCh, c) => {
+            if (r <= c) {
+                // Upper triangle + diagonal: leave blank (null)
+                row.push(null); 
+                txtRow.push("");
+            } else {
+                // Lower triangle: calculate synergy
+                // v({A})
+                const vA = appState.calc.getCoalitionValue([rowCh]);
+                // v({B})
+                const vB = appState.calc.getCoalitionValue([colCh]);
+                // v({A,B})
+                const vAB = appState.calc.getCoalitionValue([rowCh, colCh]);
+                
+                // Synergy = v({A,B}) - (vA + vB)
+                let syn = vAB - (vA + vB);
+                row.push(syn);
+                txtRow.push((syn > 0 ? "+" : "") + syn.toFixed(1) + "%");
+                
+                if (Math.abs(syn) > maxAbs) maxAbs = Math.abs(syn);
+            }
+        });
+        zValues.push(row);
+        textValues.push(txtRow);
+    });
+    
+    // 2. Plot Heatmap
+    // We want Green for Positive, White for 0, Red for Negative
+    
+    const data = [{
+        z: zValues,
+        x: labels,
+        y: labels,
+        type: 'heatmap',
+        colorscale: [
+            [0, '#ef4444'],    // -Max (Red)
+            [0.5, '#ffffff'],  // 0 (White)
+            [1, '#22c55e']     // +Max (Green)
+        ],
+        zmin: -maxAbs,
+        zmax: maxAbs,
+        text: textValues, // Display formatted value
+        texttemplate: "%{text}", 
+        hovertemplate: `
+            <b>%{x} + %{y}</b><br>
+            Synergy: <b>%{text}</b><br>
+            <span style="font-size:0.9em; color:#64748b;">
+                Impact on Conversion Rate vs. Sum of Parts
+            </span>
+            <extra></extra>
+        `
+    }];
+    
+    const layout = {
+        title: { text: '' }, 
+        margin: { t: 20, b:40, l:100, r:20 },
+        height: 400,
+        xaxis: { side: 'bottom' },
+        yaxis: { autorange: 'reversed' }
+    };
+
+    Plotly.newPlot('synergy-heatmap', data, layout, {displayModeBar: false});
+    
+    // PROFESSOR MODE: Store synergy data for tutorial
+    appState.synergyData = {
+        zValues: zValues,
+        labels: labels,
+        axis: axis
+    };
+}
+

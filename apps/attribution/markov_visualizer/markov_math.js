@@ -21,21 +21,35 @@ class MarkovAttribution {
         const n = this.states.length;
         // Init counts matrix
         const counts = Array(n).fill(0).map(() => Array(n).fill(0));
+        
+        // Track Visits for Visualization sizing
+        this.stateVisits = {};
+        this.states.forEach(s => this.stateVisits[s] = 0);
 
         paths.forEach(p => {
             // Add Start -> First
             let prev = '(start)';
+            this.stateVisits[prev]++; // Start is visited once per path
             
             p.path.forEach(step => {
                 // Determine current state name (handle potential naming mismatches if needed)
                 let curr = step; 
                 this.recordTransition(counts, prev, curr);
+                
+                // Count visit
+                if (this.stateVisits[curr] !== undefined) {
+                    this.stateVisits[curr]++;
+                }
+                
                 prev = curr;
             });
 
             // Add Final -> Conversion or Null
             let finalState = p.converted ? '(conversion)' : '(null)';
             this.recordTransition(counts, prev, finalState);
+            if (this.stateVisits[finalState] !== undefined) {
+                this.stateVisits[finalState]++;
+            }
         });
 
         // Normalize to Probabilities
@@ -53,6 +67,57 @@ class MarkovAttribution {
         this.matrix[nullIdx] = Array(n).fill(0); this.matrix[nullIdx][nullIdx] = 1.0;
     }
 
+    /**
+     * Sets the transition matrix directly from a transitions dictionary
+     * transitions: { '(start)': {'search': 0.5, ...}, 'search': {'social': 0.2, ...}, ... }
+     */
+    setTransitionMatrix(transitions) {
+        const n = this.states.length;
+        this.matrix = Array(n).fill(0).map(() => Array(n).fill(0));
+        
+        // Convert transitions dict to matrix format
+        for (let fromState in transitions) {
+            const fromIdx = this.stateIndex[fromState];
+            if (fromIdx === undefined) continue;
+            
+            for (let toState in transitions[fromState]) {
+                let toIdx;
+                // Map '(end)' to either '(conversion)' or '(null)' - use conversion as primary
+                if (toState === '(end)') {
+                    toIdx = this.stateIndex['(conversion)'];
+                } else {
+                    toIdx = this.stateIndex[toState];
+                }
+                
+                if (toIdx !== undefined) {
+                    this.matrix[fromIdx][toIdx] = transitions[fromState][toState];
+                }
+            }
+        }
+        
+        // Calculate null transitions: probability of NOT converting from each channel
+        // For each channel, the remaining probability after all transitions goes to null
+        this.channels.forEach(ch => {
+            const chIdx = this.stateIndex[ch];
+            const rowSum = this.matrix[chIdx].reduce((a, b) => a + b, 0);
+            const nullIdx = this.stateIndex['(null)'];
+            
+            // If row doesn't sum to 1, the remainder goes to null (abandonment)
+            if (rowSum < 1.0) {
+                this.matrix[chIdx][nullIdx] = 1.0 - rowSum;
+            }
+        });
+        
+        // Fix Absorbing States
+        const convIdx = this.stateIndex['(conversion)'];
+        const nullIdx = this.stateIndex['(null)'];
+        
+        this.matrix[convIdx] = Array(n).fill(0); 
+        this.matrix[convIdx][convIdx] = 1.0;
+        this.matrix[nullIdx] = Array(n).fill(0); 
+        this.matrix[nullIdx][nullIdx] = 1.0;
+    }
+
     recordTransition(counts, fromState, toState) {
         const r = this.stateIndex[fromState];
         const c = this.stateIndex[toState];
@@ -66,7 +131,7 @@ class MarkovAttribution {
      * using matrix multiplication (or fundamental matrix logic simplified)
      * 
      * Since we don't have a matrix library, we simulate the "power" method.
-     * We multiply the transition matrix by itself N times until convergence.
+     * We multiply the transition matrix by itself until convergence.
      */
     getConversionProbability(customMatrix = null) {
         let M = customMatrix || this.matrix;
@@ -75,10 +140,19 @@ class MarkovAttribution {
         let stateVec = Array(this.states.length).fill(0);
         stateVec[this.stateIndex['(start)']] = 1.0;
 
-        // Propagate for maxPathLength + buffer steps (e.g., 10-15 steps)
-        // Most marketing paths are < 10 steps.
-        for (let step = 0; step < 20; step++) {
+        // Iterate until convergence (or max iterations)
+        const EPSILON = 0.0001; // Convergence threshold
+        const MAX_ITERATIONS = 100; // Safety cap
+        
+        for (let step = 0; step < MAX_ITERATIONS; step++) {
+            const prevVec = [...stateVec];
             stateVec = this.multiplyVectorMatrix(stateVec, M);
+            
+            // Check if converged (no significant change in any state probability)
+            const maxDiff = Math.max(...stateVec.map((v, i) => Math.abs(v - prevVec[i])));
+            if (maxDiff < EPSILON) {
+                break; // Converged!
+            }
         }
 
         return stateVec[this.stateIndex['(conversion)']];
@@ -86,38 +160,65 @@ class MarkovAttribution {
 
     /**
      * Calculates Removal Effects for all channels
+     * Uses OUTGOING transition removal (not incoming)
+     * 
+     * Correct counterfactual: "What if users who touched this channel had nowhere to go next?"
+     * This prevents negative removal effects from substitution dynamics.
      */
     calculateAttributionProportional() {
         const baseProb = this.getConversionProbability();
+        console.log('🔍 Base Conversion Probability:', baseProb);
+        
         if (baseProb === 0) return {};
 
         const removalEffects = {};
         let totalEffect = 0;
 
         this.channels.forEach(ch => {
-            // Create a matrix where this channel is effectively "removed"
-            // Method: All transitions TO this channel in the matrix become transitions TO (null)
-            
             const tempM = this.cloneMatrix(this.matrix);
             const chIdx = this.stateIndex[ch];
             const nullIdx = this.stateIndex['(null)'];
 
-            // Iterate over all rows, redirect any flow aimed at chIdx to nullIdx
+            // Method 1: Remove OUTGOING transitions from this channel
+            // The channel becomes a dead-end that sends everyone to (null)
+            tempM[chIdx] = Array(this.states.length).fill(0);
+            tempM[chIdx][nullIdx] = 1.0; // All traffic from this channel → Null
+            
+            /* 
+               [ANDREW MODIFICATION]
+               Disabled "Incoming Redistribution" (Method 2) to align with standard Markov Attribution.
+               Standard definition: "If node X is removed, all paths traversing X satisfy P(conversion) = 0".
+               
+               Benefits:
+               1. Guarantees shared credit for multi-touch paths (e.g., Social->Search->Conv). Use "Redistribution" implies Social was useless if Search could replace it.
+               2. Prevents "100% attribution to the strongest node" syndrome.
+               3. Eliminates negative removal effects (we are creating a hole, not optimizing traffic).
+            */
+            
+            // Method 2 (DISABLED): Redirect incoming traffic proportionally
+            /*
             for(let r=0; r<tempM.length; r++) {
-                const flowToChannel = tempM[r][chIdx];
-                if (flowToChannel > 0) {
-                    tempM[r][chIdx] = 0;
-                    tempM[r][nullIdx] += flowToChannel; // Redirect traffic to drop-off
+                if (r === chIdx) continue;
+                
+                const flowToRemovedChannel = tempM[r][chIdx];
+                if (flowToRemovedChannel > 0) {
+                   // ... redistribution logic ...
                 }
             }
+            */
 
             const newProb = this.getConversionProbability(tempM);
             const effect = 1 - (newProb / baseProb);
             
-            // Effect can be small negative due to floating point noise, clamp 0
+            console.log(`   ${ch}: Base=${baseProb.toFixed(4)}, After removal=${newProb.toFixed(4)}, Effect=${effect.toFixed(4)} (${(effect*100).toFixed(1)}%)`);
+            
+            // Effect should always be >= 0 now (removing a channel can't improve conversion)
             removalEffects[ch] = Math.max(0, effect);
             totalEffect += removalEffects[ch];
         });
+
+        console.log('📊 Total of all removal effects:', totalEffect.toFixed(4));
+        console.log('📊 Raw removal effects:', removalEffects);
 
         // Normalize to sum to 1.0 (or 100%)
         const attribution = {};
@@ -125,6 +226,8 @@ class MarkovAttribution {
             if (totalEffect === 0) attribution[ch] = 0;
             else attribution[ch] = (removalEffects[ch] / totalEffect);
         });
+        
+        console.log('📊 Final normalized attribution:', attribution);
 
         return {
             attribution, // Shares (0.0 - 1.0)

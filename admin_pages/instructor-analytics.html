@@ -636,7 +636,7 @@
                 <div class="chart-container">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <h3 style="margin: 0;">📝 My Quizzes</h3>
-                        <a href="quiz/quiz-create.html" class="btn" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; display: inline-block;">+ New Quiz</a>
+                        <a href="quiz/quiz-manager.html" class="btn" style="background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; display: inline-block;">+ New Quiz</a>
                     </div>
                     <ul id="quiz-list" style="list-style: none; padding: 0;"></ul>
                     <div id="no-quizzes" style="display: none; text-align: center; padding: 2rem; color: #6b7280;">
@@ -769,7 +769,7 @@
             const byTool = view === 'by_tool';
             
             try {
-                const url = `${API_BASE}/courses/${currentCourseId}/timeline/?days=${days}&by_tool=${byTool}`;
+                const url = `${API_BASE}/analytics/course/${currentCourseId}/timeline/?days=${days}&by_tool=${byTool}`;
                 const response = await fetch(url, {
                     headers: { 'Authorization': `Token ${token}` }
                 });

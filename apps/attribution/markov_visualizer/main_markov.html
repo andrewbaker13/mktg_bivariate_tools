@@ -15,6 +15,23 @@
   <script src="../../../shared/js/tracking.js"></script>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   
+  <!-- Shared Attribution Data -->
+  <script src="../attribution_data.js"></script>
+
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]'], ['$$', '$$']]
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
   <!-- Reuse Math/Logic from Shapley if useful effectively -->
   <style>
       .matrix-container {
@@ -54,6 +71,10 @@
         <h1>Markov Chain Attribution Lab</h1>
         <div class="hero-context">
           <span class="badge" style="background:#8b5cf6;">Advanced Analytics</span>
+          <label class="toggle_switch" style="margin-left: 1rem; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="professorMode">
+            <span style="font-size: 0.9rem; font-weight: 600; color: #4b5563;">🎓 Professor Mode</span>
+          </label>
         </div>
       </div>
       <p class="hero-header__lede">
@@ -62,8 +83,8 @@
       </p>
     </header>
 
-    <section class="test-overview">
-      <h2 id="overview-heading">Concept: The Removal Effect</h2>
+    <section id="tut-concept-section" class="test-overview">
+      <h2 id="overview-heading">CONCEPT: THE REMOVAL EFFECT</h2>
       <div class="card">
         <p>
           <strong>The Problem:</strong> Shapley told us <em>who</em> was on the team. But it didn't tell us <em>when</em> they played.
@@ -75,44 +96,126 @@
           Then, we simulate <strong>Removing a Node</strong> (e.g. Delete "Social"). 
           If the global conversion rate drops by 20%, then Social gets 20% of the credit.
         </p>
+        
+        <div style="background: #dcfce7; border-left: 4px solid #22c55e; padding: 1rem; margin-top: 1rem; border-radius: 4px;">
+          <strong style="color: #166534;">💡 Why This Matters: Real-World Impact</strong>
+          <p style="margin: 0.5rem 0 0; font-size: 0.95rem; color: #14532d; line-height:1.6;">
+            <strong>Case Study:</strong> A SaaS company discovered via Markov analysis that while "Free Trial" touchpoints appeared in 80% of conversions, they had a low removal effect (only 12% drop). Meanwhile, "Demo Request" appeared in just 30% of paths but had a 45% removal effect—it was the critical bridge.
+            <br><br>
+            <strong>The Action:</strong> They shifted sales focus to fast-tracking engaged users to demos rather than promoting free trials, increasing close rates by 28%.
+          </p>
+        </div>
+
+        <details style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; margin-top: 1rem;">
+             <summary style="padding: 1rem; cursor:pointer; font-weight:600; color:#334155; display:flex; align-items:center; gap:0.5rem; outline:none;">
+                <span>📘 Technical Explanation: What is a Markov Chain?</span>
+             </summary>
+             <div style="padding: 0 1rem 1rem 1rem; border-top: 1px solid #e2e8f0; font-size: 0.95rem; color: #334155;">
+                <p style="margin-top:1rem;">
+                    A <strong>Markov Chain</strong> is a mathematical system that transitions from one state to another according to fixed probabilistic rules. It is named after Russian mathematician <em>Andrey Markov</em>.
+                </p>
+                <ul style="margin-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 1rem;">
+                    <li style="margin-bottom:0.5rem;"><strong>The States:</strong> In our context, these are the marketing channels (e.g., Facebook, Email, Display) plus strict start/end states (Start, Conversion, Lost).</li>
+                    <li style="margin-bottom:0.5rem;"><strong>The Transitions:</strong> The arrows connecting the states. The "weight" of an arrow is the probability that a user at State A will go to State B next.</li>
+                </ul>
+                <div style="background:#fff; padding:0.75rem; border-left:4px solid #3b82f6; border-radius:4px;">
+                    <strong>The "Memoryless" Property (Markov Property):</strong><br>
+                    The defining characteristic of a Markov chain is that the probability of the NEXT step depends <em>only</em> on the CURRENT step, not on the history of how you got there.
+                    <br><br>
+                    <em style="color:#64748b;">"It doesn't matter if a user saw 50 ads or 1 ad before arriving at the 'Checkout' page. Once they are at the 'Checkout' state, their probability of buying is fixed based on that state alone."</em>
+                </div>
+             </div>
+        </details>
       </div>
     </section>
 
     <!-- SECTION 1: DATA GEN & RAW TABLE -->
     <section class="card" style="margin-bottom: 1.5rem;">
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+      <div id="tut-scenario-section" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             <div>
-                 <label for="scenario-select" style="font-weight:bold; font-size:1.1rem; block; color:#475569;">
-                    🏢 Select Client Scenario
+                 <label for="scenario-select" style="font-weight:bold; font-size:1.1rem; display:block; margin-bottom:0.5rem; color:#1e40af;">
+                    🏢 Select Client Scenario (The Business Context)
                  </label>
-                 <select id="scenario-select" class="full-width-select" style="max-width: 500px;">
-                    <option value="linear">Case A: Simple Widget Co. (Independent)</option>
-                    <option value="synergy" selected>Case B: Luxury Vacation Inc. (Complex Paths)</option>
-                    <option value="overlap">Case C: Fast Fashion Outlet (Retargeting loops)</option>
+                 <select id="scenario-select" class="full-width-select" style="max-width: 500px; font-size:1rem; padding:0.5rem;">
+                    <option value="linear">Case A: Simple Widget Co. (Testing for Independence)</option>
+                    <option value="synergy" selected>Case B: Luxury Vacation Inc. (Testing for Multi-Touch Synergy)</option>
+                    <option value="overlap">Case C: Fast Fashion Outlet (Testing for Saturation/Cannibalization)</option>
+                    <option value="dominance">Case D: Emergency Plumber (Testing for Search Dominance)</option>
+                    <option value="b2b">Case E: The 'Smarketing' War (B2B Enterprise Software)</option>
                  </select>
             </div>
-            <button onclick="window.location.reload()" class="btn-secondary">🔄 Reroll Data</button>
+            <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                 <button onclick="exportToCSV()" style="font-size:0.8rem; padding:6px 12px; cursor:pointer; background:#fff; border:1px solid #10b981; color:#10b981; border-radius:4px; margin-bottom: 0.5rem;">📥 Export Data</button>
+                 
+                 <details style="background:white; border:1px solid #e2e8f0; border-radius:6px; padding:0.5rem; font-size:0.9rem; width: 280px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); z-index: 20; position: relative;">
+                    <summary style="cursor:pointer; font-weight:500; color:#475569; outline:none; list-style:none; display:flex; align-items:center; justify-content:flex-end; gap:0.5rem;">
+                        <span>⚙️ Simulation Parameters</span>
+                        <span style="font-size:0.8rem; color:#94a3b8;">▼</span>
+                    </summary>
+                    <div style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.75rem;">
+                        
+                        <!-- Reroll -->
+                        <button id="reroll-btn" style="width:100%; padding:8px; font-size:0.85rem; cursor:pointer; background:#fff; border:1px solid #cbd5e1; color:#334155; border-radius:4px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <span>🎲</span> <strong id="reroll-btn-text">Generate New Random Data</strong>
+                        </button>
+                        
+                        <!-- Seed -->
+                         <div style="background:#f8fafc; padding:0.75rem; border-radius:4px; border:1px solid #f1f5f9;">
+                            <label for="random-seed" style="display:block; font-size:0.8rem; font-weight:600; color:#475569; margin-bottom:6px;">Seed (for Reproducibility)</label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="text" id="random-seed" placeholder="Random" style="flex:1; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.85rem;">
+                                <button id="apply-seed-btn" style="padding:6px 12px; font-size:0.85rem; cursor:pointer; background:#3b82f6; color:white; border:none; border-radius:4px;">Set</button>
+                            </div>
+                           <p style="margin:6px 0 0 0; font-size:0.75rem; color:#64748b; line-height:1.4;">
+                                Enter a number (e.g. "123") to force the exact same results every time. Useful for classroom demos.
+                            </p>
+                        </div>
+                    </div>
+                 </details>
+            </div>
         </div>
-        <p class="text-sm muted" style="margin-top:0.5rem;">Generating 12,000 User Journeys...</p>
+        <div id="scenario-description" style="margin-top: 1rem;">
+            <!-- Injected by JS -->
+            Loading scenario details...
+        </div>
+        <p id="sim-status-text" class="text-sm muted" style="margin-top:0.5rem;">Generating User Journeys...</p>
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2rem;">
-          <h2 style="margin:0;">1. The Raw Data: Customer Journeys</h2>
-          <span style="font-size: 0.9rem; color: #64748b;">Showing first 15 of 12,000 paths</span>
-      </div>
-      <p style="margin-bottom:1rem;">Before building the network, we must look at the raw sequences. Markov cares deeply about the <strong>order</strong> of these steps (e.g., does Search come before Social?).</p>
-      
-      <!-- Replaced Table with Div Container for Aggregated View (Matches Shapley) -->
-      <div id="path-list-display" class="path-list-container" style="max-height: 400px; overflow-y: auto; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px;">
-        <!-- JS will inject rows here -->
+      <div id="tut-raw-data-section">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2rem;">
+            <h2 style="margin:0;">1. The Raw Data: Customer Journeys</h2>
+            <span id="path-count-display" style="font-size: 0.9rem; color: #64748b;">Showing first 15 of paths</span>
+        </div>
+        <p style="margin-bottom:1rem;">Before building the network, we must look at the raw sequences. Markov cares deeply about the <strong>order</strong> of these steps (e.g., does Search come before Social?).</p>
+        
+        <!-- Replaced Table with Div Container for Aggregated View (Matches Shapley) -->
+        <div id="path-list-display" class="path-list-container" style="max-height: 400px; overflow-y: auto; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <!-- JS will inject rows here -->
+        </div>
+        
+        <!-- Baseline Stats -->
+        <div style="display:flex; gap:1rem; margin-top:1rem; padding:0.75rem; background:#f8fafc; border-radius:6px; border:1px solid #e2e8f0;">
+          <div style="flex:1; text-align:center;">
+              <div style="color:#64748b; font-size:0.85rem;">Total Sessions</div>
+              <div id="stat-total-paths" style="font-size:1.25rem; font-weight:bold; color:#1e293b;">-</div>
+          </div>
+          <div style="flex:1; text-align:center; border-left:1px solid #cbd5e1;">
+              <div style="color:#64748b; font-size:0.85rem;">Total Conversions</div>
+              <div id="stat-total-conv" style="font-size:1.25rem; font-weight:bold; color:#22c55e;">-</div>
+          </div>
+          <div style="flex:1; text-align:center; border-left:1px solid #cbd5e1;">
+              <div style="color:#64748b; font-size:0.85rem;">Overall Conversion Rate</div>
+              <div id="stat-conv-rate" style="font-size:1.25rem; font-weight:bold; color:#3b82f6;">-</div>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- SECTION 2: SANKEY -->
-    <section class="card" style="margin-bottom: 1.5rem;">
+    <section id="tut-sankey-section" class="card" style="margin-bottom: 1.5rem;">
       <h2>2. Visualizing the Flow (Sankey Diagram)</h2>
-      <p>The table above is hard to read. A <strong>Sankey Diagram</strong> aggregates all those 12,000 paths into a single "River of Traffic".</p>
+      <p id="sankey-intro-text">The table above is hard to read. A <strong>Sankey Diagram</strong> aggregates all those paths into a single "River of Traffic".</p>
       <div style="background:#ecfdf5; border:1px solid #6ee7b7; padding:0.8rem; margin-bottom:1rem; border-radius:4px; font-size:0.9rem; color:#064e3b;">
           <strong>Tip for Reading:</strong> 
           <br>The width of the line represents the <strong>volume of users</strong> moving between steps. 
@@ -123,7 +226,7 @@
     </section>
 
     <!-- SECTION 3: THE TRANSITION MATRIX -->
-    <section class="card" style="margin-bottom: 1.5rem;">
+    <section id="tut-matrix-section" class="card" style="margin-bottom: 1.5rem;">
       <h2>3. The Transition Matrix</h2>
       <p class="text-sm muted">The core brain of the Markov model. Probability of moving from Row (Left) to Column (Top).</p>
       
@@ -139,13 +242,68 @@
       <div id="heatmap-container" style="height: 500px; width:100%;"></div>
     </section>
 
+    <!-- NEW SECTION: NETWORK GRAPH -->
+    <section class="card" style="margin-bottom: 1.5rem;">
+        <h2>3b. The Ecosystem Map (Network Analysis)</h2>
+        <p>While the Heatmap shows probabilities, this **Network Graph** reveals the "gravity" of your marketing ecosystem. It visualizes the same transition data as a force-directed system.</p>
+
+        <!-- Technical Note (Inline, not floating) -->
+        <details style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 1rem; padding: 0.5rem;">
+            <summary style="cursor:pointer; font-weight:600; color:#475569; padding:0.5rem; outline:none;">
+               🧮 Under the Hood: Network Theory (Click to Expand)
+            </summary>
+            <div style="padding: 0 0.5rem 0.5rem 0.5rem; color: #334155; font-size: 0.95rem;">
+                <p style="margin-top:0.5rem;">
+                    This visualization treats your channels as a <strong>Force-Directed Graph</strong>. Key nodes repel each other, while high-probability transitions act as "springs" pulling them together.
+                </p>
+                <div style="background:#fff; padding:0.75rem; border:1px solid #cbd5e1; border-radius:4px;">
+                    <strong style="display:block; margin-bottom:0.5rem; font-size:0.85rem; color:#334155;">Mathematical Basis:</strong>
+                    <ul style="font-size:0.85rem; margin:0; padding-left:1.2rem; margin-bottom: 0.5rem;">
+                        <li><strong>Node Size</strong> \(\propto\) Steady State Probability \(\pi_i\) (long-term traffic share).</li>
+                        <li><strong>Edge Thickness</strong> \(\propto\) Transition Probability \(P(X_{t+1}|X_t)\).</li>
+                    </ul>
+                    <p style="font-size:0.85rem; color:#64748b; margin:0; border-top:1px solid #e2e8f0; padding-top:0.5rem;">
+                        <em>*Mathematically equivalent to the Matrix, but highlights "Ecosystem Clusters".</em>
+                    </p>
+                </div>
+            </div>
+        </details>
+        
+        <div style="background:#f0f9ff; border-left:4px solid #0ea5e9; padding:1rem; margin-bottom:1rem; font-size:0.9rem; color:#0c4a6e;">
+          <strong>Visualization Key:</strong>
+          <ul style="margin:0.5rem 0 0 1.5rem; display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem;">
+            <li>🔵 <strong>Nodes (Circles):</strong> Represents a Channel.<br><span style="font-size:0.8em; color:#0284c7;">Bigger Circle = More Traffic passing through.</span></li>
+            <li>➡️ <strong>Edges (Lines):</strong> Represents a Transition.<br><span style="font-size:0.8em; color:#0284c7;">Thicker/Darker Line = Higher Probability.</span></li>
+          </ul>
+          <div style="margin-top:1rem; padding-top:0.5rem; border-top:1px solid #bae6fd;">
+              💡 <strong>Insight:</strong> Look for <strong>"Hubs"</strong> (central nodes connected to everything) versus <strong>"Islands"</strong> (channels disconnected from the main flow).
+          </div>
+        </div>
+        
+        <div id="network-graph" style="height:500px; width:100%; border:1px solid #e2e8f0; border-radius:8px;"></div>
+    </section>
+
     <!-- SECTION 4: REMOVAL EFFECT LAB -->
-    <section class="card">
+    <section id="tut-removal-section" class="card">
       <h2>4. The "Removal Effect" Lab</h2>
       <p class="text-sm muted">How we calculate attribution: Simulate a "Blackout" of one channel and measure the panic.</p>
 
+      <!-- NEW: GLOBAL REMOVAL CHART -->
+      <div id="global-removal-chart-container" style="margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #e2e8f0;">
+        <h3>🌍 Overview: The "Blackout" Simulation</h3>
+        <p style="margin-bottom:1rem; line-height:1.6;">Before drilling into details, let's look at the big picture. We simulated removing <strong>each channel individually</strong> and measured the % drop in global conversions.</p>
+        
+        <div style="background:#fff7ed; border-left:4px solid #f97316; padding:1rem; margin-bottom:1rem; font-size:0.9rem; color:#7c2d12;">
+            <strong>Interpretation:</strong>
+            <br>A high bar means the channel is a <strong>Vital Organ</strong> (removing it kills conversions).
+            <br>A low bar means the channel is Redundant (users found another way).
+        </div>
+        
+        <div id="global-removal-chart" style="height:350px;"></div>
+      </div>
+
       <div class="removal-lab-panel">
-         <h3 style="margin-top:0;">🧪 Impact Simulator: Removing a Node</h3>
+         <h3 style="margin-top:0;">🧪 Deep Dive: Single Channel Removal Lab</h3>
          <p style="margin-bottom: 1.5rem;">Select a channel to simulate a total outage. If the channel is critical (a bridge), conversions will crash.</p>
          
          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom: 2rem;">
@@ -188,17 +346,46 @@
                     <!-- JS Injected -->
                  </p>
                  
-                 <!-- New Section: Under the Hood -->
-                 <div style="background: #f1f5f9; padding: 1rem; border-radius: 6px; border: 1px dashed #94a3b8;">
-                    <strong style="display:block; margin-bottom:0.5rem; color:#475569;">🔧 Under the Hood: Matrix Surgery</strong>
-                    <p class="text-sm" style="margin-bottom:0.5rem;">
-                        To simulate this removal, the model scanned the Transition Matrix and <strong>intercepted</strong> all traffic heading to <span id="removed-viz-name" style="font-weight:bold;">--</span>.
-                        Instead of landing on the channel, that traffic was rerouted to "Lost / Null".
-                    </p>
-                    <div id="broken-links-list" style="max-height: 150px; overflow-y: auto; font-size: 0.9rem;">
-                        <!-- JS injected list of impacts -->
+                 <!-- New Section: Under the Hood (Technical Deep Dive) -->
+                 <details style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-top: 1rem;">
+                    <summary style="padding: 1rem; cursor:pointer; font-weight:600; color:#475569; display:flex; align-items:center; gap:0.5rem; outline:none;">
+                        <span style="font-size:1.1rem;">🔧</span>
+                        <span>Technical Deep Dive: The "Bridge is Out" Math</span>
+                        <span style="margin-left:auto; color:#94a3b8; font-size:0.8rem;">(Click to Expand)</span>
+                    </summary>
+                    <div style="padding: 0 1rem 1rem 1rem; border-top: 1px solid #e2e8f0; font-size: 0.95rem; color: #334155;">
+                        <p style="margin-top:1rem;">The core of this model assumes that marketing channels are <strong>necessary steps</strong>, not just optional suggestions.</p>
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 1.5rem 0;">
+                            <div>
+                                <strong style="color:#0f172a; display:block; margin-bottom:0.5rem;">1. The Assumption (Topology)</strong>
+                                <p style="margin:0; line-height:1.6;">
+                                    When we remove a node (channel), we do not "redistribute" its traffic to other channels. Instead, we define the channel as a <strong>Blocked Node</strong>.
+                                    <br><br>
+                                    <em>Implication:</em> Any user journey that attempts to pass through this channel instantly fails (goes to Null). This means channels that act as "Generic Gateways" get massive credit.
+                                </p>
+                            </div>
+                            <div>
+                                <strong style="color:#0f172a; display:block; margin-bottom:0.5rem;">2. The Equation</strong>
+                                <div style="background:#fff; padding:1rem; border-radius:4px; border:1px solid #cbd5e1;">
+                                    \[ \text{Effect}_i = 1 - \frac{P(\text{Conv } | \text{ Removed } i)}{P(\text{Conv})} \]
+                                </div>
+                                <p style="margin:0.5rem 0 0 0; font-size:0.9rem; color:#64748b;">
+                                    If removing Channel X causes the Global Conversion Rate to drop from 5% to 0%, the Effect is 1.0 (100%).
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Removed Traffic Redistribution Explainer -->
+                        
+                        <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #cbd5e1;">
+                            <strong style="font-size:0.85rem; color:#64748b;">Transitions Intercepted:</strong>
+                            <div id="broken-links-list" style="max-height: 150px; overflow-y: auto; font-size: 0.9rem; margin-top:0.5rem;">
+                                <!-- JS injected list of impacts -->
+                            </div>
+                        </div>
                     </div>
-                 </div>
+                 </details>
             </div>
 
          </div>
@@ -208,9 +395,52 @@
       <div id="markov-bar-chart" style="height:400px;"></div>
     </section>
 
+    <!-- SECTION 5: Method Comparison -->
+    <section id="tut-comparison-section" class="card">
+      <h2>5. SHAPLEY VS. MARKOV COMPARISON</h2>
+      <p style="color:#64748b; margin-bottom:1.5rem;">
+        Same data, different lenses. See how Shapley (presence-based) and Markov (sequence-based) allocate credit differently.
+      </p>
+      
+      <div id="comparison-chart" style="min-height: 400px;"></div>
+      
+      <div style="background:#f8fafc; border-left:4px solid #8b5cf6; padding:1.5rem; margin-top:2rem; border-radius:4px;">
+        <h3 style="margin-top:0; color:#6b21a8;">💡 Why Do They Differ?</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-top:1rem;">
+          <div>
+            <strong style="color:#3b82f6;">Shapley Value (Blue Bars):</strong>
+            <p style="font-size:0.95rem; line-height:1.6; color:#475569;">
+              Asks: "If I add this channel to <em>any</em> mix of other channels, how much does conversion rate improve on average?"
+              <br><br>
+              <strong>Ignores order.</strong> Email as 1st touch = Email as last touch. Credits channels based on their contribution to team performance, regardless of when they played.
+            </p>
+          </div>
+          <div>
+            <strong style="color:#8b5cf6;">Markov Chain (Purple Bars):</strong>
+            <p style="font-size:0.95rem; line-height:1.6; color:#475569;">
+              Asks: "If I <em>delete this node</em> from the journey network, how much does the global conversion rate drop?"
+              <br><br>
+              <strong>Order matters.</strong> Channels that act as critical bridges (e.g., Social→Email→Conversion) get more credit. Credits channels based on their role in the sequential flow.
+            </p>
+          </div>
+        </div>
+        
+        <div style="background:#fff; padding:1rem; border-radius:4px; margin-top:1rem;">
+          <strong>🎯 Interpretation Guide:</strong>
+          <ul style="margin:0.5rem 0; padding-left:1.5rem; line-height:1.8;">
+            <li><strong>Shapley > Markov:</strong> Channel adds value to many mixes but isn't critical to any single path (good "team player")</li>
+            <li><strong>Markov > Shapley:</strong> Channel is a critical bridge in high-converting paths (structural importance)</li>
+            <li><strong>Similar values:</strong> Channel is both a good mix partner AND structurally important</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
   </main>
 
+  <script src="../shapley_visualizer/shapley_math.js"></script>
   <script src="markov_math.js"></script>
   <script src="main_markov.js"></script>
+  <script src="markov_tutorial.js"></script>
 </body>
 </html>

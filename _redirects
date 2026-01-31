@@ -1,8 +1,13 @@
-# Force HTTPS for all HTTP requests
-http://drbakermarketing.com/* https://drbakermarketing.com/:splat 301!
-http://www.drbakermarketing.com/* https://www.drbakermarketing.com/:splat 301!
-http://mktpraxis.com/* https://mktpraxis.com/:splat 301!
-http://www.mktpraxis.com/* https://www.mktpraxis.com/:splat 301!
+# Redirect drbakermarketing.com to www.mktpraxis.com (Consolidate traffic)
+http://drbakermarketing.com/*       https://www.mktpraxis.com/:splat 301!
+https://drbakermarketing.com/*      https://www.mktpraxis.com/:splat 301!
+http://www.drbakermarketing.com/*   https://www.mktpraxis.com/:splat 301!
+https://www.drbakermarketing.com/*  https://www.mktpraxis.com/:splat 301!
+
+# Redirect mktpraxis.com to www.mktpraxis.com (Canonical)
+http://mktpraxis.com/*              https://www.mktpraxis.com/:splat 301!
+https://mktpraxis.com/*             https://www.mktpraxis.com/:splat 301!
+http://www.mktpraxis.com/*          https://www.mktpraxis.com/:splat 301!
 
 # Short game portal redirects for easy student access
 /game              /admin_pages/games/game-join.html    301

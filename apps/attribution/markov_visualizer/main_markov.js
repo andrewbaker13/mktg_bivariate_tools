@@ -1,61 +1,89 @@
 // main_markov.js
 
-// Reusing same channel defs as Shapley for consistency
-const CHANNELS = ['search', 'social', 'displayA', 'displayB', 'email'];
-const CHANNEL_NAMES = {
-    'search': 'Paid Search',
-    'social': 'Social',
-    'displayA': 'Display A',
-    'displayB': 'Display B',
-    'email': 'Email',
-    '(start)': 'Start',
-    '(conversion)': 'Converted',
-    '(null)': 'Lost / Null'
-};
-const COLORS = {
-    'search': '#3b82f6',
-    'social': '#ec4899',
-    'displayA': '#f59e0b',
-    'displayB': '#d97706',
-    'email': '#10b981',
-    '(start)': '#94a3b8',
-    '(conversion)': '#22c55e',
-    '(null)': '#ef4444'
-};
+// Shared constants (CHANNELS, SCENARIOS) are now loaded from assignment_data.js
+// We use them directly here.
 
-// Simplified Scenarios (Duplicated from Shapley for standalone functioning)
-const SCENARIOS = {
-    'linear': {
-        baseWeights: { 'search': 5, 'social': 3, 'displayA': 0.6, 'displayB': 0.4, 'email': 2 },
-        synergyFactor: 1.0, 
-        maxPathLength: 3
-    },
-    'synergy': {
-        baseWeights: { 'search': 3, 'social': 4, 'displayA': 1, 'displayB': 1, 'email': 3 },
-        synergyFactor: 1.5,
-        maxPathLength: 6
-    },
-    'overlap': {
-        baseWeights: { 'search': 8, 'social': 6, 'displayA': 3, 'displayB': 3, 'email': 6 },
-        synergyFactor: 0.6,
-        maxPathLength: 5
-    }
-};
+const TOOL_SLUG = 'markov-attribution';
 
 let appState = {
     model: new MarkovAttribution(CHANNELS),
     rawPaths: []
 };
 
+// Expose for Professor Mode tutorial
+window.appState = appState;
+
 document.addEventListener('DOMContentLoaded', () => {
     initUI();
+    // Initialize Seed from UI
+    handleSeedInit();
     loadScenario('synergy');
+    
+    // Initialize engagement tracking
+    if (typeof initEngagementTracking === 'function') {
+        initEngagementTracking(TOOL_SLUG);
+    }
 });
 
+function handleSeedInit() {
+    const seedInput = document.getElementById('random-seed');
+    const rerollText = document.getElementById('reroll-btn-text');
+
+    // If input is empty, generate one
+    if (seedInput && !seedInput.value) {
+        const randomSeed = Math.floor(Math.random() * 100000);
+        seedInput.value = randomSeed;
+    }
+    // Update PRNG
+    if(seedInput) {
+        prng = new SeededRNG(seedInput.value);
+        if(rerollText) {
+            rerollText.textContent = `Generate New Data (Using Seed: ${seedInput.value})`;
+        }
+    }
+}
+
 function initUI() {
+    // Reroll Button
+    const rerollBtn = document.getElementById('reroll-btn');
+    if(rerollBtn) {
+        rerollBtn.addEventListener('click', () => {
+            // Re-run with SAME seed (proving determinism)
+            const currentScen = document.getElementById('scenario-select').value;
+            loadScenario(currentScen);
+            
+            // Visual feedback
+            const originalText = rerollBtn.querySelector('strong').textContent;
+            rerollBtn.querySelector('strong').textContent = "Regenerating...";
+            setTimeout(() => {
+                rerollBtn.querySelector('strong').textContent = originalText;
+            }, 600);
+        });
+    }
+
     document.getElementById('scenario-select').addEventListener('change', (e) => {
         loadScenario(e.target.value);
     });
+    
+    // Seed "Set" Button
+    const applySeedBtn = document.getElementById('apply-seed-btn');
+    if(applySeedBtn) {
+        applySeedBtn.addEventListener('click', () => {
+             // 1. Lock seed
+             handleSeedInit();
+
+             // 2. Run immediately
+             const currentScen = document.getElementById('scenario-select').value;
+             loadScenario(currentScen);
+
+             // 3. Visual feedback
+             const originalText = applySeedBtn.textContent;
+             applySeedBtn.textContent = "Running...";
+             setTimeout(() => {
+                 applySeedBtn.textContent = "Set";
+             }, 800);
+        });
+    }
 
     document.querySelectorAll('.channel-toggle').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -67,16 +95,91 @@ function initUI() {
 
 function loadScenario(key) {
     const config = SCENARIOS[key];
-    appState.rawPaths = generateSyntheticData(config, 12000);
     
-    // Train Model
+    // -- Handle Custom Channel Labels (B2B Case) --
+    const DEFAULT_NAMES = {
+        'search': 'Paid Search', 'social': 'Social', 'displayA': 'Display (Ad A)',
+        'displayB': 'Display (Ad B)', 'email': 'Email',
+        '(start)': 'Start', '(conversion)': 'Converted', '(null)': 'Lost / Null'
+    };
+    // Reset first
+    Object.assign(CHANNEL_NAMES, DEFAULT_NAMES);
+    // Override if config has labels
+    if(config.channelLabels) {
+        Object.assign(CHANNEL_NAMES, config.channelLabels);
+    }
+    
+    // Update Removal Button Labels
+    document.querySelectorAll('.channel-toggle').forEach(btn => {
+        const ch = btn.dataset.remove;
+        if (CHANNEL_NAMES[ch]) {
+            // Keep the icon if we can find it, or just use text?
+            // Existing text: "Remove Search 🔍". Let's try to preserve the icon char if it's at the end.
+            const oldText = btn.textContent; // "Remove Search 🔍"
+            // Simple approach: Extract the last char if it's non-alpha (emoji)
+            const lastChar = oldText.trim().slice(-2); // Grab last 2 chars to be safe for surrogate pairs
+            // Check if it looks like an emoji/icon (crudely)
+            const hasIcon = /[\u{1F300}-\u{1F9FF}]/u.test(lastChar);
+            
+            // If we detect an icon, keep it. Otherwise default logic.
+            // Actually, simpler: just rewrite "Remove [Name]" and don't worry about icon for B2B?
+            // Or assume the icon is always the last token?
+            // Let's just create a new string: "Remove " + Name
+            btn.textContent = `Remove ${CHANNEL_NAMES[ch]}`;
+        }
+    });
+
+    // Use config sampleSize if available, otherwise default to 12000
+    const sampleSize = config.sampleSize || 12000;
+    
+    // Update Dynamic Texts
+    const countStr = sampleSize.toLocaleString();
+    const simStatusText = document.getElementById('sim-status-text');
+    if (simStatusText) simStatusText.textContent = `Generating ${countStr} User Journeys...`;
+    
+    const pathCountDisplay = document.getElementById('path-count-display');
+    if (pathCountDisplay) pathCountDisplay.textContent = `Showing first 15 of ${countStr} paths`;
+
+    const sankeyIntroText = document.getElementById('sankey-intro-text');
+    if (sankeyIntroText) sankeyIntroText.innerHTML = `The table above is hard to read. A <strong>Sankey Diagram</strong> aggregates all those ${countStr} paths into a single "River of Traffic".`;
+
+    appState.rawPaths = generateSyntheticData(config, sampleSize, key);
+    
+    // Train Model - this properly handles conversion vs. abandonment from path outcomes
     appState.model.train(appState.rawPaths);
+    
+    // Inject scenario description
+    const descEl = document.getElementById('scenario-description');
+    if (descEl && config.description) {
+        descEl.innerHTML = config.description;
+    }
+    
+    // Track scenario load and successful run
+    if (typeof markScenarioLoaded === 'function') {
+        markScenarioLoaded(config.name || key);
+    }
+    if (typeof markRunAttempted === 'function') {
+        markRunAttempted();
+    }
+    if (typeof markRunSuccessful === 'function') {
+        const convCount = appState.rawPaths.filter(p => p.converted).length;
+        markRunSuccessful({
+            scenario: key,
+            sample_size: sampleSize,
+            channels: CHANNELS.length,
+            conversion_rate: (convCount / sampleSize * 100).toFixed(1)
+        }, `Markov model: ${sampleSize} paths, ${(convCount / sampleSize * 100).toFixed(1)}% conversion`);
+    }
     
     // Render
     renderPathTable(appState.rawPaths);
+    renderGlobalStats(appState.rawPaths); // NEW: Update stats bar
     renderSankey();
     renderHeatmap();
+    renderNetworkGraph();       // NEW: Force Directed Graph
+    renderGlobalRemovalChart(); // NEW: Global Removal Overview
     renderAttribution();
+    renderComparison(); // Add comparison chart
     
     // Reset removal box
     document.getElementById('removal-result-box').style.display = 'none';
@@ -87,6 +190,14 @@ function loadScenario(key) {
  */
 function runRemovalExperiment(channel) {
     const res = appState.model.calculateAttributionProportional();
+    
+    // Debug logging
+    console.log('=== Removal Experiment Debug ===');
+    console.log('Selected channel:', channel);
+    console.log('Base conversion rate:', res.baseConversionRate);
+    console.log('All removal effects:', res.removalEffects);
+    console.log('All attributions:', res.attribution);
+    
     const impact = res.removalEffects[channel];
     const base = res.baseConversionRate;
     
@@ -150,7 +261,7 @@ function runRemovalExperiment(channel) {
     let impacts = [];
     matrix.forEach((row, rIdx) => {
         const prob = row[chIdx];
-        if(prob > 0.001) { // Threshold for relevance
+        if(prob > 0.000001) { // Lowered threshold to catch rare paths in small samples
             impacts.push({
                 source: states[rIdx],
                 prob: prob
@@ -178,7 +289,7 @@ function runRemovalExperiment(channel) {
             
             li.innerHTML = `
                 <span>From <strong>${srcName}</strong></span>
-                <span style="color:#ef4444;">${pct}% &rarr; 🗑️ Lost</span>
+                <span style="color:#3b82f6;">${pct}% → Redistributed</span>
             `;
             ul.appendChild(li);
         });
@@ -197,8 +308,9 @@ function renderSankey() {
     const source = [];
     const target = [];
     const value = [];
+    const linkColors = []; // Color links by source channel
 
-    // Increase threshold to hide noise strings (e.g. 0.05 = 5%)
+    // Threshold to hide small flows (adjust for clarity)
     const THRESHOLD = 0.02; 
 
     for(let r=0; r<matrix.length; r++) {
@@ -207,40 +319,93 @@ function renderSankey() {
             if (val > THRESHOLD) {
                  source.push(r);
                  target.push(c);
-                 value.push(val * 100); 
+                 // Flow volume: probability (0-1) × 100 = percentage of starting traffic
+                 const flowPercent = val * 100;
+                 // Exaggerate differences: use power function to make large flows more prominent
+                 // Store actual value for display, but use exaggerated value for visual width
+                 const visualWidth = Math.pow(flowPercent, 1.3); // Exaggerate by 30%
+                 value.push(visualWidth); 
+                 
+                 // Color the link based on source channel (with transparency)
+                 const sourceColor = colors[r] || '#94a3b8';
+                 // Convert hex to rgba with 40% opacity
+                 const rgb = sourceColor.match(/\w\w/g).map(x => parseInt(x, 16));
+                 linkColors.push(`rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.4)`);
             }
         }
     }
+    
+    // Define explicit node positions for better layout (0 = left, 1 = right)
+    // Start at far left, channels in middle columns, outcomes at far right
+    const nodeX = [];
+    const nodeY = [];
+    const stateCount = appState.model.states.length;
+    
+    appState.model.states.forEach((state, idx) => {
+        if (state === '(start)') {
+            nodeX.push(0.01);  // Far left
+            nodeY.push(0.5);   // Vertically centered
+        } else if (state === '(conversion)') {
+            nodeX.push(0.99);  // Far right
+            nodeY.push(0.3);   // Upper right
+        } else if (state === '(null)') {
+            nodeX.push(0.99);  // Far right
+            nodeY.push(0.7);   // Lower right
+        } else {
+            // Marketing channels: spread vertically in middle columns
+            const channelIdx = CHANNELS.indexOf(state);
+            if (channelIdx !== -1) {
+                nodeX.push(0.35 + (channelIdx % 2) * 0.3); // Alternate between 35% and 65%
+                nodeY.push(0.2 + (channelIdx * 0.15));      // Spread vertically
+            } else {
+                nodeX.push(0.5);
+                nodeY.push(0.5);
+            }
+        }
+    });
 
     const data = {
         type: "sankey",
         orientation: "h",
+        arrangement: "snap",  // Snap nodes to positions for cleaner layout
         node: {
-          pad: 20,
-          thickness: 30,
-          line: { color: "white", width: 1 },
+          pad: 25,           // More spacing between nodes
+          thickness: 35,     // Wider nodes for better visibility
+          line: { color: "white", width: 2 },
           label: labels,
           color: colors,
-          hovertemplate: 'State: %{label}<extra></extra>'
+          x: nodeX,          // Explicit horizontal positions
+          y: nodeY,          // Explicit vertical positions
+          // Clarified hover: sum of transitions can exceed 100% due to loops
+          hovertemplate: '<b>%{label}</b><br>Cumulative Transitions: %{value:.1f}%<br><span style="font-size:0.9em; color:#64748b;">(Can exceed 100% if users revisit)</span><extra></extra>'
         },
         link: {
           source: source,
           target: target,
           value: value,
-          color: 'rgba(200,200,200, 0.3)',
-          // Improve hover explanation
+          color: linkColors,  // Color by source channel
+          // Enhanced hover - need to recalculate actual percentage from exaggerated width
+          customdata: source.map((s, i) => {
+              // Reverse the exaggeration to show true percentage
+              const actualPercent = Math.pow(value[i], 1/1.3);
+              return actualPercent;
+          }),
           hovertemplate: `
-            <b>Flow Detail</b><br>
-            From: %{source.label}<br>
-            To: %{target.label}<br>
-            Volume: %{value:.1f}% of starting traffic<extra></extra>
+            <b>Journey Step</b><br>
+            %{source.label} → %{target.label}<br>
+            <b>%{customdata:.1f}%</b> of users take this path
+            <extra></extra>
           `
         }
     };
 
     const layout = {
-        margin: { t: 20, b: 20, l:20, r:20 },
-        font: { size: 13 }
+        title: {
+          text: 'Customer Journey Flow Map<br><sub style="font-size:0.85em; color:#64748b;">Width = % of users (exaggerated) | Colors = Channel source</sub>',
+          font: { size: 15 }
+        },
+        margin: { t: 60, b: 30, l: 40, r: 40 },
+        font: { size: 14, family: 'Inter, sans-serif' }
     };
 
     Plotly.newPlot('sankey-diagram', [data], layout);
@@ -266,7 +431,14 @@ function renderHeatmap() {
         colorscale: niceBlues,
         // Show % on the squares
         texttemplate: "%{z:.0%}", 
-        hoverinfo: 'x+y+z'
+        hovertemplate: `
+            <b>Transition Probability</b><br>
+            From: <b>%{y}</b><br>
+            To: <b>%{x}</b><br>
+            Probability: <b>%{z:.1%}</b><br>
+            <span style="font-size:0.9em; color:#64748b;">If a user is at %{y}, they have a %{z:.1%} chance of moving to %{x} next</span>
+            <extra></extra>
+        `
     }];
     
     const layout = {
@@ -327,31 +499,139 @@ function renderAttribution() {
     Plotly.newPlot('markov-bar-chart', data, layout, {displayModeBar: false});
 }
 
+function renderComparison() {
+    // Calculate Markov attribution (already done)
+    const markovRes = appState.model.calculateAttributionProportional();
+    const markovShares = markovRes.attribution;
+    const totalCR = markovRes.baseConversionRate * 100;
+    
+    // Calculate Shapley attribution from same paths
+    const shapleyCalc = new ShapleyCalculator(CHANNELS);
+    
+    // Aggregate paths to get coalition values
+    const coalitionStats = {};
+    const totalSubsets = 1 << CHANNELS.length;
+    for (let i = 0; i < totalSubsets; i++) {
+        const coalition = [];
+        for (let j = 0; j < CHANNELS.length; j++) {
+            if ((i & (1 << j)) !== 0) coalition.push(CHANNELS[j]);
+        }
+        coalitionStats[coalition.sort().join(',')] = { users: 0, conv: 0 };
+    }
+    
+    // Tally paths
+    appState.rawPaths.forEach(p => {
+        const uniqueChannels = [...new Set(p.path)].sort().join(',');
+        if (coalitionStats[uniqueChannels]) {
+            coalitionStats[uniqueChannels].users++;
+            if (p.converted) coalitionStats[uniqueChannels].conv++;
+        }
+    });
+    
+    // Set coalition values (conversion rates)
+    for (const key in coalitionStats) {
+        const data = coalitionStats[key];
+        const rate = data.users > 0 ? (data.conv / data.users) * 100 : 0;
+        const coalition = key ? key.split(',') : [];
+        shapleyCalc.setCoalitionValue(coalition, rate);
+    }
+    
+    // Calculate Shapley values
+    const shapleyValues = shapleyCalc.calculate();
+    
+    // Prepare data for grouped bar chart
+    const x = CHANNELS.map(c => CHANNEL_NAMES[c]);
+    
+    // Shapley: absolute contribution
+    const shapleyAbs = CHANNELS.map(c => shapleyValues[c]);
+    
+    // Markov: absolute contribution (share × total CR)
+    const markovAbs = CHANNELS.map(c => markovShares[c] * totalCR);
+    
+    const traceShapley = {
+        x: x,
+        y: shapleyAbs,
+        name: 'Shapley Value',
+        type: 'bar',
+        marker: { color: '#3b82f6' },
+        hovertemplate: '<b>%{x}</b><br>Shapley: %{y:.2f}%<extra></extra>'
+    };
+    
+    const traceMarkov = {
+        x: x,
+        y: markovAbs,
+        name: 'Markov Chain',
+        type: 'bar',
+        marker: { color: '#8b5cf6' },
+        hovertemplate: '<b>%{x}</b><br>Markov: %{y:.2f}%<extra></extra>'
+    };
+    
+    const layout = {
+        title: {
+            text: `Attribution Comparison: Shapley vs. Markov<br><sub style="font-size:0.85em;">Both methods applied to same ${appState.rawPaths.length.toLocaleString()} user journeys</sub>`,
+            font: { size: 15 }
+        },
+        barmode: 'group',
+        yaxis: { 
+            title: 'Marginal Conversion Impact (%)',
+            range: [0, Math.max(...shapleyAbs, ...markovAbs) * 1.2]
+        },
+        margin: { t: 70, b: 50, l: 50, r: 20 },
+        legend: {
+            orientation: 'h',
+            x: 0.5,
+            xanchor: 'center',
+            y: -0.15
+        }
+    };
+    
+    Plotly.newPlot('comparison-chart', [traceShapley, traceMarkov], layout, {displayModeBar: false});
+}
 
-// --- Data Gen (Simplified port from Shapley) ---
-function generateSyntheticData(config, count) {
+
+// --- Data Gen (Transition-Based) ---
+function generateSyntheticData(config, count, scenarioKey) {
     const paths = [];
-    const maxLen = config.maxPathLength || 3;
+    const maxLen = config.maxPathLength || 5; // Allow longer paths for true Markov behavior
+    
+    // Define realistic transition probabilities based on scenario
+    const transitions = getTransitionProbabilities(config, scenarioKey);
 
     for(let i=0; i<count; i++) {
-        // Skew slightly towards shorter paths
-        const roll = Math.random();
-        let pathLen = 1;
-        if (roll > 0.3) pathLen = Math.ceil(Math.random() * maxLen);
-        
         const pathChannels = [];
-        for(let s=0; s<pathLen; s++) {
-            pathChannels.push(pickWeightedChannel(config.baseWeights));
+        let currentState = '(start)';
+        let converted = false;
+        
+        // Follow transition probabilities to build path
+        for(let step=0; step<maxLen; step++) {
+            const nextState = pickWeightedTransition(transitions[currentState] || {});
+            
+            // Pure Markov Outcome Determination
+            if (nextState === '(end)') {
+                converted = true;
+                break; // Path successfully connected
+            }
+            else if (nextState === '(null)' || !nextState) {
+                converted = false;
+                break; // Path abandoned (Lost)
+            }
+            else {
+                pathChannels.push(nextState);
+                currentState = nextState;
+            }
         }
         
-        // Simple conversion probability based on synergy/length
-        // (Just dummy logic to get some conversions)
-        let rate = 5; // Base 5%
-        if (pathChannels.includes('search')) rate += 10;
-        if (pathChannels.length > 1) rate *= config.synergyFactor;
+        // If loop finished without hitting (end) or (null), it's a dropout (max steps reached)
+        // This implicitly acts as the "(null)" state for long wandering paths
         
-        const converted = (Math.random() * 100) < rate;
-        
+        // Ensure at least one channel (fallback for edge cases where start->end immediately)
+        if (pathChannels.length === 0) {
+            // Retry this iteration or force a single step
+            // For simplicity, force a weighted start channel and fail
+            pathChannels.push(pickWeightedChannel(config.baseWeights));
+            converted = false; 
+        }
+
         paths.push({
             id: i,
             path: pathChannels,
@@ -361,14 +641,164 @@ function generateSyntheticData(config, count) {
     return paths;
 }
 
+function getTransitionProbabilities(config, scenarioKey) {
+    // Pure Markov Setup: Probabilities determine structure AND outcome
+    
+    function buildTransitions(entryWeights, transitionBoosts, exitBoosts, selfLoopBoosts) {
+        const trans = {};
+        
+        // Default probabilities
+        // TUNED: Lowered Exit rate to simulate realistic ~4-8% total CR
+        // Increased Null rate to simulate realistic bounce/loss
+        const DEFAULT_CHANNEL_TO_CHANNEL = 0.12; 
+        const DEFAULT_EXIT = 0.02;      
+        const DEFAULT_NULL = 0.15;      
+        const DEFAULT_SELF_LOOP = 0.15; 
+        
+        // Start state - entry weights
+        trans['(start)'] = {...entryWeights};
+        
+        // Build each channel's transitions
+        CHANNELS.forEach(fromCh => {
+            trans[fromCh] = {};
+            
+            // 1. Transitions to other channels
+            CHANNELS.forEach(toCh => {
+                if (fromCh !== toCh) {
+                    const boost = transitionBoosts?.[fromCh]?.[toCh] || 1.0;
+                    trans[fromCh][toCh] = DEFAULT_CHANNEL_TO_CHANNEL * boost;
+                }
+            });
+            
+            // 2. Self Loop
+            const selfBoost = selfLoopBoosts?.[fromCh] || 1.0;
+            trans[fromCh][fromCh] = DEFAULT_SELF_LOOP * selfBoost;
+            
+            // 3. Conversion (Exit)
+            const exitBoost = exitBoosts?.[fromCh] || 1.0;
+            trans[fromCh]['(end)'] = DEFAULT_EXIT * exitBoost;
+            
+            // 4. Abandonment (Null)
+            // We adding explicit null/lost probability to make the matrix complete
+            trans[fromCh]['(null)'] = DEFAULT_NULL; 
+            
+            // Normalize to sum to 1.0
+            const total = Object.values(trans[fromCh]).reduce((a,b) => a+b, 0);
+            Object.keys(trans[fromCh]).forEach(k => {
+                trans[fromCh][k] /= total;
+            });
+        });
+        
+        return trans;
+    }
+    
+    const scenarios = {
+        'linear': buildTransitions(
+            // Entry weights
+            { 'search': 0.5, 'social': 0.25, 'email': 0.15, 'displayA': 0.05, 'displayB': 0.05 },
+            // Transition boosts (multiply defaults) - slight preference for linear flow
+            {
+                'social': { 'search': 1.3, 'email': 1.2 },
+                'email': { 'search': 1.4 },
+                'displayA': { 'search': 1.3 },
+                'displayB': { 'search': 1.3 }
+            },
+            // Exit boosts - search converts better
+            { 'search': 1.8, 'email': 1.3, 'social': 1.0, 'displayA': 0.8, 'displayB': 0.8 },
+            // Self-loop boosts - moderate retargeting
+            { 'search': 1.2, 'email': 1.0, 'social': 0.9, 'displayA': 0.8, 'displayB': 0.8 }
+        ),
+        
+        'synergy': buildTransitions(
+            // Entry weights - social and awareness first
+            { 'social': 0.4, 'search': 0.25, 'displayA': 0.15, 'displayB': 0.12, 'email': 0.08 },
+            // Transition boosts - emphasize synergistic paths
+            {
+                'social': { 'email': 1.6, 'displayA': 1.4, 'search': 1.3 },
+                'displayA': { 'email': 1.5, 'search': 1.4 },
+                'displayB': { 'email': 1.5, 'search': 1.4 },
+                'email': { 'search': 1.7 }
+            },
+            // Exit boosts - more balanced conversion
+            { 'search': 1.5, 'email': 1.4, 'social': 0.9, 'displayA': 1.0, 'displayB': 1.0 },
+            // Self-loop boosts - moderate everywhere
+            { 'search': 1.3, 'email': 1.2, 'social': 1.1, 'displayA': 1.0, 'displayB': 1.0 }
+        ),
+        
+        'overlap': buildTransitions(
+            // Entry weights - balanced
+            { 'search': 0.3, 'social': 0.28, 'email': 0.18, 'displayA': 0.13, 'displayB': 0.11 },
+            // Transition boosts - all channels interact freely (no strong patterns)
+            {
+                'search': { 'social': 1.2, 'email': 1.2 },
+                'social': { 'search': 1.2, 'email': 1.1 },
+                'email': { 'search': 1.2, 'social': 1.1 }
+            },
+            // Exit boosts - very similar conversion rates (overlap)
+            { 'search': 1.2, 'social': 1.1, 'email': 1.3, 'displayA': 1.0, 'displayB': 1.0 },
+            // Self-loop boosts - HIGH retargeting creates overlap
+            { 'search': 1.6, 'social': 1.8, 'email': 1.4, 'displayA': 2.0, 'displayB': 2.0 }
+        ),
+        
+        'dominance': buildTransitions(
+            // Entry weights - search dominant but not extreme
+            { 'search': 0.5, 'social': 0.2, 'email': 0.13, 'displayA': 0.1, 'displayB': 0.07 },
+            // Transition boosts - all roads lead to search (moderate boost)
+            {
+                'social': { 'search': 1.8 },
+                'email': { 'search': 2.0 },
+                'displayA': { 'search': 1.9 },
+                'displayB': { 'search': 1.9 }
+            },
+            // Exit boosts - search converts much better
+            { 'search': 2.2, 'social': 0.8, 'email': 1.0, 'displayA': 0.7, 'displayB': 0.7 },
+            // Self-loop boosts - search high (people search multiple times)
+            { 'search': 2.0, 'social': 0.7, 'email': 0.7, 'displayA': 0.6, 'displayB': 0.6 }
+        )
+    };
+    
+    return scenarios[scenarioKey] || scenarios['synergy'];
+}
+
+function pickWeightedTransition(transitions) {
+    const totalW = Object.values(transitions).reduce((a,b)=>a+b, 0);
+    if (totalW === 0) return '(end)';
+    
+    let r = prng.next() * totalW; // Use SeededRNG
+    for (const state in transitions) {
+        r -= transitions[state];
+        if (r <= 0) return state;
+    }
+    return '(end)';
+}
+
 function pickWeightedChannel(weights) {
     const totalW = Object.values(weights).reduce((a,b)=>a+b, 0);
-    let r = Math.random() * totalW;
+    let r = prng.next() * totalW; // Use SeededRNG
     for (const ch of CHANNELS) {
         r -= weights[ch];
         if (r <= 0) return ch;
     }
     return CHANNELS[CHANNELS.length-1];
+}
+
+function exportToCSV() {
+    let csv = 'Path_ID,Channel_Sequence,Converted\n';
+    
+    appState.rawPaths.forEach(p => {
+        const pathSeq = p.path.join(' -> ');
+        const conv = p.converted ? '1' : '0';
+        csv += `${p.id},"${pathSeq}",${conv}\n`;
+    });
+    
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `markov_paths_${Date.now()}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
 }
 
 function renderPathTable(paths) {
@@ -464,4 +894,186 @@ function renderPathTable(paths) {
         `;
         listContainer.appendChild(row);
     });
+}
+
+function renderGlobalStats(paths) {
+    const total = paths.length;
+    const converted = paths.filter(p => p.converted).length;
+    const rate = total > 0 ? ((converted / total) * 100).toFixed(2) : "0.00";
+
+    const elTotal = document.getElementById('stat-total-paths');
+    const elConv = document.getElementById('stat-total-conv');
+    const elRate = document.getElementById('stat-conv-rate');
+
+    if(elTotal) elTotal.textContent = total.toLocaleString();
+    if(elConv) elConv.textContent = converted.toLocaleString();
+    if(elRate) elRate.textContent = rate + "%";
+}
+
+// --- NEW VISUALIZATIONS ---
+
+function renderNetworkGraph() {
+    // 0. Get Visit Data for Sizing
+    // Fallback to 1 to avoid div-by-zero if empty
+    const visits = appState.model.stateVisits || {};
+    const maxVisits = Math.max(...Object.values(visits), 1);
+    
+    // Helper: Non-linear scaling for Node Size
+    // We use Math.pow(pct, 0.5) (Square Root) to ensure even mid-traffic nodes have visible presence
+    const getNodeSize = (id) => {
+        const count = visits[id] || 0;
+        const pct = count / maxVisits; 
+        
+        // Floor of 25px, max of 80px
+        return 25 + (Math.sqrt(pct) * 55); 
+    };
+
+    // 1. Prepare Nodes (Start, Conversion, Null, + Channels)
+    // NOTE: ID must match 'this.states' in markov_math.js for edges to map correctly
+    const nodes = [
+        { id: '(start)', x: 0, y: 0.5, label: 'Start', color: '#334155', size: getNodeSize('(start)') },
+        { id: '(conversion)', x: 1, y: 0.8, label: 'Conv.', color: '#22c55e', size: getNodeSize('(conversion)') },
+        { id: '(null)', x: 1, y: 0.2, label: 'Lost', color: '#94a3b8', size: getNodeSize('(null)') }
+    ];
+    
+    // Arrange Channels in a circle/column in the middle
+    // For 5 channels, let's stack them vertically or circle
+    // Vertical stack (x=0.5) allows clear left-to-right flow visualization
+    const chCount = CHANNELS.length;
+    CHANNELS.forEach((ch, i) => {
+        nodes.push({
+            id: ch,
+            x: 0.5,
+            y: 0.8 - (i * (0.6 / (chCount-1))), // Spread between 0.8 and 0.2
+            label: CHANNEL_NAMES[ch],
+            color: COLORS[ch],
+            size: getNodeSize(ch)
+        });
+    });
+
+    const nodeMap = {};
+    nodes.forEach(n => nodeMap[n.id] = n);
+
+    // 2. Prepare Edges (Scatter traces for lines)
+    const edgeTraces = [];
+    const matrix = appState.model.matrix;
+    const states = appState.model.states;
+    
+    // Threshold to show edge (Very low to catch signal)
+    const THRESHOLD = 0.001; 
+
+    // Helper to add edge
+    const addEdge = (fromId, toId, prob) => {
+        if (prob < THRESHOLD) return;
+        const from = nodeMap[fromId];
+        const to = nodeMap[toId];
+        if (!from || !to) return; // safety
+        
+        // Non-Linear Width Scaling
+        // Floor = 2px (Always visible)
+        // Scaler = Math.pow(prob, 0.5) -> Boosts small probabilities to be visible
+        // e.g. 0.05 -> 0.22 * 20 = +4px
+        // e.g. 0.50 -> 0.70 * 20 = +14px
+        const width = 2 + (Math.pow(prob, 0.5) * 20); 
+        
+        // Uniform styling for ALL lines (even rules)
+        edgeTraces.push({
+            x: [from.x, to.x],
+            y: [from.y, to.y],
+            mode: 'lines',
+            line: { width: width, color: '#94a3b8' }, // Uniform Slate 400
+            hoverinfo: 'none', 
+            showlegend: false,
+            opacity: 0.5
+        });
+    };
+
+    // Iterate matrix to find edges
+    for(let r=0; r<matrix.length; r++) {
+        for(let c=0; c<matrix[r].length; c++) {
+            const fromCh = states[r];
+            const toCh = states[c];
+            addEdge(fromCh, toCh, matrix[r][c]);
+        }
+    }
+
+    // 3. Node Trace (Scatter)
+    const nodeTrace = {
+        x: nodes.map(n => n.x),
+        y: nodes.map(n => n.y),
+        mode: 'markers+text',
+        marker: {
+            size: nodes.map(n => n.size),
+            color: nodes.map(n => n.color),
+            line: { width: 2, color: '#fff' }
+        },
+        text: nodes.map(n => n.label),
+        textposition: 'top center',
+        hoverinfo: 'text',
+        name: 'Nodes'
+    };
+
+    // Combine
+    const data = [...edgeTraces, nodeTrace];
+
+    const layout = {
+        title: 'Network Flow (Gravity Map)',
+        showlegend: false,
+        xaxis: { showgrid: false, zeroline: false, showticklabels: false, range: [-0.1, 1.1] },
+        yaxis: { showgrid: false, zeroline: false, showticklabels: false, range: [0, 1] },
+        height: 500,
+        margin: {t:40, b:20, l:20, r:20},
+        annotations: [
+            {
+                x: 0, y: 0.1, xref: 'x', yref: 'y',
+                text: 'Flow starts left, moves usually right, but channels can loop back (Vertical stack represents the "Ecosystem")',
+                showarrow: false,
+                font: { size: 10, color: '#64748b' }
+            }
+        ]
+    };
+
+    Plotly.newPlot('network-graph', data, layout, {displayModeBar: false});
+}
+
+function renderGlobalRemovalChart() {
+    // Calculate removal effect for ALL channels
+    // The model already returns removalEffects dictionary { 'search': 0.15, ... }
+    const res = appState.model.calculateAttributionProportional(); 
+    const effects = [];
+
+    CHANNELS.forEach(ch => {
+        const drop = res.removalEffects[ch] || 0;
+        effects.push({
+            channel: ch,
+            name: CHANNEL_NAMES[ch],
+            drop: drop,
+            color: COLORS[ch]
+        });
+    });
+
+    // Sort by Impact (Highest first)
+    effects.sort((a,b) => b.drop - a.drop);
+
+    // Render Bar Chart
+    const data = [{
+        x: effects.map(e => e.name),
+        y: effects.map(e => e.drop * 100), // %
+        type: 'bar',
+        marker: {
+            color: effects.map(e => e.drop > 0.15 ? '#ef4444' : '#3b82f6'), // Red if >15% impact
+            opacity: 0.8
+        },
+        text: effects.map(e => `-${(e.drop*100).toFixed(1)}%`),
+        textposition: 'auto',
+        hovertemplate: `<b>%{x}</b><br>Removal Impact: -%{y:.1f}%<br><span style="color:#64748b; font-size:0.9em;">(Conversion Rate would drop by this much)</span><extra></extra>`
+    }];
+
+    const layout = {
+        title: { text: '' }, 
+        yaxis: { title: '% Drop in Conversions' },
+        margin: { t: 20, b:40, l:50, r:20 }
+    };
+
+    Plotly.newPlot('global-removal-chart', data, layout, {displayModeBar: false});
 }

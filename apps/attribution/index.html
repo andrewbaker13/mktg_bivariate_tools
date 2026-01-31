@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketing Attribution Suite</title>
+  
+  <link rel="stylesheet" href="../../shared/css/main.css">
+  <link rel="stylesheet" href="../../shared/css/auth_bar.css">
+  
+  <script src="../../shared/js/tracking.js"></script>
+  
+  <style>
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+    
+    .tool-card {
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 2rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .tool-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+      border-color: #3b82f6;
+    }
+    
+    .tool-card h3 {
+      margin-top: 0;
+      color: #1e293b;
+      font-size: 1.5rem;
+    }
+    
+    .tool-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    
+    .badge-shapley {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .badge-markov {
+      background: #f3e8ff;
+      color: #6b21a8;
+    }
+    
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 2rem 0;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .comparison-table th {
+      background: #f8fafc;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .comparison-table td {
+      padding: 1rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .check-icon {
+      color: #22c55e;
+      font-size: 1.2rem;
+    }
+    
+    .x-icon {
+      color: #ef4444;
+      font-size: 1.2rem;
+    }
+    
+    .use-case-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    
+    .use-case-card {
+      background: #f8fafc;
+      border-left: 4px solid #3b82f6;
+      padding: 1.5rem;
+      border-radius: 4px;
+    }
+    
+    .use-case-card h4 {
+      margin-top: 0;
+      color: #1e40af;
+    }
+    
+    @media (max-width: 768px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../admin_pages/login.html">Login</a>
+        <a href="../../admin_pages/register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Marketing Attribution Suite</h1>
+        <div class="hero-context">
+          <span class="badge" style="background:#8b5cf6;">Advanced Analytics</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Master the mathematics behind multi-touch attribution. Compare how Shapley Values and Markov Chains 
+        answer the question: <strong>"Which marketing channels deserve credit for conversions?"</strong>
+      </p>
+    </header>
+
+    <section class="card">
+      <h2>CHOOSE YOUR ATTRIBUTION MODEL</h2>
+      <div class="comparison-grid">
+        <div class="tool-card" onclick="window.location.href='shapley_visualizer/main_shapley.html'">
+          <span class="tool-badge badge-shapley">Cooperative Game Theory</span>
+          <h3>🎲 Shapley Attribution</h3>
+          <p style="color:#64748b; line-height:1.6;">
+            <strong>Focus:</strong> Who was on the team?<br>
+            <strong>Method:</strong> Calculate marginal contributions across all possible channel combinations<br>
+            <strong>Best For:</strong> Understanding synergy, overlap, and fair credit allocation
+          </p>
+          <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #e2e8f0;">
+            <strong style="color:#1e40af;">View Tool →</strong>
+          </div>
+        </div>
+
+        <div class="tool-card" onclick="window.location.href='markov_visualizer/main_markov.html'">
+          <span class="tool-badge badge-markov">Probabilistic State Machines</span>
+          <h3>⛓️ Markov Chain Attribution</h3>
+          <p style="color:#64748b; line-height:1.6;">
+            <strong>Focus:</strong> Which touchpoints are critical bridges?<br>
+            <strong>Method:</strong> Model customer journeys as state transitions; remove nodes to test impact<br>
+            <strong>Best For:</strong> Understanding path dependencies and sequential influence
+          </p>
+          <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid #e2e8f0;">
+            <strong style="color:#6b21a8;">View Tool →</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>WHEN TO USE EACH MODEL</h2>
+      
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Dimension</th>
+            <th>Shapley Values</th>
+            <th>Markov Chains</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Order Matters?</strong></td>
+            <td><span class="x-icon">✗</span> Treats {A,B,C} same as {C,A,B}</td>
+            <td><span class="check-icon">✓</span> A→B→C different from C→B→A</td>
+          </tr>
+          <tr>
+            <td><strong>Data Requirement</strong></td>
+            <td>Needs conversion rates for all channel combinations</td>
+            <td>Needs sequential path data with timestamps</td>
+          </tr>
+          <tr>
+            <td><strong>Attribution Guarantee</strong></td>
+            <td><span class="check-icon">✓</span> Always sums to 100% (Efficiency Axiom)</td>
+            <td><span class="check-icon">✓</span> Normalized to sum to 100%</td>
+          </tr>
+          <tr>
+            <td><strong>Handles Synergy</strong></td>
+            <td><span class="check-icon">✓</span> Explicitly quantifies "1+1=3" effects</td>
+            <td>Implicitly captured in transition probabilities</td>
+          </tr>
+          <tr>
+            <td><strong>Computational Cost</strong></td>
+            <td>2<sup>n</sup> subset evaluations</td>
+            <td>Matrix operations (faster for large n)</td>
+          </tr>
+          <tr>
+            <td><strong>Interpretability</strong></td>
+            <td>"Fair share" based on marginal contributions</td>
+            <td>"Critical bridge" based on counterfactual removal</td>
+          </tr>
+          <tr>
+            <td><strong>Real-World Use</strong></td>
+            <td>Coalition analysis, team performance, resource allocation</td>
+            <td>Customer journey optimization, path analysis</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>REAL-WORLD USE CASES</h2>
+      
+      <div class="use-case-grid">
+        <div class="use-case-card">
+          <h4>🛍️ E-commerce: Budget Reallocation</h4>
+          <p class="text-sm">
+            <strong>Challenge:</strong> CFO wants to cut 30% of marketing budget.<br>
+            <strong>Approach:</strong> Use Shapley to identify channels with negative/low marginal value in combinations.<br>
+            <strong>Outcome:</strong> Discover Display B only adds +0.8% when paired with Display A → Cut Display B, save $200K/year.
+          </p>
+        </div>
+
+        <div class="use-case-card">
+          <h4>✈️ Travel: Journey Optimization</h4>
+          <p class="text-sm">
+            <strong>Challenge:</strong> Long sales cycles (30+ days) with complex touchpoint sequences.<br>
+            <strong>Approach:</strong> Use Markov to identify which touchpoints act as "bridges" to conversion.<br>
+            <strong>Outcome:</strong> Find Email (mid-journey) has 3x higher removal effect than Email (first-touch) → Retarget engaged users.
+          </p>
+        </div>
+
+        <div class="use-case-card">
+          <h4>💼 B2B SaaS: Content ROI</h4>
+          <p class="text-sm">
+            <strong>Challenge:</strong> Marketing claims "Brand content assists sales," but CFO sees no direct conversions.<br>
+            <strong>Approach:</strong> Use Shapley to show Content's marginal contribution when paired with Webinars+Sales Calls.<br>
+            <strong>Outcome:</strong> Prove Content adds +12% CR in high-intent mixes → Justify content budget.
+          </p>
+        </div>
+
+        <div class="use-case-card">
+          <h4>🏥 Healthcare: Patient Acquisition</h4>
+          <p class="text-sm">
+            <strong>Challenge:</strong> Hospital runs TV, Search, and Direct Mail but doesn't know which drives appointments.<br>
+            <strong>Approach:</strong> Use Markov to model patient journey from awareness → consideration → booking.<br>
+            <strong>Outcome:</strong> TV has high "start" probability but low conversion bridge → Shift budget to Search.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="background:#fffbeb; border:2px solid #fbbf24;">
+      <h2 style="color:#92400e;">📚 LEARNING PATH RECOMMENDATION</h2>
+      <div style="color:#78350f; line-height:1.8;">
+        <p><strong>New to Attribution?</strong> Start with Shapley. It's easier to grasp the "fair share" concept before diving into state machines.</p>
+        
+        <ol style="padding-left:1.5rem;">
+          <li><strong>Shapley Tool:</strong> Run "Case B: Luxury Vacation" scenario. Toggle channels in the Mix Lab to see marginal contributions live.</li>
+          <li><strong>Markov Tool:</strong> Load the same scenario. Compare how removal effects differ from Shapley's marginal values.</li>
+          <li><strong>Deep Dive:</strong> Read the "Under the Hood" sections in both tools to see the actual math.</li>
+          <li><strong>Challenge:</strong> Export data from both tools and calculate attribution using your own code.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>ADDITIONAL RESOURCES</h2>
+      <ul style="line-height:2;">
+        <li>📖 <strong>Research Paper:</strong> <a href="https://en.wikipedia.org/wiki/Shapley_value" target="_blank">Shapley Value (Wikipedia)</a></li>
+        <li>📖 <strong>Google Whitepaper:</strong> <a href="https://research.google/pubs/pub38355/" target="_blank">Data-Driven Attribution Modeling</a></li>
+        <li>🎥 <strong>Video Tutorial:</strong> <a href="https://www.youtube.com/results?search_query=marketing+attribution+shapley" target="_blank">Shapley Attribution Explained</a></li>
+        <li>💻 <strong>Code Repository:</strong> <a href="https://github.com/topics/marketing-attribution" target="_blank">Open Source Attribution Libraries</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="../../shared/js/auth_bar.js"></script>
+</body>
+</html>

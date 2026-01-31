@@ -14,6 +14,23 @@
   <script src="../../../shared/js/tracking.js"></script>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   
+  <!-- Shared Attribution Data (Scenarios, Colors) -->
+  <script src="../attribution_data.js"></script>
+
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]'], ['$$', '$$']]
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
   <script>
@@ -41,6 +58,10 @@
         <h1>Shapley Attribution Visualizer</h1>
         <div class="hero-context">
           <span class="badge">Marketing Analytics</span>
+          <label class="toggle_switch" style="margin-left: 1rem; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="professorMode">
+            <span style="font-size: 0.9rem; font-weight: 600; color: #4b5563;">🎓 Professor Mode</span>
+          </label>
         </div>
       </div>
       <p class="hero-header__lede">
@@ -49,8 +70,8 @@
       </p>
     </header>
 
-    <section class="test-overview" aria-labelledby="overview-heading">
-      <h2 id="overview-heading">Concept & Intuition</h2>
+    <section class="test-overview" id="tut-concept-section" aria-labelledby="overview-heading">
+      <h2 id="overview-heading">CONCEPT & INTUITION</h2>
       <div class="card">
         <p>
           <strong>The Problem:</strong> In multi-channel marketing, channels work together. If a user sees a Search Ad 
@@ -62,6 +83,15 @@
           users who saw <em>{Search + Social}</em> vs. users who saw <em>{Search + Social + Email}</em>, we can mathematically 
           isolate the value of adding Email to that mix.
         </p>
+        
+        <div style="background: #dcfce7; border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; border-radius: 4px;">
+            <strong style="color: #166534;">💡 Why This Matters: Real-World Impact</strong>
+            <p style="margin: 0.5rem 0 0; font-size: 0.95rem; color: #14532d; line-height:1.6;">
+                <strong>Case Study:</strong> A Fortune 500 retailer switched from Last-Click to Shapley attribution and discovered their Display campaigns were being undervalued by 400%. By reallocating budget based on marginal contributions, they increased ROAS by 35% while spending the same total budget.
+                <br><br>
+                <strong>The Key Insight:</strong> Channels that <em>assist</em> high-performing mixes deserve credit, even if they rarely get the "last touch."
+            </p>
+        </div>
         
         <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 1rem; margin: 1rem 0; border-radius: 4px;">
             <strong style="color: #b45309;">🎓 Analyst Note: Sets vs. Sequences</strong>
@@ -90,7 +120,7 @@
 
     <!-- NEW SECTION: Raw Data Visualization -->
     <section class="card" style="margin-bottom: 1.5rem;">
-      <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+      <div id="tut-scenario-section" style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 0.5rem;">
             <div>
                  <label for="scenario-select" style="font-weight:bold; font-size:1.1rem; display:block; margin-bottom:0.5rem; color:#1e40af;">
@@ -101,10 +131,37 @@
                     <option value="synergy" selected>Case B: Luxury Vacation Inc. (Testing for Multi-Touch Synergy)</option>
                     <option value="overlap">Case C: Fast Fashion Outlet (Testing for Saturation/Cannibalization)</option>
                     <option value="dominance">Case D: Emergency Plumber (Testing for Search Dominance)</option>
+                    <option value="b2b">Case E: The 'Smarketing' War (B2B Enterprise Software)</option>
                   </select>
             </div>
-            <div style="text-align:right;">
-                <button onclick="window.location.reload()" style="font-size:0.8rem; padding:6px 12px; cursor:pointer; background:#fff; border:1px solid #ccc; border-radius:4px;" title="Reroll Data">🔄 Generate New Users</button>
+            
+            <!-- CONTROLS -->
+            <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                 <details style="background:white; border:1px solid #e2e8f0; border-radius:6px; padding:0.5rem; font-size:0.9rem; width: 280px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); z-index: 20; position: relative;">
+                    <summary style="cursor:pointer; font-weight:500; color:#475569; outline:none; list-style:none; display:flex; align-items:center; justify-content:flex-end; gap:0.5rem;">
+                        <span>⚙️ Simulation Parameters</span>
+                        <span style="font-size:0.8rem; color:#94a3b8;">▼</span>
+                    </summary>
+                    <div style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.75rem;">
+                        
+                        <!-- Reroll -->
+                        <button id="reroll-btn" style="width:100%; padding:8px; font-size:0.85rem; cursor:pointer; background:#fff; border:1px solid #cbd5e1; color:#334155; border-radius:4px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <span>🎲</span> <strong id="reroll-btn-text">Generate New Random Data</strong>
+                        </button>
+                        
+                        <!-- Seed -->
+                        <div style="background:#f8fafc; padding:0.75rem; border-radius:4px; border:1px solid #f1f5f9;">
+                            <label for="random-seed" style="display:block; font-size:0.8rem; font-weight:600; color:#475569; margin-bottom:6px;">Seed (for Reproducibility)</label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="text" id="random-seed" placeholder="Random" style="flex:1; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.85rem;">
+                                <button id="apply-seed-btn" style="padding:6px 12px; font-size:0.85rem; cursor:pointer; background:#3b82f6; color:white; border:none; border-radius:4px;">Set</button>
+                            </div>
+                            <p style="margin:6px 0 0 0; font-size:0.75rem; color:#64748b; line-height:1.4;">
+                                Enter a number (e.g. "123") to force the exact same results every time. Useful for classroom demos.
+                            </p>
+                        </div>
+                    </div>
+                 </details>
             </div>
         </div>
         <div id="scenario-description" style="font-style: italic; color: #1e3a8a; font-size: 0.95rem; border-top: 1px dashed #bfdbfe; padding-top: 0.5rem; margin-top: 0.5rem;">
@@ -112,52 +169,57 @@
             Loading scenario details...
         </div>
         <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem; background: #fff; padding: 0.5rem; border-radius: 4px;">
-            <strong>Simulation Note:</strong> This generates 1200 raw user journeys typical for this type of business. 
+            <strong>Simulation Note:</strong> This generates <span id="sim-note-count">4,000</span> raw user journeys typical for this type of business. 
             Notice how some businesses define "complex" paths (repeating channels) while others are simple. 
             The <strong>Shapley Math</strong> below is calculated strictly from this generated table.
+        </div>
+        <div id="sparse-data-warning" style="display:none; font-size: 0.85rem; color: #92400e; margin-top: 0.5rem; background: #fffbeb; border:1px solid #fbbf24; padding: 0.5rem; border-radius: 4px;">
+            ⚠️ <strong>Sparse Data Alert:</strong> Some channel combinations have 0 observed users. Conversion rates for these mixes are estimated using the theoretical model to prevent math errors. In production, collect more data or use Bayesian priors.
         </div>
       </div>
 
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2 style="margin:0;">1. The Raw User Journeys</h2>
-        <div class="text-sm muted">Simulating 1200 tracked users based on Scenario above</div>
+        <h2 style="margin:0;">1. RAW USER JOURNEYS</h2>
+        <div class="text-sm muted">Simulating <span id="sim-sub-count">4,000</span> tracked users based on Scenario above</div>
       </div>
       <p>Before any math happens, we just have paths. The <strong>Scenario</strong> selected above determines the probability that users convert.</p>
       
-      <div class="path-stats-summary">
-        <div class="stat-card">
-            <div class="text-sm muted">Total Paths</div>
-            <div style="font-size:1.5rem; font-weight:bold;">1200</div>
+      <div id="tut-raw-data-section">
+        <div class="path-stats-summary">
+          <div class="stat-card">
+              <div class="text-sm muted">Total Paths</div>
+              <div id="stat-total-paths" style="font-size:1.5rem; font-weight:bold;">4,000</div>
+          </div>
+          <div class="stat-card">
+              <div class="text-sm muted">Total Conversions</div>
+              <div style="font-size:1.5rem; font-weight:bold; color:var(--app-success);" id="total-conv-display">?</div>
+          </div>
+          <div class="stat-card">
+              <div class="text-sm muted">Overall Conv. Rate</div>
+              <div style="font-size:1.5rem; font-weight:bold;" id="total-rate-display">?</div>
+          </div>
+          <div style="flex:2; padding-left:20px; color:#64748b; font-size:0.9rem; align-self:center; border-left:1px solid #e2e8f0;">
+              <span style="display:block; font-weight:bold; margin-bottom:2px;">How this connects:</span>
+              These raw path counts (e.g. "search, social") are the direct input for the Media Mix Lab and Shapley Math below.
+          </div>
         </div>
-        <div class="stat-card">
-            <div class="text-sm muted">Total Conversions</div>
-            <div style="font-size:1.5rem; font-weight:bold; color:var(--app-success);" id="total-conv-display">?</div>
-        </div>
-        <div class="stat-card">
-            <div class="text-sm muted">Overall Conv. Rate</div>
-            <div style="font-size:1.5rem; font-weight:bold;" id="total-rate-display">?</div>
-        </div>
-        <div style="flex:2; padding-left:20px; color:#64748b; font-size:0.9rem; align-self:center; border-left:1px solid #e2e8f0;">
-            <span style="display:block; font-weight:bold; margin-bottom:2px;">How this connects:</span>
-            These raw path counts (e.g. "search, social") are the direct input for the Media Mix Lab and Shapley Math below.
-        </div>
-      </div>
 
-      <div class="path-vis-container">
-        <div id="path-list-display" class="path-list">
-            <!-- Injected by JS -->
+        <div class="path-vis-container">
+          <div id="path-list-display" class="path-list">
+              <!-- Injected by JS -->
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Section 2: Coalition Lab (Full Width) -->
-    <section class="card" style="margin-bottom: 1.5rem;">
-      <h2>2. "The Media Mix Lab" (Coalition Analysis) <span title="Shapley treats a mix as a 'Set' (e.g. {Search, Social}). The math ignores who clicked first, focusing instead on who was present in the converting mix." style="cursor:help; font-size:1rem;">ℹ️</span></h2>
+    <section id="tut-coalition-lab" class="card" style="margin-bottom: 1.5rem;">
+      <h2>2. MEDIA MIX LAB (COALITION ANALYSIS) <span title="Shapley treats a mix as a 'Set' (e.g. {Search, Social}). The math ignores who clicked first, focusing instead on who was present in the converting mix." style="cursor:help; font-size:1rem;">ℹ️</span></h2>
       <p class="text-sm muted">Explore the Conversion Rate for specific definitions of "Channel Mix".</p>
       
       <!-- Scenario Selector moved to top -->
 
-      <div id="coalition-builder-panel">
+      <div>
         <h3>Current "Mix" Selection</h3>
         <p class="explanation-text">Toggle channels to filter for this specific mix and see its performance.</p>
         
@@ -196,9 +258,25 @@
       </div>
     </section>
 
-    <!-- Section 3: The Calculation (Full Width) -->
-    <section class="card" style="margin-bottom: 1.5rem;">
-      <h2>3. Inside the Math (The Calculation)</h2>
+    <!-- NEW SECTION: SYNERGY MAP -->
+    <section id="tut-synergy-section" class="card" style="margin-bottom: 1.5rem;">
+      <h2>3. Synergy Analysis (The "Team Chemistry" Map)</h2>
+      <p>Shapley isn't just about slicing the pie; it's about <strong>growing the pie</strong>. Use this heatmap to spot which channel pairings create the most "lift".</p>
+      
+      <div style="background:#f0fdf4; border-left:4px solid #22c55e; padding:1rem; margin-bottom:1rem; font-size:0.9rem; color:#14532d;">
+          <strong>Interpretation Guide:</strong>
+          <ul style="margin:0.5rem 0 0 1.5rem;">
+             <li><strong>Positive Synergy (Green):</strong> Cooperative. "Search converts 2%, Social converts 2%, but TOGETHER they convert 6%." (Bonus = +2%).</li>
+             <li><strong>Negative Synergy (Red):</strong> Redundant. "Search converts 2%, Display converts 2%, but TOGETHER they still only convert 2.5%." (Cannibalization).</li>
+          </ul>
+      </div>
+      
+      <div id="synergy-heatmap" style="height:400px; width:100%;"></div>
+    </section>
+
+    <!-- Section 4: The Calculation (Full Width) -->
+    <section id="tut-calculation-section" class="card" style="margin-bottom: 1.5rem;">
+      <h2>4. Inside the Math (The Calculation)</h2>
       <p class="text-sm muted">See how we derive the value for a specific channel.</p>
 
       <div id="calculation-details">
@@ -251,6 +329,58 @@
               </tfoot>
             </table>
           </div>
+          
+          <!-- New Section: Under the Hood (Technical Deep Dive) -->
+          <details style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin: 0 1rem 1rem 1rem;">
+            <summary style="padding: 1rem; cursor:pointer; font-weight:600; color:#475569; display:flex; align-items:center; gap:0.5rem; outline:none;">
+                <span style="font-size:1.1rem;">🧮</span>
+                <span>Technical Deep Dive: The Shapley Equation</span>
+                <span style="margin-left:auto; color:#94a3b8; font-size:0.8rem;">(Click to Expand)</span>
+            </summary>
+            <div style="padding: 0 1rem 1rem 1rem; border-top: 1px solid #e2e8f0; font-size: 0.95rem; color: #334155;">
+                <p style="margin-top:1rem;">The Shapley Value comes from <strong>Cooperative Game Theory</strong>. It assigns credit based on a player's average marginal contribution across all possible "permutations" (orders of arrival).</p>
+                
+                <div style="display:grid; grid-template-columns: 1fr; gap: 1rem; margin: 1.5rem 0;">
+                    
+                    <div style="background:#fff; padding:1.5rem; border-radius:4px; border:1px solid #cbd5e1; text-align:center;">
+                        <div style="font-family: 'Times New Roman', serif; font-size: 1.3rem; margin-bottom: 1rem;">
+                            \[ \phi_i(v) = \frac{1}{n!} \sum_{R} [v(P_i^R \cup \{i\}) - v(P_i^R)] \]
+                        </div>
+                        <p style="font-size:0.9rem; color:#64748b; margin:0; line-height:1.6; text-align:left;">
+                            This scary formula just says: 
+                            <br>1. Imagine every possible order the channels could arrive in. ("Search then Social", "Social then Search", etc.)
+                            <br>2. In each order, see how much value Channel \(i\) adds when it joins the team.
+                            <br>3. Average those contributions.
+                        </p>
+                    </div>
+
+                    <div style="background:#ecfdf5; padding:1rem; border-radius:4px; border-left:4px solid #10b981;">
+                        <strong>Key Concept: The Characteristic Function \(v(S)\)</strong>
+                        <p style="margin:0.5rem 0 0 0;">
+                            \(v(S)\) represents the total value (Conversion Rate) generated by the coalition \(S\).
+                            <br>
+                            If \(v(\{Search, Social\}) = 5\%\) and \(v(\{Search\}) = 2\%\), then the <strong>Marginal Contribution</strong> of Social to that specific mix is \(3\%\).
+                        </p>
+                    </div>
+                    
+                    <div style="background:#fffbeb; padding:1rem; border-radius:4px; border-left:4px solid #f59e0b;">
+                        <strong>Weighted Averaging (Wait, why are weighted?)</strong>
+                        <p style="margin:0.5rem 0 0 0;">
+                            Simple averages are wrong because some coalition sizes are more common in permutations than others.
+                            <br>
+                            e.g. In a 3-channel game, there are \(3! = 6\) possible arrival orders.
+                            <br>
+                            - A channel appears <strong>1st</strong> in 2 orders.
+                            - A channel appears <strong>2nd</strong> in 2 orders.
+                            - A channel appears <strong>3rd</strong> in 2 orders.
+                            <br>
+                            Our calculation table above simplifies this by grouped weighting rather than listing all N! rows.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+          </details>
       </div>
     </section>
 
@@ -267,7 +397,7 @@
 
         <div id="plotly-waterfall" style="width:100%; height:400px;"></div>
         
-        <div id="comparison-chart-wrapper" style="margin-top: 3rem; border-top: 1px dashed #cbd5e1; padding-top: 2rem;">
+        <div id="tut-comparison-section" style="margin-top: 3rem; border-top: 1px dashed #cbd5e1; padding-top: 2rem;">
           <h3>Model Comparison: Accuracy vs. Ego</h3>
           <p class="text-sm muted">Comparing Shapley (Colored Bars) against traditional Heuristic models (Grey Bars).</p>
           
@@ -304,11 +434,17 @@
         </div>
       </div>
     </section>
-      </div>
-    </section>
   </main>
 
   <script src="shapley_math.js"></script>
   <script src="main_shapley.js"></script>
+  <script src="shapley_tutorial.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof ShapleyTutorial !== 'undefined') {
+            ShapleyTutorial.init();
+        }
+    });
+  </script>
 </body>
 </html>

@@ -1089,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateCalculations();
   
   // Initialize engagement tracking
-  if (typeof InitEngagementTracking === 'function') {
-    InitEngagementTracking(TOOL_SLUG);
+  if (typeof initEngagementTracking === 'function') {
+    initEngagementTracking(TOOL_SLUG);
   }
 });

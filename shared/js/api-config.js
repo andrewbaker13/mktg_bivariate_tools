@@ -43,7 +43,7 @@ Hostname: ${window.location.hostname}
     // Assumes VS Code Live Server uses port 5500 by default
     window.JOIN_URL = isLocal
         ? `${window.location.protocol}//${window.location.hostname}:${window.location.port}/admin_pages/games/game-join.html`
-        : 'https://drbakermarketing.com/admin_pages/games/game-join.html';
+        : 'https://www.mktpraxis.com/admin_pages/games/game-join.html';
 
     console.log(`%c[Config] ${isLocal ? 'Local Development 🏠' : 'Production ☁️'}`, 'font-weight: bold; color: #3b82f6');
 })();
