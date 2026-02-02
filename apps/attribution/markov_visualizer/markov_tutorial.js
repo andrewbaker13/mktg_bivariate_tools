@@ -409,6 +409,42 @@ const MarkovTutorial = {
                 }
             ],
             check: () => true
+        },
+        {
+            id: 'conclusion',
+            title: "🎓 Professor Mode Complete!",
+            targetId: null,
+            content: `
+                <h4>📊 What You've Learned</h4>
+                <ul style="margin: 0.5rem 0 1rem 1rem; line-height: 1.7;">
+                    <li>How Markov Chains model customer journeys as a sequential network</li>
+                    <li>How to read transition probabilities in the heatmap</li>
+                    <li>What "Removal Effect" measures and why it matters</li>
+                    <li>The concept of absorbing states (Conversion/Lost)</li>
+                    <li>How Markov differs from Shapley in allocating credit</li>
+                </ul>
+                
+                <h4>🔬 Analyst's Perspective: Beyond This Tutorial</h4>
+                <p style="font-style: italic; background: #f0f9ff; padding: 12px; border-left: 4px solid #3b82f6; border-radius: 6px; line-height: 1.7;">
+                    First-order Markov Chains assume the "memoryless property"—that transition probabilities depend 
+                    only on the current state, not the full history. Real customer journeys often violate this: a user 
+                    who came from a retargeting ad behaves differently than one from organic search, even if both are 
+                    now on the same page. Advanced practitioners use higher-order Markov models, hidden Markov models 
+                    (HMMs), or sequence-aware neural networks to capture richer patterns. Additionally, Removal Effect 
+                    is a counterfactual estimate—it tells you what <em>would</em> happen if a channel disappeared, but 
+                    real-world channel interactions are messier. Consider triangulating with incrementality experiments 
+                    and exploring how time-between-touches affects transition probabilities.
+                </p>
+                
+                <h4>🎯 Next Steps</h4>
+                <ul style="margin: 0.5rem 0 1rem 1rem; line-height: 1.7;">
+                    <li>Compare with <strong>Shapley Attribution</strong> to see where the methods agree/disagree</li>
+                    <li>Try different scenarios to see how journey patterns affect removal effects</li>
+                    <li>Use the seed feature for reproducible demonstrations</li>
+                </ul>
+            `,
+            quizzes: [],
+            check: () => true
         }
     ],
 

@@ -49,20 +49,38 @@ const ShapleyTutorial = {
             targetId: 'tut-scenario-section',
             content: `
                 <p>Context matters. Different businesses have different 'physics'.</p>
-                <p class="task">👉 <strong>Task:</strong> Select <strong>"Case B: Luxury Vacation Inc."</strong> from the dropdown menu in the highlighted panel.</p>
-                <p>This case features a <em>High Synergy</em> environment where channels work better together. Read the scenario description that appears after selecting.</p>
+                <p class="task">👉 <strong>Task:</strong> Explore the scenarios! Try selecting <strong>"Case C: Fast Fashion Outlet"</strong> (cannibalization) or <strong>"Case D: Emergency Plumber"</strong> (search dominance), then compare with <strong>"Case B: Luxury Vacation"</strong> (synergy).</p>
+                <p>Notice how the Synergy Heatmap changes with each scenario!</p>
             `,
-            check: () => {
+            scenarioChanged: false,
+            onEnter: () => {
+                const step = ShapleyTutorial.steps.find(s => s.id === 'scenario');
+                step.scenarioChanged = false;
                 const sel = document.getElementById('scenario-select');
-                return sel && sel.value === 'synergy';
+                if (sel) {
+                    const handler = () => { step.scenarioChanged = true; };
+                    sel.addEventListener('change', handler);
+                    sel._tutorialHandler = handler;
+                }
+            },
+            onExit: () => {
+                const sel = document.getElementById('scenario-select');
+                if (sel && sel._tutorialHandler) {
+                    sel.removeEventListener('change', sel._tutorialHandler);
+                    delete sel._tutorialHandler;
+                }
+            },
+            check: () => {
+                const step = ShapleyTutorial.steps.find(s => s.id === 'scenario');
+                return step.scenarioChanged === true;
             },
             quizzes: [
                 {
-                    question: "In this 'Luxury Vacation' scenario, what behavior do we expect?",
+                    question: "In a 'High Synergy' scenario like Luxury Vacation, what behavior do we expect?",
                     options: [
                         "Channels work independently (Solo players).",
-                        "High Synergy (Channels work better as a team).",
-                        "Negative Synergy (Channels cannibalize each other)."
+                        "Channels work better as a team (1+1=3 effect).",
+                        "Channels cannibalize each other (1+1=1.5 effect)."
                     ],
                     answer: 1,
                     feedback: "Correct! High-ticket items usually require multiple touchpoints working together to convince a buyer."
@@ -367,6 +385,42 @@ const ShapleyTutorial = {
             },
             quizzes: [],
             check: () => true
+        },
+        {
+            id: 'conclusion',
+            title: "🎓 Professor Mode Complete!",
+            targetId: null,
+            content: `
+                <h4>📊 What You've Learned</h4>
+                <ul style="margin: 0.5rem 0 1rem 1rem; line-height: 1.7;">
+                    <li>Why Last-Touch attribution can be misleading</li>
+                    <li>How Shapley Values fairly distribute credit across all "players"</li>
+                    <li>How to identify synergy vs. independence vs. cannibalization</li>
+                    <li>How to read the coalition conversion matrix</li>
+                    <li>How to spot under-valued "assist" channels</li>
+                </ul>
+                
+                <h4>🔬 Analyst's Perspective: Beyond This Tutorial</h4>
+                <p style="font-style: italic; background: #f0f9ff; padding: 12px; border-left: 4px solid #3b82f6; border-radius: 6px; line-height: 1.7;">
+                    Shapley Values provide a mathematically fair attribution framework, but they assume all coalition 
+                    orderings are equally likely—which may not reflect real customer journey patterns where certain 
+                    sequences dominate. In practice, analysts often compare Shapley results with position-based models 
+                    and Markov chain analysis to triangulate insights. Advanced practitioners also consider time decay, 
+                    cross-device tracking gaps, and incrementality testing to validate that attributed channels truly 
+                    <em>caused</em> conversions rather than just correlating with them. As you advance, explore how 
+                    Shapley extends to multi-touch with time weights, and consider A/B testing budget reallocations 
+                    before making major investment shifts.
+                </p>
+                
+                <h4>🎯 Next Steps</h4>
+                <ul style="margin: 0.5rem 0 1rem 1rem; line-height: 1.7;">
+                    <li>Try the <strong>Markov Chain Attribution</strong> tool to see how sequence matters</li>
+                    <li>Experiment with different scenarios to see how synergy patterns change</li>
+                    <li>Export your results and compare with your own data</li>
+                </ul>
+            `,
+            quizzes: [],
+            check: () => true
         }
     ],
 
@@ -394,10 +448,19 @@ const ShapleyTutorial = {
         this.lastCheckResult = null;
         document.body.classList.add('tutorial-active');
         document.getElementById('tutorial-sidebar').classList.add('active');
+        
+        // Call onEnter for first step if defined
+        const firstStep = this.steps[this.currentStep];
+        if (firstStep.onEnter) firstStep.onEnter();
+        
         this.updateView();
     },
 
     stop() {
+        // Call onExit for current step if defined
+        const currentStep = this.steps[this.currentStep];
+        if (currentStep && currentStep.onExit) currentStep.onExit();
+        
         this.isActive = false;
         if (this.checkInterval) clearInterval(this.checkInterval);
         document.body.classList.remove('tutorial-active');
@@ -616,9 +679,18 @@ const ShapleyTutorial = {
 
     nextStep() {
         if (this.currentStep < this.steps.length - 1) {
+            // Call onExit for current step if defined
+            const currentStep = this.steps[this.currentStep];
+            if (currentStep.onExit) currentStep.onExit();
+            
             this.currentStep++;
             this.currentHighlight = null;  // Reset highlight tracking
             this.lastCheckResult = null;   // Reset check tracking
+            
+            // Call onEnter for new step if defined
+            const newStep = this.steps[this.currentStep];
+            if (newStep.onEnter) newStep.onEnter();
+            
             this.updateView();
         } else {
             this.finish();

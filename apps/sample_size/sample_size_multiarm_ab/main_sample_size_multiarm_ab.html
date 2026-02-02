@@ -36,6 +36,7 @@
         <h1>Sample Size Planner</h1>
         <div class="hero-context">
           <span class="badge">Multi-arm A/B tests</span>
+          <label class="professor-mode-toggle"><input type="checkbox" id="professorMode"><span>🎓 Professor Mode</span></label>
         </div>
       </div>
       <p class="hero-header__lede">
@@ -45,7 +46,7 @@
       </p>
     </header>
 
-    <section class="test-overview" aria-labelledby="test-overview-heading">
+    <section id="tut-overview-section" class="test-overview" aria-labelledby="test-overview-heading">
       <h2 id="test-overview-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
       <div class="card">
         <p>
@@ -76,7 +77,7 @@
       </div>
     </section>
 
-    <section class="input-card" aria-labelledby="inputs-heading">
+    <section id="tut-inputs-section" class="input-card" aria-labelledby="inputs-heading">
       <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
       <article class="card data-entry-card">
         <div class="input-header">
@@ -219,7 +220,7 @@
       </article>
     </section>
 
-    <section class="scenario-section" aria-labelledby="scenario-heading">
+    <section id="tut-scenario-section" class="scenario-section" aria-labelledby="scenario-heading">
       <h2 id="scenario-heading">PLANNING SCENARIOS</h2>
       <div class="card">
         <div class="scenario-controls">
@@ -240,7 +241,7 @@
       </div>
     </section>
 
-    <section class="visual-output" aria-labelledby="visual-output-heading">
+    <section id="tut-charts-section" class="visual-output" aria-labelledby="visual-output-heading">
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       <div class="card">
         <div class="chart-grid">
@@ -265,7 +266,7 @@
       </div>
     </section>
 
-    <section class="test-results" aria-labelledby="test-results-heading">
+    <section id="tut-results-section" class="test-results" aria-labelledby="test-results-heading">
       <h2 id="test-results-heading">DESIGN SUMMARY</h2>
       <div class="card metrics-panel">
         <div class="metric-output">
@@ -345,11 +346,14 @@
     </div>
   </footer>
 
+  <!-- Tutorial sidebar and overlay created dynamically by JS -->
+
   <script src="../../../shared/js/ui_utils.js"></script>
   <script src="../../../shared/js/auth_tracking.js"></script>
   <script src="../../../shared/js/auth_bar.js"></script>
   <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="main_sample_size_multiarm_ab.js"></script>
+  <script src="sample_size_multiarm_ab_tutorial.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       initQuizButton('sample_size_multiarm_ab');

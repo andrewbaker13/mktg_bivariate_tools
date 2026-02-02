@@ -32,6 +32,22 @@
     </div>
   </div>
 
+  <!-- Professor Mode Toggle -->
+  <label class="professor-mode-toggle">
+    <input type="checkbox" id="professorMode">
+    <span>🎓 Professor Mode</span>
+  </label>
+
+  <!-- Tutorial Sidebar -->
+  <aside id="tutorial-sidebar" class="tutorial-sidebar">
+    <div class="sidebar-header">
+      <h2>📚 Tutorial</h2>
+      <button class="close-tutorial" onclick="MLRInteractionsTutorial.stop()">&times;</button>
+    </div>
+    <div id="tutorial-content" class="tutorial-content"></div>
+  </aside>
+  <div id="tutorial-overlay" class="tutorial-overlay" onclick="MLRInteractionsTutorial.stop()"></div>
+
   <header class="intro hero-header">
     <div class="hero-header__top">
       <h1>Multiple Regression with Interactions & Non-Linear Effects</h1>
@@ -45,7 +61,7 @@
   </header>
 
   <main class="app-main">
-    <section class="test-overview">
+    <section id="tut-overview-section" class="test-overview">
       <h2>OVERVIEW & CONCEPTS</h2>
       <div class="card">
         <p>
@@ -205,7 +221,7 @@
       </div>
     </section>
 
-    <section class="inputs-panel">
+    <section id="tut-inputs-section" class="inputs-panel">
       <h2>INPUTS & SETTINGS</h2>
       
       <div class="card data-entry-card">
@@ -360,7 +376,7 @@
       </div>
     </section>
 
-    <section class="visual-output" aria-labelledby="visual-output-heading">
+    <section id="tut-visual-section" class="visual-output" aria-labelledby="visual-output-heading">
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       <div class="card">
         <article class="chart-card">
@@ -431,7 +447,7 @@
       </div>
     </section>
 
-    <section class="test-results" aria-labelledby="test-results-heading">
+    <section id="tut-results-section" class="test-results" aria-labelledby="test-results-heading">
       <h2 id="test-results-heading">TEST RESULTS</h2>
 
       <div class="card regression-equation-card">
@@ -495,7 +511,7 @@
       </div>
     </section>
 
-    <section class="diagnostics-section">
+    <section id="tut-diagnostics-section" class="diagnostics-section">
       <h2>DIAGNOSTICS & ASSUMPTIONS</h2>
       <div class="card">
         <details class="diagnostics-details">
@@ -547,6 +563,7 @@
   <script src="../../../shared/js/stats_utils.js"></script>
   <script src="../../../shared/js/ui_utils.js"></script>
   <script src="main_mlr_interactions.js"></script>
+  <script src="mlr_interactions_tutorial.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       initQuizButton('mlr_interactions');

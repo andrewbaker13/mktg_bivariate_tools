@@ -159,8 +159,9 @@ const SENTIMENT_LAB_SCENARIOS = [
   }
 ];
 
-// Sentiment data
+// Sentiment data - exposed globally for tutorial access
 let sentimentRows = [];
+window.sentimentRows = sentimentRows;
 
 // Grouping state
 let groupingEnabled = false;
@@ -452,6 +453,9 @@ function runSentimentAnalysis() {
         id: row.id || row.index
       };
     });
+
+    // Sync to window for tutorial access
+    window.sentimentRows = sentimentRows;
 
     renderSentimentSummary();
     updateDownloadButton();

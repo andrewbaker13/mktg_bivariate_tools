@@ -36,13 +36,17 @@
             <h1>One-Way ANOVA Explorer</h1>
             <div class="hero-context">
                 <span class="badge">Means tool</span>
+                <label class="professor-mode-toggle">
+                    <input type="checkbox" id="professorMode">
+                    <span>🎓 Professor Mode</span>
+                </label>
             </div>
         </div>
         <p class="hero-header__lede">Evaluate how multiple group means compare to the overall mean with visuals, diagnostics, and narratives.</p>
     </header>
 
     <main class="app-main">
-        <section class="test-overview">
+        <section class="test-overview" id="tut-overview-section">
             <h2>TEST OVERVIEW &amp; EQUATIONS</h2>
             <div class="card equation-section">
                 <p>One-way ANOVA partitions variability into signal (between groups) and noise (within groups):</p>
@@ -84,7 +88,7 @@
             </div>
         </section>
 
-        <section class="scenario-section">
+        <section class="scenario-section" id="tut-scenario-section">
             <h2>MARKETING SCENARIOS</h2>
             <div class="card">
                 <div class="scenario-controls">
@@ -104,7 +108,7 @@
             </div>
         </section>
 
-        <section class="input-stack">
+        <section class="input-stack" id="tut-input-section">
             <h2>INPUTS &amp; SETTINGS</h2>
             <article class="card data-entry-card">
                 <div class="input-header">
@@ -236,7 +240,7 @@
             </article>
         </section>
 
-        <section class="visualization-section">
+        <section class="visualization-section" id="tut-visual-section">
             <h2>VISUAL OUTPUT</h2>
             <div class="visualization-wrapper">
                 <article class="card chart-card" aria-labelledby="means-chart-title">
@@ -296,7 +300,7 @@
             </div>
         </section>
 
-        <section class="test-results" aria-labelledby="test-results-heading">
+        <section class="test-results" id="tut-results-section" aria-labelledby="test-results-heading">
             <h2 id="test-results-heading">TEST RESULTS</h2>
             <div class="dual-panels">
                 <article class="card dual-panel">
@@ -311,7 +315,7 @@
             <div id="interpretation" class="card interpretation" aria-live="polite"></div>
         </section>
 
-        <section class="summary-section card" aria-live="polite">
+        <section class="summary-section card" id="tut-summary-section" aria-live="polite">
             <h3>Summary of Estimates</h3>
             <table class="data-table">
                 <thead>
@@ -371,6 +375,7 @@
     <script src="../../../shared/js/auth_bar.js"></script>
     <script src="../../../shared/js/quiz_utils.js"></script>
     <script src="onewayanova_app.js"></script>
+    <script src="anova_tutorial.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         initQuizButton('onewayanova');

@@ -38,12 +38,16 @@
           <h1>Chi-Square Test of Independence</h1>
           <div class="hero-context">
             <span class="badge">Crosstab tool</span>
+            <label class="professor-mode-toggle">
+              <input type="checkbox" id="professorMode">
+              <span>👨‍🏫 Professor Mode</span>
+            </label>
           </div>
         </div>
         <p class="hero-header__lede">Explore whether two categorical variables are associated using a contingency table. Enter the observed counts below; we compute expected counts, &chi;&sup2;, df, p-value, and an interpretation.</p>
       </header>
 
-      <section class="test-overview">
+      <section class="test-overview" id="tut-overview-section">
         <h2 class="section-label">TEST OVERVIEW &amp; EQUATIONS</h2>
         <div class="card">
           <p>Use this tool to determine whether the distribution of one categorical variable differs across the levels of another. In marketing, this helps validate whether response rates shift across creative, channel, or audience slices.</p>
@@ -62,7 +66,7 @@
         </div>
       </section>
 
-      <section class="scenario-section">
+      <section class="scenario-section" id="tut-scenario-section">
         <h2>MARKETING SCENARIOS</h2>
         <div class="card">
           <div class="scenario-controls">
@@ -76,7 +80,7 @@
             <p>Pick a scenario to auto-fill the contingency table and narrative with real marketing counts from curated analyses. Switch back to manual inputs if you want to customize the numbers further.</p>
           </div>
         </div>
-      <section class="inputs-panel">
+      <section class="inputs-panel" id="tut-input-section">
         <h2>INPUTS &amp; SETTINGS</h2>
         <div class="card data-entry-card">
           <div class="input-header">
@@ -188,7 +192,7 @@
         </div>
       </section>
 
-      <section class="visual-output">
+      <section class="visual-output" id="tut-visual-section">
         <h2>VISUAL OUTPUT</h2>
         <div class="card">
           <article class="chart-card">
@@ -220,7 +224,7 @@
         </div>
       </section>
 
-      <section class="test-results" aria-labelledby="test-results-heading">
+      <section class="test-results" id="tut-results-section" aria-labelledby="test-results-heading">
         <h2 id="test-results-heading">TEST RESULTS</h2>
         <div class="card metrics-panel">
           <div class="metric-output">Chi-square (&chi;&sup2;): <span id="chi2" class="dynamic-value">&ndash;</span></div>
@@ -317,6 +321,7 @@
     <script src="../../../shared/js/auth_bar.js"></script>
     <script src="../../../shared/js/quiz_utils.js"></script>
     <script src="chisquare_app.js"></script>
+    <script src="chisquare_tutorial.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         initQuizButton('chisquare');

@@ -33,12 +33,18 @@
       </div>
     </div>
   </div>
-  <main class="app-main">
+  <!-- Tutorial sidebar and overlay created dynamically by JS -->
+
+<main class="app-main">
     <header class="intro hero-header">
       <div class="hero-header__top">
         <h1>Sample Size Planner</h1>
         <div class="hero-context">
           <span class="badge">Correlation / regression</span>
+          <label class="professor-mode-toggle">
+            <input type="checkbox" id="professorMode">
+            <span>🎓 Professor Mode</span>
+          </label>
         </div>
       </div>
       <p class="hero-header__lede">
@@ -47,7 +53,7 @@
       </p>
     </header>
 
-    <section class="test-overview" aria-labelledby="test-overview-heading">
+    <section class="test-overview" aria-labelledby="test-overview-heading" id="tut-overview-section">
       <h2 id="test-overview-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
       <div class="card">
         <p>
@@ -75,7 +81,7 @@
       </div>
     </section>
 
-    <section class="scenario-section" aria-labelledby="scenario-heading">
+    <section class="scenario-section" aria-labelledby="scenario-heading" id="tut-scenario-section">
       <h2 id="scenario-heading">PLANNING SCENARIOS</h2>
       <div class="card">
         <div class="scenario-controls">
@@ -97,7 +103,7 @@
       </div>
     </section>
 
-    <section class="input-card" aria-labelledby="inputs-heading">
+    <section class="input-card" aria-labelledby="inputs-heading" id="tut-inputs-section">
       <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
       <article class="card data-entry-card">
         <div class="input-header">
@@ -222,7 +228,7 @@
       </article>
     </section>
 
-    <section class="visual-output" aria-labelledby="visual-output-heading">
+    <section class="visual-output" aria-labelledby="visual-output-heading" id="tut-charts-section">
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       <div class="card">
         <div class="chart-grid">
@@ -246,7 +252,7 @@
       </div>
     </section>
 
-    <section class="test-results" aria-labelledby="test-results-heading">
+    <section class="test-results" aria-labelledby="test-results-heading" id="tut-results-section">
       <h2 id="test-results-heading">DESIGN SUMMARY</h2>
       <div class="card metrics-panel">
         <div class="metric-output">
@@ -345,6 +351,7 @@
   <script src="../../../shared/js/auth_bar.js"></script>
   <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="main_sample_size_corr_regression.js"></script>
+  <script src="sample_size_corr_regression_tutorial.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       initQuizButton('sample_size_corr_regression');

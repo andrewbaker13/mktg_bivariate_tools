@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decision Tree Classifier - Dr. Baker Marketing Analytics</title>
+    <link rel="stylesheet" href="../../../shared/css/main.css">
+    <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="../../../shared/js/tracking.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-290ZJ9RE04');
+    </script>
+</head>
+<body>
+    <!-- Auth Bar -->
+    <div class="auth-bar">
+        <div class="auth-bar__container">
+            <div></div>
+            <div id="auth-bar-content" class="auth-bar__links">
+                <a href="../../../admin_pages/login.html">Login</a>
+                <a href="../../../admin_pages/register.html">Create Account</a>
+            </div>
+        </div>
+    </div>
+
+    <header class="intro hero-header">
+        <div class="hero-header__top">
+            <h1>🌳 Decision Tree Classifier</h1>
+            <div class="hero-context">
+                <span class="badge">Machine Learning</span>
+            </div>
+        </div>
+        <p class="hero-header__lede">
+            Build and interpret classification trees for marketing decisions. Understand how decision trees segment customers
+            by learning splitting rules from data. Toggle between automated building and manual exploration to develop intuition
+            for how trees partition feature space.
+        </p>
+    </header>
+
+    <!-- Professor Mode Banner -->
+    <div class="professor-mode-banner">
+        <div class="professor-mode-content">
+            <div class="professor-mode-info">
+                <h3>👨‍🏫 Professor Mode: Guided Learning Experience</h3>
+                <p>New to decision trees? Enable Professor Mode for step-by-step guidance through building and interpreting your first tree!</p>
+            </div>
+            <label class="professor-mode-toggle">
+                <input type="checkbox" id="professorMode">
+                <span>Enable Professor Mode</span>
+            </label>
+        </div>
+    </div>
+
+    <main class="app-main">
+        <!-- Step 1: Choose Scenario -->
+        <section class="step-card" id="step1">
+            <div class="step-header">
+                <h2>📊 Step 1: Choose Your Business Problem</h2>
+            </div>
+            
+            <div class="card">
+                <div class="scenario-controls">
+                    <label for="scenario-select">Load a marketing scenario:</label>
+                    <div class="scenario-controls__input">
+                        <select id="scenario-select">
+                            <option value="">-- Select a scenario --</option>
+                        </select>
+                        <button id="scenario-download" class="secondary" type="button" disabled>
+                            Download scenario dataset
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="scenario-description" class="scenario-description">
+                    <p class="scenario-placeholder">
+                        Select a scenario above to see the business context and variables, or upload your own dataset below.
+                    </p>
+                </div>
+
+                <!-- Custom Upload -->
+                <div class="upload-section">
+                    <h4>Or Upload Your Own Data</h4>
+                    <div class="dropzone" id="data-dropzone">
+                        <p class="dropzone-title">Drag & Drop CSV file</p>
+                        <p class="dropzone-note">Include headers. One categorical outcome column + predictor columns (numeric or categorical).</p>
+                        <button type="button" id="browse-btn" class="btn secondary">Browse files</button>
+                    </div>
+                    <input type="file" id="file-input" accept=".csv,.tsv,.txt" hidden>
+                    <p class="upload-status" id="upload-status">No file uploaded.</p>
+                    
+                    <!-- Variable Assignment (shown after upload) -->
+                    <div id="variable-assignment" class="variable-assignment hidden">
+                        <h4>Assign Variables</h4>
+                        <div class="variable-row">
+                            <label for="outcome-select">Outcome Variable (what to predict):</label>
+                            <select id="outcome-select"></select>
+                        </div>
+                        <div id="predictor-list" class="predictor-list">
+                            <!-- Predictors will be listed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2: Build Settings -->
+        <section class="step-card" id="step2">
+            <div class="step-header">
+                <h2>⚙️ Step 2: Configure Tree Settings</h2>
+            </div>
+            
+            <div class="card">
+                <div class="settings-grid">
+                    <!-- Build Mode Toggle -->
+                    <div class="setting-group mode-toggle-group">
+                        <label>Build Mode</label>
+                        <div class="mode-toggle">
+                            <button type="button" id="mode-auto" class="mode-btn active">🤖 Auto</button>
+                            <button type="button" id="mode-manual" class="mode-btn">🛠️ Manual</button>
+                        </div>
+                        <p class="setting-help" id="mode-help">
+                            Algorithm finds optimal splits automatically.
+                        </p>
+                    </div>
+
+                    <!-- Tree Constraints -->
+                    <div class="setting-group">
+                        <label for="max-depth">Max Depth: <span id="max-depth-val">3</span></label>
+                        <input type="range" id="max-depth" min="1" max="6" value="3" step="1">
+                        <p class="setting-help">Maximum levels from root to deepest leaf.</p>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="min-samples-leaf">Min Samples per Leaf: <span id="min-samples-val">10</span></label>
+                        <input type="range" id="min-samples-leaf" min="1" max="50" value="10" step="1">
+                        <p class="setting-help">Prevents tiny, overfit leaf nodes.</p>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="split-criterion">Split Criterion</label>
+                        <select id="split-criterion">
+                            <option value="gini" selected>Gini Impurity</option>
+                            <option value="entropy">Information Gain (Entropy)</option>
+                        </select>
+                        <p class="setting-help">How to measure quality of splits.</p>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="train-split">Train/Test Split: <span id="train-split-val">70</span>%</label>
+                        <input type="range" id="train-split" min="50" max="90" value="70" step="5">
+                        <p class="setting-help">Percentage of data for training vs testing.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3: Build the Tree -->
+        <section class="step-card" id="step3">
+            <div class="step-header">
+                <h2>🌳 Step 3: Build the Tree</h2>
+                <div class="control-buttons">
+                    <button type="button" id="build-btn" class="btn-primary" disabled>Build Tree</button>
+                    <button type="button" id="reset-btn" class="btn-secondary" disabled>Reset</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <!-- Tree Visualization Container -->
+                <div id="tree-container" class="tree-container">
+                    <div class="tree-placeholder">
+                        <p>🌱 Select a scenario and click "Build Tree" to grow your decision tree.</p>
+                    </div>
+                </div>
+
+                <!-- Expanded Node Editor (appears when node is clicked in manual mode) -->
+                <div id="node-editor" class="node-editor hidden">
+                    <div class="node-editor-header">
+                        <h4>📊 Customize Split</h4>
+                        <button type="button" id="close-editor" class="close-btn">✕</button>
+                    </div>
+                    <div id="node-editor-content" class="node-editor-content">
+                        <!-- Dynamic content based on feature type -->
+                    </div>
+                    <div class="node-editor-actions">
+                        <button type="button" id="apply-split-btn" class="btn-primary">Apply Split</button>
+                        <button type="button" id="make-leaf-btn" class="btn-secondary">Make Leaf Instead</button>
+                        <button type="button" id="cancel-split-btn" class="btn-ghost">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 4: Model Evaluation -->
+        <section class="step-card" id="step4">
+            <div class="step-header">
+                <h2>📈 Step 4: Model Evaluation</h2>
+            </div>
+            
+            <div class="card">
+                <!-- Summary Metrics -->
+                <div class="metrics-summary" id="metrics-summary">
+                    <div class="metric-card">
+                        <span class="metric-label">Accuracy</span>
+                        <span class="metric-value" id="metric-accuracy">--</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Precision</span>
+                        <span class="metric-value" id="metric-precision">--</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Recall</span>
+                        <span class="metric-value" id="metric-recall">--</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">F1 Score</span>
+                        <span class="metric-value" id="metric-f1">--</span>
+                    </div>
+                </div>
+
+                <!-- Detailed Evaluation Grid -->
+                <div class="evaluation-grid">
+                    <!-- Confusion Matrix -->
+                    <div class="eval-panel">
+                        <h4>Confusion Matrix</h4>
+                        <div id="confusion-matrix" class="confusion-matrix">
+                            <p class="placeholder-text">Build a tree to see confusion matrix</p>
+                        </div>
+                    </div>
+
+                    <!-- ROC Curve (binary only) / Per-Class Metrics (multi-class) -->
+                    <div class="eval-panel">
+                        <h4 id="roc-panel-title">ROC Curve</h4>
+                        <div id="roc-curve" class="roc-curve">
+                            <p class="placeholder-text">Build a tree to see ROC curve</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature Importance -->
+                <div class="eval-panel full-width">
+                    <h4>Feature Importance</h4>
+                    <div id="feature-importance" class="feature-importance">
+                        <p class="placeholder-text">Build a tree to see feature importance</p>
+                    </div>
+                </div>
+
+                <!-- Dynamic Interpretation -->
+                <div class="interpretation-panel" id="interpretation-panel">
+                    <h4>💡 Interpretation</h4>
+                    <div id="interpretation-content">
+                        <p class="placeholder-text">Build a tree to see model interpretation...</p>
+                    </div>
+                </div>
+
+                <!-- Export Buttons -->
+                <div class="export-buttons">
+                    <button type="button" id="export-rules-btn" class="btn-secondary" disabled>
+                        📄 Export Tree Rules
+                    </button>
+                    <button type="button" id="export-predictions-btn" class="btn-secondary" disabled>
+                        📊 Export Predictions CSV
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script src="../../../shared/js/csv_utils.js"></script>
+    <script src="../../../shared/js/auth_tracking.js"></script>
+    <script src="../../../shared/js/auth_bar.js"></script>
+    <script src="scenarios.js"></script>
+    <script src="decision_tree.js"></script>
+    <script src="tree_visualizer.js"></script>
+    <script src="manual_builder.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

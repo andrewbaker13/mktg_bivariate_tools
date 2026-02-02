@@ -35,6 +35,10 @@
       <h1>Bivariate Linear Regression Tool</h1>
       <div class="hero-context">
         <span class="badge">New</span>
+        <label class="professor-mode-toggle">
+          <input type="checkbox" id="professorMode">
+          <span class="toggle-label">🎓 Professor Mode</span>
+        </label>
       </div>
     </div>
     <p class="hero-header__lede">
@@ -43,7 +47,7 @@
   </header>
 
   <main class="app-main">
-    <section class="test-overview">
+    <section class="test-overview" id="tut-overview-section">
       <h2>TEST OVERVIEW &amp; EQUATIONS</h2>
       <div class="card">
         <p>
@@ -74,7 +78,7 @@
       </div>
     </section>
 
-    <section class="scenario-section">
+    <section class="scenario-section" id="tut-scenario-section">
       <h2>MARKETING SCENARIOS</h2>
       <div class="card">
         <div class="scenario-controls">
@@ -97,7 +101,7 @@
       </div>
     </section>
 
-    <section class="inputs-panel">
+    <section class="inputs-panel" id="tut-input-section">
       <h2>INPUTS &amp; SETTINGS</h2>
       <div class="card data-entry-card">
         <div class="input-header">
@@ -300,7 +304,7 @@
       </details>
     </section>
 
-    <section class="visual-output" aria-labelledby="visual-output-heading">
+    <section class="visual-output" id="tut-visual-section" aria-labelledby="visual-output-heading">
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       <div class="card">
         <article class="chart-card">
@@ -341,7 +345,7 @@
       </div>
     </section>
 
-    <section class="test-results" aria-labelledby="test-results-heading">
+    <section class="test-results" id="tut-results-section" aria-labelledby="test-results-heading">
       <h2 id="test-results-heading">TEST RESULTS</h2>
 
       <div class="card regression-equation-card">
@@ -565,6 +569,7 @@
   <script src="../../../shared/js/auth_bar.js"></script>
   <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="bivariate_app.js"></script>
+  <script src="bivariate_tutorial.js"></script>
   <script>
     // Initialize quiz button for this tool
     document.addEventListener('DOMContentLoaded', () => {

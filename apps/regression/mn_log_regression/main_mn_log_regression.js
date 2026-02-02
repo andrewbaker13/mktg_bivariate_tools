@@ -1986,7 +1986,7 @@ function updateMnlogResultsPanels(design, fitResult) {
   const statEl = document.getElementById('statistic-value');
   const dfEl = document.getElementById('df-value');
   const pEl = document.getElementById('p-value');
-  const effectEl = document.getElementById('effect-size');
+  const effectEl = document.getElementById('metric-r2');
   const apaEl = document.getElementById('apa-report');
   const mgrEl = document.getElementById('managerial-report');
 

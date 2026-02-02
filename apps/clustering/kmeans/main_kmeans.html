@@ -34,6 +34,26 @@
       </div>
     </div>
   </div>
+
+  <!-- Professor Mode Toggle -->
+  <div class="professor-mode-toggle">
+    <label class="toggle-switch">
+      <input type="checkbox" id="professorMode">
+      <span class="slider"></span>
+    </label>
+    <span class="toggle-label">🎓 Professor Mode</span>
+  </div>
+
+  <!-- Tutorial Sidebar -->
+  <aside id="tutorial-sidebar" class="tutorial-sidebar">
+    <div class="tutorial-header">
+      <h2>🎓 Professor Mode</h2>
+      <button class="close-btn" onclick="KMeansTutorial.stop()">×</button>
+    </div>
+    <div id="tutorial-content" class="tutorial-content"></div>
+  </aside>
+  <div id="tutorial-overlay" class="tutorial-overlay" onclick="KMeansTutorial.stop()"></div>
+
   <main class="app-main">
     <header class="intro hero-header">
       <div class="hero-header__top">
@@ -48,7 +68,7 @@
       </p>
     </header>
 
-    <section class="test-overview" aria-labelledby="test-overview-heading">
+    <section class="test-overview" id="tut-overview-section" aria-labelledby="test-overview-heading">
       <h2 id="test-overview-heading">OVERVIEW &amp; OBJECTIVE</h2>
       <div class="card">
         <p>
@@ -97,7 +117,7 @@
       </div>
     </section>
 
-    <section class="input-card" aria-labelledby="inputs-heading">
+    <section class="input-card" id="tut-inputs-section" aria-labelledby="inputs-heading">
       <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
       <article class="card data-entry-card">
         <div class="input-header">
@@ -198,7 +218,7 @@
       </article>
     </section>
 
-    <section class="visual-output" aria-labelledby="visual-output-heading">
+    <section class="visual-output" id="tut-visual-section" aria-labelledby="visual-output-heading">
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       <div class="card">
         <div class="chart-grid">
@@ -274,7 +294,7 @@
       </div>
     </section>
 
-    <section class="test-results" aria-labelledby="test-results-heading">
+    <section class="test-results" id="tut-results-section" aria-labelledby="test-results-heading">
       <h2 id="test-results-heading">CLUSTER SUMMARY</h2>
       <div class="card metrics-panel">
         <div class="metric-output">Number of clusters (k): <span id="kmeans-metric-k">&ndash;</span></div>
@@ -379,6 +399,7 @@
   <script src="../../../shared/js/auth_bar.js"></script>
   <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="main_kmeans.js"></script>
+  <script src="kmeans_tutorial.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       initQuizButton('kmeans');

@@ -7,7 +7,8 @@ const TOOL_SLUG = 'markov-attribution';
 
 let appState = {
     model: new MarkovAttribution(CHANNELS),
-    rawPaths: []
+    rawPaths: [],
+    currentScenario: null  // Start with no scenario selected
 };
 
 // Expose for Professor Mode tutorial
@@ -17,7 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initUI();
     // Initialize Seed from UI
     handleSeedInit();
-    loadScenario('synergy');
+    
+    // Don't auto-load - wait for user to select a scenario
+    showWaitingState();
     
     // Initialize engagement tracking
     if (typeof initEngagementTracking === 'function') {
@@ -72,13 +75,15 @@ function initUI() {
              // 1. Lock seed
              handleSeedInit();
 
-             // 2. Run immediately
+             // 2. Run immediately (only if scenario selected)
              const currentScen = document.getElementById('scenario-select').value;
-             loadScenario(currentScen);
+             if (currentScen) {
+                 loadScenario(currentScen);
+             }
 
              // 3. Visual feedback
              const originalText = applySeedBtn.textContent;
-             applySeedBtn.textContent = "Running...";
+             applySeedBtn.textContent = currentScen ? "Running..." : "Seed Set!";
              setTimeout(() => {
                  applySeedBtn.textContent = "Set";
              }, 800);
@@ -93,7 +98,60 @@ function initUI() {
     });
 }
 
+/**
+ * Shows a waiting state prompting the user to select a scenario
+ */
+function showWaitingState() {
+    // Show placeholder in scenario description
+    const descEl = document.getElementById('scenario-description');
+    if (descEl) {
+        descEl.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: #64748b;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">👆</div>
+                <h3 style="margin: 0 0 0.5rem 0; color: #1e40af;">Select a Business Scenario Above</h3>
+                <p style="margin: 0;">Choose a case to generate customer journey data and begin the Markov Chain analysis.</p>
+            </div>
+        `;
+    }
+    
+    // Show placeholder message in stats panel
+    const statsContainer = document.getElementById('raw-data-stats');
+    if (statsContainer) {
+        statsContainer.innerHTML = `
+            <div style="text-align: center; padding: 1rem; color: #94a3b8; font-style: italic;">
+                Waiting for scenario selection...
+            </div>
+        `;
+    }
+    
+    // Clear charts with waiting message
+    const chartIds = ['sankey-chart', 'transition-heatmap', 'global-removal-chart', 'comparison-chart'];
+    chartIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 200px; color: #94a3b8; font-style: italic;">
+                    Select a scenario to see visualization
+                </div>
+            `;
+        }
+    });
+    
+    // Clear raw journeys list
+    const listEl = document.getElementById('raw-data-list');
+    if (listEl) {
+        listEl.innerHTML = '';
+    }
+    
+    // Hide removal result box
+    const removalBox = document.getElementById('removal-result-box');
+    if (removalBox) {
+        removalBox.style.display = 'none';
+    }
+}
+
 function loadScenario(key) {
+    appState.currentScenario = key;
     const config = SCENARIOS[key];
     
     // -- Handle Custom Channel Labels (B2B Case) --

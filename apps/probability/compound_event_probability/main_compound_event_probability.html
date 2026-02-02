@@ -32,6 +32,38 @@
       </div>
     </div>
   </div>
+  
+  <!-- Professor Mode Toggle -->
+  <label class="professor-mode-toggle">
+    <input type="checkbox" id="professorMode">
+    <span>🎓 Professor Mode</span>
+  </label>
+
+  <!-- Tutorial Sidebar -->
+  <aside id="tutorial-sidebar" class="tutorial-sidebar">
+    <div class="sidebar-header">
+      <h3>🎓 Professor Mode</h3>
+      <button id="tutorial-close-btn" class="close-tutorial" aria-label="Close tutorial">&times;</button>
+    </div>
+    <div class="tutorial-progress">
+      <div class="tutorial-progress-bar">
+        <div id="tutorial-progress-fill" class="tutorial-progress-fill"></div>
+      </div>
+      <span class="tutorial-progress-text">Step <span id="tutorial-progress-current">1</span> of <span id="tutorial-progress-total">10</span></span>
+    </div>
+    <div class="tutorial-content">
+      <h4 id="tutorial-step-title">Welcome</h4>
+      <div id="tutorial-step-content"></div>
+    </div>
+    <div class="tutorial-nav">
+      <button id="tutorial-prev-btn" class="secondary" disabled>← Previous</button>
+      <button id="tutorial-next-btn" class="primary">Next →</button>
+    </div>
+  </aside>
+
+  <!-- Tutorial Overlay -->
+  <div id="tutorial-overlay" class="tutorial-overlay"></div>
+
   <main class="app-main">
     <header class="intro hero-header">
       <div class="hero-header__top">
@@ -47,7 +79,7 @@
       </p>
     </header>
 
-    <section class="test-overview" aria-labelledby="overview-heading">
+    <section class="test-overview" id="tut-overview-section" aria-labelledby="overview-heading">
       <h2 id="overview-heading">OVERVIEW &amp; CONCEPTS</h2>
       <div class="card">
         <p>
@@ -119,7 +151,7 @@
       </div>
     </section>
 
-    <section class="scenario-section" aria-labelledby="scenario-heading">
+    <section class="scenario-section" id="tut-scenario-section" aria-labelledby="scenario-heading">
       <h2 id="scenario-heading">MARKETING &amp; PRACTICAL SCENARIOS</h2>
       <div class="card">
         <div class="scenario-controls">
@@ -140,7 +172,7 @@
       </div>
     </section>
 
-    <section class="input-card" aria-labelledby="inputs-heading">
+    <section class="input-card" id="tut-inputs-section" aria-labelledby="inputs-heading">
       <h2 id="inputs-heading">EVENT &amp; TRIAL SETTINGS</h2>
       <article class="card data-entry-card">
         <div class="input-header">
@@ -243,7 +275,7 @@
       </article>
     </section>
 
-    <section class="visual-output" aria-labelledby="visual-output-heading">
+    <section class="visual-output" id="tut-visual-section" aria-labelledby="visual-output-heading">
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       <div class="card">
         <div class="chart-grid compound-lab-grid">
@@ -324,7 +356,7 @@
       </div>
     </section>
 
-    <section class="test-results" aria-labelledby="math-heading">
+    <section class="test-results" id="tut-results-section" aria-labelledby="math-heading">
       <h2 id="math-heading">MATH DETAILS &amp; WORKED EXAMPLES</h2>
       <div class="card metrics-panel compound-math-panel">
         <div class="metric-output">
@@ -495,6 +527,7 @@
   <script src="../../../shared/js/auth_bar.js"></script>
   <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="compound_event_probability.js"></script>
+  <script src="compound_event_tutorial.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       initQuizButton('compound_event_probability');

@@ -6,7 +6,7 @@ const TOOL_SLUG = 'shapley-attribution';
 
 // Global State
 let appState = {
-    currentScenario: 'synergy',
+    currentScenario: null,  // Start with no scenario selected
     activeChannels: new Set(['search']), // Currently toggled in UI
     calc: new ShapleyCalculator(CHANNELS),
     rawPaths: [], // { path: ['search', 'social'], converted: true }
@@ -18,7 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initUI();
     // Initialize Seed from UI or Generate Random
     handleSeedInit();
-    loadScenario('synergy'); // This triggers generation & UI update
+    
+    // Don't auto-load - wait for user to select a scenario
+    showWaitingState();
 
     // PROFESSOR MODE: Expose state for tutorial
     window.appState = appState;
@@ -108,12 +110,14 @@ function initUI() {
              // 1. Lock in the seed (updates the PRNG object)
              handleSeedInit();
              
-             // 2. Run the simulation immediately (so they don't have to click twice)
-             loadScenario(appState.currentScenario);
+             // 2. Run the simulation immediately (only if scenario selected)
+             if (appState.currentScenario) {
+                 loadScenario(appState.currentScenario);
+             }
              
              // 3. Visual feedback 
              const originalText = applySeedBtn.textContent;
-             applySeedBtn.textContent = "Running...";
+             applySeedBtn.textContent = appState.currentScenario ? "Running..." : "Seed Set!";
              setTimeout(() => {
                  applySeedBtn.textContent = "Set";
              }, 800);
@@ -171,6 +175,52 @@ function updateMarginalDisplay(channelId, isAdding, oldVal, newVal) {
     box.style.padding = '1rem';
     box.style.marginBottom = '1rem';
     box.style.borderRadius = '8px';
+}
+
+/**
+ * Shows a waiting state prompting the user to select a scenario
+ */
+function showWaitingState() {
+    // Show placeholder in scenario description
+    const descEl = document.getElementById('scenario-description');
+    if (descEl) {
+        descEl.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: #64748b;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">👆</div>
+                <h3 style="margin: 0 0 0.5rem 0; color: #1e40af;">Select a Business Scenario Above</h3>
+                <p style="margin: 0;">Choose a case to generate customer journey data and begin the analysis.</p>
+            </div>
+        `;
+    }
+    
+    // Show placeholder message in stats panel
+    const statsContainer = document.getElementById('raw-data-stats');
+    if (statsContainer) {
+        statsContainer.innerHTML = `
+            <div style="text-align: center; padding: 1rem; color: #94a3b8; font-style: italic;">
+                Waiting for scenario selection...
+            </div>
+        `;
+    }
+    
+    // Clear charts with waiting message
+    const chartIds = ['synergy-heatmap', 'shapley-values-chart', 'comparison-chart'];
+    chartIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 200px; color: #94a3b8; font-style: italic;">
+                    Select a scenario to see visualization
+                </div>
+            `;
+        }
+    });
+    
+    // Clear raw journeys list
+    const listEl = document.getElementById('raw-data-list');
+    if (listEl) {
+        listEl.innerHTML = '';
+    }
 }
 
 /**

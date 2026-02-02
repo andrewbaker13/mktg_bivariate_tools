@@ -36,6 +36,25 @@
     </div>
   </div>
 
+  <!-- Professor Mode Toggle -->
+  <div class="professor-mode-toggle">
+    <label class="toggle-switch">
+      <input type="checkbox" id="professorMode">
+      <span class="slider"></span>
+    </label>
+    <span class="toggle-label">🎓 Professor Mode</span>
+  </div>
+
+  <!-- Tutorial Sidebar -->
+  <aside id="tutorial-sidebar" class="tutorial-sidebar">
+    <div class="tutorial-header">
+      <h2>🎓 Professor Mode</h2>
+      <button class="close-btn" onclick="KPrototypesTutorial.stop()">×</button>
+    </div>
+    <div id="tutorial-content" class="tutorial-content"></div>
+  </aside>
+  <div id="tutorial-overlay" class="tutorial-overlay" onclick="KPrototypesTutorial.stop()"></div>
+
   <main class="app-main">
     <header class="intro hero-header">
       <div class="hero-header__top">
@@ -51,7 +70,7 @@
       </p>
     </header>
 
-    <section class="test-overview" aria-labelledby="test-overview-heading">
+    <section class="test-overview" id="tut-overview-section" aria-labelledby="test-overview-heading">
       <h2 id="test-overview-heading">OVERVIEW &amp; OBJECTIVE</h2>
       <div class="card">
         <p>
@@ -101,7 +120,7 @@
       </div>
     </section>
 
-    <section class="input-card" aria-labelledby="inputs-heading">
+    <section class="input-card" id="tut-inputs-section" aria-labelledby="inputs-heading">
       <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
       <article class="card data-entry-card">
         <div class="input-header">
@@ -219,7 +238,7 @@
       </article>
     </section>
 
-    <section class="visual-output" aria-labelledby="visual-output-heading">
+    <section class="visual-output" id="tut-visual-section" aria-labelledby="visual-output-heading">
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       <div class="card">
         <article class="chart-card">
@@ -270,7 +289,7 @@
       </div>
     </section>
 
-    <section class="results-section" aria-labelledby="results-heading">
+    <section class="results-section" id="tut-results-section" aria-labelledby="results-heading">
       <h2 id="results-heading">CLUSTER SUMMARY &amp; RESULTS</h2>
       <div class="card">
         <h3>Summary metrics</h3>
@@ -349,6 +368,7 @@
     }
   </script>
   <script src="main_kprototypes.js"></script>
+  <script src="kprototypes_tutorial.js"></script>
 </body>
 
 </html>

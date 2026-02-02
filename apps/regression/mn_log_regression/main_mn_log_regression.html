@@ -39,6 +39,23 @@
       </div>
     </div>
   </div>
+
+  <!-- Professor Mode Toggle -->
+  <label class="professor-mode-toggle">
+    <input type="checkbox" id="professorMode">
+    <span>🎓 Professor Mode</span>
+  </label>
+
+  <!-- Tutorial Sidebar -->
+  <aside id="tutorial-sidebar" class="tutorial-sidebar">
+    <div class="sidebar-header">
+      <h2>📚 Tutorial</h2>
+      <button class="close-tutorial" onclick="MNLogRegTutorial.stop()">&times;</button>
+    </div>
+    <div id="tutorial-content" class="tutorial-content"></div>
+  </aside>
+  <div id="tutorial-overlay" class="tutorial-overlay" onclick="MNLogRegTutorial.stop()"></div>
+
   <main class="app-main">
     <header class="intro hero-header">
       <div class="hero-header__top">
@@ -54,7 +71,7 @@
       </p>
     </header>
 
-    <section class="test-overview" aria-labelledby="test-overview-heading">
+    <section id="tut-overview-section" class="test-overview" aria-labelledby="test-overview-heading">
       <h2 id="test-overview-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
       <div class="card">
         <p>
@@ -112,7 +129,7 @@
       </div>
     </section>
 
-    <section class="input-card" aria-labelledby="inputs-heading">
+    <section id="tut-inputs-section" class="input-card" aria-labelledby="inputs-heading">
       <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
       <article class="card data-entry-card">
         <div class="input-header">
@@ -213,7 +230,7 @@
       </article>
     </section>
 
-    <section class="visual-output" aria-labelledby="visual-output-heading">
+    <section id="tut-visual-section" class="visual-output" aria-labelledby="visual-output-heading">
       <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
       <div class="card">
         <div class="chart-grid">
@@ -344,7 +361,7 @@
       </div>
     </section>
 
-    <section class="test-results" aria-labelledby="test-results-heading">
+    <section id="tut-results-section" class="test-results" aria-labelledby="test-results-heading">
       <h2 id="test-results-heading">TEST RESULTS</h2>
       <div class="card regression-equation-card">
         <h3>Regression Equation</h3>
@@ -359,7 +376,7 @@
         <div class="metric-output">Model log-likelihood: <span id="statistic-value">&ndash;</span></div>
         <div class="metric-output">Approx. degrees of freedom: <span id="df-value">&ndash;</span></div>
         <div class="metric-output">p-value (not computed): <span id="p-value">&ndash;</span></div>
-        <div class="metric-output">Pseudo-R&sup2; (McFadden): <span id="effect-size">&ndash;</span></div>
+        <div class="metric-output">Pseudo-R&sup2; (McFadden): <span id="metric-r2">&ndash;</span></div>
         <details class="interpretation-aid">
           <summary>Interpretation Aid</summary>
           <p class="muted"><strong>Log-likelihood:</strong> Higher (less negative) is better fit; values are comparable only across models on the same data.</p>
@@ -414,7 +431,7 @@
       </div>
     </section>
 
-    <section class="diagnostics-section" aria-labelledby="diagnostics-heading">
+    <section id="tut-diagnostics-section" class="diagnostics-section" aria-labelledby="diagnostics-heading">
       <h2 id="diagnostics-heading">DIAGNOSTICS &amp; ASSUMPTIONS</h2>
       <div class="card">
         <details class="diagnostics-details">
@@ -465,6 +482,7 @@
   <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="mn_log_model.js"></script>
   <script src="main_mn_log_regression.js"></script>
+  <script src="mn_logreg_tutorial.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       initQuizButton('mn_log_regression');

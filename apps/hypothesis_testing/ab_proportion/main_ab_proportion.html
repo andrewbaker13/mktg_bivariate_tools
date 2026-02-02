@@ -45,13 +45,17 @@
       <h1>StudyFlow A/B Testing Comparison Tool</h1>
       <div class="hero-context">
         <span class="badge">Proportion tool</span>
+        <label class="professor-mode-toggle">
+          <input type="checkbox" id="professorMode">
+          <span class="toggle-label">🎓 Professor Mode</span>
+        </label>
       </div>
     </div>
     <p class="hero-header__lede">Compare two marketing variants with instant visual diagnostics, confidence intervals, and clear test guidance.</p>
   </header>
 
   <!-- ======== PRESERVED ORIGINAL INTRO SECTION (unchanged) ======== -->
-  <section class="test-overview" aria-labelledby="test-details-heading">
+  <section class="test-overview" id="tut-overview-section" aria-labelledby="test-details-heading">
     <h2 id="test-details-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
     <div class="card">
       <p>
@@ -75,7 +79,7 @@
     </div>
   </section>
 
-  <section class="scenario-section">
+  <section class="scenario-section" id="tut-scenario-section">
     <h2>MARKETING SCENARIOS</h2>
     <div class="card">
       <div class="scenario-controls" style="margin-top:12px;">
@@ -93,7 +97,7 @@
     </div>
   </section>
 
-  <section class="inputs-panel">
+  <section class="inputs-panel" id="tut-input-section">
     <h2>INPUTS &amp; SETTINGS</h2>
     <div class="card data-entry-card">
       <div class="input-header">
@@ -211,7 +215,7 @@
   <!-- Removed old exploratory questions per request -->
 
   <!-- ======== NEW: Charts & Titles ======== -->
-  <section class="visual-output" aria-labelledby="visual-output-heading">
+  <section class="visual-output" id="tut-visual-section" aria-labelledby="visual-output-heading">
     <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
     <div class="card">
       <div class="chart-grid">
@@ -251,7 +255,7 @@
     </div>
   </section>
 
-  <section class="test-results" aria-labelledby="test-results-heading">
+  <section class="test-results" id="tut-results-section" aria-labelledby="test-results-heading">
     <h2 id="test-results-heading">TEST RESULTS</h2>
     <div class="dual-panels">
       <article class="card dual-panel">
@@ -304,6 +308,7 @@
   <script src="../../../shared/js/auth_bar.js"></script>
   <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="main_ab_proportion.js"></script>
+  <script src="ab_proportion_tutorial.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       initQuizButton('ab_proportion');

@@ -424,6 +424,74 @@
             visibility: visible;
             opacity: 1;
         }
+        /* Custom Date Range Picker Styles */
+        .custom-date-range {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            animation: slideDown 0.2s ease-out;
+        }
+        .custom-date-range.visible {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .custom-date-range label {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .custom-date-range input[type="date"] {
+            padding: 0.35rem 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            background: white;
+        }
+        .custom-date-range input[type="date"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        .custom-date-range .apply-btn {
+            padding: 0.35rem 0.75rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .custom-date-range .apply-btn:hover {
+            background: #2563eb;
+        }
+        .custom-date-range .apply-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        .date-range-badge {
+            display: none;
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+        .date-range-badge.visible {
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -566,19 +634,31 @@
             <div class="chart-grid">
                 <div class="chart-container">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-                        <h3 style="margin: 0;">📈 Course Activity Timeline</h3>
+                        <h3 style="margin: 0;">
+                            📈 Course Activity Timeline
+                            <span id="date-range-badge" class="date-range-badge"></span>
+                        </h3>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
                             <select id="timeline-range" style="padding: 0.35rem 0.5rem; border-radius: 4px; border: 1px solid #d1d5db; font-size: 0.85rem;">
                                 <option value="7">Last 7 Days</option>
                                 <option value="30" selected>Last 30 Days</option>
                                 <option value="90">Last 90 Days</option>
                                 <option value="all">All Time</option>
+                                <option value="custom">Custom Range...</option>
                             </select>
                             <select id="timeline-view" style="padding: 0.35rem 0.5rem; border-radius: 4px; border: 1px solid #d1d5db; font-size: 0.85rem;">
                                 <option value="aggregate" selected>Overall Activity</option>
                                 <option value="by_tool">By Tool</option>
                             </select>
                         </div>
+                    </div>
+                    <!-- Custom Date Range Picker -->
+                    <div id="custom-date-range" class="custom-date-range">
+                        <label for="date-start">From:</label>
+                        <input type="date" id="date-start">
+                        <label for="date-end">To:</label>
+                        <input type="date" id="date-end">
+                        <button class="apply-btn" id="apply-date-range" disabled>Apply</button>
                     </div>
                     <div style="height: 280px;">
                         <canvas id="timelineChart"></canvas>
@@ -750,26 +830,93 @@
         let toolVisibilityData = []; // Store current tool visibility settings
         let visibleToolIds = null; // Set of visible tool IDs for filtering
         let lastTimelineData = null; // Cache timeline data for re-rendering
+        let customDateStart = null; // Store custom date range start
+        let customDateEnd = null; // Store custom date range end
 
         // Check authentication
         if (!isAuthenticated()) {
             window.location.href = 'login.html?redirect=instructor-analytics.html';
         }
         
+        // Custom date range setup
+        const timelineRangeSelect = document.getElementById('timeline-range');
+        const customDateRangeDiv = document.getElementById('custom-date-range');
+        const dateStartInput = document.getElementById('date-start');
+        const dateEndInput = document.getElementById('date-end');
+        const applyDateRangeBtn = document.getElementById('apply-date-range');
+        const dateRangeBadge = document.getElementById('date-range-badge');
+        
+        // Set default date range (last 30 days)
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        dateEndInput.value = today.toISOString().split('T')[0];
+        dateStartInput.value = thirtyDaysAgo.toISOString().split('T')[0];
+        dateEndInput.max = today.toISOString().split('T')[0]; // Can't pick future dates
+        
+        // Show/hide custom date picker based on dropdown selection
+        timelineRangeSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                customDateRangeDiv.classList.add('visible');
+                validateDateRange(); // Check if current inputs are valid
+            } else {
+                customDateRangeDiv.classList.remove('visible');
+                customDateStart = null;
+                customDateEnd = null;
+                dateRangeBadge.classList.remove('visible');
+                refreshTimeline();
+            }
+        });
+        
+        // Validate date range whenever inputs change
+        function validateDateRange() {
+            const start = dateStartInput.value;
+            const end = dateEndInput.value;
+            const isValid = start && end && new Date(start) <= new Date(end);
+            applyDateRangeBtn.disabled = !isValid;
+            return isValid;
+        }
+        
+        dateStartInput.addEventListener('change', validateDateRange);
+        dateEndInput.addEventListener('change', validateDateRange);
+        
+        // Apply custom date range
+        applyDateRangeBtn.addEventListener('click', () => {
+            if (validateDateRange()) {
+                customDateStart = dateStartInput.value;
+                customDateEnd = dateEndInput.value;
+                
+                // Show badge with date range
+                const startFormatted = new Date(customDateStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const endFormatted = new Date(customDateEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                dateRangeBadge.textContent = `${startFormatted} – ${endFormatted}`;
+                dateRangeBadge.classList.add('visible');
+                
+                refreshTimeline();
+            }
+        });
+        
         // Timeline control event listeners
-        document.getElementById('timeline-range').addEventListener('change', () => refreshTimeline());
         document.getElementById('timeline-view').addEventListener('change', () => refreshTimeline());
         
         async function refreshTimeline() {
             if (!currentCourseId) return;
             
             const token = getAuthToken();
-            const days = document.getElementById('timeline-range').value;
+            const rangeValue = document.getElementById('timeline-range').value;
             const view = document.getElementById('timeline-view').value;
             const byTool = view === 'by_tool';
             
+            // Build URL with either preset days or custom date range
+            let url;
+            if (rangeValue === 'custom' && customDateStart && customDateEnd) {
+                url = `${API_BASE}/analytics/course/${currentCourseId}/timeline/?start_date=${customDateStart}&end_date=${customDateEnd}&by_tool=${byTool}`;
+            } else {
+                const days = rangeValue;
+                url = `${API_BASE}/analytics/course/${currentCourseId}/timeline/?days=${days}&by_tool=${byTool}`;
+            }
+            
             try {
-                const url = `${API_BASE}/analytics/course/${currentCourseId}/timeline/?days=${days}&by_tool=${byTool}`;
                 const response = await fetch(url, {
                     headers: { 'Authorization': `Token ${token}` }
                 });
@@ -1119,12 +1266,15 @@
             if (timelineChart) timelineChart.destroy();
             
             // Format dates based on range
-            const days = document.getElementById('timeline-range').value;
+            const rangeValue = document.getElementById('timeline-range').value;
+            const dataLength = timelineData.length;
+            
             const formatDate = (dateStr) => {
                 const date = new Date(dateStr);
-                if (days === 'all' || days === '90') {
+                // For custom ranges or longer periods, use shorter format
+                if (rangeValue === 'custom' || rangeValue === 'all' || rangeValue === '90' || dataLength > 30) {
                     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                } else if (days === '7') {
+                } else if (rangeValue === '7' || dataLength <= 7) {
                     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                 }
                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -1132,6 +1282,9 @@
             
             const labels = timelineData.map(d => formatDate(d.date));
             const data = timelineData.map(d => d.count);
+            
+            // Calculate appropriate tick limits based on data length
+            const tickLimit = dataLength <= 7 ? 7 : (dataLength <= 30 ? 15 : Math.min(20, Math.ceil(dataLength / 3)));
             
             timelineChart = new Chart(ctx, {
                 type: 'bar',
@@ -1167,7 +1320,7 @@
                                 maxRotation: 45,
                                 minRotation: 0,
                                 autoSkip: true,
-                                maxTicksLimit: days === '7' ? 7 : (days === '30' ? 15 : 20)
+                                maxTicksLimit: tickLimit
                             }
                         },
                         y: {
@@ -1190,12 +1343,14 @@
             
             if (timelineChart) timelineChart.destroy();
             
-            const days = document.getElementById('timeline-range').value;
+            const rangeValue = document.getElementById('timeline-range').value;
+            const dataLength = data.dates ? data.dates.length : 30;
+            
             const formatDate = (dateStr) => {
                 const date = new Date(dateStr);
-                if (days === 'all' || days === '90') {
+                if (rangeValue === 'custom' || rangeValue === 'all' || rangeValue === '90' || dataLength > 30) {
                     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                } else if (days === '7') {
+                } else if (rangeValue === '7' || dataLength <= 7) {
                     return date.toLocaleDateString('en-US', { weekday: 'short' });
                 }
                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -1210,6 +1365,10 @@
                 '#14b8a6', '#f43f5e', '#a855f7', '#22c55e', '#eab308'
             ];
             
+            // Calculate point radius based on data length
+            const pointRadius = dataLength <= 7 ? 4 : (dataLength <= 30 ? 2 : 1);
+            const tickLimit = dataLength <= 7 ? 7 : (dataLength <= 30 ? 15 : Math.min(20, Math.ceil(dataLength / 3)));
+            
             const datasets = data.tool_series.map((tool, index) => ({
                 label: tool.tool_name.length > 20 ? tool.tool_name.substring(0, 18) + '...' : tool.tool_name,
                 data: tool.data,
@@ -1218,7 +1377,7 @@
                 fill: false,
                 tension: 0.3,
                 borderWidth: 2,
-                pointRadius: days === '7' ? 4 : (days === '30' ? 2 : 1),
+                pointRadius: pointRadius,
                 pointHoverRadius: 5
             }));
             
@@ -1258,7 +1417,7 @@
                                 maxRotation: 45,
                                 minRotation: 0,
                                 autoSkip: true,
-                                maxTicksLimit: days === '7' ? 7 : (days === '30' ? 15 : 20)
+                                maxTicksLimit: tickLimit
                             }
                         },
                         y: {

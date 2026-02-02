@@ -460,10 +460,11 @@ stop() {
 
 ### Setup Phase
 - [ ] Create tutorial object with required methods
-- [ ] Add sidebar HTML container
+- [ ] Add sidebar HTML container (use standard structure)
 - [ ] Add overlay HTML container
-- [ ] Add Professor Mode checkbox in UI
-- [ ] Add CSS for highlighting, sidebar, and overlay
+- [ ] Add Professor Mode toggle using `.professor-mode-toggle` class
+- [ ] Add comment to app CSS pointing to `shared/css/main.css` (DO NOT duplicate CSS)
+- [ ] Verify `shared/css/main.css` is linked in your HTML
 
 ### Step Definition Phase
 - [ ] Define all steps with `id`, `title`, `targetId`, `content`
@@ -521,13 +522,74 @@ apps/
   tool_name/
     main_tool.html          → Add Professor Mode checkbox, sidebar, overlay divs
     main_tool.js            → Calculate model properties, sync to window.lastModel
-    main_tool.css           → Add tutorial styling if needed (SEE CSS REFERENCE BELOW)
+    main_tool.css           → Add comment pointing to shared CSS (see below)
     tool_tutorial.js        → NEW FILE - Tutorial object with all steps
 ```
 
-## Standard Professor Mode CSS (REQUIRED)
+## 🚨 CRITICAL: Use Centralized CSS (Don't Duplicate!)
 
-You **MUST** add this CSS to `main_tool.css` (or `style.css`) to ensure visual consistency across all apps. Do **NOT** inject styles via JS.
+**All Professor Mode CSS is centralized in `shared/css/main.css`.** Do NOT add Professor Mode styles to individual app CSS files.
+
+### What's Already in shared/css/main.css
+
+The shared CSS file includes all standard Professor Mode styles:
+- `.professor-mode-toggle` - Standard toggle button styling
+- `#tutorial-sidebar` - Right-side panel (380px wide, slides from right)
+- `#tutorial-overlay` - Dark overlay behind highlighted elements
+- `.tutorial-highlight` - Green pulsing highlight effect
+- `.sidebar-header`, `.tutorial-step-badge`, `.tutorial-body` - Sidebar content styles
+- `.tutorial-quiz`, `.quiz-feedback` - Quiz styling
+- `.btn-primary`, `.btn-secondary` - Button styles
+- Responsive rules for mobile
+
+### In Your App's CSS File
+
+Simply add this comment to indicate CSS is centralized:
+
+```css
+/* Professor Mode styles are now in shared/css/main.css */
+```
+
+### Standard HTML for Professor Mode Toggle
+
+Use this exact structure in your HTML header:
+
+```html
+<label class="professor-mode-toggle">
+    <input type="checkbox" id="professorMode">
+    <span>🎓 Professor Mode</span>
+</label>
+```
+
+**⚠️ DO NOT:**
+- Create custom toggle styles (no sliders, no custom colors)
+- Add `#tutorial-sidebar` CSS to your app's CSS file
+- Use `.professor-toggle` (old class name) - use `.professor-mode-toggle`
+- Position sidebar on the left (standard is right-side)
+
+### Standard HTML for Sidebar and Overlay
+
+Add these containers to your HTML (usually at the end of `<body>`):
+
+```html
+<!-- Tutorial Overlay -->
+<div id="tutorial-overlay"></div>
+
+<!-- Tutorial Sidebar -->
+<div id="tutorial-sidebar">
+    <div class="sidebar-header">
+        <h2>🎓 Professor Mode</h2>
+        <button class="close-tutorial" onclick="ToolNameTutorial.stop()">✕</button>
+    </div>
+    <div id="tutorial-content"></div>
+</div>
+```
+
+## Legacy CSS Section (Reference Only)
+
+> **⚠️ NOTE:** This CSS is now centralized in `shared/css/main.css`. 
+> You do NOT need to copy this into your app's CSS file.
+> This section is kept for reference only, showing what styles are available.
 
 ```css
 /* --- Professor Mode / Tutorial Styles --- */
@@ -699,18 +761,138 @@ You **MUST** add this CSS to `main_tool.css` (or `style.css`) to ensure visual c
 </script>
 ```
 
-## The 10 Most Important Rules
+## The 12 Most Important Rules
 
-1. **Store quizzes once in `step.currentQuizzes`, never regenerate**
-2. **Calculate all model properties immediately after fitting, before window sync**
-3. **Return `null` (not `[]`) from `getDynamicQuizzes()` when data unavailable**
-4. **Avoid duplicate `const` declarations - store on object, reuse everywhere**
-5. **Transform data to match tutorial expectations (e.g., 2D arrays)**
-6. **Use nullish coalescing for property names that might vary**
-7. **Reference only UI-visible elements in task instructions**
-8. **Add IDs to container elements when highlighting multiple related components**
-9. **Track completion only if student reached final step**
-10. **Test with browser console open to catch errors early**
+1. **Use centralized CSS from `shared/css/main.css`** - Don't duplicate Professor Mode styles in app CSS files
+2. **Use standard `.professor-mode-toggle` class** - Don't create custom toggle styles
+3. **Store quizzes once in `step.currentQuizzes`, never regenerate**
+4. **Calculate all model properties immediately after fitting, before window sync**
+5. **Return `null` (not `[]`) from `getDynamicQuizzes()` when data unavailable**
+6. **Avoid duplicate `const` declarations - store on object, reuse everywhere**
+7. **Transform data to match tutorial expectations (e.g., 2D arrays)**
+8. **Use nullish coalescing for property names that might vary**
+9. **Reference only UI-visible elements in task instructions**
+10. **Add IDs to container elements when highlighting multiple related components**
+11. **Track completion only if student reached final step**
+12. **Include "Analyst's Perspective" in conclusion step (see section below)**
+
+## 🎓 REQUIRED: Analyst's Perspective in Conclusion
+
+**THE GOAL:** Every Professor Mode conclusion must include a thoughtful "Analyst's Perspective" section that helps students appreciate the tool's limitations, assumptions, and what lies beyond this introductory tutorial.
+
+**WHY THIS MATTERS:** Students often finish a tutorial thinking they've mastered a topic. The Analyst's Perspective grounds them in analytical humility—reminding them that every tool has constraints, every method has assumptions, and real-world applications often require more sophisticated approaches.
+
+**VOICE AND TONE:** When writing this section, take OFF your "coding assistant" hat and put ON your "I'm a helpful data science professor wrapping up a tutorial with my business students" hat. Be collegial, insightful, and gently provocative—not pessimistic or dismissive.
+
+### Required Structure
+
+Add this block to EVERY conclusion step:
+
+```javascript
+{
+    id: 'conclusion',
+    title: "🎓 Professor Mode Complete!",
+    targetId: null,
+    content: `
+        <!-- Standard "What You've Learned" section -->
+        <h4>📊 What You've Learned</h4>
+        <ul>
+            <li>...</li>
+        </ul>
+        
+        <!-- 🎓 REQUIRED: Analyst's Perspective -->
+        <h4>🔬 Analyst's Perspective: Beyond This Tutorial</h4>
+        <p style="font-style: italic; background: #f0f9ff; padding: 12px; border-left: 4px solid #3b82f6; border-radius: 6px; line-height: 1.7;">
+            [3-4 sentences covering: (1) key limitations/assumptions of this specific tool, 
+            (2) what more advanced practitioners consider, and (3) a forward-looking note 
+            about what students might explore next in their analytical journey.]
+        </p>
+        
+        <!-- Standard "Next Steps" section -->
+        <h4>🎯 Next Steps</h4>
+        <ul>
+            <li>...</li>
+        </ul>
+    `
+}
+```
+
+### Content Guidelines for Analyst's Perspective
+
+**Must address these three themes:**
+
+1. **Limitations & Assumptions of THIS Tool**
+   - What simplifications does this tool make?
+   - What edge cases might produce misleading results?
+   - What assumptions might not hold in real datasets?
+
+2. **What Advanced Practitioners Consider**
+   - What alternative methods exist for this problem?
+   - What additional validation steps would professionals use?
+   - What contextual factors might change the interpretation?
+
+3. **Forward-Looking Invitation**
+   - What might students explore next?
+   - How does this fit into a broader analytical toolkit?
+   - What questions should they be asking as they advance?
+
+### Example: Sentiment Analysis
+
+```javascript
+<h4>🔬 Analyst's Perspective: Beyond This Tutorial</h4>
+<p style="font-style: italic; background: #f0f9ff; padding: 12px; border-left: 4px solid #3b82f6; border-radius: 6px; line-height: 1.7;">
+    VADER is a powerful starting point, but it's a rule-based dictionary approach—meaning 
+    it can't learn domain-specific language or detect contextual nuances like sarcasm, 
+    cultural references, or evolving slang. In professional settings, analysts often 
+    fine-tune transformer-based models (like BERT) on their specific domain, incorporate 
+    aspect-based sentiment analysis to understand <em>what</em> customers feel positive or 
+    negative about, and triangulate findings with qualitative research. As you advance, 
+    consider how sentiment analysis fits into a broader voice-of-customer program that 
+    combines quantitative signals with human interpretation.
+</p>
+```
+
+### Example: Logistic Regression
+
+```javascript
+<h4>🔬 Analyst's Perspective: Beyond This Tutorial</h4>
+<p style="font-style: italic; background: #f0f9ff; padding: 12px; border-left: 4px solid #3b82f6; border-radius: 6px; line-height: 1.7;">
+    This tutorial covers binary logistic regression with a single predictor—a fundamental 
+    building block, but real-world classification problems often involve multiple predictors, 
+    interaction effects, and class imbalance that require techniques like oversampling, 
+    cost-sensitive learning, or ensemble methods. Professional analysts also scrutinize 
+    model calibration (does a 70% predicted probability really mean 70% of cases convert?), 
+    evaluate performance across subgroups to detect bias, and consider whether the relationships 
+    are truly linear in log-odds or require polynomial terms. As you advance, explore 
+    regularized regression (LASSO/Ridge), decision trees, and model explanation tools like 
+    SHAP values to build more robust and interpretable classifiers.
+</p>
+```
+
+### Example: A/B Testing
+
+```javascript
+<h4>🔬 Analyst's Perspective: Beyond This Tutorial</h4>
+<p style="font-style: italic; background: #f0f9ff; padding: 12px; border-left: 4px solid #3b82f6; border-radius: 6px; line-height: 1.7;">
+    The two-sample test you've learned assumes random assignment, independent observations, 
+    and a single primary metric—assumptions that often break down in practice due to network 
+    effects, novelty bias, or multiple-comparison issues when testing many metrics simultaneously. 
+    Experienced experimenters use techniques like stratified randomization, CUPED variance 
+    reduction, and sequential testing to get faster, more reliable results. As you advance, 
+    consider how to design experiments that account for spillover effects, how to balance 
+    statistical power against business urgency, and when quasi-experimental methods (like 
+    difference-in-differences) might be more appropriate than a true randomized trial.
+</p>
+```
+
+### Checklist for Every Conclusion
+
+- [ ] Includes "Analyst's Perspective" section with styled blockquote
+- [ ] Addresses specific limitations of THIS tool (not generic disclaimers)
+- [ ] Mentions at least one advanced technique or consideration
+- [ ] Ends with forward-looking invitation, not doom-and-gloom
+- [ ] Written in professorial voice (collegial, insightful, humble)
+- [ ] 3-4 sentences, approximately 80-120 words
 
 ## When to Use This Pattern
 
@@ -727,6 +909,56 @@ You **MUST** add this CSS to `main_tool.css` (or `style.css`) to ensure visual c
 
 ---
 
-**Reference EXAMPLES:** 
-Based on Logistic Regression Professor Mode implementation (January 2026). -- see folder: "log_regression"
-Based on folder see folder: "neural_network"
+## 📋 Apps with Professor Mode Implemented
+
+> **Last Updated:** February 1, 2026
+
+The following apps already have Professor Mode tutorials implemented. Use these as reference examples when building new tutorials.
+
+| App | Category | Tutorial File | Notes |
+|-----|----------|---------------|-------|
+| [Independent t-test](../../apps/hypothesis_testing/ind_ttest/) | Hypothesis Testing | `ttest_tutorial.js` | Welch's t-test with streaming hours scenario |
+| [Paired t-test](../../apps/hypothesis_testing/paired_ttest/) | Hypothesis Testing | `paired_ttest_tutorial.js` | Paired differences with recall/conversion scenario |
+| [One-Way ANOVA](../../apps/hypothesis_testing/onewayanova/) | Hypothesis Testing | `anova_tutorial.js` | Raw data workflow with CSV inspection |
+| [Chi-Square Test](../../apps/hypothesis_testing/chisquare/) | Hypothesis Testing | `chisquare_tutorial.js` | Contingency table with loyalty nudge scenario |
+| [A/B Proportion Test](../../apps/hypothesis_testing/ab_proportion/) | Hypothesis Testing | `ab_proportion_tutorial.js` | Two-proportion z-test with CTA button scenario |
+| [McNemar's Test](../../apps/hypothesis_testing/mcnemar/) | Hypothesis Testing | `mcnemar_tutorial.js` | Matched-pairs test with lifecycle push scenario |
+| [Bivariate Regression](../../apps/regression/bivariate_regression/) | Regression | `bivariate_tutorial.js` | Simple linear regression with marketing mix scenario |
+| [Logistic Regression](../../apps/regression/log_regression/) | Regression | `logreg_tutorial.js` | Reference implementation with dynamic quizzes |
+| [MLR with Interactions](../../apps/regression/mlr_interactions/) | Regression | `mlr_interactions_tutorial.js` | Interaction terms, quadratics, centering, simple slopes |
+| [ML Regression](../../apps/regression/ml_regression/) | Regression | `ml_regression_tutorial.js` | Multiple predictors with continuous/categorical mix |
+| [Multinomial Logistic](../../apps/regression/mn_log_regression/) | Regression | `mn_logreg_tutorial.js` | Multi-category outcomes with softmax, probability plots |
+| [Pearson Correlation](../../apps/descriptive/pearson_correlation/) | Descriptive | `pearson_tutorial.js` | Correlation analysis with spend vs signups scenario |
+| [Shapley Value Visualizer](../../apps/attribution/shapley_visualizer/) | Attribution | `shapley_tutorial.js` | Coalition-based interactive tutorial |
+| [Markov Chain Attribution](../../apps/attribution/markov_visualizer/) | Attribution | `markov_tutorial.js` | Transition probability focus |
+| [VADER Sentiment Lab](../../apps/text_analysis/sentiment_lab/) | Text Analysis | `sentiment_tutorial.js` | Text analysis with token breakdown |
+| [K-Means Clustering](../../apps/clustering/kmeans/) | Clustering | `kmeans_tutorial.js` | Customer segmentation with elbow/silhouette diagnostics |
+| [K-Prototypes Clustering](../../apps/clustering/kprototypes/) | Clustering | `kprototypes_tutorial.js` | Mixed data segmentation with gamma parameter |
+| [Compound Event Probability](../../apps/probability/compound_event_probability/) | Probability | `compound_event_tutorial.js` | Binomial model with PMF/CDF visualization, approximations |
+| [Selection Probability Lab](../../apps/probability/selection_probability_lab/) | Probability | `selection_probability_tutorial.js` | Hypergeometric vs binomial, population grid visualization |
+| [Sample Size A/B Calculator](../../apps/sample_size/sample_size_AB_calculator/) | Sample Size | `sample_size_ab_tutorial.js` | Power analysis with effect size experiments |
+| [Basic Sample Size Calculator](../../apps/sample_size/sample_size_calculator/) | Sample Size | `sample_size_calculator_tutorial.js` | Margin of error and confidence intervals |
+| [Sample Size Corr/Regression](../../apps/sample_size/sample_size_corr_regression/) | Sample Size | `sample_size_corr_regression_tutorial.js` | Correlation and regression power analysis |
+| [Multi-Arm A/B](../../apps/sample_size/sample_size_multiarm_ab/) | Sample Size | `sample_size_multiarm_ab_tutorial.js` | Bonferroni and Dunnett corrections |
+| [Sampling Visualizer](../../apps/sample_size/sampling_visualizer/) | Sample Size | `sampling_visualizer_tutorial.js` | CLT demonstration with visual distributions |
+
+### Apps Still Needing Professor Mode
+
+| App | Category | Priority | Notes |
+|-----|----------|----------|-------|
+| Univariate Analyzer | Descriptive | 🟡 Medium | |
+| Qualitative Analyzer | Text Analysis | 🟡 Medium | |
+| Theme Extractor | Text Analysis | 🟡 Medium | |
+| ARIMAX | Time Series | 🟡 Medium | |
+| Conjoint Analysis | Advanced | 🔴 High | Important advanced method |
+| Neural Network | Advanced | 🟡 Medium | |
+| Propensity Score Matching | Advanced | 🔴 High | Important for causal inference |
+| Resource Allocation | Advanced | 🟢 Lower | |
+
+### Adding New Apps to This List
+
+When you implement Professor Mode for a new app, add it to the table above with:
+- Relative link to the app folder
+- Category classification
+- Tutorial filename
+- Brief notes about unique features or patterns used

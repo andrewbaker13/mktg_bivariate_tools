@@ -1876,3 +1876,277 @@ legend {
   margin-top: 1rem;
 }
 
+/* ===================================
+   PROFESSOR MODE - STANDARDIZED STYLES
+   =================================== */
+
+/* Header width constraint - matches app-main */
+.hero-header {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Standardized Professor Mode Toggle */
+.professor-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #475569;
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.professor-mode-toggle:hover {
+  background: #f1f5f9;
+  border-color: #9333ea;
+  color: #7c3aed;
+}
+
+.professor-mode-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #9333ea;
+}
+
+/* Tutorial Sidebar - Standard Right-Side Panel */
+#tutorial-sidebar {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 380px;
+  height: 100vh;
+  background: #ffffff;
+  border-left: 1px solid #e2e8f0;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
+  z-index: 10000;
+  overflow-y: auto;
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+#tutorial-sidebar.active {
+  right: 0;
+}
+
+#tutorial-sidebar .sidebar-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #fff;
+  z-index: 10;
+}
+
+#tutorial-sidebar .sidebar-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+#tutorial-sidebar .close-tutorial {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+#tutorial-sidebar .close-tutorial:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+#tutorial-content {
+  padding: 24px 20px;
+  color: #1f2937;
+  line-height: 1.6;
+}
+
+#tutorial-content h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #1f2937;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+#tutorial-content p {
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+#tutorial-content ul,
+#tutorial-content ol {
+  margin: 12px 0;
+  padding-left: 1.5rem;
+}
+
+#tutorial-content li {
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+#tutorial-content .task {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 14px;
+  border-radius: 8px;
+  border-left: 4px solid #0284c7;
+  margin: 16px 0;
+  font-weight: 500;
+}
+
+.tutorial-step-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Tutorial Buttons */
+#tutorial-content .btn-primary {
+  display: block;
+  width: 100%;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+#tutorial-content .btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+#tutorial-content .btn-primary:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+#tutorial-content .btn-secondary {
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  background: transparent;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+#tutorial-content .btn-secondary:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+#tutorial-content .full-width {
+  width: 100%;
+}
+
+/* Tutorial Overlay */
+#tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#tutorial-overlay.active {
+  opacity: 1;
+}
+
+/* Tutorial Highlight Effect */
+.tutorial-highlight {
+  position: relative;
+  z-index: 10000;
+  box-shadow: 0 0 0 4px #7c3aed, 0 0 24px rgba(124, 58, 237, 0.4);
+  border-radius: 8px;
+  background: #fff;
+}
+
+/* Body Adjustment when Tutorial Active (right sidebar) */
+body.tutorial-active {
+  overflow-x: hidden;
+}
+
+/* Quiz Styles in Tutorial */
+.tutorial-quiz {
+  background: #fff7ed;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border-left: 4px solid #f59e0b;
+}
+
+.tutorial-quiz h4 {
+  margin-top: 0;
+  color: #9a3412;
+}
+
+.tutorial-quiz label {
+  display: block;
+  margin-bottom: 8px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.tutorial-quiz label:hover {
+  background: rgba(249, 115, 22, 0.1);
+}
+
+.tutorial-quiz input[type="radio"] {
+  margin-right: 8px;
+}
+
+/* Responsive - Tutorial Sidebar */
+@media (max-width: 900px) {
+  #tutorial-sidebar {
+    width: 100%;
+    right: -100%;
+  }
+
+  #tutorial-sidebar.active {
+    right: 0;
+  }
+}

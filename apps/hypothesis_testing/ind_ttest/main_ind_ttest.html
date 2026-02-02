@@ -35,13 +35,17 @@
             <h1>Welch's t-test Tool</h1>
             <div class="hero-context">
                 <span class="badge">Means tool</span>
+                <label class="professor-mode-toggle">
+                    <input type="checkbox" id="professorMode">
+                    <span>👨‍🏫 Professor Mode</span>
+                </label>
             </div>
         </div>
         <p class="hero-header__lede">Compare means of two independent groups with fan charts and narrative insights.</p>
     </header>
 
     <main class="app-main">
-        <section class="test-overview">
+        <section class="test-overview" id="tut-overview-section">
             <h2>TEST OVERVIEW &amp; EQUATIONS</h2>
             <div class="card">
                 <p>The Welch t-test evaluates whether two independent group means differ when variances may be unequal.</p>
@@ -60,7 +64,7 @@
             </div>
         </section>
 
-        <section class="scenario-section">
+        <section class="scenario-section" id="tut-scenario-section">
             <h2>MARKETING SCENARIOS</h2>
             <div class="card">
                 <div class="scenario-controls">
@@ -87,7 +91,7 @@
             </div>
         </section>
 
-        <section class="inputs-panel">
+        <section class="inputs-panel" id="tut-input-section">
             <h2>INPUTS &amp; SETTINGS</h2>
             <div class="card data-entry-card">
                 <div class="input-header">
@@ -186,7 +190,7 @@
             </div>
         </section>
 
-        <section class="visual-output">
+        <section class="visual-output" id="tut-visual-section">
             <h2>VISUAL OUTPUT</h2>
             <div class="card visualization-wrapper">
                 <article class="chart-card" aria-labelledby="means-chart-title">
@@ -260,7 +264,7 @@
             </div>
         </section>
 
-        <section class="test-results" aria-labelledby="test-results-heading">
+        <section class="test-results" id="tut-results-section" aria-labelledby="test-results-heading">
             <h2 id="test-results-heading">TEST RESULTS</h2>
             <div class="dual-panels">
                 <article class="card dual-panel">
@@ -277,7 +281,7 @@
                 <div id="interpretation"></div>
             </div>
 
-            <div class="card summary-section" aria-live="polite">
+            <div class="card summary-section" id="tut-summary-section" aria-live="polite">
                 <h3>Summary of Estimates</h3>
                 <table class="summary-table">
                     <thead>
@@ -338,6 +342,7 @@
     <script src="../../../shared/js/auth_bar.js"></script>
     <script src="../../../shared/js/quiz_utils.js"></script>
     <script src="ind_ttest_app.js"></script>
+    <script src="ttest_tutorial.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         initQuizButton('ind_ttest');

@@ -43,7 +43,16 @@
       </p>
     </header>
 
-    <section class="test-overview" aria-labelledby="sentiment-overview-heading">
+    <!-- Professor Mode Toggle -->
+    <div class="professor-mode-toggle">
+      <label class="toggle-label">
+        <input type="checkbox" id="professorMode">
+        <span class="toggle-text">🎓 Professor Mode</span>
+        <span class="toggle-hint">Guided tutorial with quizzes</span>
+      </label>
+    </div>
+
+    <section class="test-overview" id="tut-overview-section" aria-labelledby="sentiment-overview-heading">
       <h2 id="sentiment-overview-heading">OVERVIEW &amp; CONCEPTS</h2>
       <div class="card">
         <h3 style="margin-top:0;">What is Sentiment Analysis?</h3>
@@ -164,7 +173,7 @@
       </div>
     </section>
 
-    <section class="scenario-section" aria-labelledby="sentiment-scenarios-heading">
+    <section class="scenario-section" id="tut-scenario-section" aria-labelledby="sentiment-scenarios-heading">
       <h2 id="sentiment-scenarios-heading">CASE STUDIES</h2>
       <div class="card">
         <div class="scenario-controls">
@@ -186,7 +195,7 @@
       </div>
     </section>
 
-    <section class="input-card" aria-labelledby="sentiment-inputs-heading">
+    <section class="input-card" id="tut-input-section" aria-labelledby="sentiment-inputs-heading">
       <h2 id="sentiment-inputs-heading">LOAD TEXT DATA</h2>
       <article class="card data-entry-card">
         <div class="input-header">
@@ -248,7 +257,7 @@
       </article>
     </section>
 
-    <section class="visual-output" aria-labelledby="sentiment-output-heading">
+    <section class="visual-output" id="tut-summary-section" aria-labelledby="sentiment-output-heading">
       <h2 id="sentiment-output-heading">SUMMARY &amp; VISUALS</h2>
       <div class="card">
         <div class="chart-grid sentiment-grid">
@@ -299,7 +308,7 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top:0.75rem;">
+      <div class="card" id="tut-worked-example" style="margin-top:0.75rem;">
         <h3>How VADER scored two examples</h3>
         <p class="sentiment-example-text" id="sentiment-example-text-positive">
           Run the analysis to see how each token in a relatively positive record contributes to its final sentiment score.
@@ -337,9 +346,9 @@
       </div>
     </section>
 
-    <section class="test-results" aria-labelledby="sentiment-report-heading">
+    <section class="test-results" id="tut-report-section" aria-labelledby="sentiment-report-heading">
       <h2 id="sentiment-report-heading">ANALYSIS REPORT</h2>
-      <div class="dual-panels">
+      <div id="tut-reports-panels" class="dual-panels">
         <article class="card dual-panel">
           <h3>APA-Style Statistical Reporting</h3>
           <p id="sentiment-apa-report">Run the analysis to generate an APA-style report of your sentiment results.</p>
@@ -365,7 +374,7 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top:0.75rem;">
+      <div class="card" id="tut-summary-table" style="margin-top:0.75rem;">
         <h3>Summary of Estimates</h3>
         <div class="selection-table-wrapper">
           <table class="data-table" id="sentiment-summary-table">
@@ -385,7 +394,7 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top:0.75rem;">
+      <div class="card" id="tut-histogram-section" style="margin-top:0.75rem;">
         <h3>Sentiment Distribution: Histogram</h3>
         <div style="background:#f1f5f9; padding:0.75rem; margin-bottom:0.75rem; border-radius:0.25rem; font-size:0.9rem;">
           <p style="margin:0;"><strong>📊 How to read bar colors:</strong> Each bar represents a <em>range</em> of compound scores (e.g., 0.10 to 0.21). 
@@ -450,6 +459,7 @@
   <script src="../../../shared/js/quiz_utils.js"></script>
   <script src="vader_analyzer.js"></script>
   <script src="sentiment_lab.js"></script>
+  <script src="sentiment_tutorial.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       initQuizButton('sentiment_lab');
