@@ -883,14 +883,19 @@ const DTTutorial = {
     },
 
     start() {
+        console.log('DTTutorial.start() called');
         this.isActive = true;
         this.currentStep = 0;
         this.lastCheckResult = null;
+        console.log('About to renderSidebar()');
         this.renderSidebar();
+        console.log('About to updateView()');
         this.updateView();
+        console.log('DTTutorial.start() completed');
     },
 
     stop() {
+        console.log('DTTutorial.stop() called');
         this.isActive = false;
         this.hideOverlay();
         
