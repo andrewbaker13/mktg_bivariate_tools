@@ -1139,22 +1139,6 @@ const DTTutorial = {
             overlay.id = 'tutorial-overlay';
             document.body.appendChild(overlay);
         }
-    },
-
-    attachListeners() {
-        const toggle = document.getElementById('professorMode');
-        if (toggle) {
-            toggle.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    this.start();
-                } else {
-                    this.stop();
-                }
-            });
-        }
-        
-        // Poll for progress checks
-        setInterval(() => this.checkProgress(), 500);
     }
 };
 

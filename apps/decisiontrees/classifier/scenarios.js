@@ -343,18 +343,21 @@ const DECISION_TREE_SCENARIOS = [
 /**
  * Generate synthetic data for scenarios
  */
-function generateChurnData(n = 3500) {
+function generateChurnData(n = 3500, rng = null) {
+    // Use seeded RNG if provided, otherwise fall back to Math.random
+    const random = rng ? () => rng.next() : () => Math.random();
+    
     const data = [];
     const contractTypes = ['Month-to-Month', 'Annual', 'Two-Year'];
     
     for (let i = 0; i < n; i++) {
-        const months_member = Math.floor(Math.random() * 47) + 1;
-        const contract_type = contractTypes[Math.floor(Math.random() * 3)];
-        const age = Math.floor(Math.random() * 54) + 18;
+        const months_member = Math.floor(random() * 47) + 1;
+        const contract_type = contractTypes[Math.floor(random() * 3)];
+        const age = Math.floor(random() * 54) + 18;
         
         // Base visits - higher for longer members, with some randomness
         let visits_per_month = Math.min(30, Math.max(0, 
-            8 + (months_member / 10) + (Math.random() * 10 - 5)
+            8 + (months_member / 10) + (random() * 10 - 5)
         ));
         
         // Churn probability model
@@ -378,7 +381,7 @@ function generateChurnData(n = 3500) {
         
         // Clamp and add noise
         churnProb = Math.max(0.02, Math.min(0.85, churnProb));
-        const churned = Math.random() < churnProb ? 'Churned' : 'Stayed';
+        const churned = random() < churnProb ? 'Churned' : 'Stayed';
         
         data.push({
             months_member: Math.round(months_member),
@@ -392,15 +395,18 @@ function generateChurnData(n = 3500) {
     return data;
 }
 
-function generateLeadScoringData(n = 4000) {
+function generateLeadScoringData(n = 4000, rng = null) {
+    // Use seeded RNG if provided, otherwise fall back to Math.random
+    const random = rng ? () => rng.next() : () => Math.random();
+    
     const data = [];
     const companySizes = ['Small', 'Medium', 'Enterprise'];
     
     for (let i = 0; i < n; i++) {
-        const website_visits = Math.floor(Math.random() * 49) + 1;
-        const email_opens = Math.floor(Math.random() * 13);
-        const company_size = companySizes[Math.floor(Math.random() * 3)];
-        const days_since_signup = Math.floor(Math.random() * 59) + 1;
+        const website_visits = Math.floor(random() * 49) + 1;
+        const email_opens = Math.floor(random() * 13);
+        const company_size = companySizes[Math.floor(random() * 3)];
+        const days_since_signup = Math.floor(random() * 59) + 1;
         
         // Conversion probability model
         let convProb = 0.08; // Base rate
@@ -423,7 +429,7 @@ function generateLeadScoringData(n = 4000) {
         else if (days_since_signup > 30) convProb -= 0.08;
         
         convProb = Math.max(0.02, Math.min(0.75, convProb));
-        const converted = Math.random() < convProb ? 'Yes' : 'No';
+        const converted = random() < convProb ? 'Yes' : 'No';
         
         data.push({
             website_visits,
@@ -437,15 +443,18 @@ function generateLeadScoringData(n = 4000) {
     return data;
 }
 
-function generateCustomerSegmentData(n = 4500) {
+function generateCustomerSegmentData(n = 4500, rng = null) {
+    // Use seeded RNG if provided, otherwise fall back to Math.random
+    const random = rng ? () => rng.next() : () => Math.random();
+    
     const data = [];
     const subscriptionStatuses = ['Subscriber', 'One-Time'];
     
     for (let i = 0; i < n; i++) {
-        const first_order_value = Math.round((Math.random() * 135 + 15) * 100) / 100;
-        const orders_first_90_days = Math.floor(Math.random() * 11) + 1;
-        const subscription_status = subscriptionStatuses[Math.floor(Math.random() * 2)];
-        const referral_count = Math.floor(Math.random() * 6);
+        const first_order_value = Math.round((random() * 135 + 15) * 100) / 100;
+        const orders_first_90_days = Math.floor(random() * 11) + 1;
+        const subscription_status = subscriptionStatuses[Math.floor(random() * 2)];
+        const referral_count = Math.floor(random() * 6);
         
         // Segment scoring
         let score = 0;
@@ -468,7 +477,7 @@ function generateCustomerSegmentData(n = 4500) {
         else if (referral_count > 0) score += 0.5;
         
         // Add noise
-        score += (Math.random() - 0.5) * 2;
+        score += (random() - 0.5) * 2;
         
         // Map to segments
         let segment;
@@ -521,15 +530,17 @@ function getScenarioById(id) {
 
 /**
  * Generate data for a scenario
+ * @param {string} scenarioId - The scenario identifier
+ * @param {SeededRNG} rng - Optional seeded random number generator for reproducibility
  */
-function generateScenarioData(scenarioId) {
+function generateScenarioData(scenarioId, rng = null) {
     switch (scenarioId) {
         case 'customer-churn':
-            return generateChurnData();
+            return generateChurnData(3500, rng);
         case 'lead-scoring':
-            return generateLeadScoringData();
+            return generateLeadScoringData(4000, rng);
         case 'customer-segment':
-            return generateCustomerSegmentData();
+            return generateCustomerSegmentData(4500, rng);
         default:
             return null;
     }
