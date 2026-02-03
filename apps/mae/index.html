@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAE Model Calibration Lab - Dr. Baker Marketing Analytics</title>
+    
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="../../shared/css/main.css">
+    <link rel="stylesheet" href="../../shared/css/auth_bar.css">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Tracking -->
+    <script src="../../shared/js/tracking.js"></script>
+    
+    <!-- Plotly for charts -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    
+    <!-- MathJax for equations -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-290ZJ9RE04');
+    </script>
+</head>
+<body>
+    <!-- Auth Bar -->
+    <div class="auth-bar">
+        <div class="auth-bar__container">
+            <div></div>
+            <div id="auth-bar-content" class="auth-bar__links">
+                <a href="../../admin_pages/login.html">Login</a>
+                <a href="../../admin_pages/register.html">Create Account</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Header -->
+    <header class="intro hero-header">
+        <div class="hero-header__top">
+            <h1>📊 MAE Model Calibration Lab</h1>
+            <div class="hero-context">
+                <span class="badge">Loss Functions</span>
+                <span class="badge badge--warning">Regression Foundations</span>
+            </div>
+        </div>
+        <p class="hero-header__lede">
+            Manually calibrate linear and quadratic response models by minimizing Mean Absolute Error. 
+            Develop intuition for how loss functions guide model fitting before letting algorithms do the work.
+        </p>
+        
+        <!-- Professor Mode Toggle -->
+        <label class="professor-mode-toggle">
+            <input type="checkbox" id="professorMode">
+            <span>🎓 Professor Mode</span>
+        </label>
+    </header>
+
+    <main class="app-main">
+        <!-- Overview Section -->
+        <section class="test-overview" id="tut-overview-section" aria-labelledby="overview-heading">
+            <h2 id="overview-heading">OVERVIEW & LEARNING OBJECTIVES</h2>
+            <div class="card">
+                <p>
+                    <strong>Mean Absolute Error (MAE)</strong> is a loss function that measures the average absolute 
+                    difference between predicted and actual values. By manually adjusting model parameters to minimize MAE, 
+                    you'll understand what optimization algorithms do automatically—and develop intuition for why 
+                    different model shapes fit different data patterns.
+                </p>
+                
+                <details class="intro-notes" open>
+                    <summary>🎯 What You'll Learn</summary>
+                    <div class="notes-content">
+                        <ul>
+                            <li><strong>Loss functions in action:</strong> Watch how MAE changes as you adjust parameters. 
+                                Lower MAE = better predictions!</li>
+                            <li><strong>Linear vs. Quadratic:</strong> Learn when a simple linear model is sufficient 
+                                and when you need the flexibility of a quadratic to capture curvature.</li>
+                            <li><strong>Marketing applications:</strong> Explore three different marketing scenarios 
+                                with distinctly different data patterns to see how model choice matters in practice.</li>
+                            <li><strong>Benchmark your intuition:</strong> Compare your manually-fitted MAE against 
+                                the algorithmically optimal MAE to see how close you can get!</li>
+                        </ul>
+                        <div class="callout-box callout-blue">
+                            <p><strong>💡 Why This Matters:</strong> Every regression, machine learning model, and optimization 
+                            algorithm uses a loss function to "learn" the best parameters. Understanding MAE builds the 
+                            foundation for marketing mix modeling, attribution, and predictive analytics.</p>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="intro-notes">
+                    <summary>📐 Mathematical Foundations</summary>
+                    <div class="notes-content" id="tut-math-section">
+                        <div class="equation-block">
+                            <p><strong>Mean Absolute Error (MAE):</strong></p>
+                            $$\text{MAE} = \frac{1}{N}\sum_{i=1}^{N}\left|y_i - \hat{y}_i\right| = \frac{1}{N}\sum_{i=1}^{N}\left|\text{Actual} - \text{Predicted}\right|$$
+                        </div>
+                        
+                        <div class="equation-block">
+                            <p><strong>Linear Model:</strong></p>
+                            $$\hat{y} = B_0 + B_1 \cdot X$$
+                        </div>
+                        
+                        <div class="equation-block">
+                            <p><strong>Quadratic Model:</strong></p>
+                            $$\hat{y} = B_0 + B_1 \cdot X + B_2 \cdot X^2$$
+                        </div>
+                        
+                        <table class="data-table" style="margin-top: 1rem;">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Name</th>
+                                    <th>Interpretation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>B₀</strong></td>
+                                    <td>Intercept</td>
+                                    <td>Predicted Y when X = 0 (baseline)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>B₁</strong></td>
+                                    <td>Linear coefficient</td>
+                                    <td>Change in Y per unit increase in X (slope/rate)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>B₂</strong></td>
+                                    <td>Quadratic coefficient</td>
+                                    <td>Curvature—positive = accelerating, negative = diminishing returns</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- Scenario Selection Section -->
+        <section class="scenario-section" id="tut-scenario-section">
+            <h2>MARKETING SCENARIOS</h2>
+            <div class="card">
+                <div class="scenario-controls">
+                    <label for="scenario-select">Load a marketing case study:</label>
+                    <div class="scenario-controls__input">
+                        <select id="scenario-select">
+                            <option value="">-- Select a scenario --</option>
+                        </select>
+                        <button id="scenario-download" class="secondary" type="button" disabled>
+                            Download scenario data
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="scenario-description" class="scenario-description-container">
+                    <p class="scenario-placeholder">
+                        Select a marketing scenario above to see the business context and variables, 
+                        or use the default Search Ads dataset loaded below.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Instructions Section -->
+        <section class="instructions-section">
+            <h2>HOW TO USE THIS TOOL</h2>
+            <div class="card">
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <h4>🎚️ Adjust Parameters</h4>
+                        <p>Use the sliders for coarse adjustments or type precise values in the number inputs.</p>
+                    </div>
+                    <div class="concept-item">
+                        <h4>👀 Watch the MAE</h4>
+                        <p>The MAE updates in real-time. Your goal is to minimize it—lower is better!</p>
+                    </div>
+                    <div class="concept-item">
+                        <h4>📏 Read the Error Lines</h4>
+                        <p>Grey dotted lines show the absolute error for each data point. Shorter lines = better fit.</p>
+                    </div>
+                    <div class="concept-item">
+                        <h4>🔄 Compare Models</h4>
+                        <p>Try both linear and quadratic. Which achieves a lower MAE? What does that tell you?</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Linear Model Section -->
+        <section class="model-section" id="tut-linear-section">
+            <h2>LINEAR MODEL</h2>
+            <div class="card">
+                <div class="model-header">
+                    <h3 id="linear-model-title">🔵 Linear Fit: Y = B₀ + B₁ × X</h3>
+                </div>
+                
+                <!-- Controls -->
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label for="B0_linear">
+                            <span class="param-name">B₀ (Intercept)</span>
+                            <span class="param-value" id="B0_linear_display">20</span>
+                        </label>
+                        <div class="slider-input-row">
+                            <input type="range" id="B0_linear" min="-100" max="400" step="1" value="20">
+                            <input type="number" id="B0_linear_num" min="-100" max="400" step="0.1" value="20">
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="B1_linear">
+                            <span class="param-name">B₁ (Slope)</span>
+                            <span class="param-value" id="B1_linear_display">0.50</span>
+                        </label>
+                        <div class="slider-input-row">
+                            <input type="range" id="B1_linear" min="-0.1" max="1.1" step="0.01" value="0.5">
+                            <input type="number" id="B1_linear_num" min="-0.1" max="1.1" step="0.01" value="0.5">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dynamic Equation & MAE Display -->
+                <div class="results-display">
+                    <div class="equation-display" id="equation_linear">
+                        <strong>Model:</strong> REVENUE = <span class="dynamic-value">20.0</span> + <span class="dynamic-value">0.50</span> × AdSpending
+                    </div>
+                    <div class="mae-display" id="mae_linear">
+                        <span class="mae-label">MAE =</span>
+                        <span class="mae-value">--</span>
+                    </div>
+                </div>
+                
+                <!-- Chart -->
+                <div id="linearPlot" class="plot-container"></div>
+                
+                <details class="interpretation-aid" open>
+                    <summary>💡 Interpreting Your Linear Model</summary>
+                    <div class="interpretation-content">
+                        <div id="linear-interpretation-dynamic" class="dynamic-interpretation">
+                            <!-- Populated dynamically by app.js -->
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- Quadratic Model Section -->
+        <section class="model-section" id="tut-quadratic-section">
+            <h2>QUADRATIC MODEL</h2>
+            <div class="card">
+                <div class="model-header">
+                    <h3 id="quadratic-model-title">🟠 Quadratic Fit: Y = B₀ + B₁ × X + B₂ × X²</h3>
+                </div>
+                
+                <!-- Controls -->
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label for="B0_quadratic">
+                            <span class="param-name">B₀ (Intercept)</span>
+                            <span class="param-value" id="B0_quadratic_display">20</span>
+                        </label>
+                        <div class="slider-input-row">
+                            <input type="range" id="B0_quadratic" min="-100" max="400" step="1" value="20">
+                            <input type="number" id="B0_quadratic_num" min="-100" max="400" step="0.1" value="20">
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="B1_quadratic">
+                            <span class="param-name">B₁ (Linear Term)</span>
+                            <span class="param-value" id="B1_quadratic_display">0.50</span>
+                        </label>
+                        <div class="slider-input-row">
+                            <input type="range" id="B1_quadratic" min="-0.1" max="1.1" step="0.01" value="0.5">
+                            <input type="number" id="B1_quadratic_num" min="-0.1" max="1.1" step="0.01" value="0.5">
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="B2_quadratic">
+                            <span class="param-name">B₂ (Quadratic Term)</span>
+                            <span class="param-value" id="B2_quadratic_display">0.000100</span>
+                        </label>
+                        <div class="slider-input-row">
+                            <input type="range" id="B2_quadratic" min="-0.0005" max="0.0005" step="0.000005" value="0.0001">
+                            <input type="number" id="B2_quadratic_num" min="-0.0005" max="0.0005" step="0.000001" value="0.0001">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dynamic Equation & MAE Display -->
+                <div class="results-display">
+                    <div class="equation-display" id="equation_quadratic">
+                        <strong>Model:</strong> REVENUE = <span class="dynamic-value">20.0</span> + <span class="dynamic-value">0.50</span> × AdSpending + <span class="dynamic-value">0.000100</span> × AdSpending²
+                    </div>
+                    <div class="mae-display" id="mae_quadratic">
+                        <span class="mae-label">MAE =</span>
+                        <span class="mae-value">--</span>
+                    </div>
+                </div>
+                
+                <!-- Chart -->
+                <div id="quadraticPlot" class="plot-container"></div>
+                
+                <details class="interpretation-aid" open>
+                    <summary>💡 Interpreting Your Quadratic Model</summary>
+                    <div class="interpretation-content">
+                        <div id="quadratic-interpretation-dynamic" class="dynamic-interpretation">
+                            <!-- Populated dynamically by app.js -->
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- Model Comparison Section -->
+        <section class="comparison-section" id="tut-comparison-section">
+            <h2>MODEL COMPARISON</h2>
+            <div class="card">
+                <p class="comparison-intro">Compare your manually-fitted models against the algorithmically optimal fit. 
+                    How close can you get?</p>
+                
+                <div class="comparison-grid">
+                    <div class="comparison-card linear">
+                        <h4>🔵 Linear Model</h4>
+                        <div class="comparison-row">
+                            <div class="comparison-mae user-mae" id="compare_mae_linear">
+                                <span class="mae-label">Your MAE:</span>
+                                <span class="mae-value">--</span>
+                            </div>
+                            <div class="comparison-mae optimal-mae" id="optimal_mae_linear">
+                                <span class="mae-label">Optimal MAE:</span>
+                                <span class="mae-value">--</span>
+                            </div>
+                        </div>
+                        <div class="mae-gap" id="gap_linear">
+                            <span class="gap-label">Gap:</span>
+                            <span class="gap-value">--</span>
+                        </div>
+                    </div>
+                    <div class="comparison-card quadratic">
+                        <h4>🟠 Quadratic Model</h4>
+                        <div class="comparison-row">
+                            <div class="comparison-mae user-mae" id="compare_mae_quadratic">
+                                <span class="mae-label">Your MAE:</span>
+                                <span class="mae-value">--</span>
+                            </div>
+                            <div class="comparison-mae optimal-mae" id="optimal_mae_quadratic">
+                                <span class="mae-label">Optimal MAE:</span>
+                                <span class="mae-value">--</span>
+                            </div>
+                        </div>
+                        <div class="mae-gap" id="gap_quadratic">
+                            <span class="gap-label">Gap:</span>
+                            <span class="gap-value">--</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="comparison-verdict" class="comparison-verdict">
+                    Adjust the parameters above to see which model fits better!
+                </div>
+                
+                <details class="intro-notes">
+                    <summary>📊 How is "Optimal MAE" calculated?</summary>
+                    <div class="notes-content">
+                        <p>The optimal MAE uses <strong>Ordinary Least Squares (OLS)</strong> regression to find the 
+                        mathematically best-fit parameters, then calculates the resulting MAE. While OLS minimizes 
+                        <em>squared</em> error (not absolute error), it provides an excellent approximation of the 
+                        minimum achievable MAE.</p>
+                        <p>If your manual MAE is within <strong>5-10%</strong> of optimal, you've done an excellent job! 
+                        Getting exactly to optimal by hand is very difficult.</p>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- Exploratory Questions -->
+        <section class="questions-section">
+            <h2>EXPLORATORY QUESTIONS</h2>
+            <div class="card">
+                <details class="intro-notes" open>
+                    <summary>🤔 Think About These Questions</summary>
+                    <div class="notes-content">
+                        <ol class="questions-list">
+                            <li>
+                                <strong>What Were You Actually Doing?</strong> As you moved the sliders, you were 
+                                searching for parameters that minimize error. That's it. That's what "fitting a model" 
+                                means—whether you do it by hand or let an algorithm do it. What did this process 
+                                <em>feel</em> like? Tedious? Satisfying when MAE dropped?
+                            </li>
+                            <li>
+                                <strong>Simpler is Better (When It Works):</strong> Try the Search Ads scenario. 
+                                The linear model (2 parameters) probably fits almost as well as the quadratic 
+                                (3 parameters). If the MAE difference is tiny, which model would you choose and why?
+                            </li>
+                            <li>
+                                <strong>When Simplicity Fails:</strong> Now try the Email Frequency scenario. 
+                                Can the linear model capture the "sweet spot" where revenue peaks? What happens 
+                                to the linear model's predictions at the extremes (very few or very many emails)?
+                            </li>
+                            <li>
+                                <strong>The Gap to Optimal:</strong> Compare your manually-fitted MAE to the 
+                                algorithmically optimal MAE shown below. How close did you get? What does this 
+                                tell you about why we let computers do this in practice?
+                            </li>
+                            <li>
+                                <strong>The Big Picture:</strong> Every regression, every machine learning model, 
+                                every neural network is fundamentally doing what you just did: adjusting parameters 
+                                to minimize some measure of error. The math gets fancier, but the core idea doesn't change. 
+                                Does that make these methods feel more approachable or more mysterious?
+                            </li>
+                        </ol>
+                    </div>
+                </details>
+                
+                <details class="interpretation-aid">
+                    <summary>📚 Connecting to Broader Concepts</summary>
+                    <div class="interpretation-content">
+                        <div class="concept-grid">
+                            <div class="guide-section">
+                                <h5>🎯 What You Just Did = What Algorithms Do</h5>
+                                <p>When you run <code>lm()</code> in R or <code>LinearRegression()</code> in Python, 
+                                the computer is doing exactly what you did—searching for parameters that minimize error. 
+                                It just does it faster and finds the exact optimum using calculus.</p>
+                            </div>
+                            <div class="guide-section">
+                                <h5>⚖️ Parsimony: The Preference for Simplicity</h5>
+                                <p>Scientists and analysts prefer simpler models when they fit the data equally well. 
+                                Why? Simpler models are easier to interpret, less likely to overfit, and more likely 
+                                to work on new data. This principle has a name: <strong>Occam's Razor</strong>.</p>
+                            </div>
+                            <div class="guide-section">
+                                <h5>📉 Loss Functions: The Universal Language</h5>
+                                <p>MAE is one "loss function." MSE (mean squared error) is another. Log-loss is used 
+                                for classification. But they all serve the same purpose: giving the algorithm a single 
+                                number to minimize. Pick your loss function, then minimize it.</p>
+                            </div>
+                            <div class="guide-section">
+                                <h5>🚀 From Here to Machine Learning</h5>
+                                <p>Neural networks have millions of parameters instead of 2-3, but they're still just 
+                                minimizing a loss function. The difference is scale and the types of patterns they can 
+                                capture—not the fundamental logic of what "learning" means.</p>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-nav">
+                <a href="../../index.html" class="back-link">← Back to Tool Selection</a>
+            </div>
+            <div class="footer-meta">
+                <span class="meta-item">Created: 2024-02-20</span>
+                <span class="separator">•</span>
+                <span class="meta-item">Last Updated: 2026-02-03</span>
+            </div>
+            <div class="footer-citation">
+                <div class="citation-label">Cite this tool:</div>
+                <div class="citation-text">
+                    Baker, A. (2026). MAE Model Calibration Lab. <em>Dr. Baker's Marketing Analytics Tools</em>. 
+                    Retrieved from <a href="https://drbakermarketing.com/apps/mae/" target="_blank">https://drbakermarketing.com/apps/mae/</a>
+                </div>
+            </div>
+            <div class="footer-copyright">
+                &copy; 2026 Andrew Baker. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="../../shared/js/auth_tracking.js"></script>
+    <script src="../../shared/js/auth_bar.js"></script>
+    <script src="scenarios.js"></script>
+    <script src="app.js"></script>
+    <script src="mae_tutorial.js"></script>
+</body>
+</html>
