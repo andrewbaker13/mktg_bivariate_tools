@@ -858,19 +858,24 @@ const DTTutorial = {
     ],
 
     init() {
+        console.log('DTTutorial.init() called');
         this.attachListeners();
     },
 
     attachListeners() {
         const toggle = document.getElementById('professorMode');
+        console.log('Professor Mode checkbox found:', toggle);
         if (toggle) {
             toggle.addEventListener('change', (e) => {
+                console.log('Professor Mode checkbox changed:', e.target.checked);
                 if (e.target.checked) {
                     this.start();
                 } else {
                     this.stop();
                 }
             });
+        } else {
+            console.error('Professor Mode checkbox not found!');
         }
         
         // Poll for progress checks
