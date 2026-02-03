@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Conjoint Analysis & Simulation Tool</title>
+  <title>Conjoint Analysis - BROWSER TEST (Pyodide)</title>
   <!-- Shared design system -->
   <link rel="stylesheet" href="../../../shared/css/main.css">
     <script src="../../../shared/js/tracking.js"></script>
@@ -41,15 +41,17 @@
       <div class="hero-header__top">
         <h1>Conjoint Analysis & Simulation Tool</h1>
         <div class="hero-context">
+          <span class="badge" style="background: #10b981; color: white;">🐍 BROWSER TEST (Pyodide)</span>
           <span class="badge">Analysis Tool</span>
           <a href="main_conjoint_creator.html" class="badge badge-secondary">Design Tool →</a>
         </div>
       </div>
       <p class="hero-header__lede">
-        Analyze choice-based conjoint (CBC) data to understand how customers value product attributes. Upload experiment data, estimate individual-level preferences (part-worth utilities), simulate market shares, and optimize product configurations for maximum profit.
+        <strong style="color: #10b981;">⚡ This version runs estimation entirely in your browser using Pyodide (Python compiled to WebAssembly).</strong>
+        No server needed - your data never leaves your device. First load may take 5-10 seconds to download Python packages.
       </p>
-      <p class="hero-header__lede" style="font-size: 0.9em; color: #6b7280;">
-        <strong>🔒 Privacy:</strong> All estimation runs entirely in your browser using Pyodide (Python in WebAssembly). Your data never leaves your device.
+      <p class="hero-header__lede">
+        Analyze choice-based conjoint (CBC) data to understand how customers value product attributes. Upload experiment data, estimate individual-level preferences (part-worth utilities), simulate market shares, and optimize product configurations for maximum profit.
       </p>
       
       <!-- Progressive Workflow Stepper -->
@@ -196,25 +198,74 @@
       <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
       <article class="card data-entry-card">
         <div class="input-header">
-          <h3>Step 1: Upload Your Data</h3>
+          <h3>Step 1: Get Your Data</h3>
         </div>
 
-        <div class="data-import-block">
-          <p>
-            Upload long-format CBC data where each row represents one alternative in one choice task for one respondent.
-            Required columns: <code>respondent_id</code>, <code>task_id</code>, <code>alternative_id</code>, <code>chosen</code> (0/1), plus attribute columns.
-            <strong>Or select a Marketing Scenario above to load example data.</strong>
-          </p>
-          <div id="conjoint-dropzone" class="dropzone" role="button" tabindex="0">
-            <p class="dropzone-title">Drag &amp; drop CBC file</p>
-            <p class="dropzone-note">CSV with respondent_id, task_id, alternative_id, chosen, and attribute columns</p>
-            <button type="button" id="conjoint-browse" class="secondary">Browse files</button>
+        <!-- Tab Navigation -->
+        <div class="data-tabs">
+          <button class="data-tab active" data-tab="upload">📤 Upload Your Data</button>
+          <button class="data-tab" data-tab="examples">📚 Try Example Dataset</button>
+        </div>
+
+        <!-- Upload Tab -->
+        <div class="data-tab-content active" id="tab-upload">
+          <div class="data-import-block">
+            <p>
+              Upload long-format CBC data where each row represents one alternative in one choice task for one respondent.
+              Required columns: <code>respondent_id</code>, <code>task_id</code>, <code>alternative_id</code>, <code>chosen</code> (0/1), plus attribute columns.
+            </p>
+            <div id="conjoint-dropzone" class="dropzone" role="button" tabindex="0">
+              <p class="dropzone-title">Drag &amp; drop CBC file</p>
+              <p class="dropzone-note">CSV with respondent_id, task_id, alternative_id, chosen, and attribute columns</p>
+              <button type="button" id="conjoint-browse" class="secondary">Browse files</button>
+            </div>
+            <input type="file" id="conjoint-input" accept=".csv,.tsv,.txt" hidden>
+            <div class="template-buttons">
+              <button type="button" id="conjoint-template-download">Download Blank Template</button>
+            </div>
+            <p id="conjoint-upload-feedback" class="upload-status" aria-live="polite">No file uploaded.</p>
           </div>
-          <input type="file" id="conjoint-input" accept=".csv,.tsv,.txt" hidden>
-          <div class="template-buttons">
-            <button type="button" id="conjoint-template-download">Download Blank Template</button>
+        </div>
+
+        <!-- Examples Tab -->
+        <div class="data-tab-content" id="tab-examples">
+          <div class="example-datasets">
+            <div class="example-card" data-example="smartphone">
+              <div class="example-card__icon">📱</div>
+              <h4>Smartphone Preferences</h4>
+              <p class="example-card__stats">100 respondents • 12 tasks per person • 6 attributes</p>
+              <p class="example-card__description">
+                Consumer preferences for smartphones with varying Brand (iPhone, Samsung, BrandX, BrandY, BrandZ), Screen Size, Storage, Battery Life, Camera, and Price ($499-$899). 
+                Includes "None" option to model opt-out behavior.
+              </p>
+              <p class="example-card__learning"><strong>Learning focus:</strong> Price sensitivity, brand equity, willingness-to-pay</p>
+              <button class="primary" data-load="smartphone">Load Dataset</button>
+            </div>
+
+            <div class="example-card" data-example="coffee">
+              <div class="example-card__icon">☕</div>
+              <h4>Coffee Shop Attributes</h4>
+              <p class="example-card__stats">150 respondents • 10 tasks per person • 4 attributes</p>
+              <p class="example-card__description">
+                Customer preferences for coffee shops varying by Atmosphere (Cozy, Modern, Minimalist), WiFi Quality (Fast, Slow, None), 
+                Seating Availability (Limited, Moderate, Ample), and Price per Coffee ($3-$6).
+              </p>
+              <p class="example-card__learning"><strong>Learning focus:</strong> Service attributes, amenity tradeoffs, customer segmentation</p>
+              <button class="primary" data-load="coffee">Load Dataset</button>
+            </div>
+
+            <div class="example-card" data-example="hotel">
+              <div class="example-card__icon">🏨</div>
+              <h4>Hotel Room Features</h4>
+              <p class="example-card__stats">180 respondents • 12 tasks per person • 5 attributes</p>
+              <p class="example-card__description">
+                Business traveler preferences for hotel rooms with varying Location (Downtown, Airport, Suburb), Star Rating (3-star to 5-star),
+                Free Breakfast (Yes/No), WiFi Speed (Basic, Premium), and Price per Night ($89-$289). Includes competitor hotels.
+              </p>
+              <p class="example-card__learning"><strong>Learning focus:</strong> Competitive positioning, feature bundling, market simulation</p>
+              <button class="primary" data-load="hotel">Load Dataset</button>
+            </div>
           </div>
-          <p id="conjoint-upload-feedback" class="upload-status" aria-live="polite">No file uploaded.</p>
         </div>
 
         <div class="input-group" id="conjoint-column-mapping" style="display:none;">
@@ -531,24 +582,6 @@
             Distribution of price coefficients across respondents. More negative = more price-sensitive.
           </p>
           
-          <!-- Dynamic interpretation populated by JS -->
-          <div id="price-sensitivity-interpretation" class="insight-callout interpretation" style="display: none;">
-            <div class="insight-callout__icon">📊</div>
-            <div class="insight-callout__content">
-              <div class="insight-callout__title">Interpretation</div>
-              <p class="insight-callout__text" id="price-sensitivity-text"></p>
-            </div>
-          </div>
-          
-          <!-- Positive coefficients warning (shown conditionally) -->
-          <div id="positive-price-warning" class="insight-callout tip" style="display: none;">
-            <div class="insight-callout__icon">🤔</div>
-            <div class="insight-callout__content">
-              <div class="insight-callout__title">About Positive Price Coefficients</div>
-              <p class="insight-callout__text" id="positive-price-text"></p>
-            </div>
-          </div>
-          
           <div class="insight-callout warning">
             <div class="insight-callout__icon">⚠️</div>
             <div class="insight-callout__content">
@@ -665,35 +698,10 @@
         </p>
         
         <div class="input-group">
-          <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
-            <input type="checkbox" id="conjoint-auto-k">
-            <span>Automatically determine optimal number of segments (Elbow Method)</span>
-          </label>
-          
-          <div id="manual-k-controls">
-            <label for="conjoint-n-clusters">Number of segments (k)</label>
-            <input type="number" id="conjoint-n-clusters" min="2" max="8" step="1" value="3">
-          </div>
-          
+          <label for="conjoint-n-clusters">Number of segments (k)</label>
+          <input type="number" id="conjoint-n-clusters" min="2" max="6" step="1" value="3">
           <button type="button" id="conjoint-run-segmentation" class="primary">Run Segmentation</button>
           <p id="conjoint-segmentation-status" class="upload-status" aria-live="polite"></p>
-        </div>
-        
-        <!-- Elbow Chart (shown when auto-k is used) -->
-        <div id="conjoint-elbow-results" style="display:none; margin-top: 1.5rem;">
-          <h4>Elbow Method: Finding Optimal K</h4>
-          <div class="chart-placeholder" id="chart-elbow"></div>
-          <p class="chart-note">
-            The "elbow" point where the curve bends indicates diminishing returns from adding more clusters. 
-            The optimal k is typically at this inflection point.
-          </p>
-          <div id="elbow-recommendation" class="insight-callout tip" style="margin-top: 1rem;">
-            <div class="insight-callout__icon">🎯</div>
-            <div class="insight-callout__content">
-              <div class="insight-callout__title">Recommendation</div>
-              <p class="insight-callout__text" id="elbow-recommendation-text"></p>
-            </div>
-          </div>
         </div>
 
         <div id="conjoint-segment-results" style="display:none;">
@@ -923,40 +931,6 @@
         <p>
           Explore all possible combinations of attribute levels to find the product configuration that maximizes market share or profit. Useful for new product design decisions.
         </p>
-        
-        <details class="help-guide" style="background: #f0f9ff; border: 1px solid #0284c7; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-          <summary style="cursor: pointer; font-weight: 600; color: #0369a1;">📖 How does brute-force handle numeric attributes? (Click to expand)</summary>
-          <div style="margin-top: 1rem; font-size: 0.95em; line-height: 1.6;">
-            <p>Brute-force optimization tests <em>all combinations</em> of attribute levels. But continuous attributes (like price or screen size) have infinite possible values! Here's how the tool handles this:</p>
-            
-            <table style="width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9em;">
-              <thead>
-                <tr style="background: #e0f2fe;">
-                  <th style="padding: 8px; text-align: left; border: 1px solid #bae6fd;">Attribute Type</th>
-                  <th style="padding: 8px; text-align: left; border: 1px solid #bae6fd;">What Values Are Tested</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style="padding: 8px; border: 1px solid #bae6fd;"><strong>Categorical</strong><br>(Brand, Color)</td>
-                  <td style="padding: 8px; border: 1px solid #bae6fd;">All unique values that appeared in your CBC data.</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px; border: 1px solid #bae6fd;"><strong>Price</strong><br>(when optimizing profit)</td>
-                  <td style="padding: 8px; border: 1px solid #bae6fd;">A <strong>user-defined grid</strong>: you specify min, max, and step size. For example, $499–$899 with $50 steps tests 9 price points.</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px; border: 1px solid #bae6fd;"><strong>Other Numeric</strong><br>(Screen Size, Storage)</td>
-                  <td style="padding: 8px; border: 1px solid #bae6fd;">Only the <strong>discrete values that appeared in your CBC study</strong>. If your study used Screen Size = [5.5", 6.0", 6.5"], only those 3 values are tested.</td>
-                </tr>
-              </tbody>
-            </table>
-            
-            <div style="background: #fefce8; padding: 0.75rem; border-radius: 4px; border-left: 4px solid #eab308;">
-              <strong>⚠️ Limitation:</strong> The true optimal might fall between tested values (e.g., optimal price = $572, but we only test $550 and $600). For more precision, reduce the price step size or use the Market Simulation to manually test specific configurations.
-            </div>
-          </div>
-        </details>
 
         <div class="input-group">
           <h4>Select attributes to vary</h4>
@@ -1097,7 +1071,7 @@
   <script src="../../../shared/js/auth_tracking.js"></script>
   <script src="../../../shared/js/auth_bar.js"></script>
   <script src="../../../shared/js/quiz_utils.js"></script>
-  <script src="conjoint_app.js"></script>
+  <script src="conjoint_app_browsertest.js"></script>
   <script src="conjoint_tutorial.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {

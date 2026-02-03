@@ -568,4 +568,71 @@ All follow identical patterns for:
 
 ---
 
-*Last updated: February 2, 2026 - End of Session 2*
+## Session 3: Professor Mode Bug Fixes (February 2, 2026)
+
+### Issues Found & Fixed
+
+| Issue | Problem | Solution |
+|-------|---------|----------|
+| **Confusion Matrix Structure** | Tutorial assumed 2D array `cm[0][0]` but actual structure is object `cm[actual][predicted]` | Fixed to use class names: `cm[targetClass][targetClass]` for TP, etc. |
+| **Scenario Label Mismatch** | Tutorial said `"Customer Churn Prediction"` but dropdown shows `"🔄 Customer Churn Prediction"` | Updated to include emoji |
+| **Step 9 Highlight Mismatch** | Step asked to click "Build Tree" but highlighted Metrics panel | Changed `targetId` to `'tut-step3-section'`, added auto-scroll to metrics after rebuild |
+
+### Code Changes Made
+
+**dt_tutorial.js - Confusion Matrix Fix (Step 11):**
+```javascript
+// BEFORE (broken):
+const cm = state.confusionMatrix;
+const tn = cm[0]?.[0] || 0;  // Wrong! cm is object, not array
+
+// AFTER (fixed):
+const cm = state.confusionMatrix;
+const classes = state.classes;
+const targetClass = state.targetClass || classes[1];
+const negativeClass = classes.find(c => c !== targetClass) || classes[0];
+// cm[actual][predicted]
+const tp = cm[targetClass]?.[targetClass] || 0;
+const fn = cm[targetClass]?.[negativeClass] || 0;
+const fp = cm[negativeClass]?.[targetClass] || 0;
+const tn = cm[negativeClass]?.[negativeClass] || 0;
+```
+
+**dt_tutorial.js - Step 9 Highlight Fix:**
+```javascript
+// BEFORE:
+targetId: 'tut-metrics-section',  // Wrong section!
+onEnter: () => {
+    const section = document.getElementById('tut-metrics-section');
+    if (section) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// AFTER:
+targetId: 'tut-step3-section',  // Highlights Build Tree area
+check: () => {
+    const state = window.lastTreeState;
+    const rebuilt = state && state.maxDepth === 5;
+    // Auto-scroll to metrics AFTER they rebuild
+    if (rebuilt) {
+        const metricsSection = document.getElementById('tut-metrics-section');
+        if (metricsSection) metricsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return rebuilt;
+},
+onEnter: () => {
+    const section = document.getElementById('tut-step3-section');
+    if (section) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+```
+
+### Testing Status
+
+- [x] Steps 1-8: Working correctly
+- [x] Step 9: Now highlights Build Tree, auto-scrolls to metrics after rebuild
+- [ ] Steps 10-13: Need verification
+- [ ] Dynamic quizzes: Need to verify actual values appear
+
+---
+
+*Last updated: February 2, 2026 - End of Session 3*
+

@@ -264,11 +264,11 @@ const ConjointTutorial = {
                     question: "If we doubled all utilities (V_A=4, V_B=2, V_None=0), what happens to shares?",
                     options: [
                         "They stay exactly the same",
-                        "Product A's share increases because 4 > 2",
+                        "Product A's share increases (to ~87%) because differences get amplified",
                         "All shares become 33.3% each"
                     ],
                     answer: 1,
-                    feedback: "Actually, scaling ALL utilities by the same factor keeps relative shares unchanged. But doubling only some would change shares. This 'scale invariance' is why we focus on utility DIFFERENCES, not absolute values."
+                    feedback: "Correct! Multiplying utilities by a constant amplifies the differences — the highest utility option dominates more. P(A) jumps from 66% to 87%. Note: ADDING a constant to all utilities keeps shares unchanged (translation invariance), but MULTIPLYING changes them."
                 }
             ],
             check: () => true
@@ -349,7 +349,7 @@ const ConjointTutorial = {
                 
                 <p><strong>About This Study:</strong></p>
                 <ul>
-                    <li><strong>150 respondents</strong> — ages 18-55, smartphone owners</li>
+                    <li><strong>100 respondents</strong> — ages 18-55, smartphone owners</li>
                     <li><strong>12 choice tasks each</strong> — enough for reliable individual estimates</li>
                     <li><strong>3 phones + "None"</strong> per task</li>
                     <li><strong>6 attributes:</strong> Brand, Screen, Storage, Battery, Camera, Price</li>
@@ -369,14 +369,14 @@ const ConjointTutorial = {
             `,
             quizzes: [
                 {
-                    question: "Why does this study have 150 respondents × 12 tasks?",
+                    question: "Why does this study have 100 respondents × 12 tasks?",
                     options: [
                         "It's an arbitrary number the researcher picked",
                         "More data = more reliable estimates, especially for individual-level analysis and segmentation",
                         "12 is the maximum tasks allowed by survey software"
                     ],
                     answer: 1,
-                    feedback: "Correct! Sample size matters. 150 respondents enables segmentation analysis. 12 tasks per person provides enough data to estimate individual-level preferences (not just market averages)."
+                    feedback: "Correct! Sample size matters. 100 respondents enables segmentation analysis. 12 tasks per person provides enough data to estimate individual-level preferences (not just market averages)."
                 }
             ],
             check: () => {
@@ -426,7 +426,10 @@ const ConjointTutorial = {
                 
                 <p><strong>Data Shape Math:</strong></p>
                 <p style="background: #fef3c7; padding: 12px; border-radius: 6px;">
-                    150 respondents × 12 tasks × 4 alternatives = <strong>7,200 rows</strong>
+                    100 respondents × 12 tasks × ~4 alternatives = <strong>~4,800 rows</strong>
+                </p>
+                <p style="font-size: 0.85em; color: #666; margin-top: 8px;">
+                    <em>Note: In this experiment, the number of alternatives varied by task (3-5 options), which is realistic for CBC designs. Typically, tasks have a fixed number of alternatives.</em>
                 </p>
                 
                 <p class="task">👉 <strong>Task:</strong> Verify the mapping looks correct, then click <strong>"Confirm Mapping"</strong>.</p>
@@ -472,12 +475,12 @@ const ConjointTutorial = {
                     </tr>
                     <tr>
                         <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>Categorical</strong></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">Brand, Camera type, Color</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">Brand, Camera type, Storage</td>
                         <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">Separate utility per level</td>
                     </tr>
                     <tr>
                         <td style="padding: 8px;"><strong>Numeric (Linear)</strong></td>
-                        <td style="padding: 8px;">Price, Screen size</td>
+                        <td style="padding: 8px;">Price, Screen size, Battery life</td>
                         <td style="padding: 8px;">Single coefficient × value</td>
                     </tr>
                 </table>
@@ -1408,42 +1411,40 @@ const ConjointTutorial = {
         // ═══════════════════════════════════════════════════════════════
         {
             id: 'conclusion',
-            title: "🎓 Congratulations! Tutorial Complete",
+            title: "🎓 Professor Mode Complete!",
             targetId: null,
             content: `
-                <p style="font-size: 1.1em; text-align: center;">🏆 <strong>You've completed the Conjoint Analysis tutorial!</strong> 🏆</p>
+                <p>Excellent work! You've mastered the fundamentals of Choice-Based Conjoint analysis and simulation.</p>
                 
-                <h4>📊 What You've Mastered</h4>
+                <h4>📊 What You've Learned</h4>
                 <ul>
-                    <li><strong>Random Utility Theory:</strong> U = V + ε</li>
-                    <li><strong>Part-Worth Utilities:</strong> Quantifying feature preferences</li>
-                    <li><strong>Multinomial Logit:</strong> Converting utility to choice probability</li>
-                    <li><strong>Attribute Importance:</strong> Finding the key purchase drivers</li>
-                    <li><strong>Price Sensitivity:</strong> Understanding price-utility tradeoffs</li>
-                    <li><strong>Segmentation:</strong> Clustering customers by preference patterns</li>
-                    <li><strong>Market Simulation:</strong> Predicting share for any product config</li>
-                    <li><strong>WTP Analysis:</strong> Converting utility to dollars</li>
-                    <li><strong>IIA & Limitations:</strong> Knowing when to trust (and question) results</li>
+                    <li><strong>Random Utility Theory:</strong> U = V + ε — the foundation of choice modeling</li>
+                    <li><strong>Part-Worth Utilities:</strong> Quantifying how much each feature level contributes to preference</li>
+                    <li><strong>Multinomial Logit:</strong> Converting utility differences to choice probabilities (softmax)</li>
+                    <li><strong>Attribute Importance:</strong> Finding the key purchase drivers (utility range method)</li>
+                    <li><strong>Price Sensitivity:</strong> Understanding price-utility tradeoffs across customers</li>
+                    <li><strong>Segmentation:</strong> Clustering customers by preference patterns using K-means</li>
+                    <li><strong>Market Simulation:</strong> Predicting share for any product configuration</li>
+                    <li><strong>WTP Analysis:</strong> Converting utility to dollars (WTP = -ΔU / β_price)</li>
+                    <li><strong>IIA & Limitations:</strong> Knowing when to trust (and question) MNL results</li>
                 </ul>
                 
-                <h4>🚀 Next Steps</h4>
+                <h4>🔬 Analyst's Perspective: Beyond This Tutorial</h4>
+                <p style="font-style: italic; background: #f0f9ff; padding: 12px; border-left: 4px solid #3b82f6; border-radius: 6px; line-height: 1.7;">
+                    This tool implements individual-level MNL with L2 regularization—a solid, practical approach. But real-world conjoint projects often require more: <strong>Hierarchical Bayes (HB)</strong> estimation pools information across respondents for more stable individual estimates, especially with sparse data. <strong>Mixed Logit</strong> allows random coefficients that capture preference heterogeneity without forcing discrete segments. <strong>Latent Class MNL</strong> simultaneously estimates segments and within-segment utilities. For IIA concerns, <strong>Nested Logit</strong> or <strong>Cross-Nested Logit</strong> models can capture substitution patterns among similar products. Industry tools like Sawtooth Lighthouse, XLSTAT, or R's mlogit/apollo packages offer these extensions. As you advance, remember that model complexity should match business need—a well-interpreted MNL often beats a poorly-understood HB model. The best analysts know when simpler is better.
+                </p>
+                
+                <h4>🎯 Next Steps</h4>
                 <ol>
-                    <li><strong>Experiment:</strong> Try different simulation scenarios</li>
-                    <li><strong>Segment:</strong> Run the segmentation analysis with different k values</li>
-                    <li><strong>Optimize:</strong> Explore the Product Optimization feature</li>
-                    <li><strong>Apply:</strong> Think about how this applies to your own products</li>
+                    <li>Try different simulation scenarios and compare price-share tradeoffs</li>
+                    <li>Run segmentation with different k values — do segments make business sense?</li>
+                    <li>Explore the Product Optimization feature to find profit-maximizing configs</li>
+                    <li>Download individual-level utilities and analyze in Excel or R</li>
                 </ol>
                 
-                <h4>📚 Further Learning</h4>
-                <ul>
-                    <li>Orme, B. (2014). <em>Getting Started with Conjoint Analysis</em> — Excellent practical guide</li>
-                    <li>Train, K. (2009). <em>Discrete Choice Methods with Simulation</em> — Advanced theory</li>
-                    <li>Sawtooth Software Documentation — Industry-standard CBC software docs</li>
-                </ul>
-                
-                <p style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #ecfdf5, #dbeafe); border-radius: 12px; text-align: center;">
-                    <strong style="font-size: 1.2em;">🎉 You're now equipped to run professional-grade conjoint studies!</strong><br>
-                    <span style="font-size: 0.9em; color: #4b5563;">Use this power responsibly. Always validate important decisions with real market data.</span>
+                <p style="margin-top: 20px; padding: 15px; background: #e8f5e9; border-left: 4px solid #4caf50; border-radius: 6px;">
+                    <strong>📚 Keep Learning</strong><br>
+                    Explore our other advanced analytics tools! Try <strong>K-Means Clustering</strong> for preference-based segmentation on your own data, or <strong>Multinomial Logistic Regression</strong> to predict category choices from covariates. For pricing analysis, check out the <strong>Price Elasticity</strong> tools.
                 </p>
             `,
             quizzes: [
@@ -1606,7 +1607,7 @@ const ConjointTutorial = {
             </div>
             
             <h3 style="margin-top: 10px; margin-bottom: 15px;">${step.title}</h3>
-            <div class="tutorial-body" style="max-height: 50vh; overflow-y: auto;">${step.content}</div>
+            <div class="tutorial-body">${step.content}</div>
             
             ${quizHtml}
             
@@ -1746,7 +1747,7 @@ const ConjointTutorial = {
         sidebar.id = 'tutorial-sidebar';
         sidebar.innerHTML = `
             <div class="sidebar-header">
-                <h2>👨‍🏫 Professor Mode</h2>
+                <h2>🎓 Professor Mode</h2>
                 <button onclick="ConjointTutorial.stop()" class="close-tutorial">×</button>
             </div>
             <div id="tutorial-content"></div>

@@ -909,9 +909,21 @@ Add this block to EVERY conclusion step:
 
 ---
 
-## 📋 Apps with Professor Mode Implemented
+## � Long-Term TODOs
 
-> **Last Updated:** February 1, 2026
+> **Technical Debt & Future Improvements**
+
+1. **Consolidate all Professor Mode CSS into `shared/css/main.css`**
+   - Currently, some styles (sidebar, overlay, highlight) are in shared CSS
+   - But banner styles (`.professor-mode-banner`, `.professor-mode-content`, `.professor-mode-info`, `.professor-mode-toggle`) are duplicated in each app's CSS file
+   - Should move ALL Professor Mode styles to shared CSS for consistency and easier maintenance
+   - Affected files: `apps/decisiontrees/classifier/styles.css`, `apps/regression/log_regression/main_log_regression.css`, `apps/advanced/conjoint/main_conjoint.css`, and others
+
+---
+
+## �📋 Apps with Professor Mode Implemented
+
+> **Last Updated:** February 2, 2026
 
 The following apps already have Professor Mode tutorials implemented. Use these as reference examples when building new tutorials.
 
@@ -941,6 +953,8 @@ The following apps already have Professor Mode tutorials implemented. Use these 
 | [Sample Size Corr/Regression](../../apps/sample_size/sample_size_corr_regression/) | Sample Size | `sample_size_corr_regression_tutorial.js` | Correlation and regression power analysis |
 | [Multi-Arm A/B](../../apps/sample_size/sample_size_multiarm_ab/) | Sample Size | `sample_size_multiarm_ab_tutorial.js` | Bonferroni and Dunnett corrections |
 | [Sampling Visualizer](../../apps/sample_size/sampling_visualizer/) | Sample Size | `sampling_visualizer_tutorial.js` | CLT demonstration with visual distributions |
+| [Decision Tree Classifier](../../apps/decisiontrees/classifier/) | Advanced | `dt_tutorial.js` | CART algorithm, overfitting experiment, auto-scroll on rebuild |
+| [Conjoint Analysis](../../apps/advanced/conjoint/) | Advanced | `conjoint_tutorial.js` | 20-step comprehensive CBC tutorial, dynamic quizzes from estimationResult, WTP, IIA, segmentation |
 
 ### Apps Still Needing Professor Mode
 
@@ -950,7 +964,6 @@ The following apps already have Professor Mode tutorials implemented. Use these 
 | Qualitative Analyzer | Text Analysis | 🟡 Medium | |
 | Theme Extractor | Text Analysis | 🟡 Medium | |
 | ARIMAX | Time Series | 🟡 Medium | |
-| Conjoint Analysis | Advanced | 🔴 High | Important advanced method |
 | Neural Network | Advanced | 🟡 Medium | |
 | Propensity Score Matching | Advanced | 🔴 High | Important for causal inference |
 | Resource Allocation | Advanced | 🟢 Lower | |

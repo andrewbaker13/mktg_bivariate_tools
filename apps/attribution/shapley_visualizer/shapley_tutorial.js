@@ -714,6 +714,9 @@ const ShapleyTutorial = {
     },
 
     renderSidebar() {
+        // Prevent duplicate sidebars
+        if (document.getElementById('tutorial-sidebar')) return;
+        
         const div = document.createElement('div');
         div.id = 'tutorial-sidebar';
         div.innerHTML = `
@@ -726,10 +729,20 @@ const ShapleyTutorial = {
         document.body.appendChild(div);
 
         // Create overlay for spotlight effect
-        const overlay = document.createElement('div');
-        overlay.id = 'tutorial-overlay';
-        document.body.appendChild(overlay);
+        if (!document.getElementById('tutorial-overlay')) {
+            const overlay = document.createElement('div');
+            overlay.id = 'tutorial-overlay';
+            document.body.appendChild(overlay);
+        }
     }
 };
 
-// Auto-init embedded in object, called by main html script
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => ShapleyTutorial.init(), 300);
+    });
+} else {
+    // DOM already loaded
+    setTimeout(() => ShapleyTutorial.init(), 300);
+}

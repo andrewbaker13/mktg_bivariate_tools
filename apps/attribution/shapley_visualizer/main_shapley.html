@@ -58,9 +58,9 @@
         <h1>Shapley Attribution Visualizer</h1>
         <div class="hero-context">
           <span class="badge">Marketing Analytics</span>
-          <label class="toggle_switch" style="margin-left: 1rem; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+          <label class="professor-mode-toggle" style="margin-left: 1rem;">
             <input type="checkbox" id="professorMode">
-            <span style="font-size: 0.9rem; font-weight: 600; color: #4b5563;">🎓 Professor Mode</span>
+            <span>🎓 Professor Mode</span>
           </label>
         </div>
       </div>
@@ -440,12 +440,6 @@
   <script src="shapley_math.js"></script>
   <script src="main_shapley.js"></script>
   <script src="shapley_tutorial.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        if (typeof ShapleyTutorial !== 'undefined') {
-            ShapleyTutorial.init();
-        }
-    });
-  </script>
+  <!-- Tutorial auto-initializes from shapley_tutorial.js -->
 </body>
 </html>
