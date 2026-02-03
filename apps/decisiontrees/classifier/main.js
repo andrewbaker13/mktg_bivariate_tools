@@ -99,13 +99,9 @@ function init() {
  * Initialize the random seed
  */
 function initializeSeed() {
+    // Don't auto-generate - let it stay blank until build time
     const seedInput = document.getElementById('random-seed');
-    if (!seedInput.value) {
-        // Generate a random seed on first load
-        const randomSeed = Math.floor(Math.random() * 100000);
-        seedInput.value = randomSeed;
-    }
-    settings.randomSeed = seedInput.value;
+    settings.randomSeed = seedInput.value || null;
 }
 
 /**
@@ -180,19 +176,10 @@ function setupEventListeners() {
     
     // Random seed
     const seedInput = document.getElementById('random-seed');
-    const newSeedBtn = document.getElementById('new-seed-btn');
     
     if (seedInput) {
         seedInput.addEventListener('change', (e) => {
-            settings.randomSeed = e.target.value;
-        });
-    }
-    
-    if (newSeedBtn) {
-        newSeedBtn.addEventListener('click', () => {
-            const newSeed = Math.floor(Math.random() * 100000);
-            seedInput.value = newSeed;
-            settings.randomSeed = newSeed;
+            settings.randomSeed = e.target.value || null;
         });
     }
     
@@ -1284,6 +1271,9 @@ function displayConfusionMatrix(metrics) {
 function displayROCOrPerClass(metrics) {
     const container = document.getElementById('roc-curve');
     const titleEl = document.getElementById('roc-panel-title');
+    
+    // Clear any placeholder text
+    container.innerHTML = '';
     
     if (classes.length === 2) {
         // Binary: show ROC curve
