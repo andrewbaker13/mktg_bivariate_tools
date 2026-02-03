@@ -543,7 +543,7 @@ const MAETutorial = {
                     <li>The MAE difference should be <strong>substantial</strong></li>
                 </ul>
                 
-                <p class="task">👉 <strong>Task:</strong> Fit both models. Try to get quadratic MAE below <strong>10.0</strong>.</p>
+                <p class="task">👉 <strong>Task:</strong> Fit both models. Try to get quadratic MAE below <strong>20.0</strong>.</p>
                 
                 <p style="background: #fef3c7; padding: 10px; border-left: 3px solid #f59e0b; border-radius: 4px; margin-top: 10px;">
                     <strong>Hint:</strong> For this data, B₂ should be <strong>negative</strong> (creates a downward curve with a peak).
@@ -592,7 +592,7 @@ const MAETutorial = {
                 const maeEl = document.querySelector('#mae_quadratic .mae-value');
                 if (!maeEl) return false;
                 const mae = parseFloat(maeEl.textContent);
-                return !isNaN(mae) && mae < 10.0;
+                return !isNaN(mae) && mae < 20.0;
             },
             onEnter: () => {
                 const section = document.getElementById('tut-linear-section');
