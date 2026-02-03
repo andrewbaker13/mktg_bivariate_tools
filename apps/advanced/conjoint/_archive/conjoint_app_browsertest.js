@@ -1,9 +1,9 @@
 // Conjoint Analysis & Simulation Tool Controller
-// Uses Pyodide for client-side Python execution (no server required)
+// BROWSER TEST VERSION - Uses Pyodide for client-side Python execution
 const TOOL_SLUG = 'conjoint-analysis';
 const CREATED_DATE = '2025-12-07';
 
-// Configuration - BROWSER MODE (estimation runs locally via Pyodide)
+// Configuration - BROWSER MODE (no API calls for estimation)
 const API_BASE_URL = 'https://drbaker-backend.onrender.com/api'; // Kept for potential other endpoints
 const CONJOINT_UPLOAD_LIMIT = typeof window !== 'undefined' && typeof window.MAX_UPLOAD_ROWS === 'number'
   ? window.MAX_UPLOAD_ROWS
@@ -1192,12 +1192,6 @@ async function runEstimation() {
     document.getElementById('conjoint-simulation').style.display = 'block';
     document.getElementById('conjoint-optimization').style.display = 'block';
     
-    // Populate incremental costs UI now that we have estimation results
-    populateIncrementalCostsUI();
-    
-    // Populate optimization attribute checkboxes
-    populateOptimizationAttributes();
-    
     // Update workflow stepper to step 4 (Analyze Results)
     updateWorkflowStep(4);
     
@@ -1379,8 +1373,6 @@ function renderPriceDistributionChart(result) {
   
   if (priceCoefs.length === 0) {
     document.getElementById('chart-price-dist').innerHTML = '<p class="muted">No price coefficient available.</p>';
-    document.getElementById('price-sensitivity-interpretation').style.display = 'none';
-    document.getElementById('positive-price-warning').style.display = 'none';
     return;
   }
   
@@ -1399,74 +1391,6 @@ function renderPriceDistributionChart(result) {
   };
   
   Plotly.newPlot('chart-price-dist', data, layout, { responsive: true });
-  
-  // Generate dynamic interpretation
-  generatePriceSensitivityInterpretation(priceCoefs);
-}
-
-/**
- * Generate dynamic interpretation text for price sensitivity
- */
-function generatePriceSensitivityInterpretation(priceCoefs) {
-  const interpretationDiv = document.getElementById('price-sensitivity-interpretation');
-  const interpretationText = document.getElementById('price-sensitivity-text');
-  const positiveWarningDiv = document.getElementById('positive-price-warning');
-  const positiveWarningText = document.getElementById('positive-price-text');
-  
-  if (!interpretationDiv || !interpretationText) return;
-  
-  // Calculate statistics
-  const n = priceCoefs.length;
-  const mean = priceCoefs.reduce((a, b) => a + b, 0) / n;
-  const sorted = [...priceCoefs].sort((a, b) => a - b);
-  const median = n % 2 === 0 
-    ? (sorted[n/2 - 1] + sorted[n/2]) / 2 
-    : sorted[Math.floor(n/2)];
-  
-  // Find mode (most common value, rounded to 1 decimal)
-  const roundedCoefs = priceCoefs.map(c => Math.round(c * 10) / 10);
-  const frequency = {};
-  roundedCoefs.forEach(c => { frequency[c] = (frequency[c] || 0) + 1; });
-  const mode = parseFloat(Object.entries(frequency).sort((a, b) => b[1] - a[1])[0][0]);
-  
-  // Count positive coefficients
-  const positiveCoefs = priceCoefs.filter(c => c > 0);
-  const positiveCount = positiveCoefs.length;
-  const positivePercent = ((positiveCount / n) * 100).toFixed(1);
-  
-  // Build interpretation text
-  const modeAbs = Math.abs(mode).toFixed(1);
-  const medianRounded = median.toFixed(2);
-  
-  let interpretation = `The most common price sensitivity coefficient was approximately <strong>${mode.toFixed(1)}</strong> `;
-  interpretation += `(median: ${medianRounded}). `;
-  
-  if (mode < 0) {
-    interpretation += `This means that for the typical respondent, every <strong>$1 increase</strong> in price decreases their utility by about <strong>${modeAbs} units</strong>. `;
-    interpretation += `In practical terms: respondents with more negative coefficients (further left in the histogram) are more price-sensitive and will switch away from higher-priced options more readily.`;
-  } else if (mode === 0) {
-    interpretation += `A coefficient near zero suggests respondents were largely indifferent to price changes within the tested range.`;
-  } else {
-    interpretation += `A positive coefficient is unusual—see the note below about interpreting positive price sensitivities.`;
-  }
-  
-  interpretationText.innerHTML = interpretation;
-  interpretationDiv.style.display = 'block';
-  
-  // Show positive coefficient warning if applicable
-  if (positiveCount > 0) {
-    let positiveText = `<strong>${positiveCount} respondent${positiveCount > 1 ? 's' : ''} (${positivePercent}%)</strong> showed positive price coefficients, `;
-    positiveText += `meaning they appeared to <em>prefer</em> higher-priced options. `;
-    positiveText += `This can reflect several phenomena:<br><br>`;
-    positiveText += `<strong>Potentially valid:</strong> Price-quality inference ("you get what you pay for"), prestige effects for luxury goods, or brand-price confounding in the study design.<br><br>`;
-    positiveText += `<strong>Potentially artifactual:</strong> Random/inattentive responding, estimation noise with limited choice tasks, or model misspecification.<br><br>`;
-    positiveText += `These respondents are included in simulations but should be interpreted carefully. For Willingness-to-Pay calculations, positive price coefficients produce mathematically invalid results and are typically excluded or flagged.`;
-    
-    positiveWarningText.innerHTML = positiveText;
-    positiveWarningDiv.style.display = 'block';
-  } else {
-    positiveWarningDiv.style.display = 'none';
-  }
 }
 
 /**
@@ -1712,19 +1636,6 @@ function setupIndividualViewer(respondents) {
 function setupSegmentationControls() {
   const runBtn = document.getElementById('conjoint-run-segmentation');
   runBtn?.addEventListener('click', runSegmentation);
-  
-  // Auto-k checkbox toggle
-  const autoKCheckbox = document.getElementById('conjoint-auto-k');
-  const manualKControls = document.getElementById('manual-k-controls');
-  
-  autoKCheckbox?.addEventListener('change', () => {
-    if (autoKCheckbox.checked) {
-      manualKControls.style.display = 'none';
-    } else {
-      manualKControls.style.display = 'block';
-      document.getElementById('conjoint-elbow-results').style.display = 'none';
-    }
-  });
 }
 
 /**
@@ -1738,9 +1649,10 @@ function runSegmentation() {
     return;
   }
   
-  const autoK = document.getElementById('conjoint-auto-k')?.checked || false;
-  
   try {
+    const k = parseInt(document.getElementById('conjoint-n-clusters')?.value || 3);
+    statusEl.textContent = `Running k-means with ${k} clusters...`;
+    
     // Extract utility vectors (exclude ASCs for clustering)
     const utilityVectors = estimationResult.respondents.map(r => {
       const vec = [];
@@ -1755,28 +1667,7 @@ function runSegmentation() {
     // Normalize
     const normalized = normalizeVectors(utilityVectors);
     
-    let k;
-    
-    if (autoK) {
-      // Run elbow method to find optimal k
-      statusEl.textContent = 'Finding optimal number of segments (Elbow Method)...';
-      const maxK = Math.min(8, Math.floor(normalized.length / 5)); // At least 5 respondents per cluster
-      const elbowResult = findOptimalK(normalized, maxK);
-      k = elbowResult.optimalK;
-      
-      // Display elbow chart
-      displayElbowChart(elbowResult);
-      document.getElementById('conjoint-elbow-results').style.display = 'block';
-      
-      statusEl.textContent = `Optimal k=${k} found. Running final segmentation...`;
-    } else {
-      k = parseInt(document.getElementById('conjoint-n-clusters')?.value || 3);
-      document.getElementById('conjoint-elbow-results').style.display = 'none';
-    }
-    
-    statusEl.textContent = `Running k-means with ${k} clusters...`;
-    
-    // Run k-means with the chosen k
+    // Run k-means
     const clusters = kMeans(normalized, k);
     
     // Assign to respondents
@@ -1797,193 +1688,6 @@ function runSegmentation() {
     console.error('Segmentation error:', error);
     statusEl.textContent = `Error: ${error.message}`;
   }
-}
-
-/**
- * Find optimal K using Elbow Method (WCSS)
- */
-function findOptimalK(data, maxK) {
-  const wcssValues = [];
-  const kValues = [];
-  
-  for (let k = 2; k <= maxK; k++) {
-    const { assignments, centroids } = kMeansWithCentroids(data, k);
-    const wcss = calculateWCSS(data, assignments, centroids);
-    kValues.push(k);
-    wcssValues.push(wcss);
-  }
-  
-  // Find elbow point using the "knee" detection method
-  // Calculate the angle at each point and find where it's sharpest
-  const optimalK = detectElbow(kValues, wcssValues);
-  
-  return {
-    kValues,
-    wcssValues,
-    optimalK
-  };
-}
-
-/**
- * Calculate Within-Cluster Sum of Squares
- */
-function calculateWCSS(data, assignments, centroids) {
-  let wcss = 0;
-  for (let i = 0; i < data.length; i++) {
-    const cluster = assignments[i];
-    const dist = euclideanDist(data[i], centroids[cluster]);
-    wcss += dist * dist; // Sum of squared distances
-  }
-  return wcss;
-}
-
-/**
- * Detect elbow point in WCSS curve
- * Uses the "kneedle" algorithm concept - finds point of maximum curvature
- */
-function detectElbow(kValues, wcssValues) {
-  if (kValues.length < 3) return kValues[0];
-  
-  // Normalize both axes to [0, 1] for fair comparison
-  const kMin = Math.min(...kValues);
-  const kMax = Math.max(...kValues);
-  const wcssMin = Math.min(...wcssValues);
-  const wcssMax = Math.max(...wcssValues);
-  
-  const kNorm = kValues.map(k => (k - kMin) / (kMax - kMin));
-  const wcssNorm = wcssValues.map(w => (w - wcssMin) / (wcssMax - wcssMin || 1));
-  
-  // Calculate distance from each point to the line connecting first and last points
-  const x1 = kNorm[0], y1 = wcssNorm[0];
-  const x2 = kNorm[kNorm.length - 1], y2 = wcssNorm[wcssNorm.length - 1];
-  
-  let maxDist = 0;
-  let elbowIdx = 0;
-  
-  for (let i = 1; i < kNorm.length - 1; i++) {
-    // Distance from point (kNorm[i], wcssNorm[i]) to line
-    const dist = Math.abs((y2 - y1) * kNorm[i] - (x2 - x1) * wcssNorm[i] + x2 * y1 - y2 * x1) /
-                 Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
-    
-    if (dist > maxDist) {
-      maxDist = dist;
-      elbowIdx = i;
-    }
-  }
-  
-  return kValues[elbowIdx];
-}
-
-/**
- * Display elbow chart
- */
-function displayElbowChart(elbowResult) {
-  const { kValues, wcssValues, optimalK } = elbowResult;
-  
-  // Main WCSS line
-  const trace1 = {
-    x: kValues,
-    y: wcssValues,
-    type: 'scatter',
-    mode: 'lines+markers',
-    name: 'WCSS',
-    line: { color: '#4A90E2', width: 2 },
-    marker: { size: 8 }
-  };
-  
-  // Highlight optimal k
-  const optimalIdx = kValues.indexOf(optimalK);
-  const trace2 = {
-    x: [optimalK],
-    y: [wcssValues[optimalIdx]],
-    type: 'scatter',
-    mode: 'markers',
-    name: `Optimal (k=${optimalK})`,
-    marker: { 
-      size: 16, 
-      color: '#E94B3C',
-      symbol: 'star'
-    }
-  };
-  
-  const layout = {
-    title: '',
-    xaxis: { 
-      title: 'Number of Clusters (k)',
-      tickmode: 'linear',
-      tick0: 2,
-      dtick: 1
-    },
-    yaxis: { title: 'Within-Cluster Sum of Squares (WCSS)' },
-    margin: { l: 80, r: 40, t: 20, b: 50 },
-    showlegend: true,
-    legend: { x: 0.7, y: 0.95 }
-  };
-  
-  Plotly.newPlot('chart-elbow', [trace1, trace2], layout, { responsive: true });
-  
-  // Update recommendation text
-  const recText = document.getElementById('elbow-recommendation-text');
-  if (recText) {
-    recText.innerHTML = `Based on the elbow analysis, <strong>k = ${optimalK}</strong> segments provides the best balance between model complexity and explanatory power. ` +
-      `Adding more segments beyond this point yields diminishing returns in cluster cohesion.`;
-  }
-}
-
-/**
- * K-means with centroid tracking (for WCSS calculation)
- */
-function kMeansWithCentroids(data, k, maxIter = 100) {
-  const n = data.length;
-  const dim = data[0].length;
-  
-  // Initialize centroids randomly
-  let centroids = [];
-  const indices = new Set();
-  while (centroids.length < k) {
-    const idx = Math.floor(Math.random() * n);
-    if (!indices.has(idx)) {
-      centroids.push([...data[idx]]);
-      indices.add(idx);
-    }
-  }
-  
-  let assignments = new Array(n).fill(0);
-  
-  for (let iter = 0; iter < maxIter; iter++) {
-    let changed = false;
-    
-    // Assign each point to nearest centroid
-    for (let i = 0; i < n; i++) {
-      let minDist = Infinity;
-      let bestCluster = 0;
-      for (let c = 0; c < k; c++) {
-        const dist = euclideanDist(data[i], centroids[c]);
-        if (dist < minDist) {
-          minDist = dist;
-          bestCluster = c;
-        }
-      }
-      if (assignments[i] !== bestCluster) {
-        assignments[i] = bestCluster;
-        changed = true;
-      }
-    }
-    
-    if (!changed) break;
-    
-    // Update centroids
-    for (let c = 0; c < k; c++) {
-      const clusterPoints = data.filter((_, i) => assignments[i] === c);
-      if (clusterPoints.length > 0) {
-        for (let d = 0; d < dim; d++) {
-          centroids[c][d] = clusterPoints.reduce((sum, p) => sum + p[d], 0) / clusterPoints.length;
-        }
-      }
-    }
-  }
-  
-  return { assignments, centroids };
 }
 
 /**
@@ -2904,347 +2608,10 @@ function displaySimulationResults(results, wtpData = null) {
  * Setup optimization controls
  */
 function setupOptimizationControls() {
+  // Placeholder - to be implemented
   const runBtn = document.getElementById('conjoint-run-optimization');
-  runBtn?.addEventListener('click', runBruteForceOptimization);
-  
-  // Metric selection - show price range if profit selected
-  const metricSelect = document.getElementById('conjoint-optimize-metric');
-  metricSelect?.addEventListener('change', () => {
-    const priceRangeDiv = document.getElementById('conjoint-optimize-price-range');
-    if (metricSelect.value === 'profit') {
-      priceRangeDiv.style.display = 'block';
-    } else {
-      priceRangeDiv.style.display = 'none';
-    }
-  });
-}
-
-/**
- * Populate optimization attribute checkboxes
- */
-function populateOptimizationAttributes() {
-  const container = document.getElementById('conjoint-optimize-attributes');
-  if (!container || attributeColumns.length === 0) return;
-  
-  let html = '<p class="hint">Select which attributes to vary in the optimization search. Unchecked attributes will use their most common value as fixed.</p>';
-  
-  attributeColumns.forEach(attr => {
-    const config = attributeConfig[attr];
-    const attrType = config?.type || 'categorical';
-    
-    // Get unique levels for this attribute
-    let levelCount = 0;
-    if (attrType === 'categorical') {
-      const levels = [...new Set(getColumnValues(attr))].filter(v => v);
-      levelCount = levels.length;
-    } else {
-      levelCount = '∞';
-    }
-    
-    html += `
-      <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-        <input type="checkbox" class="optimize-attr-checkbox" data-attr="${escapeHtml(attr)}" checked>
-        <span><strong>${escapeHtml(attr)}</strong> (${levelCount} levels, ${attrType})</span>
-      </label>
-    `;
-  });
-  
-  container.innerHTML = html;
-  
-  // Also set up price range defaults based on data
-  const priceAttr = attributeColumns.find(a => a.toLowerCase() === 'price');
-  if (priceAttr) {
-    const priceValues = getColumnValues(priceAttr).map(v => parseFloat(v)).filter(v => !isNaN(v));
-    if (priceValues.length > 0) {
-      const minPrice = Math.min(...priceValues);
-      const maxPrice = Math.max(...priceValues);
-      document.getElementById('conjoint-price-min').value = minPrice;
-      document.getElementById('conjoint-price-max').value = maxPrice;
-      document.getElementById('conjoint-price-step').value = Math.round((maxPrice - minPrice) / 5);
-    }
-  }
-}
-
-/**
- * Run brute-force optimization
- */
-function runBruteForceOptimization() {
-  const statusEl = document.getElementById('conjoint-optimization-status');
-  
-  if (!estimationResult) {
-    statusEl.textContent = 'Please estimate utilities first.';
-    return;
-  }
-  
-  try {
-    // Get selected attributes to vary
-    const checkboxes = document.querySelectorAll('.optimize-attr-checkbox:checked');
-    const selectedAttrs = Array.from(checkboxes).map(cb => cb.dataset.attr);
-    
-    if (selectedAttrs.length === 0) {
-      statusEl.textContent = 'Please select at least one attribute to vary.';
-      return;
-    }
-    
-    const metric = document.getElementById('conjoint-optimize-metric')?.value || 'share';
-    
-    // Build attribute levels map
-    const attrLevels = {};
-    selectedAttrs.forEach(attr => {
-      const config = attributeConfig[attr];
-      if (config?.type === 'categorical') {
-        attrLevels[attr] = [...new Set(getColumnValues(attr))].filter(v => v).sort();
-      } else if (attr.toLowerCase() === 'price' && metric === 'profit') {
-        // For price in profit optimization, use user-specified range
-        const minPrice = parseFloat(document.getElementById('conjoint-price-min')?.value) || 0;
-        const maxPrice = parseFloat(document.getElementById('conjoint-price-max')?.value) || 100;
-        const step = parseFloat(document.getElementById('conjoint-price-step')?.value) || 10;
-        
-        const priceLevels = [];
-        for (let p = minPrice; p <= maxPrice; p += step) {
-          priceLevels.push(p);
-        }
-        attrLevels[attr] = priceLevels;
-      } else {
-        // For other numeric attributes, use observed values
-        const values = [...new Set(getColumnValues(attr))].map(v => parseFloat(v)).filter(v => !isNaN(v)).sort((a, b) => a - b);
-        attrLevels[attr] = values;
-      }
-    });
-    
-    // For unselected attributes, use most common value
-    const fixedAttrs = {};
-    attributeColumns.forEach(attr => {
-      if (!selectedAttrs.includes(attr)) {
-        const values = getColumnValues(attr);
-        const freq = {};
-        values.forEach(v => { freq[v] = (freq[v] || 0) + 1; });
-        const mostCommon = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0];
-        fixedAttrs[attr] = mostCommon;
-      }
-    });
-    
-    // Generate all combinations
-    const combinations = generateCombinations(attrLevels);
-    
-    // Check feasibility
-    if (combinations.length > 50000) {
-      statusEl.textContent = `Too many combinations (${combinations.length.toLocaleString()}). Please deselect some attributes or reduce levels.`;
-      return;
-    }
-    
-    statusEl.textContent = `Evaluating ${combinations.length.toLocaleString()} configurations...`;
-    
-    // Get unit cost for profit calculation
-    const unitCost = parseFloat(document.getElementById('conjoint-optimize-cost')?.value) || 0;
-    
-    // Evaluate each configuration
-    const results = [];
-    
-    // Create "competitor" context (use None and actual competitors if they exist)
-    const competitorProducts = [];
-    if (noneAlternative) {
-      competitorProducts.push({
-        id: 'none',
-        name: 'None',
-        isNone: true,
-        attributes: {}
-      });
-    }
-    competitorAlternatives.forEach(compId => {
-      const compAttrs = getCompetitorAttributesFromData(compId);
-      if (compAttrs) {
-        competitorProducts.push({
-          id: compId,
-          name: compId,
-          isCompetitor: true,
-          attributes: compAttrs.attributes,
-          price: compAttrs.price
-        });
-      }
-    });
-    
-    combinations.forEach((combo, idx) => {
-      // Build full product configuration
-      const product = { ...fixedAttrs, ...combo };
-      
-      // Get price
-      const priceAttr = attributeColumns.find(a => a.toLowerCase() === 'price');
-      const price = priceAttr ? (parseFloat(product[priceAttr]) || 0) : 0;
-      
-      // Calculate market share
-      const share = calculateConfigurationShare(product, competitorProducts);
-      
-      // Calculate profit
-      const profit = metric === 'profit' ? share * (price - unitCost) : 0;
-      
-      results.push({
-        config: product,
-        share: share,
-        profit: profit,
-        price: price
-      });
-      
-      // Progress update every 1000
-      if (idx % 1000 === 0 && idx > 0) {
-        statusEl.textContent = `Evaluated ${idx.toLocaleString()} of ${combinations.length.toLocaleString()}...`;
-      }
-    });
-    
-    // Sort by optimization metric
-    if (metric === 'profit') {
-      results.sort((a, b) => b.profit - a.profit);
-    } else {
-      results.sort((a, b) => b.share - a.share);
-    }
-    
-    // Display top 10
-    displayOptimizationResults(results.slice(0, 10), metric);
-    
-    statusEl.textContent = `✓ Evaluated ${combinations.length.toLocaleString()} configurations. Top 10 shown below.`;
-    document.getElementById('conjoint-optimization-results').style.display = 'block';
-    
-  } catch (error) {
-    console.error('Optimization error:', error);
-    statusEl.textContent = `Error: ${error.message}`;
-  }
-}
-
-/**
- * Generate all combinations of attribute levels
- */
-function generateCombinations(attrLevels) {
-  const attrs = Object.keys(attrLevels);
-  if (attrs.length === 0) return [{}];
-  
-  const results = [];
-  
-  function recurse(idx, current) {
-    if (idx === attrs.length) {
-      results.push({ ...current });
-      return;
-    }
-    
-    const attr = attrs[idx];
-    const levels = attrLevels[attr];
-    
-    for (const level of levels) {
-      current[attr] = level;
-      recurse(idx + 1, current);
-    }
-  }
-  
-  recurse(0, {});
-  return results;
-}
-
-/**
- * Calculate market share for a configuration against competitors
- */
-function calculateConfigurationShare(config, competitors) {
-  if (!estimationResult || !estimationResult.respondents) return 0;
-  
-  let totalShare = 0;
-  let validRespondents = 0;
-  
-  estimationResult.respondents.forEach(resp => {
-    // Calculate utility for our product
-    const ourUtility = calculateUtilityForConfig(config, resp.coefficients);
-    
-    // Calculate utilities for competitors
-    const allUtilities = [{ id: 'our_product', utility: ourUtility }];
-    
-    competitors.forEach(comp => {
-      let compUtility = 0;
-      
-      if (comp.isNone) {
-        compUtility = resp.coefficients['ASC_None'] || 0;
-      } else if (comp.isCompetitor) {
-        compUtility = resp.coefficients[`ASC_Competitor_${comp.id}`] || 0;
-        // Add attribute utilities for competitor
-        compUtility += calculateUtilityForConfig(comp.attributes, resp.coefficients);
-      }
-      
-      allUtilities.push({ id: comp.id, utility: compUtility });
-    });
-    
-    // Logit share calculation
-    const expUtilities = allUtilities.map(u => ({ ...u, exp: Math.exp(u.utility) }));
-    const sumExp = expUtilities.reduce((sum, u) => sum + u.exp, 0);
-    
-    const ourShare = expUtilities.find(u => u.id === 'our_product').exp / sumExp;
-    
-    if (isFinite(ourShare)) {
-      totalShare += ourShare;
-      validRespondents++;
-    }
-  });
-  
-  return validRespondents > 0 ? (totalShare / validRespondents) * 100 : 0;
-}
-
-/**
- * Calculate utility for a product configuration
- */
-function calculateUtilityForConfig(config, coefficients) {
-  let utility = 0;
-  
-  Object.entries(config).forEach(([attr, value]) => {
-    const attrConfig = attributeConfig[attr];
-    if (!attrConfig) return;
-    
-    if (attrConfig.type === 'categorical') {
-      // Look up the coefficient for this level
-      const coefKey = `${attr}_${value}`;
-      utility += coefficients[coefKey] || 0;
-    } else {
-      // Numeric attribute
-      const numValue = parseFloat(value) || 0;
-      utility += (coefficients[attr] || 0) * numValue;
-      
-      // Quadratic term if present
-      if (attrConfig.type === 'numeric_quadratic') {
-        utility += (coefficients[`${attr}_sq`] || 0) * numValue * numValue;
-      }
-    }
-  });
-  
-  return utility;
-}
-
-/**
- * Display optimization results
- */
-function displayOptimizationResults(results, metric) {
-  const tbody = document.getElementById('conjoint-optimization-table-body');
-  if (!tbody) return;
-  
-  tbody.innerHTML = '';
-  
-  results.forEach((result, idx) => {
-    const row = tbody.insertRow();
-    
-    // Format configuration as readable string
-    const configStr = Object.entries(result.config)
-      .map(([attr, val]) => {
-        const displayVal = typeof val === 'number' ? 
-          (attr.toLowerCase() === 'price' ? `$${val.toFixed(0)}` : val.toFixed(1)) : 
-          val;
-        return `${attr}: ${displayVal}`;
-      })
-      .join(', ');
-    
-    row.innerHTML = `
-      <td><strong>${idx + 1}</strong></td>
-      <td style="font-size: 0.9em;">${escapeHtml(configStr)}</td>
-      <td>${result.share.toFixed(1)}%</td>
-      <td>${metric === 'profit' ? '$' + result.profit.toFixed(2) : '—'}</td>
-    `;
-    
-    // Highlight top result
-    if (idx === 0) {
-      row.style.backgroundColor = '#dcfce7';
-    }
+  runBtn?.addEventListener('click', () => {
+    alert('Optimization feature coming soon!');
   });
 }
 

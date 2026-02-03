@@ -733,6 +733,9 @@ const MarkovTutorial = {
     },
 
     renderSidebar() {
+        // Prevent duplicate sidebars
+        if (document.getElementById('tutorial-sidebar')) return;
+        
         const div = document.createElement('div');
         div.id = 'tutorial-sidebar';
         div.innerHTML = `
@@ -751,7 +754,9 @@ const MarkovTutorial = {
     }
 };
 
-// Auto-init when DOM is ready
+// Auto-init when DOM is ready (with slight delay to ensure CSS is applied)
 document.addEventListener('DOMContentLoaded', () => {
-    MarkovTutorial.init();
+    setTimeout(() => {
+        MarkovTutorial.init();
+    }, 300);
 });

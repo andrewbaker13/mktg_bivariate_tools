@@ -100,7 +100,7 @@ const DTTutorial = {
                     <li><strong>Email Response:</strong> Predict who will engage with campaigns</li>
                 </ul>
                 
-                <p class="task">Select <strong>"Customer Churn Prediction"</strong> from the scenario dropdown.</p>
+                <p class="task">Select <strong>"🔄 Customer Churn Prediction"</strong> from the scenario dropdown.</p>
                 
                 <p style="background: #dbeafe; padding: 10px; border-left: 3px solid #3b82f6; border-radius: 4px; margin-top: 10px;">
                     Notice how the tool automatically identifies the target variable and features.
@@ -482,7 +482,7 @@ const DTTutorial = {
         {
             id: 'overfitting_observe',
             title: "Observe the Results",
-            targetId: 'tut-metrics-section',
+            targetId: 'tut-step3-section',  // Start by highlighting Build Tree area
             getDynamicQuizzes: () => {
                 const state = window.lastTreeState;
                 if (!state) return null;
@@ -523,7 +523,8 @@ const DTTutorial = {
                 
                 <div class="task" style="background: #fef3c7; padding: 12px; border-radius: 6px; border-left: 4px solid #f59e0b; margin-top: 15px;">
                     <p style="margin: 0 0 8px 0; font-weight: 600;">👉 Your Task:</p>
-                    <p style="margin: 0;">Click <strong>"Build Tree"</strong> to rebuild with depth 5, then look at the new metrics.</p>
+                    <p style="margin: 0;">Click the highlighted <strong>"Build Tree"</strong> button to rebuild with depth 5.</p>
+                    <p style="margin: 8px 0 0 0; font-size: 0.9em; color: #92400e;">After the tree rebuilds, scroll down to the Metrics panel to compare results.</p>
                 </div>
                 
                 <h4>What to Observe</h4>
@@ -551,12 +552,22 @@ const DTTutorial = {
                 }
             ],
             check: () => {
-                // Check if tree was rebuilt (they should have clicked Build Tree)
+                // Check if tree was rebuilt with depth 5
                 const state = window.lastTreeState;
-                return state && state.maxDepth === 5;
+                const rebuilt = state && state.maxDepth === 5;
+                
+                // Once rebuilt, scroll to metrics so they can see results
+                if (rebuilt) {
+                    const metricsSection = document.getElementById('tut-metrics-section');
+                    if (metricsSection) {
+                        metricsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+                return rebuilt;
             },
             onEnter: () => {
-                const section = document.getElementById('tut-metrics-section');
+                // Scroll to the Build Tree button area
+                const section = document.getElementById('tut-step3-section');
                 if (section) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         },
@@ -642,14 +653,18 @@ const DTTutorial = {
             targetId: 'tut-confusion-section',
             getDynamicQuizzes: () => {
                 const state = window.lastTreeState;
-                if (!state || !state.confusionMatrix) return null;
+                if (!state || !state.confusionMatrix || !state.classes || state.classes.length < 2) return null;
                 
                 const cm = state.confusionMatrix;
-                // Assuming binary: [[TN, FP], [FN, TP]]
-                const tn = cm[0]?.[0] || 0;
-                const fp = cm[0]?.[1] || 0;
-                const fn = cm[1]?.[0] || 0;
-                const tp = cm[1]?.[1] || 0;
+                const classes = state.classes;
+                const targetClass = state.targetClass || classes[1]; // Positive class (e.g., 'Churned')
+                const negativeClass = classes.find(c => c !== targetClass) || classes[0];
+                
+                // Confusion matrix is an object: cm[actual][predicted]
+                const tp = cm[targetClass]?.[targetClass] || 0;
+                const fn = cm[targetClass]?.[negativeClass] || 0;
+                const fp = cm[negativeClass]?.[targetClass] || 0;
+                const tn = cm[negativeClass]?.[negativeClass] || 0;
                 
                 return [
                     {
@@ -843,28 +858,23 @@ const DTTutorial = {
     ],
 
     init() {
-        this.renderToggle();
         this.attachListeners();
     },
 
-    renderToggle() {
-        // Check if toggle already exists
-        if (document.getElementById('professor-toggle-container')) return;
-        
-        const banner = document.getElementById('professor-mode-banner');
-        if (banner) {
-            // Just make sure the toggle in the banner works
-            const toggle = banner.querySelector('#professorMode');
-            if (toggle) {
-                toggle.addEventListener('change', (e) => {
-                    if (e.target.checked) {
-                        this.start();
-                    } else {
-                        this.stop();
-                    }
-                });
-            }
+    attachListeners() {
+        const toggle = document.getElementById('professorMode');
+        if (toggle) {
+            toggle.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    this.start();
+                } else {
+                    this.stop();
+                }
+            });
         }
+        
+        // Poll for progress checks
+        setInterval(() => this.checkProgress(), 500);
     },
 
     start() {

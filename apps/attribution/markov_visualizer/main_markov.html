@@ -71,7 +71,7 @@
         <h1>Markov Chain Attribution Lab</h1>
         <div class="hero-context">
           <span class="badge" style="background:#8b5cf6;">Advanced Analytics</span>
-          <label class="toggle_switch" style="margin-left: 1rem; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+          <label class="professor-mode-toggle" style="margin-left: 1rem; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
             <input type="checkbox" id="professorMode">
             <span style="font-size: 0.9rem; font-weight: 600; color: #4b5563;">🎓 Professor Mode</span>
           </label>
@@ -377,13 +377,12 @@
                             </div>
                         </div>
 
-                        <!-- Removed Traffic Redistribution Explainer -->
-                        
-                        <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #cbd5e1;">
-                            <strong style="font-size:0.85rem; color:#64748b;">Transitions Intercepted:</strong>
-                            <div id="broken-links-list" style="max-height: 150px; overflow-y: auto; font-size: 0.9rem; margin-top:0.5rem;">
-                                <!-- JS injected list of impacts -->
-                            </div>
+                        <div style="margin-top:1rem; padding:1rem; background:#fffbeb; border-radius:4px; border-left:4px solid #f59e0b;">
+                            <strong style="color:#92400e;">⚠️ Key Limitation:</strong>
+                            <p style="margin:0.5rem 0 0 0; font-size:0.9rem; color:#78350f; line-height:1.5;">
+                                This "blocked node" approach is conservative. In reality, some users might find alternative paths. 
+                                The Removal Effect represents the <em>maximum possible impact</em> if the channel were completely unavailable.
+                            </p>
                         </div>
                     </div>
                  </details>

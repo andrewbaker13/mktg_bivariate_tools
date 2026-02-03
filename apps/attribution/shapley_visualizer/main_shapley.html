@@ -58,9 +58,9 @@
         <h1>Shapley Attribution Visualizer</h1>
         <div class="hero-context">
           <span class="badge">Marketing Analytics</span>
-          <label class="toggle_switch" style="margin-left: 1rem; display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+          <label class="professor-mode-toggle" style="margin-left: 1rem;">
             <input type="checkbox" id="professorMode">
-            <span style="font-size: 0.9rem; font-weight: 600; color: #4b5563;">🎓 Professor Mode</span>
+            <span>🎓 Professor Mode</span>
           </label>
         </div>
       </div>
@@ -84,24 +84,25 @@
           isolate the value of adding Email to that mix.
         </p>
         
-        <div style="background: #dcfce7; border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; border-radius: 4px;">
-            <strong style="color: #166534;">💡 Why This Matters: Real-World Impact</strong>
-            <p style="margin: 0.5rem 0 0; font-size: 0.95rem; color: #14532d; line-height:1.6;">
-                <strong>Case Study:</strong> A Fortune 500 retailer switched from Last-Click to Shapley attribution and discovered their Display campaigns were being undervalued by 400%. By reallocating budget based on marginal contributions, they increased ROAS by 35% while spending the same total budget.
-                <br><br>
-                <strong>The Key Insight:</strong> Channels that <em>assist</em> high-performing mixes deserve credit, even if they rarely get the "last touch."
-            </p>
-        </div>
+        <details class="additional-notes">
+          <summary>💡 Why This Matters: Real-World Impact</summary>
+          <p>
+            <strong>Case Study:</strong> A Fortune 500 retailer switched from Last-Click to Shapley attribution and discovered their Display campaigns were being undervalued by 400%. By reallocating budget based on marginal contributions, they increased ROAS by 35% while spending the same total budget.
+          </p>
+          <p>
+            <strong>The Key Insight:</strong> Channels that assist high-performing mixes deserve credit, even if they rarely get the "last touch."
+          </p>
+        </details>
         
-        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 1rem; margin: 1rem 0; border-radius: 4px;">
-            <strong style="color: #b45309;">🎓 Analyst Note: Sets vs. Sequences</strong>
-            <p style="margin: 0.5rem 0 0; font-size: 0.95rem; color: #78350f;">
-                This tool focuses on <strong>Cooperative Game Theory (Shapley)</strong>, which treats marketing as a "Team Sport" (Who was on the field?). 
-                <br><br>
-                <strong>Real World Nuance:</strong> Advanced engines (like GA4 Data-Driven Attribution) often combine this with <strong>Markov Chains</strong> to account for <em>order</em> (e.g., "Search <em>then</em> Email" might be worth more than "Email <em>then</em> Search"). 
-                While Shapley isolates the value of <em>presence</em>, Sequence models isolate the value of <em>timing</em>.
-            </p>
-        </div>
+        <details class="additional-notes">
+          <summary>🎓 Analyst Note: Sets vs. Sequences</summary>
+          <p>
+            This tool focuses on <strong>Cooperative Game Theory (Shapley)</strong>, which treats marketing as a "Team Sport" (Who was on the field?).
+          </p>
+          <p>
+            <strong>Real World Nuance:</strong> Advanced engines (like GA4 Data-Driven Attribution) often combine this with <strong>Markov Chains</strong> to account for order (e.g., "Search then Email" might be worth more than "Email then Search"). While Shapley isolates the value of presence, Sequence models isolate the value of timing.
+          </p>
+        </details>
 
         <details class="intro-notes">
           <summary>Key Terms</summary>
@@ -165,7 +166,7 @@
                  </details>
             </div>
         </div>
-        <div id="scenario-description" style="font-style: italic; color: #1e3a8a; font-size: 0.95rem; border-top: 1px dashed #bfdbfe; padding-top: 0.5rem; margin-top: 0.5rem;">
+        <div id="scenario-description" style="color: #1e3a8a; font-size: 0.95rem; border-top: 1px dashed #bfdbfe; padding-top: 0.5rem; margin-top: 0.5rem;">
             <!-- Injected by JS -->
             Loading scenario details...
         </div>
@@ -215,7 +216,7 @@
 
     <!-- Section 2: Coalition Lab (Full Width) -->
     <section id="tut-coalition-lab" class="card" style="margin-bottom: 1.5rem;">
-      <h2>2. MEDIA MIX LAB (COALITION ANALYSIS) <span title="Shapley treats a mix as a 'Set' (e.g. {Search, Social}). The math ignores who clicked first, focusing instead on who was present in the converting mix." style="cursor:help; font-size:1rem;">ℹ️</span></h2>
+      <h2>2. MEDIA MIX LAB (COALITION ANALYSIS)</h2>
       <p class="text-sm muted">Explore the Conversion Rate for specific definitions of "Channel Mix".</p>
       
       <!-- Scenario Selector moved to top -->
@@ -255,6 +256,11 @@
             <input type="range" id="team-value-slider" min="0" max="25" step="0.5" value="0">
             <p class="hint">Adjust to simulate data for this specific combo</p>
           </div>
+        </div>
+        
+        <!-- Marginal Impact Feedback (shows when toggling channels) -->
+        <div id="marginal-value-display" class="marginal-stat-box hidden" style="margin-top: 1rem;">
+          <!-- Dynamic content injected by JS -->
         </div>
       </div>
     </section>
@@ -307,15 +313,15 @@
                   </th>
                   <th>
                       Base Conv. Rate
-                      <div style="font-weight:normal; font-size:0.8em; color:#64748b;">(Rate WITHOUT this channel)</div>
+                      <div id="th-without-channel" style="font-weight:normal; font-size:0.8em; color:#64748b;">(Rate WITHOUT Paid Search)</div>
                   </th>
                   <th style="background:#f0fdfa;">
                       New Conv. Rate
-                      <div style="font-weight:normal; font-size:0.8em; color:#065f46;">(Rate WITH this channel)</div>
+                      <div id="th-with-channel" style="font-weight:normal; font-size:0.8em; color:#065f46;">(Rate WITH Paid Search)</div>
                   </th>
                   <th>
                       Marginal Impact
-                      <div style="font-weight:normal; font-size:0.8em; color:#64748b;">(The 'Lift' provided)</div>
+                      <div id="th-lift-channel" style="font-weight:normal; font-size:0.8em; color:#64748b;">(Lift from Paid Search)</div>
                   </th>
                 </tr>
               </thead>
@@ -339,43 +345,54 @@
                 <span style="margin-left:auto; color:#94a3b8; font-size:0.8rem;">(Click to Expand)</span>
             </summary>
             <div style="padding: 0 1rem 1rem 1rem; border-top: 1px solid #e2e8f0; font-size: 0.95rem; color: #334155;">
-                <p style="margin-top:1rem;">The Shapley Value comes from <strong>Cooperative Game Theory</strong>. It assigns credit based on a player's average marginal contribution across all possible "permutations" (orders of arrival).</p>
+                <p style="margin-top:1rem;">The Shapley Value comes from <strong>Cooperative Game Theory</strong>. It assigns credit based on a player's average marginal contribution across all possible <strong>coalitions</strong> (team combinations).</p>
+                
+                <div style="background:#fef3c7; padding:0.75rem 1rem; border-radius:4px; margin:1rem 0; border-left:4px solid #f59e0b;">
+                    <strong>⚠️ Common Confusion: "Permutations" vs. "Coalitions"</strong>
+                    <p style="margin:0.5rem 0 0 0; font-size:0.9rem;">
+                        The original Shapley formula sums over all \(n!\) permutations (orderings), but this is just a <em>mathematical trick</em> to derive fair weights—it does NOT mean actual customer journey order matters. The final Shapley value depends only on <strong>which channels were present</strong> (the coalition), not the sequence they appeared in. That's why we group by coalition size below, not by arrival order.
+                    </p>
+                </div>
                 
                 <div style="display:grid; grid-template-columns: 1fr; gap: 1rem; margin: 1.5rem 0;">
                     
-                    <div style="background:#fff; padding:1.5rem; border-radius:4px; border:1px solid #cbd5e1; text-align:center;">
-                        <div style="font-family: 'Times New Roman', serif; font-size: 1.3rem; margin-bottom: 1rem;">
-                            \[ \phi_i(v) = \frac{1}{n!} \sum_{R} [v(P_i^R \cup \{i\}) - v(P_i^R)] \]
+                    <div style="background:#fff; padding:1.5rem; border-radius:4px; border:1px solid #cbd5e1;">
+                        <div style="font-family: 'Times New Roman', serif; font-size: 1.3rem; margin-bottom: 1rem; text-align:center;">
+                            \[ \phi_i = \sum_{S \subseteq N \setminus \{i\}} \frac{|S|!(n-|S|-1)!}{n!} \cdot \underbrace{[v(S \cup \{i\}) - v(S)]}_{\text{Marginal Contribution}} \]
                         </div>
-                        <p style="font-size:0.9rem; color:#64748b; margin:0; line-height:1.6; text-align:left;">
-                            This scary formula just says: 
-                            <br>1. Imagine every possible order the channels could arrive in. ("Search then Social", "Social then Search", etc.)
-                            <br>2. In each order, see how much value Channel \(i\) adds when it joins the team.
-                            <br>3. Average those contributions.
+                        
+                        <div style="background:#f8fafc; padding:1rem; border-radius:4px; margin-bottom:1rem; font-size:0.9rem;">
+                            <strong>Where:</strong>
+                            <ul style="margin:0.5rem 0 0 1.5rem; line-height:1.8;">
+                                <li>\(\phi_i\) = The Shapley Value (fair credit) for channel \(i\)</li>
+                                <li>\(N\) = The set of all channels (e.g., \(\{Search, Social, Email\}\))</li>
+                                <li>\(n\) = Total number of channels (\(n = |N|\))</li>
+                                <li>\(S\) = Any coalition (subset) that does NOT include channel \(i\)</li>
+                                <li>\(v(S)\) = Conversion rate when users saw exactly the channels in \(S\)</li>
+                                <li>\(v(S \cup \{i\}) - v(S)\) = How much adding channel \(i\) improves the conversion rate</li>
+                            </ul>
+                        </div>
+                        
+                        <p style="font-size:0.9rem; color:#64748b; margin:0; line-height:1.6;">
+                            <strong>In plain English:</strong> For each possible team \(S\) that doesn't include channel \(i\), measure how much \(i\) helps when it joins. Weight by coalition size, then sum.
                         </p>
                     </div>
 
                     <div style="background:#ecfdf5; padding:1rem; border-radius:4px; border-left:4px solid #10b981;">
-                        <strong>Key Concept: The Characteristic Function \(v(S)\)</strong>
+                        <strong>Example: Calculating \(v(S \cup \{i\}) - v(S)\)</strong>
                         <p style="margin:0.5rem 0 0 0;">
-                            \(v(S)\) represents the total value (Conversion Rate) generated by the coalition \(S\).
+                            Let \(S = \{Search\}\) and \(i = Social\).
                             <br>
-                            If \(v(\{Search, Social\}) = 5\%\) and \(v(\{Search\}) = 2\%\), then the <strong>Marginal Contribution</strong> of Social to that specific mix is \(3\%\).
+                            If \(v(\{Search, Social\}) = 5\%\) and \(v(\{Search\}) = 2\%\), then Social's <strong>marginal contribution</strong> to this coalition is \(5\% - 2\% = 3\%\).
                         </p>
                     </div>
                     
-                    <div style="background:#fffbeb; padding:1rem; border-radius:4px; border-left:4px solid #f59e0b;">
-                        <strong>Weighted Averaging (Wait, why are weighted?)</strong>
+                    <div style="background:#eff6ff; padding:1rem; border-radius:4px; border-left:4px solid #3b82f6;">
+                        <strong>Why the Weighting? (Fairness Across Coalition Sizes)</strong>
                         <p style="margin:0.5rem 0 0 0;">
-                            Simple averages are wrong because some coalition sizes are more common in permutations than others.
-                            <br>
-                            e.g. In a 3-channel game, there are \(3! = 6\) possible arrival orders.
-                            <br>
-                            - A channel appears <strong>1st</strong> in 2 orders.
-                            - A channel appears <strong>2nd</strong> in 2 orders.
-                            - A channel appears <strong>3rd</strong> in 2 orders.
-                            <br>
-                            Our calculation table above simplifies this by grouped weighting rather than listing all N! rows.
+                            Without weighting, larger coalitions would dominate (there are more of them). The factorial weights ensure that each <em>coalition size</em> contributes equally to the final value.
+                            <br><br>
+                            Think of it this way: We want to know "How valuable is Search?" We should weight its contribution to a 1-channel mix the same as its contribution to a 3-channel mix—even though there are more possible 2-channel combinations than 1-channel ones.
                         </p>
                     </div>
 
@@ -391,11 +408,6 @@
       <p class="text-sm muted">Aggregating the Shapley Values for ALL channels.</p>
 
       <div id="shapley-results-container">
-        <div id="marginal-value-display" class="marginal-stat-box hidden">
-          <!-- Dynamic content injected by JS -->
-          Added <strong>+<span id="marginal-delta">0</span>%</strong> to the mix
-        </div>
-
         <div id="plotly-waterfall" style="width:100%; height:400px;"></div>
         
         <div id="tut-comparison-section" style="margin-top: 3rem; border-top: 1px dashed #cbd5e1; padding-top: 2rem;">
@@ -440,12 +452,6 @@
   <script src="shapley_math.js"></script>
   <script src="main_shapley.js"></script>
   <script src="shapley_tutorial.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        if (typeof ShapleyTutorial !== 'undefined') {
-            ShapleyTutorial.init();
-        }
-    });
-  </script>
+  <!-- Tutorial auto-initializes from shapley_tutorial.js -->
 </body>
 </html>

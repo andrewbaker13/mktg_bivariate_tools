@@ -588,12 +588,12 @@ function updateUI(skipSlider = false) {
         const diff = val - sumParts;
         synergyContainer.style.display = 'block';
         if (diff > 0.5) {
-            synergyContainer.innerHTML = `🚀 Synergy: 1+1=3 (+${diff.toFixed(1)}%)`;
+            synergyContainer.innerHTML = `🚀 Positive Synergy (+${diff.toFixed(1)}%)`;
             synergyContainer.style.background = '#dcfce7';
             synergyContainer.style.color = '#166534';
             synergyContainer.title = "This combination performs better than the sum of its individual parts (Positive Synergy).";
         } else if (diff < -0.5) {
-            synergyContainer.innerHTML = `📉 Saturation: 1+1&lt;2 (${diff.toFixed(1)}%)`;
+            synergyContainer.innerHTML = `📉 Saturation (${diff.toFixed(1)}%)`;
             synergyContainer.style.background = '#fee2e2';
             synergyContainer.style.color = '#991b1b';
             synergyContainer.title = "This combination performs worse than the sum of its parts (Cannibalization/Diminishing Returns).";
@@ -617,6 +617,15 @@ function updateUI(skipSlider = false) {
 
 function updateCalculationDetails(channelId) {
     if (!channelId) return;
+
+    // Update table column headers with channel name
+    const channelName = CHANNEL_NAMES[channelId];
+    const thWithout = document.getElementById('th-without-channel');
+    const thWith = document.getElementById('th-with-channel');
+    const thLift = document.getElementById('th-lift-channel');
+    if (thWithout) thWithout.textContent = `(Rate WITHOUT ${channelName})`;
+    if (thWith) thWith.textContent = `(Rate WITH ${channelName})`;
+    if (thLift) thLift.textContent = `(Lift from ${channelName})`;
 
     const details = appState.calc.getDetailedCalculation(channelId);
     const tbody = document.getElementById('calc-table-body');
@@ -681,7 +690,11 @@ function renderCharts(attribution) {
     const yValuesAbs = sortedChannels.map(c => attribution[c]);
     
     // Relative Values (Share of Credit %) - Sums to 100%
-    const yValuesRel = sortedChannels.map(c => (attribution[c] / totalImpact * 100));
+    // Guard against division by zero/near-zero (use absolute value and threshold)
+    const absTotal = Math.abs(totalImpact);
+    const yValuesRel = absTotal > 0.01 
+        ? sortedChannels.map(c => (attribution[c] / totalImpact * 100))
+        : sortedChannels.map(() => 0);
 
     const colors = sortedChannels.map(c => COLORS[c]);
     
@@ -732,17 +745,18 @@ function renderCharts(attribution) {
          const total = Object.values(attribution).reduce((a,b)=>a+b,0);
          const baseTotal = Object.values(config.baseWeights).reduce((a,b)=>a+b,0);
          sortedChannels.forEach(c => {
-             linearVals.push( (config.baseWeights[c] / baseTotal) * total );
-             lastClickVals.push( (config.baseWeights[c] / baseTotal) * total ); // same for linear scen
+             const share = baseTotal !== 0 ? (config.baseWeights[c] / baseTotal) : 0;
+             linearVals.push( share * total );
+             lastClickVals.push( share * total ); // same for linear scen
          });
     } else {
         // Synergy/Overlap scens:
         const total = Object.values(attribution).reduce((a,b)=>a+b,0);
         
-        // Linear: Equal Credit? Or Weight based? Usually Linear model = Equal credit for touches
-        // Let's assume equal exposure frequency for simplicity:
-        const avgVal = total / 4;
-        linearVals = [avgVal, avgVal, avgVal, avgVal];
+        // Linear: Equal Credit - divides credit equally among all channels that touched
+        // Use sortedChannels.length to handle any number of channels dynamically
+        const avgVal = total / sortedChannels.length;
+        linearVals = sortedChannels.map(() => avgVal);
 
         // Last Touch: Usually favors Search/Direct heavily
         // We'll hardcode a "Last Touch Bias" map
