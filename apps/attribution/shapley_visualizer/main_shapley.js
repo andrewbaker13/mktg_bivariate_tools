@@ -690,7 +690,11 @@ function renderCharts(attribution) {
     const yValuesAbs = sortedChannels.map(c => attribution[c]);
     
     // Relative Values (Share of Credit %) - Sums to 100%
-    const yValuesRel = sortedChannels.map(c => (attribution[c] / totalImpact * 100));
+    // Guard against division by zero/near-zero (use absolute value and threshold)
+    const absTotal = Math.abs(totalImpact);
+    const yValuesRel = absTotal > 0.01 
+        ? sortedChannels.map(c => (attribution[c] / totalImpact * 100))
+        : sortedChannels.map(() => 0);
 
     const colors = sortedChannels.map(c => COLORS[c]);
     
@@ -741,8 +745,9 @@ function renderCharts(attribution) {
          const total = Object.values(attribution).reduce((a,b)=>a+b,0);
          const baseTotal = Object.values(config.baseWeights).reduce((a,b)=>a+b,0);
          sortedChannels.forEach(c => {
-             linearVals.push( (config.baseWeights[c] / baseTotal) * total );
-             lastClickVals.push( (config.baseWeights[c] / baseTotal) * total ); // same for linear scen
+             const share = baseTotal !== 0 ? (config.baseWeights[c] / baseTotal) : 0;
+             linearVals.push( share * total );
+             lastClickVals.push( share * total ); // same for linear scen
          });
     } else {
         // Synergy/Overlap scens:

@@ -368,29 +368,49 @@ function renderSankey() {
     const value = [];
     const linkColors = []; // Color links by source channel
 
-    // Threshold to hide small flows (adjust for clarity)
-    const THRESHOLD = 0.02; 
-
+    // Threshold to hide small flows (lowered to show transitions ≥1%)
+    const THRESHOLD = 0.01;
+    
+    // Terminal/absorbing states - skip their self-loops (always 100%, not informative)
+    const terminalStates = ['(conversion)', '(null)'];
+    
+    // First pass: collect all valid transitions to find max for normalization
+    const validTransitions = [];
     for(let r=0; r<matrix.length; r++) {
         for(let c=0; c<matrix[r].length; c++) {
             const val = matrix[r][c];
+            const fromState = appState.model.states[r];
+            
+            // Skip self-loops on terminal nodes
+            if (r === c && terminalStates.includes(fromState)) {
+                continue;
+            }
+            
             if (val > THRESHOLD) {
-                 source.push(r);
-                 target.push(c);
-                 // Flow volume: probability (0-1) × 100 = percentage of starting traffic
-                 const flowPercent = val * 100;
-                 // Exaggerate differences: use power function to make large flows more prominent
-                 // Store actual value for display, but use exaggerated value for visual width
-                 const visualWidth = Math.pow(flowPercent, 1.3); // Exaggerate by 30%
-                 value.push(visualWidth); 
-                 
-                 // Color the link based on source channel (with transparency)
-                 const sourceColor = colors[r] || '#94a3b8';
-                 // Convert hex to rgba with 40% opacity
-                 const rgb = sourceColor.match(/\w\w/g).map(x => parseInt(x, 16));
-                 linkColors.push(`rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.4)`);
+                validTransitions.push({ r, c, val });
             }
         }
+    }
+    
+    // Find max value for scaling (cap at reasonable max to prevent weird scaling)
+    const maxVal = Math.max(...validTransitions.map(t => t.val), 0.01);
+    
+    // Second pass: build the actual arrays with normalized values
+    for (const t of validTransitions) {
+        source.push(t.r);
+        target.push(t.c);
+        
+        // Normalize: scale so max transition = 100, then apply mild exaggeration
+        // This keeps proportions sensible even without the 100% self-loops
+        const normalizedPercent = (t.val / maxVal) * 100;
+        const visualWidth = Math.pow(normalizedPercent, 1.1); // Mild exaggeration (was 1.3)
+        value.push(visualWidth); 
+        
+        // Color the link based on source channel (with transparency)
+        const sourceColor = colors[t.r] || '#94a3b8';
+        // Convert hex to rgba with 40% opacity
+        const rgb = sourceColor.match(/\w\w/g).map(x => parseInt(x, 16));
+        linkColors.push(`rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.4)`);
     }
     
     // Define explicit node positions for better layout (0 = left, 1 = right)
@@ -422,6 +442,24 @@ function renderSankey() {
         }
     });
 
+    // Build node customdata for richer hover info
+    const nodeCustomData = appState.model.states.map((state, idx) => {
+        const visits = appState.model.stateVisits?.[state] || 0;
+        const totalPaths = appState.rawPaths?.length || 1;
+        const visitPct = ((visits / totalPaths) * 100).toFixed(1);
+        
+        // Calculate inbound and outbound flow
+        let inbound = 0, outbound = 0;
+        for (let c = 0; c < matrix[idx].length; c++) {
+            outbound += matrix[idx][c] * 100;
+        }
+        for (let r = 0; r < matrix.length; r++) {
+            inbound += matrix[r][idx] * 100;
+        }
+        
+        return { visits, visitPct, inbound: inbound.toFixed(1), outbound: outbound.toFixed(1), state };
+    });
+
     const data = {
         type: "sankey",
         orientation: "h",
@@ -434,32 +472,56 @@ function renderSankey() {
           color: colors,
           x: nodeX,          // Explicit horizontal positions
           y: nodeY,          // Explicit vertical positions
-          // Clarified hover: sum of transitions can exceed 100% due to loops
-          hovertemplate: '<b>%{label}</b><br>Cumulative Transitions: %{value:.1f}%<br><span style="font-size:0.9em; color:#64748b;">(Can exceed 100% if users revisit)</span><extra></extra>'
+          customdata: nodeCustomData,
+          hovertemplate: '<b>%{label}</b><br>' +
+            '━━━━━━━━━━━━━━━<br>' +
+            '👥 Visited by: %{customdata.visitPct}% of users<br>' +
+            '📥 Inbound Flow: %{customdata.inbound}%<br>' +
+            '📤 Outbound Flow: %{customdata.outbound}%<br>' +
+            '<extra></extra>'
         },
         link: {
           source: source,
           target: target,
           value: value,
           color: linkColors,  // Color by source channel
-          // Enhanced hover - need to recalculate actual percentage from exaggerated width
-          customdata: source.map((s, i) => {
-              // Reverse the exaggeration to show true percentage
-              const actualPercent = Math.pow(value[i], 1/1.3);
-              return actualPercent;
+          // Enhanced hover with richer context - use validTransitions for actual percentages
+          customdata: validTransitions.map((t, i) => {
+              // Use actual percentage from the original transition value
+              const actualPercent = t.val * 100;
+              const sourceLabel = labels[t.r];
+              const targetLabel = labels[t.c];
+              
+              // Generate interpretation
+              let interpretation = '';
+              if (targetLabel === 'Converted') {
+                  interpretation = actualPercent > 10 ? '🔥 High-converting path!' : 
+                                   actualPercent > 5 ? '✅ Solid conversion path' : 
+                                   '💡 Niche but real conversion';
+              } else if (targetLabel === 'Lost') {
+                  interpretation = actualPercent > 20 ? '⚠️ Major drop-off point' :
+                                   actualPercent > 10 ? '📉 Notable abandonment' :
+                                   '🔍 Some attrition here';
+              } else {
+                  interpretation = actualPercent > 15 ? '🚀 Major traffic flow' :
+                                   actualPercent > 5 ? '🔗 Common journey step' :
+                                   '💫 Occasional path';
+              }
+              
+              return { pct: actualPercent, interp: interpretation };
           }),
-          hovertemplate: `
-            <b>Journey Step</b><br>
-            %{source.label} → %{target.label}<br>
-            <b>%{customdata:.1f}%</b> of users take this path
-            <extra></extra>
-          `
+          hovertemplate: 
+            '<b>%{source.label} → %{target.label}</b><br>' +
+            '━━━━━━━━━━━━━━━<br>' +
+            '📊 <b>%{customdata.pct:.1f}%</b> of users take this step<br>' +
+            '%{customdata.interp}<br>' +
+            '<extra></extra>'
         }
     };
 
     const layout = {
         title: {
-          text: 'Customer Journey Flow Map<br><sub style="font-size:0.85em; color:#64748b;">Width = % of users (exaggerated) | Colors = Channel source</sub>',
+          text: 'Customer Journey Flow Map<br><sub style="font-size:0.85em; color:#64748b;">% can exceed 100% because users revisit channels (self-loops)</sub>',
           font: { size: 15 }
         },
         margin: { t: 60, b: 30, l: 40, r: 40 },
@@ -740,11 +802,13 @@ function getTransitionProbabilities(config, scenarioKey) {
             // We adding explicit null/lost probability to make the matrix complete
             trans[fromCh]['(null)'] = DEFAULT_NULL; 
             
-            // Normalize to sum to 1.0
+            // Normalize to sum to 1.0 (guard against division by zero)
             const total = Object.values(trans[fromCh]).reduce((a,b) => a+b, 0);
-            Object.keys(trans[fromCh]).forEach(k => {
-                trans[fromCh][k] /= total;
-            });
+            if (total > 0) {
+                Object.keys(trans[fromCh]).forEach(k => {
+                    trans[fromCh][k] /= total;
+                });
+            }
         });
         
         return trans;
@@ -1018,11 +1082,17 @@ function renderNetworkGraph() {
     const states = appState.model.states;
     
     // Threshold to show edge (Very low to catch signal)
-    const THRESHOLD = 0.001; 
+    const THRESHOLD = 0.001;
+    
+    // Terminal/absorbing states - skip their self-loops
+    const terminalStates = ['(conversion)', '(null)'];
 
     // Helper to add edge
     const addEdge = (fromId, toId, prob) => {
         if (prob < THRESHOLD) return;
+        
+        // Skip self-loops on terminal nodes (always 100%, not informative)
+        if (fromId === toId && terminalStates.includes(fromId)) return;
         const from = nodeMap[fromId];
         const to = nodeMap[toId];
         if (!from || !to) return; // safety
@@ -1030,17 +1100,36 @@ function renderNetworkGraph() {
         // Non-Linear Width Scaling
         // Floor = 2px (Always visible)
         // Scaler = Math.pow(prob, 0.5) -> Boosts small probabilities to be visible
-        // e.g. 0.05 -> 0.22 * 20 = +4px
-        // e.g. 0.50 -> 0.70 * 20 = +14px
         const width = 2 + (Math.pow(prob, 0.5) * 20); 
         
-        // Uniform styling for ALL lines (even rules)
+        // Generate interpretation for this edge
+        const pct = (prob * 100).toFixed(1);
+        let strength = prob > 0.15 ? 'Strong' : prob > 0.05 ? 'Moderate' : 'Weak';
+        let interpretation = '';
+        if (toId === '(conversion)') {
+            interpretation = prob > 0.1 ? '🔥 Key conversion driver' : '✅ Contributes to conversions';
+        } else if (toId === '(null)') {
+            interpretation = prob > 0.2 ? '⚠️ Major leakage point' : '📉 Some drop-off';
+        } else if (fromId === toId) {
+            interpretation = '🔄 Self-loop (repeat engagement)';
+        } else {
+            interpretation = `🔗 ${strength} handoff between channels`;
+        }
+        
+        // Create a midpoint for hover detection
+        const midX = (from.x + to.x) / 2;
+        const midY = (from.y + to.y) / 2;
+        
         edgeTraces.push({
-            x: [from.x, to.x],
-            y: [from.y, to.y],
+            x: [from.x, midX, to.x],
+            y: [from.y, midY, to.y],
             mode: 'lines',
-            line: { width: width, color: '#94a3b8' }, // Uniform Slate 400
-            hoverinfo: 'none', 
+            line: { width: width, color: '#94a3b8' },
+            hoverinfo: 'text',
+            hovertext: `<b>${from.label} → ${to.label}</b><br>` +
+                       `━━━━━━━━━━━━━━<br>` +
+                       `📊 Transition: ${pct}%<br>` +
+                       `${interpretation}`,
             showlegend: false,
             opacity: 0.5
         });
@@ -1055,7 +1144,66 @@ function renderNetworkGraph() {
         }
     }
 
-    // 3. Node Trace (Scatter)
+    // 3. Node Trace (Scatter) with rich hover info
+    const totalPaths = appState.rawPaths?.length || 1;
+    const nodeHoverText = nodes.map(n => {
+        const visitCount = visits[n.id] || 0;
+        const visitPct = ((visitCount / totalPaths) * 100).toFixed(1);
+        
+        // Get state index for matrix lookup
+        const stateIdx = states.indexOf(n.id);
+        let inbound = 0, outbound = 0, topInbound = [], topOutbound = [];
+        
+        if (stateIdx !== -1) {
+            // Calculate flows and find top connections
+            for (let c = 0; c < matrix[stateIdx].length; c++) {
+                const prob = matrix[stateIdx][c];
+                outbound += prob;
+                if (prob > 0.01) {
+                    topOutbound.push({ to: CHANNEL_NAMES[states[c]] || states[c], pct: (prob * 100).toFixed(1) });
+                }
+            }
+            for (let r = 0; r < matrix.length; r++) {
+                const prob = matrix[r][stateIdx];
+                inbound += prob;
+                if (prob > 0.01) {
+                    topInbound.push({ from: CHANNEL_NAMES[states[r]] || states[r], pct: (prob * 100).toFixed(1) });
+                }
+            }
+        }
+        
+        // Sort by probability descending
+        topOutbound.sort((a, b) => parseFloat(b.pct) - parseFloat(a.pct));
+        topInbound.sort((a, b) => parseFloat(b.pct) - parseFloat(a.pct));
+        
+        // Build hover text
+        let hover = `<b>${n.label}</b><br>━━━━━━━━━━━━━━<br>`;
+        hover += `👥 Traffic Share: ${visitPct}%<br>`;
+        
+        if (topInbound.length > 0 && n.id !== '(start)') {
+            hover += `<br>📥 <b>Top Inbound:</b><br>`;
+            topInbound.slice(0, 3).forEach(t => hover += `  ${t.from}: ${t.pct}%<br>`);
+        }
+        
+        if (topOutbound.length > 0 && n.id !== '(conversion)' && n.id !== '(null)') {
+            hover += `<br>📤 <b>Top Outbound:</b><br>`;
+            topOutbound.slice(0, 3).forEach(t => hover += `  → ${t.to}: ${t.pct}%<br>`);
+        }
+        
+        // Add role interpretation
+        if (n.id === '(start)') hover += `<br>🚀 Entry point for all journeys`;
+        else if (n.id === '(conversion)') hover += `<br>🎯 Goal state - purchase/signup`;
+        else if (n.id === '(null)') hover += `<br>💨 Users who abandoned`;
+        else {
+            const role = visitPct > 30 ? '🔥 Hub channel (high traffic)' :
+                         visitPct > 15 ? '🔗 Key connector' :
+                         '💡 Supporting channel';
+            hover += `<br>${role}`;
+        }
+        
+        return hover;
+    });
+    
     const nodeTrace = {
         x: nodes.map(n => n.x),
         y: nodes.map(n => n.y),
@@ -1068,6 +1216,7 @@ function renderNetworkGraph() {
         text: nodes.map(n => n.label),
         textposition: 'top center',
         hoverinfo: 'text',
+        hovertext: nodeHoverText,
         name: 'Nodes'
     };
 
