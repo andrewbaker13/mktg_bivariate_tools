@@ -739,10 +739,10 @@ function renderCharts(attribution) {
         // Synergy/Overlap scens:
         const total = Object.values(attribution).reduce((a,b)=>a+b,0);
         
-        // Linear: Equal Credit? Or Weight based? Usually Linear model = Equal credit for touches
-        // Let's assume equal exposure frequency for simplicity:
-        const avgVal = total / 4;
-        linearVals = [avgVal, avgVal, avgVal, avgVal];
+        // Linear: Equal Credit - divides credit equally among all channels that touched
+        // Use sortedChannels.length to handle any number of channels dynamically
+        const avgVal = total / sortedChannels.length;
+        linearVals = sortedChannels.map(() => avgVal);
 
         // Last Touch: Usually favors Search/Direct heavily
         // We'll hardcode a "Last Touch Bias" map
