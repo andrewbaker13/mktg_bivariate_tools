@@ -34,11 +34,11 @@ const ShapleyTutorial = {
                     question: "What does the Shapley Value calculate?",
                     options: [
                         "The time order of clicks.",
-                        "The average marginal contribution of a channel across all possible arrival orders.",
+                        "The average marginal contribution of a channel across all possible coalitions.",
                         "The total revenue of the company."
                     ],
                     answer: 1,
-                    feedback: "Exactly. It simulates every possible lineup (order) to ensure fairness."
+                    feedback: "Exactly. It averages over every possible coalition to ensure fair credit distribution."
                 }
             ],
             check: () => true // Always pass reading step
@@ -79,8 +79,8 @@ const ShapleyTutorial = {
                     question: "In a 'High Synergy' scenario like Luxury Vacation, what behavior do we expect?",
                     options: [
                         "Channels work independently (Solo players).",
-                        "Channels work better as a team (1+1=3 effect).",
-                        "Channels cannibalize each other (1+1=1.5 effect)."
+                        "Channels amplify each other (Positive Synergy).",
+                        "Channels cannibalize each other (Diminishing Returns)."
                     ],
                     answer: 1,
                     feedback: "Correct! High-ticket items usually require multiple touchpoints working together to convince a buyer."
@@ -252,7 +252,7 @@ const ShapleyTutorial = {
             title: "The Calculation Engine",
             targetId: 'tut-calculation-section',
             content: `
-                <p>Shapley requires calculating marginal contributions for every possible lineup (permutation).</p>
+                <p>Shapley requires calculating marginal contributions for every possible coalition of channels.</p>
                 <p class="task">👉 <strong>Task:</strong> In the highlighted 'Inside the Math' section, select <strong>Email</strong> from the dropdown to inspect its calculation breakdown.</p>
                 <p>The table shows how Email's contribution varies depending on which channels were already present.</p>
             `,
@@ -265,11 +265,11 @@ const ShapleyTutorial = {
                     question: "Why do we average the marginal contributions?",
                     options: [
                         "To make the number bigger.",
-                        "Because arrival order matters, and we don't know the specific order for every user.",
+                        "Because a channel's value depends on which other channels are present, and we need to consider all possibilities.",
                         "Because the dataset is too small."
                     ],
                     answer: 1,
-                    feedback: "Correct. By simulating every arrival order (permutation), the Shapley Value ensures the allocation is 'fair' regardless of sequence."
+                    feedback: "Correct. By considering every possible coalition, the Shapley Value ensures fair credit allocation regardless of which channels happened to be measured together."
                 }
             ],
             // Dynamic quiz: check Email's base val and Social+DisplayA marginal
@@ -402,9 +402,9 @@ const ShapleyTutorial = {
                 
                 <h4>🔬 Analyst's Perspective: Beyond This Tutorial</h4>
                 <p style="font-style: italic; background: #f0f9ff; padding: 12px; border-left: 4px solid #3b82f6; border-radius: 6px; line-height: 1.7;">
-                    Shapley Values provide a mathematically fair attribution framework, but they assume all coalition 
-                    orderings are equally likely—which may not reflect real customer journey patterns where certain 
-                    sequences dominate. In practice, analysts often compare Shapley results with position-based models 
+                    Shapley Values provide a mathematically fair attribution framework, but they assume all possible 
+                    coalitions are equally likely—which may not reflect real-world budget constraints or channel 
+                    availability. In practice, analysts often compare Shapley results with position-based models 
                     and Markov chain analysis to triangulate insights. Advanced practitioners also consider time decay, 
                     cross-device tracking gaps, and incrementality testing to validate that attributed channels truly 
                     <em>caused</em> conversions rather than just correlating with them. As you advance, explore how 

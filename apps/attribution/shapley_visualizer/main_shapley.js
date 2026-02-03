@@ -588,12 +588,12 @@ function updateUI(skipSlider = false) {
         const diff = val - sumParts;
         synergyContainer.style.display = 'block';
         if (diff > 0.5) {
-            synergyContainer.innerHTML = `🚀 Synergy: 1+1=3 (+${diff.toFixed(1)}%)`;
+            synergyContainer.innerHTML = `🚀 Positive Synergy (+${diff.toFixed(1)}%)`;
             synergyContainer.style.background = '#dcfce7';
             synergyContainer.style.color = '#166534';
             synergyContainer.title = "This combination performs better than the sum of its individual parts (Positive Synergy).";
         } else if (diff < -0.5) {
-            synergyContainer.innerHTML = `📉 Saturation: 1+1&lt;2 (${diff.toFixed(1)}%)`;
+            synergyContainer.innerHTML = `📉 Saturation (${diff.toFixed(1)}%)`;
             synergyContainer.style.background = '#fee2e2';
             synergyContainer.style.color = '#991b1b';
             synergyContainer.title = "This combination performs worse than the sum of its parts (Cannibalization/Diminishing Returns).";
@@ -617,6 +617,15 @@ function updateUI(skipSlider = false) {
 
 function updateCalculationDetails(channelId) {
     if (!channelId) return;
+
+    // Update table column headers with channel name
+    const channelName = CHANNEL_NAMES[channelId];
+    const thWithout = document.getElementById('th-without-channel');
+    const thWith = document.getElementById('th-with-channel');
+    const thLift = document.getElementById('th-lift-channel');
+    if (thWithout) thWithout.textContent = `(Rate WITHOUT ${channelName})`;
+    if (thWith) thWith.textContent = `(Rate WITH ${channelName})`;
+    if (thLift) thLift.textContent = `(Lift from ${channelName})`;
 
     const details = appState.calc.getDetailedCalculation(channelId);
     const tbody = document.getElementById('calc-table-body');

@@ -216,7 +216,7 @@
 
     <!-- Section 2: Coalition Lab (Full Width) -->
     <section id="tut-coalition-lab" class="card" style="margin-bottom: 1.5rem;">
-      <h2>2. MEDIA MIX LAB (COALITION ANALYSIS) <span title="Shapley treats a mix as a 'Set' (e.g. {Search, Social}). The math ignores who clicked first, focusing instead on who was present in the converting mix." style="cursor:help; font-size:1rem;">ℹ️</span></h2>
+      <h2>2. MEDIA MIX LAB (COALITION ANALYSIS)</h2>
       <p class="text-sm muted">Explore the Conversion Rate for specific definitions of "Channel Mix".</p>
       
       <!-- Scenario Selector moved to top -->
@@ -256,6 +256,11 @@
             <input type="range" id="team-value-slider" min="0" max="25" step="0.5" value="0">
             <p class="hint">Adjust to simulate data for this specific combo</p>
           </div>
+        </div>
+        
+        <!-- Marginal Impact Feedback (shows when toggling channels) -->
+        <div id="marginal-value-display" class="marginal-stat-box hidden" style="margin-top: 1rem;">
+          <!-- Dynamic content injected by JS -->
         </div>
       </div>
     </section>
@@ -308,15 +313,15 @@
                   </th>
                   <th>
                       Base Conv. Rate
-                      <div style="font-weight:normal; font-size:0.8em; color:#64748b;">(Rate WITHOUT this channel)</div>
+                      <div id="th-without-channel" style="font-weight:normal; font-size:0.8em; color:#64748b;">(Rate WITHOUT Paid Search)</div>
                   </th>
                   <th style="background:#f0fdfa;">
                       New Conv. Rate
-                      <div style="font-weight:normal; font-size:0.8em; color:#065f46;">(Rate WITH this channel)</div>
+                      <div id="th-with-channel" style="font-weight:normal; font-size:0.8em; color:#065f46;">(Rate WITH Paid Search)</div>
                   </th>
                   <th>
                       Marginal Impact
-                      <div style="font-weight:normal; font-size:0.8em; color:#64748b;">(The 'Lift' provided)</div>
+                      <div id="th-lift-channel" style="font-weight:normal; font-size:0.8em; color:#64748b;">(Lift from Paid Search)</div>
                   </th>
                 </tr>
               </thead>
@@ -403,11 +408,6 @@
       <p class="text-sm muted">Aggregating the Shapley Values for ALL channels.</p>
 
       <div id="shapley-results-container">
-        <div id="marginal-value-display" class="marginal-stat-box hidden">
-          <!-- Dynamic content injected by JS -->
-          Added <strong>+<span id="marginal-delta">0</span>%</strong> to the mix
-        </div>
-
         <div id="plotly-waterfall" style="width:100%; height:400px;"></div>
         
         <div id="tut-comparison-section" style="margin-top: 3rem; border-top: 1px dashed #cbd5e1; padding-top: 2rem;">
