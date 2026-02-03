@@ -527,9 +527,16 @@ class DecisionTreeClassifier {
 
 /**
  * Calculate evaluation metrics
+ * @param {Array} yTrue - True labels
+ * @param {Array} yPred - Predicted labels (objects with .prediction property)
+ * @param {Array} classes - List of classes
+ * @param {string} targetClass - The "positive" class for binary metrics (optional)
  */
-function calculateMetrics(yTrue, yPred, classes) {
+function calculateMetrics(yTrue, yPred, classes, targetClass = null) {
     const n = yTrue.length;
+    
+    // If no target class specified, use first class
+    const positiveClass = targetClass || classes[0];
     
     // Build confusion matrix
     const matrix = {};
@@ -580,25 +587,39 @@ function calculateMetrics(yTrue, yPred, classes) {
         perClass[cls] = { tp, fp, fn, tn, precision, recall, f1 };
     });
     
-    // Macro averages
-    let macroPrecision = 0, macroRecall = 0, macroF1 = 0;
-    classes.forEach(cls => {
-        macroPrecision += perClass[cls].precision;
-        macroRecall += perClass[cls].recall;
-        macroF1 += perClass[cls].f1;
-    });
-    macroPrecision /= classes.length;
-    macroRecall /= classes.length;
-    macroF1 /= classes.length;
+    // For binary classification, use target class metrics
+    // For multi-class, use macro averages
+    let precision, recall, f1;
+    
+    if (classes.length === 2 && positiveClass) {
+        // Binary: use the target class metrics
+        precision = perClass[positiveClass].precision;
+        recall = perClass[positiveClass].recall;
+        f1 = perClass[positiveClass].f1;
+    } else {
+        // Multi-class: macro averages
+        precision = 0;
+        recall = 0;
+        f1 = 0;
+        classes.forEach(cls => {
+            precision += perClass[cls].precision;
+            recall += perClass[cls].recall;
+            f1 += perClass[cls].f1;
+        });
+        precision /= classes.length;
+        recall /= classes.length;
+        f1 /= classes.length;
+    }
     
     return {
         accuracy,
-        precision: macroPrecision,
-        recall: macroRecall,
-        f1: macroF1,
+        precision,
+        recall,
+        f1,
         perClass,
         confusionMatrix: matrix,
-        classes
+        classes,
+        targetClass: positiveClass
     };
 }
 

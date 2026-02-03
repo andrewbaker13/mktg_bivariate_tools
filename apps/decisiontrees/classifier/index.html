@@ -58,9 +58,72 @@
         </div>
     </div>
 
+    <!-- Overview Section -->
+    <section class="test-overview" id="overview-section" aria-labelledby="test-overview-heading">
+        <!-- Tutorial target: tut-overview-section -->
+        <div id="tut-overview-section">
+        <div class="overview-container">
+            <h2 id="test-overview-heading">OVERVIEW & OBJECTIVE</h2>
+            <div class="card">
+                <p>
+                    A <strong>decision tree classifier</strong> is a supervised machine learning algorithm that learns to predict categorical 
+                    outcomes by finding the best sequence of yes/no questions to ask about your data. Each question creates a "split" 
+                    that separates customers into increasingly homogeneous groups.
+                </p>
+                <p class="method-description">
+                    <strong>The CART Algorithm:</strong> This tool uses Classification and Regression Trees (CART), which builds 
+                    binary trees by finding the split that maximizes <em>impurity reduction</em> at each node. The algorithm 
+                    evaluates every possible split point for every variable and chooses the one that best separates the classes.
+                </p>
+                <details class="intro-notes">
+                    <summary>Key Concepts & When to Use</summary>
+                    <div class="notes-content">
+                        <div class="concept-grid">
+                            <div class="concept-item">
+                                <h4>📊 Best For</h4>
+                                <ul>
+                                    <li>Customer segmentation with clear decision rules</li>
+                                    <li>Churn prediction with actionable thresholds</li>
+                                    <li>Lead scoring and qualification</li>
+                                    <li>Campaign targeting with explainable criteria</li>
+                                </ul>
+                            </div>
+                            <div class="concept-item">
+                                <h4>⚠️ Limitations</h4>
+                                <ul>
+                                    <li>Can overfit with deep trees or small data</li>
+                                    <li>Axis-parallel splits only (can't capture diagonal boundaries)</li>
+                                    <li>Sensitive to small data changes (high variance)</li>
+                                    <li>May miss complex interactions without sufficient depth</li>
+                                </ul>
+                            </div>
+                            <div class="concept-item">
+                                <h4>🎯 Output</h4>
+                                <ul>
+                                    <li>IF-THEN rules directly usable in campaigns</li>
+                                    <li>Feature importance rankings</li>
+                                    <li>Probability estimates per segment</li>
+                                    <li>Visual tree structure for stakeholder communication</li>
+                                </ul>
+                            </div>
+                            <div class="concept-item">
+                                <h4>📈 Marketing Advantage</h4>
+                                <p>Unlike "black box" models, decision trees produce <strong>interpretable rules</strong> you can explain 
+                                to stakeholders and directly translate into marketing automation logic.</p>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+        </div><!-- /tut-overview-section -->
+    </section>
+
     <main class="app-main">
         <!-- Step 1: Choose Scenario -->
         <section class="step-card" id="step1">
+            <!-- Tutorial target: tut-step1-section -->
+            <div id="tut-step1-section">
             <div class="step-header">
                 <h2>📊 Step 1: Choose Your Business Problem</h2>
             </div>
@@ -78,7 +141,7 @@
                     </div>
                 </div>
                 
-                <div id="scenario-description" class="scenario-description">
+                <div id="scenario-description" class="scenario-description-container">
                     <p class="scenario-placeholder">
                         Select a scenario above to see the business context and variables, or upload your own dataset below.
                     </p>
@@ -93,7 +156,12 @@
                         <button type="button" id="browse-btn" class="btn secondary">Browse files</button>
                     </div>
                     <input type="file" id="file-input" accept=".csv,.tsv,.txt" hidden>
-                    <p class="upload-status" id="upload-status">No file uploaded.</p>
+                    <div class="upload-footer">
+                        <p class="upload-status" id="upload-status">No file uploaded.</p>
+                        <button type="button" id="template-download" class="btn-link">
+                            📥 Download sample template
+                        </button>
+                    </div>
                     
                     <!-- Variable Assignment (shown after upload) -->
                     <div id="variable-assignment" class="variable-assignment hidden">
@@ -103,17 +171,21 @@
                             <select id="outcome-select"></select>
                         </div>
                         <div id="predictor-list" class="predictor-list">
-                            <!-- Predictors will be listed here -->
+                            <!-- Predictors will be listed here with clickable type toggles -->
                         </div>
+                        <p class="predictor-hint">💡 Click a predictor chip to toggle between categorical and continuous.</p>
                     </div>
                 </div>
             </div>
+        </div><!-- /tut-step1-section -->
         </section>
 
         <!-- Step 2: Build Settings -->
         <section class="step-card" id="step2">
+            <!-- Tutorial target: tut-step2-section -->
+            <div id="tut-step2-section">
             <div class="step-header">
-                <h2>⚙️ Step 2: Configure Tree Settings</h2>
+                <h2>⚙️ Step 2: Configure Tree Settings & Model</h2>
             </div>
             
             <div class="card">
@@ -143,41 +215,117 @@
                         <p class="setting-help">Prevents tiny, overfit leaf nodes.</p>
                     </div>
 
-                    <div class="setting-group">
-                        <label for="split-criterion">Split Criterion</label>
-                        <select id="split-criterion">
-                            <option value="gini" selected>Gini Impurity</option>
-                            <option value="entropy">Information Gain (Entropy)</option>
+                    <!-- Target Class Selector -->
+                    <div class="setting-group target-class-group">
+                        <label for="target-class-select">Target Class (Positive Outcome)</label>
+                        <select id="target-class-select" disabled>
+                            <option value="">-- Load data first --</option>
                         </select>
-                        <p class="setting-help">How to measure quality of splits.</p>
-                    </div>
-
-                    <div class="setting-group">
-                        <label for="train-split">Train/Test Split: <span id="train-split-val">70</span>%</label>
-                        <input type="range" id="train-split" min="50" max="90" value="70" step="5">
-                        <p class="setting-help">Percentage of data for training vs testing.</p>
+                        <p class="setting-help">Which outcome class should be treated as "success" for metrics like precision, recall, and ROC curves.</p>
                     </div>
                 </div>
+
+                <!-- Advanced Settings (Collapsible) -->
+                <details class="advanced-settings">
+                    <summary>⚙️ Advanced Settings</summary>
+                    <div class="advanced-settings-content">
+                        <div class="settings-grid">
+                            <div class="setting-group">
+                                <label for="split-criterion">Split Criterion</label>
+                                <select id="split-criterion">
+                                    <option value="gini" selected>Gini Impurity</option>
+                                    <option value="entropy">Information Gain (Entropy)</option>
+                                </select>
+                                <p class="setting-help">How to measure quality of splits.</p>
+                            </div>
+
+                            <div class="setting-group">
+                                <label for="train-split">Train/Test Split: <span id="train-split-val">70</span>%</label>
+                                <input type="range" id="train-split" min="50" max="90" value="70" step="5">
+                                <p class="setting-help">Percentage of data for training vs testing.</p>
+                            </div>
+
+                            <div class="setting-group">
+                                <label for="random-seed">Random Seed (for Reproducibility)</label>
+                                <div class="seed-input-group">
+                                    <input type="text" id="random-seed" placeholder="Auto-generated">
+                                    <button type="button" id="new-seed-btn" class="btn-small" title="Generate new random seed">🎲</button>
+                                </div>
+                                <p class="setting-help">Set a number (e.g. "12345") to get the same train/test split each time. Useful for classroom demos.</p>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- Interpretation Aid for Settings -->
+                <details class="interpretation-aid">
+                    <summary>📚 Understanding Tree Settings</summary>
+                    <div class="interpretation-content">
+                        <div class="guide-section">
+                            <h5>🤖 Auto vs 🛠️ Manual Mode</h5>
+                            <p><strong>Auto mode</strong> uses the CART algorithm to find the statistically "best" split at each node—the one that most reduces impurity (Gini or Entropy). This is efficient and finds patterns humans might miss.</p>
+                            <p><strong>Manual mode</strong> is primarily an <em>educational tool</em> to help you develop intuition for how decision trees partition data. You choose splits based on your own logic, which helps you understand the tradeoffs involved.</p>
+                            <div class="educational-note">
+                                <p><strong>📚 Real-World Practice:</strong> In industry, decision trees are virtually always built automatically using impurity-based criteria (Gini or Information Gain) combined with <strong>hyperparameter tuning</strong>—systematically testing different values of max depth, min samples per leaf, etc., to find the best-performing configuration. Manual tree construction is useful for learning but impractical at scale.</p>
+                                <p>That said, manual mode can occasionally be valuable for creating <strong>rule-based segments</strong> where business logic matters more than pure predictive accuracy—e.g., when stakeholders need round-number thresholds that are easy to communicate and implement.</p>
+                            </div>
+                        </div>
+                        <div class="guide-section">
+                            <h5>🌲 Max Depth</h5>
+                            <p>Depth controls complexity. A depth-1 tree (a "stump") makes one split. Depth-3 creates up to 8 segments. Deeper trees capture more patterns but risk <strong>overfitting</strong>—memorizing training data quirks that don't generalize.</p>
+                            <p><em>Marketing rule of thumb:</em> Start with depth 3-4. If test accuracy drops significantly from training accuracy, the tree is overfitting—reduce depth.</p>
+                        </div>
+                        <div class="guide-section">
+                            <h5>🎯 Target Class</h5>
+                            <p>For binary classification, metrics like precision and recall are calculated relative to one "positive" class. In marketing:</p>
+                            <ul>
+                                <li><strong>Churn prediction:</strong> "Churned" is typically the target (we want to catch churners)</li>
+                                <li><strong>Conversion:</strong> "Converted" is the target</li>
+                                <li><strong>Lead scoring:</strong> "Qualified" or "Won" is usually the target</li>
+                            </ul>
+                        </div>
+                        <div class="guide-section">
+                            <h5>⚖️ Gini vs Entropy (Split Criteria)</h5>
+                            <p>Both are <strong>impurity measures</strong> that quantify how mixed the classes are at a node. The algorithm evaluates every possible split and chooses the one that maximizes impurity reduction.</p>
+                            <ul>
+                                <li><strong>Gini Impurity:</strong> Measures the probability of misclassifying a randomly chosen element. Formula: 1 - Σ(p<sub>i</sub>²). Computationally faster, tends to favor larger partitions.</li>
+                                <li><strong>Entropy (Information Gain):</strong> From information theory—measures the expected "surprise" or uncertainty. Formula: -Σ(p<sub>i</sub> × log₂(p<sub>i</sub>)). Can find slightly more balanced splits.</li>
+                            </ul>
+                            <p>In practice, they usually produce nearly identical trees. Gini is the default in most implementations (including scikit-learn) due to speed.</p>
+                        </div>
+                    </div>
+                </details>
             </div>
+        </div><!-- /tut-step2-section -->
         </section>
 
         <!-- Step 3: Build the Tree -->
         <section class="step-card" id="step3">
+            <!-- Tutorial target: tut-step3-section -->
+            <div id="tut-step3-section">
             <div class="step-header">
                 <h2>🌳 Step 3: Build the Tree</h2>
                 <div class="control-buttons">
                     <button type="button" id="build-btn" class="btn-primary" disabled>Build Tree</button>
+                    <button type="button" id="finish-building-btn" class="btn-success hidden">✓ Finish Building</button>
                     <button type="button" id="reset-btn" class="btn-secondary" disabled>Reset</button>
                 </div>
             </div>
             
             <div class="card">
+                <!-- Manual mode instructions -->
+                <div id="manual-mode-instructions" class="manual-instructions hidden">
+                    <p>👆 <strong>Click on any node</strong> marked "Click to split" to choose how to split it, or click <strong>"Finish Building"</strong> when done.</p>
+                </div>
+                
                 <!-- Tree Visualization Container -->
-                <div id="tree-container" class="tree-container">
+                <!-- Tutorial target: tut-tree-container -->
+                <div id="tree-container" class="tree-container tut-tree-container">
                     <div class="tree-placeholder">
                         <p>🌱 Select a scenario and click "Build Tree" to grow your decision tree.</p>
                     </div>
                 </div>
+                <p class="tree-nav-hint">💡 <strong>Tip:</strong> Use scroll wheel to zoom, click &amp; drag to pan. Click any node to see detailed statistics.</p>
 
                 <!-- Expanded Node Editor (appears when node is clicked in manual mode) -->
                 <div id="node-editor" class="node-editor hidden">
@@ -195,6 +343,7 @@
                     </div>
                 </div>
             </div>
+        </div><!-- /tut-step3-section -->
         </section>
 
         <!-- Step 4: Model Evaluation -->
@@ -205,10 +354,15 @@
             
             <div class="card">
                 <!-- Summary Metrics -->
-                <div class="metrics-summary" id="metrics-summary">
+                <!-- Tutorial target: tut-metrics-section -->
+                <div class="metrics-summary" id="tut-metrics-section">
                     <div class="metric-card">
-                        <span class="metric-label">Accuracy</span>
+                        <span class="metric-label">Test Accuracy</span>
                         <span class="metric-value" id="metric-accuracy">--</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Train Accuracy</span>
+                        <span class="metric-value" id="metric-train-accuracy">--</span>
                     </div>
                     <div class="metric-card">
                         <span class="metric-label">Precision</span>
@@ -224,14 +378,70 @@
                     </div>
                 </div>
 
+                <!-- Metrics Interpretation Aid -->
+                <details class="interpretation-aid metrics-explainer">
+                    <summary>📚 Understanding Classification Metrics</summary>
+                    <div class="interpretation-content">
+                        <div class="metrics-explainer-grid">
+                            <div class="guide-section">
+                                <h5>🎯 Accuracy</h5>
+                                <p class="formula">= (Correct Predictions) / (Total Predictions)</p>
+                                <p><strong>What it measures:</strong> Overall correctness—how often the model gets it right across all classes.</p>
+                                <p><strong>Marketing context:</strong> "Out of all customers we scored, what percentage did we classify correctly?"</p>
+                                <p class="caution">⚠️ <strong>Caution:</strong> Accuracy can be misleading with imbalanced classes. If only 5% of customers churn, predicting "no churn" for everyone gives 95% accuracy but catches zero churners!</p>
+                            </div>
+                            <div class="guide-section">
+                                <h5>🔍 Precision</h5>
+                                <p class="formula">= True Positives / (True Positives + False Positives)</p>
+                                <p><strong>What it measures:</strong> When you predict the target class, how often are you right?</p>
+                                <p><strong>Marketing context:</strong> "Of the customers we flagged as likely churners, what percentage actually churned?"</p>
+                                <p><strong>When to prioritize:</strong> When false positives are costly. Example: Sending expensive retention offers to customers who weren't going to churn anyway wastes budget.</p>
+                            </div>
+                            <div class="guide-section">
+                                <h5>📡 Recall (Sensitivity)</h5>
+                                <p class="formula">= True Positives / (True Positives + False Negatives)</p>
+                                <p><strong>What it measures:</strong> Of all actual positive cases, how many did you catch?</p>
+                                <p><strong>Marketing context:</strong> "Of all customers who actually churned, what percentage did we identify in advance?"</p>
+                                <p><strong>When to prioritize:</strong> When missing positives is costly. Example: Missing a high-value customer about to churn means losing that revenue forever.</p>
+                            </div>
+                            <div class="guide-section">
+                                <h5>⚖️ F1 Score</h5>
+                                <p class="formula">= 2 × (Precision × Recall) / (Precision + Recall)</p>
+                                <p><strong>What it measures:</strong> Harmonic mean of precision and recall—a single metric that balances both.</p>
+                                <p><strong>Marketing context:</strong> "Overall, how well are we balancing catching churners vs. not wasting resources on false alarms?"</p>
+                                <p><strong>When to use:</strong> When you need a single number to compare models and care about both precision and recall. The harmonic mean penalizes extreme imbalances.</p>
+                            </div>
+                        </div>
+                        <div class="guide-section full-width">
+                            <h5>🤔 The Precision-Recall Tradeoff</h5>
+                            <p>You rarely maximize both. Being more aggressive (predicting "churn" more often) catches more actual churners (<strong>↑ recall</strong>) but includes more false alarms (<strong>↓ precision</strong>). Being conservative does the opposite.</p>
+                            <p><strong>Business decision:</strong> What's the relative cost of missing a churner vs. wasting a retention offer on a loyal customer? That guides which metric to optimize.</p>
+                        </div>
+                    </div>
+                </details>
+
                 <!-- Detailed Evaluation Grid -->
                 <div class="evaluation-grid">
                     <!-- Confusion Matrix -->
-                    <div class="eval-panel">
+                    <!-- Tutorial target: tut-confusion-section -->
+                    <div class="eval-panel" id="tut-confusion-section">
                         <h4>Confusion Matrix</h4>
                         <div id="confusion-matrix" class="confusion-matrix">
                             <p class="placeholder-text">Build a tree to see confusion matrix</p>
                         </div>
+                        <details class="interpretation-aid compact">
+                            <summary>How to read this</summary>
+                            <div class="interpretation-content">
+                                <p>Rows = <strong>Actual</strong> class, Columns = <strong>Predicted</strong> class.</p>
+                                <ul>
+                                    <li><strong>Diagonal (green):</strong> Correct predictions</li>
+                                    <li><strong>Off-diagonal (red):</strong> Errors</li>
+                                    <li><strong>False Positives:</strong> Predicted target, but wasn't (column sum minus diagonal)</li>
+                                    <li><strong>False Negatives:</strong> Missed actual targets (row sum minus diagonal)</li>
+                                </ul>
+                                <p><em>Marketing tip:</em> Look at where errors concentrate. Confusing "Low Value" with "Medium Value" may be acceptable; confusing "Loyal" with "Churning" is not!</p>
+                            </div>
+                        </details>
                     </div>
 
                     <!-- ROC Curve (binary only) / Per-Class Metrics (multi-class) -->
@@ -240,24 +450,122 @@
                         <div id="roc-curve" class="roc-curve">
                             <p class="placeholder-text">Build a tree to see ROC curve</p>
                         </div>
+                        <details class="interpretation-aid compact">
+                            <summary>How to read this</summary>
+                            <div class="interpretation-content">
+                                <p><strong>ROC Curve</strong> (Receiver Operating Characteristic) plots True Positive Rate vs False Positive Rate at various thresholds.</p>
+                                <ul>
+                                    <li><strong>Diagonal line:</strong> Random guessing (AUC = 0.5)</li>
+                                    <li><strong>Upper-left corner:</strong> Perfect classifier (AUC = 1.0)</li>
+                                    <li><strong>AUC (Area Under Curve):</strong> Probability that a randomly chosen positive case ranks higher than a randomly chosen negative case</li>
+                                </ul>
+                                <p><strong>Interpretation guide:</strong></p>
+                                <ul>
+                                    <li>AUC 0.9-1.0: Excellent discrimination</li>
+                                    <li>AUC 0.8-0.9: Good discrimination</li>
+                                    <li>AUC 0.7-0.8: Fair discrimination</li>
+                                    <li>AUC 0.6-0.7: Poor discrimination</li>
+                                    <li>AUC 0.5-0.6: Barely better than random</li>
+                                </ul>
+                                <p><em>Marketing context:</em> High AUC means the model reliably ranks likely churners above non-churners, even if the exact threshold varies.</p>
+                            </div>
+                        </details>
                     </div>
                 </div>
 
                 <!-- Feature Importance -->
-                <div class="eval-panel full-width">
+                <!-- Tutorial target: tut-importance-section -->
+                <div class="eval-panel full-width" id="tut-importance-section">
                     <h4>Feature Importance</h4>
                     <div id="feature-importance" class="feature-importance">
                         <p class="placeholder-text">Build a tree to see feature importance</p>
                     </div>
+                    <details class="interpretation-aid">
+                        <summary>📊 How to Read Feature Importance (Important!)</summary>
+                        <div class="interpretation-content">
+                            <div class="guide-section">
+                                <h5>What Feature Importance Tells You</h5>
+                                <p><strong>Feature importance</strong> quantifies how much each predictor variable contributed to the tree's ability to separate classes. Think of it as answering: <em>"Which variables did the tree rely on most heavily when making decisions?"</em></p>
+                                <p>Variables with <strong>high importance</strong> were used in splits that affected many observations and/or created big improvements in class purity. Variables with <strong>zero importance</strong> were never selected for any split—they didn't provide useful discrimination power given the other available features.</p>
+                            </div>
+                            
+                            <div class="guide-section">
+                                <h5>How It's Calculated</h5>
+                                <p>For decision trees, importance is computed using <strong>Mean Decrease in Impurity (MDI)</strong>:</p>
+                                <ol>
+                                    <li>At each split on feature X, measure how much Gini impurity (or entropy) decreased</li>
+                                    <li>Weight that decrease by the number of samples reaching that node</li>
+                                    <li>Sum up all the weighted decreases for feature X across the entire tree</li>
+                                    <li>Normalize so all importances sum to 100%</li>
+                                </ol>
+                                <p class="formula-note">Formula: Importance(X) = Σ [n<sub>node</sub> × ΔImpurity] for all nodes splitting on X</p>
+                            </div>
+                            
+                            <div class="guide-section">
+                                <h5>⚠️ Critical Caveats for Interpretation</h5>
+                                <ul>
+                                    <li><strong>Importance ≠ Causation:</strong> A variable can be highly important because it's correlated with the true causal driver, not because it causes the outcome. "Ice cream sales" might predict drownings (both correlate with summer), but ice cream doesn't cause drownings.</li>
+                                    <li><strong>Correlated features compete:</strong> If two variables carry similar information (e.g., "income" and "home value"), the tree may only use one. The unused variable gets low importance even though it's predictive.</li>
+                                    <li><strong>Scale doesn't matter:</strong> Unlike some methods, tree-based importance isn't affected by whether a variable is in dollars vs. thousands of dollars.</li>
+                                    <li><strong>Categorical variables with many levels</strong> can appear artificially important because they offer more potential split points.</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="guide-section">
+                                <h5>🎯 Marketing Applications</h5>
+                                <ul>
+                                    <li><strong>Campaign prioritization:</strong> Focus retention efforts on the drivers that matter most. If "Days Since Last Purchase" dominates, recency-triggered campaigns may be most effective.</li>
+                                    <li><strong>Data collection guidance:</strong> High-importance variables are worth investing in better data quality and coverage.</li>
+                                    <li><strong>Stakeholder communication:</strong> Use importance rankings to explain which factors the model "pays attention to"—but always pair with business logic validation.</li>
+                                    <li><strong>Feature engineering ideas:</strong> If behavioral variables dominate demographics, consider creating more engagement-based features.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
                 <!-- Dynamic Interpretation -->
                 <div class="interpretation-panel" id="interpretation-panel">
-                    <h4>💡 Interpretation</h4>
+                    <h4>💡 Model Summary & Business Rules</h4>
                     <div id="interpretation-content">
                         <p class="placeholder-text">Build a tree to see model interpretation...</p>
                     </div>
                 </div>
+
+                <!-- Overall Model Guidance -->
+                <details class="interpretation-aid model-guidance">
+                    <summary>📊 How to Use Your Decision Tree Model</summary>
+                    <div class="interpretation-content">
+                        <div class="guide-section">
+                            <h5>🎯 Turning Rules into Action</h5>
+                            <p>Decision trees produce <strong>IF-THEN rules</strong> that map directly to marketing segments:</p>
+                            <ul>
+                                <li><strong>Email targeting:</strong> Create segments matching each leaf's conditions</li>
+                                <li><strong>Offer personalization:</strong> Different offers for high-risk vs low-risk segments</li>
+                                <li><strong>Budget allocation:</strong> Prioritize retention spend on high-churn-probability segments</li>
+                                <li><strong>Customer journey triggers:</strong> Set up automations when customers enter certain rules</li>
+                            </ul>
+                        </div>
+                        <div class="guide-section">
+                            <h5>⚠️ Common Pitfalls</h5>
+                            <ul>
+                                <li><strong>Overfitting:</strong> If training accuracy >> test accuracy, simplify the tree (reduce depth)</li>
+                                <li><strong>Leaky features:</strong> Beware variables that "know" the outcome (e.g., "cancellation_date" predicting churn)</li>
+                                <li><strong>Class imbalance:</strong> With rare events (2% churn), accuracy is misleading—focus on precision/recall</li>
+                                <li><strong>Small leaves:</strong> Rules based on 5 customers aren't reliable—enforce minimum samples</li>
+                            </ul>
+                        </div>
+                        <div class="guide-section">
+                            <h5>📈 Improving Your Model</h5>
+                            <ul>
+                                <li><strong>Add features:</strong> Behavioral data (purchase recency, engagement) often beats demographics</li>
+                                <li><strong>Feature engineering:</strong> Ratios, trends, and time-since variables can be powerful</li>
+                                <li><strong>Try different depths:</strong> Plot train vs test accuracy at various depths to find the sweet spot</li>
+                                <li><strong>Consider ensemble methods:</strong> Random Forests (many trees averaged) usually beat single trees</li>
+                            </ul>
+                        </div>
+                    </div>
+                </details>
 
                 <!-- Export Buttons -->
                 <div class="export-buttons">
@@ -272,6 +580,37 @@
         </section>
     </main>
 
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-nav">
+                <a href="../../../index.html" class="back-link">← Back to Tool Selection</a>
+            </div>
+            <div class="footer-meta">
+                <span class="meta-item">Created: 2026-02-02</span>
+                <span class="separator">•</span>
+                <span class="meta-item">Last Updated: 2026-02-02</span>
+            </div>
+            <div class="footer-citation">
+                <div class="citation-label">Cite this tool:</div>
+                <div class="citation-text">Baker, A. (2026). Decision Tree Classifier. <em>Dr. Baker's Marketing Analytics Tools</em>. Retrieved from <a href="https://drbakermarketing.com/apps/decisiontrees/classifier/" target="_blank">https://drbakermarketing.com/apps/decisiontrees/classifier/</a></div>
+            </div>
+            <div class="footer-copyright">
+                &copy; 2026 Andrew Baker. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Node Details Modal (Read-only, appears when clicking nodes in auto mode) -->
+    <div id="node-details-modal" class="node-details-modal hidden">
+        <div class="node-details-header">
+            <h4 id="node-details-title">📊 Node Details</h4>
+            <button type="button" id="close-node-details" class="close-btn">✕</button>
+        </div>
+        <div id="node-details-content" class="node-details-content">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="../../../shared/js/csv_utils.js"></script>
     <script src="../../../shared/js/auth_tracking.js"></script>
@@ -281,5 +620,6 @@
     <script src="tree_visualizer.js"></script>
     <script src="manual_builder.js"></script>
     <script src="main.js"></script>
+    <script src="dt_tutorial.js"></script>
 </body>
 </html>

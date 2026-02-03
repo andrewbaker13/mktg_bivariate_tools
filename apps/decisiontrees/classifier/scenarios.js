@@ -12,7 +12,7 @@ const DECISION_TREE_SCENARIOS = [
                 <div class="scenario-header">
                     <span class="scenario-icon">🔄</span>
                     <h4>Customer Churn Prediction - FitLife Gym</h4>
-                    <span class="scenario-badge">N = 1,500 | Binary</span>
+                    <span class="scenario-badge">N = 3,500 | Binary</span>
                 </div>
                 
                 <p class="scenario-intro">
@@ -123,7 +123,7 @@ const DECISION_TREE_SCENARIOS = [
                 <div class="scenario-header">
                     <span class="scenario-icon">📧</span>
                     <h4>B2B Lead Scoring - CloudSync SaaS</h4>
-                    <span class="scenario-badge">N = 1,200 | Binary</span>
+                    <span class="scenario-badge">N = 4,000 | Binary</span>
                 </div>
                 
                 <p class="scenario-intro">
@@ -233,7 +233,7 @@ const DECISION_TREE_SCENARIOS = [
                 <div class="scenario-header">
                     <span class="scenario-icon">🎯</span>
                     <h4>Customer Segment Classification - Artisan Coffee Co</h4>
-                    <span class="scenario-badge">N = 1,800 | 3-Class</span>
+                    <span class="scenario-badge">N = 4,500 | 3-Class</span>
                 </div>
                 
                 <p class="scenario-intro">
@@ -343,7 +343,7 @@ const DECISION_TREE_SCENARIOS = [
 /**
  * Generate synthetic data for scenarios
  */
-function generateChurnData(n = 1500) {
+function generateChurnData(n = 3500) {
     const data = [];
     const contractTypes = ['Month-to-Month', 'Annual', 'Two-Year'];
     
@@ -392,7 +392,7 @@ function generateChurnData(n = 1500) {
     return data;
 }
 
-function generateLeadScoringData(n = 1200) {
+function generateLeadScoringData(n = 4000) {
     const data = [];
     const companySizes = ['Small', 'Medium', 'Enterprise'];
     
@@ -437,7 +437,7 @@ function generateLeadScoringData(n = 1200) {
     return data;
 }
 
-function generateCustomerSegmentData(n = 1800) {
+function generateCustomerSegmentData(n = 4500) {
     const data = [];
     const subscriptionStatuses = ['Subscriber', 'One-Time'];
     

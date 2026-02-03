@@ -786,6 +786,27 @@ class ManualTreeBuilder {
     }
 
     /**
+     * Finalize tree - mark all undecided nodes as leaves
+     */
+    finalizeTree() {
+        const markAsLeaf = (node) => {
+            if (!node) return;
+            
+            // If node hasn't been decided (no children), mark as leaf
+            if (!node.isLeaf && !node.left && !node.right) {
+                node.isLeaf = true;
+                node.isDecided = true;
+            }
+            
+            // Recurse into children
+            if (node.left) markAsLeaf(node.left);
+            if (node.right) markAsLeaf(node.right);
+        };
+        
+        markAsLeaf(this.tree);
+    }
+
+    /**
      * Export tree for classifier compatibility
      */
     exportTree() {

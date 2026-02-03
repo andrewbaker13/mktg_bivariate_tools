@@ -1,0 +1,13 @@
+Outcome,Age,Income,Visits_Per_Month,Contract_Type,Channel,Satisfaction_Score
+Churned,25,45000,2,Monthly,Online,3
+Stayed,34,62000,8,Annual,In-Store,8
+Stayed,45,78000,12,Annual,Online,9
+Churned,22,32000,1,Monthly,Mobile,2
+Stayed,38,55000,6,Annual,In-Store,7
+Churned,29,41000,3,Monthly,Online,4
+Stayed,52,95000,15,Annual,Online,9
+Stayed,41,68000,10,Annual,In-Store,8
+Churned,24,38000,2,Monthly,Mobile,3
+Stayed,36,58000,7,Annual,Online,7
+Churned,27,35000,1,Monthly,Online,2
+Stayed,48,82000,11,Annual,In-Store,9

@@ -218,7 +218,354 @@ apps/
         ├── manual_builder.js
         ├── scenarios.js
         ├── main.js
+        ├── dt_tutorial.js    (NEW - Professor Mode)
         └── scenarios/     (empty, for future static CSVs)
 ```
 
 Room left for future expansion: `apps/decisiontrees/regressor/`
+
+---
+
+## Professor Mode Implementation (Session 2)
+
+### Overview
+Added comprehensive Professor Mode tutorial following the established pattern from K-Means, Logistic Regression, and Chi-Square implementations.
+
+### Files Modified/Created
+
+| File | Changes |
+|------|---------|
+| `index.html` | Added tut- wrapper IDs throughout, Professor Mode banner, Train Accuracy metric card |
+| `main.js` | Added `window.lastTreeState`, `window.treeBuilt`, fixed feature importance bug, added trainMetrics |
+| `styles.css` | Fixed z-index for node-details-modal (10001) |
+| `dt_tutorial.js` | **NEW** - Complete 13-step tutorial (~1100 lines) |
+
+### Tutorial Structure (13 Steps)
+
+| Step | Module ID | Title | Purpose |
+|------|-----------|-------|---------|
+| 1 | welcome | Welcome | Introduce classification trees vs regression |
+| 2 | concepts | Core Concepts | Gini impurity, recursive partitioning |
+| 3 | load_data | Load Scenario | Student loads FitLife Gym data |
+| 4 | configure | Configure Settings | Set max depth = 4 (specific task) |
+| 5 | build_tree | Build the Tree | Click Build Tree button |
+| 6 | interpret_tree | Explore the Tree | Click nodes, observe structure |
+| 7 | metrics_baseline | Baseline Metrics | **Record** current Train & Test accuracy |
+| 8 | overfitting_setup | Overfitting Experiment | Change depth to 8+, predict what happens |
+| 9 | overfitting_observe | Observe Overfitting | Compare new vs baseline, spot overfitting |
+| 10 | metrics | Precision & Recall | Deep dive on precision/recall tradeoffs |
+| 11 | confusion_matrix | Confusion Matrix | Interpret the confusion matrix |
+| 12 | feature_importance | Feature Importance | Analyze which features matter most |
+| 13 | conclusion | Wrap-Up | Summary quiz, export certificates |
+
+### Key Pedagogical Flow
+```
+Baseline → Predict → Change → Observe
+```
+Students **see metrics first** (Step 7), then **predict** what will happen (Step 8), then **change settings and observe** (Step 9). This ensures all quiz questions reference metrics students have already seen.
+
+### Data Exposure for Dynamic Quizzes
+
+```javascript
+window.lastTreeState = {
+    accuracy: 0.85,           // Test accuracy
+    trainAccuracy: 0.92,      // Train accuracy (NEW)
+    precision: 0.83,
+    recall: 0.78,
+    f1: 0.80,
+    confusionMatrix: [[TP, FN], [FP, TN]],
+    rootFeature: 'Visit Frequency',
+    rootThreshold: 2.5,
+    importances: [['Feature', score], ...],  // Array (sorted)
+    maxDepth: 4
+};
+
+window.treeBuilt = true;  // For task tracking
+```
+
+### Bug Fixes Applied
+
+1. **importance.sort() Error**: `getFeatureImportance()` returns object, not array
+   ```javascript
+   // Fix: Convert to array
+   const importanceArray = Object.entries(importance)
+       .map(([name, val]) => [name, val])
+       .sort((a, b) => b[1] - a[1]);
+   ```
+
+2. **Sidebar Not Appearing**: Tutorial sidebar needs `.active` class
+   ```javascript
+   requestAnimationFrame(() => {
+       document.getElementById('tutorial-sidebar').classList.add('active');
+   });
+   ```
+
+3. **Z-Index Modal Issue**: Node details modal hidden behind overlay
+   ```css
+   .node-details-modal { z-index: 10001; }  /* Above tutorial overlay (9999) */
+   ```
+
+4. **Task Tracking for Build Tree**: Added `window.treeBuilt = false` at init, set `true` in buildTree()
+
+### UI Additions
+
+**Train Accuracy Metric Card** (in metrics panel):
+```html
+<div class="metric-card" id="train-accuracy-card">
+    <span class="metric-value" id="train-accuracy">-</span>
+    <span class="metric-label">Train Accuracy</span>
+</div>
+```
+
+**Color-coded overfitting indicator**: If train accuracy exceeds test accuracy by >10%, Train Accuracy displays in orange.
+
+### tut- Wrapper IDs Added
+
+| ID | Element |
+|----|---------|
+| `tut-scenario-dropdown` | Scenario dropdown wrapper |
+| `tut-load-scenario` | Load button |
+| `tut-settings-panel` | Settings panel |
+| `tut-max-depth` | Max depth slider |
+| `tut-build-tree-btn` | Build tree button |
+| `tut-tree-container` | Tree visualization |
+| `tut-metrics-summary` | Metrics cards |
+| `tut-confusion-matrix` | Confusion matrix |
+| `tut-feature-importance` | Feature importance chart |
+| `tut-export-section` | Export buttons |
+
+### Dynamic Quiz Examples
+
+**Step 7 (Baseline Metrics)**:
+```javascript
+getDynamicQuizzes: () => [{
+    question: `Your model shows ${(state.trainAccuracy*100).toFixed(0)}% train accuracy 
+               and ${(state.accuracy*100).toFixed(0)}% test accuracy. 
+               What does this ${gap > 5 ? 'gap' : 'similarity'} suggest?`,
+    // Dynamic answers based on actual gap
+}]
+```
+
+**Step 9 (Overfitting Observe)**:
+```javascript
+// Compare current depth to baseline (depth 4)
+// Quiz asks about the change in metrics
+```
+
+### Script Load Order Updated
+```html
+<script src="scenarios.js"></script>
+<script src="decision_tree.js"></script>
+<script src="tree_visualizer.js"></script>
+<script src="manual_builder.js"></script>
+<script src="main.js"></script>
+<script src="dt_tutorial.js"></script>  <!-- NEW - Must be last -->
+```
+
+---
+
+## Testing Checklist (Professor Mode)
+
+- [ ] Tutorial sidebar slides in when Professor Mode clicked
+- [ ] All 13 steps render correctly
+- [ ] Step 4: Task completes when depth set to 4
+- [ ] Step 5: Task completes when tree built (window.treeBuilt)
+- [ ] Step 7: Train and Test accuracy display correctly
+- [ ] Step 8: Depth slider highlighting works
+- [ ] Step 9: Overfitting detection works when depth increased
+- [ ] Node click expands modal (z-index correct)
+- [ ] Dynamic quizzes use actual metric values
+- [ ] No console errors throughout
+
+---
+
+## Reference: Existing Professor Mode Implementations
+
+Reviewed before implementation:
+- `apps/clustering/k-means/kmeans_tutorial.js` (~1000 lines)
+- `apps/regression/logistic/logistic_tutorial.js` (~900 lines)  
+- `apps/hypothesis_testing/chi-square/chi_square_tutorial.js` (~800 lines)
+
+All follow same pattern: DTTutorial object, steps array, check()/onEnter()/getDynamicQuizzes() methods.
+
+---
+
+## Critical Implementation Details for Continuation
+
+### File Locations & Line References
+
+**dt_tutorial.js** (`apps/decisiontrees/classifier/dt_tutorial.js`) - ~1155 lines
+- Lines 1-50: DTTutorial object definition, steps array start
+- Lines 50-100: Step 1 (welcome) and Step 2 (concepts)
+- Lines 100-200: Step 3 (load_data) with task tracking
+- Lines 200-300: Step 4 (configure) - depth = 4 requirement
+- Lines 300-400: Step 5 (build_tree) - uses `window.treeBuilt`
+- Lines 400-550: Step 6 (interpret_tree) - node exploration
+- Lines 550-700: Step 7 (metrics_baseline) - Record train/test accuracy
+- Lines 700-850: Step 8 (overfitting_setup) - Change to depth 8+
+- Lines 850-950: Step 9 (overfitting_observe) - Compare results
+- Lines 950-1050: Steps 10-12 (metrics, confusion, importance)
+- Lines 1050-1155: Step 13 (conclusion) + renderSidebar() + init
+
+**main.js** (`apps/decisiontrees/classifier/main.js`) - Key sections:
+- Line 59: `window.treeBuilt = false;`
+- Line 629: `window.treeBuilt = true;` (in buildTree function)
+- Lines 895-898: importanceArray conversion for auto mode
+- Lines 910-943: window.lastTreeState exposure for auto mode
+- Lines 999-1002: importanceArray conversion for manual mode
+- Lines 1019-1042: window.lastTreeState exposure for manual mode
+
+**index.html** (`apps/decisiontrees/classifier/index.html`):
+- Line 48: Professor Mode banner toggle
+- Line 623: `<script src="dt_tutorial.js"></script>` (last script)
+- Train Accuracy metric card in metrics-summary section
+
+**styles.css** (`apps/decisiontrees/classifier/styles.css`):
+- `.node-details-modal { z-index: 10001; }` - Fixed modal layering
+
+### Code Snippets for Reference
+
+**importanceArray Conversion** (main.js, around line 895):
+```javascript
+const importance = tree.getFeatureImportance();
+const importanceArray = Object.entries(importance).map(([feature, imp]) => ({
+    feature: feature,
+    importance: imp
+})).sort((a, b) => b.importance - a.importance);
+```
+
+**window.lastTreeState Structure** (main.js, around line 910):
+```javascript
+window.lastTreeState = {
+    accuracy: metrics.accuracy,
+    trainAccuracy: trainMetrics.accuracy,
+    precision: metrics.precision,
+    recall: metrics.recall,
+    f1: metrics.f1,
+    confusionMatrix: metrics.confusionMatrix,
+    rootFeature: tree.root?.feature || '',
+    rootThreshold: tree.root?.threshold || 0,
+    importances: importanceArray.map(item => [item.feature, item.importance]),
+    maxDepth: parseInt(document.getElementById('max-depth').value),
+    depthChanged: window.lastTreeState?.maxDepth !== parseInt(document.getElementById('max-depth').value),
+    previousDepth: window.lastTreeState?.maxDepth || 4
+};
+```
+
+**displayMetrics with Train Accuracy** (main.js):
+```javascript
+function displayMetrics(testMetrics, trainMetrics) {
+    document.getElementById('metric-accuracy').textContent = (testMetrics.accuracy * 100).toFixed(1) + '%';
+    document.getElementById('metric-train-accuracy').textContent = (trainMetrics.accuracy * 100).toFixed(1) + '%';
+    
+    // Overfitting indicator - color train accuracy if gap > 10%
+    const gap = trainMetrics.accuracy - testMetrics.accuracy;
+    const trainCard = document.getElementById('train-accuracy-card');
+    if (gap > 0.1) {
+        trainCard.classList.add('overfitting-warning');
+    } else {
+        trainCard.classList.remove('overfitting-warning');
+    }
+    // ... rest of metrics
+}
+```
+
+**Sidebar Animation Fix** (dt_tutorial.js, in renderSidebar):
+```javascript
+document.body.appendChild(sidebar);
+// Trigger animation after DOM insertion
+requestAnimationFrame(() => {
+    sidebar.classList.add('active');
+});
+```
+
+### Z-Index Hierarchy
+
+| Element | Z-Index | Purpose |
+|---------|---------|---------|
+| Tutorial Overlay | 9999 | Dims background |
+| Tutorial Sidebar | 10000 | Tutorial panel |
+| Highlight Box | 10000 | Points to elements |
+| Node Details Modal | 10001 | Must be ABOVE overlay |
+
+### State Variables to Track
+
+```javascript
+// In main.js (global)
+window.treeBuilt = false;        // Set true when Build Tree clicked
+window.lastTreeState = null;     // Updated after each tree build
+
+// Tutorial tracks internally
+DTTutorial.currentStep           // Current step index (0-12)
+DTTutorial.stepData              // Persistent data between steps
+```
+
+---
+
+## Session End State (February 2, 2026)
+
+### What's Done
+✅ Full Decision Tree Classifier tool implementation  
+✅ All three marketing scenarios with data generators  
+✅ Auto mode and Manual mode working  
+✅ Professor Mode tutorial with 13 steps  
+✅ All bug fixes applied (importance.sort, sidebar, z-index)  
+✅ Train Accuracy added to UI  
+✅ Pedagogical restructuring (baseline → predict → change → observe)  
+
+### What's NOT Done
+❌ Browser testing not completed  
+❌ No verification in live environment  
+❌ May still have runtime bugs  
+
+### Immediate Next Steps
+
+1. **Open in browser**: `apps/decisiontrees/classifier/index.html`
+2. **Test auto mode first** - Load scenario, build tree, check metrics
+3. **Test Professor Mode** - Click toggle, walk through all 13 steps
+4. **Check console** - Look for any JavaScript errors
+5. **Test node clicking** - Verify modal appears above tutorial overlay
+
+### Potential Issues to Watch For
+
+1. **Import/export paths** - If files moved, script paths may break
+2. **Feature types mismatch** - categorical vs continuous handling
+3. **Train metrics calculation** - Need to verify tree is predicting on training data correctly
+4. **Quiz answer generation** - Dynamic quizzes depend on window.lastTreeState being populated
+
+---
+
+## Commands for Quick Navigation
+
+```bash
+# Open the classifier tool
+start "" "apps/decisiontrees/classifier/index.html"
+
+# Find all tutorial-related code
+grep -r "DTTutorial" apps/decisiontrees/classifier/
+
+# Check for window.lastTreeState usage
+grep -r "lastTreeState" apps/decisiontrees/classifier/
+
+# Find all tut- IDs in HTML
+grep -r "tut-" apps/decisiontrees/classifier/index.html
+```
+
+---
+
+## Similar Files for Reference Pattern
+
+If you need to see how other Professor Mode tutorials work:
+- `apps/clustering/k-means/kmeans_tutorial.js`
+- `apps/regression/logistic/logistic_tutorial.js`
+- `apps/hypothesis_testing/chi-square/chi_square_tutorial.js`
+
+All follow identical patterns for:
+- Step structure with check()/onEnter()/getDynamicQuizzes()
+- Sidebar rendering with animation
+- Task completion tracking
+- Dynamic quiz generation from app state
+
+---
+
+*Last updated: February 2, 2026 - End of Session 2*

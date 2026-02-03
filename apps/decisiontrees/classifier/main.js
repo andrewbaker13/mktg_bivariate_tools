@@ -6,8 +6,40 @@
 // Tool identifier for tracking
 const TOOL_SLUG = 'decision-tree-classifier';
 
+// --- Seeded Random Generator (Mulberry32) ---
+// Allows train/test split to be deterministic if a seed is provided
+class SeededRNG {
+    constructor(seed) {
+        if (seed === undefined || seed === null || seed === '') {
+            this.seed = Math.floor(Math.random() * 2147483647);
+        } else {
+            // Hash string or use number
+            if (typeof seed === 'string') {
+                let h = 2166136261 >>> 0;
+                for (let i = 0; i < seed.length; i++) {
+                    h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+                }
+                this.seed = h >>> 0;
+            } else {
+                this.seed = seed >>> 0;
+            }
+        }
+    }
+
+    // Get a float (0 to 1)
+    next() {
+        let t = this.seed += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+}
+
+// Global PRNG instance
+let prng = null;
+
 // Global state
-let currentScenario = null;
+let currentTreeScenario = null;
 let currentData = null;
 let currentLabels = null;
 let featureNames = [];
@@ -23,12 +55,17 @@ let manualBuilder = null;
 let buildMode = 'auto'; // 'auto' or 'manual'
 let treeBuilt = false;
 
+// Expose treeBuilt globally for Professor Mode (initialize as false)
+window.treeBuilt = false;
+
 // Settings
 let settings = {
     maxDepth: 3,
     minSamplesLeaf: 10,
     criterion: 'gini',
-    trainSplit: 0.7
+    trainSplit: 0.7,
+    randomSeed: null,
+    targetClass: null  // The "positive" class for metrics
 };
 
 /**
@@ -52,7 +89,23 @@ function init() {
         onNodeClick: handleNodeClick
     });
     
+    // Initialize random seed
+    initializeSeed();
+    
     console.log('Decision Tree Classifier initialized');
+}
+
+/**
+ * Initialize the random seed
+ */
+function initializeSeed() {
+    const seedInput = document.getElementById('random-seed');
+    if (!seedInput.value) {
+        // Generate a random seed on first load
+        const randomSeed = Math.floor(Math.random() * 100000);
+        seedInput.value = randomSeed;
+    }
+    settings.randomSeed = seedInput.value;
 }
 
 /**
@@ -67,6 +120,7 @@ function setupEventListeners() {
     const dropzone = document.getElementById('data-dropzone');
     const fileInput = document.getElementById('file-input');
     const browseBtn = document.getElementById('browse-btn');
+    const templateBtn = document.getElementById('template-download');
     
     dropzone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -91,6 +145,11 @@ function setupEventListeners() {
             handleFileUpload(e.target.files[0]);
         }
     });
+    
+    // Template download
+    if (templateBtn) {
+        templateBtn.addEventListener('click', downloadSampleTemplate);
+    }
     
     // Outcome selection for custom data
     document.getElementById('outcome-select').addEventListener('change', handleOutcomeChange);
@@ -119,13 +178,77 @@ function setupEventListeners() {
         document.getElementById('train-split-val').textContent = e.target.value;
     });
     
-    // Build/Reset buttons
+    // Random seed
+    const seedInput = document.getElementById('random-seed');
+    const newSeedBtn = document.getElementById('new-seed-btn');
+    
+    if (seedInput) {
+        seedInput.addEventListener('change', (e) => {
+            settings.randomSeed = e.target.value;
+        });
+    }
+    
+    if (newSeedBtn) {
+        newSeedBtn.addEventListener('click', () => {
+            const newSeed = Math.floor(Math.random() * 100000);
+            seedInput.value = newSeed;
+            settings.randomSeed = newSeed;
+        });
+    }
+    
+    // Build/Reset/Finish buttons
     document.getElementById('build-btn').addEventListener('click', buildTree);
     document.getElementById('reset-btn').addEventListener('click', resetTree);
+    document.getElementById('finish-building-btn').addEventListener('click', finishManualBuilding);
+    
+    // Target class selector
+    document.getElementById('target-class-select').addEventListener('change', (e) => {
+        settings.targetClass = e.target.value;
+        // Recalculate metrics with new target class
+        if (treeBuilt && classifier) {
+            displayResults();
+        }
+    });
     
     // Export buttons
     document.getElementById('export-rules-btn').addEventListener('click', exportRules);
     document.getElementById('export-predictions-btn').addEventListener('click', exportPredictions);
+    
+    // Node details modal close handlers
+    const nodeModal = document.getElementById('node-details-modal');
+    const closeNodeBtn = document.getElementById('close-node-details');
+    
+    if (closeNodeBtn) {
+        closeNodeBtn.addEventListener('click', closeNodeDetails);
+    }
+    
+    if (nodeModal) {
+        // Close modal when clicking outside
+        nodeModal.addEventListener('click', (e) => {
+            if (e.target === nodeModal) {
+                closeNodeDetails();
+            }
+        });
+    }
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && nodeModal && !nodeModal.classList.contains('hidden')) {
+            closeNodeDetails();
+        }
+    });
+}
+
+/**
+ * Download sample template CSV
+ */
+function downloadSampleTemplate() {
+    const link = document.createElement('a');
+    link.href = 'sample_template.csv';
+    link.download = 'decision_tree_template.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 /**
@@ -142,19 +265,19 @@ function handleScenarioChange(e) {
         `;
         document.getElementById('scenario-download').disabled = true;
         document.getElementById('build-btn').disabled = true;
-        currentScenario = null;
+        currentTreeScenario = null;
         return;
     }
     
-    currentScenario = getScenarioById(scenarioId);
+    currentTreeScenario = getScenarioById(scenarioId);
     
     // Update description
-    document.getElementById('scenario-description').innerHTML = currentScenario.description();
+    document.getElementById('scenario-description').innerHTML = currentTreeScenario.description();
     document.getElementById('scenario-download').disabled = false;
     
     // Generate data
     const rawData = generateScenarioData(scenarioId);
-    loadScenarioData(rawData, currentScenario);
+    loadScenarioData(rawData, currentTreeScenario);
     
     // Enable build button
     document.getElementById('build-btn').disabled = false;
@@ -175,6 +298,9 @@ function loadScenarioData(rawData, scenario) {
     featureTypes = scenario.featureTypes;
     classes = scenario.outcomeClasses;
     
+    // Populate target class selector
+    populateTargetClassSelector();
+    
     // Extract features and labels
     currentData = rawData.map(row => 
         featureNames.map(f => {
@@ -190,15 +316,45 @@ function loadScenarioData(rawData, scenario) {
 }
 
 /**
+ * Populate the target class selector dropdown
+ */
+function populateTargetClassSelector() {
+    const select = document.getElementById('target-class-select');
+    select.innerHTML = '';
+    
+    classes.forEach((cls, idx) => {
+        const option = document.createElement('option');
+        option.value = cls;
+        option.textContent = cls;
+        // Default to first class (or try to pick a sensible default like "Churned", "Yes", "1")
+        if (idx === 0 || ['Churned', 'Converted', 'Yes', '1', 'True'].includes(cls)) {
+            option.selected = true;
+            settings.targetClass = cls;
+        }
+        select.appendChild(option);
+    });
+    
+    select.disabled = false;
+}
+
+/**
  * Split data into train/test sets
+ * Uses seeded RNG for reproducibility when seed is set
  */
 function splitData() {
     const n = currentData.length;
     const indices = Array.from({ length: n }, (_, i) => i);
     
-    // Shuffle
+    // Get current seed from input
+    const seedInput = document.getElementById('random-seed');
+    const seed = seedInput ? seedInput.value : null;
+    
+    // Create seeded RNG
+    prng = new SeededRNG(seed);
+    
+    // Shuffle using seeded RNG (Fisher-Yates)
     for (let i = indices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(prng.next() * (i + 1));
         [indices[i], indices[j]] = [indices[j], indices[i]];
     }
     
@@ -252,7 +408,7 @@ function handleFileUpload(file) {
             document.getElementById('scenario-description').innerHTML = `
                 <p>Custom dataset loaded. Select your outcome variable below.</p>
             `;
-            currentScenario = null;
+            currentTreeScenario = null;
             
         } catch (err) {
             showUploadError('Error parsing file: ' + err.message);
@@ -290,38 +446,41 @@ function handleOutcomeChange(e) {
     const headers = Object.keys(data[0]);
     const predictors = headers.filter(h => h !== outcomeVar);
     
-    // Detect feature types
+    // Detect feature types using shared utility if available, else fallback
     featureNames = predictors;
     featureTypes = {};
+    
+    // Store metadata for toggle capability
+    window.predictorMeta = {};
     
     predictors.forEach(p => {
         const values = data.map(row => row[p]);
         const uniqueValues = [...new Set(values)];
-        const isNumeric = values.every(v => !isNaN(parseFloat(v)));
+        const isNumeric = values.every(v => v !== '' && v !== null && !isNaN(parseFloat(v)));
+        
+        // Store metadata
+        window.predictorMeta[p] = {
+            isNumeric: isNumeric,
+            uniqueCount: uniqueValues.length,
+            canToggle: isNumeric // Only numeric columns can toggle between types
+        };
+        
+        // Default: numeric with >10 unique values = continuous, else categorical
         featureTypes[p] = (isNumeric && uniqueValues.length > 10) ? 'continuous' : 'categorical';
     });
     
     // Get classes
     classes = [...new Set(data.map(row => row[outcomeVar]))].sort();
     
-    // Extract features and labels
-    currentData = data.map(row => 
-        featureNames.map(f => {
-            const val = row[f];
-            return featureTypes[f] === 'continuous' ? parseFloat(val) : val;
-        })
-    );
-    currentLabels = data.map(row => row[outcomeVar]);
+    // Populate target class selector
+    populateTargetClassSelector();
     
-    // Show predictors
-    const predictorList = document.getElementById('predictor-list');
-    predictorList.innerHTML = '<p style="margin-bottom: 0.5rem;"><strong>Predictors:</strong></p>';
-    featureNames.forEach(f => {
-        const chip = document.createElement('span');
-        chip.className = 'predictor-chip';
-        chip.textContent = `${f} (${featureTypes[f]})`;
-        predictorList.appendChild(chip);
-    });
+    // Store outcome variable
+    window.selectedOutcome = outcomeVar;
+    
+    // Rebuild data and UI
+    rebuildDataFromTypes();
+    renderPredictorChips();
     
     // Split data
     splitData();
@@ -331,6 +490,70 @@ function handleOutcomeChange(e) {
     document.getElementById('reset-btn').disabled = false;
     
     resetTree();
+}
+
+/**
+ * Rebuild currentData based on current featureTypes
+ */
+function rebuildDataFromTypes() {
+    if (!window.uploadedData) return;
+    
+    currentData = window.uploadedData.map(row => 
+        featureNames.map(f => {
+            const val = row[f];
+            return featureTypes[f] === 'continuous' ? parseFloat(val) : val;
+        })
+    );
+    currentLabels = window.uploadedData.map(row => row[window.selectedOutcome]);
+}
+
+/**
+ * Render predictor chips with toggle capability
+ */
+function renderPredictorChips() {
+    const predictorList = document.getElementById('predictor-list');
+    predictorList.innerHTML = '<p style="margin-bottom: 0.5rem;"><strong>Predictors:</strong></p>';
+    
+    featureNames.forEach(f => {
+        const meta = window.predictorMeta[f] || {};
+        const chip = document.createElement('span');
+        chip.className = `predictor-chip ${meta.canToggle ? 'toggleable' : ''}`;
+        chip.dataset.feature = f;
+        chip.innerHTML = `${f} <span class="type-badge">${featureTypes[f]}</span>`;
+        
+        // Add click handler for toggleable chips
+        if (meta.canToggle) {
+            chip.title = 'Click to toggle between categorical and continuous';
+            chip.addEventListener('click', () => toggleFeatureType(f));
+        }
+        
+        predictorList.appendChild(chip);
+    });
+}
+
+/**
+ * Toggle a feature between categorical and continuous
+ */
+function toggleFeatureType(featureName) {
+    const meta = window.predictorMeta[featureName];
+    if (!meta || !meta.canToggle) return;
+    
+    // Toggle type
+    featureTypes[featureName] = featureTypes[featureName] === 'continuous' ? 'categorical' : 'continuous';
+    
+    // Rebuild data with new types
+    rebuildDataFromTypes();
+    
+    // Re-render chips
+    renderPredictorChips();
+    
+    // Re-split data
+    splitData();
+    
+    // Reset tree if already built
+    if (treeBuilt) {
+        resetTree();
+    }
 }
 
 /**
@@ -345,16 +568,16 @@ function showUploadError(message) {
  * Download scenario data as CSV
  */
 function downloadScenarioData() {
-    if (!currentScenario) return;
+    if (!currentTreeScenario) return;
     
-    const data = generateScenarioData(currentScenario.id);
+    const data = generateScenarioData(currentTreeScenario.id);
     const csv = dataToCSV(data);
     
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${currentScenario.id}_data.csv`;
+    a.download = `${currentTreeScenario.id}_data.csv`;
     a.click();
     URL.revokeObjectURL(url);
 }
@@ -403,6 +626,7 @@ function buildTree() {
     }
     
     treeBuilt = true;
+    window.treeBuilt = true;  // Expose for Professor Mode
 }
 
 /**
@@ -422,15 +646,8 @@ function buildAutoTree() {
     const treeData = classifier.exportForVisualization();
     visualizer.render(treeData);
     
-    // Evaluate on test set
-    const predictions = classifier.predict(testData);
-    const metrics = calculateMetrics(testLabels, predictions, classes);
-    
-    displayMetrics(metrics);
-    displayConfusionMatrix(metrics);
-    displayROCOrPerClass(metrics);
-    displayFeatureImportance(classifier.getFeatureImportance());
-    displayInterpretation(classifier);
+    // Display all results
+    displayResults();
     
     // Enable exports
     document.getElementById('export-rules-btn').disabled = false;
@@ -455,8 +672,274 @@ function initManualTree() {
     const treeData = manualBuilder.exportTree();
     visualizer.render(treeData);
     
+    // Show manual mode UI elements
+    document.getElementById('finish-building-btn').classList.remove('hidden');
+    document.getElementById('manual-mode-instructions').classList.remove('hidden');
+    
     // Clear metrics (will update as tree is built)
     clearMetrics();
+}
+
+/**
+ * Finish manual tree building - mark all undecided nodes as leaves and evaluate
+ */
+function finishManualBuilding() {
+    if (!manualBuilder) return;
+    
+    // Mark all undecided nodes as leaves
+    manualBuilder.finalizeTree();
+    
+    // Create a classifier-like object from manual tree for evaluation
+    const treeData = manualBuilder.exportTree();
+    
+    // Create temporary classifier with manual tree structure
+    classifier = {
+        root: treeData.root,
+        classes: treeData.classes,
+        featureNames: featureNames,
+        featureTypes: featureTypes,
+        predict: function(data) {
+            return data.map(row => this.predictOne(row));
+        },
+        predictOne: function(row) {
+            let node = this.root;
+            while (node && !node.isLeaf && node.left && node.right && node.split) {
+                const featureIdx = this.featureNames.indexOf(node.split.feature);
+                const value = row[featureIdx];
+                
+                if (node.split.type === 'continuous') {
+                    node = value <= node.split.threshold ? node.left : node.right;
+                } else {
+                    node = node.split.leftCategories.includes(value) ? node.left : node.right;
+                }
+            }
+            // Return object matching auto classifier format
+            return {
+                prediction: node ? node.prediction : treeData.classes[0],
+                confidence: node ? node.confidence : 0,
+                distribution: node ? node.distribution : {},
+                nodeId: node ? node.id : 'root'
+            };
+        },
+        predictProba: function(data) {
+            return data.map(row => this.predictProbaOne(row));
+        },
+        predictProbaOne: function(row) {
+            let node = this.root;
+            while (node && !node.isLeaf && node.left && node.right && node.split) {
+                const featureIdx = this.featureNames.indexOf(node.split.feature);
+                const value = row[featureIdx];
+                
+                if (node.split.type === 'continuous') {
+                    node = value <= node.split.threshold ? node.left : node.right;
+                } else {
+                    node = node.split.leftCategories.includes(value) ? node.left : node.right;
+                }
+            }
+            // Return probability distribution from node
+            const proba = {};
+            this.classes.forEach(cls => {
+                proba[cls] = node ? (node.distribution[cls] || 0) / node.n : 1 / this.classes.length;
+            });
+            return proba;
+        },
+        getFeatureImportance: function() {
+            // Calculate simple feature importance based on splits used
+            const importance = {};
+            featureNames.forEach(f => importance[f] = 0);
+            
+            const countSplits = (node) => {
+                if (!node || node.isLeaf || !node.split) return;
+                importance[node.split.feature] += node.n;
+                countSplits(node.left);
+                countSplits(node.right);
+            };
+            countSplits(this.root);
+            
+            // Normalize
+            const total = Object.values(importance).reduce((a, b) => a + b, 0);
+            if (total > 0) {
+                for (const f in importance) importance[f] /= total;
+            }
+            return importance;
+        },
+        getRules: function(node = this.root, path = []) {
+            const rules = [];
+            
+            if (!node) return rules;
+            
+            if (node.isLeaf || !node.split) {
+                const conditions = path.length > 0 ? path.join(' AND ') : 'Always';
+                rules.push({
+                    conditions: conditions,
+                    prediction: node.prediction,
+                    confidence: node.confidence,
+                    n: node.n
+                });
+                return rules;
+            }
+            
+            // Left branch
+            let leftCondition;
+            if (node.split.type === 'continuous') {
+                leftCondition = `${node.split.feature} ≤ ${node.split.threshold.toFixed(2)}`;
+            } else {
+                leftCondition = `${node.split.feature} ∈ {${node.split.leftCategories.join(', ')}}`;
+            }
+            if (node.left) {
+                rules.push(...this.getRules(node.left, [...path, leftCondition]));
+            }
+            
+            // Right branch
+            let rightCondition;
+            if (node.split.type === 'continuous') {
+                rightCondition = `${node.split.feature} > ${node.split.threshold.toFixed(2)}`;
+            } else {
+                rightCondition = `${node.split.feature} ∈ {${node.split.rightCategories.join(', ')}}`;
+            }
+            if (node.right) {
+                rules.push(...this.getRules(node.right, [...path, rightCondition]));
+            }
+            
+            return rules;
+        },
+        getTreeStats: function() {
+            let nodeCount = 0;
+            let leafCount = 0;
+            let maxDepth = 0;
+            
+            const traverse = (node) => {
+                if (!node) return;
+                nodeCount++;
+                maxDepth = Math.max(maxDepth, node.depth || 0);
+                
+                if (node.isLeaf || !node.split) {
+                    leafCount++;
+                } else {
+                    traverse(node.left);
+                    traverse(node.right);
+                }
+            };
+            
+            traverse(this.root);
+            
+            return {
+                nodeCount,
+                leafCount,
+                maxDepth,
+                classes: this.classes,
+                features: this.featureNames
+            };
+        },
+        exportRules: function() {
+            const rules = [];
+            const traverse = (node, conditions) => {
+                if (!node) return;
+                if (node.isLeaf || (!node.left && !node.right)) {
+                    rules.push({
+                        conditions: [...conditions],
+                        prediction: node.prediction,
+                        confidence: node.confidence,
+                        samples: node.n
+                    });
+                    return;
+                }
+                if (node.left && node.split) {
+                    const leftCond = node.split.type === 'continuous'
+                        ? `${node.split.feature} <= ${node.split.threshold.toFixed(2)}`
+                        : `${node.split.feature} in [${node.split.leftCategories.join(', ')}]`;
+                    traverse(node.left, [...conditions, leftCond]);
+                }
+                if (node.right && node.split) {
+                    const rightCond = node.split.type === 'continuous'
+                        ? `${node.split.feature} > ${node.split.threshold.toFixed(2)}`
+                        : `${node.split.feature} in [${node.split.rightCategories.join(', ')}]`;
+                    traverse(node.right, [...conditions, rightCond]);
+                }
+            };
+            traverse(this.root, []);
+            return rules;
+        }
+    };
+    
+    // Re-render final tree
+    visualizer.render(treeData);
+    
+    // Evaluate on test set
+    displayResults();
+    
+    // Hide manual mode UI elements
+    document.getElementById('finish-building-btn').classList.add('hidden');
+    document.getElementById('manual-mode-instructions').classList.add('hidden');
+    
+    // Enable exports
+    document.getElementById('export-rules-btn').disabled = false;
+    document.getElementById('export-predictions-btn').disabled = false;
+}
+
+/**
+ * Display all results (metrics, confusion matrix, ROC, etc.)
+ */
+function displayResults() {
+    if (!classifier || !testData || !testLabels) return;
+    
+    const predictions = classifier.predict(testData);
+    const metrics = calculateMetrics(testLabels, predictions, classes, settings.targetClass);
+    const importance = classifier.getFeatureImportance();
+    
+    // Compute train accuracy for overfitting comparison
+    const trainPredictions = classifier.predict(trainData);
+    const trainMetrics = calculateMetrics(trainLabels, trainPredictions, classes, settings.targetClass);
+    
+    // Convert importance object to sorted array
+    const importanceArray = Object.entries(importance).map(([feature, imp]) => ({
+        feature: feature,
+        importance: imp
+    })).sort((a, b) => b.importance - a.importance);
+    
+    displayMetrics(metrics, trainMetrics);
+    displayConfusionMatrix(metrics);
+    displayROCOrPerClass(metrics);
+    displayFeatureImportance(importance);
+    displayInterpretation(classifier);
+    
+    // Expose state for Professor Mode dynamic quizzes
+    const treeData = classifier.exportForVisualization ? classifier.exportForVisualization() : { root: classifier.root };
+    const rootNode = treeData.root;
+    
+    window.lastTreeState = {
+        // Test metrics (what's displayed)
+        accuracy: metrics.accuracy,
+        precision: metrics.precision,
+        recall: metrics.recall,
+        f1: metrics.f1,
+        confusionMatrix: metrics.confusionMatrix,
+        
+        // Train metrics (for overfitting comparison)
+        trainAccuracy: trainMetrics.accuracy,
+        trainPrecision: trainMetrics.precision,
+        trainRecall: trainMetrics.recall,
+        trainF1: trainMetrics.f1,
+        
+        // Tree structure info
+        rootFeature: rootNode?.split?.feature || null,
+        rootThreshold: rootNode?.split?.threshold || null,
+        rootType: rootNode?.split?.type || null,
+        maxDepth: settings.maxDepth,
+        minSamplesLeaf: settings.minSamplesLeaf,
+        criterion: settings.criterion,
+        
+        // Feature importance (already sorted as array)
+        importances: importanceArray,
+        
+        // Classes and target
+        classes: classes,
+        targetClass: settings.targetClass,
+        
+        // Sample sizes
+        trainSize: trainData.length,
+        testSize: testData.length
+    };
 }
 
 /**
@@ -506,11 +989,22 @@ function evaluateManualTree(treeData) {
     if (!hasUndecidedNodes) {
         const predictions = tempClassifier.predict(testData);
         const metrics = calculateMetrics(testLabels, predictions, classes);
+        const importance = tempClassifier.getFeatureImportance();
         
-        displayMetrics(metrics);
+        // Compute train metrics
+        const trainPredictions = tempClassifier.predict(trainData);
+        const trainMetrics = calculateMetrics(trainLabels, trainPredictions, classes, settings.targetClass);
+        
+        // Convert importance object to sorted array
+        const importanceArray = Object.entries(importance).map(([feature, imp]) => ({
+            feature: feature,
+            importance: imp
+        })).sort((a, b) => b.importance - a.importance);
+        
+        displayMetrics(metrics, trainMetrics);
         displayConfusionMatrix(metrics);
         displayROCOrPerClass(metrics);
-        displayFeatureImportance(tempClassifier.getFeatureImportance());
+        displayFeatureImportance(importance);
         displayInterpretation(tempClassifier);
         
         document.getElementById('export-rules-btn').disabled = false;
@@ -518,6 +1012,32 @@ function evaluateManualTree(treeData) {
         
         // Store for exports
         classifier = tempClassifier;
+        
+        // Expose state for Professor Mode dynamic quizzes (manual mode)
+        const rootNode = treeData.root;
+        
+        window.lastTreeState = {
+            accuracy: metrics.accuracy,
+            precision: metrics.precision,
+            recall: metrics.recall,
+            f1: metrics.f1,
+            confusionMatrix: metrics.confusionMatrix,
+            trainAccuracy: trainMetrics.accuracy,
+            trainPrecision: trainMetrics.precision,
+            trainRecall: trainMetrics.recall,
+            trainF1: trainMetrics.f1,
+            rootFeature: rootNode?.split?.feature || null,
+            rootThreshold: rootNode?.split?.threshold || null,
+            rootType: rootNode?.split?.type || null,
+            maxDepth: settings.maxDepth,
+            minSamplesLeaf: settings.minSamplesLeaf,
+            criterion: settings.criterion,
+            importances: importanceArray,
+            classes: classes,
+            targetClass: settings.targetClass,
+            trainSize: trainData.length,
+            testSize: testData.length
+        };
     }
 }
 
@@ -536,8 +1056,80 @@ function hasUndecided(node) {
  * Show node details (for auto mode or completed nodes)
  */
 function showNodeDetails(node) {
-    // Could show a modal or tooltip with detailed node stats
-    console.log('Node details:', node);
+    const modal = document.getElementById('node-details-modal');
+    const content = document.getElementById('node-details-content');
+    const title = document.getElementById('node-details-title');
+    
+    // Determine node type
+    const isLeaf = node.isLeaf || (!node.left && !node.right);
+    title.textContent = isLeaf ? '🍃 Leaf Node' : '🔀 Split Node';
+    
+    // Build compact content
+    let html = '';
+    
+    // Samples count
+    const pctOfData = trainData ? ((node.n / trainData.length) * 100).toFixed(1) : '100';
+    html += `<div class="node-detail-row"><span class="detail-label">Samples:</span> <strong>${node.n.toLocaleString()}</strong> (${pctOfData}% of data)</div>`;
+    
+    // Split rule (for decision nodes)
+    if (node.split && !isLeaf) {
+        let ruleText = '';
+        if (node.split.type === 'continuous') {
+            ruleText = `${node.split.feature} ≤ ${node.split.threshold.toFixed(2)}`;
+        } else {
+            ruleText = `${node.split.feature} ∈ {${node.split.leftCategories.join(', ')}}`;
+        }
+        html += `<div class="node-detail-row"><span class="detail-label">Split:</span> ${ruleText}</div>`;
+    }
+    
+    // Prediction with confidence
+    html += `<div class="node-detail-row"><span class="detail-label">${isLeaf ? 'Prediction:' : 'Majority:'}</span> <span class="node-prediction-badge ${isLeaf ? 'leaf' : 'split'}">${node.prediction}</span> <span class="confidence-text">(${(node.confidence * 100).toFixed(1)}%)</span></div>`;
+    
+    // Impurity
+    if (node.impurity !== undefined) {
+        html += `<div class="node-detail-row"><span class="detail-label">Gini:</span> ${node.impurity.toFixed(4)}</div>`;
+    }
+    
+    // Depth
+    html += `<div class="node-detail-row"><span class="detail-label">Depth:</span> Level ${node.depth !== undefined ? node.depth : 0}</div>`;
+    
+    // Class distribution - compact inline
+    html += `<div class="node-detail-section" style="margin-top: 0.75rem;"><span class="detail-label">Distribution:</span></div>`;
+    
+    // Visual distribution bar only
+    const colors = ['#22c55e', '#ef4444', '#f59e0b', '#3b82f6', '#a855f7'];
+    html += '<div class="distribution-bar-container" style="margin-top: 0.5rem;">';
+    let colorIdx = 0;
+    for (const cls in node.distribution) {
+        const count = node.distribution[cls];
+        const pct = (count / node.n) * 100;
+        if (pct > 0) {
+            html += `<div class="distribution-bar-segment" style="width: ${pct}%; background: ${colors[colorIdx % colors.length]};" title="${cls}: ${count} (${pct.toFixed(1)}%)">${pct >= 15 ? cls : ''}</div>`;
+        }
+        colorIdx++;
+    }
+    html += '</div>';
+    
+    // Legend
+    html += '<div class="distribution-legend">';
+    colorIdx = 0;
+    for (const cls in node.distribution) {
+        const count = node.distribution[cls];
+        const pct = ((count / node.n) * 100).toFixed(1);
+        html += `<span class="legend-item"><span class="legend-dot" style="background: ${colors[colorIdx % colors.length]};"></span>${cls}: ${pct}%</span>`;
+        colorIdx++;
+    }
+    html += '</div>';
+    
+    content.innerHTML = html;
+    modal.classList.remove('hidden');
+}
+
+/**
+ * Close node details modal
+ */
+function closeNodeDetails() {
+    document.getElementById('node-details-modal').classList.add('hidden');
 }
 
 /**
@@ -545,6 +1137,7 @@ function showNodeDetails(node) {
  */
 function resetTree() {
     treeBuilt = false;
+    window.treeBuilt = false;
     classifier = null;
     manualBuilder = null;
     
@@ -554,6 +1147,10 @@ function resetTree() {
             <p>🌱 Select a scenario and click "Build Tree" to grow your decision tree.</p>
         </div>
     `;
+    
+    // Hide manual mode UI elements
+    document.getElementById('finish-building-btn').classList.add('hidden');
+    document.getElementById('manual-mode-instructions').classList.add('hidden');
     
     // Clear metrics
     clearMetrics();
@@ -581,12 +1178,23 @@ function clearMetrics() {
 /**
  * Display summary metrics
  */
-function displayMetrics(metrics) {
+function displayMetrics(metrics, trainMetrics = null) {
     const formatPct = (val) => (val * 100).toFixed(1) + '%';
     
     const accEl = document.getElementById('metric-accuracy');
     accEl.textContent = formatPct(metrics.accuracy);
     accEl.className = `metric-value ${metrics.accuracy > 0.8 ? 'good' : metrics.accuracy > 0.6 ? 'moderate' : 'poor'}`;
+    
+    // Display training accuracy if provided
+    const trainAccEl = document.getElementById('metric-train-accuracy');
+    if (trainAccEl && trainMetrics) {
+        trainAccEl.textContent = formatPct(trainMetrics.accuracy);
+        // Color based on gap with test accuracy (overfitting indicator)
+        const gap = trainMetrics.accuracy - metrics.accuracy;
+        trainAccEl.className = `metric-value ${gap > 0.1 ? 'poor' : gap > 0.05 ? 'moderate' : 'good'}`;
+    } else if (trainAccEl) {
+        trainAccEl.textContent = '--';
+    }
     
     const precEl = document.getElementById('metric-precision');
     precEl.textContent = formatPct(metrics.precision);
@@ -643,11 +1251,11 @@ function displayROCOrPerClass(metrics) {
     
     if (classes.length === 2) {
         // Binary: show ROC curve
-        titleEl.textContent = 'ROC Curve';
+        const positiveClass = settings.targetClass || classes[0];
+        titleEl.textContent = `ROC Curve (Target: ${positiveClass})`;
         
         // Get probabilities
         const yProbas = classifier.predictProba(testData);
-        const positiveClass = classes[1]; // Assume second class is positive
         const rocData = calculateROC(testLabels, yProbas, positiveClass);
         
         const trace = {
@@ -687,20 +1295,14 @@ function displayROCOrPerClass(metrics) {
         
         classes.forEach(cls => {
             const pc = metrics.perClass[cls];
-            html += `<tr>
-                <td>${cls}</td>
+            const isTarget = cls === settings.targetClass;
+            html += `<tr class="${isTarget ? 'target-class-row' : ''}">
+                <td>${cls}${isTarget ? ' ⭐' : ''}</td>
                 <td>${(pc.precision * 100).toFixed(1)}%</td>
                 <td>${(pc.recall * 100).toFixed(1)}%</td>
                 <td>${(pc.f1 * 100).toFixed(1)}%</td>
             </tr>`;
         });
-        
-        html += `<tr>
-            <td>Macro Avg</td>
-            <td>${(metrics.precision * 100).toFixed(1)}%</td>
-            <td>${(metrics.recall * 100).toFixed(1)}%</td>
-            <td>${(metrics.f1 * 100).toFixed(1)}%</td>
-        </tr>`;
         
         html += '</table>';
         container.innerHTML = html;
@@ -743,35 +1345,140 @@ function displayInterpretation(clf) {
     const rules = clf.getRules();
     const stats = clf.getTreeStats();
     
-    // Find most important rule for each class
+    // Find most important rule for each class (highest confidence with reasonable n)
     const bestRules = {};
     rules.forEach(rule => {
-        if (!bestRules[rule.prediction] || rule.confidence > bestRules[rule.prediction].confidence) {
+        if (!bestRules[rule.prediction] || 
+            (rule.confidence > bestRules[rule.prediction].confidence && rule.n >= 5)) {
             bestRules[rule.prediction] = rule;
         }
     });
     
+    // Find largest segment for each class
+    const largestSegments = {};
+    rules.forEach(rule => {
+        if (!largestSegments[rule.prediction] || rule.n > largestSegments[rule.prediction].n) {
+            largestSegments[rule.prediction] = rule;
+        }
+    });
+    
+    // Get target class info
+    const targetClass = settings.targetClass || classes[0];
+    const targetRule = bestRules[targetClass];
+    
+    // Calculate some summary stats
+    const totalRules = rules.length;
+    const avgConfidence = rules.reduce((sum, r) => sum + r.confidence, 0) / totalRules;
+    
     let html = `
-        <p><strong>Tree Structure:</strong> ${stats.nodeCount} nodes, ${stats.leafCount} leaves, max depth ${stats.maxDepth}</p>
-        <p><strong>Key Decision Rules:</strong></p>
-        <ul>
+        <div class="interpretation-summary">
+            <h5>📊 Model Overview</h5>
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <span class="stat-value">${stats.nodeCount}</span>
+                    <span class="stat-label">Total Nodes</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${stats.leafCount}</span>
+                    <span class="stat-label">Segments (Leaves)</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${stats.maxDepth}</span>
+                    <span class="stat-label">Max Depth</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${(avgConfidence * 100).toFixed(0)}%</span>
+                    <span class="stat-label">Avg Confidence</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="interpretation-rules">
+            <h5>🎯 Key Business Rules</h5>
     `;
     
-    for (const cls in bestRules) {
-        const rule = bestRules[cls];
-        html += `<li><strong>${cls}</strong> (${(rule.confidence * 100).toFixed(0)}% confidence, n=${rule.n}): ${rule.conditions}</li>`;
+    // Highlight the target class rule first
+    if (targetRule) {
+        html += `
+            <div class="rule-highlight target-rule">
+                <div class="rule-header">
+                    <span class="rule-badge">Target: ${targetClass}</span>
+                    <span class="rule-confidence">${(targetRule.confidence * 100).toFixed(0)}% confidence</span>
+                </div>
+                <p class="rule-condition"><strong>IF</strong> ${targetRule.conditions}</p>
+                <p class="rule-outcome"><strong>THEN</strong> predict <strong>${targetRule.prediction}</strong></p>
+                <p class="rule-sample">Based on ${targetRule.n} training cases</p>
+            </div>
+        `;
     }
     
-    html += '</ul>';
+    // Show other class rules
+    for (const cls in bestRules) {
+        if (cls === targetClass) continue;
+        const rule = bestRules[cls];
+        html += `
+            <div class="rule-highlight">
+                <div class="rule-header">
+                    <span class="rule-badge secondary">${cls}</span>
+                    <span class="rule-confidence">${(rule.confidence * 100).toFixed(0)}% confidence</span>
+                </div>
+                <p class="rule-condition"><strong>IF</strong> ${rule.conditions}</p>
+                <p class="rule-outcome"><strong>THEN</strong> predict <strong>${rule.prediction}</strong></p>
+                <p class="rule-sample">Based on ${rule.n} training cases</p>
+            </div>
+        `;
+    }
     
-    // Add interpretation tips
+    html += `</div>`;
+    
+    // Marketing Action Recommendations
     html += `
-        <p style="margin-top: 1rem;"><strong>💡 Interpretation Tips:</strong></p>
-        <ul>
-            <li>Rules with higher confidence are more reliable predictions.</li>
-            <li>Features appearing higher in the tree have greater predictive power.</li>
-            <li>Leaf nodes with small sample sizes may be overfitting to training data.</li>
-        </ul>
+        <div class="interpretation-actions">
+            <h5>💼 Suggested Marketing Actions</h5>
+            <ul>
+    `;
+    
+    // Generate context-aware recommendations based on target class
+    const targetWords = targetClass.toLowerCase();
+    if (targetWords.includes('churn') || targetWords.includes('cancel') || targetWords.includes('left')) {
+        html += `
+                <li><strong>Retention focus:</strong> Target customers matching "${targetClass}" rules with proactive retention offers before they reach high-risk criteria.</li>
+                <li><strong>Early warning system:</strong> Set up automated alerts when customers approach the threshold values in your rules.</li>
+                <li><strong>Root cause analysis:</strong> Investigate why the top split variable is so predictive—is there an operational fix?</li>
+        `;
+    } else if (targetWords.includes('convert') || targetWords.includes('buy') || targetWords.includes('purchase') || targetWords.includes('yes')) {
+        html += `
+                <li><strong>Lead scoring:</strong> Prioritize leads matching "${targetClass}" rules for sales outreach.</li>
+                <li><strong>Lookalike audiences:</strong> Build ad audiences matching the high-confidence conversion profile.</li>
+                <li><strong>Content personalization:</strong> Tailor messaging based on which segment path visitors fall into.</li>
+        `;
+    } else if (targetWords.includes('high') || targetWords.includes('premium') || targetWords.includes('vip')) {
+        html += `
+                <li><strong>Upsell opportunities:</strong> Customers near the boundary of "${targetClass}" are prime upsell candidates.</li>
+                <li><strong>Loyalty program tiers:</strong> Align program tiers with the segments discovered by the tree.</li>
+                <li><strong>Personalized pricing:</strong> Consider value-based pricing tiers matching these segments.</li>
+        `;
+    } else {
+        html += `
+                <li><strong>Segmented campaigns:</strong> Create distinct campaigns for each leaf segment with tailored messaging.</li>
+                <li><strong>Resource allocation:</strong> Prioritize marketing spend on segments with highest confidence for "${targetClass}".</li>
+                <li><strong>A/B testing:</strong> Test different offers across the identified segments to optimize response.</li>
+        `;
+    }
+    
+    html += `
+            </ul>
+        </div>
+        
+        <div class="interpretation-caveats">
+            <h5>⚠️ Important Caveats</h5>
+            <ul>
+                <li><strong>Correlation ≠ Causation:</strong> These rules identify patterns, not causes. A variable might be predictive because it's correlated with the true driver.</li>
+                <li><strong>Sample size matters:</strong> Rules based on small samples (n < 30) should be treated as hypotheses to test, not facts.</li>
+                <li><strong>Temporal validity:</strong> Customer behavior changes. Revisit and retrain your model quarterly at minimum.</li>
+                <li><strong>Test set performance:</strong> Always evaluate on held-out data. Training accuracy can be misleading.</li>
+            </ul>
+        </div>
     `;
     
     container.innerHTML = html;
