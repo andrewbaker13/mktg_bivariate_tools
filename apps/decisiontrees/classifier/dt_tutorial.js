@@ -858,19 +858,24 @@ const DTTutorial = {
     ],
 
     init() {
+        console.log('DTTutorial.init() called');
         this.attachListeners();
     },
 
     attachListeners() {
         const toggle = document.getElementById('professorMode');
+        console.log('Professor Mode checkbox found:', toggle);
         if (toggle) {
             toggle.addEventListener('change', (e) => {
+                console.log('Professor Mode checkbox changed:', e.target.checked);
                 if (e.target.checked) {
                     this.start();
                 } else {
                     this.stop();
                 }
             });
+        } else {
+            console.error('Professor Mode checkbox not found!');
         }
         
         // Poll for progress checks
@@ -878,14 +883,19 @@ const DTTutorial = {
     },
 
     start() {
+        console.log('DTTutorial.start() called');
         this.isActive = true;
         this.currentStep = 0;
         this.lastCheckResult = null;
+        console.log('About to renderSidebar()');
         this.renderSidebar();
+        console.log('About to updateView()');
         this.updateView();
+        console.log('DTTutorial.start() completed');
     },
 
     stop() {
+        console.log('DTTutorial.stop() called');
         this.isActive = false;
         this.hideOverlay();
         
@@ -1139,22 +1149,6 @@ const DTTutorial = {
             overlay.id = 'tutorial-overlay';
             document.body.appendChild(overlay);
         }
-    },
-
-    attachListeners() {
-        const toggle = document.getElementById('professorMode');
-        if (toggle) {
-            toggle.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    this.start();
-                } else {
-                    this.stop();
-                }
-            });
-        }
-        
-        // Poll for progress checks
-        setInterval(() => this.checkProgress(), 500);
     }
 };
 

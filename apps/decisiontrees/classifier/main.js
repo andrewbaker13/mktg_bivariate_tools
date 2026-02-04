@@ -99,13 +99,9 @@ function init() {
  * Initialize the random seed
  */
 function initializeSeed() {
+    // Don't auto-generate - let it stay blank until build time
     const seedInput = document.getElementById('random-seed');
-    if (!seedInput.value) {
-        // Generate a random seed on first load
-        const randomSeed = Math.floor(Math.random() * 100000);
-        seedInput.value = randomSeed;
-    }
-    settings.randomSeed = seedInput.value;
+    settings.randomSeed = seedInput.value || null;
 }
 
 /**
@@ -180,19 +176,10 @@ function setupEventListeners() {
     
     // Random seed
     const seedInput = document.getElementById('random-seed');
-    const newSeedBtn = document.getElementById('new-seed-btn');
     
     if (seedInput) {
         seedInput.addEventListener('change', (e) => {
-            settings.randomSeed = e.target.value;
-        });
-    }
-    
-    if (newSeedBtn) {
-        newSeedBtn.addEventListener('click', () => {
-            const newSeed = Math.floor(Math.random() * 100000);
-            seedInput.value = newSeed;
-            settings.randomSeed = newSeed;
+            settings.randomSeed = e.target.value || null;
         });
     }
     
@@ -275,9 +262,8 @@ function handleScenarioChange(e) {
     document.getElementById('scenario-description').innerHTML = currentTreeScenario.description();
     document.getElementById('scenario-download').disabled = false;
     
-    // Generate data
-    const rawData = generateScenarioData(scenarioId);
-    loadScenarioData(rawData, currentTreeScenario);
+    // Load fixed CSV data for the scenario
+    loadScenarioFromCSV(currentTreeScenario);
     
     // Enable build button
     document.getElementById('build-btn').disabled = false;
@@ -288,6 +274,34 @@ function handleScenarioChange(e) {
     
     // Hide variable assignment (not needed for preset scenarios)
     document.getElementById('variable-assignment').classList.add('hidden');
+}
+
+/**
+ * Load scenario data from fixed CSV file
+ */
+async function loadScenarioFromCSV(scenario) {
+    try {
+        const response = await fetch(scenario.dataset);
+        if (!response.ok) {
+            throw new Error(`Failed to load ${scenario.dataset}`);
+        }
+        const csvText = await response.text();
+        const rawData = parseCSV(csvText);
+        
+        if (rawData.length < 10) {
+            throw new Error('CSV file must have at least 10 rows of data.');
+        }
+        
+        loadScenarioData(rawData, scenario);
+    } catch (error) {
+        console.error('Error loading scenario CSV:', error);
+        alert(`Error loading scenario data: ${error.message}\n\nPlease make sure the CSV file exists at ${scenario.dataset}`);
+        // Fall back to generated data if CSV not found
+        console.log('Falling back to generated data...');
+        const rng = new SeededRNG(42); // Use fixed seed for fallback
+        const rawData = generateScenarioData(scenario.id, rng);
+        loadScenarioData(rawData, scenario);
+    }
 }
 
 /**
@@ -568,9 +582,18 @@ function showUploadError(message) {
  * Download scenario data as CSV
  */
 function downloadScenarioData() {
-    if (!currentTreeScenario) return;
+    if (!currentTreeScenario || !currentData) return;
     
-    const data = generateScenarioData(currentTreeScenario.id);
+    // Reconstruct the full dataset from current data and labels
+    const data = currentData.map((row, idx) => {
+        const obj = {};
+        featureNames.forEach((name, i) => {
+            obj[name] = row[i];
+        });
+        obj[currentTreeScenario.outcomeVariable] = currentLabels[idx];
+        return obj;
+    });
+    
     const csv = dataToCSV(data);
     
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -1248,6 +1271,9 @@ function displayConfusionMatrix(metrics) {
 function displayROCOrPerClass(metrics) {
     const container = document.getElementById('roc-curve');
     const titleEl = document.getElementById('roc-panel-title');
+    
+    // Clear any placeholder text
+    container.innerHTML = '';
     
     if (classes.length === 2) {
         // Binary: show ROC curve

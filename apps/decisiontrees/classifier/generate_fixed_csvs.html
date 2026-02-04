@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Fixed CSV Files</title>
+</head>
+<body>
+    <h1>Generating Fixed CSV Files...</h1>
+    <pre id="output"></pre>
+    
+    <script src="scenarios.js"></script>
+    <script src="main.js"></script>
+    <script>
+        const output = document.getElementById('output');
+        
+        // Generate all three datasets with a fixed seed for reproducibility
+        const fixedSeed = 42;
+        const rng = new SeededRNG(fixedSeed);
+        
+        const scenarios = [
+            { id: 'customer-churn', filename: 'churn_data.csv' },
+            { id: 'lead-scoring', filename: 'lead_scoring_data.csv' },
+            { id: 'customer-segment', filename: 'customer_segment_data.csv' }
+        ];
+        
+        scenarios.forEach(scenario => {
+            const data = generateScenarioData(scenario.id, new SeededRNG(fixedSeed));
+            const csv = dataToCSV(data);
+            
+            // Create download link
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = scenario.filename;
+            a.textContent = `Download ${scenario.filename} (${data.length} rows)`;
+            a.style.display = 'block';
+            a.style.margin = '10px 0';
+            document.body.appendChild(a);
+            
+            output.textContent += `Generated ${scenario.filename}: ${data.length} rows\n`;
+        });
+        
+        output.textContent += '\n✅ All files generated! Click the links above to download them to the scenarios/ folder.';
+    </script>
+</body>
+</html>
