@@ -17,7 +17,7 @@ const DECISION_TREE_SCENARIOS = [
                 
                 <p class="scenario-intro">
                     You're the retention marketing analyst at <strong>FitLife Gym</strong>, a regional fitness chain 
-                    with 12 locations and 3,200 active members across the Midwest. VP of Member Services, 
+                    with 12 locations and 3,500 active members across the Midwest. VP of Member Services, 
                     <em>Marcus Chen</em>, is concerned about rising churn rates—currently at 6.2% monthly, 
                     up from 4.8% last year. He's asked you to build a predictive model to identify 
                     at-risk members <em>before</em> they cancel, enabling targeted retention offers.
@@ -74,9 +74,16 @@ const DECISION_TREE_SCENARIOS = [
                         <span>Last 6 Months</span>
                     </div>
                     <div class="context-item">
-                        <strong>Churn Rate</strong>
-                        <span>6.2% Monthly</span>
+                        <strong>Real-World Churn</strong>
+                        <span>~6% Monthly</span>
                     </div>
+                </div>
+                
+                <div class="scenario-note data-note">
+                    <strong>📊 About This Dataset:</strong> The training data has been <em>oversampled</em> to include 
+                    ~25% churners (vs. the real-world 6% rate). This is standard ML practice for imbalanced classes—it 
+                    helps the model learn patterns in the minority class. When deploying predictions, remember that 
+                    actual churn probability in the wild will be lower than what the model outputs.
                 </div>
                 
                 <div class="scenario-insights">
@@ -184,9 +191,16 @@ const DECISION_TREE_SCENARIOS = [
                         <span>~400</span>
                     </div>
                     <div class="context-item">
-                        <strong>Conversion Rate</strong>
-                        <span>12% Overall</span>
+                        <strong>Real-World Conv.</strong>
+                        <span>~12% Overall</span>
                     </div>
+                </div>
+                
+                <div class="scenario-note data-note">
+                    <strong>📊 About This Dataset:</strong> The training data has been <em>enriched</em> to include 
+                    ~20% converters (vs. the real-world 12% rate). This oversampling helps the model better distinguish 
+                    converters from non-converters. In production, calibrate the model's probability outputs to match 
+                    actual conversion rates.
                 </div>
                 
                 <div class="scenario-insights">
@@ -298,6 +312,12 @@ const DECISION_TREE_SCENARIOS = [
                         <strong>Classes</strong>
                         <span>3 Segments</span>
                     </div>
+                </div>
+                
+                <div class="scenario-note data-note">
+                    <strong>📊 About This Dataset:</strong> This sample of 4,500 customers is drawn from the full 
+                    customer base with <em>stratified sampling</em> to ensure adequate representation of all three 
+                    segments. In the real customer base, Premium customers are ~20%, Standard ~50%, and Budget ~30%.
                 </div>
                 
                 <div class="scenario-insights">

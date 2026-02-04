@@ -238,6 +238,15 @@ class ManualTreeBuilder {
         // Calculate initial split stats at median
         const initialStats = this.calculateContinuousSplitStats(values, labels, median);
         
+        // Build class distribution rows (same order on both sides)
+        const classDistributionRows = this.classes.map(cls => `
+            <div class="split-preview-class-row" data-class="${cls}">
+                <span class="class-name">${cls}</span>
+                <span class="class-pct left-pct-${cls.replace(/\s+/g, '-')}">${initialStats.leftPcts[cls]}%</span>
+                <span class="class-pct right-pct-${cls.replace(/\s+/g, '-')}">${initialStats.rightPcts[cls]}%</span>
+            </div>
+        `).join('');
+        
         return `
             <div class="split-slider-container">
                 <label>Split Point for <strong>${featureName}</strong>:</label>
@@ -254,16 +263,19 @@ class ManualTreeBuilder {
                 </div>
             </div>
             
-            <div class="split-preview" id="split-preview">
-                <div class="split-preview-side left">
-                    <div class="split-preview-label">🔵 LEFT (≤ ${median.toFixed(2)})</div>
-                    <div class="split-preview-stat">n = <span id="left-n">${initialStats.leftN}</span></div>
-                    <div class="split-preview-stat"><span id="left-majority">${initialStats.leftMajority}</span>: <span id="left-pct">${initialStats.leftPct}</span>%</div>
+            <div class="split-preview-table" id="split-preview">
+                <div class="split-preview-header">
+                    <span class="header-class">Class</span>
+                    <span class="header-left">🔵 LEFT (≤ <span id="left-threshold">${median.toFixed(2)}</span>)</span>
+                    <span class="header-right">🟠 RIGHT (> <span id="right-threshold">${median.toFixed(2)}</span>)</span>
                 </div>
-                <div class="split-preview-side right">
-                    <div class="split-preview-label">🟠 RIGHT (> ${median.toFixed(2)})</div>
-                    <div class="split-preview-stat">n = <span id="right-n">${initialStats.rightN}</span></div>
-                    <div class="split-preview-stat"><span id="right-majority">${initialStats.rightMajority}</span>: <span id="right-pct">${initialStats.rightPct}</span>%</div>
+                <div class="split-preview-body" id="class-distribution">
+                    ${classDistributionRows}
+                </div>
+                <div class="split-preview-footer">
+                    <span class="footer-label">n =</span>
+                    <span class="footer-n" id="left-n">${initialStats.leftN}</span>
+                    <span class="footer-n" id="right-n">${initialStats.rightN}</span>
                 </div>
             </div>
             
@@ -289,6 +301,15 @@ class ManualTreeBuilder {
         // Default: try to balance 50/50
         const { leftCats, rightCats } = this.autoBalanceCategories(values, labels, categories);
         const initialStats = this.calculateCategoricalSplitStats(values, labels, leftCats, rightCats);
+        
+        // Build class distribution rows (same order on both sides)
+        const classDistributionRows = this.classes.map(cls => `
+            <div class="split-preview-class-row" data-class="${cls}">
+                <span class="class-name">${cls}</span>
+                <span class="class-pct left-pct-${cls.replace(/\s+/g, '-')}">${initialStats.leftPcts[cls]}%</span>
+                <span class="class-pct right-pct-${cls.replace(/\s+/g, '-')}">${initialStats.rightPcts[cls]}%</span>
+            </div>
+        `).join('');
         
         return `
             <div class="category-controls" data-feature="${featureName}" data-index="${featureIndex}">
@@ -328,14 +349,19 @@ class ManualTreeBuilder {
                     ⚖️ Auto-Balance 50/50
                 </button>
                 
-                <div class="split-preview" id="split-preview">
-                    <div class="split-preview-side left">
-                        <div class="split-preview-label">🔵 LEFT</div>
-                        <div class="split-preview-stat"><span id="left-majority">${initialStats.leftMajority}</span>: <span id="left-pct">${initialStats.leftPct}</span>%</div>
+                <div class="split-preview-table" id="split-preview">
+                    <div class="split-preview-header">
+                        <span class="header-class">Class</span>
+                        <span class="header-left">🔵 LEFT</span>
+                        <span class="header-right">🟠 RIGHT</span>
                     </div>
-                    <div class="split-preview-side right">
-                        <div class="split-preview-label">🟠 RIGHT</div>
-                        <div class="split-preview-stat"><span id="right-majority">${initialStats.rightMajority}</span>: <span id="right-pct">${initialStats.rightPct}</span>%</div>
+                    <div class="split-preview-body" id="class-distribution">
+                        ${classDistributionRows}
+                    </div>
+                    <div class="split-preview-footer">
+                        <span class="footer-label">n =</span>
+                        <span class="footer-n" id="left-n">${initialStats.leftN}</span>
+                        <span class="footer-n" id="right-n">${initialStats.rightN}</span>
                     </div>
                 </div>
                 
@@ -463,6 +489,15 @@ class ManualTreeBuilder {
         const leftMajority = this.getMajorityClass(leftDist);
         const rightMajority = this.getMajorityClass(rightDist);
         
+        // Calculate percentages for ALL classes (not just majority)
+        const leftPcts = {};
+        const rightPcts = {};
+        this.classes.forEach(cls => {
+            leftPcts[cls] = leftLabels.length > 0 ? (leftDist[cls] / leftLabels.length * 100).toFixed(1) : '0.0';
+            rightPcts[cls] = rightLabels.length > 0 ? (rightDist[cls] / rightLabels.length * 100).toFixed(1) : '0.0';
+        });
+        
+        // Keep legacy fields for backward compatibility
         const leftPct = leftLabels.length > 0 ? (leftDist[leftMajority] / leftLabels.length * 100).toFixed(0) : 0;
         const rightPct = rightLabels.length > 0 ? (rightDist[rightMajority] / rightLabels.length * 100).toFixed(0) : 0;
         
@@ -494,6 +529,10 @@ class ManualTreeBuilder {
             rightMajority,
             leftPct,
             rightPct,
+            leftPcts,      // Full distribution
+            rightPcts,     // Full distribution
+            leftDist,      // Raw counts
+            rightDist,     // Raw counts
             infoGain,
             giniReduction,
             leftIndices,
@@ -525,6 +564,15 @@ class ManualTreeBuilder {
         const leftMajority = this.getMajorityClass(leftDist);
         const rightMajority = this.getMajorityClass(rightDist);
         
+        // Calculate percentages for ALL classes (not just majority)
+        const leftPcts = {};
+        const rightPcts = {};
+        this.classes.forEach(cls => {
+            leftPcts[cls] = leftLabels.length > 0 ? (leftDist[cls] / leftLabels.length * 100).toFixed(1) : '0.0';
+            rightPcts[cls] = rightLabels.length > 0 ? (rightDist[cls] / rightLabels.length * 100).toFixed(1) : '0.0';
+        });
+        
+        // Keep legacy fields for backward compatibility
         const leftPct = leftLabels.length > 0 ? (leftDist[leftMajority] / leftLabels.length * 100).toFixed(0) : 0;
         const rightPct = rightLabels.length > 0 ? (rightDist[rightMajority] / rightLabels.length * 100).toFixed(0) : 0;
         
@@ -556,6 +604,10 @@ class ManualTreeBuilder {
             rightMajority,
             leftPct,
             rightPct,
+            leftPcts,      // Full distribution
+            rightPcts,     // Full distribution
+            leftDist,      // Raw counts
+            rightDist,     // Raw counts
             leftPctTotal,
             rightPctTotal,
             infoGain,
@@ -590,25 +642,33 @@ class ManualTreeBuilder {
     }
 
     /**
-     * Update split preview display
+     * Update split preview display (for continuous features)
      */
     updateSplitPreview(stats, threshold) {
+        // Update counts
         document.getElementById('left-n').textContent = stats.leftN;
         document.getElementById('right-n').textContent = stats.rightN;
-        document.getElementById('left-majority').textContent = stats.leftMajority || '-';
-        document.getElementById('right-majority').textContent = stats.rightMajority || '-';
-        document.getElementById('left-pct').textContent = stats.leftPct;
-        document.getElementById('right-pct').textContent = stats.rightPct;
+        
+        // Update threshold labels
+        const leftThreshold = document.getElementById('left-threshold');
+        const rightThreshold = document.getElementById('right-threshold');
+        if (leftThreshold && threshold !== undefined) {
+            leftThreshold.textContent = threshold.toFixed(2);
+            rightThreshold.textContent = threshold.toFixed(2);
+        }
+        
+        // Update all class percentages
+        this.classes.forEach(cls => {
+            const safeClass = cls.replace(/\s+/g, '-');
+            const leftPctEl = document.querySelector(`.left-pct-${safeClass}`);
+            const rightPctEl = document.querySelector(`.right-pct-${safeClass}`);
+            if (leftPctEl) leftPctEl.textContent = `${stats.leftPcts[cls]}%`;
+            if (rightPctEl) rightPctEl.textContent = `${stats.rightPcts[cls]}%`;
+        });
+        
+        // Update metrics
         document.getElementById('info-gain').textContent = stats.infoGain.toFixed(4);
         document.getElementById('gini-reduction').textContent = stats.giniReduction.toFixed(4);
-        
-        // Update labels
-        const leftLabel = document.querySelector('.split-preview-side.left .split-preview-label');
-        const rightLabel = document.querySelector('.split-preview-side.right .split-preview-label');
-        if (leftLabel && threshold !== undefined) {
-            leftLabel.textContent = `🔵 LEFT (≤ ${threshold.toFixed(2)})`;
-            rightLabel.textContent = `🟠 RIGHT (> ${threshold.toFixed(2)})`;
-        }
     }
 
     /**
@@ -623,14 +683,26 @@ class ManualTreeBuilder {
         
         const stats = this.calculateCategoricalSplitStats(values, labels, leftCats, rightCats);
         
+        // Update category group stats
         document.getElementById('cat-left-n').textContent = stats.leftN;
         document.getElementById('cat-right-n').textContent = stats.rightN;
         document.getElementById('cat-left-pct').textContent = stats.leftPctTotal;
         document.getElementById('cat-right-pct').textContent = stats.rightPctTotal;
-        document.getElementById('left-majority').textContent = stats.leftMajority || '-';
-        document.getElementById('right-majority').textContent = stats.rightMajority || '-';
-        document.getElementById('left-pct').textContent = stats.leftPct;
-        document.getElementById('right-pct').textContent = stats.rightPct;
+        
+        // Update class distribution table - counts in footer
+        document.getElementById('left-n').textContent = stats.leftN;
+        document.getElementById('right-n').textContent = stats.rightN;
+        
+        // Update all class percentages
+        this.classes.forEach(cls => {
+            const safeClass = cls.replace(/\s+/g, '-');
+            const leftPctEl = document.querySelector(`.left-pct-${safeClass}`);
+            const rightPctEl = document.querySelector(`.right-pct-${safeClass}`);
+            if (leftPctEl) leftPctEl.textContent = `${stats.leftPcts[cls]}%`;
+            if (rightPctEl) rightPctEl.textContent = `${stats.rightPcts[cls]}%`;
+        });
+        
+        // Update metrics
         document.getElementById('info-gain').textContent = stats.infoGain.toFixed(4);
         document.getElementById('gini-reduction').textContent = stats.giniReduction.toFixed(4);
     }
