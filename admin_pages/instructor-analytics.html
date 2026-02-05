@@ -1314,8 +1314,13 @@
             }
         }
         
-        // Hook up the customize button
-        document.getElementById('customize-tools-btn').addEventListener('click', openToolVisibilityModal);
+        // Hook up the customize button - redirect to course settings page
+        document.getElementById('customize-tools-btn').addEventListener('click', function() {
+            const courseId = document.getElementById('course-select').value;
+            if (courseId) {
+                window.location.href = `course-settings.html?course_id=${courseId}`;
+            }
+        });
 
         function renderTimelineChart(timelineData) {
             const ctx = document.getElementById('timelineChart').getContext('2d');

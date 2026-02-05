@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Home - Marketing Praxis</title>
+    <link rel="icon" type="image/svg+xml" href="../art_assets/svg_logos/clr_notext_logo.svg">
+    <link rel="stylesheet" href="../shared/css/main.css">
+    <style>
+        /* Auth Bar Styles */
+        .auth-bar {
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0.75rem 0;
+        }
+        .auth-bar__container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .auth-bar__logo-container img {
+            height: 45px;
+        }
+        .auth-bar__links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .auth-bar__links a,
+        .auth-bar__links button {
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-family: inherit;
+        }
+        .auth-bar__links a:hover,
+        .auth-bar__links button:hover {
+            text-decoration: underline;
+        }
+
+        /* Course Header */
+        .course-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            color: white;
+            text-align: center;
+        }
+        .course-hero__container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+        .course-hero h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .course-hero__subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .course-hero__meta {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .course-hero__meta-item {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        /* Tool Categories */
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 2.5rem 0 1.5rem;
+        }
+        .category-icon {
+            font-size: 2rem;
+        }
+        .category-header h2 {
+            font-size: 1.75rem;
+            color: #1f2937;
+            margin: 0;
+        }
+
+        /* Bento Grid for Tools */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        .tool-card-modern {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .tool-card-modern:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            transform: translateY(-4px);
+        }
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .card-content {
+            flex: 1;
+        }
+        .card-title {
+            font-size: 1.15rem;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        .card-description {
+            font-size: 0.9rem;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+        .card-meta {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+        .card-tag {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .tag-beginner {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .tag-intermediate {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .tag-advanced {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .tag-new {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* Loading State */
+        .loading-container {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6b7280;
+        }
+        .empty-state h3 {
+            color: #374151;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Bar -->
+    <div class="auth-bar">
+        <div class="auth-bar__container">
+            <div class="auth-bar__logo-container">
+                <a href="../index.html">
+                    <img src="../art_assets/svg_logos/clr_notext_logo.svg" alt="MKTPraxis Logo">
+                </a>
+            </div>
+            <div id="auth-bar-content" class="auth-bar__links">
+                <a href="login.html">Login</a>
+                <a href="register.html">Create Account</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Hero -->
+    <header class="course-hero">
+        <div class="course-hero__container">
+            <h1 id="course-title">Loading...</h1>
+            <p class="course-hero__subtitle" id="course-description"></p>
+            <div class="course-hero__meta">
+                <div class="course-hero__meta-item" id="instructor-name"></div>
+                <div class="course-hero__meta-item" id="tool-count"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+        <div id="loading-container" class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>Loading course tools...</p>
+        </div>
+
+        <div id="tools-container" style="display: none;">
+            <!-- Tools will be dynamically grouped by category -->
+        </div>
+
+        <div id="empty-state" class="empty-state" style="display: none;">
+            <h3>No tools available</h3>
+            <p>Your instructor hasn't enabled any tools for this course yet.</p>
+        </div>
+    </main>
+
+    <script src="../shared/js/api-config.js"></script>
+    <script src="../shared/js/auth_tracking.js"></script>
+    <script src="../shared/js/auth_bar.js"></script>
+    <script>
+        // Get course ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('course_id');
+        
+        if (!courseId) {
+            document.getElementById('loading-container').innerHTML = '<p style="color: #dc2626;">No course selected</p>';
+        } else {
+            loadCourseHomepage();
+        }
+
+        // Track tool clicks
+        function trackToolClick(toolId) {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return;  // Don't track if not logged in
+            
+            // Fire and forget - don't wait for response
+            fetch(`${API_BASE}/courses/${courseId}/homepage/click/${toolId}/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }).catch(err => console.error('Failed to track click:', err));
+        }
+
+        async function loadCourseHomepage() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                if (!token) {
+                    window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/courses/${courseId}/homepage/`, {
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error('You are not enrolled in this course');
+                    }
+                    throw new Error('Failed to load course homepage');
+                }
+
+                const data = await response.json();
+                
+                // Update course header
+                document.getElementById('course-title').textContent = data.homepage_title || data.course_name;
+                document.getElementById('course-description').textContent = data.description || '';
+                document.getElementById('instructor-name').textContent = `👨‍🏫 ${data.instructor || 'Instructor'}`;
+                document.getElementById('tool-count').textContent = `🛠️ ${data.tools.length} Tools Available`;
+                
+                // Render tools (they are already ordered by display_order from backend)
+                if (data.tools.length === 0) {
+                    document.getElementById('loading-container').style.display = 'none';
+                    document.getElementById('empty-state').style.display = 'block';
+                } else {
+                    renderTools(data.tools, data.course_id);
+                    document.getElementById('loading-container').style.display = 'none';
+                    document.getElementById('tools-container').style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error('Error loading course homepage:', error);
+                document.getElementById('loading-container').innerHTML = `
+                    <p style="color: #dc2626;">Failed to load course homepage</p>
+                    <p style="color: #6b7280; font-size: 0.9rem;">${error.message}</p>
+                `;
+            }
+        }
+
+        function renderTools(tools, courseId) {
+            const container = document.getElementById('tools-container');
+            
+            // Group tools by category based on their course field or infer from name
+            const categories = {
+                'Descriptive Statistics': [],
+                'Hypothesis Testing': [],
+                'Predictive Modeling': [],
+                'Text Analysis': [],
+                'Marketing Attribution': [],
+                'Advanced Analytics': [],
+                'Study Design & Probability': [],
+                'Model Fitting Foundations': [],
+                'Other': []
+            };
+
+            // Simple categorization based on tool slug patterns
+            tools.forEach(tool => {
+                const slug = tool.slug.toLowerCase();
+                
+                if (slug.includes('descriptive') || slug.includes('histogram') || slug.includes('summary')) {
+                    categories['Descriptive Statistics'].push(tool);
+                } else if (slug.includes('ttest') || slug.includes('anova') || slug.includes('proportion') || slug.includes('chi') || slug.includes('mcnemar')) {
+                    categories['Hypothesis Testing'].push(tool);
+                } else if (slug.includes('regression') || slug.includes('logistic') || slug.includes('logit')) {
+                    categories['Predictive Modeling'].push(tool);
+                } else if (slug.includes('text') || slug.includes('sentiment') || slug.includes('theme') || slug.includes('qualitative')) {
+                    categories['Text Analysis'].push(tool);
+                } else if (slug.includes('shapley') || slug.includes('markov') || slug.includes('attribution')) {
+                    categories['Marketing Attribution'].push(tool);
+                } else if (slug.includes('tree') || slug.includes('neural') || slug.includes('cluster') || slug.includes('arimax') || slug.includes('resource') || slug.includes('conjoint')) {
+                    categories['Advanced Analytics'].push(tool);
+                } else if (slug.includes('sample') || slug.includes('probability') || slug.includes('selection') || slug.includes('compound')) {
+                    categories['Study Design & Probability'].push(tool);
+                } else if (slug.includes('mae') || slug.includes('logloss') || slug.includes('loss')) {
+                    categories['Model Fitting Foundations'].push(tool);
+                } else {
+                    categories['Other'].push(tool);
+                }
+            });
+
+            // Render each category with tools
+            let html = '';
+            const categoryIcons = {
+                'Descriptive Statistics': '📊',
+                'Hypothesis Testing': '🔬',
+                'Predictive Modeling': '🔮',
+                'Text Analysis': '📝',
+                'Marketing Attribution': '🎯',
+                'Advanced Analytics': '⚡',
+                'Study Design & Probability': '📐',
+                'Model Fitting Foundations': '🎯',
+                'Other': '🛠️'
+            };
+
+            Object.entries(categories).forEach(([category, categoryTools]) => {
+                if (categoryTools.length > 0) {
+                    html += `
+                        <div class="category-header">
+                            <div class="category-icon">${categoryIcons[category]}</div>
+                            <h2>${category}</h2>
+                        </div>
+                        <div class="bento-grid">
+                            ${categoryTools.map(tool => renderToolCard(tool, courseId)).join('')}
+                        </div>
+                    `;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderToolCard(tool, courseId) {
+            // Icon mapping based on tool slug
+            const iconMap = {
+                // Getting Started / Descriptive
+                'univariate-analyzer': '📊',
+                'pearson-correlation': '🔗',
+                // Hypothesis Testing
+                'independent-t-test': '🆚',
+                'paired-t-test': '🔄',
+                'one-way-anova': '🔢',
+                'ab-proportion-test': '🅰️',
+                'chi-square-test': '▦',
+                'mcnemar-test': '🔀',
+                // Regression
+                'bivariate-regression': '📉',
+                'multiple-linear-regression': '📈',
+                'mlr-interactions': '🔗',
+                'logistic-regression': '🎯',
+                'multinomial-logistic': '🍱',
+                // Text Analysis
+                'qualitative-analyzer': '💬',
+                'theme-extractor': '🧠',
+                'sentiment-analysis': '😊',
+                // Attribution
+                'shapley-attribution': '🤝',
+                'markov-attribution': '🛤️',
+                // Advanced
+                'decision-tree-classifier': '🌳',
+                'neural-network': '🧠',
+                'k-means-clustering': '👥',
+                'k-prototypes-clustering': '🏗️',
+                'arimax-forecasting': '📅',
+                'resource-allocation': '💰',
+                'conjoint-analysis': '🎁',
+                'conjoint-creator': '🔧',
+                'propensity-score-matching': '⚖️',
+                // Study Design & Probability
+                'sample-size-means': '📏',
+                'sample-size-ab': '⚖️',
+                'sample-size-correlation': '📉',
+                'sample-size-multiarm': '🐙',
+                'sampling-visualizer': '👁️',
+                'selection-probability': '🎯',
+                'compound-probability': '🎲',
+                // Model Fitting
+                'mae-calibration-lab': '📐',
+                'logloss-classification-lab': '📊'
+            };
+            
+            const icon = iconMap[tool.slug] || '📊'; // Default to bar chart if not found
+            
+            // Infer tag based on tool name/description
+            let tag = '';
+            const name = tool.name.toLowerCase();
+            const desc = (tool.description || '').toLowerCase();
+            
+            if (name.includes('simple') || name.includes('basic') || desc.includes('beginner')) {
+                tag = '<span class="card-tag tag-beginner">Beginner</span>';
+            } else if (name.includes('advanced') || name.includes('neural') || desc.includes('advanced')) {
+                tag = '<span class="card-tag tag-advanced">Advanced</span>';
+            } else if (desc.includes('intermediate')) {
+                tag = '<span class="card-tag tag-intermediate">Intermediate</span>';
+            }
+
+            // Get tool URL - construct from slug
+            const toolUrl = getToolUrl(tool.slug);
+            
+            return `
+                <a href="${toolUrl}" class="tool-card-modern" onclick="trackToolClick(${tool.id}); return true;">
+                    <div class="card-icon">${icon}</div>
+                    <div class="card-content">
+                        <h3 class="card-title">${tool.name}</h3>
+                        <p class="card-description">${tool.description || 'No description available'}</p>
+                        <div class="card-meta">
+                            ${tag}
+                        </div>
+                    </div>
+                </a>
+            `;
+        }
+
+        function getToolUrl(slug) {
+            // Complete mapping of tool slugs to their actual file paths
+            const toolMap = {
+                // Getting Started / Descriptive
+                'univariate-analyzer': '../apps/descriptive/univariate_analyzer/main_univariate_analyzer.html',
+                'pearson-correlation': '../apps/descriptive/pearson_correlation/main_pearson.html',
+                // Hypothesis Testing
+                'independent-t-test': '../apps/hypothesis_testing/ind_ttest/main_ind_ttest.html',
+                'paired-t-test': '../apps/hypothesis_testing/paired_ttest/main_paired_ttest.html',
+                'one-way-anova': '../apps/hypothesis_testing/onewayanova/main_onewayanova.html',
+                'ab-proportion-test': '../apps/hypothesis_testing/ab_proportion/main_ab_proportion.html',
+                'chi-square-test': '../apps/hypothesis_testing/chisquare/main_chisquare.html',
+                'mcnemar-test': '../apps/hypothesis_testing/mcnemar/main_mcnemar.html',
+                // Regression
+                'bivariate-regression': '../apps/regression/bivariate_regression/main_bivariate_regression.html',
+                'multiple-linear-regression': '../apps/regression/ml_regression/main_ml_regression.html',
+                'mlr-interactions': '../apps/regression/mlr_interactions/main_mlr_interactions.html',
+                'logistic-regression': '../apps/regression/log_regression/main_log_regression.html',
+                'multinomial-logistic': '../apps/regression/mn_log_regression/main_mn_log_regression.html',
+                // Text Analysis
+                'qualitative-analyzer': '../apps/text_analysis/qualitative_analyzer/main_qualitative_analyzer.html',
+                'theme-extractor': '../apps/text_analysis/theme_extractor/main_theme_extractor.html',
+                'sentiment-analysis': '../apps/text_analysis/sentiment_lab/main_sentiment_lab.html',
+                // Attribution
+                'shapley-attribution': '../apps/attribution/shapley_visualizer/main_shapley.html',
+                'markov-attribution': '../apps/attribution/markov_visualizer/main_markov.html',
+                // Advanced
+                'decision-tree-classifier': '../apps/decisiontrees/classifier/index.html',
+                'neural-network': '../apps/advanced/neural_network/index.html',
+                'k-means-clustering': '../apps/clustering/kmeans/main_kmeans.html',
+                'k-prototypes-clustering': '../apps/clustering/kprototypes/main_kprototypes.html',
+                'arimax-forecasting': '../apps/time_series/arimax/main_arimax.html',
+                'resource-allocation': '../apps/advanced/resource_allocation/main_resource_allocation.html',
+                'conjoint-analysis': '../apps/advanced/conjoint/conjoint_app.html',
+                'conjoint-creator': '../apps/advanced/conjoint_creator/conjoint_creator_app.html',
+                'propensity-score-matching': '../apps/advanced/ps_matching/log_regression.html',
+                // Study Design & Probability
+                'sample-size-means': '../apps/sample_size/sample_size_calculator/main_sample_size_calculator.html',
+                'sample-size-ab': '../apps/sample_size/sample_size_AB_calculator/main_sample_size_ab_calculator.html',
+                'sample-size-correlation': '../apps/sample_size/sample_size_corr_regression/main_sample_size_corr_regression.html',
+                'sample-size-multiarm': '../apps/sample_size/sample_size_multiarm_ab/main_sample_size_multiarm_ab.html',
+                'sampling-visualizer': '../apps/sample_size/sampling_visualizer/main_sampling_visualizer.html',
+                'selection-probability': '../apps/probability/selection_probability_lab/main_selection_probability_lab.html',
+                'compound-probability': '../apps/probability/compound_event_probability/main_compound_event_probability.html',
+                // Model Fitting
+                'mae-calibration-lab': '../apps/model_fitting/mae/index.html',
+                'logloss-classification-lab': '../apps/model_fitting/logloss/index.html'
+            };
+            
+            // Return mapped URL or show error if not found
+            return toolMap[slug] || `#tool-not-found-${slug}`;
+        }
+    </script>
+</body>
+</html>

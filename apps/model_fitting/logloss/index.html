@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log-Loss Classification Lab - Dr. Baker Marketing Analytics</title>
+    
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="../../../shared/css/main.css">
+    <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Tracking -->
+    <script src="../../../shared/js/tracking.js"></script>
+    
+    <!-- Plotly for charts -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    
+    <!-- MathJax for equations -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-290ZJ9RE04');
+    </script>
+</head>
+<body>
+    <!-- Auth Bar -->
+    <div class="auth-bar">
+        <div class="auth-bar__container">
+            <div></div>
+            <div id="auth-bar-content" class="auth-bar__links">
+                <a href="../../../admin_pages/login.html">Login</a>
+                <a href="../../../admin_pages/register.html">Create Account</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Header -->
+    <header class="intro hero-header">
+        <div class="hero-header__top">
+            <h1>📊 Log-Loss Classification Lab</h1>
+            <div class="hero-context">
+                <span class="badge">Loss Functions</span>
+                <span class="badge badge--warning">Classification Foundations</span>
+            </div>
+        </div>
+        <p class="hero-header__lede">
+            Manually calibrate logistic regression models by minimizing log-loss (cross-entropy). 
+            Develop intuition for how classification models "learn" to predict probabilities.
+        </p>
+        
+        <!-- Professor Mode Toggle -->
+        <label class="professor-mode-toggle">
+            <input type="checkbox" id="professorMode">
+            <span>🎓 Professor Mode</span>
+        </label>
+    </header>
+
+    <main class="app-main">
+        <!-- Overview Section -->
+        <section class="test-overview" id="tut-overview-section" aria-labelledby="overview-heading">
+            <h2 id="overview-heading">OVERVIEW & LEARNING OBJECTIVES</h2>
+            <div class="card">
+                <p>
+                    <strong>Log-Loss (Cross-Entropy)</strong> is the loss function for binary classification. It measures 
+                    how "surprised" your model is by the actual outcomes. By manually adjusting logistic regression 
+                    parameters to minimize log-loss, you'll understand what classification algorithms do automatically—and 
+                    why probability calibration matters for marketing decisions.
+                </p>
+                
+                <details class="intro-notes" open>
+                    <summary>🎯 What You'll Learn</summary>
+                    <div class="notes-content">
+                        <ul>
+                            <li><strong>Log-loss as a compass:</strong> Watch how log-loss changes as you adjust parameters. 
+                                Lower log-loss = better probability predictions!</li>
+                            <li><strong>The sigmoid transformation:</strong> Learn how any number becomes a probability 
+                                between 0 and 1 via the logistic function.</li>
+                            <li><strong>Decision boundaries:</strong> Visualize where your model predicts 50/50 odds 
+                                and how that threshold separates classes.</li>
+                            <li><strong>Overconfidence penalty:</strong> Discover why predicting 99% for an actual 0 
+                                is catastrophic—log-loss punishes confident mistakes severely.</li>
+                        </ul>
+                        <div class="callout-box callout-blue">
+                            <p><strong>💡 Why This Matters:</strong> Every classification model—from simple logistic regression 
+                            to deep neural networks—uses log-loss or a variant to learn. Understanding it builds the 
+                            foundation for churn prediction, conversion modeling, lead scoring, and propensity models.</p>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="intro-notes">
+                    <summary>📐 Mathematical Foundations</summary>
+                    <div class="notes-content" id="tut-math-section">
+                        <div class="equation-block">
+                            <p><strong>Log-Loss (Binary Cross-Entropy):</strong></p>
+                            $$\text{Log-Loss} = -\frac{1}{N}\sum_{i=1}^{N}\left[y_i \cdot \log(p_i) + (1-y_i) \cdot \log(1-p_i)\right]$$
+                        </div>
+                        
+                        <div class="equation-block">
+                            <p><strong>Logistic (Sigmoid) Function:</strong></p>
+                            $$p = \frac{1}{1 + e^{-z}} \quad \text{where} \quad z = B_0 + B_1 \cdot X$$
+                        </div>
+                        
+                        <div class="equation-block">
+                            <p><strong>Log-Odds (Linear Predictor):</strong></p>
+                            $$z = \log\left(\frac{p}{1-p}\right) = B_0 + B_1 \cdot X$$
+                        </div>
+                        
+                        <table class="data-table" style="margin-top: 1rem;">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Name</th>
+                                    <th>Interpretation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>B₀</strong></td>
+                                    <td>Intercept</td>
+                                    <td>Log-odds when X = 0 (shifts curve left/right)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>B₁</strong></td>
+                                    <td>Slope</td>
+                                    <td>Change in log-odds per unit X (controls steepness)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>p</strong></td>
+                                    <td>Probability</td>
+                                    <td>Predicted probability that Y = 1</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div class="callout-box callout-amber" style="margin-top: 1rem;">
+                            <p><strong>⚠️ Key Insight:</strong> Log-loss is asymmetric—predicting 0.99 for an actual 0 
+                            yields log-loss ≈ 4.6, but predicting 0.51 only yields ≈ 0.67. The penalty grows 
+                            exponentially as you become more confidently wrong!</p>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- Scenario Selection Section -->
+        <section class="scenario-section" id="tut-scenario-section">
+            <h2>MARKETING SCENARIOS</h2>
+            <div class="card">
+                <div class="scenario-controls">
+                    <label for="scenario-select">Load a marketing case study:</label>
+                    <div class="scenario-controls__input">
+                        <select id="scenario-select">
+                            <option value="">-- Select a scenario --</option>
+                        </select>
+                        <button id="scenario-download" class="secondary" type="button" disabled>
+                            Download scenario data
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="scenario-description" class="scenario-description-container">
+                    <p class="scenario-placeholder">
+                        Select a marketing scenario above to see the business context and variables, 
+                        or use the default Email Conversion dataset loaded below.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Instructions Section -->
+        <section class="instructions-section">
+            <h2>HOW TO USE THIS TOOL</h2>
+            <div class="card">
+                <div class="concept-grid">
+                    <div class="concept-item">
+                        <h4>🎚️ Adjust Parameters</h4>
+                        <p>Use sliders to shift the S-curve left/right (B₀) and change its steepness (B₁).</p>
+                    </div>
+                    <div class="concept-item">
+                        <h4>👀 Watch the Log-Loss</h4>
+                        <p>Log-loss updates in real-time. Your goal is to minimize it—lower is better!</p>
+                    </div>
+                    <div class="concept-item">
+                        <h4>📏 Read the Decision Boundary</h4>
+                        <p>The vertical dashed line shows where p = 0.5. Points left/right are classified differently.</p>
+                    </div>
+                    <div class="concept-item">
+                        <h4>🎯 Compare Accuracy vs. Log-Loss</h4>
+                        <p>They can disagree! Accuracy is coarse (right/wrong), log-loss is smooth (how confident).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simple Model Section -->
+        <section class="model-section" id="tut-simple-section">
+            <h2>SIMPLE LOGISTIC MODEL</h2>
+            <div class="card">
+                <div class="model-header">
+                    <h3 id="simple-model-title">🔵 Logistic Model: p = 1 / (1 + e<sup>-(B₀ + B₁X)</sup>)</h3>
+                </div>
+                
+                <!-- Categorical Toggle (shown only for categorical scenarios) -->
+                <div class="categorical-toggle-container" id="categorical-toggle-simple" style="display: none;">
+                    <label class="categorical-toggle">
+                        <input type="checkbox" id="includeCategoricalSimple">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Include Categorical Predictor (Segments)</span>
+                    </label>
+                    <div class="category-legend" id="category-legend-simple"></div>
+                </div>
+                
+                <!-- Controls -->
+                <div class="controls-grid" id="tut-controls-section">
+                    <div class="control-group">
+                        <label for="B0_simple">
+                            <span class="param-name">B₀ (Intercept)</span>
+                            <span class="param-value" id="B0_simple_display">-3.0</span>
+                        </label>
+                        <div class="slider-input-row">
+                            <input type="range" id="B0_simple" min="-15" max="15" step="0.1" value="-3">
+                            <input type="number" id="B0_simple_num" min="-15" max="15" step="0.1" value="-3">
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="B1_simple">
+                            <span class="param-name">B₁ (Slope)</span>
+                            <span class="param-value" id="B1_simple_display">0.08</span>
+                        </label>
+                        <div class="slider-input-row">
+                            <input type="range" id="B1_simple" min="-1" max="1" step="0.01" value="0.08">
+                            <input type="number" id="B1_simple_num" min="-1" max="1" step="0.01" value="0.08">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Categorical Coefficient Controls (hidden by default) -->
+                <div class="controls-grid categorical-controls" id="categorical-controls-simple" style="display: none;">
+                    <div class="control-group">
+                        <label for="B2_cat_simple">
+                            <span class="param-name" id="B2_cat_simple_label">B₂ (Segment 2 Shift)</span>
+                            <span class="param-value" id="B2_cat_simple_display">0.5</span>
+                        </label>
+                        <div class="slider-input-row">
+                            <input type="range" id="B2_cat_simple" min="-5" max="5" step="0.1" value="0.5">
+                            <input type="number" id="B2_cat_simple_num" min="-5" max="5" step="0.1" value="0.5">
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="B3_cat_simple">
+                            <span class="param-name" id="B3_cat_simple_label">B₃ (Segment 3 Shift)</span>
+                            <span class="param-value" id="B3_cat_simple_display">1.2</span>
+                        </label>
+                        <div class="slider-input-row">
+                            <input type="range" id="B3_cat_simple" min="-5" max="5" step="0.1" value="1.2">
+                            <input type="number" id="B3_cat_simple_num" min="-5" max="5" step="0.1" value="1.2">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dynamic Equation & Metrics Display -->
+                <div class="results-display" id="tut-metrics-section">
+                    <div class="equation-display" id="equation_simple">
+                        <strong>Model:</strong> p = 1 / (1 + e<sup>-(<span class="dynamic-value">-3.0</span> + <span class="dynamic-value">0.08</span> × X)</sup>)
+                    </div>
+                    <div class="metrics-row">
+                        <div class="logloss-display" id="logloss_simple">
+                            <span class="metric-label">Log-Loss =</span>
+                            <span class="metric-value logloss-value">--</span>
+                        </div>
+                        <div class="accuracy-display" id="accuracy_simple">
+                            <span class="metric-label">Accuracy =</span>
+                            <span class="metric-value accuracy-value">--</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chart -->
+                <div id="simplePlot" class="plot-container tut-chart-section"></div>
+                
+                <!-- Confusion Matrix Mini -->
+                <div class="confusion-matrix-container" id="tut-confusion-matrix">
+                    <h4>Confusion Matrix (Threshold = 0.5)</h4>
+                    <div class="confusion-matrix" id="confusion-matrix-simple">
+                        <div class="cm-header"></div>
+                        <div class="cm-header">Pred: 0</div>
+                        <div class="cm-header">Pred: 1</div>
+                        <div class="cm-row-label">Actual: 0</div>
+                        <div class="cm-cell cm-tn" id="cm-tn-simple">TN: --</div>
+                        <div class="cm-cell cm-fp" id="cm-fp-simple">FP: --</div>
+                        <div class="cm-row-label">Actual: 1</div>
+                        <div class="cm-cell cm-fn" id="cm-fn-simple">FN: --</div>
+                        <div class="cm-cell cm-tp" id="cm-tp-simple">TP: --</div>
+                    </div>
+                </div>
+                
+                <details class="interpretation-aid" open>
+                    <summary>💡 Interpreting Your Logistic Model</summary>
+                    <div class="interpretation-content">
+                        <div id="simple-interpretation-dynamic" class="dynamic-interpretation">
+                            <!-- Populated dynamically by app.js -->
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- Comparison Section -->
+        <section class="comparison-section" id="tut-comparison-section">
+            <h2>MODEL PERFORMANCE</h2>
+            <div class="card">
+                <h3>📊 Your Model vs. Optimal</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <div class="comparison-label">Your Log-Loss</div>
+                        <div class="comparison-value" id="compare_logloss_user">--</div>
+                    </div>
+                    <div class="comparison-item comparison-optimal">
+                        <div class="comparison-label">Optimal Log-Loss</div>
+                        <div class="comparison-value" id="compare_logloss_optimal">--</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-label">Gap</div>
+                        <div class="comparison-value gap-value" id="gap_logloss">--</div>
+                    </div>
+                </div>
+                
+                <div class="comparison-grid" style="margin-top: 1rem;">
+                    <div class="comparison-item">
+                        <div class="comparison-label">Your Accuracy</div>
+                        <div class="comparison-value" id="compare_accuracy_user">--</div>
+                    </div>
+                    <div class="comparison-item comparison-optimal">
+                        <div class="comparison-label">Optimal Accuracy</div>
+                        <div class="comparison-value" id="compare_accuracy_optimal">--</div>
+                    </div>
+                </div>
+                
+                <div id="comparison-verdict" class="comparison-verdict">
+                    <p>Adjust the sliders to minimize log-loss and see how close you can get to the optimal!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Insights Section -->
+        <section class="insights-section" id="tut-insights-section">
+            <h2>KEY INSIGHTS</h2>
+            <div class="card">
+                <details class="intro-notes" open>
+                    <summary>🧠 The Analyst's Guide to Classification Loss</summary>
+                    <div class="notes-content">
+                        <div class="guide-section">
+                            <h5>🎯 Why Not Just Use Accuracy?</h5>
+                            <p>Accuracy only tells you right vs. wrong. But in marketing, <em>how confident</em> your 
+                            model is matters critically. Consider: predicting 51% conversion vs. 99% conversion are 
+                            both "correct" classifications if the person converts—but they have wildly different implications 
+                            for bid optimization, budget allocation, and expected value calculations.</p>
+                            <p style="background: #dbeafe; padding: 10px; border-left: 3px solid #2563eb; border-radius: 4px;">
+                                <strong>Marketing Application:</strong> In programmatic advertising, you bid based on 
+                                <em>expected value</em> = p(conversion) × value_per_conversion. A model that's directionally 
+                                correct but miscalibrated will systematically overbid or underbid.
+                            </p>
+                        </div>
+                        <div class="guide-section">
+                            <h5>⚖️ Log-Loss Rewards Calibration</h5>
+                            <p>A well-calibrated model that predicts 70% should be right 70% of the time among those 
+                            predictions. Log-loss pushes models toward honest probability estimates—not just getting 
+                            the classification right, but knowing <em>how sure</em> to be.</p>
+                            <p style="background: #dcfce7; padding: 10px; border-left: 3px solid #22c55e; border-radius: 4px;">
+                                <strong>The Calibration Check:</strong> Group all predictions where you said "~80%" and 
+                                count what fraction actually converted. If it's 80%, you're calibrated. If it's 50%, 
+                                you're overconfident. Log-loss penalizes miscalibration automatically.
+                            </p>
+                        </div>
+                        <div class="guide-section">
+                            <h5>📉 The Overconfidence Trap</h5>
+                            <p>If you predict 99% and the person doesn't convert, log-loss explodes. This asymmetry 
+                            teaches models to hedge when uncertain. In marketing contexts, overconfident models 
+                            waste budget on users who were never going to convert, or miss promising leads because 
+                            they're too cautiously calibrated in the wrong direction.</p>
+                            <p style="background: #fef3c7; padding: 10px; border-left: 3px solid #f59e0b; border-radius: 4px;">
+                                <strong>Real-World Cost:</strong> A churn model that's 99% confident someone will 
+                                stay—but they leave—means you didn't send the retention offer. The business cost of 
+                                that confidence failure may far exceed the statistical penalty.
+                            </p>
+                        </div>
+                        <div class="guide-section">
+                            <h5>🔗 From Logistic to Neural Networks</h5>
+                            <p>Deep learning classification models use the exact same log-loss function. They just 
+                            have many more parameters (B₀, B₁, B₂, ... B₁,₀₀₀,₀₀₀) and learn complex patterns. But the 
+                            loss function you're minimizing here—cross-entropy—is identical to what's used in 
+                            transformer models, CNNs, and every binary classifier you'll encounter.</p>
+                        </div>
+                        <div class="guide-section">
+                            <h5>🎲 The Odds Ratio: Your Marketing Lever</h5>
+                            <p>The B₁ coefficient has a beautiful interpretation: e<sup>B₁</sup> is the <strong>odds 
+                            ratio</strong>—how much the odds of success multiply for each unit increase in X. If 
+                            B₁ = 0.1, then e<sup>0.1</sup> ≈ 1.11, meaning each unit of X increases odds by 11%.</p>
+                            <p style="background: #f3e8ff; padding: 10px; border-left: 3px solid #9333ea; border-radius: 4px;">
+                                <strong>Strategic Insight:</strong> Unlike linear regression coefficients, odds ratios 
+                                are multiplicative. An engagement score boost from 50→60 has the same <em>relative</em> 
+                                effect on odds as 80→90. This "constant proportional effect" is a key assumption of 
+                                logistic regression—and often matches how marketing interventions actually work.
+                            </p>
+                        </div>
+                        <div class="guide-section">
+                            <h5>✂️ The Decision Boundary: Where You Draw the Line</h5>
+                            <p>The point where your sigmoid crosses 50% is the decision boundary: X = -B₀/B₁. 
+                            Everyone to the left gets predicted as Class 0, everyone to the right as Class 1. 
+                            But here's what most courses don't tell you: <strong>50% is rarely the right threshold 
+                            for marketing decisions</strong>.</p>
+                            <p style="background: #fee2e2; padding: 10px; border-left: 3px solid #ef4444; border-radius: 4px;">
+                                <strong>Threshold Optimization:</strong> If false negatives cost more than false positives 
+                                (e.g., missing a high-value churner), lower your threshold. If false positives are 
+                                expensive (e.g., wasted outreach to non-responders), raise it. The optimal threshold 
+                                depends on your cost matrix, not just model accuracy.
+                            </p>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-nav">
+                <a href="../../../index.html" class="back-link">← Back to Tool Selection</a>
+            </div>
+            <div class="footer-meta">
+                <span class="meta-item">Created: 2026-02-04</span>
+                <span class="separator">•</span>
+                <span class="meta-item">Last Updated: 2026-02-04</span>
+            </div>
+            <div class="footer-citation">
+                <div class="citation-label">Cite this tool:</div>
+                <div class="citation-text">
+                    Baker, A. (2026). Log-Loss Classification Lab. <em>Dr. Baker's Marketing Analytics Tools</em>. 
+                    Retrieved from <a href="https://drbakermarketing.com/apps/model_fitting/logloss/" target="_blank">https://drbakermarketing.com/apps/model_fitting/logloss/</a>
+                </div>
+            </div>
+            <div class="footer-copyright">
+                &copy; 2026 Andrew Baker. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Tutorial Overlay -->
+    <div id="tutorial-overlay"></div>
+
+    <!-- Tutorial Sidebar -->
+    <div id="tutorial-sidebar">
+        <div class="sidebar-header">
+            <h2>🎓 Professor Mode</h2>
+            <button onclick="LogLossTutorial.stop()" class="close-tutorial">&times;</button>
+        </div>
+        <div id="tutorial-content"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../../shared/js/auth_tracking.js"></script>
+    <script src="../../../shared/js/auth_bar.js"></script>
+    <script src="scenarios.js"></script>
+    <script src="app.js"></script>
+    <script src="logloss_tutorial.js"></script>
+</body>
+</html>

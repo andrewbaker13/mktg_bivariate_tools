@@ -72,6 +72,11 @@ let settings = {
  * Initialize the application
  */
 function init() {
+    // Initialize engagement tracking
+    if (typeof initEngagementTracking === 'function') {
+        initEngagementTracking(TOOL_SLUG);
+    }
+    
     // Populate scenario dropdown
     const select = document.getElementById('scenario-select');
     DECISION_TREE_SCENARIOS.forEach(scenario => {
@@ -258,6 +263,11 @@ function handleScenarioChange(e) {
     
     currentTreeScenario = getScenarioById(scenarioId);
     
+    // Track scenario selection
+    if (typeof markScenarioLoaded === 'function') {
+        markScenarioLoaded(currentTreeScenario.label);
+    }
+    
     // Update description
     document.getElementById('scenario-description').innerHTML = currentTreeScenario.description();
     document.getElementById('scenario-download').disabled = false;
@@ -386,6 +396,11 @@ function splitData() {
  * Handle file upload
  */
 function handleFileUpload(file) {
+    // Track file upload BEFORE processing
+    if (typeof markDataUploaded === 'function') {
+        markDataUploaded(file.name);
+    }
+    
     const reader = new FileReader();
     
     reader.onload = (e) => {
@@ -639,6 +654,11 @@ function buildTree() {
         return;
     }
     
+    // Track build attempt
+    if (typeof markRunAttempted === 'function') {
+        markRunAttempted();
+    }
+    
     // Re-split data with current settings
     splitData();
     
@@ -650,6 +670,28 @@ function buildTree() {
     
     treeBuilt = true;
     window.treeBuilt = true;  // Expose for Professor Mode
+    
+    // Track successful build
+    if (typeof markRunSuccessful === 'function') {
+        const stats = classifier ? classifier.getTreeStats() : null;
+        markRunSuccessful(
+            {
+                n: currentData.length,
+                n_train: trainData ? trainData.length : 0,
+                n_test: testData ? testData.length : 0,
+                scenario: currentTreeScenario ? currentTreeScenario.id : 'custom',
+                buildMode: buildMode,
+                maxDepth: settings.maxDepth,
+                minSamplesLeaf: settings.minSamplesLeaf,
+                criterion: settings.criterion,
+                n_features: featureNames.length,
+                n_classes: classes.length,
+                treeDepth: stats ? stats.maxDepth : null,
+                nodeCount: stats ? stats.nodeCount : null
+            },
+            `Decision tree built: ${stats ? stats.nodeCount + ' nodes, depth ' + stats.maxDepth : 'manual mode'}, ${classes.length} classes`
+        );
+    }
 }
 
 /**

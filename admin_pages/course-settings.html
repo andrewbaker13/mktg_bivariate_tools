@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Settings - Course Homepage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-header h1 {
+            font-size: 1.75rem;
+            color: #1f2937;
+        }
+        .course-name {
+            color: #6b7280;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+        .back-btn {
+            padding: 0.75rem 1.5rem;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        .back-btn:hover {
+            background: #4b5563;
+        }
+        
+        /* Settings Sections */
+        .settings-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        .settings-section h2 {
+            font-size: 1.5rem;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .settings-section p {
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .form-group .helper-text {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        /* Toggle Switch */
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 56px;
+            height: 28px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #d1d5db;
+            transition: 0.3s;
+            border-radius: 28px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: #10b981;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(28px);
+        }
+        .toggle-label {
+            font-weight: 600;
+            color: #374151;
+            flex: 1;
+        }
+        
+        /* Tool Visibility Grid */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .tool-item {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.2s;
+        }
+        .tool-item.visible {
+            border-color: #10b981;
+            background: #d1fae5;
+        }
+        .tool-item .checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .tool-info {
+            flex: 1;
+        }
+        .tool-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.25rem;
+        }
+        .tool-description {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover {
+            background: #f9fafb;
+        }
+        .filter-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #059669;
+        }
+        .btn-secondary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #2563eb;
+        }
+        .btn-outline {
+            background: white;
+            color: #6b7280;
+            border: 1px solid #d1d5db;
+        }
+        .btn-outline:hover {
+            background: #f9fafb;
+        }
+        
+        /* Loading & Messages */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .loading-spinner {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .message {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+        
+        /* Quick Stats */
+        .stats-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            flex: 1;
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        /* Drag and Drop */
+        .tool-item {
+            cursor: grab;
+            user-select: none;
+        }
+        .tool-item:active {
+            cursor: grabbing;
+        }
+        .tool-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+        .tool-item.drag-over {
+            border-top: 3px solid #3b82f6;
+        }
+        .drag-handle {
+            color: #9ca3af;
+            margin-right: 0.5rem;
+            cursor: grab;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        /* Analytics Section */
+        .analytics-card {
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        .analytics-list {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0 0 0;
+        }
+        .analytics-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        .analytics-item .tool-name {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .analytics-item .click-count {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Header -->
+        <div class="page-header">
+            <div>
+                <h1>⚙️ Course Settings</h1>
+                <div class="course-name" id="course-name-display">Loading...</div>
+            </div>
+            <a href="admin-courses.html" class="back-btn">← Back to Courses</a>
+        </div>
+
+        <!-- Messages -->
+        <div id="message-container"></div>
+
+        <!-- Course Info Section -->
+        <div class="settings-section">
+            <h2>📝 Course Information</h2>
+            <p>Basic details about your course that appear on the homepage.</p>
+            
+            <div class="form-group">
+                <label for="homepage-title">Homepage Title</label>
+                <input type="text" id="homepage-title" class="form-control" placeholder="Leave empty to use course name">
+                <div class="helper-text">Custom title shown at the top of the course homepage</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="course-description">Course Description</label>
+                <textarea id="course-description" class="form-control" placeholder="Welcome to Marketing Analytics! We'll start with basics and build up to advanced models."></textarea>
+                <div class="helper-text">Introduction text that students see on the course homepage</div>
+            </div>
+        </div>
+
+        <!-- Homepage Enable/Disable -->
+        <div class="settings-section">
+            <h2>🏠 Course Homepage</h2>
+            <p>Enable a custom homepage for your students with selected tools and course information.</p>
+            
+            <div class="toggle-group">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="homepage-enabled">
+                    <span class="toggle-slider"></span>
+                </label>
+                <div class="toggle-label">Enable Course Homepage</div>
+            </div>
+            
+            <div id="homepage-disabled-message" style="display: none; padding: 1rem; background: #fef3c7; border-radius: 6px; color: #92400e;">
+                ℹ️ The course homepage is currently disabled. Enable it above to allow students to access a customized tool list.
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="settings-section" id="analytics-section" style="display: none;">
+            <h2>📊 Course Homepage Analytics</h2>
+            <p>See which tools your students are clicking from the course homepage.</p>
+            
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value" id="analytics-total-clicks">0</div>
+                    <div class="stat-label">Total Clicks (Last 30 Days)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="analytics-unique-users">0</div>
+                    <div class="stat-label">Active Students</div>
+                </div>
+            </div>
+            
+            <div class="analytics-card">
+                <h3 style="margin: 0 0 1rem 0;">Most Popular Tools</h3>
+                <ul class="analytics-list" id="analytics-list">
+                    <li style="text-align: center; color: #6b7280;">Loading analytics...</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Tool Visibility Section -->
+        <div class="settings-section" id="tool-visibility-section">
+            <h2>🛠️ Tool Visibility & Ordering</h2>
+            <p>Select which tools should appear on your course homepage and drag to reorder them. This helps students focus on relevant tools for their level.</p>
+            
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value" id="visible-count">0</div>
+                    <div class="stat-label">Visible Tools</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="hidden-count">0</div>
+                    <div class="stat-label">Hidden Tools</div>
+                </div>
+            </div>
+            
+            <!-- Quick Filters -->
+            <div class="filter-bar">
+                <button class="filter-btn active" data-filter="all">All Tools</button>
+                <button class="filter-btn" data-filter="visible">Visible Only</button>
+                <button class="filter-btn" data-filter="hidden">Hidden Only</button>
+                <div style="flex: 1;"></div>
+                <button class="filter-btn" id="select-all-btn">✓ Select All</button>
+                <button class="filter-btn" id="deselect-all-btn">✗ Deselect All</button>
+            </div>
+            
+            <!-- Tools Grid -->
+            <div class="tools-grid" id="tools-grid">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="settings-section">
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="save-btn">💾 Save Changes</button>
+                <button class="btn btn-secondary" id="preview-btn">👁️ Preview Homepage</button>
+                <button class="btn btn-outline" id="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <h2>Saving...</h2>
+            <p>Please wait while we update your course settings.</p>
+        </div>
+    </div>
+
+    <script src="../shared/js/api-config.js"></script>
+    <script>
+        console.log('Course settings page loading...');
+        
+        // Get course ID from URL first
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('course_id');
+        
+        console.log('Course ID from URL:', courseId);
+        
+        if (!courseId) {
+            alert('No course selected');
+            window.location.href = 'admin-courses.html';
+        }
+
+        let currentCourse = null;
+        let toolsData = [];
+        let currentFilter = 'all';
+        
+        // Wait for API config to load
+        let checkCount = 0;
+        const checkApiConfig = setInterval(() => {
+            checkCount++;
+            console.log(`Checking for API_BASE... attempt ${checkCount}, found: ${typeof API_BASE !== 'undefined'}`);
+            
+            if (typeof API_BASE !== 'undefined') {
+                console.log('API_BASE found:', API_BASE);
+                window.API_BASE_URL = API_BASE; // Set the variable we use throughout this page
+                clearInterval(checkApiConfig);
+                console.log('Calling initializePage()...');
+                initializePage();
+            }
+            
+            if (checkCount > 100) {
+                console.error('Timeout waiting for API_BASE');
+                clearInterval(checkApiConfig);
+                alert('Failed to load API configuration. Please refresh the page.');
+            }
+        }, 50);
+
+        // Load course data and tools
+        async function loadCourseData() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                console.log('Auth token from localStorage:', token ? 'Token found (length: ' + token.length + ')' : 'NO TOKEN');
+                
+                if (!token) {
+                    console.error('No auth token found in localStorage');
+                    alert('You must be logged in to access course settings.');
+                    window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+                    return;
+                }
+                
+                // Load tool visibility settings (which now includes course info)
+                await loadToolVisibility();
+                
+                // Load analytics if homepage is enabled
+                if (currentCourse && currentCourse.homepage_enabled) {
+                    await loadAnalytics();
+                }
+                
+            } catch (error) {
+                console.error('Error loading course data:', error);
+                showMessage('Failed to load course data', 'error');
+            }
+        }
+
+        async function loadToolVisibility() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                console.log('Loading tool visibility for course:', courseId);
+                console.log('API URL:', `${API_BASE_URL}/courses/${courseId}/homepage/tool-visibility/`);
+                console.log('Auth token present:', !!token);
+                
+                if (!token) {
+                    alert('No authentication token found. Please log in again.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/courses/${courseId}/homepage/tool-visibility/`, {
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    alert(`Failed to load tools. Status: ${response.status}\nError: ${errorText}`);
+                    throw new Error(`Failed to load tools: ${response.status}`);
+                }
+                const data = await response.json();
+                console.log('Loaded tools data:', data);
+                console.log('Number of tools:', data.tools?.length || 0);
+                
+                if (!data.tools || data.tools.length === 0) {
+                    alert('No tools found in database. Did you run the populate_tools.py script?');
+                    return;
+                }
+                
+                // Populate course info from the response
+                if (data.course_name) {
+                    const courseTitleElement = document.querySelector('h2');
+                    if (courseTitleElement) {
+                        courseTitleElement.textContent = `Customize Course Homepage: ${data.course_name}`;
+                    }
+                }
+                
+                if (data.homepage_title !== undefined) {
+                    document.getElementById('homepage-title').value = data.homepage_title || '';
+                }
+                
+                if (data.description !== undefined) {
+                    document.getElementById('course-description').value = data.description || '';
+                }
+                
+                if (data.homepage_enabled !== undefined) {
+                    document.getElementById('homepage-enabled').checked = data.homepage_enabled;
+                }
+                
+                // Sort tools by display_order
+                toolsData = data.tools.sort((a, b) => a.display_order - b.display_order);
+                console.log('Sorted tools:', toolsData.length, 'tools');
+                
+                renderTools();
+                updateStats();
+                
+            } catch (error) {
+                console.error('Error loading tools:', error);
+                alert(`Error loading tools: ${error.message}`);
+                showMessage('Failed to load tool visibility settings', 'error');
+            }
+        }
+
+        function renderTools() {
+            const grid = document.getElementById('tools-grid');
+            const filteredTools = toolsData.filter(tool => {
+                if (currentFilter === 'visible') return tool.is_visible;
+                if (currentFilter === 'hidden') return !tool.is_visible;
+                return true;
+            });
+            
+            grid.innerHTML = filteredTools.map(tool => `
+                <div class="tool-item ${tool.is_visible ? 'visible' : ''}" 
+                     data-tool-id="${tool.id}" 
+                     draggable="true">
+                    <span class="drag-handle">☰</span>
+                    <input type="checkbox" class="checkbox tool-checkbox" 
+                           data-tool-id="${tool.id}" 
+                           ${tool.is_visible ? 'checked' : ''}>
+                    <div class="tool-info">
+                        <div class="tool-name">${tool.name}</div>
+                        <div class="tool-description">${tool.description || 'No description'}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add event listeners
+            document.querySelectorAll('.tool-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', handleToolCheckboxChange);
+            });
+            
+            // Add drag and drop event listeners
+            const toolItems = document.querySelectorAll('.tool-item');
+            toolItems.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragleave', handleDragLeave);
+            });
+        }
+
+        function handleToolCheckboxChange(event) {
+            const toolId = parseInt(event.target.dataset.toolId);
+            const tool = toolsData.find(t => t.id === toolId);
+            if (tool) {
+                tool.is_visible = event.target.checked;
+                renderTools();
+                updateStats();
+            }
+        }
+
+        function updateStats() {
+            const visibleCount = toolsData.filter(t => t.is_visible).length;
+            const hiddenCount = toolsData.length - visibleCount;
+            document.getElementById('visible-count').textContent = visibleCount;
+            document.getElementById('hidden-count').textContent = hiddenCount;
+        }
+
+        function updateHomepageEnabledState(skipAnalytics = false) {
+            const enabled = document.getElementById('homepage-enabled').checked;
+            const section = document.getElementById('tool-visibility-section');
+            const analyticsSection = document.getElementById('analytics-section');
+            const message = document.getElementById('homepage-disabled-message');
+            
+            if (enabled) {
+                section.style.display = 'block';
+                message.style.display = 'none';
+                analyticsSection.style.display = 'block';
+                if (!skipAnalytics) {
+                    loadAnalytics();
+                }
+            } else {
+                section.style.display = 'none';
+                message.style.display = 'block';
+                analyticsSection.style.display = 'none';
+            }
+        }
+
+        // Drag and Drop Handlers
+        let draggedElement = null;
+
+        function handleDragStart(e) {
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.innerHTML);
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.tool-item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            e.target.classList.remove('drag-over');
+            
+            if (draggedElement !== e.target && e.target.classList.contains('tool-item')) {
+                const draggedId = parseInt(draggedElement.dataset.toolId);
+                const targetId = parseInt(e.target.dataset.toolId);
+                
+                const draggedIndex = toolsData.findIndex(t => t.id === draggedId);
+                const targetIndex = toolsData.findIndex(t => t.id === targetId);
+                
+                // Reorder the array
+                const [draggedTool] = toolsData.splice(draggedIndex, 1);
+                toolsData.splice(targetIndex, 0, draggedTool);
+                
+                // Update display_order for all tools
+                toolsData.forEach((tool, index) => {
+                    tool.display_order = index;
+                });
+                
+                renderTools();
+            }
+            
+            return false;
+        }
+
+        function handleDragLeave(e) {
+            e.target.classList.remove('drag-over');
+        }
+
+        // Analytics Loading
+        async function loadAnalytics() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch(`${API_BASE_URL}/courses/${courseId}/homepage/analytics/?days=30`, {
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to load analytics');
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                // Update stats
+                document.getElementById('analytics-total-clicks').textContent = data.total_clicks;
+                document.getElementById('analytics-unique-users').textContent = data.unique_users;
+                
+                // Update tool list
+                const analyticsList = document.getElementById('analytics-list');
+                if (data.tool_clicks.length === 0) {
+                    analyticsList.innerHTML = '<li style=\"text-align: center; color: #6b7280;\">No clicks recorded yet</li>';
+                } else {
+                    analyticsList.innerHTML = data.tool_clicks.slice(0, 10).map(tool => `
+                        <li class=\"analytics-item\">
+                            <span class=\"tool-name\">${tool.tool__name}</span>
+                            <span class=\"click-count\">${tool.click_count} clicks</span>
+                        </li>
+                    `).join('');
+                }
+                
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+            }
+        }
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderTools();
+            });
+        });
+
+        // Select/Deselect All
+        document.getElementById('select-all-btn').addEventListener('click', () => {
+            toolsData.forEach(tool => tool.is_visible = true);
+            renderTools();
+            updateStats();
+        });
+
+        document.getElementById('deselect-all-btn').addEventListener('click', () => {
+            toolsData.forEach(tool => tool.is_visible = false);
+            renderTools();
+            updateStats();
+        });
+
+        // Homepage enabled toggle
+        document.getElementById('homepage-enabled').addEventListener('change', updateHomepageEnabledState);
+
+        // Save Changes
+        document.getElementById('save-btn').addEventListener('click', async () => {
+            try {
+                document.getElementById('loading-overlay').style.display = 'flex';
+                const token = localStorage.getItem('auth_token');
+                
+                // Save course settings
+                const settingsData = {
+                    homepage_enabled: document.getElementById('homepage-enabled').checked,
+                    homepage_title: document.getElementById('homepage-title').value.trim(),
+                    description: document.getElementById('course-description').value.trim()
+                };
+                
+                const settingsResponse = await fetch(`${API_BASE_URL}/courses/${courseId}/homepage/settings/`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(settingsData)
+                });
+                
+                if (!settingsResponse.ok) throw new Error('Failed to save settings');
+                
+                // Save tool visibility and ordering
+                const toolsPayload = {
+                    tools: toolsData.map((t, index) => ({ 
+                        id: t.id, 
+                        is_visible: t.is_visible,
+                        display_order: index  // Use array index as order
+                    }))
+                };
+                
+                const visibilityResponse = await fetch(`${API_BASE_URL}/courses/${courseId}/homepage/tool-visibility/bulk/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(toolsPayload)
+                });
+                
+                if (!visibilityResponse.ok) throw new Error('Failed to save tool visibility');
+                
+                document.getElementById('loading-overlay').style.display = 'none';
+                showMessage('✓ Course settings saved successfully!', 'success');
+                
+            } catch (error) {
+                document.getElementById('loading-overlay').style.display = 'none';
+                console.error('Error saving:', error);
+                showMessage('Failed to save changes. Please try again.', 'error');
+            }
+        });
+
+        // Preview Homepage
+        document.getElementById('preview-btn').addEventListener('click', () => {
+            window.open(`course-home.html?course_id=${courseId}`, '_blank');
+        });
+
+        // Cancel
+        document.getElementById('cancel-btn').addEventListener('click', () => {
+            window.location.href = 'admin-courses.html';
+        });
+
+        function showMessage(text, type) {
+            const container = document.getElementById('message-container');
+            container.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => container.innerHTML = '', 5000);
+        }
+
+        // Initialize page once API config is loaded
+        function initializePage() {
+            loadCourseData();
+        }
+    </script>
+</body>
+</html>

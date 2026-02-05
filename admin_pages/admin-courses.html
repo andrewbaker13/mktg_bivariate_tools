@@ -517,6 +517,9 @@
                 // Actions
                 let actions = `<button class="action-btn edit" onclick="renameCourse(${course.id})" title="Rename Course">✏️ Rename</button>`;
                 
+                // Add Settings button
+                actions += `<button class="action-btn codes" onclick="window.location.href='course-settings.html?course_id=${course.id}'" title="Course Settings" style="background: #10b981;">⚙️ Settings</button>`;
+                
                 if (course.owner) {
                     actions += `<button class="action-btn transfer" onclick="showTransferModal(${course.id}, '${course.name.replace(/'/g, "\\'")}', '${course.owner_name ? course.owner_name.replace(/'/g, "\\'") : ''}')" title="Transfer Ownership">🔄 Transfer</button>`;
                 } else {
