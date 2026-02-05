@@ -652,7 +652,7 @@ Include these in `markRunSuccessful(params, summary)`:
 
 ---
 
-## Implementation Status (Last Updated: January 30, 2026)
+## Implementation Status (Last Updated: February 4, 2026)
 
 ### ✅ Tools with Complete Tracking
 
@@ -667,6 +667,7 @@ Include these in `markRunSuccessful(params, summary)`:
 | attribution | shapley_visualizer | `main_shapley.js` | `shapley-attribution` |
 | clustering | kmeans | `main_kmeans.js` | `k-means-clustering` |
 | clustering | kprototypes | `main_kprototypes.js` | `k-prototypes-clustering` |
+| decisiontrees | classifier | `main.js` | `decision-tree-classifier` |
 | descriptive | pearson_correlation | `pearson_app.js` | `pearson-correlation` |
 | descriptive | univariate_analyzer | `main_univariate_analyzer.js` | `univariate-analyzer` |
 | hypothesis_testing | ab_proportion | `main_ab_proportion.js` | `ab-proportion-test` |
@@ -675,6 +676,8 @@ Include these in `markRunSuccessful(params, summary)`:
 | hypothesis_testing | mcnemar | `mcnemar_app.js` | `mcnemar-test` |
 | hypothesis_testing | onewayanova | `onewayanova_app.js` | `one-way-anova` |
 | hypothesis_testing | paired_ttest | `paired_ttest_app.js` | `paired-t-test` |
+| model_fitting | mae | `app.js` | `mae-calibration-lab` |
+| model_fitting | logloss | `app.js` | `logloss-classification-lab` |
 | probability | compound_event_probability | `compound_event_probability.js` | `compound-probability` |
 | probability | selection_probability_lab | `selection_probability_lab.js` | `selection-probability` |
 | regression | bivariate_regression | `bivariate_app.js` | `bivariate-regression` |
@@ -697,6 +700,8 @@ Include these in `markRunSuccessful(params, summary)`:
 - **Sample size tools**: Don't have `markDataUploaded()` because they work with parameters, not uploaded files (intentional)
 - **Probability tools**: Fixed case mismatch (`InitEngagementTracking` → `initEngagementTracking`) on 2026-01-30
 - **Attribution tools**: Added tracking on 2026-01-30
+- **Decision Tree & Log-Loss tools**: Added tracking on 2026-02-04 (auto-run pattern with debouncing for Log-Loss, button-run pattern for Decision Tree)
+- **MAE tool**: Added basic initEngagementTracking (calibration lab pattern)
 
 ### 🔍 When Adding New Tools
 
@@ -706,4 +711,4 @@ Include these in `markRunSuccessful(params, summary)`:
 
 ---
 
-**Reference:** Tracking system implemented across 34 statistical tools (January 2026)
+**Reference:** Tracking system implemented across 37 statistical tools (February 2026)
