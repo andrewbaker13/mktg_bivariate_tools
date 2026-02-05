@@ -111,6 +111,12 @@ const MAE_SCENARIOS = [
     {
         id: 'email-frequency',
         label: '📧 Email Frequency (Clear Diminishing Returns)',
+        // Custom parameter ranges (quadratic term needs a much larger scale)
+        paramRanges: {
+            B0: { min: 0, max: 200, step: 1 },
+            B1: { min: 0, max: 30, step: 0.1 },
+            B2_quad: { min: -2.0, max: 0.5, step: 0.01 }
+        },
         description: () => `
             <div class="scenario-description">
                 <div class="scenario-header">
@@ -209,6 +215,12 @@ const MAE_SCENARIOS = [
     {
         id: 'influencer-spend',
         label: '📱 Influencer Marketing (Noisy with Peak)',
+        // Custom parameter ranges (x is in $K, quadratic term is larger)
+        paramRanges: {
+            B0: { min: -20, max: 80, step: 1 },
+            B1: { min: 0, max: 8, step: 0.1 },
+            B2_quad: { min: -0.08, max: 0.02, step: 0.001 }
+        },
         description: () => `
             <div class="scenario-description">
                 <div class="scenario-header">
