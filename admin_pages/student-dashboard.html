@@ -361,9 +361,36 @@
                         <option value="">Select a course...</option>
                     </select>
                 </div>
+                <button id="add-course-btn" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                    ➕ Add Another Course
+                </button>
                 <a href="#" id="course-homepage-link" style="display: none; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 4px; font-weight: 600; white-space: nowrap;">
                     🏠 Course Homepage
                 </a>
+            </div>
+        </div>
+
+        <!-- Add Course Modal -->
+        <div id="add-course-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 8px; padding: 2rem; max-width: 500px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+                <h2 style="margin: 0 0 1rem 0; color: #1f2937;">Add Another Course</h2>
+                <p style="color: #6b7280; margin-bottom: 1.5rem;">Enter the registration code provided by your instructor to enroll in an additional course.</p>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="enroll-registration-code" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Registration Code</label>
+                    <input type="text" id="enroll-registration-code" placeholder="e.g., ABC123XYZ" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; text-transform: uppercase;">
+                </div>
+                
+                <div id="enroll-message" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: 4px; display: none;"></div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button id="cancel-enroll-btn" style="padding: 0.75rem 1.5rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button id="submit-enroll-btn" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">
+                        Enroll in Course
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1010,6 +1037,81 @@
                 `;
             }).join('');
         }
+
+        // Add Course Modal functionality
+        document.getElementById('add-course-btn').addEventListener('click', () => {
+            document.getElementById('add-course-modal').style.display = 'flex';
+            document.getElementById('enroll-registration-code').value = '';
+            document.getElementById('enroll-message').style.display = 'none';
+        });
+
+        document.getElementById('cancel-enroll-btn').addEventListener('click', () => {
+            document.getElementById('add-course-modal').style.display = 'none';
+        });
+
+        document.getElementById('submit-enroll-btn').addEventListener('click', async () => {
+            const registrationCode = document.getElementById('enroll-registration-code').value.trim();
+            const messageEl = document.getElementById('enroll-message');
+            const submitBtn = document.getElementById('submit-enroll-btn');
+            
+            if (!registrationCode) {
+                messageEl.style.display = 'block';
+                messageEl.style.background = '#fee2e2';
+                messageEl.style.color = '#dc2626';
+                messageEl.textContent = 'Please enter a registration code';
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enrolling...';
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch(`${API_BASE}/auth/enroll-course/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ registration_code: registrationCode })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    messageEl.style.display = 'block';
+                    messageEl.style.background = '#d1fae5';
+                    messageEl.style.color = '#065f46';
+                    messageEl.textContent = `✓ ${data.message}`;
+                    
+                    // Refresh page after 1.5 seconds to show new course
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    messageEl.style.display = 'block';
+                    messageEl.style.background = '#fee2e2';
+                    messageEl.style.color = '#dc2626';
+                    messageEl.textContent = `✗ ${data.error || 'Failed to enroll in course'}`;
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Enroll in Course';
+                }
+            } catch (error) {
+                messageEl.style.display = 'block';
+                messageEl.style.background = '#fee2e2';
+                messageEl.style.color = '#dc2626';
+                messageEl.textContent = '✗ Network error. Please try again.';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Enroll in Course';
+            }
+        });
+
+        // Allow Enter key to submit
+        document.getElementById('enroll-registration-code').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('submit-enroll-btn').click();
+            }
+        });
 
         // Load dashboard on page load
         loadDashboard();

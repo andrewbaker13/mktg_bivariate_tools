@@ -120,12 +120,6 @@ const PositioningMap = (function() {
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
     
-    // Helper function to safely get coordinate value (returns 0 if undefined/NaN)
-    const safeCoord = (coords, dimIndex) => {
-      const val = coords && coords[dimIndex];
-      return (val !== undefined && !isNaN(val)) ? val : 0;
-    };
-    
     // Calculate data bounds from brands, segments, and customers
     const brands = Object.keys(data.brandCoords);
     const xs = brands.map(b => safeCoord(data.brandCoords[b], currentDimX));
@@ -344,8 +338,8 @@ const PositioningMap = (function() {
     
     // Create points array for Delaunay
     const points = brands.map(b => [
-      xScale(coords[b][currentDimX]),
-      yScale(coords[b][currentDimY])
+      xScale(safeCoord(coords[b], currentDimX)),
+      yScale(safeCoord(coords[b], currentDimY))
     ]);
     
     // Create Delaunay triangulation and Voronoi diagram
@@ -398,7 +392,7 @@ const PositioningMap = (function() {
       .enter()
       .append('g')
       .attr('class', 'opportunity')
-      .attr('transform', d => `translate(${xScale(d.coords[currentDimX])}, ${yScale(d.coords[currentDimY])})`);
+      .attr('transform', d => `translate(${xScale(safeCoord(d.coords, currentDimX))}, ${yScale(safeCoord(d.coords, currentDimY))})`);
     
     // Diamond marker with size based on share captured
     oppGroups.append('path')
@@ -467,7 +461,7 @@ const PositioningMap = (function() {
       .enter()
       .append('g')
       .attr('class', 'opportunity')
-      .attr('transform', d => `translate(${xScale(d.coords[currentDimX])}, ${yScale(d.coords[currentDimY])})`);
+      .attr('transform', d => `translate(${xScale(safeCoord(d.coords, currentDimX))}, ${yScale(safeCoord(d.coords, currentDimY))})`);
     
     // Diamond marker with size based on share captured
     oppGroups.append('path')
@@ -519,9 +513,16 @@ const PositioningMap = (function() {
     const dimBounds = [];
     for (let d = 0; d < numDims; d++) {
       const allVals = [
-        ...brands.map(b => coords[b][d]),
-        ...segments.map(s => s.coords[d])
-      ];
+        ...brands.map(b => safeCoord(coords[b], d)),
+        ...segments.map(s => safeCoord(s.coords, d))
+      ].filter(v => !isNaN(v) && v !== undefined);
+      
+      // Handle edge case where no valid values exist
+      if (allVals.length === 0) {
+        dimBounds.push({ min: -1, max: 1 });
+        continue;
+      }
+      
       const minVal = Math.min(...allVals);
       const maxVal = Math.max(...allVals);
       const padding = (maxVal - minVal) * 0.15 || 0.5;
@@ -697,8 +698,8 @@ const PositioningMap = (function() {
     const scale = (maxBrandDist / maxLoading) * 0.9;
     
     attrs.forEach((attr, i) => {
-      const x = loadings[i][currentDimX] * scale;
-      const y = loadings[i][currentDimY] * scale;
+      const x = safeCoord(loadings[i], currentDimX) * scale;
+      const y = safeCoord(loadings[i], currentDimY) * scale;
       
       // Vector line
       attrLayer.append('line')
@@ -738,8 +739,8 @@ const PositioningMap = (function() {
     segLayer.selectAll('*').remove();
     
     segments.forEach((seg, i) => {
-      const x = xScale(seg.coords[currentDimX]);
-      const y = yScale(seg.coords[currentDimY]);
+      const x = xScale(safeCoord(seg.coords, currentDimX));
+      const y = yScale(safeCoord(seg.coords, currentDimY));
       const color = colors.segment[i % colors.segment.length];
       
       // Use label if available (pre-defined segments), otherwise generic
@@ -780,8 +781,8 @@ const PositioningMap = (function() {
       .enter()
       .append('circle')
       .attr('class', 'customer-dot')
-      .attr('cx', d => xScale(d.coords[currentDimX]))
-      .attr('cy', d => yScale(d.coords[currentDimY]))
+      .attr('cx', d => xScale(safeCoord(d.coords, currentDimX)))
+      .attr('cy', d => yScale(safeCoord(d.coords, currentDimY)))
       .attr('r', 4)
       .attr('fill', d => {
         if (d.segment) {
@@ -815,7 +816,7 @@ const PositioningMap = (function() {
     
     // Tooltip
     dots.append('title')
-      .text(d => `Customer #${d.id}${d.segment ? ` (Segment ${d.segment})` : ''}\nIdeal Position: (${d.coords[currentDimX].toFixed(2)}, ${d.coords[currentDimY].toFixed(2)})`);
+      .text(d => `Customer #${d.id}${d.segment ? ` (Segment ${d.segment})` : ''}\nIdeal Position: (${safeCoord(d.coords, currentDimX).toFixed(2)}, ${safeCoord(d.coords, currentDimY).toFixed(2)})`);
     
     // Add legend/count
     const count = customerPoints.length;
@@ -846,7 +847,7 @@ const PositioningMap = (function() {
       .enter()
       .append('g')
       .attr('class', 'brand')
-      .attr('transform', d => `translate(${xScale(coords[d][currentDimX])}, ${yScale(coords[d][currentDimY])})`)
+      .attr('transform', d => `translate(${xScale(safeCoord(coords[d], currentDimX))}, ${yScale(safeCoord(coords[d], currentDimY))})`)
       .style('cursor', draggable ? 'grab' : 'pointer');
     
     // Brand circle
@@ -862,8 +863,8 @@ const PositioningMap = (function() {
       labelLayer.append('text')
         .attr('class', 'brand-label')
         .attr('data-brand', brand)
-        .attr('x', xScale(coords[brand][currentDimX]))
-        .attr('y', yScale(coords[brand][currentDimY]) - 18)
+        .attr('x', xScale(safeCoord(coords[brand], currentDimX)))
+        .attr('y', yScale(safeCoord(coords[brand], currentDimY)) - 18)
         .attr('text-anchor', 'middle')
         .attr('fill', colors.text)
         .attr('font-size', '12px')
@@ -901,8 +902,8 @@ const PositioningMap = (function() {
     if (draggable) {
       const drag = d3.drag()
         .on('start', function(event, d) {
-          const startX = xScale(coords[d][currentDimX]);
-          const startY = yScale(coords[d][currentDimY]);
+          const startX = xScale(safeCoord(coords[d], currentDimX));
+          const startY = yScale(safeCoord(coords[d], currentDimY));
           
           // Mark that we're dragging (to suppress click after drag)
           d3.select(this).classed('is-dragging', true);
@@ -1015,13 +1016,13 @@ const PositioningMap = (function() {
     
     brandGroup
       .transition().duration(50)
-      .attr('transform', `translate(${xScale(newCoords[currentDimX])}, ${yScale(newCoords[currentDimY])})`);
+      .attr('transform', `translate(${xScale(safeCoord(newCoords, currentDimX))}, ${yScale(safeCoord(newCoords, currentDimY))})`);
     
     svg.select('.label-layer')
       .select(`text[data-brand="${brand}"]`)
       .transition().duration(50)
-      .attr('x', xScale(newCoords[currentDimX]))
-      .attr('y', yScale(newCoords[currentDimY]) - 18);
+      .attr('x', xScale(safeCoord(newCoords, currentDimX)))
+      .attr('y', yScale(safeCoord(newCoords, currentDimY)) - 18);
   }
   
   // ==================== SET INTERACTION MODE ====================
