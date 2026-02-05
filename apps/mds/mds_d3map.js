@@ -614,7 +614,9 @@ const PositioningMap = (function() {
     brands.forEach(brand => {
       let distSq = 0;
       for (let d = 0; d < numDims; d++) {
-        distSq += (entryPoint[d] - coords[brand][d]) ** 2;
+        const brandCoord = safeCoord(coords[brand], d);
+        const entryCoord = safeCoord(entryPoint, d);
+        distSq += (entryCoord - brandCoord) ** 2;
       }
       const dist = Math.sqrt(distSq);
       if (dist < nearestDist) {
@@ -633,7 +635,9 @@ const PositioningMap = (function() {
       // N-D distance from entrant to this segment's ideal point
       let entrantDistSq = 0;
       for (let d = 0; d < numDims; d++) {
-        entrantDistSq += (entryPoint[d] - segCoords[d]) ** 2;
+        const entryCoord = safeCoord(entryPoint, d);
+        const segCoord = safeCoord(segCoords, d);
+        entrantDistSq += (entryCoord - segCoord) ** 2;
       }
       const entrantDist = Math.sqrt(entrantDistSq);
       
@@ -641,7 +645,9 @@ const PositioningMap = (function() {
       const brandDists = brands.map(b => {
         let distSq = 0;
         for (let d = 0; d < numDims; d++) {
-          distSq += (coords[b][d] - segCoords[d]) ** 2;
+          const brandCoord = safeCoord(coords[b], d);
+          const segCoord = safeCoord(segCoords, d);
+          distSq += (brandCoord - segCoord) ** 2;
         }
         return Math.sqrt(distSq);
       });
