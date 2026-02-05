@@ -32,6 +32,16 @@
             if (container) {
                 container.innerHTML = html;
                 
+                // Check user permissions and hide staff-only links
+                const isStaff = localStorage.getItem('is_staff') === 'true';
+                if (!isStaff) {
+                    // Hide all links marked with data-role="staff"
+                    const staffLinks = container.querySelectorAll('[data-role="staff"]');
+                    staffLinks.forEach(link => {
+                        link.style.display = 'none';
+                    });
+                }
+                
                 // Fix links if we are in a subdirectory
                 if (isGamePage || isQuizPage) {
                     const links = container.querySelectorAll('a');

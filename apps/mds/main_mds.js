@@ -1063,6 +1063,9 @@ function showResultsSections() {
   // Show simulation section (playground)
   document.querySelector('.simulation-section')?.classList.remove('hidden');
   
+  // Show playground quick link near the map
+  document.getElementById('playground-quick-link')?.classList.remove('hidden');
+  
   // Show competitive intelligence section  
   document.querySelector('.competitive-intel-section')?.classList.remove('hidden');
   
@@ -3509,12 +3512,16 @@ function renderDimensionExplorer() {
     if (negEl) negEl.textContent = interp?.negativeEnd?.slice(0, 2).join(', ') || 'Low';
     if (posEl) posEl.textContent = interp?.positiveEnd?.slice(0, 2).join(', ') || 'High';
     
-    // Update variance bar
+    // Update variance percentage in the dimension label
     const varPercent = (variance[dimIdx] * 100).toFixed(1);
+    const varPctEl = document.getElementById(`${dimId}-var-pct`);
+    if (varPctEl) varPctEl.textContent = `(${varPercent}%)`;
+    
+    // Update variance bar
     const varFill = document.getElementById(`${dimId}-variance`);
     const varLabel = document.getElementById(`${dimId}-var-label`);
     if (varFill) varFill.style.width = `${varPercent}%`;
-    if (varLabel) varLabel.textContent = `${varPercent}% variance`;
+    if (varLabel) varLabel.textContent = `${varPercent}% variance explained`;
     
     // Position brand chips along dimension
     const strip = document.getElementById(`${dimId}-brands`);
@@ -3558,6 +3565,20 @@ function renderDistanceHeatmap() {
     ? sim.modifiedCoords 
     : AppState.results.brandCoords;
   const brands = Object.keys(coords);
+  
+  // Update the header badge to show original/repositioned status
+  const badge = document.getElementById('heatmap-data-badge');
+  if (badge) {
+    if (hasRepositioning) {
+      badge.className = 'repositioned-data-badge';
+      badge.textContent = 'REPOSITIONED';
+      badge.title = 'Distances reflect hypothetical repositioned positions';
+    } else {
+      badge.className = 'original-data-badge';
+      badge.textContent = 'ORIGINAL';
+      badge.title = 'Distances based on original PCA positions';
+    }
+  }
   
   // Build distance matrix (using full N-D space)
   const distances = brands.map(b1 => 
@@ -3788,12 +3809,14 @@ function showBrandCard(brand) {
   // Render mini radar
   renderMiniRadar(brand);
   
-  // Show card
+  // Show overlay and card
+  document.getElementById('brand-card-overlay')?.classList.add('active');
   card.classList.remove('hidden');
 }
 
 function hideBrandCard() {
   document.getElementById('brand-hover-card')?.classList.add('hidden');
+  document.getElementById('brand-card-overlay')?.classList.remove('active');
 }
 
 function renderMiniRadar(brand) {

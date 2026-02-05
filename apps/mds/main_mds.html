@@ -698,6 +698,9 @@
             </div>
           </div>
           
+          <!-- Overlay backdrop for brand card -->
+          <div class="brand-card-overlay" id="brand-card-overlay" onclick="hideBrandCard()"></div>
+          
           <!-- Live Brand Hover Card -->
           <aside class="brand-hover-card hidden" id="brand-hover-card">
             <div class="hover-card-header">
@@ -754,6 +757,15 @@
             <button class="sim-bar-reset" onclick="resetDraggedPosition()">↩️ Reset</button>
           </div>
         </div>
+        
+        <!-- Quick link to Playground -->
+        <div class="playground-quick-link hidden" id="playground-quick-link">
+          <a href="#tut-simulation-section" class="playground-link-btn">
+            <span class="link-icon">🎮</span>
+            <span class="link-text">Open Positioning Playground</span>
+            <span class="link-arrow">↓</span>
+          </a>
+        </div>
       </div>
       
       <!-- INSIGHT CARDS - Visual Discovery Section -->
@@ -770,15 +782,20 @@
       
       <!-- DIMENSION EXPLORER - Interactive Understanding -->
       <div class="card dimension-explorer-card">
-        <h3>🎚️ Dimension Explorer</h3>
+        <h3>🎚️ Dimension Explorer <span class="original-data-badge" title="Shows original positions, not repositioned">ORIGINAL</span>
+          <span class="info-tooltip" tabindex="0" title="Technical: Each dimension is a principal component from PCA. Variance explained shows how much brand differentiation each dimension captures.
+
+Practical: Dim I usually explains the most (~40-60%). Look for how brands cluster at each end - this reveals the main competitive 'battle lines' in your market.">ℹ️</span>
+        </h3>
         <p class="hint">
-          Interactively explore what each dimension means. Each row's height reflects that dimension's relative importance (variance explained).
+          Interactively explore what each dimension means. Click any brand chip to see details.
+          Each row's height and variance bar show that dimension's explanatory power.
         </p>
         <div class="dimension-explorer" id="dimension-explorer">
           <div class="dim-explorer-row" id="dim1-explorer">
             <div class="dim-endpoints">
               <span class="dim-negative" id="dim1-neg">Loading...</span>
-              <span class="dim-label">Dimension I</span>
+              <span class="dim-label">Dimension I <span class="dim-variance-pct" id="dim1-var-pct"></span></span>
               <span class="dim-positive" id="dim1-pos">Loading...</span>
             </div>
             <div class="dim-brand-strip" id="dim1-brands">
@@ -792,7 +809,7 @@
           <div class="dim-explorer-row" id="dim2-explorer">
             <div class="dim-endpoints">
               <span class="dim-negative" id="dim2-neg">Loading...</span>
-              <span class="dim-label">Dimension II</span>
+              <span class="dim-label">Dimension II <span class="dim-variance-pct" id="dim2-var-pct"></span></span>
               <span class="dim-positive" id="dim2-pos">Loading...</span>
             </div>
             <div class="dim-brand-strip" id="dim2-brands">
@@ -806,7 +823,7 @@
           <div class="dim-explorer-row dim3-row hidden" id="dim3-explorer">
             <div class="dim-endpoints">
               <span class="dim-negative" id="dim3-neg">Loading...</span>
-              <span class="dim-label">Dimension III</span>
+              <span class="dim-label">Dimension III <span class="dim-variance-pct" id="dim3-var-pct"></span></span>
               <span class="dim-positive" id="dim3-pos">Loading...</span>
             </div>
             <div class="dim-brand-strip" id="dim3-brands">
@@ -827,7 +844,11 @@
       
       <!-- Distance Matrix Heatmap -->
       <div class="card">
-        <h3>🗺️ Competitive Distance Matrix</h3>
+        <h3>🗺️ Competitive Distance Matrix <span class="data-status-badge" id="heatmap-data-badge"></span>
+          <span class="info-tooltip" tabindex="0" title="Technical: Euclidean distance in perceptual space. Calculated from brand coordinates across all retained dimensions.
+
+Practical: Lower distance = direct competitors fighting for same customers. Higher distance = differentiated positioning with less head-to-head competition.">ℹ️</span>
+        </h3>
         <p class="hint">
           This heatmap shows perceptual distances between all brand pairs. 
           <strong>Dark blue = very similar</strong> (direct competitors), 
@@ -838,7 +859,7 @@
       
       <!-- Brand Attribute Radar Comparison -->
       <div class="card">
-        <h3>📊 Brand Profile Comparison</h3>
+        <h3>📊 Brand Profile Comparison <span class="original-data-badge" title="Shows original perceptual ratings">ORIGINAL</span></h3>
         <p class="hint">
           Select up to 3 brands to compare their attribute profiles side-by-side. 
           The radar chart reveals where brands excel and where they're vulnerable.
@@ -862,10 +883,14 @@
       
       <!-- Attribute Importance Visual -->
       <div class="card">
-        <h3>📈 Attribute Importance</h3>
+        <h3>📈 Attribute Importance 
+          <span class="info-tooltip" tabindex="0" title="Technical: Loading magnitude measures correlation between attribute and principal components. Higher loadings mean the attribute better explains brand variance.
+
+Practical: Attributes with longer bars are 'louder' in differentiating brands. Focus marketing on these attributes for maximum competitive impact.">ℹ️</span>
+        </h3>
         <p class="hint">
           Which attributes most differentiate brands in customers' minds? 
-          Longer bars = greater differentiation power.
+          Longer bars = greater differentiation power. Hover over ℹ️ for details.
         </p>
         <div id="attribute-importance-chart" class="chart-medium"></div>
       </div>
@@ -901,7 +926,7 @@
       
       <!-- Brand Coordinates -->
       <div class="card">
-        <h3>Brand Coordinates</h3>
+        <h3>Brand Coordinates <span class="original-data-badge" title="Shows original positions from PCA analysis">ORIGINAL</span></h3>
         <p class="hint">
           These coordinates define each brand's position on the perceptual map. Brands with similar 
           coordinates are perceived similarly by customers. Use these values to identify direct competitors 
