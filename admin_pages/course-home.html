@@ -398,6 +398,56 @@
         }
 
         function renderToolCard(tool, courseId) {
+            // Icon mapping based on tool slug
+            const iconMap = {
+                // Getting Started / Descriptive
+                'univariate-analyzer': '📊',
+                'pearson-correlation': '🔗',
+                // Hypothesis Testing
+                'independent-t-test': '🆚',
+                'paired-t-test': '🔄',
+                'one-way-anova': '🔢',
+                'ab-proportion-test': '🅰️',
+                'chi-square-test': '▦',
+                'mcnemar-test': '🔀',
+                // Regression
+                'bivariate-regression': '📉',
+                'multiple-linear-regression': '📈',
+                'mlr-interactions': '🔗',
+                'logistic-regression': '🎯',
+                'multinomial-logistic': '🍱',
+                // Text Analysis
+                'qualitative-analyzer': '💬',
+                'theme-extractor': '🧠',
+                'sentiment-analysis': '😊',
+                // Attribution
+                'shapley-attribution': '🤝',
+                'markov-attribution': '🛤️',
+                // Advanced
+                'decision-tree-classifier': '🌳',
+                'neural-network': '🧠',
+                'k-means-clustering': '👥',
+                'k-prototypes-clustering': '🏗️',
+                'arimax-forecasting': '📅',
+                'resource-allocation': '💰',
+                'conjoint-analysis': '🎁',
+                'conjoint-creator': '🔧',
+                'propensity-score-matching': '⚖️',
+                // Study Design & Probability
+                'sample-size-means': '📏',
+                'sample-size-ab': '⚖️',
+                'sample-size-correlation': '📉',
+                'sample-size-multiarm': '🐙',
+                'sampling-visualizer': '👁️',
+                'selection-probability': '🎯',
+                'compound-probability': '🎲',
+                // Model Fitting
+                'mae-calibration-lab': '📐',
+                'logloss-classification-lab': '📊'
+            };
+            
+            const icon = iconMap[tool.slug] || '📊'; // Default to bar chart if not found
+            
             // Infer tag based on tool name/description
             let tag = '';
             const name = tool.name.toLowerCase();
@@ -416,7 +466,7 @@
             
             return `
                 <a href="${toolUrl}" class="tool-card-modern" onclick="trackToolClick(${tool.id}); return true;">
-                    <div class="card-icon">📊</div>
+                    <div class="card-icon">${icon}</div>
                     <div class="card-content">
                         <h3 class="card-title">${tool.name}</h3>
                         <p class="card-description">${tool.description || 'No description available'}</p>
@@ -429,20 +479,56 @@
         }
 
         function getToolUrl(slug) {
-            // Map tool slugs to their actual URLs
-            // This is a simplified mapping - you may need to adjust based on your actual URL structure
+            // Complete mapping of tool slugs to their actual file paths
             const toolMap = {
-                'bivariate_regression': '../apps/regression/bivariate_regression/main_bivariate_regression.html',
-                'ml_regression': '../apps/regression/ml_regression/main_ml_regression.html',
-                'log_regression': '../apps/regression/log_regression/main_log_regression.html',
-                'independent_ttest': '../apps/hypothesis_testing/independent_ttest/main_independent_ttest.html',
-                'paired_ttest': '../apps/hypothesis_testing/paired_ttest/main_paired_ttest.html',
-                'onewayanova': '../apps/hypothesis_testing/onewayanova/main_onewayanova.html',
-                // Add more mappings as needed
+                // Getting Started / Descriptive
+                'univariate-analyzer': '../apps/descriptive/univariate_analyzer/main_univariate_analyzer.html',
+                'pearson-correlation': '../apps/descriptive/pearson_correlation/main_pearson.html',
+                // Hypothesis Testing
+                'independent-t-test': '../apps/hypothesis_testing/ind_ttest/main_ind_ttest.html',
+                'paired-t-test': '../apps/hypothesis_testing/paired_ttest/main_paired_ttest.html',
+                'one-way-anova': '../apps/hypothesis_testing/onewayanova/main_onewayanova.html',
+                'ab-proportion-test': '../apps/hypothesis_testing/ab_proportion/main_ab_proportion.html',
+                'chi-square-test': '../apps/hypothesis_testing/chisquare/main_chisquare.html',
+                'mcnemar-test': '../apps/hypothesis_testing/mcnemar/main_mcnemar.html',
+                // Regression
+                'bivariate-regression': '../apps/regression/bivariate_regression/main_bivariate_regression.html',
+                'multiple-linear-regression': '../apps/regression/ml_regression/main_ml_regression.html',
+                'mlr-interactions': '../apps/regression/mlr_interactions/main_mlr_interactions.html',
+                'logistic-regression': '../apps/regression/log_regression/main_log_regression.html',
+                'multinomial-logistic': '../apps/regression/mn_log_regression/main_mn_log_regression.html',
+                // Text Analysis
+                'qualitative-analyzer': '../apps/text_analysis/qualitative_analyzer/main_qualitative_analyzer.html',
+                'theme-extractor': '../apps/text_analysis/theme_extractor/main_theme_extractor.html',
+                'sentiment-analysis': '../apps/text_analysis/sentiment_lab/main_sentiment_lab.html',
+                // Attribution
+                'shapley-attribution': '../apps/attribution/shapley_visualizer/main_shapley.html',
+                'markov-attribution': '../apps/attribution/markov_visualizer/main_markov.html',
+                // Advanced
+                'decision-tree-classifier': '../apps/decisiontrees/classifier/index.html',
+                'neural-network': '../apps/advanced/neural_network/index.html',
+                'k-means-clustering': '../apps/clustering/kmeans/main_kmeans.html',
+                'k-prototypes-clustering': '../apps/clustering/kprototypes/main_kprototypes.html',
+                'arimax-forecasting': '../apps/time_series/arimax/main_arimax.html',
+                'resource-allocation': '../apps/advanced/resource_allocation/main_resource_allocation.html',
+                'conjoint-analysis': '../apps/advanced/conjoint/conjoint_app.html',
+                'conjoint-creator': '../apps/advanced/conjoint_creator/conjoint_creator_app.html',
+                'propensity-score-matching': '../apps/advanced/ps_matching/log_regression.html',
+                // Study Design & Probability
+                'sample-size-means': '../apps/sample_size/sample_size_calculator/main_sample_size_calculator.html',
+                'sample-size-ab': '../apps/sample_size/sample_size_AB_calculator/main_sample_size_ab_calculator.html',
+                'sample-size-correlation': '../apps/sample_size/sample_size_corr_regression/main_sample_size_corr_regression.html',
+                'sample-size-multiarm': '../apps/sample_size/sample_size_multiarm_ab/main_sample_size_multiarm_ab.html',
+                'sampling-visualizer': '../apps/sample_size/sampling_visualizer/main_sampling_visualizer.html',
+                'selection-probability': '../apps/probability/selection_probability_lab/main_selection_probability_lab.html',
+                'compound-probability': '../apps/probability/compound_event_probability/main_compound_event_probability.html',
+                // Model Fitting
+                'mae-calibration-lab': '../apps/model_fitting/mae/index.html',
+                'logloss-classification-lab': '../apps/model_fitting/logloss/index.html'
             };
             
-            // Return mapped URL or construct generic path
-            return toolMap[slug] || `../apps/${slug}/index.html`;
+            // Return mapped URL or show error if not found
+            return toolMap[slug] || `#tool-not-found-${slug}`;
         }
     </script>
 </body>
