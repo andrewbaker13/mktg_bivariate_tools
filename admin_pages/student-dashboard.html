@@ -499,39 +499,88 @@
             window.location.href = 'login.html?redirect=student-dashboard.html';
         }
 
-        // All available tools (update this list as you add more tools)
+        // All available tools with tracking (37 tools as of Feb 2026)
         const ALL_TOOLS = [
-            'pearson-correlation', 'bivariate-regression', 'ml-regression', 
-            'log-regression', 'ind-ttest', 'paired-ttest', 'onewayanova',
-            'ab-proportion', 'chisquare', 'mcnemar', 'kmeans', 'hierarchical',
-            'pca', 'factor-analysis', 'conjoint', 'cluster-analysis',
-            'discriminant', 'manova', 'ancova', 'sem', 'time-series', 'forecasting'
+            // Descriptive Statistics
+            'pearson-correlation', 'univariate-analyzer',
+            // Hypothesis Testing
+            'independent-t-test', 'paired-t-test', 'one-way-anova', 'ab-proportion-test',
+            'chi-square-test', 'mcnemar-test',
+            // Regression
+            'bivariate-regression', 'multiple-linear-regression', 'logistic-regression',
+            'mlr-interactions', 'multinomial-logistic',
+            // Clustering
+            'k-means-clustering', 'k-prototypes-clustering',
+            // Advanced
+            'conjoint-analysis', 'conjoint-creator', 'neural-network',
+            'propensity-score-matching', 'resource-allocation',
+            // Attribution
+            'markov-attribution', 'shapley-attribution',
+            // Decision Trees
+            'decision-tree-classifier',
+            // Model Fitting
+            'mae-calibration-lab', 'logloss-classification-lab',
+            // Probability
+            'compound-probability', 'selection-probability',
+            // Sample Size
+            'sample-size-ab', 'sample-size-means', 'sample-size-correlation',
+            'sample-size-multiarm', 'sampling-visualizer',
+            // Text Analysis
+            'qualitative-analyzer', 'sentiment-analysis', 'theme-extractor',
+            // Time Series
+            'arimax-forecasting'
         ];
         
         // Mapping of tool slugs to their actual paths and display names
         const TOOL_MAP = {
+            // Descriptive Statistics
             'pearson-correlation': { path: '../apps/descriptive/pearson_correlation/main_pearson.html', name: 'Pearson Correlation' },
+            'univariate-analyzer': { path: '../apps/descriptive/univariate_analyzer/main_univariate_analyzer.html', name: 'Univariate Analyzer' },
+            // Hypothesis Testing
+            'independent-t-test': { path: '../apps/hypothesis_testing/ind_ttest/main_ind_ttest.html', name: 'Independent t-test' },
+            'paired-t-test': { path: '../apps/hypothesis_testing/paired_ttest/main_paired_ttest.html', name: 'Paired t-test' },
+            'one-way-anova': { path: '../apps/hypothesis_testing/onewayanova/main_onewayanova.html', name: 'One-Way ANOVA' },
+            'ab-proportion-test': { path: '../apps/hypothesis_testing/ab_proportion/main_ab_proportion.html', name: 'A/B Proportion Test' },
+            'chi-square-test': { path: '../apps/hypothesis_testing/chisquare/main_chisquare.html', name: 'Chi-Square Test' },
+            'mcnemar-test': { path: '../apps/hypothesis_testing/mcnemar/main_mcnemar.html', name: 'McNemar Test' },
+            // Regression
             'bivariate-regression': { path: '../apps/regression/bivariate_regression/main_bivariate_regression.html', name: 'Bivariate Regression' },
-            'ml-regression': { path: '../apps/regression/ml_regression/main_ml_regression.html', name: 'Multiple Linear Regression' },
-            'log-regression': { path: '../apps/regression/log_regression/main_log_regression.html', name: 'Logistic Regression' },
-            'ind-ttest': { path: '../apps/hypothesis_testing/ind_ttest/main_ind_ttest.html', name: 'Independent t-test' },
-            'paired-ttest': { path: '../apps/hypothesis_testing/paired_ttest/main_paired_ttest.html', name: 'Paired t-test' },
-            'onewayanova': { path: '../apps/hypothesis_testing/onewayanova/main_onewayanova.html', name: 'One-Way ANOVA' },
-            'ab-proportion': { path: '../apps/hypothesis_testing/ab_proportion/main_ab_proportion.html', name: 'A/B Proportion Test' },
-            'chisquare': { path: '../apps/hypothesis_testing/chisquare/main_chisquare.html', name: 'Chi-Square Test' },
-            'mcnemar': { path: '../apps/hypothesis_testing/mcnemar/main_mcnemar.html', name: 'McNemar Test' },
-            'kmeans': { path: '../apps/clustering/kmeans/main_kmeans.html', name: 'K-Means Clustering' },
-            'mn-log-regression': { path: '../apps/regression/mn_log_regression/main_mn_log_regression.html', name: 'Multinomial Logistic Regression' },
-            'sample-size-calculator': { path: '../apps/sample_size/sample_size_calculator/main_sample_size_calculator.html', name: 'Sample Size Calculator' },
+            'multiple-linear-regression': { path: '../apps/regression/ml_regression/main_ml_regression.html', name: 'Multiple Linear Regression' },
+            'logistic-regression': { path: '../apps/regression/log_regression/main_log_regression.html', name: 'Logistic Regression' },
+            'mlr-interactions': { path: '../apps/regression/mlr_interactions/main_mlr_interactions.html', name: 'Multiple Regression with Interactions' },
+            'multinomial-logistic': { path: '../apps/regression/mn_log_regression/main_mn_log_regression.html', name: 'Multinomial Logistic Regression' },
+            // Clustering
+            'k-means-clustering': { path: '../apps/clustering/kmeans/main_kmeans.html', name: 'K-Means Clustering' },
+            'k-prototypes-clustering': { path: '../apps/clustering/kprototypes/main_kprototypes.html', name: 'K-Prototypes Clustering' },
+            // Advanced
+            'conjoint-analysis': { path: '../apps/advanced/conjoint/conjoint_app.html', name: 'Conjoint Analysis' },
+            'conjoint-creator': { path: '../apps/advanced/conjoint_creator/conjoint_creator_app.html', name: 'Conjoint Creator' },
+            'neural-network': { path: '../apps/advanced/neural_network/playground.html', name: 'Neural Network Playground' },
+            'propensity-score-matching': { path: '../apps/advanced/ps_matching/log_regression.html', name: 'Propensity Score Matching' },
+            'resource-allocation': { path: '../apps/advanced/resource_allocation/resource_allocation_app.html', name: 'Resource Allocation' },
+            // Attribution
+            'markov-attribution': { path: '../apps/attribution/markov_visualizer/main_markov.html', name: 'Markov Attribution' },
+            'shapley-attribution': { path: '../apps/attribution/shapley_visualizer/main_shapley.html', name: 'Shapley Attribution' },
+            // Decision Trees
+            'decision-tree-classifier': { path: '../apps/decisiontrees/classifier/main.html', name: 'Decision Tree Classifier' },
+            // Model Fitting
+            'mae-calibration-lab': { path: '../apps/mae/index.html', name: 'MAE Calibration Lab' },
+            'logloss-classification-lab': { path: '../apps/logloss/index.html', name: 'Log-Loss Classification Lab' },
+            // Probability
+            'compound-probability': { path: '../apps/probability/compound_event_probability/main_compound_event_probability.html', name: 'Compound Event Probability' },
+            'selection-probability': { path: '../apps/probability/selection_probability_lab/main_selection_probability_lab.html', name: 'Selection Probability Lab' },
+            // Sample Size
             'sample-size-ab': { path: '../apps/sample_size/sample_size_AB_calculator/main_sample_size_ab_calculator.html', name: 'A/B Sample Size Calculator' },
-            'sample-size-corr': { path: '../apps/sample_size/sample_size_corr_regression/main_sample_size_corr_regression.html', name: 'Correlation/Regression Sample Size' },
+            'sample-size-means': { path: '../apps/sample_size/sample_size_calculator/main_sample_size_calculator.html', name: 'Sample Size Calculator (Means)' },
+            'sample-size-correlation': { path: '../apps/sample_size/sample_size_corr_regression/main_sample_size_corr_regression.html', name: 'Sample Size for Correlation' },
             'sample-size-multiarm': { path: '../apps/sample_size/sample_size_multiarm_ab/main_sample_size_multiarm_ab.html', name: 'Multi-arm A/B Sample Size' },
             'sampling-visualizer': { path: '../apps/sample_size/sampling_visualizer/main_sampling_visualizer.html', name: 'Sampling Visualizer' },
-            'selection-probability': { path: '../apps/probability/selection_probability_lab/main_selection_probability_lab.html', name: 'Selection Probability Lab' },
-            'compound-event': { path: '../apps/probability/compound_event_probability/main_compound_event_probability.html', name: 'Compound Event Probability' },
-            'sentiment-lab': { path: '../apps/text_analysis/sentiment_lab/main_sentiment_lab.html', name: 'Sentiment Analysis Lab' },
-            'univariate-analyzer': { path: '../apps/descriptive/univariate_analyzer/main_univariate_analyzer.html', name: 'Univariate Analyzer' },
-            'ps-matching': { path: '../apps/advanced/ps_matching/log_regression.html', name: 'Propensity Score Matching' }
+            // Text Analysis
+            'qualitative-analyzer': { path: '../apps/text_analysis/qualitative_analyzer/qualitative_analyzer_app.html', name: 'Qualitative Analyzer' },
+            'sentiment-analysis': { path: '../apps/text_analysis/sentiment_lab/main_sentiment_lab.html', name: 'Sentiment Analysis Lab' },
+            'theme-extractor': { path: '../apps/text_analysis/theme_extractor/theme_extractor_app.html', name: 'Theme Extractor' },
+            // Time Series
+            'arimax-forecasting': { path: '../apps/time_series/arimax/arimax_app.html', name: 'ARIMAX Forecasting' }
         };
 
         let selectedCourseId = null;

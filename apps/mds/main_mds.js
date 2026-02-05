@@ -1058,13 +1058,11 @@ function showResultsSections() {
     const custToggle = document.getElementById('show-customers-toggle');
     if (segsToggle) segsToggle.style.display = 'flex';
     if (custToggle) custToggle.style.display = 'flex';
+    
+    // Show simulation section (playground) - ONLY when preference data is included
+    // Without preferences, we can't calculate market share or simulate what-if scenarios
+    document.querySelector('.simulation-section')?.classList.remove('hidden');
   }
-  
-  // Show simulation section (playground)
-  document.querySelector('.simulation-section')?.classList.remove('hidden');
-  
-  // Show playground quick link near the map
-  document.getElementById('playground-quick-link')?.classList.remove('hidden');
   
   // Show competitive intelligence section  
   document.querySelector('.competitive-intel-section')?.classList.remove('hidden');

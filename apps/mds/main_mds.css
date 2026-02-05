@@ -1578,49 +1578,6 @@
   font-weight: 500;
 }
 
-/* ===== PLAYGROUND QUICK LINK ===== */
-.playground-quick-link {
-  margin-top: 1rem;
-  text-align: center;
-}
-
-.playground-quick-link.hidden {
-  display: none;
-}
-
-.playground-link-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
-  color: white;
-  text-decoration: none;
-  border-radius: 25px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-  transition: all 0.3s;
-}
-
-.playground-link-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
-}
-
-.playground-link-btn .link-icon {
-  font-size: 1.2rem;
-}
-
-.playground-link-btn .link-arrow {
-  animation: bounce-down 1.5s infinite;
-}
-
-@keyframes bounce-down {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(3px); }
-}
-
 /* ===== LIVE SIMULATION BAR ===== */
 .simulation-bar {
   position: fixed;
