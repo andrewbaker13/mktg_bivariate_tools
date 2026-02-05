@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Positioning Analysis Lab</title>
+  <!-- Shared design system -->
+  <link rel="stylesheet" href="../../shared/css/main.css">
+  <script src="../../shared/js/tracking.js"></script>
+  <link rel="stylesheet" href="../../shared/css/auth_bar.css">
+  <!-- App-specific overrides -->
+  <link rel="stylesheet" href="main_mds.css">
+  <!-- D3.js for positioning map -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-delaunay@6"></script>
+  <!-- Plotly for secondary charts -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="../../shared/js/csv_utils.js"></script>
+  <script src="../../shared/js/ui_utils.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-290ZJ9RE04');
+  </script>
+</head>
+
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../admin_pages/login.html">Login</a>
+        <a href="../../admin_pages/register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Professor Mode Toggle -->
+  <div class="professor-mode-toggle">
+    <label class="toggle-switch">
+      <input type="checkbox" id="professorMode">
+      <span class="slider"></span>
+    </label>
+    <span class="toggle-label">🎓 Professor Mode</span>
+  </div>
+
+  <!-- Tutorial Sidebar -->
+  <aside id="tutorial-sidebar" class="tutorial-sidebar">
+    <div class="tutorial-header">
+      <h2>🎓 Professor Mode</h2>
+      <button class="close-btn" onclick="MDSTutorial.stop()">×</button>
+    </div>
+    <div id="tutorial-content" class="tutorial-content"></div>
+  </aside>
+  <div id="tutorial-overlay" class="tutorial-overlay" onclick="MDSTutorial.stop()"></div>
+
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Positioning Analysis Lab</h1>
+        <div class="hero-context">
+          <span class="badge">Brand Strategy</span>
+          <span class="badge-secondary">PCA + Simulation</span>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Build perceptual maps from brand/product ratings, visualize competitive positioning, 
+        overlay customer preferences, and simulate market share impacts of repositioning strategies.
+      </p>
+    </header>
+
+    <!-- OVERVIEW SECTION -->
+    <section class="test-overview" id="tut-overview-section" aria-labelledby="test-overview-heading">
+      <h2 id="test-overview-heading">OVERVIEW &amp; OBJECTIVE</h2>
+      <div class="card">
+        <p>
+          Positioning analysis helps marketers understand how brands are perceived relative to 
+          competitors and customer preferences. This tool uses <strong>Principal Components Analysis (PCA)</strong> 
+          to reduce attribute ratings into interpretable dimensions, combined with <strong>preference mapping</strong> 
+          and <strong>market share simulation</strong>.
+        </p>
+        
+        <details class="intro-notes" open>
+          <summary>📊 Key Concepts &amp; When to Use</summary>
+          <div class="notes-content">
+            <div class="concept-grid">
+              <div class="concept-item best-for">
+                <h4>📊 Best For</h4>
+                <ul>
+                  <li>Brand positioning strategy</li>
+                  <li>Competitive landscape mapping</li>
+                  <li>New product opportunity finding</li>
+                  <li>Segment-targeted repositioning</li>
+                </ul>
+              </div>
+              <div class="concept-item limitations">
+                <h4>⚠️ Limitations</h4>
+                <ul>
+                  <li>Requires interval-scale ratings</li>
+                  <li>Assumes linear relationships</li>
+                  <li>Dimension interpretation is subjective</li>
+                  <li>2D maps may oversimplify</li>
+                </ul>
+              </div>
+              <div class="concept-item output">
+                <h4>🎯 Output</h4>
+                <ul>
+                  <li>Visual perceptual map</li>
+                  <li>Dimension interpretations</li>
+                  <li>Competitive distance matrix</li>
+                  <li>Market share simulations</li>
+                </ul>
+              </div>
+              <div class="concept-item advantage">
+                <h4>📈 Marketing Advantage</h4>
+                <p>
+                  Unlike focus groups, perceptual maps provide <strong>quantitative evidence</strong> 
+                  of where your brand stands—and where to move it for maximum impact.
+                </p>
+              </div>
+            </div>
+          </div>
+        </details>
+        
+        <details class="interpretation-aid">
+          <summary>📘 The Math: How It Works</summary>
+          <div class="interpretation-content methodology-explainer">
+            
+            <!-- THE BIG PICTURE -->
+            <div class="method-section">
+              <h4>🎯 The Big Picture</h4>
+              <p>
+                You have ratings of brands on many attributes (e.g., "sporty", "luxurious", "affordable"). 
+                This tool finds the <strong>hidden dimensions</strong> that explain most of the variation in those ratings, 
+                then plots brands on those dimensions so you can see competitive positioning at a glance.
+              </p>
+              <div class="analogy-box">
+                <span class="analogy-icon">💡</span>
+                <div>
+                  <strong>Analogy:</strong> Imagine 20 attributes are really just different ways of measuring 2-3 underlying concepts 
+                  (like "premium-ness" and "performance"). PCA discovers those concepts automatically.
+                </div>
+              </div>
+            </div>
+            
+            <!-- STEP BY STEP -->
+            <div class="method-section">
+              <h4>📊 Step-by-Step Process</h4>
+              <ol class="method-steps">
+                <li>
+                  <strong>Center the data</strong> — Each attribute is centered (mean = 0) so we focus on 
+                  differences between brands, not absolute rating levels.
+                  <div class="math-block">
+                    <div class="math-equation">$$x'_{ij} = x_{ij} - \bar{x}_j$$</div>
+                    <div class="math-definitions">
+                      <span class="def-item"><em>x<sub>ij</sub></em> = rating of brand <em>i</em> on attribute <em>j</em></span>
+                      <span class="def-item"><em>x̄<sub>j</sub></em> = mean rating across all brands for attribute <em>j</em></span>
+                      <span class="def-item"><em>x'<sub>ij</sub></em> = centered rating (deviation from attribute mean)</span>
+                    </div>
+                  </div>
+                  <p class="step-note">Optional: Enable "Standardize" in Advanced Settings to also divide by 
+                  standard deviation (z-scores). This gives all attributes equal weight regardless of variance.</p>
+                </li>
+                <li>
+                  <strong>Compute covariance matrix</strong> — Measures how attributes vary together across brands. 
+                  High covariance? They're measuring the same underlying dimension.
+                  <div class="math-block">
+                    <div class="math-equation">$$C = \frac{1}{n-1}X'^TX'$$</div>
+                    <div class="math-definitions">
+                      <span class="def-item"><em>X'</em> = matrix of centered ratings (brands × attributes)</span>
+                      <span class="def-item"><em>X'<sup>T</sup></em> = transpose of X' (attributes × brands)</span>
+                      <span class="def-item"><em>n</em> = number of brands</span>
+                      <span class="def-item"><em>C</em> = covariance matrix (attributes × attributes)</span>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <strong>Extract eigenvalues & eigenvectors</strong> — Solve for the vectors that, when multiplied 
+                  by C, only get scaled (not rotated). These become the new dimension axes.
+                  <div class="math-block">
+                    <div class="math-equation">$$C \mathbf{v}_k = \lambda_k \mathbf{v}_k$$</div>
+                    <div class="math-definitions">
+                      <span class="def-item"><em>v<sub>k</sub></em> = eigenvector for dimension <em>k</em> (defines the axis direction)</span>
+                      <span class="def-item"><em>λ<sub>k</sub></em> = eigenvalue for dimension <em>k</em> (variance explained by that axis)</span>
+                      <span class="def-item">Eigenvalues sorted largest → smallest; first eigenvector = Dimension I</span>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <strong>Project brands onto dimensions</strong> — Multiply each brand's centered ratings by the 
+                  eigenvectors to get its coordinates on the new axes.
+                  <div class="math-block">
+                    <div class="math-equation">$$\text{score}_{ik} = \sum_{j=1}^{p} x'_{ij} \cdot v_{jk}$$</div>
+                    <div class="math-definitions">
+                      <span class="def-item"><em>score<sub>ik</sub></em> = brand <em>i</em>'s coordinate on dimension <em>k</em></span>
+                      <span class="def-item"><em>x'<sub>ij</sub></em> = brand <em>i</em>'s centered rating on attribute <em>j</em></span>
+                      <span class="def-item"><em>v<sub>jk</sub></em> = weight of attribute <em>j</em> in dimension <em>k</em></span>
+                      <span class="def-item"><em>p</em> = number of attributes</span>
+                    </div>
+                  </div>
+                </li>
+              </ol>
+            </div>
+            
+            <!-- KEY OUTPUTS -->
+            <div class="method-section">
+              <h4>📈 Key Outputs Explained</h4>
+              <div class="output-grid">
+                <div class="output-item">
+                  <div class="output-name">Variance Explained</div>
+                  <div class="output-desc">
+                    How much of the original attribute variation this dimension captures. 
+                    If Dim I explains 60% and Dim II explains 25%, those two dimensions capture 85% of the information.
+                  </div>
+                </div>
+                <div class="output-item">
+                  <div class="output-name">Attribute Loadings</div>
+                  <div class="output-desc">
+                    Correlations between original attributes and the new dimensions. 
+                    A loading of +0.85 means that attribute strongly defines the positive end of that dimension.
+                  </div>
+                </div>
+                <div class="output-item">
+                  <div class="output-name">Brand Coordinates</div>
+                  <div class="output-desc">
+                    Where each brand sits on each dimension. Positive = high on attributes that load positively; 
+                    negative = high on attributes that load negatively.
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- PRACTICAL IMPLICATIONS -->
+            <div class="method-section">
+              <h4>🚀 What You Can Do With This</h4>
+              <ul class="practical-uses">
+                <li><strong>Identify competitive clusters</strong> — Brands near each other are perceived similarly (direct competitors)</li>
+                <li><strong>Find whitespace</strong> — Empty areas on the map = potential positioning opportunities</li>
+                <li><strong>Understand differentiation</strong> — Distance between brands shows how distinct they are in customers' minds</li>
+                <li><strong>Guide repositioning</strong> — See which attributes you'd need to change to move toward a target position</li>
+                <li><strong>Segment targeting</strong> — With preference data, see which customer segments prefer which positions</li>
+              </ul>
+            </div>
+            
+            <!-- TECHNICAL NOTES -->
+            <div class="method-section method-technical">
+              <h4>🔬 Technical Notes</h4>
+              <p>
+                This tool uses <strong>Principal Components Analysis (PCA)</strong> on brand-attribute ratings. 
+                The correlation matrix approach is equivalent to PCA on standardized data. Eigendecomposition 
+                uses Jacobi rotation for numerical stability. The scree plot and Kaiser criterion (eigenvalue > 1) 
+                guide dimension selection.
+              </p>
+              <div class="terminology-note">
+                <strong>📝 A note on terminology:</strong> Marketers often call positioning maps "MDS" 
+                (Multidimensional Scaling), but true MDS requires pairwise similarity data as input. When working 
+                with attribute ratings (like this tool), the correct term is <strong>PCA</strong>. The confusion 
+                arose because both methods produce similar-looking 2D maps—but the inputs and math differ. 
+                If someone says "let's do MDS" with attribute data, they almost certainly mean PCA.
+              </div>
+            </div>
+            
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- SCENARIO SECTION -->
+    <section class="scenario-section" aria-labelledby="scenario-heading">
+      <h2 id="scenario-heading">MARKETING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Practical scenario</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Manual inputs (no preset)</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario datasets</button>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>
+            Load a pre-built marketing scenario with perceptual and preference data to explore 
+            positioning analysis without uploading your own files. Scenarios include beer brands, 
+            smartphone manufacturers, streaming services, and more.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATA INPUT SECTION -->
+    <section class="input-card" id="tut-inputs-section" aria-labelledby="inputs-heading">
+      <h2 id="inputs-heading">DATA INPUTS</h2>
+      
+      <!-- Perceptual Data Upload -->
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>1. Perceptual Data (Required)</h3>
+          <span class="required-badge">Required</span>
+        </div>
+        <p class="hint">
+          Upload a CSV with brands as columns and attributes as rows. Each cell contains the 
+          average rating of that brand on that attribute (e.g., 1-7 scale).
+        </p>
+        
+        <div class="data-import-block">
+          <div class="dropzone" id="perceptual-dropzone" role="button" tabindex="0">
+            <p class="dropzone-title">Drag &amp; Drop Perceptual Data CSV</p>
+            <p class="dropzone-note">Rows = attributes, Columns = brands. Include a header row with brand names.</p>
+            <button type="button" id="perceptual-browse" class="secondary">Browse files</button>
+          </div>
+          <input type="file" id="perceptual-input" 
+            accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" 
+            aria-label="Upload perceptual CSV" hidden>
+          <p class="upload-status" id="perceptual-feedback" aria-live="polite">No file uploaded.</p>
+          <div class="template-buttons">
+            <button type="button" id="download-perceptual-template" class="secondary">
+              📥 Download template CSV
+            </button>
+          </div>
+        </div>
+        
+        <div id="perceptual-preview" class="data-preview hidden">
+          <h4>Data Preview</h4>
+          <div class="preview-table-container">
+            <table id="perceptual-preview-table" class="preview-table"></table>
+          </div>
+          <p class="preview-summary" id="perceptual-summary"></p>
+        </div>
+      </article>
+
+      <!-- Preference Data Upload -->
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>2. Preference Data (Optional)</h3>
+          <span class="optional-badge">Optional</span>
+        </div>
+        <p class="hint">
+          Upload customer preference ratings for each brand. This enables ideal point mapping, 
+          segment analysis, and market share simulation.
+        </p>
+        
+        <div class="preference-toggle">
+          <label class="toggle-switch">
+            <input type="checkbox" id="include-preferences">
+            <span class="slider"></span>
+          </label>
+          <span>Include preference data for simulation</span>
+        </div>
+        
+        <div id="preference-upload-section" class="hidden">
+          <div class="data-import-block">
+            <div class="dropzone" id="preference-dropzone" role="button" tabindex="0">
+              <p class="dropzone-title">Drag &amp; Drop Preference Data CSV</p>
+              <p class="dropzone-note">Rows = customers/respondents, Columns = brands. Values = preference ratings.</p>
+              <button type="button" id="preference-browse" class="secondary">Browse files</button>
+            </div>
+            <input type="file" id="preference-input" 
+              accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" 
+              aria-label="Upload preference CSV" hidden>
+            <p class="upload-status" id="preference-feedback" aria-live="polite">No file uploaded.</p>
+            <div class="template-buttons">
+              <button type="button" id="download-preference-template" class="secondary">
+                📥 Download template CSV
+              </button>
+            </div>
+          </div>
+          
+          <!-- Pre-defined Segment Column Option -->
+          <div class="predefined-segment-option" id="predefined-segment-section" style="display: none;">
+            <div class="segment-column-toggle">
+              <label class="checkbox-label">
+                <input type="checkbox" id="has-segment-column">
+                <span class="checkbox-text">My data includes a pre-defined segment column</span>
+              </label>
+              <p class="hint">
+                If your CSV has a column identifying customer types (e.g., "VIP", "Regular") or segment IDs (1, 2, 3), 
+                you can use those instead of clustering.
+              </p>
+            </div>
+            
+            <div id="segment-column-selector" class="hidden">
+              <div class="setting-group">
+                <label for="segment-column-select">Select segment column</label>
+                <select id="segment-column-select">
+                  <option value="">-- Select column --</option>
+                </select>
+                <p class="hint" id="segment-column-preview"></p>
+              </div>
+            </div>
+          </div>
+          
+          <div id="preference-preview" class="data-preview hidden">
+            <h4>Data Preview</h4>
+            <div class="preview-table-container">
+              <table id="preference-preview-table" class="preview-table"></table>
+            </div>
+            <p class="preview-summary" id="preference-summary"></p>
+          </div>
+        </div>
+      </article>
+
+      <!-- Analysis Settings -->
+      <article class="card settings-card">
+        <h3>3. Analysis Settings</h3>
+        
+        <div class="settings-grid">
+          <div class="setting-group">
+            <div class="setting-label-row">
+              <label for="dimension-mode">Number of dimensions</label>
+              <span class="setting-helper">
+                <span class="setting-helper-icon">?</span>
+                <div class="setting-helper-tooltip">
+                  <h4>📐 Number of Dimensions</h4>
+                  <p>How many principal components (axes) to use for visualizing your positioning map.</p>
+                  <div class="helper-options">
+                    <div class="helper-option"><strong>Automatic:</strong> Uses 2D if first two dimensions explain ≥80% of variance; otherwise uses 3D for a more complete picture.</div>
+                    <div class="helper-option"><strong>2 dimensions:</strong> Simpler, easier to interpret. Best when two clear factors dominate (e.g., Quality vs. Price).</div>
+                    <div class="helper-option"><strong>3 dimensions:</strong> Captures more nuance but harder to visualize. Use when three distinct factors matter.</div>
+                  </div>
+                  <p class="tip">💡 Start with Automatic. Switch to 3D if your scree plot shows a meaningful third dimension.</p>
+                </div>
+              </span>
+            </div>
+            <select id="dimension-mode">
+              <option value="auto" selected>Automatic (based on variance explained)</option>
+              <option value="2">2 dimensions</option>
+              <option value="3">3 dimensions</option>
+            </select>
+          </div>
+          
+          <div class="setting-group">
+            <div class="setting-label-row">
+              <label for="focal-brand">Focal brand (for detailed analysis)</label>
+              <span class="setting-helper">
+                <span class="setting-helper-icon">?</span>
+                <div class="setting-helper-tooltip">
+                  <h4>🎯 Focal Brand</h4>
+                  <p>Select one brand to get deeper competitive intelligence and positioning recommendations.</p>
+                  <div class="helper-options">
+                    <div class="helper-option"><strong>What you get:</strong> Nearest competitors, positioning gaps, attribute strengths/weaknesses, and repositioning opportunities.</div>
+                    <div class="helper-option"><strong>No focal brand:</strong> General market overview without brand-specific recommendations.</div>
+                  </div>
+                  <p class="tip">💡 Choose your own brand (or main competitor) to get actionable strategic insights.</p>
+                </div>
+              </span>
+            </div>
+            <select id="focal-brand">
+              <option value="">No focal brand</option>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          
+          <div class="setting-group" id="segment-settings" style="display: none;">
+            <div class="setting-label-row">
+              <label for="segment-mode">Customer segmentation</label>
+              <span class="setting-helper">
+                <span class="setting-helper-icon">?</span>
+                <div class="setting-helper-tooltip">
+                  <h4>👥 Customer Segmentation</h4>
+                  <p>How to group customers into distinct market segments based on their brand preferences.</p>
+                  <div class="helper-options">
+                    <div class="helper-option"><strong>Automatic (optimal k):</strong> Uses the elbow method to find the best number of segments.</div>
+                    <div class="helper-option"><strong>2-5 segments:</strong> Force a specific number of clusters using k-means algorithm.</div>
+                    <div class="helper-option"><strong>Pre-defined:</strong> Use a column from your data that already contains segment labels (e.g., "VIP", "Regular").</div>
+                  </div>
+                  <p class="tip">💡 Start with Automatic unless you have domain knowledge about your market segments.</p>
+                </div>
+              </span>
+            </div>
+            <select id="segment-mode">
+              <option value="auto" selected>Cluster: Automatic (optimal k)</option>
+              <option value="2">Cluster: 2 segments</option>
+              <option value="3">Cluster: 3 segments</option>
+              <option value="4">Cluster: 4 segments</option>
+              <option value="5">Cluster: 5 segments</option>
+              <option value="predefined" id="predefined-segment-option" disabled>Use pre-defined segments</option>
+            </select>
+          </div>
+          
+          <div class="setting-group" id="share-settings" style="display: none;">
+            <div class="setting-label-row">
+              <label for="share-rule">Market share decision rule</label>
+              <span class="setting-helper">
+                <span class="setting-helper-icon">?</span>
+                <div class="setting-helper-tooltip">
+                  <h4>📊 Market Share Decision Rule</h4>
+                  <p>How to convert customer preferences into predicted market share. Each model makes different assumptions about consumer choice.</p>
+                  <div class="helper-options">
+                    <div class="helper-option"><strong>Share of preference:</strong> Market share proportional to preference rating. Simple but may overstate share for moderate preferences.</div>
+                    <div class="helper-option"><strong>First choice rule:</strong> Each customer chooses only their #1 preferred brand. Winner-take-all logic, often used in packaged goods.</div>
+                    <div class="helper-option"><strong>Logit model:</strong> Probability-based choice model where higher-preference brands get exponentially more share. Most realistic for competitive markets.</div>
+                  </div>
+                  <p class="tip">💡 Logit is recommended for most analyses. First choice works well for infrequent purchases.</p>
+                </div>
+              </span>
+            </div>
+            <select id="share-rule">
+              <option value="preference" selected>Share of preference</option>
+              <option value="first-choice">First choice rule</option>
+              <option value="logit">Logit model</option>
+            </select>
+          </div>
+          
+          <!-- Advanced Settings -->
+          <details class="advanced-settings">
+            <summary>⚙️ Advanced Settings</summary>
+            <div class="advanced-settings-content">
+              <div class="setting-group setting-group-checkbox">
+                <div class="setting-label-row" style="margin-bottom: 8px;">
+                  <label class="checkbox-label" style="margin: 0;">
+                    <input type="checkbox" id="standardize-data">
+                    <span class="checkbox-text">Standardize attributes (z-scores)</span>
+                  </label>
+                  <span class="setting-helper">
+                    <span class="setting-helper-icon">?</span>
+                    <div class="setting-helper-tooltip">
+                      <h4>📏 Standardize Attributes</h4>
+                      <p>Controls whether to convert all attribute ratings to z-scores (mean=0, std=1) before computing the positioning map.</p>
+                      <div class="helper-options">
+                        <div class="helper-option"><strong>OFF (default):</strong> Uses covariance matrix. Attributes with naturally higher variance will have more influence on brand positions. Preserves the "importance" implied by rating spread.</div>
+                        <div class="helper-option"><strong>ON:</strong> Uses correlation matrix. All attributes contribute equally regardless of their rating variance. Good when mixing different scales.</div>
+                      </div>
+                      <p class="tip">💡 Keep OFF unless your data mixes different scales (1-7 and 1-100) or you specifically want equal attribute weighting.</p>
+                    </div>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+        
+        <div class="run-controls">
+          <button type="button" id="run-analysis" class="primary" disabled>
+            Run Positioning Analysis
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <!-- VISUAL OUTPUT SECTION -->
+    <section class="visual-output" id="tut-visual-section" aria-labelledby="visual-output-heading">
+      <h2 id="visual-output-heading">PERCEPTUAL MAP</h2>
+      
+      <!-- Main Positioning Map -->
+      <div class="card">
+        <div class="map-controls">
+          <div class="view-toggle" role="tablist" aria-label="Map view">
+            <button type="button" class="view-button active" data-view="dim12" role="tab" aria-selected="true">
+              Dim I-II
+            </button>
+            <button type="button" class="view-button" data-view="dim13" role="tab" aria-selected="false">
+              Dim I-III
+            </button>
+            <button type="button" class="view-button" data-view="dim23" role="tab" aria-selected="false">
+              Dim II-III
+            </button>
+            <button type="button" class="view-button" data-view="3d" role="tab" aria-selected="false">
+              3D View
+            </button>
+          </div>
+          
+          <div class="layer-toggles">
+            <!-- Brands Toggle -->
+            <div class="layer-toggle" id="brands-toggle-wrapper">
+              <input type="checkbox" id="show-brands" checked>
+              <span>🏷️ Brands</span>
+              <span class="help-icon" title="What are brands?">?</span>
+              <div class="layer-explainer" id="explainer-brands">
+                <div class="layer-explainer-title">
+                  <span class="emoji">🏷️</span> Brand Positions
+                </div>
+                <div class="layer-explainer-desc">
+                  Each dot represents a brand's perceived position based on customer ratings. 
+                  Brands closer together are seen as more similar; brands far apart are perceived as distinct alternatives.
+                </div>
+                <div class="layer-explainer-dynamic" id="explainer-brands-dynamic">
+                  <div class="dynamic-label">📍 From Your Data</div>
+                  <div class="dynamic-content">Loading insights...</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Attributes Toggle -->
+            <div class="layer-toggle" id="attributes-toggle-wrapper">
+              <input type="checkbox" id="show-attributes" checked>
+              <span>📊 Attributes</span>
+              <span class="help-icon" title="What are attribute vectors?">?</span>
+              <div class="layer-explainer" id="explainer-attributes">
+                <div class="layer-explainer-title">
+                  <span class="emoji">📊</span> Attribute Vectors
+                </div>
+                <div class="layer-explainer-desc">
+                  Arrows showing which direction each attribute increases. Brands positioned toward an arrow's tip are rated higher on that attribute. 
+                  Longer arrows explain more of the perceptual variance.
+                </div>
+                <div class="layer-explainer-dynamic" id="explainer-attributes-dynamic">
+                  <div class="dynamic-label">📍 From Your Data</div>
+                  <div class="dynamic-content">Loading insights...</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Competitive Zones Toggle -->
+            <div class="layer-toggle" id="show-competitive-zones-toggle">
+              <input type="checkbox" id="show-competitive-zones">
+              <span>🔵 Competitive Zones</span>
+              <span class="help-icon" title="What are competitive zones?">?</span>
+              <div class="layer-explainer" id="explainer-zones">
+                <div class="layer-explainer-title">
+                  <span class="emoji">🔵</span> Voronoi Competitive Zones
+                </div>
+                <div class="layer-explainer-desc">
+                  Voronoi tessellation showing each brand's "territory"—the region of the map where that brand is the closest option.
+                  Larger zones indicate less direct competition; smaller zones mean crowded positioning.
+                </div>
+                <div class="layer-explainer-dynamic" id="explainer-zones-dynamic">
+                  <div class="dynamic-label">📍 From Your Data</div>
+                  <div class="dynamic-content">Loading insights...</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Opportunity Zones Toggle -->
+            <div class="layer-toggle" id="show-whitespace-toggle">
+              <input type="checkbox" id="show-whitespace">
+              <span>✨ Entry Opportunities</span>
+              <span class="help-icon" title="What are entry opportunities?">?</span>
+              <div class="layer-explainer" id="explainer-whitespace">
+                <div class="layer-explainer-title">
+                  <span class="emoji">✨</span> Market Entry Opportunities
+                </div>
+                <div class="layer-explainer-desc">
+                  Positions where a <strong>new entrant</strong> would capture the most market share, calculated using your preference model.
+                  Unlike simple "whitespace," these account for actual customer demand—showing where segment preferences are underserved.
+                </div>
+                <div class="layer-explainer-dynamic" id="explainer-whitespace-dynamic">
+                  <div class="dynamic-label">📈 Simulated Entry Analysis</div>
+                  <div class="dynamic-content">Loading insights...</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Segment Ideal Points Toggle -->
+            <div class="layer-toggle" id="show-segments-toggle" style="display: none;">
+              <input type="checkbox" id="show-segments" checked>
+              <span>🎯 Segment Centroids</span>
+              <span class="help-icon" title="What are segment ideal points?">?</span>
+              <div class="layer-explainer" id="explainer-segments">
+                <div class="layer-explainer-title">
+                  <span class="emoji">🎯</span> Segment Ideal Points
+                </div>
+                <div class="layer-explainer-desc">
+                  Stars mark each customer segment's "ideal" position—the combination of attributes that segment values most. 
+                  Brands closest to a segment's ideal point will capture more of that segment's preference share.
+                </div>
+                <div class="layer-explainer-dynamic" id="explainer-segments-dynamic">
+                  <div class="dynamic-label">📍 From Your Data</div>
+                  <div class="dynamic-content">Loading insights...</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Individual Customer Points Toggle -->
+            <div class="layer-toggle" id="show-customers-toggle" style="display: none;">
+              <input type="checkbox" id="show-customers">
+              <span>👥 Individual Customers</span>
+              <span class="help-icon" title="What are individual customer points?">?</span>
+              <div class="layer-explainer" id="explainer-customers">
+                <div class="layer-explainer-title">
+                  <span class="emoji">👥</span> Individual Customer Ideal Points
+                </div>
+                <div class="layer-explainer-desc">
+                  Each dot is one customer's ideal position, computed from their individual brand preferences. 
+                  This shows the actual <strong>distribution of demand</strong> rather than just segment averages—revealing preference density and heterogeneity.
+                </div>
+                <div class="layer-explainer-dynamic" id="explainer-customers-dynamic">
+                  <div class="dynamic-label">📊 Demand Distribution</div>
+                  <div class="dynamic-content">Loading insights...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Hero Map Container with Hover Panel -->
+        <div class="map-hero-container">
+          <div class="map-wrapper">
+            <div id="positioning-map" class="chart-hero"></div>
+            <!-- Drag instruction overlay -->
+            <div class="map-instruction" id="drag-instruction">
+              <span>🎯 Click a brand for details • Drag to simulate repositioning</span>
+            </div>
+          </div>
+          
+          <!-- Live Brand Hover Card -->
+          <aside class="brand-hover-card hidden" id="brand-hover-card">
+            <div class="hover-card-header">
+              <h4 id="hover-brand-name">Brand Name</h4>
+              <span class="hover-card-close" onclick="hideBrandCard()">×</span>
+            </div>
+            <div class="hover-card-body">
+              <div class="mini-radar-container">
+                <div id="mini-radar-chart"></div>
+              </div>
+              <div class="hover-stats">
+                <div class="hover-stat">
+                  <span class="stat-label">Nearest Competitor</span>
+                  <span class="stat-value" id="hover-nearest"></span>
+                </div>
+                <div class="hover-stat">
+                  <span class="stat-label">Competitive Distance</span>
+                  <span class="stat-value" id="hover-distance"></span>
+                </div>
+                <div class="hover-stat">
+                  <span class="stat-label">Best Segment Fit</span>
+                  <span class="stat-value" id="hover-segment"></span>
+                </div>
+              </div>
+              <div class="hover-strengths">
+                <span class="strength-label">Key Strengths:</span>
+                <div class="strength-tags" id="hover-strengths"></div>
+              </div>
+            </div>
+          </aside>
+        </div>
+        
+        <!-- Live Simulation Bar (appears when dragging) -->
+        <div class="simulation-bar hidden" id="live-simulation-bar">
+          <div class="sim-bar-content">
+            <div class="sim-bar-brand">
+              <span class="sim-brand-icon">📍</span>
+              <span id="sim-bar-brand-name">Dragging: Brand</span>
+            </div>
+            <div class="sim-bar-metrics">
+              <div class="sim-bar-metric">
+                <span class="metric-label">Share Change</span>
+                <span class="metric-value" id="sim-bar-share-change">+0.0%</span>
+              </div>
+              <div class="sim-bar-metric">
+                <span class="metric-label">Cannibalization</span>
+                <span class="metric-value" id="sim-bar-cannibalization">—</span>
+              </div>
+              <div class="sim-bar-metric">
+                <span class="metric-label">Distance Moved</span>
+                <span class="metric-value" id="sim-bar-distance">0.00</span>
+              </div>
+            </div>
+            <button class="sim-bar-reset" onclick="resetDraggedPosition()">↩️ Reset</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- INSIGHT CARDS - Visual Discovery Section -->
+      <div class="insight-cards-section">
+        <h3>🔍 Key Discoveries</h3>
+        <div class="insight-cards-grid" id="insight-cards">
+          <!-- Dynamically populated with visual insight cards -->
+          <div class="insight-card placeholder">
+            <span class="insight-icon">💡</span>
+            <p>Run the analysis to discover insights about your competitive landscape.</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- DIMENSION EXPLORER - Interactive Understanding -->
+      <div class="card dimension-explorer-card">
+        <h3>🎚️ Dimension Explorer</h3>
+        <p class="hint">
+          Interactively explore what each dimension means. Each row's height reflects that dimension's relative importance (variance explained).
+        </p>
+        <div class="dimension-explorer" id="dimension-explorer">
+          <div class="dim-explorer-row" id="dim1-explorer">
+            <div class="dim-endpoints">
+              <span class="dim-negative" id="dim1-neg">Loading...</span>
+              <span class="dim-label">Dimension I</span>
+              <span class="dim-positive" id="dim1-pos">Loading...</span>
+            </div>
+            <div class="dim-brand-strip" id="dim1-brands">
+              <!-- Brand chips positioned along dimension -->
+            </div>
+            <div class="dim-variance-bar">
+              <div class="dim-variance-fill" id="dim1-variance" style="width: 0%"></div>
+              <span class="dim-variance-label" id="dim1-var-label">0% variance</span>
+            </div>
+          </div>
+          <div class="dim-explorer-row" id="dim2-explorer">
+            <div class="dim-endpoints">
+              <span class="dim-negative" id="dim2-neg">Loading...</span>
+              <span class="dim-label">Dimension II</span>
+              <span class="dim-positive" id="dim2-pos">Loading...</span>
+            </div>
+            <div class="dim-brand-strip" id="dim2-brands">
+              <!-- Brand chips positioned along dimension -->
+            </div>
+            <div class="dim-variance-bar">
+              <div class="dim-variance-fill" id="dim2-variance" style="width: 0%"></div>
+              <span class="dim-variance-label" id="dim2-var-label">0% variance</span>
+            </div>
+          </div>
+          <div class="dim-explorer-row dim3-row hidden" id="dim3-explorer">
+            <div class="dim-endpoints">
+              <span class="dim-negative" id="dim3-neg">Loading...</span>
+              <span class="dim-label">Dimension III</span>
+              <span class="dim-positive" id="dim3-pos">Loading...</span>
+            </div>
+            <div class="dim-brand-strip" id="dim3-brands">
+              <!-- Brand chips positioned along dimension -->
+            </div>
+            <div class="dim-variance-bar">
+              <div class="dim-variance-fill" id="dim3-variance" style="width: 0%"></div>
+              <span class="dim-variance-label" id="dim3-var-label">0% variance</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- COMPETITIVE INTELLIGENCE SECTION -->
+    <section class="competitive-intel-section" id="tut-competitive-section" aria-labelledby="competitive-heading">
+      <h2 id="competitive-heading">COMPETITIVE INTELLIGENCE</h2>
+      
+      <!-- Distance Matrix Heatmap -->
+      <div class="card">
+        <h3>🗺️ Competitive Distance Matrix</h3>
+        <p class="hint">
+          This heatmap shows perceptual distances between all brand pairs. 
+          <strong>Dark blue = very similar</strong> (direct competitors), 
+          <strong>Light/white = very different</strong> (differentiated positioning).
+        </p>
+        <div id="distance-heatmap" class="chart-medium"></div>
+      </div>
+      
+      <!-- Brand Attribute Radar Comparison -->
+      <div class="card">
+        <h3>📊 Brand Profile Comparison</h3>
+        <p class="hint">
+          Select up to 3 brands to compare their attribute profiles side-by-side. 
+          The radar chart reveals where brands excel and where they're vulnerable.
+        </p>
+        <div class="brand-selector-row">
+          <select id="radar-brand-1" class="brand-selector" aria-label="Select first brand for comparison">
+            <option value="">Select Brand 1</option>
+          </select>
+          <select id="radar-brand-2" class="brand-selector" aria-label="Select second brand for comparison">
+            <option value="">Select Brand 2</option>
+          </select>
+          <select id="radar-brand-3" class="brand-selector" aria-label="Select third brand for comparison (optional)">
+            <option value="">Select Brand 3 (optional)</option>
+          </select>
+        </div>
+        <div id="brand-radar-chart" class="chart-medium"></div>
+        <div class="radar-insights" id="radar-insights">
+          <!-- Dynamically populated comparison insights -->
+        </div>
+      </div>
+      
+      <!-- Attribute Importance Visual -->
+      <div class="card">
+        <h3>📈 Attribute Importance</h3>
+        <p class="hint">
+          Which attributes most differentiate brands in customers' minds? 
+          Longer bars = greater differentiation power.
+        </p>
+        <div id="attribute-importance-chart" class="chart-medium"></div>
+      </div>
+    </section>
+
+    <!-- DIMENSION INTERPRETATION -->
+    <section class="test-results" id="tut-dimensions-section" aria-labelledby="dimensions-heading">
+      <h2 id="dimensions-heading">DIMENSION INTERPRETATION</h2>
+      <div class="card">
+        <p class="hint">
+          Each dimension represents an underlying perceptual theme. Attributes with high positive or 
+          negative loadings define what the dimension means.
+        </p>
+        <div id="dimension-interpretation">
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Dimension</th>
+                <th>Variance</th>
+                <th>Positive End (High)</th>
+                <th>Negative End (Low)</th>
+                <th>Interpretation</th>
+              </tr>
+            </thead>
+            <tbody id="dimension-table-body">
+              <tr>
+                <td colspan="5">Run analysis to see dimension interpretations.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Brand Coordinates -->
+      <div class="card">
+        <h3>Brand Coordinates</h3>
+        <p class="hint">
+          These coordinates define each brand's position on the perceptual map. Brands with similar 
+          coordinates are perceived similarly by customers. Use these values to identify direct competitors 
+          (close positions) and differentiated brands (distant positions).
+        </p>
+        <table class="summary-table">
+          <thead id="brand-coords-header">
+            <tr>
+              <th>Brand</th>
+              <th>Dimension I</th>
+              <th>Dimension II</th>
+              <th>Dimension III</th>
+            </tr>
+          </thead>
+          <tbody id="brand-coords-body">
+            <tr>
+              <td colspan="4">Run analysis to see brand coordinates.</td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="button" id="download-coordinates" class="secondary" disabled>
+          📥 Download coordinates (CSV)
+        </button>
+      </div>
+      
+      <!-- Attribute Loadings -->
+      <div class="card">
+        <h3>Attribute Loadings</h3>
+        <p class="hint">
+          Attribute loadings show how strongly each attribute correlates with each dimension. 
+          High positive loadings (green) indicate the attribute increases along that dimension; 
+          high negative loadings (red) indicate the attribute decreases. Attributes near zero 
+          have little influence on that dimension.
+        </p>
+        <details>
+          <summary>View full attribute loading table</summary>
+          <table class="summary-table">
+            <thead id="attr-loadings-header">
+              <tr>
+                <th>Attribute</th>
+                <th>Dimension I</th>
+                <th>Dimension II</th>
+                <th>Dimension III</th>
+              </tr>
+            </thead>
+            <tbody id="attr-loadings-body">
+              <tr>
+                <td colspan="4">Run analysis to see attribute loadings.</td>
+              </tr>
+            </tbody>
+          </table>
+        </details>
+      </div>
+    </section>
+
+    <!-- PREFERENCE & SEGMENT ANALYSIS - Visual Persona Cards -->
+    <section class="preference-results hidden" id="tut-preferences-section" aria-labelledby="preferences-heading">
+      <h2 id="preferences-heading">CUSTOMER SEGMENTS</h2>
+      
+      <!-- Segment Persona Cards -->
+      <div class="segment-personas-grid" id="segment-personas">
+        <!-- Dynamically populated with visual persona cards -->
+        <div class="persona-placeholder card">
+          <p>Upload preference data to reveal customer segment personas.</p>
+        </div>
+      </div>
+      
+      <!-- Segment Competition Matrix -->
+      <div class="card">
+        <h3>🎯 Who's Winning Each Segment?</h3>
+        <p class="hint">
+          This visual shows which brands are closest to each segment's ideal position.
+          The bar length shows preference fit—longer = stronger preference.
+        </p>
+        <div id="segment-brand-fit-chart" class="chart-medium"></div>
+      </div>
+    </section>
+
+    <!-- SIMULATION SECTION - Revolutionary Direct Manipulation -->
+    <section class="simulation-section hidden" id="tut-simulation-section" aria-labelledby="simulation-heading">
+      <h2 id="simulation-heading">POSITIONING PLAYGROUND</h2>
+      
+      <div class="playground-hero">
+        <div class="playground-instruction-banner">
+          <div class="banner-icon">🎮</div>
+          <div class="banner-text">
+            <strong>Interactive Mode Active!</strong>
+            Drag any brand directly on the map to see real-time market impact.
+            Your changes are instantly visualized below.
+          </div>
+        </div>
+        
+        <!-- Mode Selector - Pill Style -->
+        <div class="playground-modes">
+          <button class="mode-pill active" data-mode="reposition">
+            <span class="mode-icon">📍</span>
+            <span class="mode-label">Move Brand</span>
+          </button>
+          <button class="mode-pill" data-mode="new-product">
+            <span class="mode-icon">✨</span>
+            <span class="mode-label">Launch New</span>
+          </button>
+          <button class="mode-pill" data-mode="find-gap">
+            <span class="mode-icon">🔍</span>
+            <span class="mode-label">Find White Space</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Live Impact Dashboard -->
+      <div class="impact-dashboard" id="impact-dashboard">
+        <div class="impact-panel impact-share">
+          <h4>📊 Market Share Shift</h4>
+          <div class="share-comparison">
+            <div class="share-before-after">
+              <div class="share-bar-container">
+                <div class="share-bar-label">Before</div>
+                <div class="share-bars" id="share-bars-before"></div>
+              </div>
+              <div class="share-arrow">→</div>
+              <div class="share-bar-container">
+                <div class="share-bar-label">After</div>
+                <div class="share-bars" id="share-bars-after"></div>
+              </div>
+            </div>
+            <div class="share-delta-callout" id="share-delta-callout">
+              <span class="delta-value">—</span>
+              <span class="delta-label">share change</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="impact-panel impact-cannib">
+          <h4>🔄 Cannibalization Flow</h4>
+          <div id="cannib-sankey" class="sankey-mini"></div>
+          <div class="cannib-summary" id="cannib-summary">
+            Move a brand to see competitive flow.
+          </div>
+        </div>
+        
+        <div class="impact-panel impact-attributes">
+          <h4>🎯 What It Takes</h4>
+          <p class="impact-subtext">Attribute changes needed for this move</p>
+          <div class="attribute-delta-bars" id="attribute-delta-bars">
+            <!-- Horizontal bars showing required attribute changes -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- New Product Launch Panel -->
+      <div class="new-product-panel hidden" id="new-product-panel">
+        <div class="new-product-form card">
+          <h3>✨ Launch a New Product</h3>
+          <div class="form-row">
+            <label for="new-product-name">Product Name</label>
+            <input type="text" id="new-product-name" placeholder="My New Brand">
+          </div>
+          <p class="hint">Click anywhere on the perceptual map to place your new product!</p>
+          <div class="new-product-preview" id="new-product-preview">
+            <div class="preview-metric">
+              <span class="metric-label">Predicted Share</span>
+              <span class="metric-value" id="np-predicted-share">—</span>
+            </div>
+            <div class="preview-metric">
+              <span class="metric-label">Best Segment Fit</span>
+              <span class="metric-value" id="np-best-segment">—</span>
+            </div>
+            <div class="preview-metric">
+              <span class="metric-label">Nearest Competitor</span>
+              <span class="metric-value" id="np-nearest-comp">—</span>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" id="confirm-new-product" class="primary" disabled>Confirm Launch</button>
+            <button type="button" id="cancel-new-product" class="secondary">Cancel</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- White Space Finder -->
+      <div class="whitespace-panel hidden" id="whitespace-panel">
+        <div class="card">
+          <h3>🔍 Opportunity Zone Finder</h3>
+          <p class="hint">
+            The heat map overlay shows potential market share for a new product at any location.
+            Brighter zones = higher opportunity. Red markers show the top opportunities.
+          </p>
+          <div class="whitespace-controls">
+            <label>
+              <input type="checkbox" id="show-opportunity-heat" checked>
+              Show opportunity heat map
+            </label>
+            <label>
+              <input type="checkbox" id="show-top-opportunities" checked>
+              Mark top 3 opportunities
+            </label>
+          </div>
+          <div class="top-opportunities" id="top-opportunities">
+            <!-- Dynamically populated opportunity cards -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- Scenario Comparison -->
+      <div class="card scenario-manager">
+        <h3>📸 Scenario Snapshots</h3>
+        <p class="hint">Save your current simulation state to compare multiple "what-if" scenarios.</p>
+        <div class="scenario-actions">
+          <button type="button" id="save-scenario" class="secondary">
+            <span>📷</span> Save Current State
+          </button>
+          <button type="button" id="compare-scenarios" class="secondary" disabled>
+            <span>⚖️</span> Compare Scenarios
+          </button>
+          <button type="button" id="reset-all-positions" class="secondary">
+            <span>↩️</span> Reset All
+          </button>
+        </div>
+        <div class="saved-scenarios" id="saved-scenarios">
+          <!-- Scenario thumbnails appear here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- FOCAL BRAND DEEP DIVE -->
+    <section class="focal-brand-section hidden" id="tut-focal-section" aria-labelledby="focal-heading">
+      <h2 id="focal-heading">BRAND DEEP DIVE</h2>
+      
+      <div class="focal-hero-card card" id="focal-hero-card">
+        <div class="focal-header">
+          <div class="focal-brand-badge" id="focal-brand-badge">
+            <span class="brand-initial">?</span>
+          </div>
+          <div class="focal-brand-info">
+            <h3 id="focal-brand-title">Select a Brand</h3>
+            <p class="focal-tagline" id="focal-tagline">Choose a brand from the map or dropdown for deep analysis</p>
+          </div>
+          <select id="focal-brand-select" class="focal-select" aria-label="Select focal brand for deep analysis">
+            <option value="">Choose focal brand...</option>
+          </select>
+        </div>
+        
+        <div class="focal-scorecards">
+          <div class="scorecard">
+            <span class="scorecard-value" id="focal-share">—</span>
+            <span class="scorecard-label">Est. Market Share</span>
+          </div>
+          <div class="scorecard">
+            <span class="scorecard-value" id="focal-position-strength">—</span>
+            <span class="scorecard-label">Position Strength</span>
+          </div>
+          <div class="scorecard">
+            <span class="scorecard-value" id="focal-differentiation">—</span>
+            <span class="scorecard-label">Differentiation Score</span>
+          </div>
+          <div class="scorecard">
+            <span class="scorecard-value" id="focal-vulnerability">—</span>
+            <span class="scorecard-label">Vulnerability Index</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Competitive Landscape for Focal Brand -->
+      <div class="focal-panels">
+        <div class="card focal-panel">
+          <h4>🎯 Competitive Distances</h4>
+          <div id="focal-distance-bars" class="distance-bars">
+            <!-- Horizontal bars showing distance to each competitor -->
+          </div>
+        </div>
+        
+        <div class="card focal-panel">
+          <h4>📊 Attribute Profile vs. Category</h4>
+          <div id="focal-vs-category-radar" class="chart-medium"></div>
+        </div>
+      </div>
+      
+      <!-- Strategic Recommendations -->
+      <div class="card focal-recommendations">
+        <h4>💡 Strategic Recommendations</h4>
+        <div class="recommendation-cards" id="focal-rec-cards">
+          <!-- Dynamically populated recommendation cards -->
+          <div class="rec-card placeholder">
+            <span class="rec-icon">🎯</span>
+            <p>Select a focal brand to receive tailored strategic recommendations.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTS SECTION -->
+    <section class="reports-section" aria-labelledby="reports-heading">
+      <h2 id="reports-heading">SUMMARY REPORTS</h2>
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>APA-Style Report</h3>
+          <p id="apa-report">
+            After you run the positioning analysis, this panel will provide a formal statistical 
+            summary suitable for academic reports, including variance explained, dimensionality, 
+            and key findings.
+          </p>
+          <button type="button" id="copy-apa" class="secondary" disabled>📋 Copy Report</button>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="managerial-report">
+            This panel translates the positioning analysis into plain-language strategic insights, 
+            highlighting competitive positioning, segment opportunities, and recommended actions.
+          </p>
+          <button type="button" id="copy-managerial" class="secondary" disabled>📋 Copy Report</button>
+        </article>
+      </div>
+    </section>
+
+    <!-- DIAGNOSTICS SECTION -->
+    <section class="diagnostics-section" aria-labelledby="diagnostics-heading">
+      <h2 id="diagnostics-heading">DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+      <div class="card">
+        <details class="diagnostics-details" open>
+          <summary>Diagnostics &amp; assumptions</summary>
+          <div id="diagnostics-content">
+            <h4>Key Assumptions</h4>
+            <ul>
+              <li><strong>Linear relationships:</strong> PCA assumes that brand-attribute relationships are linear. Non-linear perceptions may require alternative techniques.</li>
+              <li><strong>Interval-scale data:</strong> Perceptual ratings should be measured on interval scales (e.g., 1-7 Likert). Ordinal data may violate assumptions.</li>
+              <li><strong>Adequate sample:</strong> Preference data should include enough customers per segment for stable ideal point estimates (typically 30+ per segment).</li>
+            </ul>
+            <h4>Interpretation Cautions</h4>
+            <ul>
+              <li>Perceptual maps show <em>relative</em> positions—absolute scale depends on input data normalization.</li>
+              <li>Dimension interpretations are subjective and should be validated with qualitative research.</li>
+              <li>Market share simulations assume current competitive dynamics remain stable.</li>
+            </ul>
+            <div id="diagnostics-flags">
+              <!-- Populated dynamically with data-specific warnings -->
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- EXPORT SECTION -->
+    <section class="export-section" aria-labelledby="export-heading">
+      <h2 id="export-heading">EXPORT &amp; DOWNLOAD</h2>
+      <div class="card">
+        <div class="export-controls">
+          <button type="button" id="export-map-png" class="secondary" disabled>
+            📊 Export Map (PNG)
+          </button>
+          <button type="button" id="export-all-data" class="secondary" disabled>
+            📁 Download All Results (CSV)
+          </button>
+          <button type="button" id="export-simulation" class="secondary" disabled>
+            🎯 Export Simulation Scenario
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <div class="footer-content">
+      <div class="footer-nav">
+        <a href="../../index.html" class="back-link">← Back to Tool Selection</a>
+      </div>
+      <div class="footer-meta">
+        <span class="meta-item">Created: 2026-02-04</span>
+        <span class="separator">•</span>
+        <span class="meta-item">Last Updated: <span id="modified-date">2026-02-04</span></span>
+      </div>
+      <div class="footer-citation">
+        <div class="citation-label">Cite this tool:</div>
+        <div class="citation-text">Baker, A. (2026). Perceptual Positioning Lab. <em>Dr. Baker's Marketing Tools</em>. 
+          Retrieved from <a href="https://drbakermarketing.com/apps/mds/main_mds.html" target="_blank" rel="noopener">
+          https://drbakermarketing.com/apps/mds/main_mds.html</a></div>
+      </div>
+      <div class="footer-copyright">
+        &copy; 2026 Andrew Baker. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <script src="../../shared/js/auth_tracking.js"></script>
+  <script src="../../shared/js/auth_bar.js"></script>
+  <script src="mds_math.js"></script>
+  <script src="mds_scenarios.js"></script>
+  <script src="mds_d3map.js"></script>
+  <script src="main_mds.js"></script>
+</body>
+
+</html>
