@@ -837,6 +837,63 @@
         if (!isAuthenticated()) {
             window.location.href = 'login.html?redirect=instructor-analytics.html';
         }
+
+        // =================================================================
+        // STUDENT DISPLAY HELPERS
+        // =================================================================
+        const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+        function toTitleCase(value) {
+            if (!value) return '';
+            return value
+                .toString()
+                .replace(/[_\-.]+/g, ' ')
+                .split(' ')
+                .filter(Boolean)
+                .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+                .join(' ');
+        }
+
+        function formatStudentName(student) {
+            if (!student) return 'Student';
+            const first = student.first_name || student.firstName || '';
+            const last = student.last_name || student.lastName || '';
+            const full = `${first} ${last}`.trim();
+            if (full) return full;
+            if (student.full_name) return student.full_name;
+            if (student.name) return student.name;
+            if (student.username) return toTitleCase(student.username);
+            return 'Student';
+        }
+
+        function parseJoinDate(student) {
+            if (!student) return null;
+            const rawDate = student.joined_at || student.date_joined || student.enrolled_at || student.created_at || student.created || null;
+            if (!rawDate) return null;
+            const parsed = new Date(rawDate);
+            return isNaN(parsed.getTime()) ? null : parsed;
+        }
+
+        function getDaysInactive(student) {
+            const metricsDays = student?.metrics?.days_since_activity ?? student?.days_since_activity ?? null;
+            if (metricsDays !== null && metricsDays !== undefined && metricsDays < 900) {
+                return metricsDays;
+            }
+
+            const joinDate = parseJoinDate(student);
+            if (joinDate) {
+                const diffDays = Math.floor((Date.now() - joinDate.getTime()) / MS_PER_DAY);
+                return diffDays >= 0 ? diffDays : 0;
+            }
+
+            return metricsDays;
+        }
+
+        function formatDaysInactiveLabel(daysInactive) {
+            if (daysInactive === null || daysInactive === undefined) return 'Unknown inactivity';
+            if (daysInactive === 0) return '0 days inactive';
+            return `${daysInactive} days inactive`;
+        }
         
         // Custom date range setup
         const timelineRangeSelect = document.getElementById('timeline-range');
@@ -1531,11 +1588,11 @@
                              onclick="loadStudentDetail(${student.student_id})">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <span style="font-weight: 700;">${student.icon} ${student.first_name} ${student.last_name}</span>
-                                    <span style="color: #6b7280; margin-left: 0.5rem;">(${student.username})</span>
+                                    <span style="font-weight: 700;">${student.icon} ${formatStudentName(student)}</span>
+                                    ${student.username ? `<span style="color: #6b7280; margin-left: 0.5rem;">@${student.username}</span>` : ''}
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="font-size: 0.875rem; color: #6b7280;">${student.metrics.total_runs} runs, ${student.metrics.days_since_activity} days inactive</div>
+                                    <div style="font-size: 0.875rem; color: #6b7280;">${student.metrics.total_runs} runs, ${formatDaysInactiveLabel(getDaysInactive(student))}</div>
                                 </div>
                             </div>
                             <div style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
@@ -1596,7 +1653,7 @@
                 
                 // Build student name from response
                 const studentName = data.student ? 
-                    `${data.student.first_name || ''} ${data.student.last_name || ''} (${data.student.username})` :
+                    `${formatStudentName(data.student)}${data.student.username ? ` (@${data.student.username})` : ''}` :
                     'Student Details';
                 
                 document.getElementById('modal-student-name').textContent = studentName;
@@ -1713,8 +1770,12 @@
                     }
                 }
                 
+                const studentName = formatStudentName(student);
+                const usernameTag = student.username && studentName.toLowerCase() !== student.username.toLowerCase() ? 
+                    `<div style="font-size: 0.75rem; color: #6b7280;">@${student.username}</div>` : '';
+
                 tr.innerHTML = `
-                    <td><strong>${student.username}</strong></td>
+                    <td><strong>${studentName}</strong>${usernameTag}</td>
                     <td>${student.email || '-'}</td>
                     <td>${student.total_runs}${isFiltered ? '*' : ''}</td>
                     <td>${student.tools_used}${isFiltered ? '*' : ''}</td>
@@ -2060,6 +2121,10 @@
                 if (!response.ok) throw new Error('Failed to load student details');
                 
                 const data = await response.json();
+                if (data.student) {
+                    const displayName = formatStudentName(data.student);
+                    document.getElementById('modal-student-name').textContent = `${displayName} - Detailed Analytics`;
+                }
                 
                 const content = document.getElementById('modal-student-content');
                 

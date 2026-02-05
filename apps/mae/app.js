@@ -31,6 +31,9 @@
     let currentScenario = null;
     let xLabel = "Ad Spending ($)";
     let yLabel = "Revenue ($)";
+    let renderCount = 0;
+    let lastTrackTime = 0;
+    let lastScenarioLogged = null;
 
     // ===== DOM Elements =====
     const elements = {
@@ -198,6 +201,10 @@
             currentScenario = null;
             xLabel = "Ad Spending ($)";
             yLabel = "Revenue ($)";
+            if (typeof markScenarioLoaded === "function" && lastScenarioLogged !== "Default Search Ads") {
+                markScenarioLoaded("Default Search Ads");
+                lastScenarioLogged = "Default Search Ads";
+            }
             elements.scenarioDescription.innerHTML = `
                 <p class="scenario-placeholder">
                     Select a marketing scenario above to see the business context and variables, 
@@ -224,6 +231,10 @@
         currentScenario = scenario;
         xLabel = scenario.xLabel;
         yLabel = scenario.yLabel;
+        if (typeof markScenarioLoaded === "function" && lastScenarioLogged !== scenario.label) {
+            markScenarioLoaded(scenario.label);
+            lastScenarioLogged = scenario.label;
+        }
         
         // Render scenario description
         elements.scenarioDescription.innerHTML = scenario.description();
@@ -327,6 +338,15 @@
         a.download = currentScenario ? `${currentScenario.id}_data.csv` : "mae_data.csv";
         a.click();
         URL.revokeObjectURL(url);
+
+        if (typeof logFeatureUsage === "function") {
+            const scenarioName = currentScenario ? currentScenario.label : "Default Search Ads";
+            logFeatureUsage(TOOL_SLUG, "export_data", {
+                format: "csv",
+                rows: data.x.length,
+                scenario: scenarioName
+            });
+        }
     }
 
     /**
@@ -724,6 +744,39 @@
         
         // ===== Update Comparison Section =====
         updateComparison();
+
+        // ===== Tracking (debounced) =====
+        renderCount += 1;
+        const now = Date.now();
+        if (renderCount > 1 && (now - lastTrackTime) > 500) {
+            lastTrackTime = now;
+            const scenarioName = currentScenario ? currentScenario.label : "Default Search Ads";
+            const trackingParams = {
+                scenario: scenarioName,
+                n: data.x.length,
+                B0_linear: params.B0_linear,
+                B1_linear: params.B1_linear,
+                B0_quadratic: params.B0_quadratic,
+                B1_quadratic: params.B1_quadratic,
+                B2_quadratic: params.B2_quadratic,
+                mae_linear: currentMAELinear,
+                mae_quadratic: currentMAEQuadratic
+            };
+            const summary = `MAE linear ${currentMAELinear.toFixed(2)}, quadratic ${currentMAEQuadratic.toFixed(2)}`;
+
+            if (typeof markRunAttempted === "function") {
+                markRunAttempted();
+            }
+            if (typeof markRunSuccessful === "function") {
+                markRunSuccessful(trackingParams, summary);
+            }
+            if (typeof logToolUsage === "function") {
+                logToolUsage(TOOL_SLUG, trackingParams, summary, {
+                    scenario: scenarioName,
+                    dataSource: "scenario"
+                });
+            }
+        }
     }
 
     // ===== Dynamic Interpretation Functions =====
@@ -1053,6 +1106,11 @@
             
             // Initial plot
             updatePlots();
+
+            if (typeof markScenarioLoaded === "function" && lastScenarioLogged !== "Default Search Ads") {
+                markScenarioLoaded("Default Search Ads");
+                lastScenarioLogged = "Default Search Ads";
+            }
             
             // Track tool initialization
             if (typeof initEngagementTracking === "function") {
