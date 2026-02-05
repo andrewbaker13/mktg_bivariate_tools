@@ -354,10 +354,17 @@
 
         <!-- Course Selector -->
         <div class="course-selector" id="course-selector" style="display: none;">
-            <label for="student-course-select" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">My Course:</label>
-            <select id="student-course-select">
-                <option value="">Select a course...</option>
-            </select>
+            <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                <div style="flex: 1;">
+                    <label for="student-course-select" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">My Course:</label>
+                    <select id="student-course-select">
+                        <option value="">Select a course...</option>
+                    </select>
+                </div>
+                <a href="#" id="course-homepage-link" style="display: none; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 4px; font-weight: 600; white-space: nowrap;">
+                    🏠 Course Homepage
+                </a>
+            </div>
         </div>
 
         <div id="loading" class="loading">
@@ -503,6 +510,19 @@
         let selectedCourseId = null;
         let userCourses = [];
 
+        function updateCourseHomepageLink() {
+            const courseSelect = document.getElementById('student-course-select');
+            const homepageLink = document.getElementById('course-homepage-link');
+            const selectedOption = courseSelect.options[courseSelect.selectedIndex];
+            
+            if (selectedOption && selectedOption.dataset.homepageEnabled === 'true') {
+                homepageLink.href = `course-home.html?course_id=${selectedCourseId}`;
+                homepageLink.style.display = 'block';
+            } else {
+                homepageLink.style.display = 'none';
+            }
+        }
+
         async function loadPercentileData() {
             const token = getAuthToken();
             
@@ -544,21 +564,31 @@
                 if (userCourses.length > 0) {
                     const courseSelect = document.getElementById('student-course-select');
                     courseSelect.innerHTML = userCourses.map(course => 
-                        `<option value="${course.id}">${course.name}</option>`
+                        `<option value="${course.id}" data-homepage-enabled="${course.homepage_enabled || false}">${course.name}</option>`
                     ).join('');
                     
                     // Set default to first course
                     selectedCourseId = userCourses[0].id;
                     courseSelect.value = selectedCourseId;
                     
+                    // Update course homepage link
+                    updateCourseHomepageLink();
+                    
                     // Show course selector only if multiple courses
                     if (userCourses.length > 1) {
                         document.getElementById('course-selector').style.display = 'block';
+                    } else if (userCourses.length === 1) {
+                        // Show selector even for single course if homepage enabled
+                        const hasHomepage = userCourses[0].homepage_enabled;
+                        if (hasHomepage) {
+                            document.getElementById('course-selector').style.display = 'block';
+                        }
                     }
                     
                     // Add change listener
                     courseSelect.addEventListener('change', (e) => {
                         selectedCourseId = parseInt(e.target.value);
+                        updateCourseHomepageLink();
                         loadPercentileData();
                     });
                 }
