@@ -31,6 +31,9 @@
     let currentScenario = null;
     let xLabel = "Ad Spending ($)";
     let yLabel = "Revenue ($)";
+    let renderCount = 0;
+    let lastTrackTime = 0;
+    let lastScenarioLogged = null;
     
     // Categorical state
     let hasCategoricalData = false;
@@ -208,6 +211,72 @@
             });
     }
 
+    /**
+     * Load scenario data from a CSV file
+     * @param {string} csvPath - Path to the CSV file
+     * @param {boolean} hasCategory - Whether the CSV includes a category column
+     */
+    function loadScenarioCSV(csvPath, hasCategory) {
+        fetch(csvPath)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(text => {
+                const x = [];
+                const y = [];
+                const category = [];
+                let lines = text.split("\n").filter(line => line.trim() !== "");
+                
+                // Skip header
+                if (lines[0].toLowerCase().includes("x")) {
+                    lines.shift();
+                }
+                
+                lines.forEach(line => {
+                    const parts = line.split(",");
+                    if (parts.length >= 2) {
+                        const xVal = parseFloat(parts[0]);
+                        const yVal = parseFloat(parts[1]);
+                        if (!isNaN(xVal) && !isNaN(yVal)) {
+                            x.push(xVal);
+                            y.push(yVal);
+                            if (hasCategory && parts.length >= 3) {
+                                category.push(parseInt(parts[2], 10));
+                            }
+                        }
+                    }
+                });
+                
+                data = { x, y };
+                if (hasCategory && category.length > 0) {
+                    data.category = category;
+                }
+                
+                // Update y range
+                yMin = Math.min(...data.y) - 50;
+                yMax = Math.max(...data.y) + 50;
+                
+                // Calculate optimal MAEs for this scenario
+                calculateOptimalMAEs();
+                
+                // Reset parameters and update
+                resetParameters();
+                updatePlots();
+            })
+            .catch(error => {
+                console.error("Error loading scenario CSV:", error);
+                elements.linearPlot.innerHTML = `
+                    <div style="padding: 2rem; text-align: center; color: #dc2626;">
+                        <p><strong>Error loading scenario data</strong></p>
+                        <p>Could not load ${csvPath}</p>
+                    </div>
+                `;
+            });
+    }
+
     // ===== Scenario Management =====
 
     /**
@@ -318,6 +387,10 @@
             currentScenario = null;
             xLabel = "Ad Spending ($)";
             yLabel = "Revenue ($)";
+            if (typeof markScenarioLoaded === "function" && lastScenarioLogged !== "Default Search Ads") {
+                markScenarioLoaded("Default Search Ads");
+                lastScenarioLogged = "Default Search Ads";
+            }
             elements.scenarioDescription.innerHTML = `
                 <p class="scenario-placeholder">
                     Select a marketing scenario above to see the business context and variables, 
@@ -360,6 +433,10 @@
         currentScenario = scenario;
         xLabel = scenario.xLabel;
         yLabel = scenario.yLabel;
+        if (typeof markScenarioLoaded === "function" && lastScenarioLogged !== scenario.label) {
+            markScenarioLoaded(scenario.label);
+            lastScenarioLogged = scenario.label;
+        }
         
         // Update parameter slider ranges if scenario has custom ranges
         updateParameterRanges(scenario.paramRanges);
@@ -404,28 +481,8 @@
         elements.scenarioDescription.innerHTML = scenario.description();
         elements.scenarioDownload.disabled = false;
         
-        // Load scenario data (returns {x: [], y: [], category?: []})
-        const scenarioData = scenario.generateData();
-        data = {
-            x: scenarioData.x,
-            y: scenarioData.y
-        };
-        
-        // Add category data if present
-        if (scenarioData.category) {
-            data.category = scenarioData.category;
-        }
-        
-        // Update y range
-        yMin = Math.min(...data.y) - 50;
-        yMax = Math.max(...data.y) + 50;
-        
-        // Calculate optimal MAEs for this scenario
-        calculateOptimalMAEs();
-        
-        // Reset parameters and update
-        resetParameters();
-        updatePlots();
+        // Load scenario data from CSV file
+        loadScenarioCSV(scenario.csvFile, scenario.hasCategorical || false);
     }
     
     /**
@@ -578,6 +635,15 @@
         a.download = currentScenario ? `${currentScenario.id}_data.csv` : "mae_data.csv";
         a.click();
         URL.revokeObjectURL(url);
+
+        if (typeof logFeatureUsage === "function") {
+            const scenarioName = currentScenario ? currentScenario.label : "Default Search Ads";
+            logFeatureUsage(TOOL_SLUG, "export_data", {
+                format: "csv",
+                rows: data.x.length,
+                scenario: scenarioName
+            });
+        }
     }
 
     /**
@@ -1372,6 +1438,37 @@
         
         // ===== Update Comparison Section =====
         updateComparison();
+
+        // ===== Tracking (debounced) =====
+        // Only update engagement milestones - NOT logToolUsage (which creates DB records)
+        // The engagement system will log once when milestones are reached
+        renderCount += 1;
+        const now = Date.now();
+        if (renderCount > 1 && (now - lastTrackTime) > 500) {
+            lastTrackTime = now;
+            const scenarioName = currentScenario ? currentScenario.label : "Default Search Ads";
+            const trackingParams = {
+                scenario: scenarioName,
+                n: data.x.length,
+                B0_linear: params.B0_linear,
+                B1_linear: params.B1_linear,
+                B0_quadratic: params.B0_quadratic,
+                B1_quadratic: params.B1_quadratic,
+                B2_quadratic: params.B2_quadratic,
+                mae_linear: currentMAELinear,
+                mae_quadratic: currentMAEQuadratic
+            };
+            const summary = `MAE linear ${currentMAELinear.toFixed(2)}, quadratic ${currentMAEQuadratic.toFixed(2)}`;
+
+            if (typeof markRunAttempted === "function") {
+                markRunAttempted();
+            }
+            if (typeof markRunSuccessful === "function") {
+                markRunSuccessful(trackingParams, summary);
+            }
+            // REMOVED: logToolUsage call that was creating a DB record every 500ms
+            // The engagement tracking system handles logging via checkEngagementMilestones()
+        }
     }
 
     // ===== Dynamic Interpretation Functions =====
@@ -1729,6 +1826,11 @@
             
             // Initial plot
             updatePlots();
+
+            if (typeof markScenarioLoaded === "function" && lastScenarioLogged !== "Default Search Ads") {
+                markScenarioLoaded("Default Search Ads");
+                lastScenarioLogged = "Default Search Ads";
+            }
             
             // Track tool initialization
             if (typeof initEngagementTracking === "function") {

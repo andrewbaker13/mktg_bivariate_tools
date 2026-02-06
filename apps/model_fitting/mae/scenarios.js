@@ -5,6 +5,8 @@
  * Scenario 1: Nearly Linear (linear model works well)
  * Scenario 2: Strong Diminishing Returns (quadratic clearly wins)
  * Scenario 3: Noisy with Visible Peak (neither model perfect, teaches uncertainty)
+ * 
+ * All scenarios now load from fixed CSV files so all students see the same data.
  */
 
 const MAE_SCENARIOS = [
@@ -80,37 +82,17 @@ const MAE_SCENARIOS = [
         `,
         xLabel: 'Ad Spending ($)',
         yLabel: 'Revenue ($)',
-        generateData: () => {
-            // NEARLY LINEAR: Very mild curvature, linear model should work almost as well
-            // True relationship: y ≈ 45 + 0.43x - 0.00004x² (barely curved)
-            // R² for linear will be close to R² for quadratic
-            const data = [];
-            const n = 25;
-            
-            // Spread points across the range with some randomness
-            for (let i = 0; i < n; i++) {
-                const xBase = 200 + (700 * i / (n - 1));
-                const x = xBase + (Math.random() - 0.5) * 60;
-                
-                // Very mild curvature - almost linear
-                const yTrue = 45 + 0.43 * x - 0.00004 * Math.pow(x, 2);
-                const noise = (Math.random() - 0.5) * 55; // Moderate noise
-                const y = Math.max(80, yTrue + noise);
-                
-                data.push({ x: Math.round(x), y: Math.round(y) });
-            }
-            
-            // Return as arrays
-            const sorted = data.sort((a, b) => a.x - b.x);
-            return {
-                x: sorted.map(d => d.x),
-                y: sorted.map(d => d.y)
-            };
-        }
+        csvFile: 'data/search_ads.csv'
     },
     {
         id: 'email-frequency',
         label: '📧 Email Frequency (Clear Diminishing Returns)',
+        // Custom parameter ranges (quadratic term needs a much larger scale)
+        paramRanges: {
+            B0: { min: 0, max: 200, step: 1 },
+            B1: { min: 0, max: 30, step: 0.1 },
+            B2_quad: { min: -2.0, max: 0.5, step: 0.01 }
+        },
         description: () => `
             <div class="scenario-description">
                 <div class="scenario-header">
@@ -181,34 +163,17 @@ const MAE_SCENARIOS = [
         `,
         xLabel: 'Emails per Month',
         yLabel: 'Monthly Spend ($)',
-        generateData: () => {
-            // STRONG DIMINISHING RETURNS: Quadratic clearly outperforms linear
-            // True relationship: y = 85 + 18x - 0.8x² (peak around x = 11.25)
-            // Linear will have noticeably higher MAE
-            const data = [];
-            const n = 20;
-            
-            for (let i = 0; i < n; i++) {
-                const x = 2 + Math.random() * 18; // 2-20 emails
-                
-                // Strong curvature with clear peak around 11 emails
-                const yTrue = 85 + 18 * x - 0.8 * Math.pow(x, 2);
-                const noise = (Math.random() - 0.5) * 20; // Lower noise to show curve clearly
-                const y = Math.max(50, yTrue + noise);
-                
-                data.push({ x: Math.round(x * 10) / 10, y: Math.round(y) });
-            }
-            
-            const sorted = data.sort((a, b) => a.x - b.x);
-            return {
-                x: sorted.map(d => d.x),
-                y: sorted.map(d => d.y)
-            };
-        }
+        csvFile: 'data/email_frequency.csv'
     },
     {
         id: 'influencer-spend',
         label: '📱 Influencer Marketing (Noisy with Peak)',
+        // Custom parameter ranges (x is in $K, quadratic term is larger)
+        paramRanges: {
+            B0: { min: -20, max: 80, step: 1 },
+            B1: { min: 0, max: 8, step: 0.1 },
+            B2_quad: { min: -0.08, max: 0.02, step: 0.001 }
+        },
         description: () => `
             <div class="scenario-description">
                 <div class="scenario-header">
@@ -281,30 +246,7 @@ const MAE_SCENARIOS = [
         `,
         xLabel: 'Influencer Spend ($K)',
         yLabel: 'Campaign Revenue ($K)',
-        generateData: () => {
-            // NOISY WITH VISIBLE PEAK: Neither model fits great, teaches uncertainty
-            // True relationship: y = 15 + 2.8x - 0.025x² (peak around x = 56)
-            // High variance means both models have decent but not great fit
-            const data = [];
-            const n = 35;
-            
-            for (let i = 0; i < n; i++) {
-                const x = 10 + Math.random() * 80; // $10K - $90K
-                
-                // Clear peak around $56K, with actual decline after
-                const yTrue = 15 + 2.8 * x - 0.025 * Math.pow(x, 2);
-                const noise = (Math.random() - 0.5) * 40; // HIGH noise
-                const y = Math.max(20, yTrue + noise);
-                
-                data.push({ x: Math.round(x), y: Math.round(y) });
-            }
-            
-            const sorted = data.sort((a, b) => a.x - b.x);
-            return {
-                x: sorted.map(d => d.x),
-                y: sorted.map(d => d.y)
-            };
-        }
+        csvFile: 'data/influencer_spend.csv'
     },
     {
         id: 'b2b-printers',
@@ -434,69 +376,7 @@ const MAE_SCENARIOS = [
         `,
         xLabel: 'Consultation Hours',
         yLabel: 'Contract Value ($K)',
-        generateData: () => {
-            // B2B 3D PRINTERS: Categorical predictor with 3 enterprise segments
-            // True relationship (linear with categorical):
-            //   Small:  y = 25 + 1.8*x + noise  (baseline $25K, +$1.8K per hour)
-            //   Medium: y = 25 + 45 + 1.8*x + noise = 70 + 1.8*x  (+$45K shift)
-            //   Large:  y = 25 + 110 + 1.8*x + noise = 135 + 1.8*x (+$110K shift)
-            // 
-            // Adding mild quadratic curvature for diminishing returns at high hours:
-            //   y = intercept + 1.8*x - 0.015*x² + noise
-            
-            const data = { x: [], y: [], category: [] };
-            const segments = [
-                { name: 'Small Enterprise', baseIntercept: 25, n: 40 },
-                { name: 'Medium Enterprise', baseIntercept: 70, n: 40 },
-                { name: 'Large Enterprise', baseIntercept: 135, n: 40 }
-            ];
-            
-            const slope = 1.8;         // $1.8K per consultation hour
-            const quadratic = -0.015;  // Mild diminishing returns
-            
-            segments.forEach((segment, segIdx) => {
-                for (let i = 0; i < segment.n; i++) {
-                    // Consultation hours: 8-50 hours, varies by segment
-                    // Small tends toward lower hours, Large toward higher
-                    let xBase;
-                    if (segIdx === 0) {
-                        xBase = 8 + Math.random() * 30;  // 8-38 hours for small
-                    } else if (segIdx === 1) {
-                        xBase = 12 + Math.random() * 32; // 12-44 hours for medium
-                    } else {
-                        xBase = 18 + Math.random() * 32; // 18-50 hours for large
-                    }
-                    
-                    const x = Math.round(xBase * 10) / 10;
-                    
-                    // True value with mild curvature
-                    const yTrue = segment.baseIntercept + slope * x + quadratic * x * x;
-                    
-                    // Noise scales with deal size (heteroscedasticity is realistic)
-                    const noiseScale = 8 + segment.baseIntercept * 0.12;
-                    const noise = (Math.random() - 0.5) * noiseScale * 2;
-                    
-                    const y = Math.max(15, Math.round(yTrue + noise));
-                    
-                    data.x.push(x);
-                    data.y.push(y);
-                    data.category.push(segIdx); // 0, 1, 2
-                }
-            });
-            
-            // Shuffle to mix segments (don't want sorted by segment)
-            const indices = data.x.map((_, i) => i);
-            for (let i = indices.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [indices[i], indices[j]] = [indices[j], indices[i]];
-            }
-            
-            return {
-                x: indices.map(i => data.x[i]),
-                y: indices.map(i => data.y[i]),
-                category: indices.map(i => data.category[i])
-            };
-        }
+        csvFile: 'data/b2b_printers.csv'
     }
 ];
 
