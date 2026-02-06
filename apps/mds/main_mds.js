@@ -9,6 +9,7 @@ const AppState = {
   // Data
   perceptualData: null,      // { brands: [], attributes: [], matrix: [][] }
   preferenceData: null,      // { brands: [], customers: [][], predefinedSegments?: [], segmentLabels?: [] }
+  weightsData: null,         // { type: 'usage'|'spend', values: number[], columnName: string }
   
   // Analysis results
   results: null,             // Computed after analysis
@@ -106,14 +107,21 @@ function setupScenarioSelect() {
   select.addEventListener('change', () => {
     const scenarioId = select.value;
     const descEl = document.getElementById('scenario-description');
-    const downloadBtn = document.getElementById('scenario-download');
     
     if (!scenarioId) {
       AppState.activeScenario = null;
       descEl.innerHTML = `<p>Load a pre-built marketing scenario with perceptual and preference data to explore 
         positioning analysis without uploading your own files.</p>`;
-      downloadBtn.classList.add('hidden');
-      downloadBtn.disabled = true;
+      const perceptualBtn = document.getElementById('scenario-download-perceptual');
+      const preferenceBtn = document.getElementById('scenario-download-preference');
+      if (perceptualBtn) {
+        perceptualBtn.classList.add('hidden');
+        perceptualBtn.disabled = true;
+      }
+      if (preferenceBtn) {
+        preferenceBtn.classList.add('hidden');
+        preferenceBtn.disabled = true;
+      }
       return;
     }
     
@@ -143,12 +151,34 @@ function setupScenarioSelect() {
         }
       }
       
+      // If scenario includes weights (usage or spend data), load them
+      if (data.weights) {
+        loadWeightsFromScenario(data.weights);
+      } else {
+        // Clear any previous weights
+        AppState.weightsData = null;
+        document.getElementById('include-weights').checked = false;
+        document.getElementById('weights-upload-section').classList.add('hidden');
+      }
+      
       // Update description
       descEl.innerHTML = scenario.description();
       
-      // Enable download button
-      downloadBtn.classList.remove('hidden');
-      downloadBtn.disabled = false;
+      // Enable download buttons
+      const perceptualBtn = document.getElementById('scenario-download-perceptual');
+      const preferenceBtn = document.getElementById('scenario-download-preference');
+      
+      if (perceptualBtn) {
+        perceptualBtn.classList.remove('hidden');
+        perceptualBtn.disabled = false;
+      }
+      if (preferenceBtn && data.preferences) {
+        preferenceBtn.classList.remove('hidden');
+        preferenceBtn.disabled = false;
+      } else if (preferenceBtn) {
+        preferenceBtn.classList.add('hidden');
+        preferenceBtn.disabled = true;
+      }
       
       // Track scenario load
       if (typeof markScenarioLoaded === 'function') {
@@ -157,28 +187,28 @@ function setupScenarioSelect() {
     }
   });
   
-  // Scenario download handler
-  const downloadBtn = document.getElementById('scenario-download');
-  if (downloadBtn) {
-    downloadBtn.addEventListener('click', () => {
+  // Scenario download handlers - separate buttons to avoid browser warnings
+  const perceptualBtn = document.getElementById('scenario-download-perceptual');
+  const preferenceBtn = document.getElementById('scenario-download-preference');
+  
+  if (perceptualBtn) {
+    perceptualBtn.addEventListener('click', () => {
       if (!AppState.activeScenario) return;
       const data = AppState.activeScenario.generate();
-      downloadScenarioData(data);
+      const perceptualCsv = generatePerceptualCsv(data.perceptual);
+      downloadTextFile(`${AppState.activeScenario.id}_perceptual.csv`, perceptualCsv, { mimeType: 'text/csv' });
     });
   }
-}
-
-function downloadScenarioData(data) {
-  // Download perceptual data
-  const perceptualCsv = generatePerceptualCsv(data.perceptual);
-  downloadTextFile(`${AppState.activeScenario.id}_perceptual.csv`, perceptualCsv, { mimeType: 'text/csv' });
   
-  // Download preference data if available
-  if (data.preferences) {
-    setTimeout(() => {
-      const prefCsv = generatePreferenceCsv(data.preferences);
-      downloadTextFile(`${AppState.activeScenario.id}_preferences.csv`, prefCsv, { mimeType: 'text/csv' });
-    }, 500);
+  if (preferenceBtn) {
+    preferenceBtn.addEventListener('click', () => {
+      if (!AppState.activeScenario) return;
+      const data = AppState.activeScenario.generate();
+      if (data.preferences) {
+        const prefCsv = generatePreferenceCsv(data.preferences);
+        downloadTextFile(`${AppState.activeScenario.id}_preferences.csv`, prefCsv, { mimeType: 'text/csv' });
+      }
+    });
   }
 }
 
@@ -201,6 +231,18 @@ function setupFileUploads() {
     feedbackId: 'preference-feedback',
     onSuccess: handlePreferenceUpload
   });
+  
+  // Weights data upload
+  setupDropzone({
+    dropzoneId: 'weights-dropzone',
+    inputId: 'weights-input',
+    browseId: 'weights-browse',
+    feedbackId: 'weights-feedback',
+    onSuccess: handleWeightsUpload
+  });
+  
+  // Setup weights toggle
+  setupWeightsToggle();
 }
 
 function setupDropzone({ dropzoneId, inputId, browseId, feedbackId, onSuccess }) {
@@ -530,9 +572,10 @@ function enablePredefinedSegmentFromScenario(segmentLabels) {
     segmentModeHint.innerHTML = `<strong>Pre-defined segments available:</strong> ${segmentLabels.join(', ')}`;
   }
   
-  // Auto-select pre-defined mode for scenarios
+  // Auto-select pre-defined mode for scenarios - ALSO update AppState
   if (segmentModeSelect) {
     segmentModeSelect.value = 'predefined';
+    AppState.settings.segmentMode = 'predefined';
   }
   
   // Hide the segment column selector section (not needed for scenarios)
@@ -583,6 +626,192 @@ function showPreferencePreview(brands, customers) {
   
   summary.textContent = `${customers.length} customers × ${brands.length} brands`;
   preview.classList.remove('hidden');
+}
+
+// ==================== WEIGHTS HANDLING ====================
+function setupWeightsToggle() {
+  const toggle = document.getElementById('include-weights');
+  if (!toggle) return;
+  
+  toggle.addEventListener('change', (e) => {
+    const section = document.getElementById('weights-upload-section');
+    if (section) {
+      section.classList.toggle('hidden', !e.target.checked);
+    }
+    if (!e.target.checked) {
+      // Clear weights data if toggle is turned off
+      AppState.weightsData = null;
+      const feedback = document.getElementById('weights-feedback');
+      if (feedback) feedback.textContent = 'No file uploaded.';
+      const preview = document.getElementById('weights-preview');
+      if (preview) preview.classList.add('hidden');
+      const typeDisplay = document.getElementById('weights-type-display');
+      if (typeDisplay) typeDisplay.classList.add('hidden');
+    }
+  });
+}
+
+function handleWeightsUpload(parsed, filename) {
+  const headers = parsed.headers.map(h => h.toUpperCase().trim());
+  const rows = parsed.rows;
+  
+  // Check for USAGE or SPEND column
+  const usageIdx = headers.findIndex(h => h === 'USAGE');
+  const spendIdx = headers.findIndex(h => h === 'SPEND');
+  
+  if (usageIdx === -1 && spendIdx === -1) {
+    const feedback = document.getElementById('weights-feedback');
+    if (feedback) {
+      feedback.textContent = '❌ CSV must contain a column named USAGE or SPEND';
+      feedback.className = 'upload-status error';
+    }
+    return;
+  }
+  
+  // Validate row count matches preference data
+  if (AppState.preferenceData && rows.length !== AppState.preferenceData.customers.length) {
+    const feedback = document.getElementById('weights-feedback');
+    if (feedback) {
+      feedback.textContent = `❌ Row count mismatch: weights has ${rows.length} rows, preferences has ${AppState.preferenceData.customers.length}`;
+      feedback.className = 'upload-status error';
+    }
+    return;
+  }
+  
+  // Parse weights
+  const isSpend = spendIdx !== -1;
+  const colIdx = isSpend ? spendIdx : usageIdx;
+  const values = rows.map(row => parseFloat(row[colIdx]) || 1);
+  
+  // Validate values
+  const hasNegative = values.some(v => v < 0);
+  if (hasNegative) {
+    const feedback = document.getElementById('weights-feedback');
+    if (feedback) {
+      feedback.textContent = '❌ Weight values cannot be negative';
+      feedback.className = 'upload-status error';
+    }
+    return;
+  }
+  
+  // Store weights
+  AppState.weightsData = {
+    type: isSpend ? 'spend' : 'usage',
+    values: values,
+    columnName: parsed.headers[colIdx]
+  };
+  
+  // Show success feedback
+  const feedback = document.getElementById('weights-feedback');
+  if (feedback) {
+    feedback.textContent = `✅ Loaded ${filename}`;
+    feedback.className = 'upload-status success';
+  }
+  
+  // Show weight type badge
+  const typeDisplay = document.getElementById('weights-type-display');
+  if (typeDisplay) {
+    typeDisplay.classList.remove('hidden');
+    const badge = typeDisplay.querySelector('.weight-type-badge');
+    if (badge) {
+      if (isSpend) {
+        badge.innerHTML = `<strong>💵 Dollar Share Mode:</strong> Market share will be weighted by customer spending ($${values.reduce((a,b) => a+b, 0).toLocaleString()} total)`;
+        badge.className = 'weight-type-badge spend-badge';
+      } else {
+        const avgUsage = values.reduce((a,b) => a+b, 0) / values.length;
+        badge.innerHTML = `<strong>📊 Usage-Weighted Mode:</strong> Market share weighted by consumption rate (avg: ${avgUsage.toFixed(2)}x)`;
+        badge.className = 'weight-type-badge usage-badge';
+      }
+    }
+  }
+  
+  // Show preview
+  showWeightsPreview(values, isSpend ? 'spend' : 'usage');
+}
+
+function showWeightsPreview(weights, type) {
+  const preview = document.getElementById('weights-preview');
+  const table = document.getElementById('weights-preview-table');
+  const summary = document.getElementById('weights-summary');
+  
+  if (!preview || !table) return;
+  
+  const label = type === 'spend' ? 'Spend ($)' : 'Usage Rate';
+  
+  let html = `<thead><tr><th>Customer</th><th>${label}</th></tr></thead><tbody>`;
+  
+  const displayRows = Math.min(8, weights.length);
+  for (let i = 0; i < displayRows; i++) {
+    const val = type === 'spend' ? `$${weights[i].toLocaleString()}` : weights[i].toFixed(2);
+    html += `<tr><td>${i + 1}</td><td>${val}</td></tr>`;
+  }
+  
+  if (weights.length > 8) {
+    html += `<tr><td colspan="2" style="text-align:center; color:#888;">... ${weights.length - 8} more customers ...</td></tr>`;
+  }
+  
+  html += '</tbody>';
+  table.innerHTML = html;
+  
+  const total = weights.reduce((a, b) => a + b, 0);
+  const avg = total / weights.length;
+  const min = Math.min(...weights);
+  const max = Math.max(...weights);
+  
+  if (type === 'spend') {
+    summary.textContent = `${weights.length} customers | Total: $${total.toLocaleString()} | Range: $${min.toLocaleString()} - $${max.toLocaleString()}`;
+  } else {
+    summary.textContent = `${weights.length} customers | Avg: ${avg.toFixed(2)}x | Range: ${min.toFixed(2)} - ${max.toFixed(2)}`;
+  }
+  
+  preview.classList.remove('hidden');
+}
+
+// Load weights from a scenario (not file upload)
+function loadWeightsFromScenario(weights) {
+  if (!weights || !weights.values || weights.values.length === 0) return;
+  
+  // Enable the weights toggle
+  const toggle = document.getElementById('include-weights');
+  if (toggle) toggle.checked = true;
+  
+  const section = document.getElementById('weights-upload-section');
+  if (section) section.classList.remove('hidden');
+  
+  // Store weights in state
+  AppState.weightsData = {
+    type: weights.type,
+    values: weights.values,
+    columnName: weights.type === 'spend' ? 'SPEND' : 'USAGE'
+  };
+  
+  // Update feedback
+  const feedback = document.getElementById('weights-feedback');
+  if (feedback) {
+    feedback.textContent = `✅ ${weights.type === 'spend' ? 'Spend' : 'Usage'} data loaded from scenario`;
+    feedback.className = 'upload-status success';
+  }
+  
+  // Show type badge
+  const typeDisplay = document.getElementById('weights-type-display');
+  if (typeDisplay) {
+    typeDisplay.classList.remove('hidden');
+    const badge = typeDisplay.querySelector('.weight-type-badge');
+    if (badge) {
+      const values = weights.values;
+      if (weights.type === 'spend') {
+        badge.innerHTML = `<strong>💵 Dollar Share Mode:</strong> Market share weighted by customer spending ($${values.reduce((a,b) => a+b, 0).toLocaleString()} total)`;
+        badge.className = 'weight-type-badge spend-badge';
+      } else {
+        const avgUsage = values.reduce((a,b) => a+b, 0) / values.length;
+        badge.innerHTML = `<strong>📊 Usage-Weighted Mode:</strong> Market share weighted by consumption rate (avg: ${avgUsage.toFixed(2)}x)`;
+        badge.className = 'weight-type-badge usage-badge';
+      }
+    }
+  }
+  
+  // Show preview
+  showWeightsPreview(weights.values, weights.type);
 }
 
 function populateFocalBrandSelect(brands) {
@@ -729,6 +958,16 @@ function runAnalysis() {
     // Store original coords for simulation (deep copy to prevent mutation)
     AppState.simulation.originalCoords = deepCopyCoords(AppState.results.brandCoords);
     AppState.simulation.modifiedCoords = deepCopyCoords(AppState.results.brandCoords);
+    
+    // Reset simulation state
+    AppState.simulation.hasChanges = false;
+    AppState.simulation.repositionedBrands = [];
+    
+    // Initialize market shares for simulation (requires preference data)
+    if (AppState.results.preferences && AppState.preferenceData?.customers?.length > 0) {
+      AppState.simulation.originalResults.marketShares = calculateMarketShares(AppState.simulation.originalCoords);
+      AppState.simulation.repositionedResults.marketShares = { ...AppState.simulation.originalResults.marketShares };
+    }
     
     // Update all displays
     updateAllDisplays();
@@ -1251,6 +1490,11 @@ function render3DPositioningMap(container) {
   
   // Brand markers
   if (showBrands) {
+    const newEntrants = AppState.simulation.newEntrants || [];
+    const brandColors = brands.map(b => newEntrants.includes(b) ? '#15803d' : '#2563eb');
+    const lineColors = brands.map(b => newEntrants.includes(b) ? '#166534' : 'white');
+    const textColors = brands.map(b => newEntrants.includes(b) ? '#15803d' : '#1f2937');
+    
     traces.push({
       x: brands.map(b => coords[b][0]),
       y: brands.map(b => coords[b][1]),
@@ -1260,12 +1504,12 @@ function render3DPositioningMap(container) {
       type: 'scatter3d',
       name: 'Brands',
       marker: {
-        size: 10,
-        color: '#2563eb',
-        line: { color: 'white', width: 1 }
+        size: brands.map(b => newEntrants.includes(b) ? 12 : 10),
+        color: brandColors,
+        line: { color: lineColors, width: brands.map(b => newEntrants.includes(b) ? 2 : 1) }
       },
       textposition: 'top center',
-      textfont: { size: 10, color: '#1f2937' },
+      textfont: { size: 10, color: textColors },
       hovertemplate: '<b>%{text}</b><br>Dim I: %{x:.2f}<br>Dim II: %{y:.2f}<br>Dim III: %{z:.2f}<extra></extra>'
     });
   }
@@ -1378,24 +1622,37 @@ function render3DPositioningMap(container) {
 
 // Handle brand drag (live update)
 function handleBrandDrag(brand, newCoords, dimX, dimY) {
+  // Ensure brand exists in modifiedCoords (for new entrants)
+  if (!AppState.simulation.modifiedCoords[brand]) {
+    AppState.simulation.modifiedCoords[brand] = [0, 0, 0];
+  }
+  
   // Update modified coordinates
   AppState.simulation.modifiedCoords[brand][dimX] = newCoords[0];
   AppState.simulation.modifiedCoords[brand][dimY] = newCoords[1];
   
   // Show simulation bar with live metrics
+  // For new entrants, use their initial position (0,0,0) since they have no original coords
   showSimulationBar(brand);
-  updateSimulationBar(brand, AppState.simulation.originalCoords[brand]);
+  const startCoords = AppState.simulation.originalCoords[brand] || [0, 0, 0];
+  updateSimulationBar(brand, startCoords);
 }
 
 // Handle brand drag end
 function handleBrandDragEnd(brand, newCoords, dimX, dimY) {
+  // Ensure brand exists in modifiedCoords (for new entrants)
+  if (!AppState.simulation.modifiedCoords[brand]) {
+    AppState.simulation.modifiedCoords[brand] = [0, 0, 0];
+  }
+  
   // Final update
   AppState.simulation.modifiedCoords[brand][dimX] = newCoords[0];
   AppState.simulation.modifiedCoords[brand][dimY] = newCoords[1];
   AppState.simulation.hasChanges = true;
   
-  // Track which brands have been repositioned
-  if (!AppState.simulation.repositionedBrands.includes(brand)) {
+  // Track which brands have been repositioned (but not new entrants - they're tracked separately)
+  const newEntrants = AppState.simulation.newEntrants || [];
+  if (!newEntrants.includes(brand) && !AppState.simulation.repositionedBrands.includes(brand)) {
     AppState.simulation.repositionedBrands.push(brand);
   }
   
@@ -1436,6 +1693,34 @@ function recalculateRepositionedResults() {
   }
   sim.repositionedResults.distances = calculateDistanceMatrix(sim.modifiedCoords);
   sim.repositionedResults.insights = generateKeyInsightsFor(sim.modifiedCoords);
+}
+
+// Helper: Check if simulation has any changes (repositioned brands OR new entrants)
+function hasSimulationChanges() {
+  const sim = AppState.simulation;
+  return sim.hasChanges && (
+    sim.repositionedBrands.length > 0 || 
+    (sim.newEntrants && sim.newEntrants.length > 0)
+  );
+}
+
+// Helper: Get all current brands (original + new entrants)
+function getAllCurrentBrands() {
+  const sim = AppState.simulation;
+  return Object.keys(sim.modifiedCoords);
+}
+
+// Helper: Get description of simulation changes for display
+function getSimulationChangeDescription() {
+  const sim = AppState.simulation;
+  const parts = [];
+  if (sim.repositionedBrands.length > 0) {
+    parts.push(`Moved: ${sim.repositionedBrands.join(', ')}`);
+  }
+  if (sim.newEntrants && sim.newEntrants.length > 0) {
+    parts.push(`Added: ${sim.newEntrants.join(', ')}`);
+  }
+  return parts.join(' | ');
 }
 
 // Helper: Get coordinate slice for full N-D calculations (respects solution dimensionality)
@@ -1505,6 +1790,7 @@ function resetRepositioning() {
   // Copy original coords back to modified
   sim.modifiedCoords = JSON.parse(JSON.stringify(sim.originalCoords));
   sim.repositionedBrands = [];
+  sim.newEntrants = []; // Clear any added market entrants
   sim.hasChanges = false;
   sim.repositionedResults = {
     marketShares: {},
@@ -1515,8 +1801,11 @@ function resetRepositioning() {
   // Hide repositioning banner
   hideRepositioningBanner();
   
+  // Update dropdowns to remove new entrants
+  populateBrandSelectors();
+  
   // Re-render everything
-  renderPositionMap();
+  renderPositioningMap();
   renderDistanceHeatmap();
   renderInsightCards();
   
@@ -1546,16 +1835,33 @@ function showRepositioningBanner() {
   }
   
   const sim = AppState.simulation;
+  
+  // Build description of moved brands
   const brandsText = sim.repositionedBrands.length <= 3 
     ? sim.repositionedBrands.join(', ')
     : `${sim.repositionedBrands.slice(0, 2).join(', ')} +${sim.repositionedBrands.length - 2} more`;
+  
+  // Build description of new entrants
+  const entrantsText = (sim.newEntrants && sim.newEntrants.length > 0)
+    ? sim.newEntrants.map(e => e.name).join(', ')
+    : '';
+  
+  // Compose the message
+  let changeDescription = '';
+  if (sim.repositionedBrands.length > 0 && entrantsText) {
+    changeDescription = `Moved: <span class="moved-brands">${brandsText}</span>. Added: <span class="new-entrants">${entrantsText}</span>.`;
+  } else if (sim.repositionedBrands.length > 0) {
+    changeDescription = `Moved: <span class="moved-brands">${brandsText}</span>.`;
+  } else if (entrantsText) {
+    changeDescription = `Added: <span class="new-entrants">${entrantsText}</span>.`;
+  }
   
   banner.innerHTML = `
     <div class="banner-content">
       <span class="banner-icon">🔄</span>
       <span class="banner-text">
         <strong>REPOSITIONED* Simulation Mode</strong> — 
-        You've moved: <span class="moved-brands">${brandsText}</span>. 
+        ${changeDescription}
         All outputs reflect hypothetical positions.
       </span>
       <button class="banner-reset-btn" onclick="resetRepositioning()">Reset All</button>
@@ -1583,9 +1889,6 @@ function updateImpactDashboard(movedBrand) {
   
   // === CANNIBALIZATION FLOW ===
   updateCannibalizationFlow(movedBrand);
-  
-  // === ATTRIBUTE CHANGES ("What It Takes") ===
-  updateAttributeDeltas(movedBrand);
 }
 
 // Update the Before/After market share comparison bars
@@ -1594,6 +1897,21 @@ function updateMarketShareBars(movedBrand) {
   const beforeContainer = document.getElementById('share-bars-before');
   const afterContainer = document.getElementById('share-bars-after');
   const deltaCallout = document.getElementById('share-delta-callout');
+  const shareTypeIndicator = document.getElementById('share-type-indicator');
+  
+  // Update share type indicator based on weights
+  if (shareTypeIndicator) {
+    if (AppState.weightsData?.type === 'spend') {
+      shareTypeIndicator.textContent = '💵 Dollar-weighted share';
+      shareTypeIndicator.className = 'share-type-indicator dollar-share';
+    } else if (AppState.weightsData?.type === 'usage') {
+      shareTypeIndicator.textContent = '📊 Usage-weighted share';
+      shareTypeIndicator.className = 'share-type-indicator usage-weighted';
+    } else {
+      shareTypeIndicator.textContent = '';
+      shareTypeIndicator.className = 'share-type-indicator unit-share';
+    }
+  }
   
   if (!beforeContainer || !afterContainer) return;
   
@@ -1610,7 +1928,10 @@ function updateMarketShareBars(movedBrand) {
   
   const originalShares = sim.originalResults.marketShares || {};
   const newShares = sim.repositionedResults.marketShares || {};
-  const brands = Object.keys(originalShares);
+  const newEntrants = sim.newEntrants || [];
+  
+  // Use ALL current brands (original + new entrants)
+  const brands = getAllCurrentBrands();
   
   if (brands.length === 0) return;
   
@@ -1619,22 +1940,28 @@ function updateMarketShareBars(movedBrand) {
   let afterHTML = '';
   
   brands.forEach(brand => {
-    const origPct = ((originalShares[brand] || 0) * 100).toFixed(1);
+    const isNewEntrant = newEntrants.includes(brand);
+    // New entrants have 0% original share (they didn't exist)
+    const origPct = isNewEntrant ? 0 : ((originalShares[brand] || 0) * 100).toFixed(1);
     const newPct = ((newShares[brand] || 0) * 100).toFixed(1);
-    const isMovedBrand = brand === movedBrand;
+    const isMovedBrand = brand === movedBrand || isNewEntrant;
     const change = newPct - origPct;
     
+    // Style new entrants distinctly
+    const entrantClass = isNewEntrant ? 'new-entrant' : '';
+    const beforeLabel = isNewEntrant ? '(new)' : `${origPct}%`;
+    
     beforeHTML += `
-      <div class="share-bar-item ${isMovedBrand ? 'highlighted' : ''}">
+      <div class="share-bar-item ${isMovedBrand ? 'highlighted' : ''} ${entrantClass}">
         <span class="bar-brand">${brand.substring(0, 8)}</span>
-        <div class="bar-track"><div class="bar-fill" style="width:${Math.min(origPct, 100)}%"></div></div>
-        <span class="bar-value">${origPct}%</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${isNewEntrant ? 0 : Math.min(origPct, 100)}%"></div></div>
+        <span class="bar-value">${beforeLabel}</span>
       </div>
     `;
     
     const changeClass = change > 0.05 ? 'positive' : (change < -0.05 ? 'negative' : '');
     afterHTML += `
-      <div class="share-bar-item ${isMovedBrand ? 'highlighted' : ''} ${changeClass}">
+      <div class="share-bar-item ${isMovedBrand ? 'highlighted' : ''} ${changeClass} ${entrantClass}">
         <span class="bar-brand">${brand.substring(0, 8)}</span>
         <div class="bar-track"><div class="bar-fill" style="width:${Math.min(newPct, 100)}%"></div></div>
         <span class="bar-value">${newPct}%</span>
@@ -1645,17 +1972,23 @@ function updateMarketShareBars(movedBrand) {
   beforeContainer.innerHTML = beforeHTML;
   afterContainer.innerHTML = afterHTML;
   
-  // Update delta callout for the moved brand
+  // Update delta callout for the moved brand or new entrant
   if (deltaCallout && movedBrand) {
-    const origShare = (originalShares[movedBrand] || 0) * 100;
+    const isNewEntrant = newEntrants.includes(movedBrand);
+    const origShare = isNewEntrant ? 0 : (originalShares[movedBrand] || 0) * 100;
     const newShare = (newShares[movedBrand] || 0) * 100;
     const delta = newShare - origShare;
     const sign = delta >= 0 ? '+' : '';
     
     const deltaValue = deltaCallout.querySelector('.delta-value');
     if (deltaValue) {
-      deltaValue.textContent = `${sign}${delta.toFixed(1)}%`;
-      deltaValue.className = `delta-value ${delta > 0.05 ? 'positive' : (delta < -0.05 ? 'negative' : '')}`;
+      if (isNewEntrant) {
+        deltaValue.textContent = `${newShare.toFixed(1)}% (NEW)`;
+        deltaValue.className = 'delta-value new-entrant';
+      } else {
+        deltaValue.textContent = `${sign}${delta.toFixed(1)}%`;
+        deltaValue.className = `delta-value ${delta > 0.05 ? 'positive' : (delta < -0.05 ? 'negative' : '')}`;
+      }
     }
   }
 }
@@ -1663,140 +1996,59 @@ function updateMarketShareBars(movedBrand) {
 // Update cannibalization flow visualization
 function updateCannibalizationFlow(movedBrand) {
   const sim = AppState.simulation;
-  const summaryEl = document.getElementById('cannib-summary');
   const sankeyEl = document.getElementById('cannib-sankey');
   
-  if (!summaryEl) return;
+  if (!sankeyEl) return;
   
   const hasPreferences = AppState.preferenceData?.customers?.length > 0;
   
   if (!hasPreferences) {
-    summaryEl.textContent = 'Enable preference data to see competitive flow.';
-    if (sankeyEl) sankeyEl.innerHTML = '';
+    sankeyEl.innerHTML = '<p class="impact-subtext">Enable preference data to see competitive flow</p>';
     return;
   }
   
   const originalShares = sim.originalResults.marketShares || {};
   const newShares = sim.repositionedResults.marketShares || {};
-  const brands = Object.keys(originalShares);
+  const newEntrants = sim.newEntrants || [];
+  
+  // Use ALL current brands (original + new entrants)
+  const brands = getAllCurrentBrands();
   
   if (brands.length === 0) return;
   
-  // Find gainers and losers
-  const changes = brands.map(brand => ({
-    brand,
-    change: ((newShares[brand] || 0) - (originalShares[brand] || 0)) * 100
-  })).sort((a, b) => b.change - a.change);
+  // Find gainers and losers (new entrants have 0% original share)
+  const changes = brands.map(brand => {
+    const isNewEntrant = newEntrants.includes(brand);
+    const origShare = isNewEntrant ? 0 : (originalShares[brand] || 0);
+    return {
+      brand,
+      change: ((newShares[brand] || 0) - origShare) * 100,
+      isNew: isNewEntrant
+    };
+  }).sort((a, b) => Math.abs(b.change) - Math.abs(a.change)); // Sort by absolute change (biggest movers first)
   
-  const gainers = changes.filter(c => c.change > 0.05);
-  const losers = changes.filter(c => c.change < -0.05);
-  
-  // Summary text
-  if (gainers.length === 0 && losers.length === 0) {
-    summaryEl.innerHTML = '📊 Minimal share movement from this repositioning.';
-  } else {
-    const topGainer = gainers[0];
-    const topLoser = losers[losers.length - 1];
-    
-    let summary = '';
-    if (topGainer) {
-      summary += `<span class="flow-gainer">📈 ${topGainer.brand}: +${topGainer.change.toFixed(1)}%</span>`;
-    }
-    if (topLoser) {
-      summary += `<span class="flow-loser">📉 ${topLoser.brand}: ${topLoser.change.toFixed(1)}%</span>`;
-    }
-    summaryEl.innerHTML = summary;
-  }
+  // Show all brands (up to 12 max for very large datasets)
+  const displayChanges = changes.slice(0, 12);
   
   // Simple flow visualization (mini bars)
-  if (sankeyEl) {
-    let flowHTML = '<div class="mini-flow">';
-    changes.slice(0, 5).forEach(c => {
-      const isPositive = c.change > 0;
-      const width = Math.min(Math.abs(c.change) * 10, 100);
-      flowHTML += `
-        <div class="flow-row">
-          <span class="flow-brand">${c.brand.substring(0, 6)}</span>
-          <div class="flow-bar ${isPositive ? 'positive' : 'negative'}" style="width:${width}%"></div>
-          <span class="flow-delta">${c.change >= 0 ? '+' : ''}${c.change.toFixed(1)}%</span>
-        </div>
-      `;
-    });
-    flowHTML += '</div>';
-    sankeyEl.innerHTML = flowHTML;
-  }
-}
-
-// Update attribute changes needed for this move
-function updateAttributeDeltas(movedBrand) {
-  const container = document.getElementById('attribute-delta-bars');
-  if (!container || !movedBrand) return;
-  
-  const sim = AppState.simulation;
-  
-  // Get original and new coordinates
-  const origCoords = sim.originalCoords[movedBrand];
-  const newCoords = sim.modifiedCoords[movedBrand];
-  
-  if (!origCoords || !newCoords) return;
-  
-  // Get the attribute loadings to reverse-engineer what attribute changes are needed
-  const loadings = AppState.results?.loadings;
-  
-  if (!loadings || loadings.length === 0) {
-    // No loadings available - show coordinate change instead
-    const dx = newCoords[0] - origCoords[0];
-    const dy = newCoords[1] - origCoords[1];
-    
-    container.innerHTML = `
-      <div class="coord-change">
-        <div class="coord-row">
-          <span>Dim I shift:</span>
-          <span class="${dx >= 0 ? 'positive' : 'negative'}">${dx >= 0 ? '+' : ''}${dx.toFixed(2)}</span>
-        </div>
-        <div class="coord-row">
-          <span>Dim II shift:</span>
-          <span class="${dy >= 0 ? 'positive' : 'negative'}">${dy >= 0 ? '+' : ''}${dy.toFixed(2)}</span>
-        </div>
-      </div>
-    `;
-    return;
-  }
-  
-  // Calculate implied attribute changes using loadings
-  const dx = newCoords[0] - origCoords[0];
-  const dy = newCoords[1] - origCoords[1];
-  
-  // Each attribute's contribution to the move
-  const attrChanges = loadings.map((loading, i) => {
-    const attrName = AppState.perceptualData?.attributes?.[i] || `Attr ${i + 1}`;
-    // Project the coordinate change onto this attribute's loading vector
-    const impliedChange = (dx * loading[0] + dy * loading[1]) / (Math.sqrt(loading[0]**2 + loading[1]**2) + 0.001);
-    return { attr: attrName, change: impliedChange };
-  });
-  
-  // Sort by absolute change
-  attrChanges.sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
-  
-  // Show top 5 most impacted attributes
-  let html = '';
-  attrChanges.slice(0, 5).forEach(ac => {
-    const isPositive = ac.change >= 0;
-    const barWidth = Math.min(Math.abs(ac.change) * 30, 100);
-    html += `
-      <div class="attr-delta-row">
-        <span class="attr-name">${ac.attr.substring(0, 12)}</span>
-        <div class="attr-bar-track">
-          <div class="attr-bar-fill ${isPositive ? 'increase' : 'decrease'}" style="width:${barWidth}%"></div>
-        </div>
-        <span class="attr-delta-val ${isPositive ? 'positive' : 'negative'}">
-          ${isPositive ? '↑' : '↓'} ${Math.abs(ac.change).toFixed(2)}
-        </span>
+  let flowHTML = '<div class="mini-flow">';
+  displayChanges.forEach(c => {
+    const isPositive = c.change > 0.05;
+    const isNegative = c.change < -0.05;
+    const width = Math.min(Math.abs(c.change) * 6, 100);
+    const newClass = c.isNew ? 'new-entrant' : '';
+    const newBadge = c.isNew ? ' ✨' : '';
+    const barClass = isPositive ? 'positive' : (isNegative ? 'negative' : 'neutral');
+    flowHTML += `
+      <div class="flow-row ${newClass}">
+        <span class="flow-brand">${c.brand.substring(0, 8)}${newBadge}</span>
+        <div class="flow-bar ${barClass}" style="width:${width}%"></div>
+        <span class="flow-delta ${barClass}">${c.change >= 0 ? '+' : ''}${c.change.toFixed(1)}%</span>
       </div>
     `;
   });
-  
-  container.innerHTML = html || '<div class="no-data">Move a brand to see required changes</div>';
+  flowHTML += '</div>';
+  sankeyEl.innerHTML = flowHTML;
 }
 
 // Handle brand click
@@ -1820,11 +2072,16 @@ function updateSimulationBar(brand, startCoords) {
   if (!bar) return;
   
   const currentCoords = AppState.simulation.modifiedCoords[brand];
+  if (!currentCoords) return; // Brand doesn't exist in modifiedCoords
+  
+  // Handle new entrants that don't have original coords
+  // Use the initial placement (0,0,0) as their start coords
+  const safeStartCoords = startCoords || [0, 0, 0];
   
   // Calculate distance moved
   const distance = Math.sqrt(
-    Math.pow(currentCoords[0] - startCoords[0], 2) +
-    Math.pow(currentCoords[1] - startCoords[1], 2)
+    Math.pow(currentCoords[0] - safeStartCoords[0], 2) +
+    Math.pow(currentCoords[1] - safeStartCoords[1], 2)
   );
   document.getElementById('sim-bar-distance').textContent = distance.toFixed(2);
   
@@ -1833,18 +2090,33 @@ function updateSimulationBar(brand, startCoords) {
     const originalShares = calculateMarketShares(AppState.simulation.originalCoords);
     const newShares = calculateMarketShares(AppState.simulation.modifiedCoords);
     
-    if (originalShares && newShares && originalShares[brand] !== undefined) {
-      const delta = (newShares[brand] - originalShares[brand]) * 100;
+    // For new entrants, their original share is 0 (they didn't exist)
+    const newEntrants = AppState.simulation.newEntrants || [];
+    const isNewEntrant = newEntrants.includes(brand);
+    const originalShare = isNewEntrant ? 0 : (originalShares[brand] || 0);
+    const newShare = newShares[brand] || 0;
+    
+    if (originalShares && newShares) {
+      const delta = (newShare - originalShare) * 100;
       const sign = delta >= 0 ? '+' : '';
-      document.getElementById('sim-bar-share-change').textContent = `${sign}${delta.toFixed(1)}%`;
-      document.getElementById('sim-bar-share-change').style.color = delta >= 0 ? '#22c55e' : '#ef4444';
+      const shareEl = document.getElementById('sim-bar-share-change');
+      if (shareEl) {
+        if (isNewEntrant) {
+          shareEl.textContent = `${(newShare * 100).toFixed(1)}% (NEW)`;
+          shareEl.style.color = '#22c55e';
+        } else {
+          shareEl.textContent = `${sign}${delta.toFixed(1)}%`;
+          shareEl.style.color = delta >= 0 ? '#22c55e' : '#ef4444';
+        }
+      }
       
       // Find biggest loser (cannibalization)
       let biggestLoser = null;
       let biggestLoss = 0;
       Object.keys(newShares).forEach(b => {
         if (b !== brand) {
-          const loss = originalShares[b] - newShares[b];
+          const origShare = isNewEntrant && !originalShares[b] ? 0 : (originalShares[b] || 0);
+          const loss = origShare - newShares[b];
           if (loss > biggestLoss) {
             biggestLoss = loss;
             biggestLoser = b;
@@ -2167,24 +2439,25 @@ function generateAPAReport() {
   const numDims = AppState.results.numDimensions;
   const cumVar = (AppState.results.cumulativeVariance[numDims - 1] * 100).toFixed(1);
   
-  let report = `A principal components analysis was conducted on perceptual ratings of ${numBrands} brands across ${numAttrs} attributes. `;
-  report += `The first ${numDims} dimensions were retained, explaining ${cumVar}% of the total variance. `;
+  let report = `<p>A principal components analysis was conducted on perceptual ratings of <strong>${numBrands} brands</strong> across <strong>${numAttrs} attributes</strong>. The first ${numDims} dimension${numDims > 1 ? 's were' : ' was'} retained, explaining <strong>${cumVar}%</strong> of the total variance.</p>`;
   
   const interps = AppState.results.dimensionInterpretations;
+  report += '<p><strong>Dimension Interpretations:</strong></p><ul>';
   interps.forEach(dim => {
-    report += `Dimension ${dim.dimension} (${(AppState.results.varianceExplained[dim.dimension - 1] * 100).toFixed(1)}% variance) `;
-    report += `contrasted ${dim.positiveEnd.slice(0, 2).join(' and ') || 'various attributes'} `;
-    report += `with ${dim.negativeEnd.slice(0, 2).join(' and ') || 'other attributes'}. `;
+    const varPct = (AppState.results.varianceExplained[dim.dimension - 1] * 100).toFixed(1);
+    const posAttrs = dim.positiveEnd.slice(0, 2).join(' and ') || 'various attributes';
+    const negAttrs = dim.negativeEnd.slice(0, 2).join(' and ') || 'other attributes';
+    report += `<li><strong>Dimension ${dim.dimension}</strong> (${varPct}% variance): Contrasts <em>${posAttrs}</em> with <em>${negAttrs}</em></li>`;
   });
+  report += '</ul>';
   
   if (AppState.results.preferences) {
     const numCust = AppState.preferenceData.customers.length;
     const numSegs = AppState.results.preferences.numSegments;
-    report += `Preference data from ${numCust} customers was analyzed, revealing ${numSegs} distinct market segments. `;
+    report += `<p>Preference data from <strong>${numCust} customers</strong> was analyzed, revealing <strong>${numSegs} distinct market segment${numSegs > 1 ? 's' : ''}</strong>.</p>`;
   }
   
-  document.getElementById('apa-report').textContent = report;
-  document.getElementById('copy-apa').disabled = false;
+  document.getElementById('apa-report').innerHTML = report;
 }
 
 function generateManagerialReport() {
@@ -2194,32 +2467,33 @@ function generateManagerialReport() {
   const coords = AppState.results.brandCoords;
   const interps = AppState.results.dimensionInterpretations;
   
-  let report = `📊 **Competitive Landscape Summary**\n\n`;
-  report += `The perceptual map reveals how ${brands.length} brands are positioned in customers' minds. `;
-  report += `The main competitive dimension is "${interps[0].interpretation}", `;
-  report += `while the secondary dimension captures "${interps[1]?.interpretation || 'other attributes'}". `;
+  let report = `<p><strong>📊 Competitive Landscape Summary</strong></p>`;
+  report += `<p>The perceptual map reveals how <strong>${brands.length} brands</strong> are positioned in customers' minds. `;
+  report += `The main competitive dimension is "<em>${interps[0].interpretation}</em>", `;
+  report += `while the secondary dimension captures "<em>${interps[1]?.interpretation || 'other attributes'}</em>".</p>`;
   
   // Find brands at extremes (use slice to avoid mutating original array)
   const dim1Sorted = [...brands].sort((a, b) => coords[b][0] - coords[a][0]);
-  report += `\n\n**Key Positions:**\n`;
-  report += `• ${dim1Sorted[0]} leads on ${interps[0].positiveEnd[0] || 'Dimension I positive end'}\n`;
-  report += `• ${dim1Sorted[dim1Sorted.length - 1]} leads on ${interps[0].negativeEnd[0] || 'Dimension I negative end'}\n`;
+  report += '<p><strong>🎯 Key Positions:</strong></p><ul>';
+  report += `<li><strong>${dim1Sorted[0]}</strong> leads on ${interps[0].positiveEnd[0] || 'Dimension I positive end'}</li>`;
+  report += `<li><strong>${dim1Sorted[dim1Sorted.length - 1]}</strong> leads on ${interps[0].negativeEnd[0] || 'Dimension I negative end'}</li>`;
+  report += '</ul>';
   
   if (AppState.results.preferences) {
-    report += `\n**Segment Opportunities:**\n`;
+    report += '<p><strong>👥 Segment Opportunities:</strong></p><ul>';
     AppState.results.preferences.segmentIdealPoints.forEach(seg => {
-      report += `• Segment ${seg.segment} (${seg.size} customers) — `;
       // Find closest brand
       const distances = brands.map(b => ({
         brand: b,
         dist: Math.sqrt(Math.pow(coords[b][0] - seg.coords[0], 2) + Math.pow(coords[b][1] - seg.coords[1], 2))
       })).sort((a, b) => a.dist - b.dist);
-      report += `best served by ${distances[0].brand}\n`;
+      const segLabel = seg.label || `Segment ${seg.segment}`;
+      report += `<li><strong>${segLabel}</strong> (${seg.size} customers) — best served by <strong>${distances[0].brand}</strong></li>`;
     });
+    report += '</ul>';
   }
   
-  document.getElementById('managerial-report').textContent = report;
-  document.getElementById('copy-managerial').disabled = false;
+  document.getElementById('managerial-report').innerHTML = report;
 }
 
 // ==================== VIEW TOGGLE ====================
@@ -2266,67 +2540,102 @@ function setupLayerToggles() {
 
 // ==================== SIMULATION ====================
 function setupSimulationControls() {
-  // Mode toggle - using .mode-pill buttons in the playground header
-  const modeButtons = document.querySelectorAll('.mode-pill');
-  modeButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      modeButtons.forEach(b => {
-        b.classList.remove('active');
-        b.setAttribute('aria-selected', 'false');
-      });
-      btn.classList.add('active');
-      btn.setAttribute('aria-selected', 'true');
-      
-      const mode = btn.dataset.mode;
-      AppState.simulation.mode = mode;
-      
-      // Show/hide appropriate control panels based on mode
-      const repositionControls = document.getElementById('reposition-controls');
-      const newProductControls = document.getElementById('new-product-controls');
-      const findGapControls = document.getElementById('find-gap-controls');
-      
-      if (repositionControls) repositionControls.classList.toggle('hidden', mode !== 'reposition');
-      if (newProductControls) newProductControls.classList.toggle('hidden', mode !== 'new-product');
-      if (findGapControls) findGapControls.classList.toggle('hidden', mode !== 'find-gap');
-      
-      // Update map interaction mode
-      if (typeof PositioningMap !== 'undefined' && PositioningMap.setMode) {
-        PositioningMap.setMode(mode);
-      }
-    });
+  // Setup market entrant modal
+  setupMarketEntrantModal();
+  
+  // Reset all positions button
+  const resetAllBtn = document.getElementById('reset-all-positions');
+  if (resetAllBtn) {
+    resetAllBtn.addEventListener('click', resetRepositioning);
+  }
+}
+
+// ==================== MARKET ENTRANT ====================
+function setupMarketEntrantModal() {
+  const addBtn = document.getElementById('add-market-entrant');
+  const overlay = document.getElementById('entrant-modal-overlay');
+  const closeBtn = document.getElementById('entrant-modal-close');
+  const cancelBtn = document.getElementById('entrant-cancel');
+  const confirmBtn = document.getElementById('entrant-confirm');
+  const nameInput = document.getElementById('entrant-name');
+  
+  if (!addBtn || !overlay) return;
+  
+  // Open modal
+  addBtn.addEventListener('click', () => {
+    overlay.classList.remove('hidden');
+    nameInput.value = '';
+    nameInput.focus();
   });
   
-  // Populate brand selector for repositioning
-  const brandSelect = document.getElementById('sim-brand-select');
-  if (brandSelect) {
-    brandSelect.addEventListener('change', onSimBrandChange);
+  // Close modal
+  const closeModal = () => {
+    overlay.classList.add('hidden');
+  };
+  
+  closeBtn?.addEventListener('click', closeModal);
+  cancelBtn?.addEventListener('click', closeModal);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+  
+  // Handle Enter key in input
+  nameInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && nameInput.value.trim()) {
+      addMarketEntrant(nameInput.value.trim());
+      closeModal();
+    }
+    if (e.key === 'Escape') {
+      closeModal();
+    }
+  });
+  
+  // Confirm button
+  confirmBtn?.addEventListener('click', () => {
+    const name = nameInput.value.trim();
+    if (name) {
+      addMarketEntrant(name);
+      closeModal();
+    }
+  });
+}
+
+function addMarketEntrant(name) {
+  if (!AppState.results || !name) return;
+  
+  // Track the new entrant
+  if (!AppState.simulation.newEntrants) {
+    AppState.simulation.newEntrants = [];
   }
   
-  // Slider/input sync for repositioning
-  setupCoordSync('sim-dim1-slider', 'sim-dim1', updateRepositionedBrand);
-  setupCoordSync('sim-dim2-slider', 'sim-dim2', updateRepositionedBrand);
-  
-  // Slider/input sync for new product
-  setupCoordSync('new-dim1-slider', 'new-dim1', updateNewProductPreview);
-  setupCoordSync('new-dim2-slider', 'new-dim2', updateNewProductPreview);
-  
-  // Reset button
-  const resetBtn = document.getElementById('reset-position');
-  if (resetBtn) {
-    resetBtn.addEventListener('click', resetBrandPosition);
+  // Check for duplicate names
+  const existingBrands = Object.keys(AppState.simulation.modifiedCoords);
+  if (existingBrands.includes(name)) {
+    alert(`A brand named "${name}" already exists. Please choose a different name.`);
+    return;
   }
   
-  // Add new product button
-  const addBtn = document.getElementById('add-new-product');
-  if (addBtn) {
-    addBtn.addEventListener('click', addNewProduct);
-  }
+  // Add the new entrant at origin (0, 0, 0)
+  AppState.simulation.newEntrants.push(name);
+  AppState.simulation.modifiedCoords[name] = [0, 0, 0];
+  AppState.simulation.hasChanges = true;
   
-  // Remove new product button
-  const removeBtn = document.getElementById('remove-new-product');
-  if (removeBtn) {
-    removeBtn.addEventListener('click', removeNewProduct);
-  }
+  // Show the simulation banner
+  showRepositioningBanner();
+  
+  // Update dropdowns to include new entrant
+  populateBrandSelectors();
+  
+  // Re-render the map
+  renderPositioningMap();
+  
+  // Update simulation displays
+  recalculateRepositionedResults();
+  updateImpactDashboard(name);
+  renderDistanceHeatmap();
+  renderInsightCards();
+  
+  console.log(`Added market entrant: ${name}`);
 }
 
 function setupCoordSync(sliderId, inputId, callback) {
@@ -2437,8 +2746,18 @@ function updateSimulationResults() {
 }
 
 function calculateMarketShares(brandCoords) {
-  const preferences = AppState.results.preferences;
+  const preferences = AppState.results?.preferences;
+  if (!preferences || !preferences.segmentIdealPoints) {
+    console.warn('calculateMarketShares: No preferences or segments available');
+    return {};
+  }
+  
   const segments = preferences.segmentIdealPoints;
+  if (!segments || segments.length === 0) {
+    console.warn('calculateMarketShares: No segment ideal points');
+    return {};
+  }
+  
   const rule = AppState.settings.shareRule;
   const numDims = AppState.results?.numDimensions || 2;
   
@@ -2446,28 +2765,88 @@ function calculateMarketShares(brandCoords) {
   const shares = {};
   brands.forEach(b => shares[b] = 0);
   
-  // Calculate share based on selected decision rule (using full N-D space)
+  // Prepare brand coordinates sliced to numDims for fair comparison
+  const slicedBrandCoords = {};
+  brands.forEach(b => {
+    const coords = brandCoords[b];
+    slicedBrandCoords[b] = coords ? coords.slice(0, numDims) : new Array(numDims).fill(0);
+  });
+  
+  // If weights are present, calculate at individual customer level instead of segment level
+  if (AppState.weightsData && AppState.weightsData.values) {
+    const customerPoints = computeIndividualCustomerPoints();
+    const weights = AppState.weightsData.values;
+    
+    if (customerPoints.length === weights.length) {
+      let totalWeight = 0;
+      
+      customerPoints.forEach((cust, idx) => {
+        const weight = weights[idx] || 1;
+        totalWeight += weight;
+        const idealPoint = cust.coords.slice(0, numDims);
+        
+        if (rule === 'preference') {
+          const custShares = MDSMath.distanceBasedShare(slicedBrandCoords, idealPoint);
+          brands.forEach(b => {
+            shares[b] += weight * (custShares[b] || 0);
+          });
+        } else if (rule === 'first-choice') {
+          let minDist = Infinity;
+          let winner = brands[0];
+          brands.forEach(b => {
+            const dist = MDSMath.euclideanDistance(slicedBrandCoords[b], idealPoint);
+            if (dist < minDist) {
+              minDist = dist;
+              winner = b;
+            }
+          });
+          shares[winner] += weight;
+        } else if (rule === 'logit') {
+          const distances = {};
+          brands.forEach(b => {
+            distances[b] = MDSMath.euclideanDistance(slicedBrandCoords[b], idealPoint);
+          });
+          const utilities = brands.map(b => -distances[b]);
+          const custShares = MDSMath.logitShare(utilities, brands, 2.0);
+          brands.forEach(b => {
+            shares[b] += weight * custShares[b];
+          });
+        }
+      });
+      
+      // Normalize by total weight
+      if (totalWeight > 0) {
+        brands.forEach(b => {
+          shares[b] /= totalWeight;
+        });
+      }
+      
+      return shares;
+    }
+  }
+  
+  // Default segment-based calculation (no weights or weight mismatch)
   if (rule === 'preference') {
     // Share of preference: weight by segment preferences and distances
     segments.forEach(seg => {
       const segmentWeight = seg.size / AppState.preferenceData.customers.length;
-      // Note: distanceBasedShare uses full coords passed to it
-      const segShares = MDSMath.distanceBasedShare(brandCoords, seg.coords.slice(0, numDims));
+      const idealPoint = seg.coords.slice(0, numDims);
+      const segShares = MDSMath.distanceBasedShare(slicedBrandCoords, idealPoint);
       
       brands.forEach(b => {
         shares[b] += segmentWeight * (segShares[b] || 0);
       });
     });
   } else if (rule === 'first-choice') {
-    // First choice: assign 100% to closest brand per segment (full N-D distance)
+    // First choice: assign 100% to closest brand per segment
     segments.forEach(seg => {
       const segmentWeight = seg.size / AppState.preferenceData.customers.length;
+      const idealPoint = seg.coords.slice(0, numDims);
       let minDist = Infinity;
       let winner = brands[0];
       
       brands.forEach(b => {
-        const bCoords = brandCoords[b];
-        const dist = MDSMath.euclideanDistance(bCoords.slice(0, numDims), seg.coords.slice(0, numDims));
+        const dist = MDSMath.euclideanDistance(slicedBrandCoords[b], idealPoint);
         if (dist < minDist) {
           minDist = dist;
           winner = b;
@@ -2477,14 +2856,14 @@ function calculateMarketShares(brandCoords) {
       shares[winner] += segmentWeight;
     });
   } else if (rule === 'logit') {
-    // Logit model: convert distances to utilities (full N-D space)
+    // Logit model: convert distances to utilities
     segments.forEach(seg => {
       const segmentWeight = seg.size / AppState.preferenceData.customers.length;
+      const idealPoint = seg.coords.slice(0, numDims);
       const distances = {};
       
       brands.forEach(b => {
-        const bCoords = brandCoords[b];
-        distances[b] = MDSMath.euclideanDistance(bCoords.slice(0, numDims), seg.coords.slice(0, numDims));
+        distances[b] = MDSMath.euclideanDistance(slicedBrandCoords[b], idealPoint);
       });
       
       // Convert to utilities (negative distance)
@@ -2596,39 +2975,7 @@ function generateSimulationInsights(originalShares, newShares) {
 
 // ==================== EXPORTS ====================
 function setupExportButtons() {
-  const copyApa = document.getElementById('copy-apa');
-  const copyManagerial = document.getElementById('copy-managerial');
-  const exportPng = document.getElementById('export-map-png');
   const exportData = document.getElementById('export-all-data');
-  
-  if (copyApa) {
-    copyApa.addEventListener('click', () => {
-      const text = document.getElementById('apa-report').textContent;
-      navigator.clipboard.writeText(text);
-      copyApa.textContent = '✓ Copied!';
-      setTimeout(() => copyApa.textContent = '📋 Copy Report', 2000);
-    });
-  }
-  
-  if (copyManagerial) {
-    copyManagerial.addEventListener('click', () => {
-      const text = document.getElementById('managerial-report').textContent;
-      navigator.clipboard.writeText(text);
-      copyManagerial.textContent = '✓ Copied!';
-      setTimeout(() => copyManagerial.textContent = '📋 Copy Report', 2000);
-    });
-  }
-  
-  if (exportPng) {
-    exportPng.addEventListener('click', () => {
-      Plotly.downloadImage('positioning-map', {
-        format: 'png',
-        filename: 'perceptual_map',
-        width: 1200,
-        height: 800
-      });
-    });
-  }
   
   if (exportData) {
     exportData.addEventListener('click', exportAllData);
@@ -2636,26 +2983,140 @@ function setupExportButtons() {
 }
 
 function enableExportButtons() {
-  document.getElementById('export-map-png').disabled = false;
-  document.getElementById('export-all-data').disabled = false;
-  document.getElementById('download-coordinates').disabled = false;
+  const exportBtn = document.getElementById('export-all-data');
+  if (exportBtn) exportBtn.disabled = false;
+  const downloadBtn = document.getElementById('download-coordinates');
+  if (downloadBtn) downloadBtn.disabled = false;
+  const entrantBtn = document.getElementById('add-market-entrant');
+  if (entrantBtn) entrantBtn.disabled = false;
 }
 
 function exportAllData() {
   if (!AppState.results) return;
   
-  // Brand coordinates CSV
-  let csv = 'Brand,Dimension_I,Dimension_II,Dimension_III\n';
+  let csv = '';
+  const numDims = AppState.results.numDimensions || 2;
+  
+  // ===== TABLE 1: Brand Coordinates =====
+  csv += '=== BRAND COORDINATES ===\n';
+  csv += 'Brand,Dimension_I,Dimension_II';
+  if (numDims >= 3) csv += ',Dimension_III';
+  csv += '\n';
+  
   Object.entries(AppState.results.brandCoords).forEach(([brand, coords]) => {
-    csv += `${brand},${coords[0]},${coords[1]},${coords[2] || 0}\n`;
+    csv += `${brand},${coords[0].toFixed(4)},${coords[1].toFixed(4)}`;
+    if (numDims >= 3) csv += `,${(coords[2] || 0).toFixed(4)}`;
+    csv += '\n';
   });
   
-  downloadTextFile('brand_coordinates.csv', csv, { mimeType: 'text/csv' });
+  csv += '\n';
+  
+  // ===== TABLE 2: Attribute Loadings =====
+  csv += '=== ATTRIBUTE LOADINGS ===\n';
+  csv += 'Attribute,Dim_I_Loading,Dim_II_Loading';
+  if (numDims >= 3) csv += ',Dim_III_Loading';
+  csv += '\n';
+  
+  if (AppState.results.attrLoadings && AppState.perceptualData?.attributes) {
+    AppState.perceptualData.attributes.forEach((attr, i) => {
+      const loading = AppState.results.attrLoadings[i] || [0, 0, 0];
+      csv += `${attr},${loading[0].toFixed(4)},${loading[1].toFixed(4)}`;
+      if (numDims >= 3) csv += `,${(loading[2] || 0).toFixed(4)}`;
+      csv += '\n';
+    });
+  }
+  
+  csv += '\n';
+  
+  // ===== TABLE 3: Variance Explained =====
+  csv += '=== VARIANCE EXPLAINED ===\n';
+  csv += 'Dimension,Variance_Explained,Cumulative_Variance\n';
+  
+  if (AppState.results.varianceExplained) {
+    AppState.results.varianceExplained.forEach((v, i) => {
+      const cumVar = AppState.results.cumulativeVariance?.[i] || 0;
+      csv += `Dimension_${i + 1},${(v * 100).toFixed(2)}%,${(cumVar * 100).toFixed(2)}%\n`;
+    });
+  }
+  
+  csv += '\n';
+  
+  // ===== TABLE 4: Dimension Interpretations =====
+  csv += '=== DIMENSION INTERPRETATIONS ===\n';
+  csv += 'Dimension,Low_End_Attributes,High_End_Attributes\n';
+  
+  if (AppState.results.dimensionInterpretations) {
+    AppState.results.dimensionInterpretations.forEach((interp, i) => {
+      const lowAttrs = interp.negative.map(a => a.name).join('; ');
+      const highAttrs = interp.positive.map(a => a.name).join('; ');
+      csv += `Dimension_${i + 1},"${lowAttrs}","${highAttrs}"\n`;
+    });
+  }
+  
+  csv += '\n';
+  
+  // ===== TABLE 5: Brand Distances =====
+  csv += '=== BRAND DISTANCE MATRIX ===\n';
+  const brands = Object.keys(AppState.results.brandCoords);
+  csv += 'Brand,' + brands.join(',') + '\n';
+  
+  brands.forEach(brand1 => {
+    const row = [brand1];
+    brands.forEach(brand2 => {
+      const c1 = AppState.results.brandCoords[brand1];
+      const c2 = AppState.results.brandCoords[brand2];
+      const dist = Math.sqrt(c1.slice(0, numDims).reduce((sum, v, i) => sum + Math.pow(v - c2[i], 2), 0));
+      row.push(dist.toFixed(4));
+    });
+    csv += row.join(',') + '\n';
+  });
+  
+  csv += '\n';
+  
+  // ===== TABLE 6: Market Shares (if available) =====
+  if (AppState.simulation?.originalResults?.marketShares && Object.keys(AppState.simulation.originalResults.marketShares).length > 0) {
+    // Indicate share type in header
+    const shareType = AppState.weightsData?.type === 'spend' ? '(Dollar-Weighted)' 
+                    : AppState.weightsData?.type === 'usage' ? '(Usage-Weighted)' 
+                    : '(Unit Share)';
+    csv += `=== MARKET SHARE ESTIMATES ${shareType} ===\n`;
+    csv += 'Brand,Original_Share,Repositioned_Share,Change\n';
+    
+    const origShares = AppState.simulation.originalResults.marketShares;
+    const newShares = AppState.simulation.repositionedResults?.marketShares || origShares;
+    
+    Object.keys(origShares).forEach(brand => {
+      const orig = (origShares[brand] * 100).toFixed(2);
+      const newS = (newShares[brand] * 100).toFixed(2);
+      const change = ((newShares[brand] - origShares[brand]) * 100).toFixed(2);
+      csv += `${brand},${orig}%,${newS}%,${change >= 0 ? '+' : ''}${change}%\n`;
+    });
+    
+    csv += '\n';
+  }
+  
+  // ===== TABLE 7: Segment Ideal Points (if available) =====
+  if (AppState.results.preferences?.segmentIdealPoints) {
+    csv += '=== SEGMENT IDEAL POINTS ===\n';
+    csv += 'Segment,Label,Size,Ideal_Point_I,Ideal_Point_II';
+    if (numDims >= 3) csv += ',Ideal_Point_III';
+    csv += '\n';
+    
+    AppState.results.preferences.segmentIdealPoints.forEach(seg => {
+      const label = seg.label || `Segment ${seg.segment}`;
+      csv += `${seg.segment},"${label}",${seg.size},${seg.coords[0].toFixed(4)},${seg.coords[1].toFixed(4)}`;
+      if (numDims >= 3) csv += `,${(seg.coords[2] || 0).toFixed(4)}`;
+      csv += '\n';
+    });
+  }
+  
+  downloadTextFile('perceptual_analysis_results.csv', csv, { mimeType: 'text/csv' });
 }
 
 function setupTemplateDownloads() {
   const perceptualBtn = document.getElementById('download-perceptual-template');
   const preferenceBtn = document.getElementById('download-preference-template');
+  const weightsBtn = document.getElementById('download-weights-template');
   
   if (perceptualBtn) {
     perceptualBtn.addEventListener('click', () => {
@@ -2678,6 +3139,23 @@ Reliable,3.9,4.1,4.5,3.8`;
 4,5,7,9,5
 5,7,6,7,8`;
       downloadTextFile('preference_template.csv', csv, { mimeType: 'text/csv' });
+    });
+  }
+  
+  if (weightsBtn) {
+    weightsBtn.addEventListener('click', () => {
+      // Template shows both USAGE and SPEND options
+      const csv = `Customer,USAGE,SPEND
+1,1.2,850
+2,0.8,450
+3,1.5,1200
+4,0.6,320
+5,2.0,980
+# USAGE: Consumption rate multiplier (1.0 = average)
+# SPEND: Annual $ spent in category
+# Include USAGE OR SPEND column (not both)
+# Rows must match your preference data`;
+      downloadTextFile('weights_template.csv', csv, { mimeType: 'text/csv' });
     });
   }
 }
@@ -3199,7 +3677,7 @@ function renderInsightCards() {
   if (!container || !AppState.results) return;
   
   const sim = AppState.simulation;
-  const hasRepositioning = sim.hasChanges && sim.repositionedBrands.length > 0;
+  const hasRepositioning = hasSimulationChanges();
   
   // Generate insights with comparison data if repositioning active
   const insights = generateKeyInsights();
@@ -3218,11 +3696,12 @@ function renderInsightCards() {
   
   // Add repositioning header if active
   if (hasRepositioning) {
+    const changeDesc = getSimulationChangeDescription();
     html += `
       <div class="insight-card repositioning-header">
         <span class="insight-icon">🔄</span>
         <h4>REPOSITIONED* Simulation Active</h4>
-        <p>Brands moved: <strong>${sim.repositionedBrands.join(', ')}</strong></p>
+        <p><strong>${changeDesc}</strong></p>
         <button class="btn-reset-repositioning" onclick="resetRepositioning()">Reset All</button>
       </div>
     `;
@@ -3249,7 +3728,7 @@ function renderInsightCards() {
 function generateKeyInsights() {
   const insights = [];
   const sim = AppState.simulation;
-  const hasRepositioning = sim.hasChanges && sim.repositionedBrands.length > 0;
+  const hasRepositioning = hasSimulationChanges();
   const numDimsInsights = AppState.results?.numDimensions || 2;
   
   // Use simulation coords (updated by drag) if available, otherwise original
@@ -3260,6 +3739,8 @@ function generateKeyInsights() {
     ? sim.originalCoords
     : AppState.results.brandCoords;
   const brands = Object.keys(coords);
+  const originalBrands = Object.keys(originalCoords);
+  const newEntrants = sim.newEntrants || [];
   
   // Insight 1: Most differentiated brand (using full N-D space)
   let maxDist = 0;
@@ -3274,14 +3755,14 @@ function generateKeyInsights() {
     }
   });
   
-  // Calculate original most differentiated for comparison
+  // Calculate original most differentiated for comparison (only using original brands)
   let originalMaxDist = 0;
   let originalMostDiff = '';
   if (hasRepositioning) {
-    brands.forEach(brand => {
-      const avgDist = brands
+    originalBrands.forEach(brand => {
+      const avgDist = originalBrands
         .filter(b => b !== brand)
-        .reduce((sum, b) => sum + MDSMath.euclideanDistance(originalCoords[brand].slice(0, numDimsInsights), originalCoords[b].slice(0, numDimsInsights)), 0) / (brands.length - 1);
+        .reduce((sum, b) => sum + MDSMath.euclideanDistance(originalCoords[brand].slice(0, numDimsInsights), originalCoords[b].slice(0, numDimsInsights)), 0) / (originalBrands.length - 1);
       if (avgDist > originalMaxDist) {
         originalMaxDist = avgDist;
         originalMostDiff = brand;
@@ -3314,16 +3795,16 @@ function generateKeyInsights() {
     }
   }
   
-  // Calculate original closest for comparison
+  // Calculate original closest for comparison (only using original brands)
   let originalMinDist = Infinity;
   let originalClosestPair = [];
   if (hasRepositioning) {
-    for (let i = 0; i < brands.length; i++) {
-      for (let j = i + 1; j < brands.length; j++) {
-        const dist = MDSMath.euclideanDistance(originalCoords[brands[i]].slice(0, numDimsInsights), originalCoords[brands[j]].slice(0, numDimsInsights));
+    for (let i = 0; i < originalBrands.length; i++) {
+      for (let j = i + 1; j < originalBrands.length; j++) {
+        const dist = MDSMath.euclideanDistance(originalCoords[originalBrands[i]].slice(0, numDimsInsights), originalCoords[originalBrands[j]].slice(0, numDimsInsights));
         if (dist < originalMinDist) {
           originalMinDist = dist;
-          originalClosestPair = [brands[i], brands[j]];
+          originalClosestPair = [originalBrands[i], originalBrands[j]];
         }
       }
     }
@@ -3396,6 +3877,24 @@ function generateKeyInsights() {
         hasComparison: true,
         comparison: `<span class="comparison-original">Was: ${((originalShares[biggestLoser.brand] || 0) * 100).toFixed(1)}%</span> → <span class="comparison-new">Now: ${((newShares[biggestLoser.brand] || 0) * 100).toFixed(1)}%</span>`,
         type: 'negative'
+      });
+    }
+    
+    // Insight for new market entrants
+    if (newEntrants.length > 0) {
+      newEntrants.forEach(entrant => {
+        const entrantShare = (newShares[entrant] || 0) * 100;
+        if (entrantShare > 0.1) {
+          insights.push({
+            icon: '🆕',
+            title: 'New Entrant Impact',
+            description: `${entrant} captures market share from incumbents.`,
+            metric: `${entrantShare.toFixed(1)}% share`,
+            hasComparison: true,
+            comparison: `<span class="new-entrant-highlight">New brand entering at (${coords[entrant][0].toFixed(1)}, ${coords[entrant][1].toFixed(1)})</span>`,
+            type: 'new-entrant'
+          });
+        }
       });
     }
   }
@@ -3542,7 +4041,6 @@ function renderDimensionExplorer() {
       chip.textContent = brand;
       chip.style.left = `${pct}%`;
       chip.title = `${brand}: ${val.toFixed(2)}`;
-      chip.onclick = () => showBrandCard(brand);
       
       strip.appendChild(chip);
     });
@@ -3555,7 +4053,7 @@ function renderDistanceHeatmap() {
   if (!container || !AppState.results) return;
   
   const sim = AppState.simulation;
-  const hasRepositioning = sim.hasChanges && sim.repositionedBrands.length > 0;
+  const hasRepositioning = hasSimulationChanges();
   const numDimsHeatmap = AppState.results?.numDimensions || 2;
   
   // Use simulation coords (updated by drag) if available, otherwise original
@@ -3864,6 +4362,16 @@ function populateBrandSelectors() {
       option.textContent = brand;
       select.appendChild(option);
     });
+    
+    // Add any new entrants from simulation
+    const newEntrants = AppState.simulation?.newEntrants || [];
+    newEntrants.forEach(entrant => {
+      const option = document.createElement('option');
+      option.value = entrant;
+      option.textContent = `${entrant} (NEW)`;
+      option.className = 'new-entrant-option';
+      select.appendChild(option);
+    });
   });
   
   // Setup change listeners for radar
@@ -3877,7 +4385,7 @@ function renderFocalBrandAnalysis(brand) {
   if (!brand || !AppState.results) return;
   
   const sim = AppState.simulation;
-  const hasRepositioning = sim.hasChanges && sim.repositionedBrands.length > 0;
+  const hasRepositioning = hasSimulationChanges();
   const numDimsFocal = AppState.results?.numDimensions || 2;
   
   // Use simulation coords (updated by drag) if available
@@ -3951,7 +4459,7 @@ function renderFocalDistanceBars(focalBrand) {
   if (!container) return;
   
   const sim = AppState.simulation;
-  const hasRepositioning = sim.hasChanges && sim.repositionedBrands.length > 0;
+  const hasRepositioning = hasSimulationChanges();
   const numDimsBars = AppState.results?.numDimensions || 2;
   
   // Use simulation coords

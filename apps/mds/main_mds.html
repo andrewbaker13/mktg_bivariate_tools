@@ -280,7 +280,8 @@
             <select id="scenario-select">
               <option value="">Manual inputs (no preset)</option>
             </select>
-            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario datasets</button>
+            <button id="scenario-download-perceptual" class="secondary hidden" type="button" disabled>📥 Download Perceptual Data</button>
+            <button id="scenario-download-preference" class="secondary hidden" type="button" disabled>📥 Download Preference Data</button>
           </div>
         </div>
         <div id="scenario-description">
@@ -405,9 +406,60 @@
         </div>
       </article>
 
+      <!-- Customer Weights Upload (Usage/Spend) -->
+      <article class="card data-entry-card" id="weights-section">
+        <div class="input-header">
+          <h3>3. Customer Weights (Optional)</h3>
+          <span class="optional-badge">Optional</span>
+        </div>
+        <p class="hint">
+          Upload customer-level usage rate or spending data to weight market share calculations.
+          This makes simulations more realistic by accounting for heavy vs. light users.
+        </p>
+        
+        <div class="weights-toggle">
+          <label class="toggle-switch">
+            <input type="checkbox" id="include-weights">
+            <span class="slider"></span>
+          </label>
+          <span>Include customer weights for market share</span>
+        </div>
+        
+        <div id="weights-upload-section" class="hidden">
+          <div class="data-import-block">
+            <div class="dropzone" id="weights-dropzone" role="button" tabindex="0">
+              <p class="dropzone-title">Drag &amp; Drop Weights CSV</p>
+              <p class="dropzone-note">Must have same number of rows as preference data. Include a column named USAGE or SPEND.</p>
+              <button type="button" id="weights-browse" class="secondary">Browse files</button>
+            </div>
+            <input type="file" id="weights-input" 
+              accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" 
+              aria-label="Upload weights CSV" hidden>
+            <p class="upload-status" id="weights-feedback" aria-live="polite">No file uploaded.</p>
+            <div class="template-buttons">
+              <button type="button" id="download-weights-template" class="secondary">
+                📥 Download template CSV
+              </button>
+            </div>
+          </div>
+          
+          <div class="weights-type-info hidden" id="weights-type-display">
+            <p class="weight-type-badge"></p>
+          </div>
+          
+          <div id="weights-preview" class="data-preview hidden">
+            <h4>Data Preview</h4>
+            <div class="preview-table-container">
+              <table id="weights-preview-table" class="preview-table"></table>
+            </div>
+            <p class="preview-summary" id="weights-summary"></p>
+          </div>
+        </div>
+      </article>
+
       <!-- Analysis Settings -->
       <article class="card settings-card">
-        <h3>3. Analysis Settings</h3>
+        <h3>4. Analysis Settings</h3>
         
         <div class="settings-grid">
           <div class="setting-group">
@@ -692,10 +744,15 @@
         <div class="map-hero-container">
           <div class="map-wrapper">
             <div id="positioning-map" class="chart-hero"></div>
-            <!-- Drag instruction overlay -->
+          </div>
+          <!-- Drag instruction - positioned below chart -->
+          <div class="map-instruction-wrapper">
             <div class="map-instruction" id="drag-instruction">
               <span>🎯 Click a brand for details • Drag to simulate repositioning</span>
             </div>
+            <button type="button" id="add-market-entrant" class="secondary" style="margin-left: 1rem;" disabled>
+              ✨ Add Market Entrant
+            </button>
           </div>
           
           <!-- Overlay backdrop for brand card -->
@@ -771,41 +828,18 @@
         </div>
       </div>
       
-      <!-- SIMULATION SECTION - Positioning Playground (Right Below Map) -->
+      <!-- SIMULATION SECTION - What-If Impact Analysis -->
       <section class="simulation-section hidden" id="tut-simulation-section" aria-labelledby="simulation-heading">
-        <h2 id="simulation-heading">POSITIONING PLAYGROUND</h2>
+        <h2 id="simulation-heading">SIMULATION IMPACT</h2>
+        <p class="section-subtitle">See how repositioning or adding brands affects market dynamics</p>
         
-        <div class="playground-hero">
-          <div class="playground-instruction-banner">
-            <div class="banner-icon">🎮</div>
-            <div class="banner-text">
-              <strong>Interactive Mode Active!</strong>
-              Drag any brand directly on the map to see real-time market impact.
-              Your changes are instantly visualized below.
-            </div>
-          </div>
-          
-          <!-- Mode Selector - Pill Style -->
-          <div class="playground-modes">
-            <button class="mode-pill active" data-mode="reposition">
-              <span class="mode-icon">📍</span>
-              <span class="mode-label">Move Brand</span>
-            </button>
-            <button class="mode-pill" data-mode="new-product">
-              <span class="mode-icon">✨</span>
-              <span class="mode-label">Launch New</span>
-            </button>
-            <button class="mode-pill" data-mode="find-gap">
-              <span class="mode-icon">🔍</span>
-              <span class="mode-label">Find White Space</span>
-            </button>
-          </div>
-        </div>
-        
-        <!-- Live Impact Dashboard -->
-        <div class="impact-dashboard" id="impact-dashboard">
+        <!-- Live Impact Dashboard - 2 column layout -->
+        <div class="impact-dashboard impact-dashboard-two-col" id="impact-dashboard">
           <div class="impact-panel impact-share">
-            <h4>📊 Market Share Shift</h4>
+            <h4 id="market-share-title">📊 Market Share Shift
+              <span class="info-tooltip" tabindex="0" title="Estimated market share based on distance from each segment's ideal point. Brands closer to segment ideal points capture more share from that segment. Uses a Share of Preference model weighted by segment sizes.">ℹ️</span>
+            </h4>
+            <div class="share-type-indicator" id="share-type-indicator"></div>
             <div class="share-comparison">
               <div class="share-before-after">
                 <div class="share-bar-container">
@@ -826,94 +860,20 @@
           </div>
           
           <div class="impact-panel impact-cannib">
-            <h4>🔄 Cannibalization Flow</h4>
-            <div id="cannib-sankey" class="sankey-mini"></div>
-            <div class="cannib-summary" id="cannib-summary">
-              Move a brand to see competitive flow.
-            </div>
-          </div>
-          
-          <div class="impact-panel impact-attributes">
-            <h4>🎯 What It Takes</h4>
-            <p class="impact-subtext">Attribute changes needed for this move</p>
-            <div class="attribute-delta-bars" id="attribute-delta-bars">
-              <!-- Horizontal bars showing required attribute changes -->
+            <h4>🔄 Cannibalization Flow
+              <span class="info-tooltip" tabindex="0" title="Shows how market share redistributes when a brand moves. Green = share gained, Red = share lost. When Brand A moves closer to customers, it 'cannibalizes' share from nearby competitors. High flow between two brands indicates they compete for the same customer segments.">ℹ️</span>
+            </h4>
+            <div id="cannib-sankey" class="sankey-mini">
+              <p class="impact-subtext">Move a brand to see competitive flow</p>
             </div>
           </div>
         </div>
         
-        <!-- New Product Launch Panel -->
-        <div class="new-product-panel hidden" id="new-product-panel">
-          <div class="new-product-form card">
-            <h3>✨ Launch a New Product</h3>
-            <div class="form-row">
-              <label for="new-product-name">Product Name</label>
-              <input type="text" id="new-product-name" placeholder="My New Brand">
-            </div>
-            <p class="hint">Click anywhere on the perceptual map to place your new product!</p>
-            <div class="new-product-preview" id="new-product-preview">
-              <div class="preview-metric">
-                <span class="metric-label">Predicted Share</span>
-                <span class="metric-value" id="np-predicted-share">—</span>
-              </div>
-              <div class="preview-metric">
-                <span class="metric-label">Best Segment Fit</span>
-                <span class="metric-value" id="np-best-segment">—</span>
-              </div>
-              <div class="preview-metric">
-                <span class="metric-label">Nearest Competitor</span>
-                <span class="metric-value" id="np-nearest-comp">—</span>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button type="button" id="confirm-new-product" class="primary" disabled>Confirm Launch</button>
-              <button type="button" id="cancel-new-product" class="secondary">Cancel</button>
-            </div>
-          </div>
-        </div>
-        
-        <!-- White Space Finder -->
-        <div class="whitespace-panel hidden" id="whitespace-panel">
-          <div class="card">
-            <h3>🔍 Opportunity Zone Finder</h3>
-            <p class="hint">
-              The heat map overlay shows potential market share for a new product at any location.
-              Brighter zones = higher opportunity. Red markers show the top opportunities.
-            </p>
-            <div class="whitespace-controls">
-              <label>
-                <input type="checkbox" id="show-opportunity-heat" checked>
-                Show opportunity heat map
-              </label>
-              <label>
-                <input type="checkbox" id="show-top-opportunities" checked>
-                Mark top 3 opportunities
-              </label>
-            </div>
-            <div class="top-opportunities" id="top-opportunities">
-              <!-- Dynamically populated opportunity cards -->
-            </div>
-          </div>
-        </div>
-        
-        <!-- Scenario Comparison -->
-        <div class="card scenario-manager">
-          <h3>📸 Scenario Snapshots</h3>
-          <p class="hint">Save your current simulation state to compare multiple "what-if" scenarios.</p>
-          <div class="scenario-actions">
-            <button type="button" id="save-scenario" class="secondary">
-              <span>📷</span> Save Current State
-            </button>
-            <button type="button" id="compare-scenarios" class="secondary" disabled>
-              <span>⚖️</span> Compare Scenarios
-            </button>
-            <button type="button" id="reset-all-positions" class="secondary">
-              <span>↩️</span> Reset All
-            </button>
-          </div>
-          <div class="saved-scenarios" id="saved-scenarios">
-            <!-- Scenario thumbnails appear here -->
-          </div>
+        <!-- Reset Simulation -->
+        <div class="simulation-reset-bar">
+          <button type="button" id="reset-all-positions" class="secondary">
+            <span>↩️</span> Reset All Positions
+          </button>
         </div>
       </section>
       
@@ -1214,20 +1174,18 @@ Practical: Attributes with longer bars are 'louder' in differentiating brands. F
       <div class="dual-panels">
         <article class="card dual-panel">
           <h3>APA-Style Report</h3>
-          <p id="apa-report">
-            After you run the positioning analysis, this panel will provide a formal statistical 
+          <div id="apa-report">
+            <p>After you run the positioning analysis, this panel will provide a formal statistical 
             summary suitable for academic reports, including variance explained, dimensionality, 
-            and key findings.
-          </p>
-          <button type="button" id="copy-apa" class="secondary" disabled>📋 Copy Report</button>
+            and key findings.</p>
+          </div>
         </article>
         <article class="card dual-panel">
           <h3>Managerial Interpretation</h3>
-          <p id="managerial-report">
-            This panel translates the positioning analysis into plain-language strategic insights, 
-            highlighting competitive positioning, segment opportunities, and recommended actions.
-          </p>
-          <button type="button" id="copy-managerial" class="secondary" disabled>📋 Copy Report</button>
+          <div id="managerial-report">
+            <p>This panel translates the positioning analysis into plain-language strategic insights, 
+            highlighting competitive positioning, segment opportunities, and recommended actions.</p>
+          </div>
         </article>
       </div>
     </section>
@@ -1264,18 +1222,31 @@ Practical: Attributes with longer bars are 'louder' in differentiating brands. F
       <h2 id="export-heading">EXPORT &amp; DOWNLOAD</h2>
       <div class="card">
         <div class="export-controls">
-          <button type="button" id="export-map-png" class="secondary" disabled>
-            📊 Export Map (PNG)
-          </button>
           <button type="button" id="export-all-data" class="secondary" disabled>
             📁 Download All Results (CSV)
-          </button>
-          <button type="button" id="export-simulation" class="secondary" disabled>
-            🎯 Export Simulation Scenario
           </button>
         </div>
       </div>
     </section>
+    
+    <!-- Market Entrant Modal -->
+    <div class="entrant-modal-overlay hidden" id="entrant-modal-overlay">
+      <div class="entrant-modal">
+        <div class="entrant-modal-header">
+          <h3>✨ Add Market Entrant</h3>
+          <button type="button" class="modal-close" id="entrant-modal-close">×</button>
+        </div>
+        <div class="entrant-modal-body">
+          <label for="entrant-name">Name your new competitor:</label>
+          <input type="text" id="entrant-name" placeholder="e.g., New Brand X" maxlength="30">
+          <p class="hint">The new entrant will appear at the center of the map. Drag it to your desired position.</p>
+        </div>
+        <div class="entrant-modal-footer">
+          <button type="button" id="entrant-confirm" class="primary">Add to Map</button>
+          <button type="button" id="entrant-cancel" class="secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
   </main>
 
   <footer class="app-footer">

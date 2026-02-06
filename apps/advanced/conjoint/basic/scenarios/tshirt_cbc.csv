@@ -1,0 +1,1441 @@
+respondent_id,task_id,alternative_id,chosen,Color,Fit,Material,Design Placement
+1,1,1,1,White,Regular,Performance Mesh,Small Logo
+1,1,2,0,White,Oversized,100% Cotton,Back Print
+1,1,3,0,Tie-Dye,Regular,100% Cotton,Back Print
+1,2,1,0,Black,Oversized,Performance Mesh,Small Logo
+1,2,2,0,Black,Oversized,Tri-Blend,Small Logo
+1,2,3,1,White,Regular,Tri-Blend,Full Front
+1,3,1,0,White,Slim,100% Cotton,Back Print
+1,3,2,1,Tie-Dye,Regular,Performance Mesh,Back Print
+1,3,3,0,Black,Oversized,Performance Mesh,Full Front
+1,4,1,0,Black,Regular,100% Cotton,Small Logo
+1,4,2,0,Black,Slim,100% Cotton,Small Logo
+1,4,3,1,Black,Regular,Performance Mesh,Small Logo
+1,5,1,0,Tie-Dye,Oversized,Tri-Blend,Full Front
+1,5,2,0,White,Oversized,Tri-Blend,Full Front
+1,5,3,1,Black,Regular,Performance Mesh,Back Print
+1,6,1,0,Tie-Dye,Slim,Performance Mesh,Back Print
+1,6,2,0,White,Slim,100% Cotton,Full Front
+1,6,3,1,Black,Slim,Tri-Blend,Back Print
+1,7,1,0,Black,Oversized,Performance Mesh,Back Print
+1,7,2,0,Tie-Dye,Slim,100% Cotton,Small Logo
+1,7,3,1,White,Regular,Performance Mesh,Small Logo
+1,8,1,0,White,Slim,Tri-Blend,Small Logo
+1,8,2,0,Black,Oversized,Tri-Blend,Small Logo
+1,8,3,1,White,Regular,Performance Mesh,Back Print
+2,1,1,0,Black,Regular,Performance Mesh,Back Print
+2,1,2,1,Black,Oversized,Tri-Blend,Full Front
+2,1,3,0,Black,Slim,Performance Mesh,Small Logo
+2,2,1,0,White,Oversized,Performance Mesh,Small Logo
+2,2,2,0,Black,Slim,100% Cotton,Back Print
+2,2,3,1,Tie-Dye,Slim,Performance Mesh,Full Front
+2,3,1,1,Tie-Dye,Slim,100% Cotton,Back Print
+2,3,2,0,White,Slim,Performance Mesh,Back Print
+2,3,3,0,Black,Slim,Performance Mesh,Small Logo
+2,4,1,1,Black,Regular,Tri-Blend,Small Logo
+2,4,2,0,White,Regular,Performance Mesh,Full Front
+2,4,3,0,Tie-Dye,Regular,100% Cotton,Small Logo
+2,5,1,0,Tie-Dye,Slim,100% Cotton,Small Logo
+2,5,2,1,Black,Oversized,Tri-Blend,Small Logo
+2,5,3,0,White,Slim,Performance Mesh,Back Print
+2,6,1,0,White,Slim,100% Cotton,Back Print
+2,6,2,1,Black,Oversized,Performance Mesh,Full Front
+2,6,3,0,White,Oversized,Performance Mesh,Back Print
+2,7,1,0,White,Oversized,Performance Mesh,Back Print
+2,7,2,1,White,Oversized,Tri-Blend,Back Print
+2,7,3,0,Black,Regular,100% Cotton,Full Front
+2,8,1,0,Tie-Dye,Oversized,Performance Mesh,Small Logo
+2,8,2,1,White,Oversized,100% Cotton,Back Print
+2,8,3,0,Black,Slim,Performance Mesh,Small Logo
+3,1,1,0,Black,Oversized,Performance Mesh,Back Print
+3,1,2,0,White,Regular,Tri-Blend,Back Print
+3,1,3,1,Black,Oversized,Performance Mesh,Back Print
+3,2,1,0,White,Regular,100% Cotton,Small Logo
+3,2,2,1,Black,Slim,Performance Mesh,Full Front
+3,2,3,0,Black,Slim,Performance Mesh,Small Logo
+3,3,1,1,Tie-Dye,Regular,100% Cotton,Back Print
+3,3,2,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+3,3,3,0,Tie-Dye,Regular,Tri-Blend,Back Print
+3,4,1,0,White,Oversized,Performance Mesh,Full Front
+3,4,2,0,Tie-Dye,Slim,100% Cotton,Small Logo
+3,4,3,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+3,5,1,0,White,Slim,Performance Mesh,Full Front
+3,5,2,1,White,Regular,Tri-Blend,Back Print
+3,5,3,0,Tie-Dye,Oversized,Performance Mesh,Full Front
+3,6,1,1,White,Slim,Performance Mesh,Small Logo
+3,6,2,0,Black,Slim,Tri-Blend,Back Print
+3,6,3,0,White,Oversized,Tri-Blend,Full Front
+3,7,1,0,Black,Regular,100% Cotton,Small Logo
+3,7,2,0,White,Oversized,100% Cotton,Small Logo
+3,7,3,1,Black,Slim,Performance Mesh,Small Logo
+3,8,1,0,White,Regular,Performance Mesh,Small Logo
+3,8,2,0,Black,Oversized,Tri-Blend,Full Front
+3,8,3,1,Black,Oversized,100% Cotton,Full Front
+4,1,1,1,Tie-Dye,Slim,100% Cotton,Back Print
+4,1,2,0,Black,Slim,Performance Mesh,Small Logo
+4,1,3,0,White,Slim,Tri-Blend,Back Print
+4,2,1,1,White,Slim,Performance Mesh,Back Print
+4,2,2,0,Black,Oversized,Performance Mesh,Small Logo
+4,2,3,0,White,Slim,100% Cotton,Full Front
+4,3,1,0,White,Regular,Tri-Blend,Small Logo
+4,3,2,1,White,Slim,Tri-Blend,Small Logo
+4,3,3,0,White,Slim,Performance Mesh,Full Front
+4,4,1,1,White,Oversized,100% Cotton,Back Print
+4,4,2,0,White,Regular,Tri-Blend,Back Print
+4,4,3,0,White,Oversized,Performance Mesh,Back Print
+4,5,1,0,Black,Regular,Performance Mesh,Back Print
+4,5,2,0,White,Regular,100% Cotton,Back Print
+4,5,3,1,Tie-Dye,Slim,100% Cotton,Small Logo
+4,6,1,1,Tie-Dye,Oversized,100% Cotton,Back Print
+4,6,2,0,White,Slim,Performance Mesh,Back Print
+4,6,3,0,Tie-Dye,Regular,100% Cotton,Full Front
+4,7,1,0,Tie-Dye,Regular,Performance Mesh,Full Front
+4,7,2,1,Black,Regular,Tri-Blend,Full Front
+4,7,3,0,Black,Oversized,Tri-Blend,Back Print
+4,8,1,0,Tie-Dye,Oversized,Performance Mesh,Back Print
+4,8,2,0,Tie-Dye,Regular,100% Cotton,Back Print
+4,8,3,1,White,Regular,Performance Mesh,Small Logo
+5,1,1,0,White,Regular,100% Cotton,Back Print
+5,1,2,0,Black,Slim,Tri-Blend,Small Logo
+5,1,3,1,Tie-Dye,Regular,100% Cotton,Small Logo
+5,2,1,0,White,Regular,Performance Mesh,Full Front
+5,2,2,0,Tie-Dye,Regular,Performance Mesh,Back Print
+5,2,3,1,White,Slim,Tri-Blend,Full Front
+5,3,1,1,Black,Oversized,Performance Mesh,Back Print
+5,3,2,0,White,Oversized,Performance Mesh,Small Logo
+5,3,3,0,Black,Regular,100% Cotton,Back Print
+5,4,1,0,Black,Regular,Tri-Blend,Back Print
+5,4,2,1,Tie-Dye,Slim,Tri-Blend,Full Front
+5,4,3,0,Black,Slim,Performance Mesh,Small Logo
+5,5,1,0,Black,Oversized,Performance Mesh,Small Logo
+5,5,2,0,White,Regular,100% Cotton,Small Logo
+5,5,3,1,Black,Regular,100% Cotton,Back Print
+5,6,1,1,White,Regular,Tri-Blend,Full Front
+5,6,2,0,Tie-Dye,Regular,100% Cotton,Full Front
+5,6,3,0,Black,Regular,100% Cotton,Small Logo
+5,7,1,0,Black,Regular,100% Cotton,Small Logo
+5,7,2,0,White,Regular,100% Cotton,Small Logo
+5,7,3,1,Black,Oversized,Performance Mesh,Full Front
+5,8,1,0,White,Oversized,100% Cotton,Small Logo
+5,8,2,1,Tie-Dye,Oversized,100% Cotton,Back Print
+5,8,3,0,Tie-Dye,Regular,100% Cotton,Full Front
+6,1,1,0,Tie-Dye,Oversized,100% Cotton,Full Front
+6,1,2,0,Tie-Dye,Oversized,Tri-Blend,Small Logo
+6,1,3,1,Tie-Dye,Regular,100% Cotton,Back Print
+6,2,1,1,White,Oversized,100% Cotton,Small Logo
+6,2,2,0,Black,Oversized,100% Cotton,Full Front
+6,2,3,0,Black,Oversized,100% Cotton,Small Logo
+6,3,1,0,Tie-Dye,Regular,100% Cotton,Back Print
+6,3,2,0,Black,Slim,Performance Mesh,Back Print
+6,3,3,1,White,Oversized,Performance Mesh,Full Front
+6,4,1,0,Tie-Dye,Slim,Tri-Blend,Full Front
+6,4,2,0,Tie-Dye,Slim,100% Cotton,Full Front
+6,4,3,1,White,Slim,100% Cotton,Back Print
+6,5,1,0,Tie-Dye,Regular,Tri-Blend,Back Print
+6,5,2,1,Tie-Dye,Oversized,Performance Mesh,Full Front
+6,5,3,0,White,Oversized,100% Cotton,Small Logo
+6,6,1,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+6,6,2,1,Tie-Dye,Regular,Performance Mesh,Small Logo
+6,6,3,0,Tie-Dye,Regular,Tri-Blend,Back Print
+6,7,1,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+6,7,2,1,Black,Slim,Performance Mesh,Back Print
+6,7,3,0,Black,Regular,Tri-Blend,Full Front
+6,8,1,1,Black,Slim,Performance Mesh,Full Front
+6,8,2,0,White,Slim,Tri-Blend,Small Logo
+6,8,3,0,Black,Oversized,100% Cotton,Full Front
+7,1,1,1,Black,Slim,100% Cotton,Full Front
+7,1,2,0,White,Slim,Performance Mesh,Full Front
+7,1,3,0,Black,Regular,Performance Mesh,Full Front
+7,2,1,1,Black,Oversized,100% Cotton,Full Front
+7,2,2,0,Black,Regular,Tri-Blend,Full Front
+7,2,3,0,Tie-Dye,Slim,Tri-Blend,Full Front
+7,3,1,0,White,Slim,Performance Mesh,Small Logo
+7,3,2,1,Tie-Dye,Oversized,Performance Mesh,Full Front
+7,3,3,0,Black,Oversized,Tri-Blend,Small Logo
+7,4,1,0,White,Oversized,Performance Mesh,Small Logo
+7,4,2,0,White,Slim,Tri-Blend,Full Front
+7,4,3,1,Black,Oversized,Performance Mesh,Small Logo
+7,5,1,0,White,Oversized,Tri-Blend,Small Logo
+7,5,2,0,White,Regular,Tri-Blend,Small Logo
+7,5,3,1,Tie-Dye,Slim,Performance Mesh,Full Front
+7,6,1,0,White,Regular,100% Cotton,Full Front
+7,6,2,1,Black,Regular,Tri-Blend,Back Print
+7,6,3,0,Tie-Dye,Slim,100% Cotton,Full Front
+7,7,1,0,Tie-Dye,Slim,Performance Mesh,Full Front
+7,7,2,1,Tie-Dye,Oversized,100% Cotton,Back Print
+7,7,3,0,Tie-Dye,Slim,Tri-Blend,Full Front
+7,8,1,1,Black,Regular,Performance Mesh,Small Logo
+7,8,2,0,Black,Slim,Tri-Blend,Back Print
+7,8,3,0,White,Regular,Tri-Blend,Small Logo
+8,1,1,0,Black,Regular,Tri-Blend,Back Print
+8,1,2,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+8,1,3,1,Tie-Dye,Slim,Performance Mesh,Back Print
+8,2,1,1,White,Oversized,Performance Mesh,Full Front
+8,2,2,0,White,Regular,Tri-Blend,Full Front
+8,2,3,0,White,Oversized,100% Cotton,Small Logo
+8,3,1,0,White,Regular,Performance Mesh,Back Print
+8,3,2,1,Tie-Dye,Oversized,100% Cotton,Full Front
+8,3,3,0,Tie-Dye,Oversized,100% Cotton,Back Print
+8,4,1,0,White,Oversized,Tri-Blend,Small Logo
+8,4,2,0,Black,Slim,100% Cotton,Full Front
+8,4,3,1,White,Regular,100% Cotton,Back Print
+8,5,1,0,Black,Oversized,100% Cotton,Small Logo
+8,5,2,0,Black,Regular,100% Cotton,Small Logo
+8,5,3,1,Tie-Dye,Regular,100% Cotton,Back Print
+8,6,1,0,Black,Regular,100% Cotton,Full Front
+8,6,2,1,Black,Oversized,100% Cotton,Small Logo
+8,6,3,0,Black,Regular,Performance Mesh,Small Logo
+8,7,1,1,Tie-Dye,Regular,Performance Mesh,Full Front
+8,7,2,0,Black,Regular,100% Cotton,Small Logo
+8,7,3,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+8,8,1,1,Tie-Dye,Oversized,Tri-Blend,Full Front
+8,8,2,0,White,Oversized,Performance Mesh,Small Logo
+8,8,3,0,Black,Regular,Performance Mesh,Small Logo
+9,1,1,0,White,Slim,100% Cotton,Small Logo
+9,1,2,1,White,Regular,Performance Mesh,Small Logo
+9,1,3,0,Black,Regular,Performance Mesh,Small Logo
+9,2,1,0,Black,Regular,100% Cotton,Full Front
+9,2,2,0,Tie-Dye,Slim,100% Cotton,Small Logo
+9,2,3,1,Tie-Dye,Oversized,Tri-Blend,Back Print
+9,3,1,1,Tie-Dye,Regular,Tri-Blend,Back Print
+9,3,2,0,Black,Regular,Tri-Blend,Small Logo
+9,3,3,0,Black,Slim,100% Cotton,Back Print
+9,4,1,0,Black,Slim,Performance Mesh,Back Print
+9,4,2,0,Tie-Dye,Slim,100% Cotton,Small Logo
+9,4,3,1,Tie-Dye,Oversized,100% Cotton,Back Print
+9,5,1,1,Tie-Dye,Regular,Performance Mesh,Back Print
+9,5,2,0,Tie-Dye,Slim,100% Cotton,Small Logo
+9,5,3,0,White,Oversized,100% Cotton,Full Front
+9,6,1,0,Tie-Dye,Oversized,100% Cotton,Small Logo
+9,6,2,1,Tie-Dye,Regular,Performance Mesh,Small Logo
+9,6,3,0,White,Slim,Tri-Blend,Small Logo
+9,7,1,0,White,Oversized,100% Cotton,Full Front
+9,7,2,0,White,Slim,Tri-Blend,Small Logo
+9,7,3,1,Black,Regular,100% Cotton,Full Front
+9,8,1,1,White,Oversized,Tri-Blend,Small Logo
+9,8,2,0,Black,Slim,100% Cotton,Small Logo
+9,8,3,0,Tie-Dye,Slim,Performance Mesh,Full Front
+10,1,1,0,Black,Regular,100% Cotton,Small Logo
+10,1,2,0,Black,Oversized,100% Cotton,Full Front
+10,1,3,1,Tie-Dye,Oversized,100% Cotton,Back Print
+10,2,1,1,Tie-Dye,Slim,100% Cotton,Back Print
+10,2,2,0,Black,Oversized,Tri-Blend,Back Print
+10,2,3,0,Black,Oversized,100% Cotton,Back Print
+10,3,1,0,White,Slim,100% Cotton,Back Print
+10,3,2,0,Black,Oversized,Tri-Blend,Back Print
+10,3,3,1,Tie-Dye,Regular,Performance Mesh,Full Front
+10,4,1,0,Black,Oversized,100% Cotton,Full Front
+10,4,2,0,White,Regular,100% Cotton,Back Print
+10,4,3,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+10,5,1,0,Tie-Dye,Slim,Performance Mesh,Back Print
+10,5,2,1,Black,Oversized,Tri-Blend,Back Print
+10,5,3,0,White,Slim,Tri-Blend,Back Print
+10,6,1,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+10,6,2,1,Tie-Dye,Oversized,Performance Mesh,Full Front
+10,6,3,0,Tie-Dye,Oversized,Performance Mesh,Small Logo
+10,7,1,0,Black,Slim,100% Cotton,Full Front
+10,7,2,1,Tie-Dye,Regular,100% Cotton,Back Print
+10,7,3,0,White,Oversized,Tri-Blend,Full Front
+10,8,1,0,Black,Slim,100% Cotton,Full Front
+10,8,2,1,Tie-Dye,Regular,Tri-Blend,Full Front
+10,8,3,0,Black,Regular,100% Cotton,Back Print
+11,1,1,0,White,Slim,100% Cotton,Full Front
+11,1,2,1,White,Slim,Performance Mesh,Back Print
+11,1,3,0,Black,Slim,Tri-Blend,Back Print
+11,2,1,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+11,2,2,0,Tie-Dye,Slim,100% Cotton,Small Logo
+11,2,3,1,Tie-Dye,Slim,100% Cotton,Full Front
+11,3,1,0,White,Regular,100% Cotton,Full Front
+11,3,2,0,Black,Regular,Tri-Blend,Full Front
+11,3,3,1,Tie-Dye,Oversized,Performance Mesh,Full Front
+11,4,1,0,Tie-Dye,Regular,100% Cotton,Back Print
+11,4,2,1,Tie-Dye,Slim,Tri-Blend,Back Print
+11,4,3,0,White,Regular,Performance Mesh,Back Print
+11,5,1,1,Tie-Dye,Oversized,Performance Mesh,Small Logo
+11,5,2,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+11,5,3,0,Black,Slim,Performance Mesh,Back Print
+11,6,1,0,Black,Slim,Performance Mesh,Small Logo
+11,6,2,1,Black,Oversized,Tri-Blend,Small Logo
+11,6,3,0,Black,Slim,100% Cotton,Small Logo
+11,7,1,1,White,Oversized,Tri-Blend,Full Front
+11,7,2,0,White,Oversized,100% Cotton,Small Logo
+11,7,3,0,Black,Oversized,100% Cotton,Back Print
+11,8,1,1,Tie-Dye,Slim,Tri-Blend,Back Print
+11,8,2,0,Black,Regular,Tri-Blend,Back Print
+11,8,3,0,White,Regular,Tri-Blend,Back Print
+12,1,1,0,Black,Slim,Tri-Blend,Small Logo
+12,1,2,0,Black,Slim,Performance Mesh,Full Front
+12,1,3,1,Black,Oversized,Performance Mesh,Small Logo
+12,2,1,0,Black,Regular,Tri-Blend,Small Logo
+12,2,2,0,Black,Oversized,100% Cotton,Back Print
+12,2,3,1,Black,Regular,Tri-Blend,Full Front
+12,3,1,0,White,Regular,Performance Mesh,Small Logo
+12,3,2,0,White,Regular,100% Cotton,Small Logo
+12,3,3,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+12,4,1,0,Tie-Dye,Regular,Tri-Blend,Full Front
+12,4,2,0,White,Slim,Tri-Blend,Back Print
+12,4,3,1,Tie-Dye,Oversized,Tri-Blend,Back Print
+12,5,1,1,Tie-Dye,Regular,Tri-Blend,Back Print
+12,5,2,0,White,Slim,100% Cotton,Small Logo
+12,5,3,0,Black,Regular,Tri-Blend,Full Front
+12,6,1,1,White,Oversized,100% Cotton,Back Print
+12,6,2,0,Tie-Dye,Regular,100% Cotton,Small Logo
+12,6,3,0,Black,Regular,Tri-Blend,Small Logo
+12,7,1,0,White,Slim,100% Cotton,Back Print
+12,7,2,1,Tie-Dye,Slim,100% Cotton,Full Front
+12,7,3,0,White,Oversized,Tri-Blend,Small Logo
+12,8,1,0,Black,Slim,Performance Mesh,Full Front
+12,8,2,0,Black,Regular,Tri-Blend,Back Print
+12,8,3,1,White,Slim,Tri-Blend,Back Print
+13,1,1,0,White,Slim,Performance Mesh,Back Print
+13,1,2,1,White,Slim,Tri-Blend,Back Print
+13,1,3,0,Tie-Dye,Regular,100% Cotton,Small Logo
+13,2,1,0,White,Slim,100% Cotton,Full Front
+13,2,2,1,Tie-Dye,Oversized,Tri-Blend,Back Print
+13,2,3,0,Black,Slim,Performance Mesh,Back Print
+13,3,1,1,Tie-Dye,Oversized,Performance Mesh,Back Print
+13,3,2,0,White,Regular,100% Cotton,Back Print
+13,3,3,0,White,Regular,100% Cotton,Back Print
+13,4,1,0,Tie-Dye,Regular,Tri-Blend,Full Front
+13,4,2,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+13,4,3,1,White,Regular,100% Cotton,Full Front
+13,5,1,0,White,Regular,Tri-Blend,Small Logo
+13,5,2,0,White,Oversized,Performance Mesh,Full Front
+13,5,3,1,Black,Regular,100% Cotton,Full Front
+13,6,1,0,Tie-Dye,Regular,Performance Mesh,Back Print
+13,6,2,1,Tie-Dye,Regular,Performance Mesh,Full Front
+13,6,3,0,Black,Oversized,100% Cotton,Small Logo
+13,7,1,0,Tie-Dye,Oversized,Performance Mesh,Small Logo
+13,7,2,1,Black,Regular,Performance Mesh,Back Print
+13,7,3,0,Black,Slim,100% Cotton,Full Front
+13,8,1,1,Black,Regular,Performance Mesh,Full Front
+13,8,2,0,Black,Slim,Tri-Blend,Full Front
+13,8,3,0,White,Slim,Performance Mesh,Small Logo
+14,1,1,0,Black,Regular,Performance Mesh,Small Logo
+14,1,2,1,Tie-Dye,Oversized,Performance Mesh,Back Print
+14,1,3,0,White,Slim,100% Cotton,Full Front
+14,2,1,1,White,Regular,Tri-Blend,Back Print
+14,2,2,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+14,2,3,0,Tie-Dye,Slim,Tri-Blend,Full Front
+14,3,1,0,Tie-Dye,Slim,100% Cotton,Small Logo
+14,3,2,0,White,Oversized,Tri-Blend,Full Front
+14,3,3,1,White,Regular,Performance Mesh,Full Front
+14,4,1,0,Tie-Dye,Slim,Tri-Blend,Back Print
+14,4,2,0,Black,Slim,Tri-Blend,Full Front
+14,4,3,1,White,Regular,Tri-Blend,Back Print
+14,5,1,0,Tie-Dye,Regular,Tri-Blend,Back Print
+14,5,2,0,Tie-Dye,Oversized,Performance Mesh,Small Logo
+14,5,3,1,White,Oversized,Performance Mesh,Small Logo
+14,6,1,0,Tie-Dye,Slim,Performance Mesh,Full Front
+14,6,2,0,White,Slim,100% Cotton,Small Logo
+14,6,3,1,Black,Oversized,Performance Mesh,Full Front
+14,7,1,0,White,Regular,Performance Mesh,Small Logo
+14,7,2,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+14,7,3,1,Black,Regular,Tri-Blend,Back Print
+14,8,1,0,Tie-Dye,Regular,Performance Mesh,Back Print
+14,8,2,1,Tie-Dye,Oversized,Performance Mesh,Full Front
+14,8,3,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+15,1,1,0,White,Regular,Performance Mesh,Back Print
+15,1,2,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+15,1,3,1,Black,Regular,100% Cotton,Back Print
+15,2,1,1,Black,Slim,Tri-Blend,Small Logo
+15,2,2,0,Black,Slim,100% Cotton,Full Front
+15,2,3,0,Tie-Dye,Oversized,Tri-Blend,Back Print
+15,3,1,0,Black,Slim,100% Cotton,Back Print
+15,3,2,1,Black,Slim,100% Cotton,Back Print
+15,3,3,0,White,Oversized,Performance Mesh,Full Front
+15,4,1,1,Black,Regular,Performance Mesh,Small Logo
+15,4,2,0,White,Oversized,Tri-Blend,Full Front
+15,4,3,0,Black,Oversized,Tri-Blend,Small Logo
+15,5,1,0,White,Slim,Performance Mesh,Full Front
+15,5,2,0,Black,Oversized,Performance Mesh,Small Logo
+15,5,3,1,White,Slim,100% Cotton,Small Logo
+15,6,1,0,Tie-Dye,Slim,Tri-Blend,Back Print
+15,6,2,1,Tie-Dye,Regular,Performance Mesh,Small Logo
+15,6,3,0,White,Regular,Performance Mesh,Full Front
+15,7,1,1,White,Oversized,Performance Mesh,Full Front
+15,7,2,0,Black,Slim,Performance Mesh,Full Front
+15,7,3,0,Black,Regular,Performance Mesh,Back Print
+15,8,1,0,Tie-Dye,Slim,100% Cotton,Back Print
+15,8,2,1,Black,Regular,Tri-Blend,Full Front
+15,8,3,0,Black,Slim,100% Cotton,Small Logo
+16,1,1,0,Tie-Dye,Slim,Performance Mesh,Back Print
+16,1,2,0,Black,Slim,Performance Mesh,Full Front
+16,1,3,1,Tie-Dye,Slim,Tri-Blend,Full Front
+16,2,1,0,Tie-Dye,Slim,Tri-Blend,Full Front
+16,2,2,1,White,Oversized,100% Cotton,Small Logo
+16,2,3,0,White,Slim,100% Cotton,Back Print
+16,3,1,1,Tie-Dye,Slim,Performance Mesh,Small Logo
+16,3,2,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+16,3,3,0,Black,Regular,100% Cotton,Back Print
+16,4,1,0,Tie-Dye,Oversized,Performance Mesh,Full Front
+16,4,2,0,Tie-Dye,Regular,Tri-Blend,Back Print
+16,4,3,1,Black,Slim,Performance Mesh,Small Logo
+16,5,1,0,White,Regular,Performance Mesh,Back Print
+16,5,2,0,Black,Regular,100% Cotton,Small Logo
+16,5,3,1,White,Regular,Tri-Blend,Small Logo
+16,6,1,0,White,Slim,Tri-Blend,Small Logo
+16,6,2,0,Black,Regular,100% Cotton,Back Print
+16,6,3,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+16,7,1,0,Tie-Dye,Slim,Tri-Blend,Back Print
+16,7,2,0,Tie-Dye,Slim,100% Cotton,Small Logo
+16,7,3,1,Tie-Dye,Slim,Performance Mesh,Full Front
+16,8,1,1,Black,Slim,Performance Mesh,Small Logo
+16,8,2,0,Black,Slim,Tri-Blend,Full Front
+16,8,3,0,Tie-Dye,Oversized,Tri-Blend,Full Front
+17,1,1,0,White,Regular,100% Cotton,Small Logo
+17,1,2,0,Black,Regular,100% Cotton,Small Logo
+17,1,3,1,White,Slim,Tri-Blend,Back Print
+17,2,1,1,Tie-Dye,Slim,Tri-Blend,Back Print
+17,2,2,0,Black,Slim,100% Cotton,Back Print
+17,2,3,0,Tie-Dye,Slim,100% Cotton,Back Print
+17,3,1,0,Black,Slim,Performance Mesh,Small Logo
+17,3,2,1,Tie-Dye,Regular,Performance Mesh,Small Logo
+17,3,3,0,White,Slim,Performance Mesh,Full Front
+17,4,1,1,Tie-Dye,Oversized,100% Cotton,Back Print
+17,4,2,0,Black,Oversized,Tri-Blend,Small Logo
+17,4,3,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+17,5,1,0,Black,Slim,100% Cotton,Full Front
+17,5,2,1,Tie-Dye,Slim,Tri-Blend,Full Front
+17,5,3,0,White,Regular,Performance Mesh,Back Print
+17,6,1,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+17,6,2,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+17,6,3,1,Tie-Dye,Regular,100% Cotton,Small Logo
+17,7,1,0,White,Regular,Performance Mesh,Back Print
+17,7,2,0,Black,Oversized,Performance Mesh,Back Print
+17,7,3,1,Tie-Dye,Regular,Performance Mesh,Back Print
+17,8,1,1,Tie-Dye,Regular,Tri-Blend,Back Print
+17,8,2,0,Black,Slim,100% Cotton,Small Logo
+17,8,3,0,Black,Oversized,100% Cotton,Small Logo
+18,1,1,0,White,Regular,Tri-Blend,Back Print
+18,1,2,1,Black,Regular,Performance Mesh,Back Print
+18,1,3,0,Tie-Dye,Oversized,Performance Mesh,Full Front
+18,2,1,0,White,Slim,Tri-Blend,Small Logo
+18,2,2,0,White,Slim,100% Cotton,Back Print
+18,2,3,1,White,Regular,Performance Mesh,Back Print
+18,3,1,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+18,3,2,0,White,Regular,Performance Mesh,Back Print
+18,3,3,1,Black,Regular,Performance Mesh,Small Logo
+18,4,1,0,Black,Regular,100% Cotton,Full Front
+18,4,2,0,Black,Oversized,Tri-Blend,Small Logo
+18,4,3,1,Tie-Dye,Oversized,Performance Mesh,Back Print
+18,5,1,0,White,Slim,100% Cotton,Back Print
+18,5,2,1,Black,Oversized,Tri-Blend,Full Front
+18,5,3,0,Tie-Dye,Regular,100% Cotton,Small Logo
+18,6,1,0,Black,Regular,100% Cotton,Small Logo
+18,6,2,1,Black,Slim,Tri-Blend,Small Logo
+18,6,3,0,Black,Regular,100% Cotton,Small Logo
+18,7,1,1,White,Slim,Tri-Blend,Full Front
+18,7,2,0,Tie-Dye,Oversized,100% Cotton,Back Print
+18,7,3,0,Black,Slim,Performance Mesh,Full Front
+18,8,1,0,Black,Slim,Performance Mesh,Full Front
+18,8,2,1,Black,Regular,Performance Mesh,Back Print
+18,8,3,0,Tie-Dye,Slim,100% Cotton,Back Print
+19,1,1,0,White,Oversized,Performance Mesh,Back Print
+19,1,2,0,White,Regular,Performance Mesh,Full Front
+19,1,3,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+19,2,1,0,Tie-Dye,Oversized,100% Cotton,Full Front
+19,2,2,1,Tie-Dye,Oversized,Tri-Blend,Full Front
+19,2,3,0,White,Regular,Tri-Blend,Small Logo
+19,3,1,1,Tie-Dye,Regular,Tri-Blend,Full Front
+19,3,2,0,White,Regular,Performance Mesh,Full Front
+19,3,3,0,White,Oversized,Tri-Blend,Back Print
+19,4,1,0,Tie-Dye,Oversized,Performance Mesh,Small Logo
+19,4,2,0,Black,Oversized,Performance Mesh,Back Print
+19,4,3,1,Tie-Dye,Oversized,100% Cotton,Full Front
+19,5,1,0,White,Slim,Performance Mesh,Small Logo
+19,5,2,0,Tie-Dye,Regular,100% Cotton,Small Logo
+19,5,3,1,Tie-Dye,Slim,100% Cotton,Back Print
+19,6,1,1,Black,Oversized,100% Cotton,Full Front
+19,6,2,0,Tie-Dye,Slim,Performance Mesh,Back Print
+19,6,3,0,Black,Slim,Performance Mesh,Full Front
+19,7,1,1,Tie-Dye,Slim,Tri-Blend,Back Print
+19,7,2,0,Tie-Dye,Slim,100% Cotton,Small Logo
+19,7,3,0,Black,Regular,100% Cotton,Small Logo
+19,8,1,0,Black,Slim,Performance Mesh,Full Front
+19,8,2,1,Black,Slim,Performance Mesh,Full Front
+19,8,3,0,White,Slim,100% Cotton,Small Logo
+20,1,1,0,Black,Oversized,Performance Mesh,Full Front
+20,1,2,0,Black,Oversized,100% Cotton,Small Logo
+20,1,3,1,Tie-Dye,Slim,Tri-Blend,Back Print
+20,2,1,0,Black,Slim,100% Cotton,Full Front
+20,2,2,0,White,Slim,Tri-Blend,Small Logo
+20,2,3,1,Black,Regular,Tri-Blend,Back Print
+20,3,1,0,Black,Regular,Performance Mesh,Back Print
+20,3,2,0,White,Oversized,Performance Mesh,Full Front
+20,3,3,1,Tie-Dye,Oversized,Tri-Blend,Small Logo
+20,4,1,0,White,Regular,Performance Mesh,Full Front
+20,4,2,0,White,Regular,100% Cotton,Back Print
+20,4,3,1,Tie-Dye,Regular,100% Cotton,Full Front
+20,5,1,0,Black,Oversized,Tri-Blend,Back Print
+20,5,2,1,Tie-Dye,Oversized,Tri-Blend,Full Front
+20,5,3,0,Black,Regular,Performance Mesh,Small Logo
+20,6,1,0,Black,Slim,Performance Mesh,Full Front
+20,6,2,1,Black,Slim,100% Cotton,Small Logo
+20,6,3,0,White,Slim,Performance Mesh,Back Print
+20,7,1,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+20,7,2,0,Tie-Dye,Oversized,Performance Mesh,Small Logo
+20,7,3,0,White,Oversized,100% Cotton,Small Logo
+20,8,1,0,White,Oversized,100% Cotton,Small Logo
+20,8,2,1,White,Slim,Performance Mesh,Small Logo
+20,8,3,0,White,Slim,100% Cotton,Back Print
+21,1,1,0,White,Oversized,Performance Mesh,Back Print
+21,1,2,1,Tie-Dye,Oversized,Tri-Blend,Small Logo
+21,1,3,0,White,Oversized,Tri-Blend,Back Print
+21,2,1,1,Black,Regular,Tri-Blend,Full Front
+21,2,2,0,Tie-Dye,Oversized,Performance Mesh,Small Logo
+21,2,3,0,Tie-Dye,Slim,100% Cotton,Back Print
+21,3,1,1,Tie-Dye,Regular,Performance Mesh,Back Print
+21,3,2,0,White,Regular,100% Cotton,Small Logo
+21,3,3,0,Black,Regular,Performance Mesh,Small Logo
+21,4,1,0,Black,Regular,100% Cotton,Full Front
+21,4,2,0,Black,Regular,100% Cotton,Back Print
+21,4,3,1,White,Regular,100% Cotton,Full Front
+21,5,1,1,Tie-Dye,Regular,Tri-Blend,Back Print
+21,5,2,0,White,Regular,Performance Mesh,Full Front
+21,5,3,0,Black,Regular,Performance Mesh,Back Print
+21,6,1,0,White,Oversized,100% Cotton,Small Logo
+21,6,2,1,Black,Regular,Tri-Blend,Full Front
+21,6,3,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+21,7,1,1,Tie-Dye,Oversized,Performance Mesh,Back Print
+21,7,2,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+21,7,3,0,White,Regular,100% Cotton,Small Logo
+21,8,1,1,Tie-Dye,Slim,Tri-Blend,Full Front
+21,8,2,0,Black,Regular,100% Cotton,Small Logo
+21,8,3,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+22,1,1,0,White,Regular,Performance Mesh,Small Logo
+22,1,2,1,White,Regular,Performance Mesh,Full Front
+22,1,3,0,White,Slim,Tri-Blend,Full Front
+22,2,1,0,White,Slim,Tri-Blend,Full Front
+22,2,2,0,White,Slim,Performance Mesh,Small Logo
+22,2,3,1,Black,Oversized,100% Cotton,Small Logo
+22,3,1,1,Black,Regular,Performance Mesh,Small Logo
+22,3,2,0,Black,Regular,100% Cotton,Back Print
+22,3,3,0,Tie-Dye,Slim,Tri-Blend,Full Front
+22,4,1,1,White,Slim,100% Cotton,Back Print
+22,4,2,0,Black,Regular,Tri-Blend,Back Print
+22,4,3,0,White,Slim,Tri-Blend,Back Print
+22,5,1,0,Black,Oversized,100% Cotton,Back Print
+22,5,2,1,White,Slim,Tri-Blend,Small Logo
+22,5,3,0,Tie-Dye,Oversized,Tri-Blend,Back Print
+22,6,1,0,White,Slim,Performance Mesh,Small Logo
+22,6,2,1,Black,Regular,Tri-Blend,Small Logo
+22,6,3,0,White,Slim,100% Cotton,Small Logo
+22,7,1,1,Tie-Dye,Slim,Performance Mesh,Small Logo
+22,7,2,0,White,Regular,Performance Mesh,Back Print
+22,7,3,0,Black,Regular,100% Cotton,Back Print
+22,8,1,1,White,Oversized,100% Cotton,Small Logo
+22,8,2,0,White,Oversized,Tri-Blend,Back Print
+22,8,3,0,White,Slim,Tri-Blend,Small Logo
+23,1,1,0,White,Regular,Performance Mesh,Small Logo
+23,1,2,1,Tie-Dye,Regular,Tri-Blend,Full Front
+23,1,3,0,White,Oversized,Performance Mesh,Full Front
+23,2,1,0,White,Regular,100% Cotton,Full Front
+23,2,2,0,White,Regular,100% Cotton,Full Front
+23,2,3,1,Black,Oversized,Tri-Blend,Small Logo
+23,3,1,0,Black,Regular,100% Cotton,Back Print
+23,3,2,1,Black,Regular,100% Cotton,Back Print
+23,3,3,0,Black,Slim,100% Cotton,Full Front
+23,4,1,0,White,Regular,Performance Mesh,Back Print
+23,4,2,1,Tie-Dye,Oversized,Tri-Blend,Small Logo
+23,4,3,0,Black,Slim,Performance Mesh,Full Front
+23,5,1,0,Black,Regular,Performance Mesh,Small Logo
+23,5,2,0,Black,Regular,100% Cotton,Back Print
+23,5,3,1,White,Slim,Performance Mesh,Back Print
+23,6,1,0,Tie-Dye,Regular,Tri-Blend,Full Front
+23,6,2,0,Tie-Dye,Slim,Tri-Blend,Full Front
+23,6,3,1,Tie-Dye,Oversized,Performance Mesh,Small Logo
+23,7,1,0,Black,Slim,100% Cotton,Full Front
+23,7,2,0,Black,Slim,100% Cotton,Back Print
+23,7,3,1,Tie-Dye,Slim,Performance Mesh,Small Logo
+23,8,1,0,White,Slim,Tri-Blend,Full Front
+23,8,2,0,White,Slim,100% Cotton,Back Print
+23,8,3,1,Black,Slim,Tri-Blend,Full Front
+24,1,1,0,Tie-Dye,Oversized,100% Cotton,Full Front
+24,1,2,0,Tie-Dye,Slim,Tri-Blend,Back Print
+24,1,3,1,Tie-Dye,Oversized,100% Cotton,Small Logo
+24,2,1,0,Tie-Dye,Oversized,100% Cotton,Small Logo
+24,2,2,0,Black,Oversized,Performance Mesh,Small Logo
+24,2,3,1,White,Oversized,Performance Mesh,Back Print
+24,3,1,1,White,Slim,100% Cotton,Full Front
+24,3,2,0,Tie-Dye,Slim,100% Cotton,Back Print
+24,3,3,0,Tie-Dye,Oversized,Performance Mesh,Full Front
+24,4,1,1,Black,Regular,100% Cotton,Back Print
+24,4,2,0,Tie-Dye,Slim,Tri-Blend,Full Front
+24,4,3,0,Tie-Dye,Regular,Tri-Blend,Back Print
+24,5,1,1,Tie-Dye,Slim,100% Cotton,Small Logo
+24,5,2,0,Tie-Dye,Slim,100% Cotton,Back Print
+24,5,3,0,Tie-Dye,Slim,100% Cotton,Back Print
+24,6,1,0,White,Oversized,Tri-Blend,Small Logo
+24,6,2,1,White,Regular,Performance Mesh,Full Front
+24,6,3,0,Tie-Dye,Slim,100% Cotton,Small Logo
+24,7,1,1,White,Regular,Tri-Blend,Small Logo
+24,7,2,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+24,7,3,0,Tie-Dye,Oversized,Tri-Blend,Back Print
+24,8,1,1,Black,Regular,100% Cotton,Full Front
+24,8,2,0,Tie-Dye,Regular,100% Cotton,Small Logo
+24,8,3,0,Black,Regular,Performance Mesh,Back Print
+25,1,1,0,Tie-Dye,Slim,100% Cotton,Small Logo
+25,1,2,0,Black,Regular,100% Cotton,Small Logo
+25,1,3,1,Black,Regular,Tri-Blend,Back Print
+25,2,1,0,Tie-Dye,Slim,Performance Mesh,Full Front
+25,2,2,1,White,Oversized,100% Cotton,Small Logo
+25,2,3,0,Black,Oversized,100% Cotton,Small Logo
+25,3,1,0,Tie-Dye,Oversized,Tri-Blend,Small Logo
+25,3,2,0,Black,Regular,100% Cotton,Back Print
+25,3,3,1,White,Slim,Performance Mesh,Full Front
+25,4,1,0,White,Regular,Tri-Blend,Small Logo
+25,4,2,0,Black,Regular,100% Cotton,Small Logo
+25,4,3,1,Black,Slim,100% Cotton,Full Front
+25,5,1,0,Black,Slim,Performance Mesh,Full Front
+25,5,2,0,Black,Regular,Performance Mesh,Small Logo
+25,5,3,1,Black,Slim,100% Cotton,Full Front
+25,6,1,1,Tie-Dye,Regular,Tri-Blend,Back Print
+25,6,2,0,Black,Slim,100% Cotton,Small Logo
+25,6,3,0,White,Oversized,100% Cotton,Small Logo
+25,7,1,1,Tie-Dye,Oversized,Tri-Blend,Back Print
+25,7,2,0,White,Regular,Performance Mesh,Small Logo
+25,7,3,0,Black,Oversized,Performance Mesh,Back Print
+25,8,1,1,Tie-Dye,Oversized,Performance Mesh,Full Front
+25,8,2,0,Black,Oversized,Tri-Blend,Back Print
+25,8,3,0,White,Slim,Tri-Blend,Back Print
+26,1,1,0,White,Oversized,Tri-Blend,Back Print
+26,1,2,1,White,Regular,Performance Mesh,Back Print
+26,1,3,0,White,Regular,Performance Mesh,Small Logo
+26,2,1,0,White,Oversized,Performance Mesh,Full Front
+26,2,2,1,Black,Oversized,100% Cotton,Small Logo
+26,2,3,0,Black,Slim,Tri-Blend,Back Print
+26,3,1,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+26,3,2,1,White,Oversized,Tri-Blend,Full Front
+26,3,3,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+26,4,1,1,Tie-Dye,Regular,Performance Mesh,Back Print
+26,4,2,0,White,Slim,100% Cotton,Small Logo
+26,4,3,0,White,Oversized,Performance Mesh,Small Logo
+26,5,1,1,White,Oversized,Tri-Blend,Full Front
+26,5,2,0,Black,Slim,Tri-Blend,Full Front
+26,5,3,0,Black,Slim,Tri-Blend,Full Front
+26,6,1,0,Black,Slim,100% Cotton,Back Print
+26,6,2,1,White,Oversized,Tri-Blend,Full Front
+26,6,3,0,White,Oversized,Performance Mesh,Small Logo
+26,7,1,0,Tie-Dye,Oversized,100% Cotton,Small Logo
+26,7,2,0,Tie-Dye,Oversized,100% Cotton,Full Front
+26,7,3,1,White,Oversized,Tri-Blend,Full Front
+26,8,1,1,Black,Slim,100% Cotton,Full Front
+26,8,2,0,White,Regular,Tri-Blend,Small Logo
+26,8,3,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+27,1,1,0,Tie-Dye,Oversized,Tri-Blend,Full Front
+27,1,2,1,Tie-Dye,Slim,Tri-Blend,Small Logo
+27,1,3,0,Black,Oversized,Performance Mesh,Back Print
+27,2,1,0,Tie-Dye,Slim,Performance Mesh,Back Print
+27,2,2,1,White,Slim,100% Cotton,Back Print
+27,2,3,0,Tie-Dye,Oversized,Performance Mesh,Full Front
+27,3,1,0,White,Regular,Tri-Blend,Full Front
+27,3,2,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+27,3,3,1,Black,Regular,Tri-Blend,Back Print
+27,4,1,0,Tie-Dye,Oversized,Performance Mesh,Back Print
+27,4,2,1,White,Regular,100% Cotton,Back Print
+27,4,3,0,Tie-Dye,Regular,Tri-Blend,Back Print
+27,5,1,0,Tie-Dye,Slim,100% Cotton,Small Logo
+27,5,2,0,Tie-Dye,Regular,100% Cotton,Full Front
+27,5,3,1,Black,Regular,100% Cotton,Back Print
+27,6,1,0,Black,Oversized,100% Cotton,Small Logo
+27,6,2,0,White,Oversized,Performance Mesh,Small Logo
+27,6,3,1,White,Oversized,Tri-Blend,Small Logo
+27,7,1,0,Black,Oversized,Tri-Blend,Back Print
+27,7,2,1,Black,Regular,100% Cotton,Small Logo
+27,7,3,0,Tie-Dye,Oversized,Tri-Blend,Back Print
+27,8,1,0,Tie-Dye,Slim,Performance Mesh,Back Print
+27,8,2,1,Tie-Dye,Slim,100% Cotton,Back Print
+27,8,3,0,White,Oversized,Performance Mesh,Full Front
+28,1,1,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+28,1,2,0,Black,Regular,Performance Mesh,Full Front
+28,1,3,0,Black,Regular,100% Cotton,Back Print
+28,2,1,0,Black,Oversized,Tri-Blend,Back Print
+28,2,2,0,Black,Oversized,Performance Mesh,Full Front
+28,2,3,1,Tie-Dye,Slim,Tri-Blend,Back Print
+28,3,1,0,White,Slim,Performance Mesh,Full Front
+28,3,2,0,Black,Regular,100% Cotton,Full Front
+28,3,3,1,Black,Oversized,100% Cotton,Small Logo
+28,4,1,0,Black,Slim,100% Cotton,Small Logo
+28,4,2,1,Black,Oversized,Performance Mesh,Full Front
+28,4,3,0,White,Slim,Tri-Blend,Full Front
+28,5,1,0,White,Slim,Tri-Blend,Back Print
+28,5,2,0,Black,Slim,100% Cotton,Full Front
+28,5,3,1,Tie-Dye,Regular,Tri-Blend,Full Front
+28,6,1,0,White,Slim,Performance Mesh,Small Logo
+28,6,2,1,Tie-Dye,Oversized,100% Cotton,Full Front
+28,6,3,0,Black,Oversized,Performance Mesh,Small Logo
+28,7,1,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+28,7,2,0,White,Slim,100% Cotton,Full Front
+28,7,3,1,Tie-Dye,Regular,Tri-Blend,Full Front
+28,8,1,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+28,8,2,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+28,8,3,0,White,Oversized,100% Cotton,Full Front
+29,1,1,0,Black,Oversized,100% Cotton,Small Logo
+29,1,2,1,Black,Slim,100% Cotton,Small Logo
+29,1,3,0,White,Oversized,100% Cotton,Small Logo
+29,2,1,1,White,Oversized,Tri-Blend,Full Front
+29,2,2,0,Tie-Dye,Oversized,100% Cotton,Small Logo
+29,2,3,0,Black,Oversized,Tri-Blend,Small Logo
+29,3,1,1,Tie-Dye,Slim,Tri-Blend,Small Logo
+29,3,2,0,White,Regular,100% Cotton,Small Logo
+29,3,3,0,White,Slim,Tri-Blend,Small Logo
+29,4,1,1,Tie-Dye,Oversized,Performance Mesh,Back Print
+29,4,2,0,Tie-Dye,Oversized,100% Cotton,Full Front
+29,4,3,0,Black,Regular,Performance Mesh,Small Logo
+29,5,1,1,Tie-Dye,Slim,Tri-Blend,Full Front
+29,5,2,0,White,Regular,100% Cotton,Back Print
+29,5,3,0,Black,Oversized,Tri-Blend,Back Print
+29,6,1,0,Black,Regular,Performance Mesh,Back Print
+29,6,2,0,White,Regular,Performance Mesh,Back Print
+29,6,3,1,Tie-Dye,Regular,Tri-Blend,Full Front
+29,7,1,1,Tie-Dye,Oversized,100% Cotton,Small Logo
+29,7,2,0,White,Slim,100% Cotton,Small Logo
+29,7,3,0,White,Slim,100% Cotton,Back Print
+29,8,1,0,White,Slim,100% Cotton,Back Print
+29,8,2,1,Tie-Dye,Slim,100% Cotton,Full Front
+29,8,3,0,White,Slim,100% Cotton,Small Logo
+30,1,1,0,Black,Oversized,Performance Mesh,Small Logo
+30,1,2,1,Tie-Dye,Regular,Tri-Blend,Full Front
+30,1,3,0,Tie-Dye,Slim,Performance Mesh,Back Print
+30,2,1,1,White,Regular,Tri-Blend,Small Logo
+30,2,2,0,White,Regular,Tri-Blend,Back Print
+30,2,3,0,Tie-Dye,Oversized,Performance Mesh,Small Logo
+30,3,1,1,Tie-Dye,Slim,Tri-Blend,Full Front
+30,3,2,0,White,Slim,Tri-Blend,Full Front
+30,3,3,0,Tie-Dye,Slim,Performance Mesh,Back Print
+30,4,1,0,White,Slim,100% Cotton,Full Front
+30,4,2,1,Black,Oversized,Performance Mesh,Back Print
+30,4,3,0,White,Regular,Tri-Blend,Back Print
+30,5,1,0,White,Oversized,100% Cotton,Back Print
+30,5,2,0,White,Regular,100% Cotton,Full Front
+30,5,3,1,Tie-Dye,Oversized,Performance Mesh,Full Front
+30,6,1,1,Black,Regular,Performance Mesh,Back Print
+30,6,2,0,White,Slim,Performance Mesh,Small Logo
+30,6,3,0,White,Slim,Tri-Blend,Back Print
+30,7,1,1,Black,Regular,Performance Mesh,Full Front
+30,7,2,0,White,Slim,100% Cotton,Small Logo
+30,7,3,0,Black,Slim,Performance Mesh,Full Front
+30,8,1,0,Tie-Dye,Oversized,Performance Mesh,Back Print
+30,8,2,0,White,Slim,100% Cotton,Back Print
+30,8,3,1,Tie-Dye,Slim,Tri-Blend,Full Front
+31,1,1,0,Black,Regular,Tri-Blend,Full Front
+31,1,2,1,Tie-Dye,Slim,100% Cotton,Back Print
+31,1,3,0,Black,Slim,Performance Mesh,Small Logo
+31,2,1,0,White,Regular,100% Cotton,Full Front
+31,2,2,1,Black,Oversized,Performance Mesh,Small Logo
+31,2,3,0,Black,Regular,Performance Mesh,Back Print
+31,3,1,1,White,Regular,Tri-Blend,Back Print
+31,3,2,0,Black,Oversized,Performance Mesh,Back Print
+31,3,3,0,Black,Regular,Tri-Blend,Small Logo
+31,4,1,1,Black,Slim,100% Cotton,Small Logo
+31,4,2,0,Black,Oversized,Performance Mesh,Back Print
+31,4,3,0,Black,Oversized,100% Cotton,Back Print
+31,5,1,0,Black,Regular,Tri-Blend,Back Print
+31,5,2,1,Black,Regular,Tri-Blend,Small Logo
+31,5,3,0,Black,Regular,Tri-Blend,Full Front
+31,6,1,0,Tie-Dye,Slim,Performance Mesh,Full Front
+31,6,2,0,Black,Slim,Performance Mesh,Full Front
+31,6,3,1,Black,Slim,100% Cotton,Back Print
+31,7,1,0,Black,Oversized,Performance Mesh,Back Print
+31,7,2,1,Tie-Dye,Regular,Performance Mesh,Back Print
+31,7,3,0,White,Regular,100% Cotton,Small Logo
+31,8,1,1,White,Slim,Tri-Blend,Back Print
+31,8,2,0,Tie-Dye,Slim,100% Cotton,Full Front
+31,8,3,0,Black,Slim,Performance Mesh,Back Print
+32,1,1,1,Tie-Dye,Slim,Performance Mesh,Back Print
+32,1,2,0,Black,Slim,100% Cotton,Back Print
+32,1,3,0,Black,Regular,Performance Mesh,Back Print
+32,2,1,0,White,Regular,Tri-Blend,Small Logo
+32,2,2,0,White,Slim,Performance Mesh,Full Front
+32,2,3,1,White,Oversized,Performance Mesh,Back Print
+32,3,1,0,Black,Oversized,Tri-Blend,Back Print
+32,3,2,0,White,Slim,Performance Mesh,Small Logo
+32,3,3,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+32,4,1,0,White,Regular,Performance Mesh,Full Front
+32,4,2,1,Tie-Dye,Slim,Tri-Blend,Back Print
+32,4,3,0,Black,Slim,Performance Mesh,Back Print
+32,5,1,0,Tie-Dye,Oversized,100% Cotton,Back Print
+32,5,2,0,Tie-Dye,Regular,Performance Mesh,Full Front
+32,5,3,1,Tie-Dye,Slim,100% Cotton,Full Front
+32,6,1,1,Tie-Dye,Regular,Tri-Blend,Full Front
+32,6,2,0,Black,Slim,Performance Mesh,Small Logo
+32,6,3,0,Tie-Dye,Oversized,Performance Mesh,Small Logo
+32,7,1,0,Black,Oversized,100% Cotton,Small Logo
+32,7,2,0,White,Slim,Performance Mesh,Full Front
+32,7,3,1,Tie-Dye,Oversized,Tri-Blend,Full Front
+32,8,1,1,Tie-Dye,Slim,100% Cotton,Full Front
+32,8,2,0,Black,Slim,Performance Mesh,Back Print
+32,8,3,0,White,Slim,100% Cotton,Full Front
+33,1,1,0,White,Oversized,Tri-Blend,Back Print
+33,1,2,0,Black,Oversized,100% Cotton,Back Print
+33,1,3,1,Black,Oversized,Performance Mesh,Full Front
+33,2,1,0,Tie-Dye,Regular,100% Cotton,Small Logo
+33,2,2,1,Tie-Dye,Regular,Tri-Blend,Back Print
+33,2,3,0,Black,Oversized,100% Cotton,Full Front
+33,3,1,0,Tie-Dye,Oversized,Tri-Blend,Full Front
+33,3,2,1,Black,Slim,100% Cotton,Full Front
+33,3,3,0,White,Oversized,100% Cotton,Full Front
+33,4,1,1,Tie-Dye,Oversized,100% Cotton,Small Logo
+33,4,2,0,White,Slim,Tri-Blend,Small Logo
+33,4,3,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+33,5,1,0,White,Slim,100% Cotton,Full Front
+33,5,2,1,Tie-Dye,Oversized,Tri-Blend,Small Logo
+33,5,3,0,White,Slim,100% Cotton,Full Front
+33,6,1,1,Tie-Dye,Slim,Performance Mesh,Back Print
+33,6,2,0,Tie-Dye,Regular,100% Cotton,Small Logo
+33,6,3,0,Black,Slim,Performance Mesh,Full Front
+33,7,1,0,White,Slim,100% Cotton,Small Logo
+33,7,2,0,White,Regular,100% Cotton,Small Logo
+33,7,3,1,Tie-Dye,Regular,Performance Mesh,Back Print
+33,8,1,1,Black,Regular,100% Cotton,Full Front
+33,8,2,0,White,Regular,Performance Mesh,Full Front
+33,8,3,0,Black,Regular,Performance Mesh,Small Logo
+34,1,1,1,White,Oversized,100% Cotton,Full Front
+34,1,2,0,Black,Oversized,Performance Mesh,Back Print
+34,1,3,0,Tie-Dye,Oversized,Tri-Blend,Full Front
+34,2,1,1,Tie-Dye,Slim,Tri-Blend,Full Front
+34,2,2,0,Black,Slim,Performance Mesh,Small Logo
+34,2,3,0,Tie-Dye,Slim,Performance Mesh,Full Front
+34,3,1,0,Black,Slim,100% Cotton,Full Front
+34,3,2,0,White,Slim,Performance Mesh,Small Logo
+34,3,3,1,Tie-Dye,Oversized,Performance Mesh,Full Front
+34,4,1,1,Tie-Dye,Regular,Performance Mesh,Small Logo
+34,4,2,0,Black,Slim,100% Cotton,Small Logo
+34,4,3,0,Tie-Dye,Regular,Performance Mesh,Full Front
+34,5,1,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+34,5,2,1,White,Regular,Performance Mesh,Full Front
+34,5,3,0,Black,Regular,Tri-Blend,Full Front
+34,6,1,0,Tie-Dye,Slim,100% Cotton,Back Print
+34,6,2,0,Tie-Dye,Slim,100% Cotton,Back Print
+34,6,3,1,Black,Regular,Performance Mesh,Full Front
+34,7,1,0,Tie-Dye,Oversized,100% Cotton,Small Logo
+34,7,2,1,Black,Oversized,100% Cotton,Small Logo
+34,7,3,0,White,Regular,Performance Mesh,Small Logo
+34,8,1,0,Tie-Dye,Oversized,Performance Mesh,Small Logo
+34,8,2,0,Black,Slim,Performance Mesh,Back Print
+34,8,3,1,White,Regular,Tri-Blend,Back Print
+35,1,1,1,White,Slim,Performance Mesh,Full Front
+35,1,2,0,White,Regular,Tri-Blend,Small Logo
+35,1,3,0,Tie-Dye,Slim,100% Cotton,Small Logo
+35,2,1,0,Black,Regular,100% Cotton,Small Logo
+35,2,2,1,Tie-Dye,Oversized,Tri-Blend,Small Logo
+35,2,3,0,Tie-Dye,Slim,Tri-Blend,Full Front
+35,3,1,1,White,Slim,Tri-Blend,Back Print
+35,3,2,0,Tie-Dye,Regular,Tri-Blend,Full Front
+35,3,3,0,Tie-Dye,Slim,100% Cotton,Back Print
+35,4,1,0,White,Oversized,Performance Mesh,Small Logo
+35,4,2,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+35,4,3,1,Tie-Dye,Regular,Tri-Blend,Back Print
+35,5,1,0,White,Regular,Performance Mesh,Full Front
+35,5,2,0,Black,Slim,Performance Mesh,Full Front
+35,5,3,1,White,Regular,Performance Mesh,Back Print
+35,6,1,0,White,Slim,Tri-Blend,Full Front
+35,6,2,0,White,Regular,100% Cotton,Full Front
+35,6,3,1,White,Oversized,Tri-Blend,Back Print
+35,7,1,0,Tie-Dye,Oversized,100% Cotton,Full Front
+35,7,2,0,Black,Slim,100% Cotton,Full Front
+35,7,3,1,Black,Oversized,100% Cotton,Small Logo
+35,8,1,1,Black,Oversized,Tri-Blend,Full Front
+35,8,2,0,Black,Slim,100% Cotton,Full Front
+35,8,3,0,Black,Slim,Tri-Blend,Small Logo
+36,1,1,0,Black,Oversized,Performance Mesh,Back Print
+36,1,2,0,Black,Regular,100% Cotton,Full Front
+36,1,3,1,Tie-Dye,Oversized,100% Cotton,Small Logo
+36,2,1,1,Black,Oversized,100% Cotton,Back Print
+36,2,2,0,Tie-Dye,Oversized,100% Cotton,Small Logo
+36,2,3,0,Black,Slim,100% Cotton,Small Logo
+36,3,1,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+36,3,2,0,White,Oversized,Tri-Blend,Small Logo
+36,3,3,0,White,Regular,100% Cotton,Small Logo
+36,4,1,1,Black,Oversized,100% Cotton,Back Print
+36,4,2,0,Black,Slim,100% Cotton,Full Front
+36,4,3,0,Black,Slim,Tri-Blend,Small Logo
+36,5,1,0,Black,Regular,Performance Mesh,Small Logo
+36,5,2,1,Tie-Dye,Regular,Performance Mesh,Back Print
+36,5,3,0,White,Slim,Performance Mesh,Small Logo
+36,6,1,1,Tie-Dye,Oversized,100% Cotton,Small Logo
+36,6,2,0,White,Oversized,Performance Mesh,Back Print
+36,6,3,0,White,Regular,100% Cotton,Small Logo
+36,7,1,0,Black,Oversized,Performance Mesh,Small Logo
+36,7,2,0,Black,Oversized,Tri-Blend,Back Print
+36,7,3,1,Black,Oversized,Tri-Blend,Back Print
+36,8,1,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+36,8,2,0,White,Slim,Tri-Blend,Back Print
+36,8,3,1,Black,Oversized,Tri-Blend,Small Logo
+37,1,1,0,White,Oversized,100% Cotton,Back Print
+37,1,2,0,Tie-Dye,Slim,100% Cotton,Small Logo
+37,1,3,1,Tie-Dye,Oversized,Tri-Blend,Back Print
+37,2,1,0,White,Regular,Performance Mesh,Full Front
+37,2,2,0,Black,Regular,Performance Mesh,Back Print
+37,2,3,1,White,Oversized,Tri-Blend,Full Front
+37,3,1,0,Tie-Dye,Slim,Performance Mesh,Full Front
+37,3,2,1,Tie-Dye,Slim,100% Cotton,Full Front
+37,3,3,0,Black,Oversized,Tri-Blend,Small Logo
+37,4,1,0,White,Oversized,Performance Mesh,Small Logo
+37,4,2,0,White,Regular,Tri-Blend,Small Logo
+37,4,3,1,Tie-Dye,Oversized,Tri-Blend,Back Print
+37,5,1,0,Black,Slim,Performance Mesh,Back Print
+37,5,2,1,White,Regular,Tri-Blend,Full Front
+37,5,3,0,Tie-Dye,Slim,Tri-Blend,Full Front
+37,6,1,0,White,Regular,100% Cotton,Small Logo
+37,6,2,1,Tie-Dye,Oversized,Tri-Blend,Small Logo
+37,6,3,0,White,Slim,100% Cotton,Small Logo
+37,7,1,0,Black,Oversized,Performance Mesh,Full Front
+37,7,2,1,Tie-Dye,Oversized,Tri-Blend,Small Logo
+37,7,3,0,Tie-Dye,Regular,Tri-Blend,Full Front
+37,8,1,0,Black,Regular,Performance Mesh,Full Front
+37,8,2,1,Tie-Dye,Oversized,100% Cotton,Full Front
+37,8,3,0,Tie-Dye,Regular,Tri-Blend,Back Print
+38,1,1,1,White,Oversized,100% Cotton,Back Print
+38,1,2,0,Black,Regular,100% Cotton,Small Logo
+38,1,3,0,Black,Oversized,Performance Mesh,Small Logo
+38,2,1,0,Tie-Dye,Slim,100% Cotton,Small Logo
+38,2,2,1,Black,Regular,Performance Mesh,Full Front
+38,2,3,0,Black,Regular,Tri-Blend,Full Front
+38,3,1,1,White,Regular,100% Cotton,Small Logo
+38,3,2,0,Tie-Dye,Slim,Tri-Blend,Back Print
+38,3,3,0,Tie-Dye,Slim,100% Cotton,Small Logo
+38,4,1,0,Black,Oversized,Performance Mesh,Small Logo
+38,4,2,1,White,Regular,Tri-Blend,Small Logo
+38,4,3,0,Tie-Dye,Oversized,100% Cotton,Small Logo
+38,5,1,1,White,Slim,Tri-Blend,Back Print
+38,5,2,0,Tie-Dye,Slim,100% Cotton,Back Print
+38,5,3,0,Tie-Dye,Regular,Performance Mesh,Back Print
+38,6,1,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+38,6,2,1,White,Regular,Tri-Blend,Small Logo
+38,6,3,0,Black,Slim,100% Cotton,Small Logo
+38,7,1,0,Black,Oversized,Performance Mesh,Back Print
+38,7,2,1,White,Slim,100% Cotton,Full Front
+38,7,3,0,Black,Oversized,Performance Mesh,Full Front
+38,8,1,0,Black,Regular,Tri-Blend,Back Print
+38,8,2,1,White,Regular,Performance Mesh,Back Print
+38,8,3,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+39,1,1,0,Black,Regular,Performance Mesh,Full Front
+39,1,2,0,White,Regular,Performance Mesh,Back Print
+39,1,3,1,Tie-Dye,Oversized,Tri-Blend,Small Logo
+39,2,1,0,Black,Regular,Performance Mesh,Small Logo
+39,2,2,1,Black,Slim,100% Cotton,Full Front
+39,2,3,0,Black,Slim,Performance Mesh,Back Print
+39,3,1,0,White,Slim,Tri-Blend,Full Front
+39,3,2,0,Tie-Dye,Regular,100% Cotton,Small Logo
+39,3,3,1,Tie-Dye,Oversized,Performance Mesh,Small Logo
+39,4,1,0,White,Slim,Performance Mesh,Small Logo
+39,4,2,1,Black,Regular,Tri-Blend,Back Print
+39,4,3,0,Black,Regular,Tri-Blend,Full Front
+39,5,1,1,Tie-Dye,Regular,Performance Mesh,Back Print
+39,5,2,0,Black,Slim,100% Cotton,Back Print
+39,5,3,0,Tie-Dye,Slim,100% Cotton,Small Logo
+39,6,1,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+39,6,2,0,Black,Slim,100% Cotton,Full Front
+39,6,3,0,Black,Slim,Tri-Blend,Small Logo
+39,7,1,0,Black,Oversized,Performance Mesh,Back Print
+39,7,2,1,Black,Oversized,100% Cotton,Back Print
+39,7,3,0,Black,Oversized,Performance Mesh,Small Logo
+39,8,1,1,Black,Oversized,Performance Mesh,Full Front
+39,8,2,0,White,Oversized,Tri-Blend,Full Front
+39,8,3,0,Black,Regular,Performance Mesh,Small Logo
+40,1,1,0,Black,Slim,100% Cotton,Small Logo
+40,1,2,0,White,Slim,Tri-Blend,Small Logo
+40,1,3,1,White,Regular,Tri-Blend,Back Print
+40,2,1,1,Black,Slim,Performance Mesh,Back Print
+40,2,2,0,Black,Slim,Tri-Blend,Back Print
+40,2,3,0,White,Regular,100% Cotton,Small Logo
+40,3,1,0,Tie-Dye,Slim,Tri-Blend,Full Front
+40,3,2,0,Tie-Dye,Regular,100% Cotton,Full Front
+40,3,3,1,Black,Slim,Performance Mesh,Back Print
+40,4,1,0,Black,Regular,100% Cotton,Small Logo
+40,4,2,0,White,Oversized,Tri-Blend,Back Print
+40,4,3,1,Black,Regular,Performance Mesh,Small Logo
+40,5,1,0,Tie-Dye,Oversized,100% Cotton,Full Front
+40,5,2,1,White,Slim,100% Cotton,Small Logo
+40,5,3,0,White,Oversized,100% Cotton,Small Logo
+40,6,1,1,Black,Regular,Performance Mesh,Small Logo
+40,6,2,0,Black,Oversized,100% Cotton,Back Print
+40,6,3,0,Black,Slim,Tri-Blend,Full Front
+40,7,1,0,Black,Oversized,Performance Mesh,Small Logo
+40,7,2,1,White,Slim,Performance Mesh,Full Front
+40,7,3,0,Tie-Dye,Oversized,Performance Mesh,Back Print
+40,8,1,1,White,Slim,100% Cotton,Back Print
+40,8,2,0,White,Regular,Tri-Blend,Small Logo
+40,8,3,0,White,Regular,Tri-Blend,Back Print
+41,1,1,0,Black,Slim,Tri-Blend,Full Front
+41,1,2,1,White,Slim,Tri-Blend,Back Print
+41,1,3,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+41,2,1,1,Black,Regular,Tri-Blend,Back Print
+41,2,2,0,Tie-Dye,Regular,100% Cotton,Full Front
+41,2,3,0,White,Regular,100% Cotton,Small Logo
+41,3,1,0,White,Slim,Tri-Blend,Full Front
+41,3,2,0,White,Slim,Performance Mesh,Full Front
+41,3,3,1,Black,Regular,Performance Mesh,Back Print
+41,4,1,0,Black,Slim,100% Cotton,Full Front
+41,4,2,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+41,4,3,1,White,Slim,Tri-Blend,Back Print
+41,5,1,1,Tie-Dye,Oversized,100% Cotton,Small Logo
+41,5,2,0,Black,Regular,Performance Mesh,Full Front
+41,5,3,0,Tie-Dye,Regular,100% Cotton,Small Logo
+41,6,1,0,White,Slim,Performance Mesh,Small Logo
+41,6,2,0,White,Regular,Performance Mesh,Back Print
+41,6,3,1,White,Oversized,Performance Mesh,Full Front
+41,7,1,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+41,7,2,0,White,Slim,Performance Mesh,Small Logo
+41,7,3,1,White,Regular,Performance Mesh,Back Print
+41,8,1,0,Black,Regular,Tri-Blend,Small Logo
+41,8,2,0,Black,Oversized,Performance Mesh,Full Front
+41,8,3,1,Tie-Dye,Oversized,100% Cotton,Full Front
+42,1,1,1,White,Slim,Tri-Blend,Full Front
+42,1,2,0,White,Slim,100% Cotton,Back Print
+42,1,3,0,White,Oversized,100% Cotton,Back Print
+42,2,1,0,Black,Oversized,100% Cotton,Small Logo
+42,2,2,1,Black,Regular,Performance Mesh,Small Logo
+42,2,3,0,White,Regular,Performance Mesh,Full Front
+42,3,1,1,Black,Slim,100% Cotton,Back Print
+42,3,2,0,Tie-Dye,Slim,Tri-Blend,Full Front
+42,3,3,0,Black,Slim,Performance Mesh,Full Front
+42,4,1,0,Tie-Dye,Oversized,100% Cotton,Full Front
+42,4,2,1,Black,Slim,Tri-Blend,Back Print
+42,4,3,0,Black,Slim,Performance Mesh,Small Logo
+42,5,1,1,Tie-Dye,Oversized,100% Cotton,Full Front
+42,5,2,0,White,Regular,100% Cotton,Full Front
+42,5,3,0,Black,Slim,100% Cotton,Full Front
+42,6,1,1,White,Regular,Performance Mesh,Small Logo
+42,6,2,0,Black,Slim,Tri-Blend,Back Print
+42,6,3,0,White,Oversized,Tri-Blend,Full Front
+42,7,1,1,Tie-Dye,Oversized,Tri-Blend,Small Logo
+42,7,2,0,Black,Regular,Performance Mesh,Small Logo
+42,7,3,0,Black,Oversized,Performance Mesh,Full Front
+42,8,1,0,White,Oversized,100% Cotton,Full Front
+42,8,2,1,White,Oversized,100% Cotton,Back Print
+42,8,3,0,Tie-Dye,Slim,Tri-Blend,Back Print
+43,1,1,0,Tie-Dye,Oversized,Performance Mesh,Back Print
+43,1,2,1,Black,Regular,Performance Mesh,Small Logo
+43,1,3,0,White,Regular,Performance Mesh,Full Front
+43,2,1,1,Black,Regular,100% Cotton,Small Logo
+43,2,2,0,White,Slim,Performance Mesh,Small Logo
+43,2,3,0,White,Slim,Tri-Blend,Small Logo
+43,3,1,0,Black,Slim,100% Cotton,Small Logo
+43,3,2,1,Tie-Dye,Slim,Tri-Blend,Back Print
+43,3,3,0,White,Oversized,100% Cotton,Back Print
+43,4,1,1,Black,Regular,Performance Mesh,Small Logo
+43,4,2,0,Black,Regular,100% Cotton,Back Print
+43,4,3,0,Black,Oversized,Tri-Blend,Small Logo
+43,5,1,1,White,Slim,Performance Mesh,Full Front
+43,5,2,0,Black,Regular,Performance Mesh,Full Front
+43,5,3,0,Tie-Dye,Slim,Performance Mesh,Back Print
+43,6,1,0,Tie-Dye,Slim,Tri-Blend,Back Print
+43,6,2,0,Black,Oversized,100% Cotton,Full Front
+43,6,3,1,White,Oversized,Tri-Blend,Full Front
+43,7,1,0,White,Regular,Tri-Blend,Small Logo
+43,7,2,1,Black,Oversized,100% Cotton,Full Front
+43,7,3,0,Tie-Dye,Slim,100% Cotton,Full Front
+43,8,1,0,White,Oversized,100% Cotton,Small Logo
+43,8,2,0,Black,Regular,100% Cotton,Small Logo
+43,8,3,1,White,Oversized,100% Cotton,Small Logo
+44,1,1,0,Tie-Dye,Slim,Tri-Blend,Back Print
+44,1,2,1,Black,Slim,Performance Mesh,Full Front
+44,1,3,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+44,2,1,0,White,Slim,Performance Mesh,Small Logo
+44,2,2,1,Tie-Dye,Slim,100% Cotton,Full Front
+44,2,3,0,Black,Slim,Performance Mesh,Back Print
+44,3,1,1,White,Slim,100% Cotton,Full Front
+44,3,2,0,Tie-Dye,Slim,100% Cotton,Small Logo
+44,3,3,0,Black,Slim,100% Cotton,Back Print
+44,4,1,0,White,Regular,Tri-Blend,Small Logo
+44,4,2,0,Black,Regular,Tri-Blend,Small Logo
+44,4,3,1,White,Oversized,Tri-Blend,Full Front
+44,5,1,0,White,Slim,Performance Mesh,Full Front
+44,5,2,0,White,Oversized,Performance Mesh,Full Front
+44,5,3,1,White,Oversized,Tri-Blend,Full Front
+44,6,1,1,Black,Oversized,100% Cotton,Small Logo
+44,6,2,0,White,Slim,Tri-Blend,Back Print
+44,6,3,0,Black,Regular,Performance Mesh,Small Logo
+44,7,1,0,Tie-Dye,Slim,100% Cotton,Back Print
+44,7,2,0,White,Slim,Performance Mesh,Small Logo
+44,7,3,1,White,Regular,Tri-Blend,Full Front
+44,8,1,1,Black,Oversized,Tri-Blend,Back Print
+44,8,2,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+44,8,3,0,White,Slim,100% Cotton,Back Print
+45,1,1,0,Tie-Dye,Regular,100% Cotton,Full Front
+45,1,2,1,Tie-Dye,Oversized,Tri-Blend,Small Logo
+45,1,3,0,White,Slim,Performance Mesh,Small Logo
+45,2,1,1,Tie-Dye,Oversized,Tri-Blend,Back Print
+45,2,2,0,Black,Regular,100% Cotton,Full Front
+45,2,3,0,White,Regular,Performance Mesh,Small Logo
+45,3,1,1,White,Regular,Tri-Blend,Back Print
+45,3,2,0,White,Regular,100% Cotton,Small Logo
+45,3,3,0,Black,Regular,Performance Mesh,Full Front
+45,4,1,1,White,Oversized,Tri-Blend,Back Print
+45,4,2,0,Black,Slim,Tri-Blend,Small Logo
+45,4,3,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+45,5,1,0,White,Slim,Performance Mesh,Back Print
+45,5,2,0,Black,Slim,100% Cotton,Small Logo
+45,5,3,1,White,Slim,100% Cotton,Full Front
+45,6,1,1,Black,Regular,Tri-Blend,Full Front
+45,6,2,0,White,Slim,100% Cotton,Full Front
+45,6,3,0,Black,Regular,100% Cotton,Full Front
+45,7,1,0,White,Oversized,100% Cotton,Full Front
+45,7,2,0,White,Regular,Performance Mesh,Full Front
+45,7,3,1,Black,Oversized,100% Cotton,Full Front
+45,8,1,0,Black,Regular,Tri-Blend,Small Logo
+45,8,2,0,Black,Regular,Tri-Blend,Small Logo
+45,8,3,1,Tie-Dye,Slim,Performance Mesh,Full Front
+46,1,1,1,Tie-Dye,Regular,Performance Mesh,Full Front
+46,1,2,0,Black,Oversized,Performance Mesh,Small Logo
+46,1,3,0,White,Slim,Tri-Blend,Small Logo
+46,2,1,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+46,2,2,0,White,Regular,Tri-Blend,Full Front
+46,2,3,1,Tie-Dye,Oversized,Tri-Blend,Full Front
+46,3,1,1,Tie-Dye,Oversized,Performance Mesh,Back Print
+46,3,2,0,Black,Oversized,100% Cotton,Full Front
+46,3,3,0,Black,Regular,Tri-Blend,Full Front
+46,4,1,0,White,Oversized,Performance Mesh,Full Front
+46,4,2,0,White,Regular,100% Cotton,Small Logo
+46,4,3,1,White,Oversized,100% Cotton,Back Print
+46,5,1,0,Black,Regular,Performance Mesh,Full Front
+46,5,2,0,Tie-Dye,Regular,100% Cotton,Full Front
+46,5,3,1,White,Oversized,Performance Mesh,Full Front
+46,6,1,0,Black,Oversized,Performance Mesh,Small Logo
+46,6,2,0,White,Slim,Performance Mesh,Full Front
+46,6,3,1,Tie-Dye,Oversized,Performance Mesh,Back Print
+46,7,1,0,Tie-Dye,Oversized,100% Cotton,Full Front
+46,7,2,0,Black,Slim,100% Cotton,Full Front
+46,7,3,1,Tie-Dye,Slim,Tri-Blend,Full Front
+46,8,1,0,Tie-Dye,Regular,100% Cotton,Full Front
+46,8,2,1,Black,Oversized,100% Cotton,Full Front
+46,8,3,0,Tie-Dye,Oversized,100% Cotton,Full Front
+47,1,1,1,Black,Oversized,100% Cotton,Small Logo
+47,1,2,0,White,Oversized,100% Cotton,Small Logo
+47,1,3,0,White,Slim,Performance Mesh,Small Logo
+47,2,1,1,Tie-Dye,Regular,Tri-Blend,Full Front
+47,2,2,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+47,2,3,0,White,Slim,Performance Mesh,Full Front
+47,3,1,1,White,Oversized,Tri-Blend,Small Logo
+47,3,2,0,Tie-Dye,Oversized,Performance Mesh,Back Print
+47,3,3,0,Tie-Dye,Oversized,100% Cotton,Small Logo
+47,4,1,1,Black,Slim,Tri-Blend,Full Front
+47,4,2,0,Black,Slim,Performance Mesh,Back Print
+47,4,3,0,Black,Regular,Performance Mesh,Full Front
+47,5,1,0,White,Oversized,100% Cotton,Small Logo
+47,5,2,0,White,Oversized,100% Cotton,Small Logo
+47,5,3,1,Tie-Dye,Regular,100% Cotton,Full Front
+47,6,1,0,White,Oversized,100% Cotton,Back Print
+47,6,2,1,Black,Regular,Performance Mesh,Back Print
+47,6,3,0,Tie-Dye,Oversized,100% Cotton,Small Logo
+47,7,1,0,Tie-Dye,Oversized,Performance Mesh,Back Print
+47,7,2,1,Black,Regular,Tri-Blend,Full Front
+47,7,3,0,White,Oversized,Performance Mesh,Small Logo
+47,8,1,0,Black,Oversized,Tri-Blend,Small Logo
+47,8,2,1,Tie-Dye,Slim,Tri-Blend,Full Front
+47,8,3,0,Black,Slim,Tri-Blend,Back Print
+48,1,1,0,White,Oversized,100% Cotton,Back Print
+48,1,2,0,Black,Regular,Performance Mesh,Small Logo
+48,1,3,1,Tie-Dye,Regular,100% Cotton,Back Print
+48,2,1,0,Black,Oversized,100% Cotton,Small Logo
+48,2,2,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+48,2,3,1,White,Regular,100% Cotton,Small Logo
+48,3,1,0,Tie-Dye,Slim,Performance Mesh,Full Front
+48,3,2,1,Tie-Dye,Regular,Performance Mesh,Full Front
+48,3,3,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+48,4,1,0,White,Regular,Performance Mesh,Small Logo
+48,4,2,0,Black,Regular,Performance Mesh,Back Print
+48,4,3,1,White,Slim,100% Cotton,Full Front
+48,5,1,0,Tie-Dye,Slim,Performance Mesh,Full Front
+48,5,2,1,White,Slim,Tri-Blend,Full Front
+48,5,3,0,White,Oversized,Performance Mesh,Small Logo
+48,6,1,1,Black,Slim,100% Cotton,Small Logo
+48,6,2,0,Black,Oversized,100% Cotton,Small Logo
+48,6,3,0,White,Slim,100% Cotton,Back Print
+48,7,1,1,Black,Regular,Tri-Blend,Small Logo
+48,7,2,0,Black,Oversized,Performance Mesh,Full Front
+48,7,3,0,Black,Slim,Performance Mesh,Full Front
+48,8,1,0,Tie-Dye,Slim,100% Cotton,Back Print
+48,8,2,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+48,8,3,0,Tie-Dye,Regular,100% Cotton,Small Logo
+49,1,1,1,White,Slim,Tri-Blend,Full Front
+49,1,2,0,White,Regular,100% Cotton,Small Logo
+49,1,3,0,White,Slim,100% Cotton,Small Logo
+49,2,1,0,Tie-Dye,Regular,100% Cotton,Small Logo
+49,2,2,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+49,2,3,1,Black,Oversized,Performance Mesh,Small Logo
+49,3,1,0,Tie-Dye,Slim,100% Cotton,Back Print
+49,3,2,0,Tie-Dye,Oversized,100% Cotton,Back Print
+49,3,3,1,Black,Regular,Tri-Blend,Full Front
+49,4,1,0,White,Regular,100% Cotton,Back Print
+49,4,2,0,Tie-Dye,Slim,Tri-Blend,Full Front
+49,4,3,1,Black,Slim,Performance Mesh,Small Logo
+49,5,1,1,Tie-Dye,Oversized,Performance Mesh,Full Front
+49,5,2,0,White,Slim,Performance Mesh,Full Front
+49,5,3,0,Black,Slim,100% Cotton,Full Front
+49,6,1,1,Tie-Dye,Regular,100% Cotton,Small Logo
+49,6,2,0,Tie-Dye,Slim,100% Cotton,Full Front
+49,6,3,0,Tie-Dye,Slim,Performance Mesh,Full Front
+49,7,1,1,Tie-Dye,Regular,Performance Mesh,Small Logo
+49,7,2,0,Black,Slim,Performance Mesh,Small Logo
+49,7,3,0,Black,Regular,100% Cotton,Small Logo
+49,8,1,1,Black,Oversized,Tri-Blend,Back Print
+49,8,2,0,Tie-Dye,Slim,100% Cotton,Small Logo
+49,8,3,0,Tie-Dye,Oversized,Tri-Blend,Full Front
+50,1,1,0,Black,Slim,100% Cotton,Back Print
+50,1,2,1,Black,Slim,100% Cotton,Full Front
+50,1,3,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+50,2,1,0,Tie-Dye,Slim,Tri-Blend,Full Front
+50,2,2,1,Black,Slim,100% Cotton,Full Front
+50,2,3,0,White,Slim,Performance Mesh,Back Print
+50,3,1,1,White,Slim,100% Cotton,Small Logo
+50,3,2,0,Tie-Dye,Slim,Performance Mesh,Small Logo
+50,3,3,0,Tie-Dye,Regular,100% Cotton,Full Front
+50,4,1,0,Black,Oversized,Performance Mesh,Full Front
+50,4,2,1,Black,Regular,100% Cotton,Small Logo
+50,4,3,0,Tie-Dye,Regular,100% Cotton,Full Front
+50,5,1,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+50,5,2,1,White,Slim,Tri-Blend,Full Front
+50,5,3,0,Black,Regular,Performance Mesh,Back Print
+50,6,1,0,Tie-Dye,Oversized,Performance Mesh,Small Logo
+50,6,2,1,Black,Oversized,100% Cotton,Full Front
+50,6,3,0,Black,Oversized,Tri-Blend,Full Front
+50,7,1,1,Black,Slim,100% Cotton,Small Logo
+50,7,2,0,White,Regular,100% Cotton,Small Logo
+50,7,3,0,Tie-Dye,Regular,Tri-Blend,Back Print
+50,8,1,1,Black,Regular,Tri-Blend,Back Print
+50,8,2,0,Tie-Dye,Regular,Performance Mesh,Full Front
+50,8,3,0,White,Slim,Performance Mesh,Small Logo
+51,1,1,0,Black,Oversized,Tri-Blend,Back Print
+51,1,2,0,Tie-Dye,Regular,Tri-Blend,Full Front
+51,1,3,1,Tie-Dye,Slim,Performance Mesh,Full Front
+51,2,1,0,Tie-Dye,Slim,Tri-Blend,Back Print
+51,2,2,0,Black,Slim,100% Cotton,Back Print
+51,2,3,1,Tie-Dye,Slim,Tri-Blend,Back Print
+51,3,1,0,Black,Slim,Tri-Blend,Small Logo
+51,3,2,0,White,Oversized,100% Cotton,Full Front
+51,3,3,1,Tie-Dye,Regular,100% Cotton,Small Logo
+51,4,1,0,Tie-Dye,Regular,Tri-Blend,Back Print
+51,4,2,1,Tie-Dye,Slim,100% Cotton,Full Front
+51,4,3,0,Black,Regular,100% Cotton,Small Logo
+51,5,1,1,Tie-Dye,Oversized,100% Cotton,Back Print
+51,5,2,0,Tie-Dye,Slim,Performance Mesh,Full Front
+51,5,3,0,Black,Regular,Performance Mesh,Back Print
+51,6,1,1,Tie-Dye,Oversized,100% Cotton,Small Logo
+51,6,2,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+51,6,3,0,White,Oversized,100% Cotton,Small Logo
+51,7,1,1,White,Oversized,100% Cotton,Back Print
+51,7,2,0,Tie-Dye,Slim,Performance Mesh,Full Front
+51,7,3,0,Black,Oversized,Performance Mesh,Small Logo
+51,8,1,1,Black,Oversized,100% Cotton,Full Front
+51,8,2,0,Black,Slim,Performance Mesh,Back Print
+51,8,3,0,White,Slim,100% Cotton,Full Front
+52,1,1,0,White,Slim,Performance Mesh,Full Front
+52,1,2,0,Black,Slim,100% Cotton,Small Logo
+52,1,3,1,Black,Slim,Performance Mesh,Small Logo
+52,2,1,0,Black,Regular,100% Cotton,Full Front
+52,2,2,1,White,Oversized,Tri-Blend,Back Print
+52,2,3,0,Black,Slim,100% Cotton,Small Logo
+52,3,1,0,White,Regular,Tri-Blend,Full Front
+52,3,2,1,Black,Regular,Tri-Blend,Full Front
+52,3,3,0,Black,Slim,100% Cotton,Small Logo
+52,4,1,0,Black,Regular,100% Cotton,Small Logo
+52,4,2,0,Black,Slim,Tri-Blend,Small Logo
+52,4,3,1,Black,Oversized,100% Cotton,Full Front
+52,5,1,0,Tie-Dye,Regular,Performance Mesh,Back Print
+52,5,2,0,White,Oversized,Performance Mesh,Full Front
+52,5,3,1,Tie-Dye,Regular,Tri-Blend,Full Front
+52,6,1,1,Tie-Dye,Slim,100% Cotton,Full Front
+52,6,2,0,Tie-Dye,Regular,Tri-Blend,Back Print
+52,6,3,0,Black,Regular,Performance Mesh,Full Front
+52,7,1,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+52,7,2,1,Black,Slim,Tri-Blend,Back Print
+52,7,3,0,Black,Regular,Tri-Blend,Back Print
+52,8,1,0,White,Slim,100% Cotton,Back Print
+52,8,2,0,White,Slim,Performance Mesh,Small Logo
+52,8,3,1,White,Slim,100% Cotton,Full Front
+53,1,1,0,Black,Regular,Tri-Blend,Back Print
+53,1,2,0,White,Slim,Performance Mesh,Small Logo
+53,1,3,1,Tie-Dye,Regular,Tri-Blend,Back Print
+53,2,1,0,Black,Oversized,100% Cotton,Full Front
+53,2,2,0,Tie-Dye,Oversized,100% Cotton,Full Front
+53,2,3,1,White,Oversized,Tri-Blend,Back Print
+53,3,1,1,White,Regular,Tri-Blend,Full Front
+53,3,2,0,Tie-Dye,Oversized,Tri-Blend,Small Logo
+53,3,3,0,Black,Oversized,Tri-Blend,Small Logo
+53,4,1,0,Black,Slim,Performance Mesh,Full Front
+53,4,2,0,Tie-Dye,Regular,100% Cotton,Full Front
+53,4,3,1,White,Slim,100% Cotton,Small Logo
+53,5,1,1,White,Oversized,Performance Mesh,Back Print
+53,5,2,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+53,5,3,0,Black,Oversized,Performance Mesh,Full Front
+53,6,1,0,Tie-Dye,Regular,100% Cotton,Back Print
+53,6,2,1,White,Slim,Tri-Blend,Full Front
+53,6,3,0,Black,Regular,Performance Mesh,Small Logo
+53,7,1,0,White,Oversized,Performance Mesh,Back Print
+53,7,2,0,Tie-Dye,Regular,Tri-Blend,Full Front
+53,7,3,1,Black,Oversized,100% Cotton,Full Front
+53,8,1,1,White,Slim,Performance Mesh,Back Print
+53,8,2,0,Black,Slim,Tri-Blend,Full Front
+53,8,3,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+54,1,1,0,White,Regular,Performance Mesh,Full Front
+54,1,2,0,Black,Regular,Performance Mesh,Back Print
+54,1,3,1,White,Regular,Tri-Blend,Full Front
+54,2,1,0,Tie-Dye,Slim,Performance Mesh,Back Print
+54,2,2,0,White,Oversized,Tri-Blend,Full Front
+54,2,3,1,Black,Slim,100% Cotton,Full Front
+54,3,1,0,Black,Oversized,100% Cotton,Back Print
+54,3,2,0,White,Regular,100% Cotton,Small Logo
+54,3,3,1,Tie-Dye,Oversized,100% Cotton,Back Print
+54,4,1,0,White,Regular,Performance Mesh,Full Front
+54,4,2,0,White,Slim,Performance Mesh,Small Logo
+54,4,3,1,Black,Oversized,Tri-Blend,Small Logo
+54,5,1,1,Black,Oversized,Tri-Blend,Small Logo
+54,5,2,0,Black,Oversized,100% Cotton,Small Logo
+54,5,3,0,Tie-Dye,Regular,100% Cotton,Back Print
+54,6,1,0,White,Oversized,Performance Mesh,Back Print
+54,6,2,0,Black,Slim,Tri-Blend,Small Logo
+54,6,3,1,Tie-Dye,Slim,100% Cotton,Back Print
+54,7,1,0,White,Oversized,Tri-Blend,Full Front
+54,7,2,0,Tie-Dye,Regular,100% Cotton,Back Print
+54,7,3,1,Tie-Dye,Slim,Tri-Blend,Full Front
+54,8,1,1,Black,Oversized,Tri-Blend,Full Front
+54,8,2,0,Black,Slim,100% Cotton,Back Print
+54,8,3,0,Black,Slim,Performance Mesh,Full Front
+55,1,1,0,White,Oversized,Tri-Blend,Small Logo
+55,1,2,0,White,Slim,Tri-Blend,Back Print
+55,1,3,1,Tie-Dye,Oversized,Tri-Blend,Small Logo
+55,2,1,0,White,Oversized,Performance Mesh,Small Logo
+55,2,2,1,White,Oversized,Performance Mesh,Full Front
+55,2,3,0,Tie-Dye,Slim,Performance Mesh,Full Front
+55,3,1,1,White,Slim,Performance Mesh,Back Print
+55,3,2,0,Black,Slim,Tri-Blend,Full Front
+55,3,3,0,Black,Slim,Tri-Blend,Full Front
+55,4,1,0,White,Slim,100% Cotton,Full Front
+55,4,2,0,Black,Slim,Performance Mesh,Full Front
+55,4,3,1,White,Regular,100% Cotton,Full Front
+55,5,1,0,Tie-Dye,Oversized,100% Cotton,Full Front
+55,5,2,1,Black,Oversized,Tri-Blend,Back Print
+55,5,3,0,Black,Oversized,Tri-Blend,Small Logo
+55,6,1,0,Black,Slim,Performance Mesh,Small Logo
+55,6,2,1,White,Regular,100% Cotton,Small Logo
+55,6,3,0,Tie-Dye,Slim,100% Cotton,Back Print
+55,7,1,0,White,Slim,Performance Mesh,Back Print
+55,7,2,1,Tie-Dye,Regular,Performance Mesh,Back Print
+55,7,3,0,Tie-Dye,Slim,Tri-Blend,Full Front
+55,8,1,0,Black,Slim,100% Cotton,Back Print
+55,8,2,0,Black,Oversized,100% Cotton,Back Print
+55,8,3,1,White,Oversized,Tri-Blend,Small Logo
+56,1,1,0,Black,Oversized,100% Cotton,Back Print
+56,1,2,0,Black,Slim,Tri-Blend,Back Print
+56,1,3,1,Tie-Dye,Oversized,Tri-Blend,Back Print
+56,2,1,1,Black,Slim,Performance Mesh,Full Front
+56,2,2,0,Tie-Dye,Slim,Performance Mesh,Back Print
+56,2,3,0,Black,Slim,100% Cotton,Small Logo
+56,3,1,1,Tie-Dye,Regular,Tri-Blend,Small Logo
+56,3,2,0,Tie-Dye,Regular,100% Cotton,Full Front
+56,3,3,0,Black,Oversized,100% Cotton,Back Print
+56,4,1,0,White,Slim,Performance Mesh,Full Front
+56,4,2,1,White,Oversized,100% Cotton,Small Logo
+56,4,3,0,Black,Slim,100% Cotton,Small Logo
+56,5,1,1,White,Slim,100% Cotton,Full Front
+56,5,2,0,Black,Regular,100% Cotton,Small Logo
+56,5,3,0,White,Slim,Performance Mesh,Full Front
+56,6,1,0,Tie-Dye,Oversized,100% Cotton,Back Print
+56,6,2,0,Black,Oversized,100% Cotton,Back Print
+56,6,3,1,Black,Regular,Performance Mesh,Full Front
+56,7,1,1,Black,Oversized,Tri-Blend,Back Print
+56,7,2,0,White,Oversized,Tri-Blend,Small Logo
+56,7,3,0,Tie-Dye,Regular,100% Cotton,Full Front
+56,8,1,0,White,Slim,100% Cotton,Small Logo
+56,8,2,0,White,Oversized,Tri-Blend,Back Print
+56,8,3,1,White,Slim,Performance Mesh,Full Front
+57,1,1,0,Black,Slim,Performance Mesh,Full Front
+57,1,2,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+57,1,3,1,White,Regular,Performance Mesh,Small Logo
+57,2,1,1,Black,Slim,100% Cotton,Full Front
+57,2,2,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+57,2,3,0,Black,Slim,Tri-Blend,Back Print
+57,3,1,1,Tie-Dye,Slim,100% Cotton,Small Logo
+57,3,2,0,Black,Oversized,Tri-Blend,Full Front
+57,3,3,0,Black,Slim,Tri-Blend,Small Logo
+57,4,1,0,White,Slim,Tri-Blend,Back Print
+57,4,2,1,Tie-Dye,Slim,100% Cotton,Back Print
+57,4,3,0,Black,Slim,100% Cotton,Small Logo
+57,5,1,0,Tie-Dye,Regular,100% Cotton,Full Front
+57,5,2,0,White,Oversized,Tri-Blend,Back Print
+57,5,3,1,Black,Regular,Tri-Blend,Small Logo
+57,6,1,0,Black,Oversized,Tri-Blend,Small Logo
+57,6,2,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+57,6,3,1,Black,Regular,Tri-Blend,Back Print
+57,7,1,0,White,Oversized,100% Cotton,Full Front
+57,7,2,0,Black,Regular,Tri-Blend,Full Front
+57,7,3,1,White,Regular,Tri-Blend,Small Logo
+57,8,1,0,Tie-Dye,Slim,100% Cotton,Back Print
+57,8,2,0,White,Oversized,Performance Mesh,Small Logo
+57,8,3,1,Black,Oversized,Performance Mesh,Full Front
+58,1,1,1,White,Regular,Performance Mesh,Small Logo
+58,1,2,0,White,Slim,100% Cotton,Back Print
+58,1,3,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+58,2,1,0,Black,Slim,Tri-Blend,Back Print
+58,2,2,1,White,Regular,100% Cotton,Full Front
+58,2,3,0,Tie-Dye,Oversized,100% Cotton,Full Front
+58,3,1,0,Tie-Dye,Regular,100% Cotton,Small Logo
+58,3,2,0,Tie-Dye,Regular,100% Cotton,Small Logo
+58,3,3,1,White,Oversized,Tri-Blend,Back Print
+58,4,1,0,Tie-Dye,Regular,100% Cotton,Small Logo
+58,4,2,0,Black,Slim,Tri-Blend,Small Logo
+58,4,3,1,Tie-Dye,Oversized,100% Cotton,Back Print
+58,5,1,0,Tie-Dye,Regular,Performance Mesh,Full Front
+58,5,2,0,Tie-Dye,Regular,Tri-Blend,Small Logo
+58,5,3,1,Tie-Dye,Regular,Tri-Blend,Full Front
+58,6,1,1,Tie-Dye,Oversized,Performance Mesh,Back Print
+58,6,2,0,White,Regular,Performance Mesh,Back Print
+58,6,3,0,Tie-Dye,Oversized,Performance Mesh,Back Print
+58,7,1,0,White,Regular,100% Cotton,Full Front
+58,7,2,1,Tie-Dye,Oversized,Tri-Blend,Full Front
+58,7,3,0,Tie-Dye,Regular,Performance Mesh,Small Logo
+58,8,1,0,Black,Slim,100% Cotton,Small Logo
+58,8,2,1,Black,Regular,Tri-Blend,Back Print
+58,8,3,0,Black,Slim,Performance Mesh,Full Front
+59,1,1,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+59,1,2,0,White,Slim,Performance Mesh,Back Print
+59,1,3,1,Black,Oversized,100% Cotton,Small Logo
+59,2,1,0,Tie-Dye,Slim,Performance Mesh,Back Print
+59,2,2,0,White,Regular,100% Cotton,Back Print
+59,2,3,1,Tie-Dye,Oversized,100% Cotton,Small Logo
+59,3,1,1,White,Regular,Tri-Blend,Small Logo
+59,3,2,0,White,Slim,100% Cotton,Full Front
+59,3,3,0,Black,Slim,Tri-Blend,Full Front
+59,4,1,0,Black,Oversized,Tri-Blend,Back Print
+59,4,2,1,White,Oversized,Performance Mesh,Back Print
+59,4,3,0,Black,Oversized,Tri-Blend,Small Logo
+59,5,1,1,Tie-Dye,Regular,Performance Mesh,Full Front
+59,5,2,0,Tie-Dye,Oversized,Tri-Blend,Full Front
+59,5,3,0,Black,Slim,Tri-Blend,Full Front
+59,6,1,0,White,Oversized,100% Cotton,Small Logo
+59,6,2,1,Tie-Dye,Oversized,Performance Mesh,Small Logo
+59,6,3,0,White,Slim,100% Cotton,Full Front
+59,7,1,0,Black,Oversized,Tri-Blend,Full Front
+59,7,2,1,White,Oversized,Performance Mesh,Small Logo
+59,7,3,0,White,Slim,100% Cotton,Full Front
+59,8,1,0,White,Regular,Performance Mesh,Full Front
+59,8,2,1,Tie-Dye,Regular,Tri-Blend,Back Print
+59,8,3,0,Black,Slim,100% Cotton,Full Front
+60,1,1,0,Black,Slim,100% Cotton,Full Front
+60,1,2,0,Tie-Dye,Slim,Tri-Blend,Small Logo
+60,1,3,1,White,Oversized,Tri-Blend,Small Logo
+60,2,1,0,White,Oversized,Performance Mesh,Small Logo
+60,2,2,0,White,Oversized,Tri-Blend,Back Print
+60,2,3,1,White,Regular,100% Cotton,Back Print
+60,3,1,0,Black,Slim,Tri-Blend,Full Front
+60,3,2,1,Tie-Dye,Slim,100% Cotton,Full Front
+60,3,3,0,Black,Slim,Performance Mesh,Small Logo
+60,4,1,0,Tie-Dye,Regular,100% Cotton,Small Logo
+60,4,2,0,Tie-Dye,Slim,Performance Mesh,Full Front
+60,4,3,1,White,Slim,100% Cotton,Back Print
+60,5,1,1,Tie-Dye,Slim,Tri-Blend,Back Print
+60,5,2,0,White,Regular,100% Cotton,Back Print
+60,5,3,0,Tie-Dye,Regular,Performance Mesh,Back Print
+60,6,1,0,Black,Regular,Tri-Blend,Full Front
+60,6,2,0,Black,Regular,Performance Mesh,Small Logo
+60,6,3,1,Tie-Dye,Oversized,Performance Mesh,Back Print
+60,7,1,0,Tie-Dye,Regular,Tri-Blend,Full Front
+60,7,2,1,Tie-Dye,Oversized,Performance Mesh,Back Print
+60,7,3,0,Black,Oversized,100% Cotton,Full Front
+60,8,1,1,White,Oversized,Performance Mesh,Full Front
+60,8,2,0,Tie-Dye,Slim,100% Cotton,Back Print
+60,8,3,0,Black,Slim,100% Cotton,Full Front

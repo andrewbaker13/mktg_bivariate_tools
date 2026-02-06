@@ -626,7 +626,8 @@ const MDSMath = (function() {
     const distances = {};
     
     brands.forEach(brand => {
-      distances[brand] = euclideanDistance(brandCoords[brand], idealPoint);
+      const dist = euclideanDistance(brandCoords[brand], idealPoint);
+      distances[brand] = isNaN(dist) ? 0 : dist;
     });
     
     // Convert to attraction (inverse of distance)
@@ -638,6 +639,14 @@ const MDSMath = (function() {
       attractions[brand] = 1 / (distances[brand] + 0.001);
       totalAttraction += attractions[brand];
     });
+    
+    // Handle edge case where totalAttraction is 0 or NaN
+    if (!totalAttraction || isNaN(totalAttraction)) {
+      const shares = {};
+      const equalShare = 1 / brands.length;
+      brands.forEach(brand => { shares[brand] = equalShare; });
+      return shares;
+    }
     
     // Convert to shares
     const shares = {};

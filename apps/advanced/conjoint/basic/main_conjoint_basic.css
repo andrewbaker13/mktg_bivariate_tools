@@ -1,0 +1,305 @@
+/* Basic Conjoint Analysis Tool - ONLY tool-specific styles
+   Everything else comes from shared/css/main.css */
+
+/* ===== Professor Mode Banner ===== */
+.professor-mode-banner {
+    max-width: 1200px;
+    margin: 0 auto 1.5rem;
+    padding: 0 clamp(1rem, 4vw, 3rem);
+}
+
+.professor-mode-content {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.professor-mode-info h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+    color: white;
+}
+
+.professor-mode-info p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+/* ===== Workflow Stepper (4-step variant) ===== */
+.workflow-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    max-width: 700px;
+}
+
+.workflow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.workflow-step__indicator {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: #757575;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.workflow-step.active .workflow-step__indicator {
+    background: #2a7de1;
+    color: white;
+    box-shadow: 0 0 0 4px rgba(42, 125, 225, 0.2);
+}
+
+.workflow-step.completed .workflow-step__indicator {
+    background: #28a745;
+    color: white;
+}
+
+.workflow-step__checkmark { display: none; }
+.workflow-step.completed .workflow-step__checkmark { display: block; }
+.workflow-step.completed .workflow-step__number { display: none; }
+
+.workflow-step__label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #757575;
+    text-align: center;
+    max-width: 100px;
+}
+
+.workflow-step.active .workflow-step__label {
+    color: #2a7de1;
+    font-weight: 600;
+}
+
+.workflow-step.completed .workflow-step__label { color: #28a745; }
+
+.workflow-step__connector {
+    width: 60px;
+    height: 3px;
+    background: #e0e0e0;
+    margin: 0 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.workflow-step.completed + .workflow-step__connector {
+    background: #28a745;
+}
+
+/* ===== Attribute Confirmation Panel (unique to basic tool) ===== */
+.attribute-config-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.attribute-confirm-item {
+    border: 1px solid var(--app-border, #d6dfea);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    background: var(--app-card-bg, #fff);
+}
+
+.attribute-confirm-item h4 {
+    margin: 0 0 0.5rem;
+    color: var(--app-accent, #2a7de1);
+    font-size: 1rem;
+}
+
+.attribute-levels-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.attribute-level-tag {
+    display: inline-block;
+    background: #e8f0fe;
+    color: #1a56db;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.attribute-level-tag.reference {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px dashed #f59e0b;
+}
+
+/* ===== Product Simulation Cards ===== */
+.products-config-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.product-config-card {
+    border: 2px solid var(--app-border, #ddd);
+    border-radius: 8px;
+    padding: 1.5rem;
+    background: var(--app-card-bg, #f9f9f9);
+}
+
+.product-config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--app-border, #ddd);
+}
+
+.prod-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: 1px solid var(--app-border, #ddd);
+    padding: 0.5rem;
+    border-radius: 4px;
+    flex: 1;
+    margin-right: 1rem;
+}
+
+.remove-prod {
+    background: var(--app-danger, #e74c3c);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.remove-prod:hover { background: #c0392b; }
+
+.product-config-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.product-config-body label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.prod-attr {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--app-border, #ddd);
+    border-radius: 4px;
+}
+
+.simulation-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ===== Optimization Attribute List ===== */
+.optimize-attribute-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+/* ===== Loading Overlay ===== */
+.loading-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-overlay[aria-hidden="false"] { display: flex; }
+
+.loading-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 3rem;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #3498db;
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-modal h3 { margin: 0 0 1rem; color: #2c3e50; font-size: 1.5rem; }
+.loading-modal p { margin: 0.5rem 0; color: #555; }
+.loading-detail { font-size: 0.9rem; color: #777; margin-top: 1rem !important; }
+
+.loading-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.loading-stats strong { color: #3498db; font-size: 1.1rem; }
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .workflow-stepper {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .workflow-step__connector { display: none; }
+
+    .professor-mode-content {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}

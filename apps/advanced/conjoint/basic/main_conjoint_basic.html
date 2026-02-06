@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Basic Conjoint Analysis Tool</title>
+  <!-- Shared design system -->
+  <link rel="stylesheet" href="../../../../shared/css/main.css">
+  <script src="../../../../shared/js/tracking.js"></script>
+  <link rel="stylesheet" href="../../../../shared/css/auth_bar.css">
+  <!-- App-specific overrides -->
+  <link rel="stylesheet" href="main_conjoint_basic.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-290ZJ9RE04');
+  </script>
+</head>
+
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../../../admin_pages/login.html">Login</a>
+        <a href="../../../../admin_pages/register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <main class="app-main">
+    <header class="intro hero-header">
+      <div class="hero-header__top">
+        <h1>Basic Conjoint Analysis</h1>
+        <div class="hero-context">
+          <span class="badge">Choice Analysis</span>
+          <a href="../main_conjoint.html" class="badge badge-secondary">Full Version &rarr;</a>
+        </div>
+      </div>
+      <p class="hero-header__lede">
+        Understand how categorical product attributes drive consumer choice. Upload choice-based conjoint (CBC) data, estimate part-worth utilities, simulate market shares, and find optimal product configurations &mdash; all in pure JavaScript, right in your browser.
+      </p>
+      <p class="hero-header__lede" style="font-size: 0.9em; color: #6b7280;">
+        <strong>Privacy:</strong> All estimation runs entirely in your browser. Your data never leaves your device.
+      </p>
+
+      <!-- Progressive Workflow Stepper -->
+      <div class="workflow-stepper" id="conjoint-workflow-stepper">
+        <div class="workflow-step active" data-step="1">
+          <div class="workflow-step__indicator">
+            <span class="workflow-step__number">1</span>
+            <span class="workflow-step__checkmark">&check;</span>
+          </div>
+          <div class="workflow-step__label">Upload Data</div>
+        </div>
+        <div class="workflow-step__connector"></div>
+        <div class="workflow-step" data-step="2">
+          <div class="workflow-step__indicator">
+            <span class="workflow-step__number">2</span>
+            <span class="workflow-step__checkmark">&check;</span>
+          </div>
+          <div class="workflow-step__label">Configure</div>
+        </div>
+        <div class="workflow-step__connector"></div>
+        <div class="workflow-step" data-step="3">
+          <div class="workflow-step__indicator">
+            <span class="workflow-step__number">3</span>
+            <span class="workflow-step__checkmark">&check;</span>
+          </div>
+          <div class="workflow-step__label">Estimate &amp; Analyze</div>
+        </div>
+        <div class="workflow-step__connector"></div>
+        <div class="workflow-step" data-step="4">
+          <div class="workflow-step__indicator">
+            <span class="workflow-step__number">4</span>
+            <span class="workflow-step__checkmark">&check;</span>
+          </div>
+          <div class="workflow-step__label">Simulate</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Professor Mode Banner -->
+    <div class="professor-mode-banner">
+      <div class="professor-mode-content">
+        <div class="professor-mode-info">
+          <h3>Professor Mode: Guided Learning Experience</h3>
+          <p>New to conjoint analysis? Enable Professor Mode for step-by-step guidance through CBC estimation and market simulation!</p>
+        </div>
+        <label class="professor-mode-toggle">
+          <input type="checkbox" id="professorMode">
+          <span>Enable Professor Mode</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Section 1: TEST OVERVIEW & EQUATIONS -->
+    <section class="test-overview" aria-labelledby="test-overview-heading" id="tut-overview-section">
+      <h2 id="test-overview-heading">TEST OVERVIEW &amp; EQUATIONS</h2>
+      <div class="card">
+        <p>
+          <strong>Choice-based conjoint (CBC)</strong> analysis reveals how customers trade off product attributes when making purchase decisions. Each respondent completes multiple choice tasks where they select their preferred alternative from a set of products with varying attribute levels.
+        </p>
+        <p>
+          This basic tool estimates <strong>individual-level part-worth utilities</strong> for categorical attributes using multinomial logit (MNL) regression. For each respondent, the utility of alternative \(j\) in task \(t\) is:
+        </p>
+        <p class="equation">
+          $$
+          U_{jt} = \sum_{a \in \text{attributes}} \sum_{\ell} \beta_{a,\ell} \cdot \mathbb{1}[\text{level}(a) = \ell]
+          $$
+        </p>
+        <p>
+          The first level of each attribute serves as the reference (utility = 0). The probability of choosing alternative \(j\) follows the softmax (multinomial logit):
+        </p>
+        <p class="equation">
+          $$
+          P(\text{choose } j) = \frac{\exp(U_j)}{\sum_{k} \exp(U_k)}
+          $$
+        </p>
+        <p>
+          Coefficients are estimated by maximizing the log-likelihood with L2 (Ridge) regularization to prevent overfitting:
+        </p>
+        <p class="equation">
+          $$
+          \max_{\beta} \;\; \sum_{t} \sum_{j} y_{jt} \cdot \log P(j|t) \;-\; \lambda \|\beta\|^2
+          $$
+        </p>
+
+        <details class="intro-notes" open>
+          <summary>Key Concepts</summary>
+          <ul>
+            <li><strong>Part-worth utilities:</strong> The value (in utility units) a customer assigns to each attribute level. Higher values = stronger preference.</li>
+            <li><strong>Attribute importance:</strong> The range of utilities within an attribute divided by the sum of all ranges. Shows which attributes drive choice most.</li>
+            <li><strong>Individual-level estimation:</strong> Each respondent gets their own coefficients, capturing preference heterogeneity across your sample.</li>
+            <li><strong>Market simulation:</strong> Use estimated utilities to predict market shares for hypothetical product configurations.</li>
+          </ul>
+        </details>
+        <details class="intro-notes">
+          <summary>When to Use Basic vs. Full Version</summary>
+          <p>
+            This <strong>basic version</strong> is ideal when all your product attributes are categorical (e.g., brand, color, size tier, feature present/absent). It runs instantly in JavaScript with no dependencies.
+          </p>
+          <p>
+            Use the <a href="../main_conjoint.html"><strong>Full Conjoint Tool</strong></a> when you need:
+          </p>
+          <ul>
+            <li>Numeric attributes (linear or quadratic effects)</li>
+            <li>Continuous price coefficients &amp; willingness-to-pay (WTP)</li>
+            <li>"None" / opt-out alternative modeling</li>
+            <li>Competitor brand constants (ASCs)</li>
+            <li>Segmentation analysis (K-means clustering)</li>
+            <li>Profit optimization with cost structures</li>
+          </ul>
+        </details>
+      </div>
+    </section>
+
+    <!-- Section 2: MARKETING SCENARIOS -->
+    <section class="scenario-section" aria-labelledby="scenario-heading" id="tut-scenario-section">
+      <h2 id="scenario-heading">MARKETING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Practical scenario</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">Manual upload (no preset)</option>
+              <option value="coffee_shop">Campus Coffee Shop Redesign</option>
+              <option value="streaming">Music Streaming Service Launch</option>
+              <option value="tshirt">Event T-Shirt Design for Brand Activation</option>
+            </select>
+            <button id="scenario-download" class="secondary hidden" type="button" disabled>Download scenario dataset</button>
+          </div>
+        </div>
+        <div id="scenario-description">
+          <p>Select a preset to auto-load realistic CBC study data, or upload your own CSV below. The download button lets you inspect or modify the dataset in Excel before re-uploading.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: INPUTS & SETTINGS -->
+    <section class="input-card" aria-labelledby="inputs-heading" id="tut-inputs-section">
+      <h2 id="inputs-heading">INPUTS &amp; SETTINGS</h2>
+      <article class="card data-entry-card">
+        <div class="input-header">
+          <h3>Step 1: Upload Your Data</h3>
+        </div>
+
+        <div class="data-import-block">
+          <p>
+            Upload long-format CBC data where each row represents one alternative in one choice task for one respondent.
+            Required columns: <code>respondent_id</code>, <code>task_id</code>, <code>alternative_id</code>, <code>chosen</code> (0/1), plus categorical attribute columns.
+            <strong>Or select a Marketing Scenario above to load example data.</strong>
+          </p>
+          <div id="conjoint-dropzone" class="dropzone" role="button" tabindex="0">
+            <p class="dropzone-title">Drag &amp; drop CBC file</p>
+            <p class="dropzone-note">CSV with respondent_id, task_id, alternative_id, chosen, and attribute columns</p>
+            <button type="button" id="conjoint-browse" class="secondary">Browse files</button>
+          </div>
+          <input type="file" id="conjoint-input" accept=".csv,.tsv,.txt" hidden>
+          <div class="template-buttons">
+            <button type="button" id="conjoint-template-download">Download Blank Template</button>
+          </div>
+          <p id="conjoint-upload-feedback" class="upload-status" aria-live="polite">No file uploaded.</p>
+        </div>
+
+        <div class="input-group" id="conjoint-column-mapping" style="display:none;">
+          <h3>Column Mapping</h3>
+          <p class="hint">Map your CSV columns to the required CBC data structure fields.</p>
+          <div class="input-grid">
+            <div>
+              <label for="conjoint-respondent-col">Respondent ID Column</label>
+              <select id="conjoint-respondent-col"></select>
+            </div>
+            <div>
+              <label for="conjoint-task-col">Task ID Column</label>
+              <select id="conjoint-task-col"></select>
+            </div>
+            <div>
+              <label for="conjoint-alternative-col">Alternative ID Column</label>
+              <select id="conjoint-alternative-col"></select>
+            </div>
+            <div>
+              <label for="conjoint-chosen-col">Chosen (0/1) Column</label>
+              <select id="conjoint-chosen-col"></select>
+            </div>
+          </div>
+          <button type="button" id="conjoint-confirm-mapping" class="primary">Confirm Mapping</button>
+        </div>
+
+        <div class="input-group" id="conjoint-attribute-config" style="display:none;">
+          <h3>Step 2: Confirm Detected Attributes</h3>
+          <p class="hint">
+            All remaining columns are treated as categorical attributes. Review the detected attributes and their levels below.
+          </p>
+          <div id="conjoint-attribute-list" class="attribute-config-list">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <div class="input-group" id="conjoint-estimation-controls" style="display:none;">
+          <h3>Step 3: Estimate Individual Utilities
+            <span class="help-icon">?
+              <span class="help-popover">
+                <div class="help-term">Regularized MNL</div>
+                Estimates individual-level preferences using L2-penalized maximum likelihood. This stabilizes estimates for respondents with limited choice data.
+              </span>
+            </span>
+          </h3>
+          <div class="input-grid">
+            <div>
+              <label for="conjoint-regularization">
+                Regularization strength (L2)
+                <span class="help-icon">?
+                  <span class="help-popover">
+                    <div class="help-term">Regularization (L2)</div>
+                    Prevents overfitting by penalizing extreme coefficient values. Higher values = more conservative estimates. Default 1.0 works well for most CBC studies.
+                  </span>
+                </span>
+              </label>
+              <input type="number" id="conjoint-regularization" min="0" max="10" step="0.1" value="1.0">
+              <p class="hint">Higher values reduce overfitting but may bias coefficients toward zero. Default 1.0 is suitable for most studies.</p>
+            </div>
+          </div>
+          <button type="button" id="conjoint-estimate-model" class="primary">Estimate Individual Utilities</button>
+          <p id="conjoint-estimation-status" class="upload-status" aria-live="polite"></p>
+        </div>
+      </article>
+    </section>
+
+    <!-- Section 4: VISUAL OUTPUT -->
+    <section class="visual-output" aria-labelledby="visual-output-heading" style="display:none;" id="tut-visual-output-section">
+      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+
+      <!-- Attribute Importance Card -->
+      <div class="result-card">
+        <div class="result-card__header">
+          <span class="result-card__header-icon">&#x1F4CA;</span>
+          <h3 class="result-card__header-title">Attribute Importance</h3>
+          <span class="help-icon" style="color: white;">?
+            <span class="help-popover">
+              <div class="help-term">Attribute Importance</div>
+              Shows which product features drive customer choices most. Calculated as the utility range within each attribute divided by the sum of all ranges.
+            </span>
+          </span>
+        </div>
+        <div class="result-card__body">
+          <div class="chart-placeholder" id="chart-importance"></div>
+          <p class="chart-note">
+            Higher bars = more influential attributes in purchase decisions.
+          </p>
+        </div>
+        <div class="result-card__actions">
+          <button class="secondary" onclick="Plotly.downloadImage('chart-importance', {format: 'png', width: 1200, height: 600, filename: 'attribute_importance'})">Export Chart (PNG)</button>
+        </div>
+      </div>
+
+      <!-- Part-Worth Utilities Card -->
+      <div class="result-card">
+        <div class="result-card__header">
+          <span class="result-card__header-icon">&#x1F4C8;</span>
+          <h3 class="result-card__header-title">Part-Worth Utilities</h3>
+          <span class="help-icon" style="color: white;">?
+            <span class="help-popover">
+              <div class="help-term">Part-Worth Utilities</div>
+              The value (in utility units) customers assign to each attribute level. Higher values indicate stronger preference.
+            </span>
+          </span>
+        </div>
+        <div class="result-card__body">
+          <div class="chart-placeholder" id="chart-partworths"></div>
+          <p class="chart-note">
+            Average utility for each attribute level. Compare within attributes to see which levels win.
+          </p>
+        </div>
+        <div class="result-card__actions">
+          <button class="secondary" onclick="Plotly.downloadImage('chart-partworths', {format: 'png', width: 1200, height: 600, filename: 'partworth_utilities'})">Export Chart (PNG)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: TEST RESULTS -->
+    <section class="test-results" aria-labelledby="test-results-heading" style="display:none;" id="tut-model-results-section">
+      <h2 id="test-results-heading">MODEL RESULTS</h2>
+
+      <div class="card metrics-panel">
+        <div class="metric-output">Total respondents estimated: <span id="conjoint-n-respondents">&ndash;</span></div>
+        <div class="metric-output">Mean tasks per respondent: <span id="conjoint-mean-tasks">&ndash;</span></div>
+        <div class="metric-output">
+          Mean pseudo-R&sup2; (McFadden): <span id="conjoint-mean-r2">&ndash;</span>
+          <span class="help-icon">?
+            <span class="help-popover">
+              <div class="help-term">Pseudo R&sup2;</div>
+              Measures model fit. >0.20 is good, >0.40 is excellent for conjoint analysis. Based on likelihood improvement over a null model.
+            </span>
+          </span>
+        </div>
+        <div class="metric-output">Estimation time: <span id="conjoint-estimation-time">&ndash;</span></div>
+        <details class="interpretation-aid">
+          <summary>Interpretation Aid</summary>
+          <p class="muted"><strong>Pseudo-R&sup2;:</strong> Measure of model fit per respondent. Values 0.2&ndash;0.4 are typical for CBC studies; higher values indicate stronger predictive power.</p>
+          <p class="muted"><strong>Tasks per respondent:</strong> More tasks (12&ndash;20) produce more stable coefficient estimates. Fewer than 8 tasks may yield unreliable utilities.</p>
+        </details>
+      </div>
+
+      <div class="dual-panels">
+        <article class="card dual-panel">
+          <h3>APA-Style Report</h3>
+          <p id="conjoint-apa-report">Estimate the model to see the APA-style statistical report.</p>
+        </article>
+        <article class="card dual-panel">
+          <h3>Managerial Interpretation</h3>
+          <p id="conjoint-managerial-report">Business-focused interpretation will appear here after estimation.</p>
+        </article>
+      </div>
+
+      <div class="card summary-table-card">
+        <h3>Aggregated Part-Worth Utilities</h3>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Attribute</th>
+              <th>Level</th>
+              <th>Mean Utility</th>
+              <th>Std. Dev.</th>
+              <th>Min</th>
+              <th>Max</th>
+            </tr>
+          </thead>
+          <tbody id="conjoint-utilities-table-body">
+            <tr>
+              <td colspan="6">Estimate the model to view aggregated part-worth utilities.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="template-download">
+          <button type="button" id="conjoint-download-utilities" class="secondary">
+            Download individual utilities (CSV)
+          </button>
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 6: MARKET SIMULATION -->
+    <section class="simulation-section" aria-labelledby="simulation-heading" style="display:none;" id="tut-simulation-section">
+      <h2 id="simulation-heading">MARKET SIMULATION</h2>
+      <div class="card">
+        <h3>Scenario Builder</h3>
+        <p>
+          Define competing product profiles using categorical attribute dropdowns. The tool computes predicted market shares using estimated individual-level utilities.
+        </p>
+
+        <div class="simulation-controls">
+          <button type="button" id="conjoint-add-product" class="secondary">+ Add Product</button>
+          <button type="button" id="conjoint-clear-scenario" class="secondary">Clear All</button>
+        </div>
+
+        <div id="conjoint-products-list" class="products-config-list">
+          <!-- Product configuration cards populated here -->
+        </div>
+
+        <div class="input-group">
+          <label for="conjoint-market-size">Total market size (customers)</label>
+          <input type="number" id="conjoint-market-size" min="1" max="1000000000" step="1000" value="10000">
+          <p class="hint">Used to convert share percentages into customer counts.</p>
+        </div>
+
+        <button type="button" id="conjoint-run-simulation" class="primary">Run Market Simulation</button>
+        <p id="conjoint-simulation-status" class="upload-status" aria-live="polite"></p>
+
+        <div id="conjoint-simulation-results" style="display:none;">
+          <h3>Simulation Results</h3>
+          <div class="chart-placeholder" id="chart-sim-share"></div>
+          <p class="chart-note">
+            Predicted preference share based on individual-level utilities averaged across all respondents.
+          </p>
+
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Market Share (%)</th>
+                <th>Customer Count</th>
+              </tr>
+            </thead>
+            <tbody id="conjoint-simulation-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+
+          <p class="template-download">
+            <button type="button" id="conjoint-download-simulation" class="secondary">
+              Download simulation results (CSV)
+            </button>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: PRODUCT OPTIMIZATION -->
+    <section class="optimization-section" aria-labelledby="optimization-heading" style="display:none;" id="tut-optimization-section">
+      <h2 id="optimization-heading">PRODUCT OPTIMIZATION</h2>
+      <div class="card">
+        <h3>Brute-Force Configuration Search</h3>
+        <p>
+          Enumerate all possible combinations of categorical attribute levels to find the product configuration that maximizes market share. Select which attributes to vary below.
+        </p>
+
+        <div class="input-group">
+          <h4>Select attributes to vary</h4>
+          <div id="conjoint-optimize-attributes" class="optimize-attribute-list">
+            <!-- Checkboxes for each attribute -->
+          </div>
+        </div>
+
+        <button type="button" id="conjoint-run-optimization" class="primary">Run Optimization</button>
+        <p id="conjoint-optimization-status" class="upload-status" aria-live="polite"></p>
+
+        <div id="conjoint-optimization-results" style="display:none;">
+          <h3>Top 10 Configurations</h3>
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Configuration</th>
+                <th>Market Share (%)</th>
+              </tr>
+            </thead>
+            <tbody id="conjoint-optimization-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <div class="footer-content">
+      <div class="footer-nav">
+        <a href="../../../../index.html">&larr; Back to Tool Selection</a>
+      </div>
+      <div class="footer-meta">
+        <span>Created: <span id="created-date">2025-06-01</span></span>
+        <span class="meta-separator">&bull;</span>
+        <span>Last Updated: <span id="modified-date">2025-06-01</span></span>
+      </div>
+      <div class="footer-citation">
+        <span class="citation-label">Cite this tool</span>
+        <p class="citation-text">
+          Baker, A. (2025). <em>Basic Conjoint Analysis Tool</em>. Marketing Analysis Tools.
+          <br>
+          <span style="font-size: 0.85em; color: #6b7280;">Retrieved from: https://drbakermarketing.com/apps/advanced/conjoint/basic/main_conjoint_basic.html</span>
+        </p>
+      </div>
+      <div class="footer-copyright">
+        &copy; 2025 Andrew Baker. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <div id="conjoint-loading-overlay" class="loading-overlay" aria-hidden="true">
+    <div class="loading-modal">
+      <div class="loading-spinner"></div>
+      <h3>Estimating Individual Utilities</h3>
+      <p id="loading-progress-text">Preparing data for estimation...</p>
+      <p class="loading-detail">Running MNL estimation in JavaScript. This typically takes a few seconds.</p>
+      <div class="loading-stats">
+        <span id="loading-respondents">Respondents: <strong>--</strong></span>
+        <span id="loading-tasks">Tasks: <strong>--</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tutorial Overlay -->
+  <div id="tutorial-overlay"></div>
+
+  <!-- Tutorial Sidebar -->
+  <div id="tutorial-sidebar">
+    <div class="sidebar-header">
+      <h2>Professor Mode</h2>
+      <button class="close-tutorial" onclick="ConjointBasicTutorial.stop()">&#x2715;</button>
+    </div>
+    <div id="tutorial-content"></div>
+  </div>
+
+  <script src="../../../../shared/js/csv_utils.js"></script>
+  <script src="../../../../shared/js/ui_utils.js"></script>
+  <script src="../../../../shared/js/auth_tracking.js"></script>
+  <script src="../../../../shared/js/auth_bar.js"></script>
+  <script src="conjoint_basic_app.js"></script>
+  <script src="conjoint_basic_tutorial.js"></script>
+</body>
+
+</html>

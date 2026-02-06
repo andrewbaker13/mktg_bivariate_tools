@@ -34,6 +34,8 @@ const PositioningMap = (function() {
     brand: '#2563eb',
     brandHover: '#1d4ed8',
     brandDrag: '#7c3aed',
+    newEntrant: '#22c55e',       // Green for new market entrants
+    newEntrantHover: '#16a34a',
     attribute: '#64748b',
     voronoi: 'rgba(37, 99, 235, 0.08)',
     voronoiStroke: 'rgba(37, 99, 235, 0.2)',
@@ -841,6 +843,12 @@ const PositioningMap = (function() {
     brandLayer.selectAll('*').remove();
     labelLayer.selectAll('*').remove();
     
+    // Get list of new entrants from AppState (if available)
+    const newEntrants = (typeof AppState !== 'undefined' && AppState.simulation?.newEntrants) || [];
+    
+    // Helper to check if a brand is a new entrant
+    const isNewEntrant = (brand) => newEntrants.includes(brand);
+    
     // Create shadow layer for original positions (will be populated during drag)
     if (!svg.select('.shadow-layer').node()) {
       svg.insert('g', '.brand-layer')
@@ -852,27 +860,38 @@ const PositioningMap = (function() {
       .data(brands)
       .enter()
       .append('g')
-      .attr('class', 'brand')
+      .attr('class', d => `brand ${isNewEntrant(d) ? 'new-entrant' : ''}`)
       .attr('transform', d => `translate(${xScale(safeCoord(coords[d], currentDimX))}, ${yScale(safeCoord(coords[d], currentDimY))})`)
       .style('cursor', draggable ? 'grab' : 'pointer');
     
     // Brand circle
     brandGroups.append('circle')
-      .attr('r', 12)
-      .attr('fill', colors.brand)
-      .attr('stroke', 'white')
-      .attr('stroke-width', 3)
+      .attr('r', d => isNewEntrant(d) ? 14 : 12)
+      .attr('fill', d => isNewEntrant(d) ? colors.newEntrant : colors.brand)
+      .attr('stroke', d => isNewEntrant(d) ? '#15803d' : 'white')
+      .attr('stroke-width', d => isNewEntrant(d) ? 3 : 3)
       .attr('filter', 'url(#brand-shadow)');
+    
+    // Add sparkle icon for new entrants
+    brandGroups.filter(d => isNewEntrant(d))
+      .append('text')
+      .attr('class', 'entrant-icon')
+      .attr('x', 0)
+      .attr('y', 4)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '12px')
+      .attr('fill', 'white')
+      .text('✨');
     
     // Brand labels (in separate layer for z-index)
     brands.forEach(brand => {
       labelLayer.append('text')
-        .attr('class', 'brand-label')
+        .attr('class', `brand-label ${isNewEntrant(brand) ? 'new-entrant-label' : ''}`)
         .attr('data-brand', brand)
         .attr('x', xScale(safeCoord(coords[brand], currentDimX)))
-        .attr('y', yScale(safeCoord(coords[brand], currentDimY)) - 18)
+        .attr('y', yScale(safeCoord(coords[brand], currentDimY)) - (isNewEntrant(brand) ? 20 : 18))
         .attr('text-anchor', 'middle')
-        .attr('fill', colors.text)
+        .attr('fill', isNewEntrant(brand) ? colors.newEntrant : colors.text)
         .attr('font-size', '12px')
         .attr('font-weight', '600')
         .text(brand);
@@ -881,17 +900,19 @@ const PositioningMap = (function() {
     // Hover effects
     brandGroups
       .on('mouseenter', function(event, d) {
+        const isEntrant = isNewEntrant(d);
         d3.select(this).select('circle')
           .transition().duration(150)
-          .attr('r', 15)
-          .attr('fill', colors.brandHover);
+          .attr('r', isEntrant ? 17 : 15)
+          .attr('fill', isEntrant ? colors.newEntrantHover : colors.brandHover);
       })
       .on('mouseleave', function(event, d) {
         if (!d3.select(this).classed('dragging')) {
+          const isEntrant = isNewEntrant(d);
           d3.select(this).select('circle')
             .transition().duration(150)
-            .attr('r', 12)
-            .attr('fill', colors.brand);
+            .attr('r', isEntrant ? 14 : 12)
+            .attr('fill', isEntrant ? colors.newEntrant : colors.brand);
         }
       })
       .on('click', function(event, d) {
@@ -914,8 +935,8 @@ const PositioningMap = (function() {
           // Mark that we're dragging (to suppress click after drag)
           d3.select(this).classed('is-dragging', true);
           
-          // Store original position
-          d3.select(this).datum().originalPos = { x: startX, y: startY };
+          // Store original position as a data attribute on the element (not on the string datum)
+          d3.select(this).attr('data-orig-x', startX).attr('data-orig-y', startY);
           
           // Clear any existing shadows for this brand
           const shadowLayer = svg.select('.shadow-layer');

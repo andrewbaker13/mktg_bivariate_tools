@@ -1,0 +1,2401 @@
+respondent_id,task_id,alternative_id,chosen,Music Library,Audio Quality,Podcast Access,Social Features,Price Tier
+1,1,1,0,50M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+1,1,2,1,50M songs,Lossless,Full Library,None,$5.99/mo
+1,1,3,0,50M songs,High-Fi,None,Shared Playlists,$5.99/mo
+1,2,1,0,80M songs,Lossless,None,Live Listening,$5.99/mo
+1,2,2,1,100M+ songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+1,2,3,0,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+1,3,1,1,80M songs,Standard,None,Live Listening,Free w/ Ads
+1,3,2,0,100M+ songs,Lossless,None,Live Listening,$11.99/mo
+1,3,3,0,80M songs,Standard,None,Live Listening,$5.99/mo
+1,4,1,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+1,4,2,1,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+1,4,3,0,100M+ songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+1,5,1,0,50M songs,Standard,Limited,None,$11.99/mo
+1,5,2,0,50M songs,High-Fi,Full Library,None,$11.99/mo
+1,5,3,1,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+1,6,1,0,100M+ songs,Standard,None,Live Listening,$11.99/mo
+1,6,2,0,50M songs,High-Fi,None,None,$5.99/mo
+1,6,3,1,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+1,7,1,0,80M songs,Standard,None,Shared Playlists,Free w/ Ads
+1,7,2,1,80M songs,High-Fi,Limited,None,$5.99/mo
+1,7,3,0,80M songs,Standard,Limited,None,$11.99/mo
+1,8,1,0,100M+ songs,Lossless,Limited,None,$11.99/mo
+1,8,2,1,50M songs,Standard,None,None,$5.99/mo
+1,8,3,0,50M songs,Lossless,Limited,Live Listening,$11.99/mo
+2,1,1,0,100M+ songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+2,1,2,0,80M songs,Lossless,None,Shared Playlists,$5.99/mo
+2,1,3,1,80M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+2,2,1,0,100M+ songs,Standard,Full Library,None,$5.99/mo
+2,2,2,0,80M songs,Standard,None,None,Free w/ Ads
+2,2,3,1,100M+ songs,High-Fi,Full Library,None,$11.99/mo
+2,3,1,0,80M songs,Standard,None,None,$11.99/mo
+2,3,2,1,50M songs,Lossless,Limited,Live Listening,Free w/ Ads
+2,3,3,0,100M+ songs,High-Fi,Limited,None,Free w/ Ads
+2,4,1,0,100M+ songs,Lossless,Full Library,Live Listening,$5.99/mo
+2,4,2,1,50M songs,Lossless,Full Library,Live Listening,$5.99/mo
+2,4,3,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+2,5,1,0,50M songs,Standard,None,None,$11.99/mo
+2,5,2,0,80M songs,Standard,Limited,None,$5.99/mo
+2,5,3,1,100M+ songs,Lossless,None,None,$11.99/mo
+2,6,1,0,80M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+2,6,2,1,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+2,6,3,0,100M+ songs,High-Fi,Limited,None,$5.99/mo
+2,7,1,0,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+2,7,2,1,80M songs,Standard,Full Library,Live Listening,Free w/ Ads
+2,7,3,0,100M+ songs,Lossless,Full Library,Live Listening,Free w/ Ads
+2,8,1,0,100M+ songs,High-Fi,None,None,$5.99/mo
+2,8,2,0,50M songs,Lossless,Full Library,None,$11.99/mo
+2,8,3,1,50M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+3,1,1,0,50M songs,High-Fi,None,Live Listening,$5.99/mo
+3,1,2,1,100M+ songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+3,1,3,0,100M+ songs,Standard,None,None,$5.99/mo
+3,2,1,1,80M songs,Lossless,Limited,None,Free w/ Ads
+3,2,2,0,100M+ songs,High-Fi,Limited,None,$5.99/mo
+3,2,3,0,100M+ songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+3,3,1,0,80M songs,Lossless,None,Shared Playlists,Free w/ Ads
+3,3,2,1,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+3,3,3,0,80M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+3,4,1,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+3,4,2,0,100M+ songs,Lossless,Full Library,Live Listening,$11.99/mo
+3,4,3,1,80M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+3,5,1,0,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+3,5,2,0,50M songs,Lossless,None,Shared Playlists,$5.99/mo
+3,5,3,1,50M songs,Standard,None,Shared Playlists,$5.99/mo
+3,6,1,1,80M songs,Standard,None,Shared Playlists,$5.99/mo
+3,6,2,0,80M songs,High-Fi,None,None,Free w/ Ads
+3,6,3,0,50M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+3,7,1,0,100M+ songs,Lossless,Limited,Live Listening,Free w/ Ads
+3,7,2,1,80M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+3,7,3,0,100M+ songs,Lossless,Full Library,None,$5.99/mo
+3,8,1,0,80M songs,Lossless,None,Live Listening,$5.99/mo
+3,8,2,1,80M songs,Standard,Full Library,Live Listening,Free w/ Ads
+3,8,3,0,50M songs,Standard,Limited,Live Listening,$5.99/mo
+4,1,1,0,80M songs,Lossless,None,Live Listening,$5.99/mo
+4,1,2,1,50M songs,Standard,Limited,Shared Playlists,$5.99/mo
+4,1,3,0,80M songs,Standard,Limited,None,$11.99/mo
+4,2,1,1,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+4,2,2,0,50M songs,Standard,Full Library,Live Listening,$11.99/mo
+4,2,3,0,80M songs,Standard,None,Shared Playlists,$11.99/mo
+4,3,1,0,80M songs,Standard,Limited,None,$5.99/mo
+4,3,2,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+4,3,3,1,100M+ songs,High-Fi,None,Shared Playlists,$11.99/mo
+4,4,1,0,80M songs,Standard,Limited,Live Listening,$11.99/mo
+4,4,2,1,100M+ songs,High-Fi,None,None,Free w/ Ads
+4,4,3,0,80M songs,High-Fi,Limited,None,$5.99/mo
+4,5,1,0,50M songs,Lossless,Full Library,Live Listening,$5.99/mo
+4,5,2,1,80M songs,Lossless,None,Live Listening,Free w/ Ads
+4,5,3,0,80M songs,Standard,None,Live Listening,Free w/ Ads
+4,6,1,0,100M+ songs,Standard,None,Shared Playlists,$11.99/mo
+4,6,2,1,100M+ songs,Lossless,None,Shared Playlists,$5.99/mo
+4,6,3,0,50M songs,Standard,Full Library,Live Listening,Free w/ Ads
+4,7,1,0,80M songs,High-Fi,Limited,None,$5.99/mo
+4,7,2,0,100M+ songs,High-Fi,None,None,$11.99/mo
+4,7,3,1,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+4,8,1,0,80M songs,Lossless,Limited,None,$5.99/mo
+4,8,2,1,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+4,8,3,0,80M songs,Standard,None,None,Free w/ Ads
+5,1,1,0,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+5,1,2,1,100M+ songs,High-Fi,None,Shared Playlists,Free w/ Ads
+5,1,3,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+5,2,1,0,50M songs,Lossless,None,Shared Playlists,$11.99/mo
+5,2,2,0,80M songs,Lossless,Limited,None,$11.99/mo
+5,2,3,1,100M+ songs,Standard,Full Library,None,$11.99/mo
+5,3,1,0,80M songs,Standard,Limited,Live Listening,$11.99/mo
+5,3,2,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+5,3,3,1,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+5,4,1,0,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+5,4,2,0,80M songs,High-Fi,Limited,Live Listening,$5.99/mo
+5,4,3,1,100M+ songs,Standard,Full Library,None,Free w/ Ads
+5,5,1,0,100M+ songs,Standard,Limited,None,Free w/ Ads
+5,5,2,1,80M songs,Lossless,None,Live Listening,$5.99/mo
+5,5,3,0,50M songs,Standard,Limited,Live Listening,$5.99/mo
+5,6,1,0,50M songs,Lossless,Full Library,None,Free w/ Ads
+5,6,2,0,80M songs,High-Fi,None,None,$11.99/mo
+5,6,3,1,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+5,7,1,0,50M songs,Standard,Full Library,Live Listening,$5.99/mo
+5,7,2,0,50M songs,Standard,None,Live Listening,Free w/ Ads
+5,7,3,1,80M songs,Standard,None,None,$11.99/mo
+5,8,1,0,50M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+5,8,2,1,100M+ songs,Lossless,None,None,$5.99/mo
+5,8,3,0,100M+ songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+6,1,1,0,50M songs,Standard,Limited,Shared Playlists,$5.99/mo
+6,1,2,1,80M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+6,1,3,0,50M songs,Standard,Limited,None,$5.99/mo
+6,2,1,0,50M songs,High-Fi,Limited,None,Free w/ Ads
+6,2,2,1,80M songs,Lossless,Limited,Live Listening,$11.99/mo
+6,2,3,0,80M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+6,3,1,0,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+6,3,2,0,100M+ songs,Lossless,Limited,None,Free w/ Ads
+6,3,3,1,100M+ songs,High-Fi,Limited,Live Listening,$11.99/mo
+6,4,1,0,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+6,4,2,1,80M songs,High-Fi,Full Library,None,$5.99/mo
+6,4,3,0,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+6,5,1,0,50M songs,High-Fi,Limited,Live Listening,$5.99/mo
+6,5,2,0,80M songs,High-Fi,None,None,$11.99/mo
+6,5,3,1,50M songs,Lossless,None,Live Listening,$5.99/mo
+6,6,1,0,50M songs,Lossless,None,Live Listening,$11.99/mo
+6,6,2,1,100M+ songs,Lossless,Full Library,None,Free w/ Ads
+6,6,3,0,50M songs,Standard,None,None,$5.99/mo
+6,7,1,0,100M+ songs,Lossless,Full Library,None,$5.99/mo
+6,7,2,1,100M+ songs,Lossless,Limited,None,$5.99/mo
+6,7,3,0,50M songs,High-Fi,Full Library,None,$5.99/mo
+6,8,1,1,80M songs,Standard,Full Library,Live Listening,$5.99/mo
+6,8,2,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+6,8,3,0,100M+ songs,Standard,None,None,$5.99/mo
+7,1,1,0,50M songs,Standard,None,Shared Playlists,$11.99/mo
+7,1,2,0,50M songs,Standard,None,Live Listening,$11.99/mo
+7,1,3,1,100M+ songs,High-Fi,Limited,Live Listening,$5.99/mo
+7,2,1,1,100M+ songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+7,2,2,0,50M songs,Standard,Full Library,None,Free w/ Ads
+7,2,3,0,50M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+7,3,1,0,80M songs,Standard,Limited,Live Listening,$11.99/mo
+7,3,2,0,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+7,3,3,1,80M songs,Lossless,None,Live Listening,$11.99/mo
+7,4,1,0,50M songs,Standard,Limited,None,$5.99/mo
+7,4,2,1,80M songs,Standard,Limited,Shared Playlists,$5.99/mo
+7,4,3,0,50M songs,Standard,None,Live Listening,$5.99/mo
+7,5,1,0,50M songs,Standard,Limited,Shared Playlists,$5.99/mo
+7,5,2,0,100M+ songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+7,5,3,1,100M+ songs,Lossless,Full Library,None,$11.99/mo
+7,6,1,0,100M+ songs,High-Fi,Limited,None,$5.99/mo
+7,6,2,0,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+7,6,3,1,80M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+7,7,1,0,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+7,7,2,0,100M+ songs,Lossless,None,Live Listening,Free w/ Ads
+7,7,3,1,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+7,8,1,0,50M songs,Standard,None,Live Listening,$5.99/mo
+7,8,2,1,80M songs,Lossless,None,Shared Playlists,$5.99/mo
+7,8,3,0,80M songs,Lossless,Full Library,None,$5.99/mo
+8,1,1,1,80M songs,Lossless,Full Library,None,$5.99/mo
+8,1,2,0,80M songs,Lossless,None,None,$11.99/mo
+8,1,3,0,50M songs,Lossless,None,Shared Playlists,Free w/ Ads
+8,2,1,0,80M songs,Standard,None,Live Listening,$5.99/mo
+8,2,2,0,50M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+8,2,3,1,80M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+8,3,1,1,50M songs,Lossless,Full Library,Live Listening,$5.99/mo
+8,3,2,0,50M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+8,3,3,0,50M songs,Lossless,Limited,None,$11.99/mo
+8,4,1,0,50M songs,High-Fi,Limited,None,$5.99/mo
+8,4,2,1,100M+ songs,Standard,Full Library,Shared Playlists,$11.99/mo
+8,4,3,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+8,5,1,0,80M songs,Lossless,None,None,Free w/ Ads
+8,5,2,0,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+8,5,3,1,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+8,6,1,0,100M+ songs,High-Fi,None,Shared Playlists,$11.99/mo
+8,6,2,0,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+8,6,3,1,100M+ songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+8,7,1,1,100M+ songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+8,7,2,0,100M+ songs,Standard,None,None,$5.99/mo
+8,7,3,0,80M songs,Lossless,Full Library,None,$11.99/mo
+8,8,1,0,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+8,8,2,0,80M songs,Lossless,Limited,None,Free w/ Ads
+8,8,3,1,100M+ songs,Lossless,Full Library,None,Free w/ Ads
+9,1,1,1,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+9,1,2,0,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+9,1,3,0,50M songs,Standard,Limited,Shared Playlists,$5.99/mo
+9,2,1,0,80M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+9,2,2,1,100M+ songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+9,2,3,0,50M songs,High-Fi,None,Live Listening,$5.99/mo
+9,3,1,0,80M songs,Lossless,None,Shared Playlists,$5.99/mo
+9,3,2,1,50M songs,Standard,Limited,Live Listening,Free w/ Ads
+9,3,3,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+9,4,1,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+9,4,2,0,50M songs,Lossless,Full Library,None,$5.99/mo
+9,4,3,1,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+9,5,1,1,100M+ songs,Lossless,Full Library,None,Free w/ Ads
+9,5,2,0,80M songs,Lossless,Limited,None,$11.99/mo
+9,5,3,0,100M+ songs,Lossless,Full Library,None,$5.99/mo
+9,6,1,0,100M+ songs,High-Fi,Limited,None,$5.99/mo
+9,6,2,1,50M songs,Standard,None,Shared Playlists,Free w/ Ads
+9,6,3,0,100M+ songs,Lossless,None,None,$5.99/mo
+9,7,1,1,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+9,7,2,0,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+9,7,3,0,50M songs,Lossless,Limited,Live Listening,$11.99/mo
+9,8,1,1,80M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+9,8,2,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+9,8,3,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+10,1,1,1,80M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+10,1,2,0,100M+ songs,Lossless,None,Live Listening,$11.99/mo
+10,1,3,0,50M songs,Standard,Full Library,None,$11.99/mo
+10,2,1,0,50M songs,Lossless,None,None,$11.99/mo
+10,2,2,1,80M songs,Standard,Limited,Shared Playlists,$5.99/mo
+10,2,3,0,50M songs,Lossless,None,Live Listening,$5.99/mo
+10,3,1,1,50M songs,Standard,Limited,None,Free w/ Ads
+10,3,2,0,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+10,3,3,0,50M songs,Standard,Full Library,Live Listening,Free w/ Ads
+10,4,1,0,80M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+10,4,2,1,50M songs,High-Fi,Limited,None,Free w/ Ads
+10,4,3,0,80M songs,Lossless,None,Live Listening,$11.99/mo
+10,5,1,0,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+10,5,2,1,50M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+10,5,3,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+10,6,1,1,50M songs,Lossless,Limited,None,$11.99/mo
+10,6,2,0,80M songs,Lossless,Full Library,Live Listening,$11.99/mo
+10,6,3,0,100M+ songs,High-Fi,Limited,Live Listening,$5.99/mo
+10,7,1,0,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+10,7,2,0,80M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+10,7,3,1,80M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+10,8,1,0,50M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+10,8,2,0,100M+ songs,High-Fi,Limited,None,Free w/ Ads
+10,8,3,1,50M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+11,1,1,0,80M songs,Standard,None,Shared Playlists,$5.99/mo
+11,1,2,0,100M+ songs,Lossless,None,None,$11.99/mo
+11,1,3,1,80M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+11,2,1,0,100M+ songs,Standard,Limited,Live Listening,$11.99/mo
+11,2,2,0,80M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+11,2,3,1,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+11,3,1,1,100M+ songs,Lossless,Full Library,None,Free w/ Ads
+11,3,2,0,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+11,3,3,0,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+11,4,1,1,80M songs,Lossless,Limited,None,$5.99/mo
+11,4,2,0,100M+ songs,High-Fi,None,Shared Playlists,Free w/ Ads
+11,4,3,0,100M+ songs,Lossless,None,Shared Playlists,$5.99/mo
+11,5,1,1,100M+ songs,Lossless,Full Library,None,Free w/ Ads
+11,5,2,0,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+11,5,3,0,80M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+11,6,1,0,50M songs,High-Fi,Limited,None,Free w/ Ads
+11,6,2,0,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+11,6,3,1,80M songs,High-Fi,None,Live Listening,$5.99/mo
+11,7,1,0,100M+ songs,Lossless,Full Library,None,$5.99/mo
+11,7,2,0,80M songs,Standard,Full Library,Live Listening,Free w/ Ads
+11,7,3,1,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+11,8,1,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+11,8,2,0,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+11,8,3,1,80M songs,High-Fi,None,Shared Playlists,$11.99/mo
+12,1,1,1,100M+ songs,High-Fi,Limited,Live Listening,Free w/ Ads
+12,1,2,0,80M songs,Standard,Full Library,Live Listening,$11.99/mo
+12,1,3,0,80M songs,Standard,Limited,Live Listening,$5.99/mo
+12,2,1,0,80M songs,High-Fi,None,None,$11.99/mo
+12,2,2,1,100M+ songs,Lossless,Full Library,Live Listening,Free w/ Ads
+12,2,3,0,50M songs,Standard,Limited,Shared Playlists,$11.99/mo
+12,3,1,0,80M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+12,3,2,0,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+12,3,3,1,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+12,4,1,0,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+12,4,2,0,50M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+12,4,3,1,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+12,5,1,0,100M+ songs,Standard,None,Shared Playlists,$11.99/mo
+12,5,2,1,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+12,5,3,0,100M+ songs,High-Fi,None,Live Listening,$5.99/mo
+12,6,1,0,50M songs,High-Fi,None,Live Listening,$5.99/mo
+12,6,2,0,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+12,6,3,1,80M songs,Standard,None,Live Listening,$5.99/mo
+12,7,1,0,50M songs,Lossless,Limited,Live Listening,$5.99/mo
+12,7,2,0,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+12,7,3,1,80M songs,Standard,None,Shared Playlists,Free w/ Ads
+12,8,1,1,80M songs,High-Fi,Full Library,None,$5.99/mo
+12,8,2,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+12,8,3,0,50M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+13,1,1,0,50M songs,Lossless,None,Shared Playlists,$11.99/mo
+13,1,2,1,50M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+13,1,3,0,50M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+13,2,1,0,100M+ songs,Standard,Full Library,None,$5.99/mo
+13,2,2,1,100M+ songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+13,2,3,0,50M songs,Standard,None,Live Listening,$5.99/mo
+13,3,1,0,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+13,3,2,1,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+13,3,3,0,50M songs,Lossless,Limited,None,$11.99/mo
+13,4,1,0,50M songs,Standard,None,Live Listening,$11.99/mo
+13,4,2,0,50M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+13,4,3,1,50M songs,Lossless,None,Shared Playlists,$5.99/mo
+13,5,1,1,80M songs,Standard,Full Library,None,Free w/ Ads
+13,5,2,0,80M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+13,5,3,0,80M songs,High-Fi,Full Library,None,$11.99/mo
+13,6,1,0,50M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+13,6,2,0,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+13,6,3,1,80M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+13,7,1,0,50M songs,Standard,Full Library,Live Listening,$11.99/mo
+13,7,2,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+13,7,3,1,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+13,8,1,1,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+13,8,2,0,50M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+13,8,3,0,80M songs,Lossless,None,None,Free w/ Ads
+14,1,1,0,80M songs,High-Fi,None,Live Listening,$5.99/mo
+14,1,2,1,50M songs,Standard,Full Library,Live Listening,Free w/ Ads
+14,1,3,0,100M+ songs,Lossless,None,None,$11.99/mo
+14,2,1,1,100M+ songs,Lossless,Limited,None,$5.99/mo
+14,2,2,0,80M songs,Lossless,None,None,$5.99/mo
+14,2,3,0,80M songs,Lossless,Limited,None,$5.99/mo
+14,3,1,1,50M songs,High-Fi,Limited,Live Listening,$5.99/mo
+14,3,2,0,100M+ songs,High-Fi,Limited,None,$5.99/mo
+14,3,3,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+14,4,1,0,50M songs,Standard,None,Live Listening,$11.99/mo
+14,4,2,0,50M songs,Lossless,Limited,None,$5.99/mo
+14,4,3,1,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+14,5,1,0,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+14,5,2,0,50M songs,High-Fi,None,Live Listening,$5.99/mo
+14,5,3,1,80M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+14,6,1,1,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+14,6,2,0,80M songs,Standard,Limited,None,$11.99/mo
+14,6,3,0,50M songs,Lossless,Full Library,None,$5.99/mo
+14,7,1,0,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+14,7,2,1,50M songs,Standard,Limited,Live Listening,$5.99/mo
+14,7,3,0,100M+ songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+14,8,1,0,50M songs,Lossless,None,None,$11.99/mo
+14,8,2,0,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+14,8,3,1,100M+ songs,Standard,Limited,None,Free w/ Ads
+15,1,1,0,50M songs,Lossless,Limited,Live Listening,$11.99/mo
+15,1,2,0,50M songs,High-Fi,Limited,Live Listening,$5.99/mo
+15,1,3,1,80M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+15,2,1,0,100M+ songs,Standard,None,Live Listening,$5.99/mo
+15,2,2,0,50M songs,Standard,Limited,Live Listening,Free w/ Ads
+15,2,3,1,80M songs,High-Fi,None,Shared Playlists,$5.99/mo
+15,3,1,1,50M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+15,3,2,0,50M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+15,3,3,0,50M songs,Lossless,Limited,None,Free w/ Ads
+15,4,1,0,80M songs,Standard,Limited,None,$5.99/mo
+15,4,2,1,50M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+15,4,3,0,100M+ songs,Lossless,Full Library,Live Listening,Free w/ Ads
+15,5,1,1,50M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+15,5,2,0,50M songs,Lossless,None,Live Listening,$11.99/mo
+15,5,3,0,50M songs,High-Fi,Full Library,None,Free w/ Ads
+15,6,1,0,50M songs,Standard,None,Shared Playlists,$11.99/mo
+15,6,2,0,50M songs,Standard,None,None,Free w/ Ads
+15,6,3,1,100M+ songs,Lossless,None,Shared Playlists,Free w/ Ads
+15,7,1,0,50M songs,Lossless,Full Library,None,$11.99/mo
+15,7,2,1,50M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+15,7,3,0,100M+ songs,Standard,None,Shared Playlists,$11.99/mo
+15,8,1,0,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+15,8,2,0,100M+ songs,Lossless,None,None,$5.99/mo
+15,8,3,1,80M songs,Standard,None,Live Listening,Free w/ Ads
+16,1,1,1,100M+ songs,Lossless,Limited,Live Listening,Free w/ Ads
+16,1,2,0,100M+ songs,Lossless,None,Shared Playlists,Free w/ Ads
+16,1,3,0,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+16,2,1,0,50M songs,Standard,None,Shared Playlists,$11.99/mo
+16,2,2,1,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+16,2,3,0,80M songs,Lossless,None,Shared Playlists,$5.99/mo
+16,3,1,0,100M+ songs,Standard,Full Library,Live Listening,$11.99/mo
+16,3,2,0,80M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+16,3,3,1,50M songs,Lossless,Limited,None,$11.99/mo
+16,4,1,0,50M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+16,4,2,1,80M songs,Lossless,Limited,None,Free w/ Ads
+16,4,3,0,80M songs,Lossless,None,Live Listening,$5.99/mo
+16,5,1,0,50M songs,Lossless,Limited,Live Listening,$5.99/mo
+16,5,2,0,50M songs,Lossless,Limited,Live Listening,$11.99/mo
+16,5,3,1,80M songs,Standard,Full Library,Live Listening,Free w/ Ads
+16,6,1,0,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+16,6,2,0,80M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+16,6,3,1,50M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+16,7,1,1,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+16,7,2,0,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+16,7,3,0,50M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+16,8,1,0,50M songs,High-Fi,Limited,None,$11.99/mo
+16,8,2,0,80M songs,Lossless,None,Live Listening,Free w/ Ads
+16,8,3,1,50M songs,High-Fi,Limited,None,$5.99/mo
+17,1,1,0,50M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+17,1,2,0,50M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+17,1,3,1,50M songs,High-Fi,Full Library,None,$5.99/mo
+17,2,1,0,50M songs,High-Fi,Full Library,None,$5.99/mo
+17,2,2,1,80M songs,Lossless,Limited,None,Free w/ Ads
+17,2,3,0,50M songs,High-Fi,None,None,$5.99/mo
+17,3,1,0,50M songs,High-Fi,None,None,$5.99/mo
+17,3,2,1,100M+ songs,Standard,None,Shared Playlists,$11.99/mo
+17,3,3,0,50M songs,Standard,Full Library,None,Free w/ Ads
+17,4,1,1,50M songs,Lossless,None,Shared Playlists,Free w/ Ads
+17,4,2,0,50M songs,Lossless,Limited,None,Free w/ Ads
+17,4,3,0,50M songs,High-Fi,Full Library,None,Free w/ Ads
+17,5,1,1,100M+ songs,High-Fi,None,Live Listening,$5.99/mo
+17,5,2,0,50M songs,Standard,None,Live Listening,Free w/ Ads
+17,5,3,0,50M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+17,6,1,0,80M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+17,6,2,1,80M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+17,6,3,0,50M songs,High-Fi,None,None,$5.99/mo
+17,7,1,0,50M songs,Lossless,None,Live Listening,$11.99/mo
+17,7,2,0,100M+ songs,High-Fi,None,None,$11.99/mo
+17,7,3,1,80M songs,Lossless,None,Live Listening,$5.99/mo
+17,8,1,1,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+17,8,2,0,80M songs,Standard,Full Library,Live Listening,$11.99/mo
+17,8,3,0,80M songs,Standard,None,Live Listening,$5.99/mo
+18,1,1,0,80M songs,Standard,Limited,Shared Playlists,$5.99/mo
+18,1,2,1,80M songs,Lossless,Full Library,Live Listening,$11.99/mo
+18,1,3,0,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+18,2,1,0,100M+ songs,Standard,None,Live Listening,$11.99/mo
+18,2,2,0,80M songs,Standard,Limited,Live Listening,$11.99/mo
+18,2,3,1,50M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+18,3,1,0,50M songs,Standard,None,None,Free w/ Ads
+18,3,2,1,100M+ songs,Standard,Limited,None,$5.99/mo
+18,3,3,0,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+18,4,1,1,50M songs,Standard,None,None,$5.99/mo
+18,4,2,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+18,4,3,0,80M songs,Lossless,Limited,None,$11.99/mo
+18,5,1,0,50M songs,Lossless,Full Library,Live Listening,$5.99/mo
+18,5,2,1,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+18,5,3,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+18,6,1,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+18,6,2,1,100M+ songs,Standard,None,Shared Playlists,$5.99/mo
+18,6,3,0,50M songs,Lossless,Limited,None,$5.99/mo
+18,7,1,1,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+18,7,2,0,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+18,7,3,0,100M+ songs,Standard,Limited,Live Listening,$11.99/mo
+18,8,1,1,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+18,8,2,0,50M songs,Standard,Limited,Live Listening,$11.99/mo
+18,8,3,0,80M songs,Lossless,None,None,$5.99/mo
+19,1,1,1,100M+ songs,Lossless,Limited,None,$5.99/mo
+19,1,2,0,50M songs,Standard,None,None,$5.99/mo
+19,1,3,0,100M+ songs,High-Fi,None,Live Listening,$5.99/mo
+19,2,1,1,100M+ songs,Standard,Limited,None,Free w/ Ads
+19,2,2,0,100M+ songs,Standard,Full Library,None,$5.99/mo
+19,2,3,0,80M songs,Standard,Full Library,Live Listening,$11.99/mo
+19,3,1,1,50M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+19,3,2,0,80M songs,Lossless,Limited,None,$5.99/mo
+19,3,3,0,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+19,4,1,0,80M songs,Lossless,Limited,Live Listening,Free w/ Ads
+19,4,2,0,50M songs,High-Fi,Full Library,None,$5.99/mo
+19,4,3,1,80M songs,Lossless,Full Library,None,Free w/ Ads
+19,5,1,1,100M+ songs,High-Fi,Limited,Live Listening,$5.99/mo
+19,5,2,0,80M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+19,5,3,0,50M songs,Lossless,Limited,Live Listening,Free w/ Ads
+19,6,1,0,80M songs,Standard,Limited,None,$11.99/mo
+19,6,2,0,100M+ songs,Standard,Limited,Live Listening,$11.99/mo
+19,6,3,1,100M+ songs,Standard,None,None,Free w/ Ads
+19,7,1,0,80M songs,Standard,Limited,None,Free w/ Ads
+19,7,2,0,80M songs,High-Fi,None,Shared Playlists,$5.99/mo
+19,7,3,1,100M+ songs,Standard,None,Live Listening,Free w/ Ads
+19,8,1,1,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+19,8,2,0,80M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+19,8,3,0,50M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+20,1,1,0,80M songs,Standard,Limited,Live Listening,$5.99/mo
+20,1,2,0,50M songs,High-Fi,None,Live Listening,$5.99/mo
+20,1,3,1,100M+ songs,Standard,Full Library,Live Listening,$11.99/mo
+20,2,1,0,100M+ songs,High-Fi,Limited,None,$11.99/mo
+20,2,2,1,100M+ songs,Lossless,None,Shared Playlists,Free w/ Ads
+20,2,3,0,100M+ songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+20,3,1,0,50M songs,High-Fi,None,Live Listening,$11.99/mo
+20,3,2,1,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+20,3,3,0,100M+ songs,High-Fi,Limited,None,$11.99/mo
+20,4,1,0,100M+ songs,Standard,None,Live Listening,Free w/ Ads
+20,4,2,0,100M+ songs,Standard,Full Library,Shared Playlists,$11.99/mo
+20,4,3,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+20,5,1,1,100M+ songs,Lossless,None,Live Listening,Free w/ Ads
+20,5,2,0,100M+ songs,Lossless,None,Shared Playlists,$11.99/mo
+20,5,3,0,100M+ songs,Lossless,None,None,$11.99/mo
+20,6,1,0,100M+ songs,High-Fi,None,Shared Playlists,Free w/ Ads
+20,6,2,1,100M+ songs,Lossless,Full Library,Live Listening,Free w/ Ads
+20,6,3,0,100M+ songs,Lossless,None,Live Listening,Free w/ Ads
+20,7,1,1,100M+ songs,Standard,Full Library,Live Listening,$11.99/mo
+20,7,2,0,50M songs,High-Fi,Limited,None,$11.99/mo
+20,7,3,0,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+20,8,1,1,50M songs,Lossless,None,None,$11.99/mo
+20,8,2,0,80M songs,Standard,Limited,None,Free w/ Ads
+20,8,3,0,80M songs,Standard,Limited,None,Free w/ Ads
+21,1,1,0,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+21,1,2,0,100M+ songs,Standard,None,None,$5.99/mo
+21,1,3,1,100M+ songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+21,2,1,1,50M songs,Lossless,None,None,Free w/ Ads
+21,2,2,0,50M songs,Lossless,Full Library,None,$11.99/mo
+21,2,3,0,50M songs,High-Fi,Full Library,None,$5.99/mo
+21,3,1,0,100M+ songs,Standard,None,None,$5.99/mo
+21,3,2,0,50M songs,Lossless,None,Shared Playlists,$11.99/mo
+21,3,3,1,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+21,4,1,1,80M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+21,4,2,0,100M+ songs,Standard,Limited,None,$11.99/mo
+21,4,3,0,50M songs,Standard,Limited,Live Listening,$5.99/mo
+21,5,1,1,100M+ songs,Lossless,Limited,None,Free w/ Ads
+21,5,2,0,50M songs,Lossless,None,Live Listening,$11.99/mo
+21,5,3,0,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+21,6,1,1,100M+ songs,High-Fi,Limited,None,Free w/ Ads
+21,6,2,0,50M songs,Standard,Limited,Shared Playlists,$11.99/mo
+21,6,3,0,80M songs,Standard,Full Library,Live Listening,$5.99/mo
+21,7,1,1,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+21,7,2,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+21,7,3,0,50M songs,Lossless,Full Library,None,$11.99/mo
+21,8,1,0,80M songs,Lossless,Limited,Live Listening,$11.99/mo
+21,8,2,1,50M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+21,8,3,0,80M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+22,1,1,0,80M songs,High-Fi,Full Library,None,$5.99/mo
+22,1,2,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+22,1,3,1,80M songs,Lossless,Limited,None,$5.99/mo
+22,2,1,0,50M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+22,2,2,0,100M+ songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+22,2,3,1,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+22,3,1,0,100M+ songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+22,3,2,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+22,3,3,1,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+22,4,1,0,50M songs,Lossless,None,Live Listening,$11.99/mo
+22,4,2,0,100M+ songs,Standard,Limited,None,$5.99/mo
+22,4,3,1,80M songs,High-Fi,None,Live Listening,Free w/ Ads
+22,5,1,0,50M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+22,5,2,1,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+22,5,3,0,50M songs,High-Fi,Limited,Live Listening,$5.99/mo
+22,6,1,1,50M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+22,6,2,0,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+22,6,3,0,100M+ songs,High-Fi,Limited,None,$5.99/mo
+22,7,1,0,80M songs,Standard,Full Library,None,Free w/ Ads
+22,7,2,1,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+22,7,3,0,100M+ songs,High-Fi,Limited,None,$11.99/mo
+22,8,1,1,80M songs,Standard,Limited,Live Listening,$5.99/mo
+22,8,2,0,80M songs,Standard,Limited,None,$11.99/mo
+22,8,3,0,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+23,1,1,1,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+23,1,2,0,80M songs,High-Fi,None,None,Free w/ Ads
+23,1,3,0,50M songs,Standard,None,Shared Playlists,Free w/ Ads
+23,2,1,0,80M songs,Lossless,None,None,$11.99/mo
+23,2,2,1,100M+ songs,Standard,Limited,Live Listening,$11.99/mo
+23,2,3,0,80M songs,Lossless,Full Library,None,$11.99/mo
+23,3,1,1,100M+ songs,Lossless,None,None,$5.99/mo
+23,3,2,0,80M songs,Lossless,None,None,Free w/ Ads
+23,3,3,0,80M songs,Standard,Limited,Live Listening,$11.99/mo
+23,4,1,0,50M songs,Standard,Full Library,None,Free w/ Ads
+23,4,2,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+23,4,3,1,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+23,5,1,0,50M songs,Standard,None,Shared Playlists,$5.99/mo
+23,5,2,0,100M+ songs,Standard,None,Live Listening,$11.99/mo
+23,5,3,1,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+23,6,1,1,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+23,6,2,0,50M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+23,6,3,0,80M songs,Lossless,Full Library,None,$11.99/mo
+23,7,1,1,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+23,7,2,0,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+23,7,3,0,80M songs,Standard,Limited,None,$11.99/mo
+23,8,1,1,50M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+23,8,2,0,50M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+23,8,3,0,100M+ songs,Standard,None,None,$5.99/mo
+24,1,1,0,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+24,1,2,1,80M songs,Lossless,Limited,None,Free w/ Ads
+24,1,3,0,50M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+24,2,1,0,100M+ songs,Lossless,Full Library,None,$5.99/mo
+24,2,2,0,80M songs,High-Fi,None,Shared Playlists,$5.99/mo
+24,2,3,1,80M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+24,3,1,1,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+24,3,2,0,50M songs,Standard,None,Live Listening,Free w/ Ads
+24,3,3,0,80M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+24,4,1,0,50M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+24,4,2,1,100M+ songs,Lossless,Limited,Live Listening,Free w/ Ads
+24,4,3,0,80M songs,Standard,None,Shared Playlists,Free w/ Ads
+24,5,1,1,100M+ songs,High-Fi,None,Live Listening,$5.99/mo
+24,5,2,0,50M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+24,5,3,0,80M songs,Standard,None,Live Listening,Free w/ Ads
+24,6,1,0,50M songs,Standard,Limited,None,$11.99/mo
+24,6,2,0,50M songs,Lossless,Full Library,None,$11.99/mo
+24,6,3,1,80M songs,Lossless,Limited,None,$5.99/mo
+24,7,1,0,50M songs,High-Fi,None,Shared Playlists,$11.99/mo
+24,7,2,0,80M songs,High-Fi,Limited,None,$11.99/mo
+24,7,3,1,100M+ songs,Standard,Limited,None,$5.99/mo
+24,8,1,1,80M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+24,8,2,0,50M songs,Standard,Limited,None,$11.99/mo
+24,8,3,0,100M+ songs,Standard,None,Live Listening,$5.99/mo
+25,1,1,0,100M+ songs,Standard,None,Shared Playlists,$11.99/mo
+25,1,2,0,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+25,1,3,1,100M+ songs,High-Fi,Full Library,None,$11.99/mo
+25,2,1,1,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+25,2,2,0,50M songs,Standard,None,Live Listening,$11.99/mo
+25,2,3,0,100M+ songs,High-Fi,None,Shared Playlists,Free w/ Ads
+25,3,1,1,100M+ songs,Lossless,None,Live Listening,Free w/ Ads
+25,3,2,0,80M songs,Lossless,Limited,None,$5.99/mo
+25,3,3,0,50M songs,Standard,None,Shared Playlists,$11.99/mo
+25,4,1,1,50M songs,High-Fi,Full Library,None,$5.99/mo
+25,4,2,0,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+25,4,3,0,50M songs,Standard,None,Shared Playlists,Free w/ Ads
+25,5,1,0,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+25,5,2,1,100M+ songs,Lossless,Full Library,None,$5.99/mo
+25,5,3,0,80M songs,High-Fi,None,None,Free w/ Ads
+25,6,1,0,50M songs,Lossless,None,None,$5.99/mo
+25,6,2,1,50M songs,Standard,Full Library,None,Free w/ Ads
+25,6,3,0,100M+ songs,Lossless,None,Shared Playlists,Free w/ Ads
+25,7,1,1,100M+ songs,Lossless,Limited,None,Free w/ Ads
+25,7,2,0,50M songs,Standard,None,Live Listening,$11.99/mo
+25,7,3,0,80M songs,Standard,None,Shared Playlists,$5.99/mo
+25,8,1,0,50M songs,Lossless,Limited,Live Listening,$11.99/mo
+25,8,2,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+25,8,3,1,50M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+26,1,1,0,50M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+26,1,2,1,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+26,1,3,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+26,2,1,1,80M songs,Standard,Full Library,None,$11.99/mo
+26,2,2,0,50M songs,Standard,Limited,Shared Playlists,$11.99/mo
+26,2,3,0,100M+ songs,High-Fi,None,Shared Playlists,$11.99/mo
+26,3,1,0,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+26,3,2,1,100M+ songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+26,3,3,0,80M songs,Standard,Full Library,Live Listening,$11.99/mo
+26,4,1,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+26,4,2,1,100M+ songs,High-Fi,Limited,None,Free w/ Ads
+26,4,3,0,80M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+26,5,1,1,50M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+26,5,2,0,50M songs,Lossless,None,Live Listening,$5.99/mo
+26,5,3,0,50M songs,High-Fi,None,Shared Playlists,$11.99/mo
+26,6,1,0,50M songs,High-Fi,None,Live Listening,Free w/ Ads
+26,6,2,1,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+26,6,3,0,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+26,7,1,0,50M songs,High-Fi,Full Library,None,Free w/ Ads
+26,7,2,0,80M songs,High-Fi,Full Library,None,$11.99/mo
+26,7,3,1,80M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+26,8,1,1,80M songs,Standard,None,Shared Playlists,$5.99/mo
+26,8,2,0,80M songs,Lossless,Limited,None,Free w/ Ads
+26,8,3,0,50M songs,Lossless,None,Shared Playlists,$5.99/mo
+27,1,1,1,100M+ songs,High-Fi,None,None,Free w/ Ads
+27,1,2,0,80M songs,High-Fi,None,None,$11.99/mo
+27,1,3,0,80M songs,Lossless,None,Live Listening,$11.99/mo
+27,2,1,1,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+27,2,2,0,80M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+27,2,3,0,100M+ songs,High-Fi,None,None,$5.99/mo
+27,3,1,1,80M songs,Standard,Limited,Live Listening,$11.99/mo
+27,3,2,0,80M songs,Standard,None,None,$5.99/mo
+27,3,3,0,100M+ songs,Lossless,Limited,None,$11.99/mo
+27,4,1,1,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+27,4,2,0,80M songs,Standard,None,None,$5.99/mo
+27,4,3,0,80M songs,High-Fi,None,Live Listening,$5.99/mo
+27,5,1,0,50M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+27,5,2,1,100M+ songs,Standard,None,Shared Playlists,Free w/ Ads
+27,5,3,0,80M songs,High-Fi,Limited,None,$5.99/mo
+27,6,1,0,100M+ songs,Lossless,None,Live Listening,$11.99/mo
+27,6,2,0,50M songs,Lossless,Limited,Live Listening,$11.99/mo
+27,6,3,1,80M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+27,7,1,1,80M songs,Lossless,Limited,None,Free w/ Ads
+27,7,2,0,100M+ songs,Lossless,None,Live Listening,Free w/ Ads
+27,7,3,0,80M songs,High-Fi,None,Live Listening,$5.99/mo
+27,8,1,0,50M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+27,8,2,0,80M songs,Standard,Limited,Shared Playlists,$5.99/mo
+27,8,3,1,80M songs,Lossless,Limited,None,Free w/ Ads
+28,1,1,1,50M songs,High-Fi,Full Library,None,$11.99/mo
+28,1,2,0,50M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+28,1,3,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+28,2,1,0,80M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+28,2,2,0,50M songs,Lossless,Limited,Live Listening,$11.99/mo
+28,2,3,1,80M songs,Lossless,Full Library,None,$5.99/mo
+28,3,1,1,100M+ songs,Standard,None,Live Listening,$5.99/mo
+28,3,2,0,50M songs,Standard,Full Library,None,$11.99/mo
+28,3,3,0,80M songs,Lossless,None,Live Listening,$5.99/mo
+28,4,1,0,100M+ songs,Lossless,None,Shared Playlists,$11.99/mo
+28,4,2,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+28,4,3,1,80M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+28,5,1,0,50M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+28,5,2,1,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+28,5,3,0,80M songs,Standard,Limited,None,$11.99/mo
+28,6,1,0,80M songs,High-Fi,Limited,None,$5.99/mo
+28,6,2,1,50M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+28,6,3,0,50M songs,Standard,Full Library,Live Listening,Free w/ Ads
+28,7,1,1,80M songs,Standard,Limited,Shared Playlists,$5.99/mo
+28,7,2,0,80M songs,High-Fi,Full Library,None,$11.99/mo
+28,7,3,0,50M songs,Standard,None,Shared Playlists,$5.99/mo
+28,8,1,0,50M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+28,8,2,0,80M songs,Standard,None,Shared Playlists,Free w/ Ads
+28,8,3,1,80M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+29,1,1,1,50M songs,Lossless,Limited,Live Listening,$11.99/mo
+29,1,2,0,100M+ songs,Standard,Full Library,Live Listening,$11.99/mo
+29,1,3,0,80M songs,Standard,None,Shared Playlists,$11.99/mo
+29,2,1,0,80M songs,High-Fi,None,None,$11.99/mo
+29,2,2,0,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+29,2,3,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+29,3,1,0,50M songs,Lossless,Limited,None,$5.99/mo
+29,3,2,0,50M songs,Standard,None,None,$5.99/mo
+29,3,3,1,50M songs,Lossless,None,Live Listening,Free w/ Ads
+29,4,1,0,100M+ songs,Lossless,None,Shared Playlists,$5.99/mo
+29,4,2,0,50M songs,Standard,Limited,None,$11.99/mo
+29,4,3,1,100M+ songs,Lossless,Full Library,None,Free w/ Ads
+29,5,1,1,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+29,5,2,0,100M+ songs,High-Fi,Limited,Live Listening,$11.99/mo
+29,5,3,0,80M songs,Standard,None,Live Listening,$5.99/mo
+29,6,1,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+29,6,2,1,80M songs,High-Fi,None,None,Free w/ Ads
+29,6,3,0,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+29,7,1,0,100M+ songs,Standard,Limited,None,Free w/ Ads
+29,7,2,1,100M+ songs,Standard,Limited,Live Listening,Free w/ Ads
+29,7,3,0,80M songs,High-Fi,None,None,Free w/ Ads
+29,8,1,1,50M songs,High-Fi,Limited,None,Free w/ Ads
+29,8,2,0,50M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+29,8,3,0,50M songs,High-Fi,None,None,$11.99/mo
+30,1,1,0,80M songs,Lossless,Full Library,None,$11.99/mo
+30,1,2,0,50M songs,Lossless,Full Library,None,$5.99/mo
+30,1,3,1,100M+ songs,High-Fi,None,Live Listening,Free w/ Ads
+30,2,1,1,50M songs,High-Fi,Limited,Live Listening,$5.99/mo
+30,2,2,0,80M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+30,2,3,0,80M songs,High-Fi,None,Live Listening,$5.99/mo
+30,3,1,1,100M+ songs,Standard,Full Library,None,$5.99/mo
+30,3,2,0,50M songs,Lossless,None,Shared Playlists,$5.99/mo
+30,3,3,0,80M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+30,4,1,1,80M songs,Lossless,Limited,Live Listening,Free w/ Ads
+30,4,2,0,80M songs,Lossless,Limited,Live Listening,$5.99/mo
+30,4,3,0,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+30,5,1,0,80M songs,Standard,None,Live Listening,$5.99/mo
+30,5,2,0,80M songs,High-Fi,None,Live Listening,$11.99/mo
+30,5,3,1,100M+ songs,Standard,None,Shared Playlists,Free w/ Ads
+30,6,1,1,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+30,6,2,0,100M+ songs,Standard,Full Library,None,$5.99/mo
+30,6,3,0,80M songs,Lossless,None,Live Listening,$11.99/mo
+30,7,1,0,80M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+30,7,2,0,80M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+30,7,3,1,50M songs,Standard,Limited,Live Listening,$5.99/mo
+30,8,1,0,50M songs,Standard,None,None,$5.99/mo
+30,8,2,0,100M+ songs,Lossless,Full Library,None,Free w/ Ads
+30,8,3,1,100M+ songs,Standard,None,Live Listening,$5.99/mo
+31,1,1,1,80M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+31,1,2,0,50M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+31,1,3,0,100M+ songs,Standard,None,Live Listening,Free w/ Ads
+31,2,1,0,80M songs,High-Fi,Limited,None,$11.99/mo
+31,2,2,1,100M+ songs,Standard,Limited,Live Listening,$11.99/mo
+31,2,3,0,50M songs,Standard,None,Live Listening,Free w/ Ads
+31,3,1,0,50M songs,High-Fi,None,Shared Playlists,$11.99/mo
+31,3,2,1,80M songs,Lossless,Limited,Live Listening,$11.99/mo
+31,3,3,0,50M songs,Standard,None,None,Free w/ Ads
+31,4,1,0,80M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+31,4,2,0,50M songs,High-Fi,None,Live Listening,Free w/ Ads
+31,4,3,1,100M+ songs,High-Fi,None,Shared Playlists,Free w/ Ads
+31,5,1,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+31,5,2,1,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+31,5,3,0,50M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+31,6,1,0,100M+ songs,High-Fi,Limited,None,$5.99/mo
+31,6,2,0,50M songs,Lossless,Limited,None,$11.99/mo
+31,6,3,1,100M+ songs,Standard,Limited,None,Free w/ Ads
+31,7,1,0,50M songs,High-Fi,None,None,$5.99/mo
+31,7,2,0,50M songs,Lossless,Full Library,None,$5.99/mo
+31,7,3,1,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+31,8,1,0,80M songs,Standard,None,None,Free w/ Ads
+31,8,2,1,100M+ songs,Lossless,None,None,$5.99/mo
+31,8,3,0,100M+ songs,Lossless,Limited,None,$5.99/mo
+32,1,1,1,80M songs,High-Fi,None,Live Listening,$5.99/mo
+32,1,2,0,50M songs,Standard,None,Live Listening,$11.99/mo
+32,1,3,0,80M songs,High-Fi,Limited,None,$5.99/mo
+32,2,1,0,50M songs,Standard,Limited,Shared Playlists,$5.99/mo
+32,2,2,0,80M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+32,2,3,1,80M songs,Lossless,Limited,Live Listening,Free w/ Ads
+32,3,1,1,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+32,3,2,0,50M songs,Standard,Limited,None,Free w/ Ads
+32,3,3,0,100M+ songs,Lossless,None,None,$11.99/mo
+32,4,1,0,100M+ songs,Standard,Limited,Live Listening,$11.99/mo
+32,4,2,0,80M songs,Standard,None,None,Free w/ Ads
+32,4,3,1,100M+ songs,Lossless,Full Library,Live Listening,$11.99/mo
+32,5,1,0,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+32,5,2,1,100M+ songs,Standard,Full Library,None,$5.99/mo
+32,5,3,0,50M songs,Lossless,Limited,None,$11.99/mo
+32,6,1,0,80M songs,Standard,Limited,Shared Playlists,$5.99/mo
+32,6,2,0,50M songs,High-Fi,None,Shared Playlists,$11.99/mo
+32,6,3,1,100M+ songs,Standard,Limited,Live Listening,$5.99/mo
+32,7,1,0,50M songs,Standard,Full Library,Live Listening,$11.99/mo
+32,7,2,1,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+32,7,3,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+32,8,1,0,80M songs,Lossless,None,Live Listening,$5.99/mo
+32,8,2,1,50M songs,Lossless,Full Library,None,Free w/ Ads
+32,8,3,0,80M songs,Standard,Full Library,None,$5.99/mo
+33,1,1,0,100M+ songs,High-Fi,Limited,Live Listening,$11.99/mo
+33,1,2,0,100M+ songs,Lossless,None,Live Listening,Free w/ Ads
+33,1,3,1,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+33,2,1,0,80M songs,Lossless,None,Live Listening,$5.99/mo
+33,2,2,1,50M songs,Lossless,Limited,None,Free w/ Ads
+33,2,3,0,100M+ songs,Standard,None,Live Listening,Free w/ Ads
+33,3,1,0,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+33,3,2,1,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+33,3,3,0,80M songs,Standard,None,None,$11.99/mo
+33,4,1,1,100M+ songs,High-Fi,None,None,$11.99/mo
+33,4,2,0,50M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+33,4,3,0,80M songs,High-Fi,Limited,None,$11.99/mo
+33,5,1,1,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+33,5,2,0,50M songs,Standard,Limited,None,$11.99/mo
+33,5,3,0,50M songs,Standard,None,None,Free w/ Ads
+33,6,1,1,50M songs,High-Fi,Limited,None,$11.99/mo
+33,6,2,0,50M songs,Standard,Full Library,Live Listening,$5.99/mo
+33,6,3,0,80M songs,High-Fi,Full Library,None,$11.99/mo
+33,7,1,1,100M+ songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+33,7,2,0,80M songs,Standard,Limited,Shared Playlists,$5.99/mo
+33,7,3,0,100M+ songs,Standard,Full Library,Shared Playlists,$11.99/mo
+33,8,1,0,50M songs,Lossless,Limited,Live Listening,Free w/ Ads
+33,8,2,0,100M+ songs,High-Fi,None,Shared Playlists,$11.99/mo
+33,8,3,1,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+34,1,1,1,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+34,1,2,0,50M songs,High-Fi,Full Library,None,$11.99/mo
+34,1,3,0,50M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+34,2,1,1,80M songs,Lossless,None,Shared Playlists,Free w/ Ads
+34,2,2,0,100M+ songs,Standard,Limited,Live Listening,Free w/ Ads
+34,2,3,0,50M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+34,3,1,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+34,3,2,0,100M+ songs,Lossless,None,None,Free w/ Ads
+34,3,3,0,50M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+34,4,1,0,80M songs,Lossless,None,Live Listening,$11.99/mo
+34,4,2,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+34,4,3,1,80M songs,High-Fi,Limited,None,$11.99/mo
+34,5,1,0,100M+ songs,Lossless,None,None,Free w/ Ads
+34,5,2,1,50M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+34,5,3,0,50M songs,Lossless,None,Shared Playlists,$5.99/mo
+34,6,1,1,50M songs,Lossless,Limited,Live Listening,$5.99/mo
+34,6,2,0,100M+ songs,High-Fi,None,None,$5.99/mo
+34,6,3,0,80M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+34,7,1,0,80M songs,Lossless,Limited,None,$11.99/mo
+34,7,2,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+34,7,3,1,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+34,8,1,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+34,8,2,0,100M+ songs,Lossless,Full Library,None,$5.99/mo
+34,8,3,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+35,1,1,0,50M songs,Standard,None,Shared Playlists,$5.99/mo
+35,1,2,1,80M songs,Lossless,None,Live Listening,Free w/ Ads
+35,1,3,0,50M songs,Standard,None,Shared Playlists,Free w/ Ads
+35,2,1,0,100M+ songs,Standard,Limited,Shared Playlists,$5.99/mo
+35,2,2,1,50M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+35,2,3,0,50M songs,High-Fi,None,Live Listening,$5.99/mo
+35,3,1,0,50M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+35,3,2,0,50M songs,Lossless,Limited,None,Free w/ Ads
+35,3,3,1,80M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+35,4,1,1,100M+ songs,Standard,Limited,Live Listening,$11.99/mo
+35,4,2,0,50M songs,Standard,Limited,None,Free w/ Ads
+35,4,3,0,50M songs,High-Fi,Limited,None,Free w/ Ads
+35,5,1,0,100M+ songs,High-Fi,None,Live Listening,$5.99/mo
+35,5,2,1,80M songs,High-Fi,None,Live Listening,$5.99/mo
+35,5,3,0,50M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+35,6,1,0,80M songs,High-Fi,None,None,$5.99/mo
+35,6,2,0,50M songs,High-Fi,None,Live Listening,Free w/ Ads
+35,6,3,1,100M+ songs,High-Fi,Limited,Live Listening,$5.99/mo
+35,7,1,0,80M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+35,7,2,1,50M songs,Standard,Full Library,Live Listening,Free w/ Ads
+35,7,3,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+35,8,1,0,80M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+35,8,2,0,100M+ songs,Standard,None,Shared Playlists,$11.99/mo
+35,8,3,1,80M songs,Standard,Full Library,Live Listening,$5.99/mo
+36,1,1,0,50M songs,Standard,None,None,Free w/ Ads
+36,1,2,1,80M songs,Lossless,None,Shared Playlists,Free w/ Ads
+36,1,3,0,80M songs,Standard,Full Library,Live Listening,$5.99/mo
+36,2,1,1,50M songs,High-Fi,Full Library,None,$5.99/mo
+36,2,2,0,80M songs,High-Fi,None,None,Free w/ Ads
+36,2,3,0,100M+ songs,Standard,Limited,Live Listening,Free w/ Ads
+36,3,1,1,50M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+36,3,2,0,50M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+36,3,3,0,100M+ songs,Standard,None,Shared Playlists,Free w/ Ads
+36,4,1,1,100M+ songs,High-Fi,None,Live Listening,$5.99/mo
+36,4,2,0,50M songs,High-Fi,None,None,Free w/ Ads
+36,4,3,0,80M songs,High-Fi,None,Live Listening,Free w/ Ads
+36,5,1,1,80M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+36,5,2,0,50M songs,Standard,Full Library,Live Listening,Free w/ Ads
+36,5,3,0,100M+ songs,High-Fi,None,Live Listening,$5.99/mo
+36,6,1,0,80M songs,Lossless,Full Library,None,Free w/ Ads
+36,6,2,1,100M+ songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+36,6,3,0,50M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+36,7,1,0,100M+ songs,Standard,None,Live Listening,$11.99/mo
+36,7,2,0,100M+ songs,Standard,Full Library,None,$11.99/mo
+36,7,3,1,50M songs,Lossless,Full Library,None,Free w/ Ads
+36,8,1,0,50M songs,High-Fi,None,Live Listening,Free w/ Ads
+36,8,2,1,50M songs,High-Fi,None,Shared Playlists,$11.99/mo
+36,8,3,0,50M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+37,1,1,0,50M songs,High-Fi,None,Live Listening,Free w/ Ads
+37,1,2,1,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+37,1,3,0,80M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+37,2,1,0,80M songs,Standard,None,None,$5.99/mo
+37,2,2,0,50M songs,Lossless,Limited,None,Free w/ Ads
+37,2,3,1,100M+ songs,Standard,Limited,None,$11.99/mo
+37,3,1,0,80M songs,High-Fi,None,None,$11.99/mo
+37,3,2,1,100M+ songs,Lossless,None,None,Free w/ Ads
+37,3,3,0,50M songs,Standard,None,Shared Playlists,$11.99/mo
+37,4,1,0,50M songs,Standard,Full Library,Live Listening,$11.99/mo
+37,4,2,1,100M+ songs,High-Fi,Full Library,Live Listening,$5.99/mo
+37,4,3,0,80M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+37,5,1,0,50M songs,High-Fi,None,None,$11.99/mo
+37,5,2,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+37,5,3,0,80M songs,High-Fi,None,Live Listening,Free w/ Ads
+37,6,1,0,100M+ songs,Standard,Full Library,None,Free w/ Ads
+37,6,2,1,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+37,6,3,0,50M songs,Lossless,None,None,$11.99/mo
+37,7,1,0,50M songs,Lossless,None,None,$5.99/mo
+37,7,2,0,50M songs,Lossless,None,None,$11.99/mo
+37,7,3,1,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+37,8,1,0,100M+ songs,Standard,None,None,Free w/ Ads
+37,8,2,0,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+37,8,3,1,50M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+38,1,1,1,100M+ songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+38,1,2,0,50M songs,Standard,None,None,$11.99/mo
+38,1,3,0,50M songs,Standard,Limited,Shared Playlists,$11.99/mo
+38,2,1,1,100M+ songs,Standard,Full Library,Live Listening,$11.99/mo
+38,2,2,0,50M songs,Standard,Full Library,Live Listening,$5.99/mo
+38,2,3,0,80M songs,High-Fi,None,None,$11.99/mo
+38,3,1,0,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+38,3,2,1,100M+ songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+38,3,3,0,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+38,4,1,0,50M songs,High-Fi,None,None,$5.99/mo
+38,4,2,0,100M+ songs,Standard,None,None,$11.99/mo
+38,4,3,1,80M songs,High-Fi,Full Library,None,$11.99/mo
+38,5,1,1,100M+ songs,Lossless,None,Live Listening,$11.99/mo
+38,5,2,0,50M songs,Lossless,Full Library,None,Free w/ Ads
+38,5,3,0,80M songs,Lossless,None,Shared Playlists,$5.99/mo
+38,6,1,0,80M songs,High-Fi,None,Live Listening,$11.99/mo
+38,6,2,0,80M songs,Lossless,Limited,Live Listening,Free w/ Ads
+38,6,3,1,100M+ songs,Standard,None,None,$5.99/mo
+38,7,1,1,100M+ songs,High-Fi,Limited,Live Listening,Free w/ Ads
+38,7,2,0,50M songs,Standard,Full Library,Live Listening,$5.99/mo
+38,7,3,0,100M+ songs,Lossless,None,None,$11.99/mo
+38,8,1,0,50M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+38,8,2,1,100M+ songs,Standard,None,Shared Playlists,$5.99/mo
+38,8,3,0,80M songs,Standard,Full Library,Live Listening,Free w/ Ads
+39,1,1,1,100M+ songs,Standard,Limited,Shared Playlists,Free w/ Ads
+39,1,2,0,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+39,1,3,0,50M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+39,2,1,0,50M songs,Lossless,None,Shared Playlists,Free w/ Ads
+39,2,2,1,100M+ songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+39,2,3,0,80M songs,Standard,None,Live Listening,$11.99/mo
+39,3,1,0,100M+ songs,High-Fi,None,Shared Playlists,Free w/ Ads
+39,3,2,1,80M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+39,3,3,0,80M songs,Standard,None,None,$5.99/mo
+39,4,1,1,80M songs,High-Fi,Full Library,None,$5.99/mo
+39,4,2,0,50M songs,High-Fi,Limited,Live Listening,$5.99/mo
+39,4,3,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+39,5,1,1,100M+ songs,High-Fi,Limited,None,Free w/ Ads
+39,5,2,0,80M songs,Standard,Full Library,None,$5.99/mo
+39,5,3,0,50M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+39,6,1,0,100M+ songs,Lossless,None,None,Free w/ Ads
+39,6,2,1,80M songs,Standard,Full Library,Live Listening,Free w/ Ads
+39,6,3,0,50M songs,Standard,Limited,Shared Playlists,$5.99/mo
+39,7,1,0,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+39,7,2,0,50M songs,High-Fi,None,Shared Playlists,$5.99/mo
+39,7,3,1,50M songs,Lossless,Limited,Live Listening,Free w/ Ads
+39,8,1,0,50M songs,Standard,None,None,$5.99/mo
+39,8,2,1,100M+ songs,Lossless,Limited,Live Listening,Free w/ Ads
+39,8,3,0,100M+ songs,Lossless,None,Live Listening,$11.99/mo
+40,1,1,0,100M+ songs,Standard,Full Library,None,$5.99/mo
+40,1,2,0,50M songs,High-Fi,None,None,Free w/ Ads
+40,1,3,1,50M songs,Lossless,None,None,$11.99/mo
+40,2,1,0,50M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+40,2,2,0,80M songs,High-Fi,None,Live Listening,$11.99/mo
+40,2,3,1,80M songs,Lossless,Limited,Live Listening,$5.99/mo
+40,3,1,0,80M songs,Standard,None,None,Free w/ Ads
+40,3,2,0,50M songs,Standard,Full Library,None,$11.99/mo
+40,3,3,1,50M songs,Standard,Full Library,Live Listening,Free w/ Ads
+40,4,1,1,80M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+40,4,2,0,100M+ songs,Standard,Full Library,Shared Playlists,$11.99/mo
+40,4,3,0,50M songs,High-Fi,None,None,Free w/ Ads
+40,5,1,0,50M songs,Standard,Limited,Live Listening,Free w/ Ads
+40,5,2,0,80M songs,High-Fi,None,None,$11.99/mo
+40,5,3,1,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+40,6,1,1,100M+ songs,Standard,None,None,$11.99/mo
+40,6,2,0,50M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+40,6,3,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+40,7,1,0,50M songs,Lossless,Full Library,None,$5.99/mo
+40,7,2,0,80M songs,Standard,Limited,Live Listening,$11.99/mo
+40,7,3,1,100M+ songs,Lossless,Full Library,Live Listening,$5.99/mo
+40,8,1,0,80M songs,Standard,Full Library,Live Listening,Free w/ Ads
+40,8,2,0,50M songs,Standard,None,None,Free w/ Ads
+40,8,3,1,50M songs,Lossless,Full Library,Live Listening,$5.99/mo
+41,1,1,1,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+41,1,2,0,100M+ songs,Lossless,None,None,$5.99/mo
+41,1,3,0,80M songs,High-Fi,Limited,None,$11.99/mo
+41,2,1,0,50M songs,High-Fi,Full Library,None,Free w/ Ads
+41,2,2,0,80M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+41,2,3,1,100M+ songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+41,3,1,1,80M songs,Standard,Limited,Live Listening,$5.99/mo
+41,3,2,0,50M songs,Lossless,Limited,None,$5.99/mo
+41,3,3,0,100M+ songs,Standard,None,None,$5.99/mo
+41,4,1,1,100M+ songs,Standard,None,None,$11.99/mo
+41,4,2,0,50M songs,Lossless,None,None,Free w/ Ads
+41,4,3,0,50M songs,Standard,Full Library,Live Listening,Free w/ Ads
+41,5,1,1,100M+ songs,High-Fi,None,Shared Playlists,$11.99/mo
+41,5,2,0,80M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+41,5,3,0,80M songs,Lossless,Limited,None,$5.99/mo
+41,6,1,1,50M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+41,6,2,0,80M songs,High-Fi,None,Live Listening,$11.99/mo
+41,6,3,0,100M+ songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+41,7,1,1,80M songs,Lossless,Limited,Live Listening,Free w/ Ads
+41,7,2,0,80M songs,Standard,Full Library,None,$5.99/mo
+41,7,3,0,100M+ songs,Standard,Limited,None,$11.99/mo
+41,8,1,0,80M songs,Standard,None,None,$5.99/mo
+41,8,2,1,50M songs,Lossless,Limited,None,Free w/ Ads
+41,8,3,0,50M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+42,1,1,0,100M+ songs,Standard,None,None,$5.99/mo
+42,1,2,1,50M songs,Standard,None,None,Free w/ Ads
+42,1,3,0,100M+ songs,Standard,Limited,None,$5.99/mo
+42,2,1,0,100M+ songs,High-Fi,Limited,Live Listening,Free w/ Ads
+42,2,2,1,80M songs,Lossless,Full Library,Live Listening,$11.99/mo
+42,2,3,0,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+42,3,1,0,80M songs,High-Fi,None,Live Listening,$11.99/mo
+42,3,2,1,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+42,3,3,0,50M songs,High-Fi,Full Library,None,$5.99/mo
+42,4,1,0,50M songs,Lossless,Full Library,None,$11.99/mo
+42,4,2,0,80M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+42,4,3,1,80M songs,Lossless,Full Library,None,Free w/ Ads
+42,5,1,1,100M+ songs,Lossless,None,Shared Playlists,$5.99/mo
+42,5,2,0,50M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+42,5,3,0,100M+ songs,Standard,Limited,Shared Playlists,$5.99/mo
+42,6,1,0,80M songs,Lossless,Limited,Live Listening,$5.99/mo
+42,6,2,0,80M songs,Standard,None,Live Listening,$11.99/mo
+42,6,3,1,100M+ songs,High-Fi,Limited,None,Free w/ Ads
+42,7,1,0,50M songs,Standard,Limited,None,Free w/ Ads
+42,7,2,0,80M songs,High-Fi,Limited,None,$5.99/mo
+42,7,3,1,100M+ songs,Standard,Limited,Shared Playlists,Free w/ Ads
+42,8,1,1,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+42,8,2,0,50M songs,High-Fi,None,Shared Playlists,$11.99/mo
+42,8,3,0,100M+ songs,High-Fi,Limited,Live Listening,$5.99/mo
+43,1,1,0,80M songs,High-Fi,None,None,Free w/ Ads
+43,1,2,0,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+43,1,3,1,100M+ songs,High-Fi,None,None,Free w/ Ads
+43,2,1,0,50M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+43,2,2,1,80M songs,Standard,None,None,Free w/ Ads
+43,2,3,0,100M+ songs,Standard,Full Library,Shared Playlists,$11.99/mo
+43,3,1,1,100M+ songs,Lossless,Limited,None,$5.99/mo
+43,3,2,0,80M songs,High-Fi,None,Live Listening,$5.99/mo
+43,3,3,0,80M songs,Standard,None,None,$11.99/mo
+43,4,1,0,80M songs,High-Fi,Limited,None,$5.99/mo
+43,4,2,0,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+43,4,3,1,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+43,5,1,1,50M songs,Standard,None,Shared Playlists,$5.99/mo
+43,5,2,0,80M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+43,5,3,0,100M+ songs,Standard,None,None,$5.99/mo
+43,6,1,0,50M songs,Lossless,Limited,Live Listening,$11.99/mo
+43,6,2,0,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+43,6,3,1,80M songs,Lossless,Limited,Live Listening,$5.99/mo
+43,7,1,0,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+43,7,2,1,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+43,7,3,0,50M songs,High-Fi,None,Live Listening,$11.99/mo
+43,8,1,0,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+43,8,2,1,100M+ songs,Lossless,None,Shared Playlists,Free w/ Ads
+43,8,3,0,80M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+44,1,1,1,100M+ songs,Lossless,Limited,None,$5.99/mo
+44,1,2,0,50M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+44,1,3,0,80M songs,High-Fi,None,None,$11.99/mo
+44,2,1,0,100M+ songs,Standard,Limited,Shared Playlists,Free w/ Ads
+44,2,2,1,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+44,2,3,0,80M songs,Lossless,Limited,None,$11.99/mo
+44,3,1,1,100M+ songs,High-Fi,None,None,Free w/ Ads
+44,3,2,0,50M songs,High-Fi,None,None,$5.99/mo
+44,3,3,0,80M songs,Lossless,Full Library,None,$11.99/mo
+44,4,1,0,80M songs,High-Fi,Limited,Live Listening,$5.99/mo
+44,4,2,0,50M songs,High-Fi,None,None,Free w/ Ads
+44,4,3,1,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+44,5,1,0,80M songs,Lossless,Full Library,None,$11.99/mo
+44,5,2,1,80M songs,High-Fi,Limited,None,Free w/ Ads
+44,5,3,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+44,6,1,0,50M songs,Standard,Full Library,Live Listening,$5.99/mo
+44,6,2,0,100M+ songs,Standard,None,None,$5.99/mo
+44,6,3,1,100M+ songs,Lossless,Full Library,Live Listening,Free w/ Ads
+44,7,1,1,80M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+44,7,2,0,100M+ songs,Lossless,None,None,Free w/ Ads
+44,7,3,0,80M songs,Lossless,None,Shared Playlists,Free w/ Ads
+44,8,1,1,100M+ songs,High-Fi,None,Live Listening,Free w/ Ads
+44,8,2,0,50M songs,Standard,None,Shared Playlists,$11.99/mo
+44,8,3,0,50M songs,Standard,None,Shared Playlists,Free w/ Ads
+45,1,1,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+45,1,2,1,80M songs,High-Fi,Limited,Live Listening,$5.99/mo
+45,1,3,0,50M songs,High-Fi,None,None,Free w/ Ads
+45,2,1,1,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+45,2,2,0,50M songs,Lossless,Limited,Live Listening,Free w/ Ads
+45,2,3,0,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+45,3,1,0,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+45,3,2,0,80M songs,High-Fi,None,Live Listening,Free w/ Ads
+45,3,3,1,50M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+45,4,1,1,80M songs,Lossless,Limited,Live Listening,Free w/ Ads
+45,4,2,0,50M songs,Standard,Limited,None,$11.99/mo
+45,4,3,0,80M songs,High-Fi,Full Library,None,Free w/ Ads
+45,5,1,1,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+45,5,2,0,100M+ songs,High-Fi,None,None,$11.99/mo
+45,5,3,0,80M songs,Lossless,Limited,None,$5.99/mo
+45,6,1,0,50M songs,Standard,None,Live Listening,Free w/ Ads
+45,6,2,1,80M songs,Lossless,Limited,Live Listening,Free w/ Ads
+45,6,3,0,50M songs,Lossless,Full Library,None,$11.99/mo
+45,7,1,1,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+45,7,2,0,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+45,7,3,0,100M+ songs,Standard,Limited,None,$11.99/mo
+45,8,1,0,80M songs,High-Fi,None,Live Listening,$11.99/mo
+45,8,2,0,80M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+45,8,3,1,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+46,1,1,0,80M songs,Lossless,Limited,None,$11.99/mo
+46,1,2,0,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+46,1,3,1,80M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+46,2,1,0,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+46,2,2,0,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+46,2,3,1,80M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+46,3,1,0,80M songs,Standard,Full Library,Live Listening,$5.99/mo
+46,3,2,0,50M songs,Standard,Limited,None,$11.99/mo
+46,3,3,1,80M songs,Standard,Full Library,Live Listening,$5.99/mo
+46,4,1,0,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+46,4,2,1,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+46,4,3,0,80M songs,High-Fi,None,Live Listening,$11.99/mo
+46,5,1,0,100M+ songs,High-Fi,Full Library,Live Listening,$5.99/mo
+46,5,2,1,100M+ songs,Lossless,Full Library,Live Listening,$5.99/mo
+46,5,3,0,100M+ songs,Lossless,None,Live Listening,$11.99/mo
+46,6,1,0,80M songs,Standard,Full Library,None,$5.99/mo
+46,6,2,0,100M+ songs,Standard,None,Live Listening,Free w/ Ads
+46,6,3,1,100M+ songs,Standard,Full Library,Live Listening,Free w/ Ads
+46,7,1,0,50M songs,Standard,Limited,Live Listening,Free w/ Ads
+46,7,2,0,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+46,7,3,1,50M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+46,8,1,0,50M songs,Lossless,None,None,Free w/ Ads
+46,8,2,1,80M songs,Standard,Limited,Shared Playlists,$5.99/mo
+46,8,3,0,50M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+47,1,1,1,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+47,1,2,0,50M songs,Lossless,None,Shared Playlists,$11.99/mo
+47,1,3,0,80M songs,Standard,None,None,$11.99/mo
+47,2,1,1,100M+ songs,Standard,Full Library,None,Free w/ Ads
+47,2,2,0,50M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+47,2,3,0,50M songs,High-Fi,Limited,None,$11.99/mo
+47,3,1,0,50M songs,Lossless,Full Library,None,$5.99/mo
+47,3,2,0,100M+ songs,Lossless,Limited,None,$11.99/mo
+47,3,3,1,100M+ songs,Lossless,Limited,Live Listening,Free w/ Ads
+47,4,1,0,80M songs,High-Fi,None,None,Free w/ Ads
+47,4,2,1,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+47,4,3,0,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+47,5,1,0,100M+ songs,Lossless,None,Shared Playlists,$5.99/mo
+47,5,2,0,50M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+47,5,3,1,50M songs,Lossless,Full Library,Live Listening,$5.99/mo
+47,6,1,0,80M songs,Lossless,None,Live Listening,Free w/ Ads
+47,6,2,0,50M songs,Standard,None,None,Free w/ Ads
+47,6,3,1,80M songs,High-Fi,Limited,Live Listening,$5.99/mo
+47,7,1,0,50M songs,High-Fi,None,None,Free w/ Ads
+47,7,2,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+47,7,3,1,100M+ songs,Lossless,Full Library,None,Free w/ Ads
+47,8,1,1,50M songs,Standard,Full Library,None,Free w/ Ads
+47,8,2,0,50M songs,Lossless,None,Shared Playlists,$11.99/mo
+47,8,3,0,100M+ songs,Standard,None,None,Free w/ Ads
+48,1,1,0,100M+ songs,High-Fi,None,Shared Playlists,$11.99/mo
+48,1,2,1,80M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+48,1,3,0,50M songs,High-Fi,None,Shared Playlists,$11.99/mo
+48,2,1,0,100M+ songs,Standard,Full Library,Live Listening,$11.99/mo
+48,2,2,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+48,2,3,1,80M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+48,3,1,0,50M songs,Lossless,Limited,None,$11.99/mo
+48,3,2,1,80M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+48,3,3,0,50M songs,Standard,None,Shared Playlists,$5.99/mo
+48,4,1,0,80M songs,Standard,Limited,None,$11.99/mo
+48,4,2,1,80M songs,Lossless,Full Library,None,$5.99/mo
+48,4,3,0,80M songs,Standard,None,None,$5.99/mo
+48,5,1,1,80M songs,High-Fi,Limited,None,Free w/ Ads
+48,5,2,0,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+48,5,3,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+48,6,1,0,100M+ songs,High-Fi,Full Library,Live Listening,$5.99/mo
+48,6,2,1,80M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+48,6,3,0,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+48,7,1,1,100M+ songs,High-Fi,None,None,Free w/ Ads
+48,7,2,0,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+48,7,3,0,50M songs,High-Fi,Full Library,None,Free w/ Ads
+48,8,1,0,100M+ songs,Lossless,None,None,$5.99/mo
+48,8,2,0,50M songs,Standard,Limited,Live Listening,Free w/ Ads
+48,8,3,1,80M songs,Lossless,None,Live Listening,Free w/ Ads
+49,1,1,0,50M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+49,1,2,0,50M songs,Lossless,None,None,Free w/ Ads
+49,1,3,1,80M songs,Lossless,None,Shared Playlists,$5.99/mo
+49,2,1,0,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+49,2,2,1,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+49,2,3,0,100M+ songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+49,3,1,1,80M songs,High-Fi,Limited,Live Listening,$5.99/mo
+49,3,2,0,50M songs,High-Fi,None,Shared Playlists,$5.99/mo
+49,3,3,0,50M songs,Standard,None,None,Free w/ Ads
+49,4,1,0,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+49,4,2,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+49,4,3,0,50M songs,High-Fi,None,None,$11.99/mo
+49,5,1,0,100M+ songs,High-Fi,None,None,$11.99/mo
+49,5,2,0,80M songs,Lossless,Limited,None,$5.99/mo
+49,5,3,1,100M+ songs,High-Fi,Limited,Live Listening,$11.99/mo
+49,6,1,0,80M songs,High-Fi,None,None,Free w/ Ads
+49,6,2,1,100M+ songs,Lossless,Limited,Shared Playlists,$11.99/mo
+49,6,3,0,80M songs,Standard,Full Library,None,$11.99/mo
+49,7,1,1,100M+ songs,Lossless,Full Library,None,$5.99/mo
+49,7,2,0,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+49,7,3,0,100M+ songs,Lossless,Full Library,None,$5.99/mo
+49,8,1,0,80M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+49,8,2,0,80M songs,Standard,Limited,Shared Playlists,$5.99/mo
+49,8,3,1,100M+ songs,Standard,None,Live Listening,Free w/ Ads
+50,1,1,0,80M songs,Standard,Full Library,Live Listening,$5.99/mo
+50,1,2,0,80M songs,Standard,Limited,None,Free w/ Ads
+50,1,3,1,50M songs,Lossless,Full Library,None,Free w/ Ads
+50,2,1,0,50M songs,Standard,Full Library,Live Listening,$11.99/mo
+50,2,2,0,50M songs,High-Fi,None,None,$11.99/mo
+50,2,3,1,80M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+50,3,1,0,100M+ songs,Standard,Full Library,None,Free w/ Ads
+50,3,2,0,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+50,3,3,1,80M songs,Lossless,Full Library,None,Free w/ Ads
+50,4,1,0,80M songs,High-Fi,None,Shared Playlists,$11.99/mo
+50,4,2,0,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+50,4,3,1,80M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+50,5,1,1,80M songs,Lossless,Limited,Live Listening,Free w/ Ads
+50,5,2,0,80M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+50,5,3,0,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+50,6,1,0,50M songs,Standard,None,Live Listening,Free w/ Ads
+50,6,2,0,50M songs,High-Fi,None,None,$11.99/mo
+50,6,3,1,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+50,7,1,1,100M+ songs,Lossless,Full Library,None,Free w/ Ads
+50,7,2,0,80M songs,Lossless,None,None,$11.99/mo
+50,7,3,0,80M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+50,8,1,0,50M songs,High-Fi,Limited,Live Listening,$5.99/mo
+50,8,2,1,50M songs,Lossless,Limited,None,Free w/ Ads
+50,8,3,0,80M songs,Standard,Full Library,None,Free w/ Ads
+51,1,1,1,100M+ songs,Lossless,Full Library,None,Free w/ Ads
+51,1,2,0,50M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+51,1,3,0,50M songs,Lossless,Limited,None,$11.99/mo
+51,2,1,0,100M+ songs,High-Fi,Limited,None,Free w/ Ads
+51,2,2,0,50M songs,Standard,None,Live Listening,$11.99/mo
+51,2,3,1,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+51,3,1,0,80M songs,Standard,Limited,None,$5.99/mo
+51,3,2,1,100M+ songs,Lossless,Full Library,None,$5.99/mo
+51,3,3,0,100M+ songs,Lossless,None,None,$11.99/mo
+51,4,1,0,100M+ songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+51,4,2,0,50M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+51,4,3,1,80M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+51,5,1,0,100M+ songs,Standard,None,None,$5.99/mo
+51,5,2,0,50M songs,High-Fi,Limited,None,$5.99/mo
+51,5,3,1,50M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+51,6,1,0,50M songs,High-Fi,Full Library,None,Free w/ Ads
+51,6,2,1,100M+ songs,Lossless,Full Library,None,$11.99/mo
+51,6,3,0,50M songs,Lossless,None,Shared Playlists,$11.99/mo
+51,7,1,0,50M songs,Standard,Limited,Live Listening,Free w/ Ads
+51,7,2,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+51,7,3,1,100M+ songs,Standard,None,Live Listening,$11.99/mo
+51,8,1,0,80M songs,Standard,None,Shared Playlists,$5.99/mo
+51,8,2,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+51,8,3,1,100M+ songs,Lossless,Limited,None,Free w/ Ads
+52,1,1,0,50M songs,High-Fi,Limited,None,Free w/ Ads
+52,1,2,0,80M songs,Lossless,None,Live Listening,$11.99/mo
+52,1,3,1,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+52,2,1,0,80M songs,High-Fi,None,None,$5.99/mo
+52,2,2,1,100M+ songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+52,2,3,0,80M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+52,3,1,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+52,3,2,0,50M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+52,3,3,0,50M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+52,4,1,0,50M songs,High-Fi,None,None,$5.99/mo
+52,4,2,0,50M songs,Standard,Limited,Live Listening,$5.99/mo
+52,4,3,1,80M songs,Standard,None,None,$11.99/mo
+52,5,1,1,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+52,5,2,0,100M+ songs,High-Fi,None,Live Listening,$5.99/mo
+52,5,3,0,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+52,6,1,1,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+52,6,2,0,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+52,6,3,0,80M songs,High-Fi,None,Shared Playlists,$5.99/mo
+52,7,1,0,100M+ songs,Lossless,None,Live Listening,Free w/ Ads
+52,7,2,1,80M songs,Lossless,None,Shared Playlists,Free w/ Ads
+52,7,3,0,80M songs,Standard,Limited,Shared Playlists,$5.99/mo
+52,8,1,1,50M songs,Standard,None,None,$5.99/mo
+52,8,2,0,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+52,8,3,0,50M songs,Lossless,Limited,Live Listening,$5.99/mo
+53,1,1,0,50M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+53,1,2,0,50M songs,Standard,Full Library,Live Listening,$5.99/mo
+53,1,3,1,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+53,2,1,1,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+53,2,2,0,50M songs,Lossless,Full Library,None,$5.99/mo
+53,2,3,0,50M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+53,3,1,0,100M+ songs,Lossless,Limited,None,Free w/ Ads
+53,3,2,1,80M songs,High-Fi,None,Shared Playlists,$5.99/mo
+53,3,3,0,50M songs,Standard,Full Library,Live Listening,$11.99/mo
+53,4,1,1,50M songs,Standard,None,Live Listening,$5.99/mo
+53,4,2,0,100M+ songs,Lossless,None,Live Listening,$5.99/mo
+53,4,3,0,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+53,5,1,0,80M songs,Lossless,Limited,None,$5.99/mo
+53,5,2,1,100M+ songs,Lossless,Full Library,None,$11.99/mo
+53,5,3,0,100M+ songs,High-Fi,Limited,None,$11.99/mo
+53,6,1,1,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+53,6,2,0,80M songs,High-Fi,Full Library,None,Free w/ Ads
+53,6,3,0,50M songs,High-Fi,None,Live Listening,$11.99/mo
+53,7,1,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+53,7,2,0,50M songs,Standard,Limited,Live Listening,Free w/ Ads
+53,7,3,1,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+53,8,1,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+53,8,2,1,50M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+53,8,3,0,100M+ songs,Lossless,Limited,Shared Playlists,$11.99/mo
+54,1,1,0,50M songs,Lossless,None,Live Listening,$11.99/mo
+54,1,2,1,50M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+54,1,3,0,50M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+54,2,1,0,100M+ songs,Lossless,None,Shared Playlists,$11.99/mo
+54,2,2,0,50M songs,High-Fi,Limited,None,$11.99/mo
+54,2,3,1,80M songs,Lossless,Limited,None,Free w/ Ads
+54,3,1,0,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+54,3,2,1,100M+ songs,Standard,None,Live Listening,Free w/ Ads
+54,3,3,0,50M songs,Lossless,None,None,Free w/ Ads
+54,4,1,0,50M songs,Lossless,Limited,None,Free w/ Ads
+54,4,2,1,50M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+54,4,3,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+54,5,1,1,100M+ songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+54,5,2,0,80M songs,Standard,None,Shared Playlists,Free w/ Ads
+54,5,3,0,80M songs,Standard,None,Shared Playlists,$11.99/mo
+54,6,1,0,100M+ songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+54,6,2,0,100M+ songs,High-Fi,None,None,$5.99/mo
+54,6,3,1,50M songs,Standard,Full Library,None,$5.99/mo
+54,7,1,1,100M+ songs,Lossless,Limited,Live Listening,Free w/ Ads
+54,7,2,0,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+54,7,3,0,50M songs,High-Fi,Full Library,None,Free w/ Ads
+54,8,1,0,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+54,8,2,1,100M+ songs,Lossless,Full Library,Live Listening,$5.99/mo
+54,8,3,0,80M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+55,1,1,0,80M songs,High-Fi,None,Shared Playlists,$5.99/mo
+55,1,2,1,100M+ songs,Lossless,None,Live Listening,$5.99/mo
+55,1,3,0,50M songs,Lossless,Full Library,None,Free w/ Ads
+55,2,1,0,100M+ songs,Standard,Limited,Shared Playlists,$5.99/mo
+55,2,2,0,50M songs,Standard,Full Library,None,$11.99/mo
+55,2,3,1,80M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+55,3,1,0,100M+ songs,Lossless,Full Library,None,$11.99/mo
+55,3,2,0,50M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+55,3,3,1,80M songs,High-Fi,None,Live Listening,$5.99/mo
+55,4,1,0,100M+ songs,Standard,Full Library,None,$11.99/mo
+55,4,2,0,50M songs,High-Fi,Limited,None,$5.99/mo
+55,4,3,1,100M+ songs,Standard,Limited,Shared Playlists,Free w/ Ads
+55,5,1,0,100M+ songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+55,5,2,0,50M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+55,5,3,1,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+55,6,1,0,100M+ songs,Standard,None,None,$5.99/mo
+55,6,2,1,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+55,6,3,0,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+55,7,1,1,80M songs,Lossless,Limited,None,$5.99/mo
+55,7,2,0,80M songs,High-Fi,None,None,$5.99/mo
+55,7,3,0,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+55,8,1,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+55,8,2,1,100M+ songs,High-Fi,Limited,None,$5.99/mo
+55,8,3,0,50M songs,Standard,Limited,None,$11.99/mo
+56,1,1,1,50M songs,Lossless,None,None,$5.99/mo
+56,1,2,0,50M songs,High-Fi,None,None,$11.99/mo
+56,1,3,0,100M+ songs,Standard,Limited,Live Listening,$5.99/mo
+56,2,1,0,50M songs,Standard,None,Shared Playlists,$11.99/mo
+56,2,2,0,100M+ songs,High-Fi,Limited,Live Listening,$11.99/mo
+56,2,3,1,100M+ songs,High-Fi,Limited,Live Listening,Free w/ Ads
+56,3,1,1,50M songs,Lossless,None,Shared Playlists,Free w/ Ads
+56,3,2,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+56,3,3,0,100M+ songs,Standard,Full Library,Live Listening,Free w/ Ads
+56,4,1,1,80M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+56,4,2,0,100M+ songs,Lossless,None,Live Listening,$11.99/mo
+56,4,3,0,50M songs,Lossless,None,Shared Playlists,$5.99/mo
+56,5,1,1,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+56,5,2,0,50M songs,Lossless,Limited,Live Listening,Free w/ Ads
+56,5,3,0,100M+ songs,High-Fi,Limited,Live Listening,Free w/ Ads
+56,6,1,0,100M+ songs,Standard,Full Library,None,Free w/ Ads
+56,6,2,0,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+56,6,3,1,80M songs,Standard,Full Library,Live Listening,Free w/ Ads
+56,7,1,0,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+56,7,2,0,100M+ songs,Lossless,Limited,None,Free w/ Ads
+56,7,3,1,80M songs,Standard,Limited,Live Listening,$5.99/mo
+56,8,1,0,50M songs,High-Fi,None,Live Listening,$11.99/mo
+56,8,2,0,100M+ songs,Lossless,Limited,None,$11.99/mo
+56,8,3,1,50M songs,High-Fi,Full Library,None,Free w/ Ads
+57,1,1,1,50M songs,High-Fi,Full Library,None,Free w/ Ads
+57,1,2,0,100M+ songs,Standard,Full Library,Shared Playlists,$11.99/mo
+57,1,3,0,80M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+57,2,1,0,50M songs,Standard,Limited,Live Listening,Free w/ Ads
+57,2,2,1,50M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+57,2,3,0,50M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+57,3,1,1,80M songs,Lossless,Full Library,None,Free w/ Ads
+57,3,2,0,80M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+57,3,3,0,80M songs,High-Fi,Limited,None,Free w/ Ads
+57,4,1,0,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+57,4,2,1,50M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+57,4,3,0,80M songs,High-Fi,None,Live Listening,$5.99/mo
+57,5,1,0,50M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+57,5,2,0,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+57,5,3,1,100M+ songs,Standard,Limited,Shared Playlists,$5.99/mo
+57,6,1,0,80M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+57,6,2,0,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+57,6,3,1,100M+ songs,High-Fi,None,None,$5.99/mo
+57,7,1,0,50M songs,High-Fi,None,None,Free w/ Ads
+57,7,2,1,80M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+57,7,3,0,50M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+57,8,1,0,50M songs,Standard,None,None,Free w/ Ads
+57,8,2,1,50M songs,Standard,Limited,None,$5.99/mo
+57,8,3,0,50M songs,Standard,Limited,Shared Playlists,$5.99/mo
+58,1,1,1,80M songs,Lossless,None,Live Listening,$11.99/mo
+58,1,2,0,80M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+58,1,3,0,50M songs,Lossless,Limited,Live Listening,$11.99/mo
+58,2,1,0,80M songs,Lossless,None,Live Listening,$5.99/mo
+58,2,2,0,80M songs,Standard,Full Library,None,$5.99/mo
+58,2,3,1,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+58,3,1,0,50M songs,Standard,Limited,None,$11.99/mo
+58,3,2,0,80M songs,Standard,None,Shared Playlists,$5.99/mo
+58,3,3,1,50M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+58,4,1,0,100M+ songs,Standard,None,None,Free w/ Ads
+58,4,2,1,100M+ songs,Standard,Full Library,Live Listening,Free w/ Ads
+58,4,3,0,100M+ songs,High-Fi,None,None,$5.99/mo
+58,5,1,0,80M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+58,5,2,0,100M+ songs,Standard,None,None,$11.99/mo
+58,5,3,1,100M+ songs,High-Fi,Limited,None,$11.99/mo
+58,6,1,0,80M songs,Lossless,Limited,None,$11.99/mo
+58,6,2,0,50M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+58,6,3,1,80M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+58,7,1,1,100M+ songs,Lossless,Full Library,None,$11.99/mo
+58,7,2,0,100M+ songs,Standard,Full Library,Shared Playlists,$11.99/mo
+58,7,3,0,80M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+58,8,1,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+58,8,2,0,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+58,8,3,0,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+59,1,1,0,80M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+59,1,2,1,80M songs,Lossless,Limited,Live Listening,$5.99/mo
+59,1,3,0,100M+ songs,Standard,None,Live Listening,$11.99/mo
+59,2,1,0,50M songs,Lossless,Limited,None,Free w/ Ads
+59,2,2,1,80M songs,High-Fi,Limited,None,$5.99/mo
+59,2,3,0,80M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+59,3,1,0,50M songs,High-Fi,None,Live Listening,$5.99/mo
+59,3,2,0,50M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+59,3,3,1,80M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+59,4,1,0,80M songs,High-Fi,Full Library,None,$5.99/mo
+59,4,2,0,100M+ songs,Lossless,Full Library,None,$5.99/mo
+59,4,3,1,80M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+59,5,1,0,80M songs,Lossless,None,None,Free w/ Ads
+59,5,2,0,50M songs,Standard,Full Library,Live Listening,$5.99/mo
+59,5,3,1,80M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+59,6,1,0,80M songs,Lossless,None,Shared Playlists,$5.99/mo
+59,6,2,1,100M+ songs,High-Fi,Limited,None,Free w/ Ads
+59,6,3,0,50M songs,Lossless,None,Live Listening,$5.99/mo
+59,7,1,1,50M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+59,7,2,0,80M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+59,7,3,0,80M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+59,8,1,0,80M songs,High-Fi,None,Shared Playlists,$11.99/mo
+59,8,2,1,80M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+59,8,3,0,80M songs,Standard,None,Shared Playlists,$11.99/mo
+60,1,1,1,80M songs,Standard,None,None,Free w/ Ads
+60,1,2,0,80M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+60,1,3,0,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+60,2,1,1,50M songs,Standard,Full Library,None,$11.99/mo
+60,2,2,0,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+60,2,3,0,100M+ songs,Standard,None,Shared Playlists,$11.99/mo
+60,3,1,0,100M+ songs,Standard,None,Live Listening,$11.99/mo
+60,3,2,1,50M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+60,3,3,0,100M+ songs,High-Fi,Limited,Live Listening,$5.99/mo
+60,4,1,1,100M+ songs,Standard,Full Library,None,$5.99/mo
+60,4,2,0,80M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+60,4,3,0,50M songs,High-Fi,Limited,None,$11.99/mo
+60,5,1,0,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+60,5,2,1,80M songs,Standard,Full Library,Live Listening,$11.99/mo
+60,5,3,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+60,6,1,0,50M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+60,6,2,1,80M songs,Lossless,Full Library,None,$11.99/mo
+60,6,3,0,80M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+60,7,1,1,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+60,7,2,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+60,7,3,0,100M+ songs,High-Fi,None,Shared Playlists,$11.99/mo
+60,8,1,0,100M+ songs,High-Fi,None,None,$5.99/mo
+60,8,2,1,100M+ songs,Standard,Full Library,Shared Playlists,$11.99/mo
+60,8,3,0,50M songs,Standard,None,None,$11.99/mo
+61,1,1,0,80M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+61,1,2,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+61,1,3,1,100M+ songs,High-Fi,Full Library,None,$11.99/mo
+61,2,1,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+61,2,2,0,100M+ songs,Standard,None,Live Listening,Free w/ Ads
+61,2,3,1,50M songs,Lossless,Limited,None,Free w/ Ads
+61,3,1,1,80M songs,Lossless,Limited,Live Listening,$5.99/mo
+61,3,2,0,80M songs,Lossless,Full Library,Live Listening,$11.99/mo
+61,3,3,0,80M songs,Lossless,Full Library,None,$11.99/mo
+61,4,1,1,80M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+61,4,2,0,80M songs,High-Fi,None,Live Listening,$5.99/mo
+61,4,3,0,100M+ songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+61,5,1,0,100M+ songs,High-Fi,None,None,$11.99/mo
+61,5,2,1,50M songs,Lossless,Full Library,Live Listening,$5.99/mo
+61,5,3,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+61,6,1,0,50M songs,Lossless,None,None,$5.99/mo
+61,6,2,0,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+61,6,3,1,100M+ songs,Standard,None,Live Listening,$5.99/mo
+61,7,1,0,80M songs,Standard,None,None,$11.99/mo
+61,7,2,0,50M songs,Lossless,None,Shared Playlists,Free w/ Ads
+61,7,3,1,80M songs,High-Fi,Full Library,None,Free w/ Ads
+61,8,1,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+61,8,2,0,80M songs,Lossless,None,None,$5.99/mo
+61,8,3,1,80M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+62,1,1,0,50M songs,Lossless,Limited,None,$5.99/mo
+62,1,2,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+62,1,3,0,50M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+62,2,1,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+62,2,2,1,100M+ songs,Lossless,None,None,$11.99/mo
+62,2,3,0,50M songs,Lossless,Limited,None,$5.99/mo
+62,3,1,0,80M songs,Standard,Limited,None,Free w/ Ads
+62,3,2,1,100M+ songs,Lossless,Limited,None,$11.99/mo
+62,3,3,0,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+62,4,1,0,100M+ songs,Lossless,None,Shared Playlists,$5.99/mo
+62,4,2,1,50M songs,Lossless,None,Shared Playlists,$5.99/mo
+62,4,3,0,100M+ songs,Standard,Limited,Live Listening,$5.99/mo
+62,5,1,1,80M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+62,5,2,0,50M songs,High-Fi,None,None,$11.99/mo
+62,5,3,0,50M songs,Standard,Limited,Live Listening,Free w/ Ads
+62,6,1,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+62,6,2,1,80M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+62,6,3,0,50M songs,High-Fi,Limited,Live Listening,$5.99/mo
+62,7,1,1,50M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+62,7,2,0,80M songs,High-Fi,Limited,None,$5.99/mo
+62,7,3,0,100M+ songs,Lossless,None,Shared Playlists,$5.99/mo
+62,8,1,0,80M songs,High-Fi,None,None,$5.99/mo
+62,8,2,0,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+62,8,3,1,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+63,1,1,0,50M songs,Standard,None,None,$5.99/mo
+63,1,2,1,50M songs,Standard,Limited,None,$5.99/mo
+63,1,3,0,50M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+63,2,1,1,80M songs,Lossless,None,Shared Playlists,Free w/ Ads
+63,2,2,0,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+63,2,3,0,50M songs,Standard,None,None,$5.99/mo
+63,3,1,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+63,3,2,0,80M songs,Standard,None,Shared Playlists,Free w/ Ads
+63,3,3,1,80M songs,Standard,None,None,$5.99/mo
+63,4,1,0,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+63,4,2,1,80M songs,Lossless,Limited,Live Listening,$5.99/mo
+63,4,3,0,80M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+63,5,1,0,50M songs,Standard,Full Library,Live Listening,$11.99/mo
+63,5,2,0,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+63,5,3,1,80M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+63,6,1,0,50M songs,Standard,Limited,None,$11.99/mo
+63,6,2,0,80M songs,Lossless,None,None,$11.99/mo
+63,6,3,1,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+63,7,1,0,50M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+63,7,2,0,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+63,7,3,1,50M songs,Standard,None,Live Listening,$5.99/mo
+63,8,1,0,80M songs,Lossless,Full Library,Live Listening,$11.99/mo
+63,8,2,1,50M songs,Lossless,None,None,$5.99/mo
+63,8,3,0,100M+ songs,Lossless,None,None,$11.99/mo
+64,1,1,0,80M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+64,1,2,0,80M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+64,1,3,1,100M+ songs,Lossless,Limited,None,Free w/ Ads
+64,2,1,0,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+64,2,2,1,100M+ songs,Standard,Full Library,Live Listening,Free w/ Ads
+64,2,3,0,100M+ songs,High-Fi,Limited,None,$11.99/mo
+64,3,1,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+64,3,2,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+64,3,3,1,80M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+64,4,1,0,100M+ songs,Standard,Limited,Live Listening,$11.99/mo
+64,4,2,0,100M+ songs,Lossless,Limited,None,$11.99/mo
+64,4,3,1,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+64,5,1,1,80M songs,Lossless,Full Library,None,$5.99/mo
+64,5,2,0,100M+ songs,Lossless,Limited,Shared Playlists,$11.99/mo
+64,5,3,0,50M songs,Lossless,None,Live Listening,Free w/ Ads
+64,6,1,0,80M songs,High-Fi,None,Shared Playlists,$5.99/mo
+64,6,2,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+64,6,3,1,100M+ songs,High-Fi,None,Shared Playlists,Free w/ Ads
+64,7,1,0,50M songs,Standard,Limited,Live Listening,$11.99/mo
+64,7,2,1,100M+ songs,High-Fi,None,Shared Playlists,$11.99/mo
+64,7,3,0,80M songs,High-Fi,Limited,None,$11.99/mo
+64,8,1,0,100M+ songs,High-Fi,Full Library,None,$11.99/mo
+64,8,2,0,100M+ songs,High-Fi,Limited,None,$5.99/mo
+64,8,3,1,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+65,1,1,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+65,1,2,0,80M songs,Standard,None,None,$5.99/mo
+65,1,3,1,100M+ songs,Lossless,Full Library,Live Listening,Free w/ Ads
+65,2,1,0,80M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+65,2,2,0,50M songs,Standard,Limited,Live Listening,$5.99/mo
+65,2,3,1,80M songs,Standard,Limited,Shared Playlists,$5.99/mo
+65,3,1,0,50M songs,Lossless,None,None,$5.99/mo
+65,3,2,1,80M songs,Standard,None,Live Listening,$5.99/mo
+65,3,3,0,100M+ songs,Standard,Limited,Live Listening,$5.99/mo
+65,4,1,0,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+65,4,2,0,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+65,4,3,1,50M songs,High-Fi,Limited,None,$11.99/mo
+65,5,1,1,80M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+65,5,2,0,80M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+65,5,3,0,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+65,6,1,0,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+65,6,2,1,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+65,6,3,0,80M songs,High-Fi,Limited,None,$11.99/mo
+65,7,1,1,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+65,7,2,0,100M+ songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+65,7,3,0,100M+ songs,Standard,None,Shared Playlists,$5.99/mo
+65,8,1,0,50M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+65,8,2,0,80M songs,Lossless,None,None,$5.99/mo
+65,8,3,1,50M songs,Lossless,Limited,Live Listening,$11.99/mo
+66,1,1,1,50M songs,Lossless,Full Library,None,Free w/ Ads
+66,1,2,0,100M+ songs,Standard,None,Shared Playlists,$5.99/mo
+66,1,3,0,100M+ songs,High-Fi,None,None,$5.99/mo
+66,2,1,0,80M songs,High-Fi,None,None,$11.99/mo
+66,2,2,1,100M+ songs,High-Fi,Limited,None,Free w/ Ads
+66,2,3,0,50M songs,Lossless,None,Live Listening,$5.99/mo
+66,3,1,0,50M songs,Standard,Full Library,None,$5.99/mo
+66,3,2,1,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+66,3,3,0,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+66,4,1,0,100M+ songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+66,4,2,0,100M+ songs,High-Fi,None,None,$11.99/mo
+66,4,3,1,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+66,5,1,0,80M songs,Lossless,Limited,None,Free w/ Ads
+66,5,2,0,100M+ songs,Lossless,Limited,None,$11.99/mo
+66,5,3,1,80M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+66,6,1,0,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+66,6,2,1,100M+ songs,Standard,Full Library,None,$5.99/mo
+66,6,3,0,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+66,7,1,1,100M+ songs,High-Fi,Full Library,None,$11.99/mo
+66,7,2,0,80M songs,Lossless,None,Shared Playlists,Free w/ Ads
+66,7,3,0,50M songs,High-Fi,None,Shared Playlists,$11.99/mo
+66,8,1,0,80M songs,Standard,Limited,None,$11.99/mo
+66,8,2,0,100M+ songs,Standard,None,None,Free w/ Ads
+66,8,3,1,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+67,1,1,1,50M songs,Standard,Full Library,Live Listening,Free w/ Ads
+67,1,2,0,80M songs,High-Fi,Full Library,None,$11.99/mo
+67,1,3,0,80M songs,High-Fi,None,Shared Playlists,$11.99/mo
+67,2,1,0,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+67,2,2,1,100M+ songs,Lossless,Full Library,Live Listening,Free w/ Ads
+67,2,3,0,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+67,3,1,1,80M songs,High-Fi,Full Library,None,Free w/ Ads
+67,3,2,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+67,3,3,0,100M+ songs,Standard,Limited,Shared Playlists,Free w/ Ads
+67,4,1,1,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+67,4,2,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+67,4,3,0,50M songs,Lossless,Full Library,None,$11.99/mo
+67,5,1,1,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+67,5,2,0,100M+ songs,Standard,Limited,None,Free w/ Ads
+67,5,3,0,50M songs,Lossless,None,None,Free w/ Ads
+67,6,1,0,50M songs,High-Fi,None,Live Listening,Free w/ Ads
+67,6,2,1,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+67,6,3,0,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+67,7,1,1,80M songs,Lossless,Limited,Live Listening,$11.99/mo
+67,7,2,0,50M songs,Standard,None,Shared Playlists,Free w/ Ads
+67,7,3,0,100M+ songs,Lossless,Full Library,Live Listening,$11.99/mo
+67,8,1,1,100M+ songs,Lossless,None,None,Free w/ Ads
+67,8,2,0,100M+ songs,Lossless,Limited,Shared Playlists,$11.99/mo
+67,8,3,0,100M+ songs,Standard,Limited,None,Free w/ Ads
+68,1,1,0,50M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+68,1,2,0,50M songs,Lossless,Limited,None,$11.99/mo
+68,1,3,1,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+68,2,1,0,80M songs,Standard,Full Library,None,$11.99/mo
+68,2,2,0,80M songs,Lossless,Full Library,None,$5.99/mo
+68,2,3,1,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+68,3,1,0,100M+ songs,Lossless,Full Library,None,$11.99/mo
+68,3,2,1,50M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+68,3,3,0,80M songs,High-Fi,Limited,None,$11.99/mo
+68,4,1,0,50M songs,High-Fi,Full Library,None,Free w/ Ads
+68,4,2,1,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+68,4,3,0,50M songs,High-Fi,None,None,$11.99/mo
+68,5,1,0,50M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+68,5,2,0,50M songs,Standard,Full Library,Live Listening,Free w/ Ads
+68,5,3,1,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+68,6,1,0,100M+ songs,Lossless,Limited,None,$11.99/mo
+68,6,2,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+68,6,3,1,80M songs,Lossless,Full Library,None,$5.99/mo
+68,7,1,1,50M songs,Lossless,Limited,None,Free w/ Ads
+68,7,2,0,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+68,7,3,0,50M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+68,8,1,0,80M songs,Standard,Full Library,Live Listening,$11.99/mo
+68,8,2,1,80M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+68,8,3,0,100M+ songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+69,1,1,1,100M+ songs,High-Fi,Limited,None,$5.99/mo
+69,1,2,0,80M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+69,1,3,0,100M+ songs,Standard,Limited,Live Listening,$11.99/mo
+69,2,1,0,50M songs,High-Fi,None,Live Listening,$5.99/mo
+69,2,2,1,80M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+69,2,3,0,80M songs,Lossless,Limited,Live Listening,$11.99/mo
+69,3,1,0,100M+ songs,Lossless,None,None,$11.99/mo
+69,3,2,0,80M songs,Standard,Full Library,Live Listening,$5.99/mo
+69,3,3,1,100M+ songs,High-Fi,None,Live Listening,Free w/ Ads
+69,4,1,1,100M+ songs,Lossless,None,Live Listening,$11.99/mo
+69,4,2,0,50M songs,Standard,None,Shared Playlists,Free w/ Ads
+69,4,3,0,80M songs,High-Fi,None,Shared Playlists,$11.99/mo
+69,5,1,0,50M songs,Lossless,Limited,None,Free w/ Ads
+69,5,2,1,50M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+69,5,3,0,50M songs,Lossless,None,Live Listening,Free w/ Ads
+69,6,1,0,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+69,6,2,1,100M+ songs,Standard,Limited,None,Free w/ Ads
+69,6,3,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+69,7,1,1,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+69,7,2,0,50M songs,Standard,Full Library,Live Listening,$11.99/mo
+69,7,3,0,80M songs,Standard,None,None,$11.99/mo
+69,8,1,0,50M songs,Standard,Full Library,Live Listening,$5.99/mo
+69,8,2,0,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+69,8,3,1,50M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+70,1,1,1,80M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+70,1,2,0,80M songs,High-Fi,Limited,None,$5.99/mo
+70,1,3,0,80M songs,Standard,Full Library,None,Free w/ Ads
+70,2,1,0,80M songs,Standard,Full Library,None,Free w/ Ads
+70,2,2,0,80M songs,Standard,None,None,$5.99/mo
+70,2,3,1,80M songs,Standard,None,Live Listening,$11.99/mo
+70,3,1,1,100M+ songs,Standard,Limited,Shared Playlists,$5.99/mo
+70,3,2,0,50M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+70,3,3,0,80M songs,Standard,None,None,$11.99/mo
+70,4,1,0,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+70,4,2,1,50M songs,Standard,None,Shared Playlists,Free w/ Ads
+70,4,3,0,50M songs,Standard,Full Library,None,$11.99/mo
+70,5,1,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+70,5,2,0,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+70,5,3,1,100M+ songs,Standard,None,Live Listening,$5.99/mo
+70,6,1,0,50M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+70,6,2,0,100M+ songs,Standard,None,Live Listening,$5.99/mo
+70,6,3,1,50M songs,High-Fi,None,Shared Playlists,$11.99/mo
+70,7,1,0,80M songs,Lossless,Limited,None,$5.99/mo
+70,7,2,1,80M songs,Lossless,None,Live Listening,$11.99/mo
+70,7,3,0,50M songs,High-Fi,Full Library,None,Free w/ Ads
+70,8,1,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+70,8,2,0,80M songs,High-Fi,None,Live Listening,Free w/ Ads
+70,8,3,1,50M songs,Standard,None,Live Listening,Free w/ Ads
+71,1,1,1,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+71,1,2,0,80M songs,High-Fi,None,Live Listening,$5.99/mo
+71,1,3,0,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+71,2,1,0,50M songs,Standard,None,None,Free w/ Ads
+71,2,2,1,100M+ songs,Lossless,None,Live Listening,$5.99/mo
+71,2,3,0,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+71,3,1,0,50M songs,Standard,None,Live Listening,Free w/ Ads
+71,3,2,0,80M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+71,3,3,1,50M songs,High-Fi,Limited,None,Free w/ Ads
+71,4,1,0,80M songs,High-Fi,Limited,None,Free w/ Ads
+71,4,2,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+71,4,3,1,50M songs,Standard,Limited,Shared Playlists,$5.99/mo
+71,5,1,1,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+71,5,2,0,50M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+71,5,3,0,80M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+71,6,1,0,50M songs,Standard,Limited,Live Listening,$11.99/mo
+71,6,2,1,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+71,6,3,0,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+71,7,1,0,100M+ songs,Standard,Full Library,Shared Playlists,$11.99/mo
+71,7,2,1,100M+ songs,Lossless,None,Live Listening,Free w/ Ads
+71,7,3,0,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+71,8,1,0,50M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+71,8,2,1,80M songs,Standard,None,Live Listening,$5.99/mo
+71,8,3,0,80M songs,Standard,Full Library,None,Free w/ Ads
+72,1,1,1,100M+ songs,High-Fi,Full Library,None,$11.99/mo
+72,1,2,0,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+72,1,3,0,80M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+72,2,1,0,80M songs,High-Fi,None,None,Free w/ Ads
+72,2,2,1,80M songs,Lossless,None,Shared Playlists,$5.99/mo
+72,2,3,0,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+72,3,1,0,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+72,3,2,1,100M+ songs,Lossless,Full Library,Live Listening,$11.99/mo
+72,3,3,0,100M+ songs,Standard,Full Library,Shared Playlists,$11.99/mo
+72,4,1,0,50M songs,Standard,None,Live Listening,Free w/ Ads
+72,4,2,1,100M+ songs,Lossless,Limited,None,$5.99/mo
+72,4,3,0,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+72,5,1,0,50M songs,High-Fi,Limited,None,$5.99/mo
+72,5,2,0,80M songs,Lossless,Limited,None,$5.99/mo
+72,5,3,1,80M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+72,6,1,0,80M songs,High-Fi,None,None,$11.99/mo
+72,6,2,0,50M songs,Standard,Limited,Shared Playlists,$11.99/mo
+72,6,3,1,80M songs,Standard,None,Shared Playlists,Free w/ Ads
+72,7,1,1,80M songs,Lossless,None,Live Listening,Free w/ Ads
+72,7,2,0,100M+ songs,Standard,Limited,Shared Playlists,$5.99/mo
+72,7,3,0,100M+ songs,Standard,Limited,Live Listening,Free w/ Ads
+72,8,1,1,80M songs,Standard,Full Library,Live Listening,Free w/ Ads
+72,8,2,0,80M songs,Standard,None,Shared Playlists,$11.99/mo
+72,8,3,0,50M songs,Standard,Full Library,Live Listening,$11.99/mo
+73,1,1,1,80M songs,High-Fi,Limited,None,Free w/ Ads
+73,1,2,0,80M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+73,1,3,0,100M+ songs,Standard,Limited,Shared Playlists,Free w/ Ads
+73,2,1,0,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+73,2,2,0,100M+ songs,Lossless,Limited,None,$5.99/mo
+73,2,3,1,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+73,3,1,0,50M songs,High-Fi,None,Live Listening,Free w/ Ads
+73,3,2,1,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+73,3,3,0,50M songs,Standard,Limited,Shared Playlists,$11.99/mo
+73,4,1,0,50M songs,High-Fi,Limited,None,$11.99/mo
+73,4,2,1,80M songs,Standard,Limited,None,$11.99/mo
+73,4,3,0,100M+ songs,Lossless,Full Library,None,Free w/ Ads
+73,5,1,0,80M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+73,5,2,1,50M songs,Lossless,Full Library,None,$5.99/mo
+73,5,3,0,80M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+73,6,1,0,80M songs,Lossless,None,None,$5.99/mo
+73,6,2,0,100M+ songs,High-Fi,Full Library,None,$11.99/mo
+73,6,3,1,50M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+73,7,1,0,50M songs,Standard,Full Library,None,$5.99/mo
+73,7,2,0,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+73,7,3,1,80M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+73,8,1,0,80M songs,Lossless,Full Library,None,$11.99/mo
+73,8,2,0,80M songs,High-Fi,Limited,None,$11.99/mo
+73,8,3,1,100M+ songs,Standard,Full Library,None,$5.99/mo
+74,1,1,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+74,1,2,1,80M songs,Standard,Full Library,Live Listening,$5.99/mo
+74,1,3,0,80M songs,Standard,Limited,None,$11.99/mo
+74,2,1,0,100M+ songs,High-Fi,Limited,Live Listening,$5.99/mo
+74,2,2,1,80M songs,Lossless,None,Shared Playlists,Free w/ Ads
+74,2,3,0,50M songs,High-Fi,None,Shared Playlists,$5.99/mo
+74,3,1,1,100M+ songs,Lossless,None,None,Free w/ Ads
+74,3,2,0,50M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+74,3,3,0,50M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+74,4,1,0,80M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+74,4,2,0,80M songs,Standard,None,Live Listening,$11.99/mo
+74,4,3,1,100M+ songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+74,5,1,0,100M+ songs,Lossless,None,Shared Playlists,$11.99/mo
+74,5,2,0,100M+ songs,Standard,Full Library,None,$11.99/mo
+74,5,3,1,80M songs,Lossless,Limited,None,$5.99/mo
+74,6,1,1,80M songs,Lossless,Limited,Live Listening,Free w/ Ads
+74,6,2,0,80M songs,Standard,None,None,$5.99/mo
+74,6,3,0,100M+ songs,High-Fi,None,None,$5.99/mo
+74,7,1,0,50M songs,Standard,Limited,Live Listening,$11.99/mo
+74,7,2,0,100M+ songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+74,7,3,1,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+74,8,1,0,50M songs,High-Fi,Full Library,None,$11.99/mo
+74,8,2,1,80M songs,Standard,None,Live Listening,$11.99/mo
+74,8,3,0,100M+ songs,Lossless,Limited,None,$11.99/mo
+75,1,1,0,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+75,1,2,1,100M+ songs,Standard,None,Live Listening,Free w/ Ads
+75,1,3,0,100M+ songs,Standard,None,None,$11.99/mo
+75,2,1,1,50M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+75,2,2,0,50M songs,Standard,None,Live Listening,Free w/ Ads
+75,2,3,0,50M songs,Standard,Full Library,Live Listening,Free w/ Ads
+75,3,1,1,100M+ songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+75,3,2,0,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+75,3,3,0,100M+ songs,Lossless,Full Library,Live Listening,$11.99/mo
+75,4,1,1,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+75,4,2,0,80M songs,Lossless,Limited,Live Listening,$5.99/mo
+75,4,3,0,80M songs,Standard,Full Library,Live Listening,Free w/ Ads
+75,5,1,0,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+75,5,2,0,100M+ songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+75,5,3,1,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+75,6,1,0,80M songs,Standard,Limited,Live Listening,$5.99/mo
+75,6,2,1,80M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+75,6,3,0,80M songs,Standard,None,Shared Playlists,Free w/ Ads
+75,7,1,0,100M+ songs,Lossless,Limited,None,$5.99/mo
+75,7,2,1,50M songs,Lossless,Limited,Live Listening,Free w/ Ads
+75,7,3,0,80M songs,High-Fi,None,None,$11.99/mo
+75,8,1,1,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+75,8,2,0,80M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+75,8,3,0,50M songs,High-Fi,None,None,Free w/ Ads
+76,1,1,0,50M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+76,1,2,1,100M+ songs,Lossless,Limited,None,Free w/ Ads
+76,1,3,0,50M songs,Standard,Limited,Shared Playlists,$5.99/mo
+76,2,1,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+76,2,2,1,80M songs,Standard,Limited,None,Free w/ Ads
+76,2,3,0,100M+ songs,Standard,Limited,Shared Playlists,$5.99/mo
+76,3,1,0,50M songs,High-Fi,None,Live Listening,$5.99/mo
+76,3,2,0,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+76,3,3,1,80M songs,High-Fi,Full Library,None,Free w/ Ads
+76,4,1,0,80M songs,Lossless,None,Shared Playlists,$5.99/mo
+76,4,2,1,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+76,4,3,0,50M songs,Lossless,None,Live Listening,$5.99/mo
+76,5,1,1,50M songs,Lossless,None,None,Free w/ Ads
+76,5,2,0,50M songs,Lossless,None,None,$11.99/mo
+76,5,3,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+76,6,1,1,50M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+76,6,2,0,50M songs,Lossless,None,Live Listening,$11.99/mo
+76,6,3,0,80M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+76,7,1,1,80M songs,High-Fi,Full Library,None,Free w/ Ads
+76,7,2,0,50M songs,High-Fi,None,Live Listening,$11.99/mo
+76,7,3,0,80M songs,High-Fi,None,Live Listening,Free w/ Ads
+76,8,1,0,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+76,8,2,0,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+76,8,3,1,80M songs,Standard,Limited,Live Listening,$11.99/mo
+77,1,1,0,100M+ songs,Lossless,Full Library,Live Listening,$11.99/mo
+77,1,2,0,50M songs,Standard,Limited,Live Listening,$11.99/mo
+77,1,3,1,50M songs,High-Fi,Full Library,Shared Playlists,$11.99/mo
+77,2,1,1,80M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+77,2,2,0,50M songs,Standard,None,Live Listening,$11.99/mo
+77,2,3,0,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+77,3,1,1,50M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+77,3,2,0,50M songs,High-Fi,None,Live Listening,$5.99/mo
+77,3,3,0,100M+ songs,Lossless,None,None,$11.99/mo
+77,4,1,0,50M songs,Standard,None,Live Listening,$5.99/mo
+77,4,2,1,80M songs,Lossless,None,Live Listening,$11.99/mo
+77,4,3,0,50M songs,High-Fi,None,Shared Playlists,$5.99/mo
+77,5,1,0,80M songs,High-Fi,Full Library,None,Free w/ Ads
+77,5,2,0,80M songs,Standard,None,Live Listening,Free w/ Ads
+77,5,3,1,80M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+77,6,1,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+77,6,2,0,50M songs,High-Fi,None,Live Listening,$11.99/mo
+77,6,3,0,50M songs,Standard,Limited,Live Listening,$11.99/mo
+77,7,1,1,80M songs,Lossless,Full Library,None,Free w/ Ads
+77,7,2,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+77,7,3,0,80M songs,High-Fi,None,None,$11.99/mo
+77,8,1,0,80M songs,Lossless,None,None,$11.99/mo
+77,8,2,0,50M songs,Lossless,None,None,$5.99/mo
+77,8,3,1,50M songs,Standard,None,Shared Playlists,Free w/ Ads
+78,1,1,0,50M songs,Standard,Limited,Live Listening,$5.99/mo
+78,1,2,1,100M+ songs,Standard,None,Live Listening,$5.99/mo
+78,1,3,0,80M songs,Standard,Full Library,None,$11.99/mo
+78,2,1,1,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+78,2,2,0,50M songs,Standard,None,Live Listening,$11.99/mo
+78,2,3,0,100M+ songs,High-Fi,None,Shared Playlists,$11.99/mo
+78,3,1,1,100M+ songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+78,3,2,0,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+78,3,3,0,50M songs,Standard,Limited,Live Listening,$11.99/mo
+78,4,1,0,50M songs,Standard,Full Library,None,$5.99/mo
+78,4,2,0,100M+ songs,Standard,None,None,$11.99/mo
+78,4,3,1,80M songs,Standard,Full Library,Live Listening,$11.99/mo
+78,5,1,0,50M songs,High-Fi,Limited,None,$11.99/mo
+78,5,2,0,100M+ songs,Standard,Full Library,None,$11.99/mo
+78,5,3,1,80M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+78,6,1,0,100M+ songs,High-Fi,Limited,Live Listening,$11.99/mo
+78,6,2,1,100M+ songs,Standard,Full Library,Live Listening,Free w/ Ads
+78,6,3,0,50M songs,Lossless,None,Shared Playlists,$5.99/mo
+78,7,1,0,80M songs,Standard,None,Live Listening,$11.99/mo
+78,7,2,0,100M+ songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+78,7,3,1,100M+ songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+78,8,1,0,50M songs,Lossless,None,None,Free w/ Ads
+78,8,2,0,100M+ songs,High-Fi,None,None,$5.99/mo
+78,8,3,1,80M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+79,1,1,1,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+79,1,2,0,50M songs,Lossless,Limited,Live Listening,Free w/ Ads
+79,1,3,0,80M songs,Standard,Full Library,None,$5.99/mo
+79,2,1,0,80M songs,High-Fi,Full Library,None,$5.99/mo
+79,2,2,1,80M songs,High-Fi,Limited,None,Free w/ Ads
+79,2,3,0,100M+ songs,Lossless,None,Live Listening,$11.99/mo
+79,3,1,0,100M+ songs,High-Fi,Limited,Live Listening,$11.99/mo
+79,3,2,1,80M songs,High-Fi,Limited,None,Free w/ Ads
+79,3,3,0,50M songs,High-Fi,None,Live Listening,Free w/ Ads
+79,4,1,0,50M songs,Standard,None,Live Listening,$5.99/mo
+79,4,2,1,80M songs,Standard,Limited,None,$11.99/mo
+79,4,3,0,50M songs,Standard,Limited,None,Free w/ Ads
+79,5,1,0,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+79,5,2,0,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+79,5,3,1,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+79,6,1,0,80M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+79,6,2,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+79,6,3,1,100M+ songs,Lossless,None,None,$5.99/mo
+79,7,1,1,80M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+79,7,2,0,50M songs,Lossless,Limited,Live Listening,Free w/ Ads
+79,7,3,0,100M+ songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+79,8,1,0,80M songs,High-Fi,Limited,None,$5.99/mo
+79,8,2,0,100M+ songs,High-Fi,Limited,Live Listening,$11.99/mo
+79,8,3,1,50M songs,Lossless,None,Live Listening,$5.99/mo
+80,1,1,0,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+80,1,2,0,50M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+80,1,3,1,100M+ songs,Standard,None,Live Listening,$11.99/mo
+80,2,1,0,50M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+80,2,2,0,50M songs,Standard,None,Shared Playlists,Free w/ Ads
+80,2,3,1,100M+ songs,Lossless,Limited,None,$5.99/mo
+80,3,1,0,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+80,3,2,0,50M songs,Standard,Full Library,None,$11.99/mo
+80,3,3,1,80M songs,Standard,Limited,Live Listening,$11.99/mo
+80,4,1,0,80M songs,Lossless,Full Library,None,$5.99/mo
+80,4,2,1,80M songs,Standard,Limited,Live Listening,$5.99/mo
+80,4,3,0,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+80,5,1,0,50M songs,Lossless,None,Shared Playlists,$11.99/mo
+80,5,2,1,100M+ songs,Lossless,None,Live Listening,$11.99/mo
+80,5,3,0,80M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+80,6,1,0,80M songs,Lossless,Limited,None,Free w/ Ads
+80,6,2,1,100M+ songs,Standard,None,None,$5.99/mo
+80,6,3,0,100M+ songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+80,7,1,1,100M+ songs,Standard,None,Live Listening,Free w/ Ads
+80,7,2,0,80M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+80,7,3,0,100M+ songs,Standard,None,Shared Playlists,$5.99/mo
+80,8,1,0,80M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+80,8,2,1,80M songs,Lossless,Limited,Live Listening,$11.99/mo
+80,8,3,0,50M songs,Standard,Limited,Live Listening,$11.99/mo
+81,1,1,0,80M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+81,1,2,0,50M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+81,1,3,1,100M+ songs,Standard,Full Library,Live Listening,$11.99/mo
+81,2,1,0,80M songs,Standard,None,Live Listening,$5.99/mo
+81,2,2,1,80M songs,Standard,Limited,Shared Playlists,$5.99/mo
+81,2,3,0,100M+ songs,Lossless,None,None,$11.99/mo
+81,3,1,0,80M songs,High-Fi,None,Shared Playlists,$11.99/mo
+81,3,2,0,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+81,3,3,1,100M+ songs,Standard,None,None,$5.99/mo
+81,4,1,1,100M+ songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+81,4,2,0,50M songs,Standard,Full Library,None,Free w/ Ads
+81,4,3,0,100M+ songs,Standard,Full Library,None,$11.99/mo
+81,5,1,0,100M+ songs,Standard,Limited,Live Listening,$11.99/mo
+81,5,2,0,80M songs,Lossless,Limited,None,$11.99/mo
+81,5,3,1,50M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+81,6,1,0,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+81,6,2,0,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+81,6,3,1,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+81,7,1,0,80M songs,Standard,Full Library,None,$11.99/mo
+81,7,2,0,50M songs,Standard,Full Library,None,Free w/ Ads
+81,7,3,1,50M songs,Lossless,Limited,Live Listening,$5.99/mo
+81,8,1,0,80M songs,High-Fi,Full Library,None,$5.99/mo
+81,8,2,1,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+81,8,3,0,80M songs,High-Fi,None,None,$11.99/mo
+82,1,1,0,80M songs,Standard,Full Library,None,$11.99/mo
+82,1,2,0,100M+ songs,Standard,Limited,Live Listening,Free w/ Ads
+82,1,3,1,100M+ songs,Lossless,None,None,Free w/ Ads
+82,2,1,1,50M songs,Standard,None,Shared Playlists,$5.99/mo
+82,2,2,0,80M songs,Standard,None,Live Listening,$5.99/mo
+82,2,3,0,50M songs,Lossless,None,Live Listening,$11.99/mo
+82,3,1,0,50M songs,Lossless,Full Library,None,$11.99/mo
+82,3,2,1,80M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+82,3,3,0,50M songs,High-Fi,None,Live Listening,$11.99/mo
+82,4,1,0,50M songs,Lossless,None,Live Listening,$5.99/mo
+82,4,2,1,100M+ songs,High-Fi,None,None,Free w/ Ads
+82,4,3,0,100M+ songs,High-Fi,Limited,None,Free w/ Ads
+82,5,1,1,50M songs,Standard,Full Library,None,$11.99/mo
+82,5,2,0,50M songs,Lossless,None,Live Listening,$11.99/mo
+82,5,3,0,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+82,6,1,0,50M songs,Lossless,Full Library,None,$11.99/mo
+82,6,2,0,80M songs,Standard,Full Library,Live Listening,$11.99/mo
+82,6,3,1,100M+ songs,High-Fi,None,Shared Playlists,Free w/ Ads
+82,7,1,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+82,7,2,1,100M+ songs,Standard,Limited,Live Listening,$5.99/mo
+82,7,3,0,80M songs,High-Fi,None,Live Listening,Free w/ Ads
+82,8,1,0,100M+ songs,Lossless,Limited,Live Listening,Free w/ Ads
+82,8,2,1,80M songs,High-Fi,None,None,Free w/ Ads
+82,8,3,0,50M songs,Lossless,None,Live Listening,Free w/ Ads
+83,1,1,1,80M songs,High-Fi,None,Shared Playlists,$11.99/mo
+83,1,2,0,100M+ songs,Standard,None,None,Free w/ Ads
+83,1,3,0,50M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+83,2,1,0,80M songs,Lossless,Full Library,None,$11.99/mo
+83,2,2,0,80M songs,Lossless,Limited,Live Listening,$11.99/mo
+83,2,3,1,100M+ songs,High-Fi,Full Library,Live Listening,$5.99/mo
+83,3,1,0,50M songs,High-Fi,Limited,Live Listening,$5.99/mo
+83,3,2,1,80M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+83,3,3,0,80M songs,Standard,None,Shared Playlists,$5.99/mo
+83,4,1,0,100M+ songs,Standard,None,Shared Playlists,$11.99/mo
+83,4,2,0,50M songs,High-Fi,None,Shared Playlists,$11.99/mo
+83,4,3,1,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+83,5,1,1,100M+ songs,High-Fi,None,None,$5.99/mo
+83,5,2,0,50M songs,Lossless,None,None,$11.99/mo
+83,5,3,0,50M songs,Lossless,None,Shared Playlists,$11.99/mo
+83,6,1,0,50M songs,High-Fi,None,None,$5.99/mo
+83,6,2,0,100M+ songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+83,6,3,1,80M songs,Standard,Full Library,None,Free w/ Ads
+83,7,1,0,100M+ songs,High-Fi,Limited,Live Listening,Free w/ Ads
+83,7,2,1,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+83,7,3,0,100M+ songs,Standard,None,Live Listening,$11.99/mo
+83,8,1,0,100M+ songs,Lossless,Limited,Live Listening,$11.99/mo
+83,8,2,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+83,8,3,0,50M songs,Standard,Full Library,None,Free w/ Ads
+84,1,1,1,100M+ songs,Lossless,Limited,Live Listening,Free w/ Ads
+84,1,2,0,50M songs,Lossless,None,None,$11.99/mo
+84,1,3,0,50M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+84,2,1,0,50M songs,Standard,None,Live Listening,$11.99/mo
+84,2,2,0,80M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+84,2,3,1,100M+ songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+84,3,1,0,50M songs,High-Fi,Full Library,None,$11.99/mo
+84,3,2,1,50M songs,Lossless,None,None,Free w/ Ads
+84,3,3,0,50M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+84,4,1,0,100M+ songs,High-Fi,Limited,None,$11.99/mo
+84,4,2,0,80M songs,Standard,Limited,None,Free w/ Ads
+84,4,3,1,50M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+84,5,1,0,100M+ songs,Standard,Limited,None,$5.99/mo
+84,5,2,1,100M+ songs,Lossless,Limited,None,Free w/ Ads
+84,5,3,0,80M songs,High-Fi,None,Live Listening,$5.99/mo
+84,6,1,0,50M songs,Standard,Limited,None,$5.99/mo
+84,6,2,1,80M songs,Standard,Limited,Live Listening,$5.99/mo
+84,6,3,0,80M songs,High-Fi,Limited,None,$11.99/mo
+84,7,1,0,100M+ songs,Standard,None,None,$11.99/mo
+84,7,2,1,80M songs,Standard,Full Library,Live Listening,Free w/ Ads
+84,7,3,0,80M songs,Lossless,None,Shared Playlists,$11.99/mo
+84,8,1,1,100M+ songs,Standard,None,None,Free w/ Ads
+84,8,2,0,100M+ songs,Standard,None,Shared Playlists,Free w/ Ads
+84,8,3,0,50M songs,Standard,None,None,$11.99/mo
+85,1,1,0,100M+ songs,Standard,Limited,None,Free w/ Ads
+85,1,2,1,50M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+85,1,3,0,100M+ songs,High-Fi,Full Library,Live Listening,$5.99/mo
+85,2,1,0,80M songs,Standard,Full Library,None,$5.99/mo
+85,2,2,0,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+85,2,3,1,80M songs,High-Fi,None,Live Listening,Free w/ Ads
+85,3,1,0,100M+ songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+85,3,2,1,50M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+85,3,3,0,80M songs,Standard,None,Shared Playlists,$11.99/mo
+85,4,1,1,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+85,4,2,0,50M songs,High-Fi,None,Shared Playlists,Free w/ Ads
+85,4,3,0,100M+ songs,Lossless,Full Library,Live Listening,$5.99/mo
+85,5,1,1,100M+ songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+85,5,2,0,80M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+85,5,3,0,80M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+85,6,1,0,100M+ songs,Standard,None,Shared Playlists,$11.99/mo
+85,6,2,1,80M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+85,6,3,0,50M songs,Standard,None,None,Free w/ Ads
+85,7,1,1,50M songs,Standard,None,Live Listening,$11.99/mo
+85,7,2,0,80M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+85,7,3,0,50M songs,High-Fi,None,Live Listening,$5.99/mo
+85,8,1,1,50M songs,Lossless,Limited,Live Listening,Free w/ Ads
+85,8,2,0,80M songs,Lossless,None,None,$5.99/mo
+85,8,3,0,80M songs,Lossless,Limited,Live Listening,$5.99/mo
+86,1,1,0,50M songs,Lossless,Limited,Live Listening,Free w/ Ads
+86,1,2,0,80M songs,Lossless,Full Library,None,$11.99/mo
+86,1,3,1,100M+ songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+86,2,1,0,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+86,2,2,0,50M songs,High-Fi,None,None,$5.99/mo
+86,2,3,1,100M+ songs,High-Fi,None,Live Listening,Free w/ Ads
+86,3,1,1,100M+ songs,High-Fi,Limited,Live Listening,$11.99/mo
+86,3,2,0,100M+ songs,Standard,None,Shared Playlists,$5.99/mo
+86,3,3,0,80M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+86,4,1,1,50M songs,High-Fi,Limited,None,Free w/ Ads
+86,4,2,0,50M songs,Lossless,None,Live Listening,$5.99/mo
+86,4,3,0,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+86,5,1,0,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+86,5,2,0,100M+ songs,Standard,Full Library,None,Free w/ Ads
+86,5,3,1,100M+ songs,Lossless,Full Library,Live Listening,Free w/ Ads
+86,6,1,0,80M songs,High-Fi,Limited,Live Listening,$5.99/mo
+86,6,2,1,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+86,6,3,0,80M songs,High-Fi,None,Live Listening,$5.99/mo
+86,7,1,1,100M+ songs,High-Fi,Full Library,None,$11.99/mo
+86,7,2,0,100M+ songs,Standard,None,None,$5.99/mo
+86,7,3,0,100M+ songs,High-Fi,None,Shared Playlists,$11.99/mo
+86,8,1,0,100M+ songs,High-Fi,None,None,$11.99/mo
+86,8,2,0,100M+ songs,High-Fi,None,Shared Playlists,Free w/ Ads
+86,8,3,1,80M songs,Standard,Limited,Live Listening,$5.99/mo
+87,1,1,0,50M songs,Lossless,None,Live Listening,$5.99/mo
+87,1,2,0,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+87,1,3,1,100M+ songs,High-Fi,Full Library,None,$5.99/mo
+87,2,1,0,80M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+87,2,2,0,80M songs,Lossless,Full Library,None,Free w/ Ads
+87,2,3,1,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+87,3,1,0,80M songs,Lossless,None,None,$5.99/mo
+87,3,2,0,80M songs,Standard,None,Shared Playlists,$5.99/mo
+87,3,3,1,50M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+87,4,1,0,100M+ songs,Lossless,None,Shared Playlists,Free w/ Ads
+87,4,2,1,80M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+87,4,3,0,50M songs,Lossless,None,Shared Playlists,$5.99/mo
+87,5,1,1,100M+ songs,Standard,None,Shared Playlists,Free w/ Ads
+87,5,2,0,80M songs,Standard,Limited,Live Listening,$5.99/mo
+87,5,3,0,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+87,6,1,1,100M+ songs,Standard,Full Library,Live Listening,Free w/ Ads
+87,6,2,0,80M songs,High-Fi,None,None,$5.99/mo
+87,6,3,0,50M songs,Standard,Full Library,Live Listening,$5.99/mo
+87,7,1,0,50M songs,Lossless,Limited,None,Free w/ Ads
+87,7,2,1,50M songs,High-Fi,Limited,Live Listening,$5.99/mo
+87,7,3,0,80M songs,Lossless,Limited,Live Listening,$5.99/mo
+87,8,1,0,80M songs,Standard,None,Shared Playlists,Free w/ Ads
+87,8,2,1,80M songs,Standard,Full Library,Live Listening,$5.99/mo
+87,8,3,0,50M songs,Lossless,Limited,Shared Playlists,$5.99/mo
+88,1,1,1,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+88,1,2,0,50M songs,Standard,Limited,None,Free w/ Ads
+88,1,3,0,100M+ songs,High-Fi,Full Library,None,Free w/ Ads
+88,2,1,0,100M+ songs,High-Fi,None,None,$5.99/mo
+88,2,2,0,50M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+88,2,3,1,80M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+88,3,1,1,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+88,3,2,0,50M songs,High-Fi,None,Shared Playlists,$11.99/mo
+88,3,3,0,100M+ songs,High-Fi,None,None,Free w/ Ads
+88,4,1,0,50M songs,Lossless,None,None,$11.99/mo
+88,4,2,1,80M songs,High-Fi,None,Live Listening,Free w/ Ads
+88,4,3,0,80M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+88,5,1,0,80M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+88,5,2,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+88,5,3,0,100M+ songs,Standard,None,None,$5.99/mo
+88,6,1,1,50M songs,Standard,Limited,None,Free w/ Ads
+88,6,2,0,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+88,6,3,0,80M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+88,7,1,1,100M+ songs,Lossless,Full Library,None,Free w/ Ads
+88,7,2,0,100M+ songs,Standard,None,Live Listening,$5.99/mo
+88,7,3,0,80M songs,High-Fi,None,Live Listening,$11.99/mo
+88,8,1,1,80M songs,Lossless,Full Library,Live Listening,$5.99/mo
+88,8,2,0,80M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+88,8,3,0,50M songs,Standard,None,None,$11.99/mo
+89,1,1,0,50M songs,Lossless,None,Shared Playlists,$5.99/mo
+89,1,2,0,100M+ songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+89,1,3,1,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+89,2,1,0,50M songs,High-Fi,Limited,None,Free w/ Ads
+89,2,2,1,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+89,2,3,0,50M songs,Lossless,None,Shared Playlists,$5.99/mo
+89,3,1,0,80M songs,Lossless,Full Library,None,$5.99/mo
+89,3,2,1,80M songs,High-Fi,Limited,None,$5.99/mo
+89,3,3,0,50M songs,Standard,None,None,$5.99/mo
+89,4,1,0,80M songs,High-Fi,Limited,None,Free w/ Ads
+89,4,2,0,50M songs,Standard,None,None,$5.99/mo
+89,4,3,1,50M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+89,5,1,0,80M songs,Standard,Limited,Live Listening,$11.99/mo
+89,5,2,0,50M songs,Standard,None,Live Listening,Free w/ Ads
+89,5,3,1,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+89,6,1,0,50M songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+89,6,2,1,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+89,6,3,0,100M+ songs,Lossless,Limited,None,$5.99/mo
+89,7,1,0,80M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+89,7,2,0,80M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+89,7,3,1,80M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+89,8,1,0,100M+ songs,Lossless,Limited,Shared Playlists,$11.99/mo
+89,8,2,1,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+89,8,3,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+90,1,1,0,50M songs,Standard,None,Shared Playlists,$11.99/mo
+90,1,2,0,50M songs,Standard,Limited,None,$11.99/mo
+90,1,3,1,100M+ songs,Lossless,Full Library,Live Listening,Free w/ Ads
+90,2,1,1,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+90,2,2,0,80M songs,Lossless,Limited,None,Free w/ Ads
+90,2,3,0,50M songs,High-Fi,None,Shared Playlists,$5.99/mo
+90,3,1,0,80M songs,Lossless,None,None,$5.99/mo
+90,3,2,0,80M songs,Standard,None,Shared Playlists,Free w/ Ads
+90,3,3,1,100M+ songs,Standard,Limited,None,Free w/ Ads
+90,4,1,0,100M+ songs,Lossless,None,None,$5.99/mo
+90,4,2,1,100M+ songs,Lossless,Limited,None,$11.99/mo
+90,4,3,0,80M songs,Standard,Limited,Live Listening,$5.99/mo
+90,5,1,0,80M songs,High-Fi,None,Shared Playlists,$11.99/mo
+90,5,2,0,100M+ songs,Standard,Limited,Live Listening,Free w/ Ads
+90,5,3,1,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+90,6,1,0,100M+ songs,Standard,Limited,None,Free w/ Ads
+90,6,2,0,100M+ songs,Standard,None,None,$11.99/mo
+90,6,3,1,80M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+90,7,1,0,80M songs,Standard,Full Library,Live Listening,$11.99/mo
+90,7,2,1,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+90,7,3,0,50M songs,Standard,None,Live Listening,$5.99/mo
+90,8,1,0,50M songs,Lossless,None,None,$5.99/mo
+90,8,2,0,50M songs,Lossless,None,Live Listening,Free w/ Ads
+90,8,3,1,100M+ songs,Lossless,Limited,Live Listening,$5.99/mo
+91,1,1,0,100M+ songs,Lossless,None,None,$5.99/mo
+91,1,2,0,80M songs,Standard,None,None,$11.99/mo
+91,1,3,1,100M+ songs,Lossless,Full Library,None,$11.99/mo
+91,2,1,0,50M songs,Standard,Limited,Live Listening,Free w/ Ads
+91,2,2,0,100M+ songs,High-Fi,None,Live Listening,Free w/ Ads
+91,2,3,1,80M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+91,3,1,1,80M songs,Lossless,Full Library,None,$5.99/mo
+91,3,2,0,50M songs,Standard,Limited,Shared Playlists,$11.99/mo
+91,3,3,0,100M+ songs,Lossless,None,None,Free w/ Ads
+91,4,1,1,80M songs,Lossless,Limited,None,$11.99/mo
+91,4,2,0,100M+ songs,Lossless,Full Library,None,$11.99/mo
+91,4,3,0,50M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+91,5,1,0,80M songs,High-Fi,Limited,None,Free w/ Ads
+91,5,2,1,100M+ songs,Lossless,Limited,None,Free w/ Ads
+91,5,3,0,50M songs,Lossless,Full Library,Shared Playlists,Free w/ Ads
+91,6,1,1,80M songs,Lossless,Full Library,None,Free w/ Ads
+91,6,2,0,100M+ songs,Standard,Full Library,Shared Playlists,$11.99/mo
+91,6,3,0,50M songs,Standard,Limited,Shared Playlists,$11.99/mo
+91,7,1,0,80M songs,High-Fi,None,Live Listening,$11.99/mo
+91,7,2,0,100M+ songs,Standard,Limited,Live Listening,$11.99/mo
+91,7,3,1,100M+ songs,Standard,None,None,Free w/ Ads
+91,8,1,0,50M songs,Standard,Limited,Live Listening,$11.99/mo
+91,8,2,1,100M+ songs,High-Fi,Full Library,None,$11.99/mo
+91,8,3,0,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+92,1,1,1,80M songs,Lossless,None,Live Listening,Free w/ Ads
+92,1,2,0,50M songs,Lossless,Limited,Live Listening,$11.99/mo
+92,1,3,0,50M songs,Standard,Limited,None,Free w/ Ads
+92,2,1,1,80M songs,Standard,Full Library,Live Listening,$5.99/mo
+92,2,2,0,100M+ songs,High-Fi,Full Library,Live Listening,$11.99/mo
+92,2,3,0,100M+ songs,High-Fi,None,None,$5.99/mo
+92,3,1,1,100M+ songs,High-Fi,Limited,Live Listening,$11.99/mo
+92,3,2,0,80M songs,High-Fi,Full Library,None,Free w/ Ads
+92,3,3,0,50M songs,Lossless,Full Library,Shared Playlists,$5.99/mo
+92,4,1,1,50M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+92,4,2,0,100M+ songs,High-Fi,None,Shared Playlists,$5.99/mo
+92,4,3,0,50M songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+92,5,1,0,100M+ songs,Standard,Limited,Live Listening,$5.99/mo
+92,5,2,0,50M songs,Standard,Limited,Live Listening,Free w/ Ads
+92,5,3,1,100M+ songs,Lossless,Full Library,None,$11.99/mo
+92,6,1,1,100M+ songs,Standard,None,None,$5.99/mo
+92,6,2,0,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+92,6,3,0,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+92,7,1,0,100M+ songs,Lossless,None,None,$11.99/mo
+92,7,2,1,80M songs,High-Fi,Full Library,None,$5.99/mo
+92,7,3,0,100M+ songs,Standard,None,Live Listening,$11.99/mo
+92,8,1,0,100M+ songs,Standard,None,None,$5.99/mo
+92,8,2,1,100M+ songs,Lossless,Limited,Shared Playlists,$5.99/mo
+92,8,3,0,100M+ songs,Lossless,None,Live Listening,$11.99/mo
+93,1,1,1,100M+ songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+93,1,2,0,80M songs,Lossless,None,Live Listening,$5.99/mo
+93,1,3,0,100M+ songs,Standard,Limited,Shared Playlists,$5.99/mo
+93,2,1,0,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+93,2,2,1,100M+ songs,Standard,Full Library,None,$5.99/mo
+93,2,3,0,100M+ songs,Lossless,None,Live Listening,Free w/ Ads
+93,3,1,0,50M songs,Standard,Limited,None,$11.99/mo
+93,3,2,0,50M songs,Standard,Limited,None,$5.99/mo
+93,3,3,1,80M songs,High-Fi,Full Library,None,$11.99/mo
+93,4,1,0,50M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+93,4,2,0,50M songs,Lossless,None,Shared Playlists,Free w/ Ads
+93,4,3,1,100M+ songs,Lossless,None,Live Listening,Free w/ Ads
+93,5,1,1,80M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+93,5,2,0,80M songs,Standard,None,None,Free w/ Ads
+93,5,3,0,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+93,6,1,1,100M+ songs,High-Fi,Limited,Live Listening,Free w/ Ads
+93,6,2,0,50M songs,Lossless,Full Library,None,$5.99/mo
+93,6,3,0,50M songs,Standard,Limited,Shared Playlists,$11.99/mo
+93,7,1,0,100M+ songs,Standard,Limited,Shared Playlists,$11.99/mo
+93,7,2,1,80M songs,Lossless,Full Library,Live Listening,$11.99/mo
+93,7,3,0,100M+ songs,Standard,Limited,Live Listening,Free w/ Ads
+93,8,1,0,100M+ songs,Standard,None,Shared Playlists,$5.99/mo
+93,8,2,1,100M+ songs,Standard,Full Library,None,$5.99/mo
+93,8,3,0,100M+ songs,Standard,Limited,Live Listening,$5.99/mo
+94,1,1,1,50M songs,Lossless,Limited,None,$5.99/mo
+94,1,2,0,50M songs,High-Fi,Limited,None,$5.99/mo
+94,1,3,0,50M songs,Standard,Limited,None,$11.99/mo
+94,2,1,1,80M songs,Lossless,Limited,Live Listening,$5.99/mo
+94,2,2,0,50M songs,Lossless,Full Library,None,Free w/ Ads
+94,2,3,0,80M songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+94,3,1,1,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+94,3,2,0,100M+ songs,Standard,Limited,None,$5.99/mo
+94,3,3,0,50M songs,Standard,Full Library,None,$5.99/mo
+94,4,1,0,80M songs,High-Fi,None,Shared Playlists,$11.99/mo
+94,4,2,1,80M songs,Lossless,None,None,$11.99/mo
+94,4,3,0,50M songs,Standard,None,Live Listening,$11.99/mo
+94,5,1,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+94,5,2,1,50M songs,Lossless,None,Live Listening,$11.99/mo
+94,5,3,0,80M songs,Standard,Limited,Live Listening,$11.99/mo
+94,6,1,0,100M+ songs,High-Fi,None,Live Listening,Free w/ Ads
+94,6,2,1,100M+ songs,Lossless,Full Library,None,$11.99/mo
+94,6,3,0,50M songs,High-Fi,None,None,Free w/ Ads
+94,7,1,0,50M songs,Standard,Full Library,Shared Playlists,Free w/ Ads
+94,7,2,1,100M+ songs,Standard,None,Shared Playlists,$5.99/mo
+94,7,3,0,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+94,8,1,0,100M+ songs,Standard,None,Live Listening,$5.99/mo
+94,8,2,0,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+94,8,3,1,100M+ songs,Lossless,None,Live Listening,Free w/ Ads
+95,1,1,1,50M songs,Lossless,Limited,None,Free w/ Ads
+95,1,2,0,50M songs,Lossless,Limited,Live Listening,$5.99/mo
+95,1,3,0,50M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+95,2,1,1,50M songs,Lossless,None,Shared Playlists,$11.99/mo
+95,2,2,0,100M+ songs,Standard,Limited,None,Free w/ Ads
+95,2,3,0,80M songs,Standard,Limited,Live Listening,$5.99/mo
+95,3,1,1,100M+ songs,Lossless,Full Library,None,$5.99/mo
+95,3,2,0,80M songs,Standard,None,None,$11.99/mo
+95,3,3,0,80M songs,Lossless,Limited,Live Listening,Free w/ Ads
+95,4,1,0,50M songs,Standard,Limited,Shared Playlists,$11.99/mo
+95,4,2,0,80M songs,Lossless,None,None,$5.99/mo
+95,4,3,1,80M songs,Standard,None,None,$11.99/mo
+95,5,1,1,100M+ songs,Lossless,None,Live Listening,$5.99/mo
+95,5,2,0,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+95,5,3,0,50M songs,Standard,None,Live Listening,$5.99/mo
+95,6,1,0,80M songs,Standard,None,Live Listening,$5.99/mo
+95,6,2,0,80M songs,Lossless,Limited,Shared Playlists,$11.99/mo
+95,6,3,1,100M+ songs,Lossless,None,Live Listening,$5.99/mo
+95,7,1,1,80M songs,Standard,Limited,None,Free w/ Ads
+95,7,2,0,50M songs,Standard,Limited,Live Listening,$11.99/mo
+95,7,3,0,50M songs,Standard,Limited,Shared Playlists,$11.99/mo
+95,8,1,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo
+95,8,2,0,50M songs,Standard,Full Library,Live Listening,$5.99/mo
+95,8,3,1,100M+ songs,High-Fi,Limited,Live Listening,$11.99/mo
+96,1,1,0,100M+ songs,Lossless,None,None,$5.99/mo
+96,1,2,0,100M+ songs,Standard,Full Library,Live Listening,$11.99/mo
+96,1,3,1,100M+ songs,Lossless,None,None,$5.99/mo
+96,2,1,0,80M songs,High-Fi,Limited,None,$5.99/mo
+96,2,2,0,80M songs,High-Fi,Full Library,Shared Playlists,$5.99/mo
+96,2,3,1,50M songs,High-Fi,Limited,Live Listening,$11.99/mo
+96,3,1,0,80M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+96,3,2,0,100M+ songs,Standard,None,Live Listening,$11.99/mo
+96,3,3,1,50M songs,Lossless,Full Library,None,$5.99/mo
+96,4,1,0,50M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+96,4,2,1,100M+ songs,Standard,Limited,None,$11.99/mo
+96,4,3,0,50M songs,Standard,None,Shared Playlists,Free w/ Ads
+96,5,1,0,50M songs,Standard,None,Live Listening,$11.99/mo
+96,5,2,0,80M songs,Standard,None,None,Free w/ Ads
+96,5,3,1,50M songs,Standard,Limited,None,Free w/ Ads
+96,6,1,0,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+96,6,2,1,100M+ songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+96,6,3,0,80M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+96,7,1,0,80M songs,High-Fi,None,None,$5.99/mo
+96,7,2,0,50M songs,Standard,None,Shared Playlists,$5.99/mo
+96,7,3,1,100M+ songs,High-Fi,Limited,Shared Playlists,Free w/ Ads
+96,8,1,1,50M songs,High-Fi,Full Library,None,Free w/ Ads
+96,8,2,0,80M songs,Standard,Full Library,Shared Playlists,$5.99/mo
+96,8,3,0,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+97,1,1,0,50M songs,High-Fi,None,None,$5.99/mo
+97,1,2,0,50M songs,High-Fi,Limited,Live Listening,$5.99/mo
+97,1,3,1,100M+ songs,Lossless,None,Shared Playlists,$11.99/mo
+97,2,1,0,100M+ songs,Lossless,Limited,Shared Playlists,$11.99/mo
+97,2,2,1,80M songs,Lossless,Full Library,None,$5.99/mo
+97,2,3,0,100M+ songs,Standard,Full Library,None,$5.99/mo
+97,3,1,0,50M songs,Standard,Limited,None,$11.99/mo
+97,3,2,0,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+97,3,3,1,50M songs,Lossless,None,Live Listening,Free w/ Ads
+97,4,1,0,50M songs,High-Fi,Full Library,Live Listening,Free w/ Ads
+97,4,2,1,50M songs,Standard,Full Library,Shared Playlists,$11.99/mo
+97,4,3,0,80M songs,Standard,Limited,Live Listening,$11.99/mo
+97,5,1,1,100M+ songs,Lossless,Limited,Shared Playlists,$11.99/mo
+97,5,2,0,80M songs,High-Fi,None,Shared Playlists,$11.99/mo
+97,5,3,0,50M songs,Standard,None,Shared Playlists,$5.99/mo
+97,6,1,0,80M songs,Standard,Full Library,None,Free w/ Ads
+97,6,2,1,50M songs,Standard,None,Live Listening,Free w/ Ads
+97,6,3,0,50M songs,High-Fi,None,None,Free w/ Ads
+97,7,1,0,80M songs,Standard,Limited,Live Listening,$5.99/mo
+97,7,2,0,50M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+97,7,3,1,80M songs,High-Fi,Full Library,None,Free w/ Ads
+97,8,1,0,50M songs,High-Fi,None,Live Listening,$5.99/mo
+97,8,2,0,50M songs,Standard,Limited,Shared Playlists,Free w/ Ads
+97,8,3,1,100M+ songs,Lossless,Limited,Shared Playlists,$11.99/mo
+98,1,1,0,50M songs,High-Fi,Full Library,Live Listening,$5.99/mo
+98,1,2,0,50M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+98,1,3,1,80M songs,High-Fi,Limited,None,$5.99/mo
+98,2,1,0,100M+ songs,Standard,None,Shared Playlists,$5.99/mo
+98,2,2,1,100M+ songs,Standard,Limited,None,Free w/ Ads
+98,2,3,0,100M+ songs,High-Fi,Limited,Shared Playlists,$11.99/mo
+98,3,1,1,80M songs,High-Fi,Limited,None,$11.99/mo
+98,3,2,0,100M+ songs,High-Fi,None,Live Listening,$5.99/mo
+98,3,3,0,50M songs,Lossless,None,Shared Playlists,Free w/ Ads
+98,4,1,0,50M songs,High-Fi,None,None,$5.99/mo
+98,4,2,0,80M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+98,4,3,1,80M songs,Lossless,Full Library,Live Listening,$11.99/mo
+98,5,1,0,50M songs,High-Fi,Limited,Shared Playlists,$5.99/mo
+98,5,2,0,100M+ songs,Standard,Limited,Shared Playlists,$5.99/mo
+98,5,3,1,100M+ songs,High-Fi,Limited,None,$11.99/mo
+98,6,1,0,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+98,6,2,1,100M+ songs,Standard,Limited,Shared Playlists,Free w/ Ads
+98,6,3,0,50M songs,High-Fi,None,Live Listening,Free w/ Ads
+98,7,1,1,80M songs,High-Fi,Full Library,None,$5.99/mo
+98,7,2,0,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+98,7,3,0,50M songs,Standard,None,None,Free w/ Ads
+98,8,1,0,80M songs,Lossless,None,None,Free w/ Ads
+98,8,2,1,80M songs,High-Fi,None,Live Listening,$11.99/mo
+98,8,3,0,50M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+99,1,1,0,80M songs,Lossless,Full Library,Shared Playlists,$11.99/mo
+99,1,2,1,100M+ songs,Lossless,Full Library,None,$5.99/mo
+99,1,3,0,80M songs,Standard,Limited,Live Listening,$5.99/mo
+99,2,1,0,50M songs,Standard,Full Library,None,$5.99/mo
+99,2,2,1,50M songs,High-Fi,None,Live Listening,$5.99/mo
+99,2,3,0,50M songs,Standard,None,None,$5.99/mo
+99,3,1,0,50M songs,High-Fi,Limited,Live Listening,Free w/ Ads
+99,3,2,0,100M+ songs,Lossless,Limited,Shared Playlists,$11.99/mo
+99,3,3,1,100M+ songs,Lossless,Limited,Shared Playlists,Free w/ Ads
+99,4,1,0,80M songs,Lossless,Limited,None,Free w/ Ads
+99,4,2,1,80M songs,Standard,None,Live Listening,$5.99/mo
+99,4,3,0,50M songs,Lossless,None,Shared Playlists,$5.99/mo
+99,5,1,1,100M+ songs,Lossless,None,Shared Playlists,$11.99/mo
+99,5,2,0,80M songs,Standard,Limited,Shared Playlists,$11.99/mo
+99,5,3,0,80M songs,High-Fi,Full Library,Shared Playlists,Free w/ Ads
+99,6,1,0,80M songs,Lossless,Limited,None,$5.99/mo
+99,6,2,1,80M songs,Lossless,Full Library,None,Free w/ Ads
+99,6,3,0,50M songs,Standard,Limited,None,$11.99/mo
+99,7,1,0,100M+ songs,High-Fi,None,Live Listening,$11.99/mo
+99,7,2,0,80M songs,High-Fi,Limited,Live Listening,$11.99/mo
+99,7,3,1,100M+ songs,Standard,None,Shared Playlists,$11.99/mo
+99,8,1,0,50M songs,Lossless,None,Shared Playlists,$11.99/mo
+99,8,2,0,100M+ songs,Lossless,None,Shared Playlists,Free w/ Ads
+99,8,3,1,100M+ songs,High-Fi,None,Live Listening,Free w/ Ads
+100,1,1,0,50M songs,Lossless,Full Library,Live Listening,$11.99/mo
+100,1,2,0,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+100,1,3,1,100M+ songs,High-Fi,Limited,Live Listening,$5.99/mo
+100,2,1,1,80M songs,High-Fi,Full Library,None,$5.99/mo
+100,2,2,0,80M songs,High-Fi,None,None,$11.99/mo
+100,2,3,0,100M+ songs,Standard,None,Shared Playlists,$11.99/mo
+100,3,1,1,50M songs,Standard,None,None,Free w/ Ads
+100,3,2,0,100M+ songs,High-Fi,None,None,$11.99/mo
+100,3,3,0,80M songs,Standard,None,Shared Playlists,$11.99/mo
+100,4,1,0,80M songs,Lossless,Limited,None,$5.99/mo
+100,4,2,0,50M songs,Standard,Full Library,Live Listening,Free w/ Ads
+100,4,3,1,100M+ songs,Standard,Full Library,Live Listening,$5.99/mo
+100,5,1,0,50M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+100,5,2,0,50M songs,High-Fi,Full Library,Live Listening,$11.99/mo
+100,5,3,1,50M songs,Lossless,None,None,$5.99/mo
+100,6,1,0,50M songs,Standard,None,None,$11.99/mo
+100,6,2,0,100M+ songs,High-Fi,Full Library,Live Listening,$5.99/mo
+100,6,3,1,80M songs,Standard,Limited,Live Listening,Free w/ Ads
+100,7,1,0,100M+ songs,Standard,Limited,None,$11.99/mo
+100,7,2,0,100M+ songs,High-Fi,Limited,None,$11.99/mo
+100,7,3,1,80M songs,High-Fi,Full Library,None,Free w/ Ads
+100,8,1,1,50M songs,Standard,Limited,None,$11.99/mo
+100,8,2,0,80M songs,Lossless,Full Library,Live Listening,Free w/ Ads
+100,8,3,0,100M+ songs,Standard,Full Library,Shared Playlists,$5.99/mo

@@ -1,6 +1,100 @@
 // Perceptual Positioning Lab - Pre-built Marketing Scenarios
 // Each scenario includes perceptual data and optional preference data
 
+// Helper: Generate preferences with high variance for interesting scatter
+function generateHighVariancePreferences(brands, n, segmentProfiles, segmentLabels, segmentColumn, segmentDistribution = [0.35, 0.70]) {
+  const customers = [];
+  const predefinedSegments = [];
+  
+  for (let i = 0; i < n; i++) {
+    // Segment assignment
+    const rand = Math.random();
+    let segmentIdx = rand < segmentDistribution[0] ? 0 : (rand < segmentDistribution[1] ? 1 : 2);
+    
+    // 15% chance of being a "segment crossover" - doesn't fit neatly
+    const isCrossover = Math.random() < 0.15;
+    if (isCrossover) {
+      segmentIdx = Math.floor(Math.random() * 3);
+    }
+    
+    // 8% chance of being an "outlier" with random preferences
+    const isOutlier = Math.random() < 0.08;
+    
+    predefinedSegments.push(segmentIdx);
+    
+    if (isOutlier) {
+      // Outliers have completely independent random preferences
+      const prefs = brands.map(() => {
+        return 1 + Math.random() * 8; // Full 1-9 range
+      });
+      customers.push(prefs);
+      continue;
+    }
+    
+    // Customer variation parameters - much wider ranges
+    const extremity = 0.1 + Math.random() * 0.9; // 0.1 to 1.0 (wider range)
+    const personalBias = (Math.random() - 0.5) * 5; // -2.5 to +2.5 (bigger!)
+    const responseBias = (Math.random() - 0.5) * 2; // Some rate everything higher/lower
+    
+    // Per-brand noise - MUCH higher variance
+    const brandNoise = () => (Math.random() - 0.5) * 4; // -2 to +2
+    
+    // Occasionally flip preferences (5% chance per brand)
+    const flipChance = 0.05;
+    
+    const profile = segmentProfiles[segmentIdx];
+    const prefs = [];
+    
+    brands.forEach(brand => {
+      let rating;
+      const noise = brandNoise();
+      const flip = Math.random() < flipChance;
+      
+      // Determine base rating from profile
+      let isLoved = profile.loved.includes(brand);
+      let isLiked = profile.liked.includes(brand);
+      let isDisliked = profile.disliked.includes(brand);
+      
+      // Flip reverses the preference
+      if (flip) {
+        if (isLoved) {
+          isLoved = false;
+          isDisliked = true;
+        } else if (isDisliked) {
+          isDisliked = false;
+          isLiked = true;
+        }
+      }
+      
+      if (isLoved) {
+        // Loved: base 5.5-9 range
+        rating = 5.5 + extremity * 3 + personalBias * 0.5 + responseBias + noise;
+      } else if (isLiked) {
+        // Liked: base 4-8 range
+        rating = 4.5 + extremity * 2.5 + personalBias * 0.4 + responseBias + noise;
+      } else if (isDisliked) {
+        // Disliked: base 1-5 range
+        rating = 4.5 - extremity * 3 - personalBias * 0.5 + responseBias + noise;
+      } else {
+        // Neutral: widest spread possible 2-8
+        rating = 5 + personalBias * 0.6 + responseBias + noise * 1.5;
+      }
+      
+      prefs.push(Math.max(1, Math.min(9, rating)));
+    });
+    
+    customers.push(prefs);
+  }
+  
+  return { 
+    brands, 
+    customers,
+    predefinedSegments,
+    segmentLabels,
+    segmentColumn
+  };
+}
+
 const MDS_SCENARIOS = [
   
   // ==================== BEER BRANDS ====================
@@ -28,7 +122,8 @@ const MDS_SCENARIOS = [
         <ul>
           <li><strong>Brands:</strong> Budweiser, Miller, Coors, Corona, Heineken, Sam Adams, Blue Moon, Stella Artois, Modelo, PBR</li>
           <li><strong>Attributes:</strong> Premium, Refreshing, Smooth, Full-bodied, Craft quality, Imported appeal, and 6 more</li>
-          <li><strong>Preference data:</strong> 200 simulated customers in 3 segments (Premium seekers, Value seekers, Lifestyle seekers)</li>
+          <li><strong>Preference data:</strong> 400 simulated customers in 3 segments (Premium seekers, Value seekers, Lifestyle seekers)</li>
+          <li><strong>Usage weights:</strong> Consumption rate data (Value seekers drink 2x more than Premium seekers)</li>
         </ul>
       `;
     },
@@ -81,22 +176,46 @@ const MDS_SCENARIOS = [
       // Generate preference data (400 customers, 3 segments)
       const preferences = this.generateBeerPreferences(brands, 400);
       
+      // Generate usage weights (heavy drinkers consume more)
+      const weights = this.generateBeerUsageWeights(preferences);
+      
       return {
         perceptual: { brands, attributes, matrix },
-        preferences: preferences
+        preferences: preferences,
+        weights: weights
       };
     },
     
+    // Generate usage rate weights based on segment
+    // Premium seekers: moderate (0.8-1.2), Value seekers: heavy (1.2-2.5), Lifestyle: light (0.4-1.0)
+    generateBeerUsageWeights: function(preferences) {
+      const n = preferences.customers.length;
+      const segments = preferences.predefinedSegments;
+      const values = [];
+      
+      for (let i = 0; i < n; i++) {
+        const segIdx = segments[i];
+        let baseUsage;
+        
+        if (segIdx === 0) { // Premium seekers - moderate consumption
+          baseUsage = 0.8 + Math.random() * 0.4; // 0.8-1.2
+        } else if (segIdx === 1) { // Value seekers - heavy consumption
+          baseUsage = 1.2 + Math.random() * 1.3; // 1.2-2.5
+        } else { // Lifestyle seekers - light/social consumption
+          baseUsage = 0.4 + Math.random() * 0.6; // 0.4-1.0
+        }
+        
+        // Add individual variation
+        const individualNoise = 0.8 + Math.random() * 0.4; // 0.8-1.2 multiplier
+        values.push(parseFloat((baseUsage * individualNoise).toFixed(2)));
+      }
+      
+      return { type: 'usage', values };
+    },
+    
     generateBeerPreferences: function(brands, n) {
-      const customers = [];
-      const predefinedSegments = [];
       const segmentLabels = ['Premium Seekers', 'Value Seekers', 'Lifestyle Seekers'];
       
-      // Segment 1: Premium seekers (40%) - prefer craft/imports
-      // Segment 2: Value seekers (35%) - prefer domestic mass market
-      // Segment 3: Lifestyle seekers (25%) - prefer trendy/social brands
-      
-      // Define segment preference profiles (favorite brands get HIGH, others get LOW)
       const segmentProfiles = {
         0: { // Premium seekers - love craft/imports, dislike cheap domestics
           loved: ['Sam Adams', 'Blue Moon', 'Stella Artois', 'Heineken'],
@@ -115,57 +234,7 @@ const MDS_SCENARIOS = [
         }
       };
       
-      for (let i = 0; i < n; i++) {
-        // Segment assignment with some randomization (not perfectly ordered)
-        const rand = Math.random();
-        const segmentIdx = rand < 0.40 ? 0 : (rand < 0.75 ? 1 : 2);
-        predefinedSegments.push(segmentIdx);
-        
-        // Customer "extremity" - how polarized are their preferences?
-        // Wider range for more diversity: some very picky, some very flexible
-        const extremity = 0.3 + Math.random() * 0.7; // 0.3 to 1.0
-        
-        // Customer-specific random offset (where they sit within their segment)
-        // Larger range for more within-cluster spread
-        const personalBias = (Math.random() - 0.5) * 3; // -1.5 to +1.5
-        
-        // Per-brand noise factor - each brand gets independent noise
-        const brandNoise = () => (Math.random() - 0.5) * 2; // -1 to +1
-        
-        const profile = segmentProfiles[segmentIdx];
-        const prefs = [];
-        
-        brands.forEach((brand) => {
-          let rating;
-          const noise = brandNoise();
-          
-          if (profile.loved.includes(brand)) {
-            // Loved brands: 6-9 range with spread
-            rating = 6 + extremity * 2.5 + personalBias * 0.4 + noise;
-          } else if (profile.liked.includes(brand)) {
-            // Liked brands: 4-7 range  
-            rating = 4.5 + extremity * 2 + personalBias * 0.3 + noise;
-          } else if (profile.disliked.includes(brand)) {
-            // Disliked brands: 1-4 range
-            rating = 4 - extremity * 2.5 - personalBias * 0.4 + noise;
-          } else {
-            // Neutral brands: 3-6 range
-            rating = 4.5 + personalBias * 0.5 + noise * 1.5;
-          }
-          
-          prefs.push(Math.max(1, Math.min(9, rating)));
-        });
-        
-        customers.push(prefs);
-      }
-      
-      return { 
-        brands, 
-        customers,
-        predefinedSegments,
-        segmentLabels,
-        segmentColumn: 'Customer_Type'
-      };
+      return generateHighVariancePreferences(brands, n, segmentProfiles, segmentLabels, 'Customer_Type', [0.40, 0.75]);
     }
   },
   
@@ -194,7 +263,8 @@ const MDS_SCENARIOS = [
         <ul>
           <li><strong>Brands:</strong> Apple, Samsung, Google, OnePlus, Xiaomi, Motorola</li>
           <li><strong>Attributes:</strong> Innovation, Build Quality, Camera, Value, Status, etc.</li>
-          <li><strong>Preference data:</strong> 150 customers in 3 segments (Premium, Value, Tech enthusiasts)</li>
+          <li><strong>Preference data:</strong> 300 customers in 3 segments (Premium, Value, Tech enthusiasts)</li>
+          <li><strong>Spend weights:</strong> Annual device spending (Premium buyers: $800-1500, Budget: $200-500)</li>
         </ul>
       `;
     },
@@ -239,18 +309,46 @@ const MDS_SCENARIOS = [
       
       const preferences = this.generatePhonePreferences(brands, 300);
       
+      // Generate spend weights (annual device + accessory spend)
+      const weights = this.generatePhoneSpendWeights(preferences);
+      
       return {
         perceptual: { brands, attributes, matrix },
-        preferences: preferences
+        preferences: preferences,
+        weights: weights
       };
     },
     
+    // Generate spending data based on segment
+    // Premium: $800-1500, Budget: $200-500, Tech enthusiasts: $600-1200
+    generatePhoneSpendWeights: function(preferences) {
+      const n = preferences.customers.length;
+      const segments = preferences.predefinedSegments;
+      const values = [];
+      
+      for (let i = 0; i < n; i++) {
+        const segIdx = segments[i];
+        let baseSpend;
+        
+        if (segIdx === 0) { // Premium buyers - high spend
+          baseSpend = 800 + Math.random() * 700; // $800-1500
+        } else if (segIdx === 1) { // Budget conscious - low spend
+          baseSpend = 200 + Math.random() * 300; // $200-500
+        } else { // Tech enthusiasts - moderate-high spend
+          baseSpend = 600 + Math.random() * 600; // $600-1200
+        }
+        
+        // Add individual variation (+/- 15%)
+        const individualNoise = 0.85 + Math.random() * 0.3;
+        values.push(Math.round(baseSpend * individualNoise));
+      }
+      
+      return { type: 'spend', values };
+    },
+    
     generatePhonePreferences: function(brands, n) {
-      const customers = [];
-      const predefinedSegments = [];
       const segmentLabels = ['Premium Buyers', 'Budget Conscious', 'Tech Enthusiasts'];
       
-      // Define segment preference profiles
       const segmentProfiles = {
         0: { // Premium buyers - love Apple/Samsung, dislike budget brands
           loved: ['Apple', 'Samsung'],
@@ -269,46 +367,7 @@ const MDS_SCENARIOS = [
         }
       };
       
-      for (let i = 0; i < n; i++) {
-        // Randomized segment assignment
-        const rand = Math.random();
-        const segmentIdx = rand < 0.35 ? 0 : (rand < 0.70 ? 1 : 2);
-        predefinedSegments.push(segmentIdx);
-        
-        const extremity = 0.3 + Math.random() * 0.7;
-        const personalBias = (Math.random() - 0.5) * 3;
-        const brandNoise = () => (Math.random() - 0.5) * 2;
-        
-        const profile = segmentProfiles[segmentIdx];
-        const prefs = [];
-        
-        brands.forEach(brand => {
-          let rating;
-          const noise = brandNoise();
-          
-          if (profile.loved.includes(brand)) {
-            rating = 6 + extremity * 2.5 + personalBias * 0.4 + noise;
-          } else if (profile.liked.includes(brand)) {
-            rating = 4.5 + extremity * 2 + personalBias * 0.3 + noise;
-          } else if (profile.disliked.includes(brand)) {
-            rating = 4 - extremity * 2.5 - personalBias * 0.4 + noise;
-          } else {
-            rating = 4.5 + personalBias * 0.5 + noise * 1.5;
-          }
-          
-          prefs.push(Math.max(1, Math.min(9, rating)));
-        });
-        
-        customers.push(prefs);
-      }
-      
-      return { 
-        brands, 
-        customers,
-        predefinedSegments,
-        segmentLabels,
-        segmentColumn: 'Buyer_Type'
-      };
+      return generateHighVariancePreferences(brands, n, segmentProfiles, segmentLabels, 'Buyer_Type');
     }
   },
   
@@ -377,11 +436,8 @@ const MDS_SCENARIOS = [
     },
     
     generateStreamingPreferences: function(brands, n) {
-      const customers = [];
-      const predefinedSegments = [];
       const segmentLabels = ['Family Households', 'Binge Watchers', 'Quality Seekers'];
       
-      // Define segment preference profiles
       const segmentProfiles = {
         0: { // Family households - love family-friendly, dislike adult content
           loved: ['Disney+', 'Amazon Prime'],
@@ -400,44 +456,7 @@ const MDS_SCENARIOS = [
         }
       };
       
-      for (let i = 0; i < n; i++) {
-        const rand = Math.random();
-        const segmentIdx = rand < 0.35 ? 0 : (rand < 0.75 ? 1 : 2);
-        predefinedSegments.push(segmentIdx);
-        
-        const extremity = 0.3 + Math.random() * 0.7;
-        const personalBias = (Math.random() - 0.5) * 3;
-        const brandNoise = () => (Math.random() - 0.5) * 2;
-        const profile = segmentProfiles[segmentIdx];
-        const prefs = [];
-        
-        brands.forEach(brand => {
-          let rating;
-          const noise = brandNoise();
-          
-          if (profile.loved.includes(brand)) {
-            rating = 6 + extremity * 2.5 + personalBias * 0.4 + noise;
-          } else if (profile.liked.includes(brand)) {
-            rating = 4.5 + extremity * 2 + personalBias * 0.3 + noise;
-          } else if (profile.disliked.includes(brand)) {
-            rating = 4 - extremity * 2.5 - personalBias * 0.4 + noise;
-          } else {
-            rating = 4.5 + personalBias * 0.5 + noise * 1.5;
-          }
-          
-          prefs.push(Math.max(1, Math.min(9, rating)));
-        });
-        
-        customers.push(prefs);
-      }
-      
-      return { 
-        brands, 
-        customers,
-        predefinedSegments,
-        segmentLabels,
-        segmentColumn: 'Viewer_Type'
-      };
+      return generateHighVariancePreferences(brands, n, segmentProfiles, segmentLabels, 'Viewer_Type', [0.35, 0.75]);
     }
   },
   
@@ -506,11 +525,8 @@ const MDS_SCENARIOS = [
     },
     
     generateFastFoodPreferences: function(brands, n) {
-      const customers = [];
-      const predefinedSegments = [];
       const segmentLabels = ['Quality Seekers', 'Value Hunters', 'Experience Seekers'];
       
-      // Define segment preference profiles
       const segmentProfiles = {
         0: { // Quality seekers - love premium fast-casual
           loved: ['Five Guys', 'Shake Shack', 'In-N-Out', 'Chick-fil-A'],
@@ -529,44 +545,7 @@ const MDS_SCENARIOS = [
         }
       };
       
-      for (let i = 0; i < n; i++) {
-        const rand = Math.random();
-        const segmentIdx = rand < 0.35 ? 0 : (rand < 0.70 ? 1 : 2);
-        predefinedSegments.push(segmentIdx);
-        
-        const extremity = 0.3 + Math.random() * 0.7;
-        const personalBias = (Math.random() - 0.5) * 3;
-        const brandNoise = () => (Math.random() - 0.5) * 2;
-        const profile = segmentProfiles[segmentIdx];
-        const prefs = [];
-        
-        brands.forEach(brand => {
-          let rating;
-          const noise = brandNoise();
-          
-          if (profile.loved.includes(brand)) {
-            rating = 6 + extremity * 2.5 + personalBias * 0.4 + noise;
-          } else if (profile.liked.includes(brand)) {
-            rating = 4.5 + extremity * 2 + personalBias * 0.3 + noise;
-          } else if (profile.disliked.includes(brand)) {
-            rating = 4 - extremity * 2.5 - personalBias * 0.4 + noise;
-          } else {
-            rating = 4.5 + personalBias * 0.5 + noise * 1.5;
-          }
-          
-          prefs.push(Math.max(1, Math.min(9, rating)));
-        });
-        
-        customers.push(prefs);
-      }
-      
-      return { 
-        brands, 
-        customers,
-        predefinedSegments,
-        segmentLabels,
-        segmentColumn: 'Diner_Type'
-      };
+      return generateHighVariancePreferences(brands, n, segmentProfiles, segmentLabels, 'Diner_Type', [0.35, 0.70]);
     }
   },
   
@@ -635,11 +614,8 @@ const MDS_SCENARIOS = [
     },
     
     generateShoePreferences: function(brands, n) {
-      const customers = [];
-      const predefinedSegments = [];
       const segmentLabels = ['Fashion Forward', 'Serious Runners', 'Comfort Seekers'];
       
-      // Define segment preference profiles
       const segmentProfiles = {
         0: { // Fashion forward - love stylish brands
           loved: ['Nike', 'Adidas', 'Puma'],
@@ -658,44 +634,7 @@ const MDS_SCENARIOS = [
         }
       };
       
-      for (let i = 0; i < n; i++) {
-        const rand = Math.random();
-        const segmentIdx = rand < 0.35 ? 0 : (rand < 0.70 ? 1 : 2);
-        predefinedSegments.push(segmentIdx);
-        
-        const extremity = 0.3 + Math.random() * 0.7;
-        const personalBias = (Math.random() - 0.5) * 3;
-        const brandNoise = () => (Math.random() - 0.5) * 2;
-        const profile = segmentProfiles[segmentIdx];
-        const prefs = [];
-        
-        brands.forEach(brand => {
-          let rating;
-          const noise = brandNoise();
-          
-          if (profile.loved.includes(brand)) {
-            rating = 6 + extremity * 2.5 + personalBias * 0.4 + noise;
-          } else if (profile.liked.includes(brand)) {
-            rating = 4.5 + extremity * 2 + personalBias * 0.3 + noise;
-          } else if (profile.disliked.includes(brand)) {
-            rating = 4 - extremity * 2.5 - personalBias * 0.4 + noise;
-          } else {
-            rating = 4.5 + personalBias * 0.5 + noise * 1.5;
-          }
-          
-          prefs.push(Math.max(1, Math.min(9, rating)));
-        });
-        
-        customers.push(prefs);
-      }
-      
-      return { 
-        brands, 
-        customers,
-        predefinedSegments,
-        segmentLabels,
-        segmentColumn: 'Shopper_Type'
-      };
+      return generateHighVariancePreferences(brands, n, segmentProfiles, segmentLabels, 'Shopper_Type', [0.35, 0.70]);
     }
   }
   
