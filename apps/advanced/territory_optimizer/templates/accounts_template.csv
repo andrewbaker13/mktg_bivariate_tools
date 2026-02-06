@@ -1,0 +1,11 @@
+account_id,name,lat,lng,annual_potential,close_probability,industry
+A001,Acme Corporation,40.7128,-74.0060,125000,0.35,Manufacturing
+A002,TechStart Inc,40.7589,-73.9851,45000,0.72,Technology
+A003,Metro Health Systems,40.6892,-73.9442,80000,0.50,Healthcare
+A004,Brooklyn Supplies Co,40.6501,-73.9496,62000,0.45,Retail
+A005,Queens Manufacturing,40.7282,-73.7949,95000,0.38,Manufacturing
+A006,Manhattan Tech Labs,40.7831,-73.9712,150000,0.28,Technology
+A007,Bronx Medical Center,40.8448,-73.8648,110000,0.42,Healthcare
+A008,Hudson Valley Retail,40.7100,-74.0100,38000,0.65,Retail
+A009,Empire Industrial,40.7500,-73.9900,88000,0.40,Manufacturing
+A010,Downtown Digital,40.7200,-74.0000,55000,0.58,Technology

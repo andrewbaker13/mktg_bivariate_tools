@@ -45,6 +45,20 @@
     </p>
   </header>
 
+  <!-- Professor Mode Banner -->
+  <div class="professor-mode-banner">
+    <div class="professor-mode-content">
+      <div class="professor-mode-info">
+        <h3>👨‍🏫 Professor Mode: Guided Learning Experience</h3>
+        <p>New to propensity score matching? Enable Professor Mode for step-by-step guidance through matching methods, balance diagnostics, and interpreting causal treatment effects!</p>
+      </div>
+      <label class="professor-mode-toggle">
+        <input type="checkbox" id="professorMode">
+        <span>Enable Professor Mode</span>
+      </label>
+    </div>
+  </div>
+
   <main class="app-main">
     <!-- Overview Section -->
     <section class="test-overview">
@@ -197,8 +211,8 @@
           
           <div class="matching-option" id="caliper-wrapper">
             <label for="caliper-width">Caliper Width</label>
-            <input type="number" id="caliper-width" min="0.01" max="1" value="0.2" step="0.01">
-            <p class="muted small">Maximum PS difference for a valid match. 0.2 is a common default (0.2 SD of logit PS).</p>
+            <input type="number" id="caliper-width" min="0.05" max="1" value="0.25" step="0.05">
+            <p class="muted small">Maximum PS difference for a valid match. 0.25 is recommended; increase if few matches are found.</p>
           </div>
           
           <div class="matching-option">
@@ -228,12 +242,26 @@
           <p id="plot-ps-distribution-caption" class="chart-note"></p>
           <details class="interpretation-aid">
             <summary>Interpretation Aid</summary>
-            <p class="muted">
-              <strong>What to look for:</strong> The histograms show the distribution of estimated propensity scores for treated (blue) and control (orange) groups. <em>Good overlap</em> means both distributions cover similar ranges&mdash;this indicates the groups are comparable and matching will work well.
-            </p>
-            <p class="muted">
-              <strong>Warning signs:</strong> If distributions barely overlap (e.g., all treated units have high PS while controls have low PS), matching will be difficult and may produce biased estimates. This suggests fundamental differences between groups that PS matching cannot fully address.
-            </p>
+            <div class="interpretation-content">
+              <h4>Technical Interpretation</h4>
+              <p class="muted">
+                <strong>What you're seeing:</strong> The histograms show the distribution of estimated propensity scores for treated (blue) and control (orange) groups. Each propensity score represents the predicted probability that a unit received treatment, based on its covariate values.
+              </p>
+              <p class="muted">
+                <strong>Good overlap:</strong> When both distributions cover similar ranges (e.g., both spanning 0.2–0.8), matching can find comparable units. The key assumption of PSM—that we can find similar treated and control units—is satisfied.
+              </p>
+              <p class="muted">
+                <strong>Warning signs:</strong> If treated units cluster near 1.0 and controls near 0.0 with little overlap, the propensity model is "perfectly predicting" treatment. This means groups are fundamentally different on observed characteristics, and matching will fail or produce few matches.
+              </p>
+              
+              <h4>Practical Interpretation</h4>
+              <p class="muted">
+                <strong>Marketing example:</strong> In a loyalty program analysis, if customers who enrolled all have very high propensity scores while non-enrollees have very low scores, it means enrolled customers were systematically different (e.g., higher prior spend, more visits). Finding a "fair comparison" will be difficult.
+              </p>
+              <p class="muted">
+                <strong>What to do if overlap is poor:</strong> (1) Use fewer or different covariates, (2) collect more data, or (3) consider that the treatment effect may not be estimable with this data—the groups are too different to compare.
+              </p>
+            </div>
           </details>
         </article>
         
@@ -245,15 +273,29 @@
           <p id="plot-balance-caption" class="chart-note"></p>
           <details class="interpretation-aid">
             <summary>Interpretation Aid</summary>
-            <p class="muted">
-              <strong>Standardized Mean Difference (SMD):</strong> Each point shows how different treated and control groups are on a covariate, measured in standard deviation units. An SMD of 0.1 means the groups differ by 0.1 SDs.
-            </p>
-            <p class="muted">
-              <strong>Balance thresholds:</strong> SMD &lt; 0.1 is generally considered "good balance." SMD between 0.1&ndash;0.25 is acceptable but not ideal. SMD &gt; 0.25 suggests meaningful imbalance that may bias treatment effect estimates.
-            </p>
-            <p class="muted">
-              <strong>Before vs. After:</strong> Open circles show pre-matching imbalance; filled circles show post-matching balance. Effective matching should move all covariates closer to zero (the dashed vertical line).
-            </p>
+            <div class="interpretation-content">
+              <h4>Technical Interpretation</h4>
+              <p class="muted">
+                <strong>Standardized Mean Difference (SMD):</strong> Each point shows how different treated and control groups are on a covariate, measured in pooled standard deviation units. An SMD of 0.2 means the groups differ by 0.2 standard deviations on that variable.
+              </p>
+              <p class="muted">
+                <strong>Balance thresholds:</strong> SMD &lt; 0.1 indicates excellent balance (green zone). SMD 0.1–0.25 is acceptable but shows residual imbalance (yellow). SMD &gt; 0.25 suggests meaningful differences that may bias the ATT estimate (red).
+              </p>
+              <p class="muted">
+                <strong>Before vs. After:</strong> Open circles show pre-matching imbalance; filled circles show post-matching balance. Successful matching moves all points toward zero (the center dashed line).
+              </p>
+              
+              <h4>Practical Interpretation</h4>
+              <p class="muted">
+                <strong>What it tells you:</strong> This "Love Plot" shows whether matching created comparable groups. If all filled circles (after matching) are within the ±0.1 bands, you can be confident that treated and matched control groups are similar on observed characteristics.
+              </p>
+              <p class="muted">
+                <strong>Marketing example:</strong> If "Prior_Spend" has SMD = 0.5 before matching (treated spent more) but SMD = 0.05 after matching, the matched comparison controls for prior spending behavior. The ATT now compares customers with similar spending histories.
+              </p>
+              <p class="muted">
+                <strong>Action:</strong> If any covariate remains imbalanced (SMD &gt; 0.25) after matching, consider adding it to the outcome model or interpreting results cautiously—remaining confounding may bias the effect estimate.
+              </p>
+            </div>
           </details>
         </article>
       </div>
@@ -294,15 +336,29 @@
         
         <details class="interpretation-aid">
           <summary>Understanding Matching Quality</summary>
-          <p class="muted">
-            <strong>Matched pairs:</strong> The number of treated units successfully matched to control units. Higher is better (less data loss).
-          </p>
-          <p class="muted">
-            <strong>Unmatched treated:</strong> Treated units that couldn't find a suitable control match within the caliper. If this is high, consider widening the caliper or reviewing common support.
-          </p>
-          <p class="muted">
-            <strong>Mean propensity scores:</strong> After matching, mean PS should be similar between treated and matched controls. Large differences suggest matching wasn't fully effective.
-          </p>
+          <div class="interpretation-content">
+            <h4>Technical Interpretation</h4>
+            <p class="muted">
+              <strong>Matched pairs:</strong> The number of treated units successfully matched to control units within the caliper threshold. This determines the effective sample size for ATT estimation.
+            </p>
+            <p class="muted">
+              <strong>Unmatched treated:</strong> Treated units outside the "common support" region—they have propensity scores too extreme to find comparable controls. High unmatched rates (&gt;20%) suggest limited overlap.
+            </p>
+            <p class="muted">
+              <strong>Mean propensity scores:</strong> After matching, mean PS should be nearly identical between treated and matched controls. Differences &gt; 0.05 suggest residual imbalance.
+            </p>
+            
+            <h4>Practical Interpretation</h4>
+            <p class="muted">
+              <strong>Sample size trade-off:</strong> PSM often discards observations (unmatched treated or unused controls). A match rate of 80%+ is typically good; below 50% suggests the groups may be too different for meaningful comparison.
+            </p>
+            <p class="muted">
+              <strong>Who gets excluded:</strong> Unmatched treated units are often "extreme" cases—e.g., customers with very high engagement who enrolled in a program but have no comparable non-enrollees. The ATT estimate applies only to the matched subset, which may differ from all treated units.
+            </p>
+            <p class="muted">
+              <strong>Generalizability:</strong> If many treated units are excluded, ask: "Can I generalize the treatment effect to the excluded cases?" If they're systematically different, the answer may be no.
+            </p>
+          </div>
         </details>
       </div>
     </section>
@@ -333,12 +389,29 @@
         </p>
         <details class="interpretation-aid">
           <summary>About Standardized Mean Differences</summary>
-          <p class="muted">
-            The SMD measures the difference in means between treated and control groups, divided by the pooled standard deviation. Unlike raw differences, SMD is unit-free and comparable across variables.
-          </p>
-          <p class="muted">
-            For categorical variables, SMD is calculated for each level (as a 0/1 indicator). The table reports the maximum SMD across levels.
-          </p>
+          <div class="interpretation-content">
+            <h4>Technical Interpretation</h4>
+            <p class="muted">
+              <strong>What SMD measures:</strong> The difference in means between treated and control groups, divided by the pooled standard deviation: SMD = (Mean_Treated - Mean_Control) / SD_pooled. This makes the measure unit-free and comparable across variables.
+            </p>
+            <p class="muted">
+              <strong>For categorical variables:</strong> Each category level is treated as a 0/1 indicator, and SMD is calculated for the proportion in each level.
+            </p>
+            <p class="muted">
+              <strong>% Reduction:</strong> Shows how much matching improved balance. 80%+ reduction is excellent; negative reduction means matching made things worse (rare, but possible with replacement).
+            </p>
+            
+            <h4>Practical Interpretation</h4>
+            <p class="muted">
+              <strong>Reading the table:</strong> Compare the "SMD Before" and "SMD After" columns. Ideally, all "SMD After" values should be near zero (green). Covariates with high SMD after matching may still confound your treatment effect estimate.
+            </p>
+            <p class="muted">
+              <strong>Example:</strong> If "Prior_Spend" has SMD = 0.4 before matching, treated customers spent 0.4 SDs more than controls before the program. After matching (SMD = 0.05), the difference is negligible—you're now comparing customers with similar spending histories.
+            </p>
+            <p class="muted">
+              <strong>If balance is poor:</strong> Try adjusting matching settings (wider caliper, different covariates) or consider that selection bias may be too strong to overcome with this data.
+            </p>
+          </div>
         </details>
       </div>
     </section>
@@ -387,15 +460,32 @@
         
         <details class="interpretation-aid">
           <summary>Interpreting the ATT</summary>
-          <p class="muted">
-            <strong>What it means:</strong> The ATT estimates how much the treatment changed the outcome, on average, for those who received treatment. A positive ATT means treated units had higher outcomes than comparable controls; negative means lower.
-          </p>
-          <p class="muted">
-            <strong>Statistical significance:</strong> If the p-value &lt; 0.05, we have evidence that the treatment had a non-zero effect. The confidence interval shows the plausible range of the true effect.
-          </p>
-          <p class="muted">
-            <strong>Practical significance:</strong> Even a statistically significant effect may be too small to matter practically. Consider the effect size in the context of your business goals.
-          </p>
+          <div class="interpretation-content">
+            <h4>Technical Interpretation</h4>
+            <p class="muted">
+              <strong>Average Treatment Effect on the Treated (ATT):</strong> The mean difference in outcomes between treated units and their matched controls: ATT = (1/n) Σ(Y_treated - Y_matched_control). This estimates the causal effect of treatment for those who received it.
+            </p>
+            <p class="muted">
+              <strong>Standard Error &amp; 95% CI:</strong> The SE measures uncertainty in the ATT estimate. The 95% CI means we are 95% confident the true effect lies within this range. If the CI excludes zero, the effect is statistically significant at α = 0.05.
+            </p>
+            <p class="muted">
+              <strong>t-statistic &amp; p-value:</strong> The t-stat is ATT/SE; p-value tests H₀: ATT = 0. p &lt; 0.05 provides evidence of a non-zero treatment effect.
+            </p>
+            
+            <h4>Practical Interpretation</h4>
+            <p class="muted">
+              <strong>What the number means:</strong> If ATT = 120 for a spending outcome, treated customers spent an average of $120 more than similar untreated customers. This is the estimated causal impact of the treatment.
+            </p>
+            <p class="muted">
+              <strong>Business decision-making:</strong> Compare the ATT to the cost of treatment. If a loyalty program costs $50/customer to run but generates ATT = $120 in additional spend, the program has positive ROI.
+            </p>
+            <p class="muted">
+              <strong>Caution:</strong> The ATT is valid only if (1) the propensity model includes all confounders, (2) matching achieved good balance, and (3) there are no unmeasured confounders. PSM cannot prove causation—it can only adjust for observed differences.
+            </p>
+            <p class="muted">
+              <strong>Effect size vs. significance:</strong> A large p-value with a meaningful ATT suggests insufficient sample size. A tiny p-value with a tiny ATT may be statistically significant but practically irrelevant. Always consider both.
+            </p>
+          </div>
         </details>
       </div>
 

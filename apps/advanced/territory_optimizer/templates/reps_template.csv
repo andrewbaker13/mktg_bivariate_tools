@@ -1,0 +1,5 @@
+rep_id,name,home_lat,home_lng,max_accounts,max_travel_miles,effectiveness
+R001,Sarah Chen,40.7484,-73.9857,25,50,1.15
+R002,Mike Johnson,40.6892,-74.0445,30,75,0.92
+R003,Lisa Park,40.7589,-73.8500,28,60,1.10
+R004,Tom Rivera,40.8200,-73.9100,22,45,0.88

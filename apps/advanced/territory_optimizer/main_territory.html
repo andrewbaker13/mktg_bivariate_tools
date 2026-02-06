@@ -92,6 +92,108 @@
             <li><strong>Greedy Nearest Neighbor:</strong> Assigns each account to the nearest available rep. Simple baseline for comparison.</li>
             <li><strong>Weighted Voronoi:</strong> Partitions space based on rep "influence" (location + capacity). Visual and intuitive.</li>
           </ul>
+          
+          <details class="algorithm-advanced">
+            <summary>🔬 Advanced: Algorithm Mathematics</summary>
+            
+            <div class="algorithm-detail">
+              <h4>1. Balanced K-Means Clustering</h4>
+              <p class="algo-overview">A capacity-constrained variant of K-means that ensures balanced workload distribution.</p>
+              
+              <div class="algo-math">
+                <p><strong>Objective Function:</strong></p>
+                <p class="formula">min Σᵢ Σⱼ∈Cᵢ ‖xⱼ - μᵢ‖² · wⱼ</p>
+                <p>Where:</p>
+                <ul>
+                  <li><em>xⱼ</em> = location of account j (lat, lng)</li>
+                  <li><em>μᵢ</em> = centroid of cluster i (rep home location)</li>
+                  <li><em>wⱼ</em> = account weight (annual_potential × close_probability)</li>
+                  <li><em>Cᵢ</em> = set of accounts assigned to rep i</li>
+                </ul>
+                
+                <p><strong>Capacity Constraint:</strong></p>
+                <p class="formula">|Cᵢ| ≤ max_accounts_i &nbsp;∀i</p>
+                
+                <p><strong>Algorithm Steps:</strong></p>
+                <ol>
+                  <li><strong>Initialize:</strong> Set cluster centers μᵢ to rep home locations</li>
+                  <li><strong>Assignment:</strong> For each account, compute distance to all reps:<br>
+                    <span class="formula">d(xⱼ, μᵢ) = √[(latⱼ - latᵢ)² + (lngⱼ - lngᵢ)² × cos²(lat)]</span><br>
+                    Assign to nearest rep with available capacity</li>
+                  <li><strong>Update:</strong> Recalculate centroids as weighted mean of assigned accounts</li>
+                  <li><strong>Iterate:</strong> Repeat steps 2-3 until convergence (max 50 iterations)</li>
+                </ol>
+                
+                <p><strong>Complexity:</strong> O(n × k × iterations) where n = accounts, k = reps</p>
+              </div>
+            </div>
+            
+            <div class="algorithm-detail">
+              <h4>2. Greedy Nearest Neighbor</h4>
+              <p class="algo-overview">A simple heuristic that makes locally optimal choices at each step.</p>
+              
+              <div class="algo-math">
+                <p><strong>Decision Rule:</strong></p>
+                <p class="formula">assign(aⱼ) = argminᵢ { d(aⱼ, rᵢ) : |Cᵢ| < max_i }</p>
+                
+                <p><strong>Distance Calculation (Haversine):</strong></p>
+                <p class="formula">d = 2R × arcsin(√[sin²(Δlat/2) + cos(lat₁)cos(lat₂)sin²(Δlng/2)])</p>
+                <p>Where R = 3959 miles (Earth radius)</p>
+                
+                <p><strong>Algorithm Steps:</strong></p>
+                <ol>
+                  <li>Sort accounts by priority score: <span class="formula">score = potential × probability</span></li>
+                  <li>For each account (highest priority first):
+                    <ul>
+                      <li>Calculate distance to all reps with available capacity</li>
+                      <li>Assign to the nearest available rep</li>
+                      <li>Decrement that rep's remaining capacity</li>
+                    </ul>
+                  </li>
+                </ol>
+                
+                <p><strong>Complexity:</strong> O(n × k) - very fast but not globally optimal</p>
+                <p><strong>Limitation:</strong> Does not consider account value when assigning, only distance</p>
+              </div>
+            </div>
+            
+            <div class="algorithm-detail">
+              <h4>3. Weighted Voronoi Tessellation</h4>
+              <p class="algo-overview">Partitions space into regions where each point is "closest" to a rep, with distance weighted by rep capacity.</p>
+              
+              <div class="algo-math">
+                <p><strong>Power Distance:</strong></p>
+                <p class="formula">pow(x, sᵢ) = ‖x - sᵢ‖² - wᵢ</p>
+                <p>Where wᵢ is the "power" weight for rep i (derived from capacity)</p>
+                
+                <p><strong>Voronoi Cell Definition:</strong></p>
+                <p class="formula">Vᵢ = { x ∈ ℝ² : pow(x, sᵢ) ≤ pow(x, sⱼ) ∀j ≠ i }</p>
+                
+                <p><strong>Weight Calculation:</strong></p>
+                <p class="formula">wᵢ = (max_accounts_i / Σⱼ max_accounts_j) × scaling_factor</p>
+                <p>Higher capacity reps have larger "territories of influence"</p>
+                
+                <p><strong>Algorithm Steps:</strong></p>
+                <ol>
+                  <li>Calculate weight wᵢ for each rep based on capacity proportion</li>
+                  <li>For each account location x:
+                    <ul>
+                      <li>Compute power distance to all reps</li>
+                      <li>Assign to rep with minimum power distance</li>
+                    </ul>
+                  </li>
+                  <li>Apply capacity constraints (reassign overflow to next-nearest)</li>
+                </ol>
+                
+                <p><strong>Properties:</strong></p>
+                <ul>
+                  <li>Creates visually intuitive, contiguous regions</li>
+                  <li>Naturally balances territory size with rep capacity</li>
+                  <li>Cell boundaries are hyperbolic arcs (not straight lines)</li>
+                </ul>
+              </div>
+            </div>
+          </details>
         </details>
         <details class="additional-notes">
           <summary>How Scoring Works</summary>
@@ -102,6 +204,98 @@
             <li><strong>Revenue Alignment:</strong> Correlation between rep effectiveness and territory potential. Higher = better matching.</li>
             <li><strong>Compactness:</strong> Ratio of territory area to convex hull. Higher = tighter clustering.</li>
           </ul>
+          
+          <details class="algorithm-advanced">
+            <summary>🔬 Advanced: Scoring Mathematics</summary>
+            
+            <div class="algorithm-detail">
+              <h4>Balance Score (Workload Equity)</h4>
+              <p class="algo-overview">Measures how evenly work is distributed. Uses inverse coefficient of variation.</p>
+              
+              <div class="algo-math">
+                <p><strong>Workload per Rep:</strong></p>
+                <p class="formula">Wᵢ = Σⱼ∈Cᵢ (potentialⱼ × probabilityⱼ)</p>
+                
+                <p><strong>Coefficient of Variation:</strong></p>
+                <p class="formula">CV = σ(W) / μ(W) = √[Σ(Wᵢ - W̄)² / n] / W̄</p>
+                
+                <p><strong>Balance Score:</strong></p>
+                <p class="formula">Balance = max(0, 100 × (1 - CV))</p>
+                <p>Perfect balance (CV=0) → 100%. High variation (CV≥1) → 0%</p>
+              </div>
+            </div>
+            
+            <div class="algorithm-detail">
+              <h4>Travel Efficiency Score</h4>
+              <p class="algo-overview">Penalizes total distance reps must travel to reach their accounts.</p>
+              
+              <div class="algo-math">
+                <p><strong>Total Travel Distance:</strong></p>
+                <p class="formula">Dᵢ = Σⱼ∈Cᵢ haversine(repᵢ, accountⱼ)</p>
+                
+                <p><strong>Haversine Formula:</strong></p>
+                <p class="formula">d = 2R × arcsin(√[sin²(Δφ/2) + cos(φ₁)cos(φ₂)sin²(Δλ/2)])</p>
+                <p>Where φ = latitude (radians), λ = longitude (radians), R = 3959 mi</p>
+                
+                <p><strong>Travel Score:</strong></p>
+                <p class="formula">Travel = 100 × max(0, 1 - (avg_distance / max_travel))</p>
+                <p>Where max_travel is the configured constraint (default 75 miles)</p>
+              </div>
+            </div>
+            
+            <div class="algorithm-detail">
+              <h4>Revenue Alignment Score</h4>
+              <p class="algo-overview">Measures correlation between rep effectiveness and territory value.</p>
+              
+              <div class="algo-math">
+                <p><strong>Territory Value:</strong></p>
+                <p class="formula">Vᵢ = Σⱼ∈Cᵢ (potentialⱼ × probabilityⱼ)</p>
+                
+                <p><strong>Pearson Correlation:</strong></p>
+                <p class="formula">r = Σ(eᵢ - ē)(Vᵢ - V̄) / √[Σ(eᵢ - ē)² × Σ(Vᵢ - V̄)²]</p>
+                <p>Where eᵢ = effectiveness of rep i</p>
+                
+                <p><strong>Revenue Score:</strong></p>
+                <p class="formula">Revenue = 50 × (1 + r)</p>
+                <p>Perfect positive correlation (r=1) → 100%<br>
+                   No correlation (r=0) → 50%<br>
+                   Negative correlation (r=-1) → 0%</p>
+              </div>
+            </div>
+            
+            <div class="algorithm-detail">
+              <h4>Compactness Score</h4>
+              <p class="algo-overview">Measures how tightly clustered accounts are within each territory.</p>
+              
+              <div class="algo-math">
+                <p><strong>Convex Hull:</strong></p>
+                <p>The smallest convex polygon containing all points in a territory.</p>
+                
+                <p><strong>Dispersion Metric:</strong></p>
+                <p class="formula">dispersionᵢ = avg_distance_to_centroid / hull_radius</p>
+                
+                <p><strong>Compactness Score:</strong></p>
+                <p class="formula">Compactness = 100 × (1 - avg_dispersion)</p>
+                <p>Tightly clustered accounts → higher score<br>
+                   Scattered/fragmented territories → lower score</p>
+                
+                <p><strong>Alternative: Isoperimetric Quotient</strong></p>
+                <p class="formula">Q = 4πA / P²</p>
+                <p>Where A = area, P = perimeter. A circle has Q=1 (maximum compactness)</p>
+              </div>
+            </div>
+            
+            <div class="algorithm-detail">
+              <h4>Overall Score</h4>
+              <p class="algo-overview">Weighted combination of all four metrics.</p>
+              
+              <div class="algo-math">
+                <p><strong>Default Weights:</strong></p>
+                <p class="formula">Overall = 0.25×Balance + 0.25×Travel + 0.25×Revenue + 0.25×Compactness</p>
+                <p>Equal weighting by default, but can be adjusted via the weight sliders in settings.</p>
+              </div>
+            </div>
+          </details>
         </details>
       </div>
     </section>
@@ -139,6 +333,7 @@
           <div class="scenario-controls__input">
             <select id="scenario-select">
               <option value="">-- Select a scenario --</option>
+              <option value="san_diego">San Diego Tech Sales</option>
               <option value="regional_b2b">Regional B2B Sales Team (NYC Metro)</option>
               <option value="retail_expansion">Retail Expansion (Chicago)</option>
               <option value="pharma_reps">Pharmaceutical Sales (Northeast)</option>
@@ -146,6 +341,111 @@
           </div>
         </div>
         <div id="scenario-description" class="scenario-description"></div>
+      </div>
+    </section>
+    
+    <!-- Data Overview Section (visible when data is loaded, regardless of mode) -->
+    <section id="data-overview-section" class="data-overview-section hidden">
+      <h2>LOADED DATA OVERVIEW</h2>
+      <div class="card">
+        <details class="constraints-panel" open>
+          <summary>
+            <span class="constraints-title">Scenario Constraints & Data</span>
+            <span class="constraints-summary" id="constraints-summary"></span>
+          </summary>
+          <div class="constraints-content">
+            <div class="constraints-lock-row">
+              <label class="lock-toggle">
+                <input type="checkbox" id="lock-constraints" checked>
+                <span>Lock constraints to scenario defaults</span>
+              </label>
+            </div>
+            
+            <div class="constraints-grid">
+              <!-- Sales Force Section -->
+              <div class="constraint-section">
+                <h4>Sales Force</h4>
+                <div class="constraint-row">
+                  <label>Number of Reps</label>
+                  <input type="number" id="constraint-num-reps" min="1" max="20" disabled>
+                </div>
+                <div class="constraint-row">
+                  <label>Max Accounts/Rep</label>
+                  <input type="number" id="constraint-max-accounts" min="1" max="100" disabled>
+                </div>
+                <div class="constraint-row">
+                  <label>Max Travel (mi)</label>
+                  <input type="number" id="constraint-max-travel" min="1" max="500" disabled>
+                </div>
+              </div>
+              
+              <!-- Territory Section -->
+              <div class="constraint-section">
+                <h4>Territory Metrics</h4>
+                <div class="constraint-row">
+                  <label>Total Accounts</label>
+                  <span class="constraint-value" id="constraint-total-accounts">--</span>
+                </div>
+                <div class="constraint-row">
+                  <label>Total Potential</label>
+                  <span class="constraint-value" id="constraint-total-potential">--</span>
+                </div>
+                <div class="constraint-row">
+                  <label>Avg Close Prob</label>
+                  <span class="constraint-value" id="constraint-avg-prob">--</span>
+                </div>
+              </div>
+              
+              <!-- Rep Details Section -->
+              <div class="constraint-section constraint-section--wide">
+                <h4>Sales Rep Details</h4>
+                <div class="rep-table-wrapper">
+                  <table class="rep-table" id="constraint-rep-table">
+                    <thead>
+                      <tr>
+                        <th>Rep</th>
+                        <th>Location</th>
+                        <th>Max Accts</th>
+                        <th>Max Travel</th>
+                        <th>Effectiveness</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+              
+              <!-- Account Details Section -->
+              <div class="constraint-section constraint-section--wide">
+                <h4>Account Details <span class="accounts-count" id="accounts-table-count"></span></h4>
+                <div class="accounts-table-wrapper">
+                  <table class="accounts-table" id="constraint-accounts-table">
+                    <thead>
+                      <tr>
+                        <th>Account</th>
+                        <th>Location</th>
+                        <th>Annual Potential</th>
+                        <th>Close Prob</th>
+                        <th>Industry</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+                <div class="accounts-table-toggle" id="accounts-toggle-row">
+                  <button id="toggle-all-accounts" class="secondary small">Show all accounts</button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Download Button -->
+            <div class="constraints-actions">
+              <button id="download-scenario-data" class="secondary small">
+                <span>📥</span> Download Scenario Data (CSV)
+              </button>
+            </div>
+          </div>
+        </details>
       </div>
     </section>
 
@@ -197,15 +497,27 @@
     <section id="manual-section" class="manual-section hidden">
       <h2>MANUAL TERRITORY DRAWING</h2>
       <div class="card">
-        <p>
-          Use the drawing tools on the map to create territory polygons. After drawing each polygon, 
-          assign it to a sales rep. Your hand-drawn territories will be scored against the algorithmic solutions.
-        </p>
+        <div class="manual-steps">
+          <p><strong>Step 1:</strong> Load a scenario first (select from dropdown above) or upload your data.</p>
+          <p><strong>Step 2:</strong> Use the polygon/rectangle tools (top-left of map) to draw territories.</p>
+          <p><strong>Step 3:</strong> After drawing, you'll be prompted to assign the area to a rep.</p>
+          <p><strong>Step 4:</strong> Click "Score My Territories" to compare against the algorithm.</p>
+        </div>
+        <div class="manual-scenario-loader">
+          <label for="manual-scenario-select">Quick load scenario:</label>
+          <select id="manual-scenario-select">
+            <option value="">-- Select a scenario --</option>
+            <option value="san_diego">San Diego Tech Sales</option>
+            <option value="regional_b2b">NYC Metro B2B</option>
+            <option value="retail_expansion">Chicago Retail</option>
+            <option value="pharma_reps">Northeast Pharma</option>
+          </select>
+        </div>
         <div class="manual-controls">
           <button id="clear-drawings" class="secondary">Clear All Drawings</button>
           <button id="score-manual" class="primary" disabled>Score My Territories</button>
         </div>
-        <p class="muted" id="manual-status">Draw polygons on the map to define territories.</p>
+        <p class="muted" id="manual-status">Load data first, then draw polygons on the map.</p>
       </div>
     </section>
 
@@ -216,7 +528,7 @@
         <div class="config-grid">
           <!-- Algorithm Selection -->
           <div class="config-item">
-            <label for="algorithm-select">Algorithm</label>
+            <label for="algorithm-select">Algorithm <span class="tooltip-icon" data-tooltip="Different algorithms produce different territory shapes. K-Means creates balanced clusters, Greedy builds territories one account at a time, and Voronoi creates geometric regions around each rep.">ⓘ</span></label>
             <select id="algorithm-select">
               <option value="kmeans" selected>Balanced K-Means</option>
               <option value="greedy">Greedy Nearest Neighbor</option>
@@ -226,7 +538,7 @@
           
           <!-- Priority -->
           <div class="config-item">
-            <label>Optimization Priority</label>
+            <label>Optimization Priority <span class="tooltip-icon" data-tooltip="Sets the primary goal when there are trade-offs. Balance = even workloads across reps. Travel = shortest routes. Revenue = highest-value accounts grouped strategically.">ⓘ</span></label>
             <div class="radio-group">
               <label><input type="radio" name="priority" value="balance" checked> Balance workloads</label>
               <label><input type="radio" name="priority" value="travel"> Minimize travel</label>
@@ -236,31 +548,32 @@
           
           <!-- Constraints -->
           <div class="config-item">
-            <label for="max-accounts">Max Accounts per Rep</label>
+            <label for="max-accounts">Max Accounts per Rep <span class="tooltip-icon" data-tooltip="Hard limit on accounts per rep. Prevents overloading—a rep with 50+ accounts may not have time to service them all effectively.">ⓘ</span></label>
             <input type="number" id="max-accounts" min="1" max="100" value="30">
           </div>
           
           <div class="config-item">
-            <label for="max-travel">Max Travel (miles)</label>
+            <label for="max-travel">Max Travel (miles) <span class="tooltip-icon" data-tooltip="Maximum daily driving distance. Reduces windshield time and ensures reps can actually visit their assigned accounts.">ⓘ</span></label>
             <input type="number" id="max-travel" min="1" max="500" value="75">
           </div>
         </div>
         
         <!-- Weight Sliders -->
         <div class="weight-sliders">
-          <h4>Scoring Weights</h4>
+          <h4>Scoring Weights <span class="tooltip-icon" data-tooltip="Unlike traditional optimization with a single objective, territory design must balance multiple competing goals. These weights let you control how much each factor matters when scoring solutions. Higher weight = more influence on the final score.">ⓘ</span></h4>
+          <p class="weight-intro">Adjust how much each factor influences the overall territory score. Most real-world optimization has a single goal; territory design requires balancing several.</p>
           <div class="slider-row">
-            <label>Potential Weight</label>
+            <label>Potential Weight <span class="tooltip-icon" data-tooltip="How much account revenue potential matters. Higher values reward territories with more high-value accounts. Practical impact: Sales teams often want their best reps covering highest-potential areas.">ⓘ</span></label>
             <input type="range" id="weight-potential" min="0" max="1" step="0.1" value="0.8">
             <span id="weight-potential-value">0.8</span>
           </div>
           <div class="slider-row">
-            <label>Probability Weight</label>
+            <label>Probability Weight <span class="tooltip-icon" data-tooltip="How much conversion likelihood matters. Higher values favor territories with 'sure wins' over uncertain prospects. Practical impact: Risk-averse strategies prioritize probability over upside.">ⓘ</span></label>
             <input type="range" id="weight-probability" min="0" max="1" step="0.1" value="0.6">
             <span id="weight-probability-value">0.6</span>
           </div>
           <div class="slider-row">
-            <label>Travel Cost Weight</label>
+            <label>Travel Cost Weight <span class="tooltip-icon" data-tooltip="How much driving distance matters. Higher values penalize scattered territories. Practical impact: High travel costs eat into margins—reps spending 4+ hours driving have less selling time.">ⓘ</span></label>
             <input type="range" id="weight-travel" min="0" max="1" step="0.1" value="0.4">
             <span id="weight-travel-value">0.4</span>
           </div>
@@ -276,6 +589,15 @@
     <section id="map-section" class="map-section">
       <h2>TERRITORY MAP</h2>
       <div class="card map-card">
+        <div class="map-controls">
+          <label for="map-style">Map Style:</label>
+          <select id="map-style">
+            <option value="minimal" selected>Minimal (Light)</option>
+            <option value="standard">Standard</option>
+            <option value="dark">Dark</option>
+          </select>
+          <button id="reset-view" class="secondary small" title="Reset to show all accounts">Reset View</button>
+        </div>
         <div id="territory-map" class="territory-map"></div>
         <div class="map-legend" id="map-legend">
           <p class="muted">Load data to see territories</p>
@@ -336,18 +658,22 @@
 
     <!-- Comparison Section (for manual vs. algorithm) -->
     <section id="comparison-section" class="comparison-section hidden">
-      <h2>ALGORITHM vs. MANUAL COMPARISON</h2>
+      <h2>YOUR TERRITORIES vs. ALGORITHM</h2>
       <div class="card">
+        <p class="comparison-intro" id="comparison-intro"></p>
         <div class="comparison-grid">
           <div class="comparison-col">
-            <h3>Your Territories</h3>
+            <h3>✏️ Your Hand-Drawn Territories</h3>
+            <p class="comparison-subtitle">How your manual assignments scored</p>
             <div id="manual-scores"></div>
           </div>
-          <div class="comparison-col">
-            <h3>Algorithm Solution</h3>
+          <div class="comparison-col comparison-col--algo">
+            <h3>🤖 Algorithm Solution</h3>
+            <p class="comparison-subtitle" id="algo-subtitle">Optimized using selected algorithm</p>
             <div id="algorithm-scores"></div>
           </div>
         </div>
+        <div class="comparison-verdict" id="comparison-verdict"></div>
       </div>
     </section>
 
@@ -365,7 +691,24 @@
   </main>
 
   <footer class="app-footer">
-    <p>&copy; 2026 Marketing Analytics Education Tools</p>
+    <div class="footer-inner">
+        <div class="footer-meta">
+            <span>Created: 2026-02-06</span>
+            <span class="meta-separator">&bull;</span>
+            <span>Last Updated: 2026-02-06</span>
+        </div>
+        <div class="footer-citation">
+            <span class="citation-label">Cite this tool</span>
+            <p class="citation-text">
+                Baker, A. (2026). <em>Sales Territory Optimizer</em>. Marketing Analysis Tools.
+                <br>
+                <span style="font-size: 0.85em; color: #6b7280;">Retrieved from: https://drbakermarketing.com/apps/advanced/territory_optimizer/main_territory.html</span>
+            </p>
+        </div>
+        <div class="footer-copyright">
+            &copy; 2026 Andrew Baker. All rights reserved.
+        </div>
+    </div>
   </footer>
 
   <script src="main_territory.js"></script>

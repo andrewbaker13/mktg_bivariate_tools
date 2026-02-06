@@ -315,3 +315,54 @@
   border-left: 4px solid var(--app-accent);
 }
 
+/* Professor Mode Redaction Styles */
+.professor-mode-redacted {
+  position: relative;
+}
+
+.professor-mode-redacted:not(.interpretation-aid) {
+  opacity: 0.6;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  padding: 1rem;
+  border-radius: 0.375rem;
+  font-style: italic;
+}
+
+.professor-mode-redacted .redact-note {
+  font-size: 0.8em;
+  color: #6b7280;
+  font-style: italic;
+  margin-left: 0.5rem;
+}
+
+.professor-mode-redacted.interpretation-aid {
+  pointer-events: none;
+}
+
+.professor-mode-redacted.interpretation-aid summary::after {
+  content: " (hidden)";
+  font-size: 0.8em;
+  color: #9ca3af;
+}
+
+/* Interpretation Aid Content Styling */
+.interpretation-content {
+  padding: 0.5rem 0;
+}
+
+.interpretation-content h4 {
+  margin: 1rem 0 0.5rem 0;
+  padding-bottom: 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--app-accent, #2563eb);
+  border-bottom: 1px solid var(--app-border, #e5e7eb);
+}
+
+.interpretation-content h4:first-child {
+  margin-top: 0;
+}
+
+.interpretation-content p {
+  margin: 0.5rem 0;
+}
