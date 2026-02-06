@@ -211,6 +211,72 @@
             });
     }
 
+    /**
+     * Load scenario data from a CSV file
+     * @param {string} csvPath - Path to the CSV file
+     * @param {boolean} hasCategory - Whether the CSV includes a category column
+     */
+    function loadScenarioCSV(csvPath, hasCategory) {
+        fetch(csvPath)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(text => {
+                const x = [];
+                const y = [];
+                const category = [];
+                let lines = text.split("\n").filter(line => line.trim() !== "");
+                
+                // Skip header
+                if (lines[0].toLowerCase().includes("x")) {
+                    lines.shift();
+                }
+                
+                lines.forEach(line => {
+                    const parts = line.split(",");
+                    if (parts.length >= 2) {
+                        const xVal = parseFloat(parts[0]);
+                        const yVal = parseFloat(parts[1]);
+                        if (!isNaN(xVal) && !isNaN(yVal)) {
+                            x.push(xVal);
+                            y.push(yVal);
+                            if (hasCategory && parts.length >= 3) {
+                                category.push(parseInt(parts[2], 10));
+                            }
+                        }
+                    }
+                });
+                
+                data = { x, y };
+                if (hasCategory && category.length > 0) {
+                    data.category = category;
+                }
+                
+                // Update y range
+                yMin = Math.min(...data.y) - 50;
+                yMax = Math.max(...data.y) + 50;
+                
+                // Calculate optimal MAEs for this scenario
+                calculateOptimalMAEs();
+                
+                // Reset parameters and update
+                resetParameters();
+                updatePlots();
+            })
+            .catch(error => {
+                console.error("Error loading scenario CSV:", error);
+                elements.linearPlot.innerHTML = `
+                    <div style="padding: 2rem; text-align: center; color: #dc2626;">
+                        <p><strong>Error loading scenario data</strong></p>
+                        <p>Could not load ${csvPath}</p>
+                    </div>
+                `;
+            });
+    }
+
     // ===== Scenario Management =====
 
     /**
@@ -415,28 +481,8 @@
         elements.scenarioDescription.innerHTML = scenario.description();
         elements.scenarioDownload.disabled = false;
         
-        // Load scenario data (returns {x: [], y: [], category?: []})
-        const scenarioData = scenario.generateData();
-        data = {
-            x: scenarioData.x,
-            y: scenarioData.y
-        };
-        
-        // Add category data if present
-        if (scenarioData.category) {
-            data.category = scenarioData.category;
-        }
-        
-        // Update y range
-        yMin = Math.min(...data.y) - 50;
-        yMax = Math.max(...data.y) + 50;
-        
-        // Calculate optimal MAEs for this scenario
-        calculateOptimalMAEs();
-        
-        // Reset parameters and update
-        resetParameters();
-        updatePlots();
+        // Load scenario data from CSV file
+        loadScenarioCSV(scenario.csvFile, scenario.hasCategorical || false);
     }
     
     /**
