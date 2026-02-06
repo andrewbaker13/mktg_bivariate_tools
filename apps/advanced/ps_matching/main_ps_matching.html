@@ -6,22 +6,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Propensity Score Matching Tool</title>
   <link rel="stylesheet" href="../../../shared/css/main.css">
-    <script src="../../../shared/js/tracking.js"></script>
+  <script src="../../../shared/js/tracking.js"></script>
   <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
   <link rel="stylesheet" href="main_ps_matching.css">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <script src="../../../shared/js/predictor_utils.js"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-290ZJ9RE04');
+  </script>
+</head>
 
-      gtag('config', 'G-290ZJ9RE04');
-    </script>
-</head><body>
+<body>
   <div class="auth-bar">
     <div class="auth-bar__container">
       <div></div>
@@ -31,45 +32,65 @@
       </div>
     </div>
   </div>
+
   <header class="intro hero-header">
     <div class="hero-header__top">
       <h1>Propensity Score Matching</h1>
       <div class="hero-context">
-        <span class="badge">Causal inference</span>
+        <span class="badge">Causal Inference</span>
       </div>
     </div>
     <p class="hero-header__lede">
-      Estimate and check propensity scores for observational marketing data, then compare treated vs. matched control outcomes. Upload raw rows, pick a treatment indicator and covariates, and the tool will fit a logistic model for treatment, perform nearest-neighbor matching, and report balance diagnostics and treatment effects.
+      Estimate causal treatment effects from observational marketing data using propensity score matching. Upload data with a treatment indicator and outcome, select covariates for balance, and the tool performs nearest-neighbor matching to create comparable treated and control groups.
     </p>
   </header>
 
   <main class="app-main">
+    <!-- Overview Section -->
     <section class="test-overview">
       <h2>OVERVIEW &amp; APPROACH</h2>
       <div class="card">
         <p>
-          Propensity score methods use logistic regression to estimate the <strong>probability of receiving a treatment</strong> (such as being exposed to a campaign) given a set of covariates \(X_1, X_2, \dots, X_p\). By matching treated and control units with similar propensity scores, we aim to compare groups that look similar on observed covariates, mimicking some aspects of a randomized experiment.
+          <strong>Propensity Score Matching (PSM)</strong> is a technique for estimating causal effects from observational data. When we cannot randomly assign treatment (e.g., who receives a marketing campaign), treated and control groups may differ systematically. PSM addresses this by matching each treated unit to control units with similar <em>propensity scores</em>&mdash;the probability of receiving treatment given observed covariates.
         </p>
         <p class="equation">
-          <strong>Propensity score model:</strong>
-          $$ \log\left(\frac{p_i}{1 - p_i}\right) = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \dots + \beta_p X_{pi} $$
-          where \(p_i = \Pr(T_i = 1 \mid X_{1i}, \dots, X_{pi})\) is the probability of treatment for unit \(i\).
+          <strong>Step 1 &ndash; Propensity Score Model:</strong>
+          $$ e(X_i) = \Pr(T_i = 1 \mid X_i) = \text{logit}^{-1}(\beta_0 + \beta_1 X_{1i} + \dots + \beta_p X_{pi}) $$
+          We fit a logistic regression predicting treatment \(T\) from covariates \(X\). The fitted probability \(\hat{e}(X_i)\) is the propensity score.
         </p>
         <p class="equation">
-          <strong>Matching &amp; balance:</strong>
-          units with similar \(p_i\) but different treatment status are paired (for example, 1:1 nearest-neighbor matching). Balance diagnostics then compare covariate distributions between treated and matched controls; if balance is good, the estimated treatment effect on this matched sample is more credible than a raw, unadjusted comparison.
+          <strong>Step 2 &ndash; Matching:</strong>
+          For each treated unit, find the control unit(s) with the closest propensity score. This creates a matched sample where treated and control groups are balanced on covariates.
+        </p>
+        <p class="equation">
+          <strong>Step 3 &ndash; Treatment Effect:</strong>
+          $$ \text{ATT} = \frac{1}{n_1} \sum_{T_i=1} \left[ Y_i - Y_{j(i)} \right] $$
+          The <em>Average Treatment Effect on the Treated</em> (ATT) compares outcomes between each treated unit and its matched control(s).
         </p>
         <details class="additional-notes">
-          <summary>Treatment indicator &amp; covariates</summary>
+          <summary>When to use propensity score matching</summary>
           <p>
-            The treatment must be coded as a binary variable (for example, 0/1 or exposed/not exposed). Covariates are variables you believe may influence both treatment assignment and the outcome (for example, prior spend, engagement, or segment). Matching can only adjust for observed covariates, so thoughtful selection and clear causal reasoning are still essential.
+            PSM is appropriate when you have observational data where treatment was <em>not</em> randomly assigned (e.g., customers who self-selected into a loyalty program, users who happened to see an ad). You need: (1) a binary treatment indicator, (2) an outcome you want to measure the treatment effect on, and (3) covariates that predict treatment assignment and may confound the treatment-outcome relationship.
+          </p>
+          <p class="muted">
+            <strong>Key limitation:</strong> PSM only adjusts for <em>observed</em> covariates. If unobserved factors influence both treatment and outcome (hidden confounding), the estimated effect may still be biased. This is why good causal reasoning and domain knowledge are essential.
+          </p>
+        </details>
+        <details class="additional-notes">
+          <summary>Interpreting the Average Treatment Effect on the Treated (ATT)</summary>
+          <p>
+            The ATT answers: "Among those who received treatment, what was the average effect compared to similar untreated individuals?" This is often the most policy-relevant question (e.g., "Did the campaign lift sales among people we actually targeted?").
+          </p>
+          <p class="muted">
+            Note: ATT differs from ATE (Average Treatment Effect), which estimates the effect across the entire population. PSM with 1:1 matching typically estimates ATT.
           </p>
         </details>
       </div>
     </section>
 
+    <!-- Scenario Section -->
     <section class="scenario-section">
-      <h2>OBSERVATIONAL STUDY SCENARIOS</h2>
+      <h2>MARKETING SCENARIOS</h2>
       <div class="card">
         <div class="scenario-controls">
           <label for="scenario-select">Load a matching scenario:</label>
@@ -84,311 +105,378 @@
         </div>
         <div id="scenario-description">
           <p>
-            Use presets to explore quasi-experimental setups, such as <em>campaign exposure vs. no exposure</em> or <em>loyalty program enrollment vs. non-enrollment</em>.
-            Each scenario provides a raw data file you can download, inspect in Excel, and re-upload to see how propensity matching changes the comparison.
+            Use presets to explore causal inference scenarios, such as <em>loyalty program enrollment</em> or <em>email campaign exposure</em>.
+            Each scenario provides a raw data file with treatment, outcome, and covariates.
           </p>
         </div>
       </div>
     </section>
 
+    <!-- Data Input Section -->
     <section class="inputs-panel">
-      <h2>INPUTS &amp; SETTINGS</h2>
+      <h2>DATA &amp; VARIABLE SELECTION</h2>
+      
       <div class="card data-entry-card">
         <div class="input-header">
           <h3>Upload Raw Data File</h3>
         </div>
         <p class="panel-intro">
-          Upload a CSV file with raw case-level data. Include one binary outcome column (0/1 or two categories) and multiple predictors (numeric or categorical). Headers are required.
+          Upload a CSV file with case-level data including: a binary treatment indicator (0/1), an outcome variable, and covariates for matching. Headers are required.
         </p>
         <div class="dropzone" id="raw-dropzone" role="button" tabindex="0">
           <p class="dropzone-title">Drag &amp; Drop raw data file (.csv, .tsv, .txt)</p>
-          <p class="dropzone-note">Include headers; at least one binary outcome column and predictors (numeric or text for categorical).</p>
+          <p class="dropzone-note">Include headers; must have treatment (binary), outcome, and covariate columns.</p>
           <button type="button" id="raw-browse" class="secondary">Browse files</button>
         </div>
         <input type="file" id="raw-input" accept=".csv,.tsv,.txt" hidden>
         
         <div class="template-buttons">
-          <button type="button" id="raw-template-download">Download raw template</button>
+          <button type="button" id="raw-template-download">Download CSV template</button>
         </div>
         <p class="upload-status" id="raw-upload-status">No file uploaded.</p>
       </div>
 
+      <!-- Variable Selection Panel -->
       <div id="variable-selection-panel" class="card variable-selection-panel hidden">
-        <h3>Assign Variables</h3>
-        <p>Select your outcome (Y) and one or more predictors. Set predictor types and reference levels for categorical variables.</p>
-        <div class="variable-selectors-grid">
+        <h3>Assign Variables for Matching</h3>
+        <p>Select your treatment indicator, outcome variable, and covariates to balance on.</p>
+        
+        <div class="variable-selectors-grid psm-grid">
+          <!-- Treatment Variable -->
           <div class="variable-column">
-            <label for="outcome-select">Outcome (binary)</label>
-            <select id="outcome-select"></select>
-            <div id="outcome-focal-wrapper" class="muted small hidden" style="margin-top: 0.5rem;">
-              <label for="outcome-focal-select">Focal outcome (treated as 1):</label>
-              <select id="outcome-focal-select"></select>
+            <label for="treatment-select"><strong>Treatment Variable</strong> (binary)</label>
+            <select id="treatment-select">
+              <option value="">-- Select treatment --</option>
+            </select>
+            <div id="treatment-focal-wrapper" class="muted small hidden" style="margin-top: 0.5rem;">
+              <label for="treatment-focal-select">Treated group (coded as 1):</label>
+              <select id="treatment-focal-select"></select>
             </div>
-            <p id="outcome-coding-note" class="muted" style="margin-top: 0.25rem;"></p>
+            <p id="treatment-coding-note" class="muted" style="margin-top: 0.25rem;"></p>
           </div>
+          
+          <!-- Outcome Variable -->
           <div class="variable-column">
-            <h4>Predictors</h4>
-            <div id="predictor-list" class="predictor-list stacked"></div>
+            <label for="outcome-select"><strong>Outcome Variable</strong></label>
+            <select id="outcome-select">
+              <option value="">-- Select outcome --</option>
+            </select>
+            <p class="muted small">Can be binary (0/1) or continuous. The ATT will measure the treatment effect on this variable.</p>
+          </div>
+          
+          <!-- Covariates -->
+          <div class="variable-column covariates-column">
+            <label><strong>Covariates</strong> (for propensity model)</label>
+            <p class="muted small">Select variables that may confound the treatment-outcome relationship.</p>
+            <div id="covariate-list" class="predictor-list stacked"></div>
           </div>
         </div>
-        <div id="assignment-summary" class="muted"></div>
+        
+        <div id="assignment-summary" class="muted" style="margin-top: 1rem;"></div>
         <p id="input-status" class="muted"></p>
         <p id="row-filter-status" class="muted"></p>
       </div>
 
-      <div class="card confidence-card">
-        <h3>Confidence Level &amp; Reporting</h3>
-        <p>Set the significance level for hypothesis tests and confidence intervals.</p>
-        <div class="alpha-controls">
-          <label for="alpha">Significance level (&alpha;)</label>
-          <input type="number" id="alpha" min="0.001" max="0.5" step="0.001" value="0.05">
-          <div class="confidence-buttons" role="group" aria-label="Select confidence level">
-            <button type="button" class="confidence-button conf-level-btn" data-level="0.90">90% Conf.</button>
-            <button type="button" class="confidence-button conf-level-btn selected" data-level="0.95">95% Conf.</button>
-            <button type="button" class="confidence-button conf-level-btn" data-level="0.99">99% Conf.</button>
+      <!-- Matching Options -->
+      <div id="matching-options-panel" class="card hidden">
+        <h3>Matching Options</h3>
+        <div class="matching-options-grid">
+          <div class="matching-option">
+            <label for="matching-method">Matching Method</label>
+            <select id="matching-method">
+              <option value="nearest" selected>Nearest Neighbor (1:1)</option>
+              <option value="nearest-k">Nearest Neighbor (1:k)</option>
+              <option value="caliper">Caliper Matching</option>
+            </select>
           </div>
-          <label class="switch-option" style="margin-top: 0.75rem;">
-            <input type="checkbox" id="logreg-standardize-continuous">
-            <span>Standardize continuous predictors (mean 0, SD 1)</span>
-          </label>
-          <p class="hint">
-            Standardization affects model fitting and effect plots only. Summary statistics always report predictors on their original scale.
-          </p>
+          
+          <div class="matching-option" id="k-matches-wrapper" style="display:none;">
+            <label for="k-matches">Number of matches (k)</label>
+            <input type="number" id="k-matches" min="1" max="10" value="3" step="1">
+          </div>
+          
+          <div class="matching-option" id="caliper-wrapper">
+            <label for="caliper-width">Caliper Width</label>
+            <input type="number" id="caliper-width" min="0.01" max="1" value="0.2" step="0.01">
+            <p class="muted small">Maximum PS difference for a valid match. 0.2 is a common default (0.2 SD of logit PS).</p>
+          </div>
+          
+          <div class="matching-option">
+            <label>
+              <input type="checkbox" id="with-replacement" checked>
+              <span>Match with replacement</span>
+            </label>
+            <p class="muted small">Allow control units to be matched to multiple treated units.</p>
+          </div>
         </div>
+        
+        <button type="button" id="run-matching-btn" class="primary" style="margin-top: 1rem;">
+          Run Matching Analysis
+        </button>
       </div>
     </section>
 
+    <!-- Propensity Score Diagnostics -->
     <section class="visual-output" aria-labelledby="visual-output-heading">
-      <h2 id="visual-output-heading">VISUAL OUTPUT</h2>
+      <h2 id="visual-output-heading">PROPENSITY SCORE DIAGNOSTICS</h2>
       <div class="card">
+        <!-- Propensity Score Distribution -->
         <article class="chart-card">
-          <h3>Actual vs. Fitted</h3>
-          <div id="plot-actual-fitted" class="chart-placeholder" role="img" aria-live="polite"
-            aria-label="Plot of actual versus fitted outcome values."></div>
-          <p id="plot-actual-fitted-caption" class="chart-note"></p>
+          <h3>Propensity Score Distribution</h3>
+          <div id="plot-ps-distribution" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Histogram of propensity scores by treatment status."></div>
+          <p id="plot-ps-distribution-caption" class="chart-note"></p>
           <details class="interpretation-aid">
             <summary>Interpretation Aid</summary>
             <p class="muted">
-              Each point plots a fitted probability on the horizontal axis and the observed 0/1 outcome (with a small amount of vertical jitter for visibility) on the vertical axis. Points clustered near 0 or 1 on the x-axis indicate confident predictions; a mix of 0s and 1s at similar fitted probabilities indicates uncertainty. Strong patterns or obvious outliers can signal model misspecification or influential cases to review.
+              <strong>What to look for:</strong> The histograms show the distribution of estimated propensity scores for treated (blue) and control (orange) groups. <em>Good overlap</em> means both distributions cover similar ranges&mdash;this indicates the groups are comparable and matching will work well.
+            </p>
+            <p class="muted">
+              <strong>Warning signs:</strong> If distributions barely overlap (e.g., all treated units have high PS while controls have low PS), matching will be difficult and may produce biased estimates. This suggests fundamental differences between groups that PS matching cannot fully address.
             </p>
           </details>
         </article>
+        
+        <!-- Balance Plot (Love Plot) -->
         <article class="chart-card">
-          <h3>Predicted probabilities vs. focal predictor</h3>
-          <div class="effect-controls">
-            <label for="effect-focal-select">Focal predictor</label>
-            <select id="effect-focal-select"></select>
-            <div class="range-controls">
-              <span>Focal range (continuous):</span>
-              <label><input type="radio" name="effect-range" value="sd" checked> Mean +/- 2 SD</label>
-              <label><input type="radio" name="effect-range" value="observed"> Observed min/max</label>
-              <label><input type="radio" name="effect-range" value="custom"> Custom</label>
-              <div class="custom-range" id="custom-range-wrapper" style="display:none;">
-                <label>Min <input type="number" id="effect-range-min" step="any"></label>
-                <label>Max <input type="number" id="effect-range-max" step="any"></label>
-              </div>
-            </div>
-            <div class="effect-constants-card">
-              <h4>Hold other predictors constant</h4>
-              <p class="muted">
-                Choose levels/values for the non-focal predictors used when plotting the focal curve.
-              </p>
-              <div id="effect-nonfocal-continuous" class="effect-nonfocal-levels"></div>
-              <div id="effect-nonfocal-levels" class="effect-nonfocal-levels"></div>
-            </div>
-            <p id="effect-constants-note" class="muted"></p>
-          </div>
-          <div id="plot-effect" class="chart-placeholder" role="img" aria-live="polite"
-            aria-label="Predicted probabilities versus focal predictor."></div>
-          <p id="plot-effect-caption" class="chart-note"></p>
+          <h3>Covariate Balance: Before vs. After Matching</h3>
+          <div id="plot-balance" class="chart-placeholder" role="img" aria-live="polite"
+            aria-label="Love plot showing standardized mean differences before and after matching."></div>
+          <p id="plot-balance-caption" class="chart-note"></p>
           <details class="interpretation-aid">
             <summary>Interpretation Aid</summary>
-            <p id="effect-interpretation" class="muted">
-              The line (or bars for categorical focals) shows the predicted probability that the focal outcome (coded as 1) occurs while holding other predictors constant at chosen values. Steeper slopes or larger gaps between bars imply stronger effects. Confidence bands/bars reflect the statistical uncertainty for those probabilities; wider bands mean less certainty. If bands for different settings overlap heavily, the model may not distinguish them well at those values.
+            <p class="muted">
+              <strong>Standardized Mean Difference (SMD):</strong> Each point shows how different treated and control groups are on a covariate, measured in standard deviation units. An SMD of 0.1 means the groups differ by 0.1 SDs.
+            </p>
+            <p class="muted">
+              <strong>Balance thresholds:</strong> SMD &lt; 0.1 is generally considered "good balance." SMD between 0.1&ndash;0.25 is acceptable but not ideal. SMD &gt; 0.25 suggests meaningful imbalance that may bias treatment effect estimates.
+            </p>
+            <p class="muted">
+              <strong>Before vs. After:</strong> Open circles show pre-matching imbalance; filled circles show post-matching balance. Effective matching should move all covariates closer to zero (the dashed vertical line).
             </p>
           </details>
         </article>
       </div>
     </section>
 
-    <section class="summary-section" aria-labelledby="summary-heading">
-      <h2 id="summary-heading">SUMMARY STATISTICS</h2>
-      <div class="card summary-stats-card">
-        <h3>Summary Statistics</h3>
-        <div class="summary-stats-grid">
-          <div>
-            <h4>Outcome &amp; Continuous Predictors</h4>
-            <table class="summary-table">
-              <thead>
-                <tr>
-                  <th>Variable</th>
-                  <th>Mean</th>
-                  <th>Median</th>
-                  <th>Std. Dev.</th>
-                  <th>Min</th>
-                  <th>Max</th>
-                </tr>
-              </thead>
-              <tbody id="numeric-summary-body">
-                <tr><td colspan="6">Provide data to see summary statistics.</td></tr>
-              </tbody>
-            </table>
+    <!-- Matching Summary Section -->
+    <section class="matching-summary-section" aria-labelledby="matching-summary-heading">
+      <h2 id="matching-summary-heading">MATCHING SUMMARY</h2>
+      <div class="card">
+        <div class="matching-stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">Treated Units</span>
+            <span class="stat-value" id="stat-n-treated">--</span>
           </div>
-          <div>
-            <h4>Categorical Predictors (% by level)</h4>
-            <table class="summary-table">
-              <thead>
-                <tr>
-                  <th>Predictor</th>
-                  <th>Level</th>
-                  <th>Percent</th>
-                </tr>
-              </thead>
-              <tbody id="categorical-summary-body">
-                <tr><td colspan="3">Provide data to see level percentages.</td></tr>
-              </tbody>
-            </table>
+          <div class="stat-item">
+            <span class="stat-label">Control Units</span>
+            <span class="stat-value" id="stat-n-control">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Matched Pairs</span>
+            <span class="stat-value" id="stat-matched-pairs">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Unmatched Treated</span>
+            <span class="stat-value" id="stat-unmatched">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Mean PS (Treated)</span>
+            <span class="stat-value" id="stat-mean-ps-treated">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Mean PS (Matched Control)</span>
+            <span class="stat-value" id="stat-mean-ps-control">--</span>
           </div>
         </div>
+        
+        <div id="matching-quality-note" class="muted" style="margin-top: 1rem;"></div>
+        
+        <details class="interpretation-aid">
+          <summary>Understanding Matching Quality</summary>
+          <p class="muted">
+            <strong>Matched pairs:</strong> The number of treated units successfully matched to control units. Higher is better (less data loss).
+          </p>
+          <p class="muted">
+            <strong>Unmatched treated:</strong> Treated units that couldn't find a suitable control match within the caliper. If this is high, consider widening the caliper or reviewing common support.
+          </p>
+          <p class="muted">
+            <strong>Mean propensity scores:</strong> After matching, mean PS should be similar between treated and matched controls. Large differences suggest matching wasn't fully effective.
+          </p>
+        </details>
       </div>
     </section>
 
-    <section class="test-results" aria-labelledby="test-results-heading">
-      <h2 id="test-results-heading">TEST RESULTS</h2>
-
-      <div class="card regression-equation-card">
-        <h3>Regression Equation</h3>
-        <p id="regression-equation-output" class="regression-equation-text">
-          Provide data to see the fitted regression equation.
+    <!-- Covariate Balance Table -->
+    <section class="balance-section" aria-labelledby="balance-heading">
+      <h2 id="balance-heading">COVARIATE BALANCE TABLE</h2>
+      <div class="card">
+        <h3>Standardized Mean Differences</h3>
+        <table class="summary-table balance-table">
+          <thead>
+            <tr>
+              <th>Covariate</th>
+              <th>Mean (Treated)</th>
+              <th>Mean (Control)</th>
+              <th>SMD Before</th>
+              <th>Mean (Matched Ctrl)</th>
+              <th>SMD After</th>
+              <th>% Reduction</th>
+            </tr>
+          </thead>
+          <tbody id="balance-table-body">
+            <tr><td colspan="7">Run matching to see balance diagnostics.</td></tr>
+          </tbody>
+        </table>
+        <p class="muted" style="margin-top: 0.75rem;">
+          <strong>SMD interpretation:</strong> |SMD| &lt; 0.1 = excellent balance (green), 0.1&ndash;0.25 = acceptable (yellow), &gt; 0.25 = concerning (red).
         </p>
-        <p class="template-download">
-          <button type="button" id="logreg-download-results" class="secondary">
-            Download predicted probabilities (CSV)
-          </button>
-        </p>
-        <p class="hint">
-          The downloaded file includes your original raw data plus two columns: <code>p_hat</code> (the model&rsquo;s
-          predicted probability of the focal outcome for each observation) and <code>neg_loglik_contribution</code>,
-          the individual contribution to the negative log-likelihood penalty used to fit the model.
-        </p>
-      </div>
-
-      <div class="card metrics-panel">
-        <div class="metric-output"><span>Log-likelihood:</span><span id="metric-loglik" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output"><span>Null deviance:</span><span id="metric-null-dev" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output"><span>Residual deviance:</span><span id="metric-resid-dev" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output"><span>Model chi-square:</span><span id="metric-chi2" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output"><span>Model p-value:</span><span id="metric-pmodel" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output"><span>Pseudo R-squared:</span><span id="metric-r2" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output"><span>Sample size (n):</span><span id="metric-n" class="dynamic-value">&ndash;</span></div>
-        <div class="metric-output"><span>Alpha:</span><span id="metric-alpha" class="dynamic-value">&ndash;</span></div>
         <details class="interpretation-aid">
-          <summary>Interpretation Aid</summary>
+          <summary>About Standardized Mean Differences</summary>
           <p class="muted">
-            <strong>Log-likelihood / Deviance:</strong> Log-likelihood measures how well the model explains the observed pattern of 0/1 outcomes; deviance is a scaled version that compares the fitted model to a saturated one. Lower deviance means better fit.
+            The SMD measures the difference in means between treated and control groups, divided by the pooled standard deviation. Unlike raw differences, SMD is unit-free and comparable across variables.
           </p>
           <p class="muted">
-            <strong>Model chi-square &amp; p-value:</strong> Compares the fitted model to an intercept-only (null) model using the difference in deviance. A small p-value (&lt; alpha) means the predictors, as a set, improve the ability to predict success vs. failure.
+            For categorical variables, SMD is calculated for each level (as a 0/1 indicator). The table reports the maximum SMD across levels.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <!-- Treatment Effect Results -->
+    <section class="test-results" aria-labelledby="test-results-heading">
+      <h2 id="test-results-heading">TREATMENT EFFECT RESULTS</h2>
+
+      <div class="card treatment-effect-card">
+        <h3>Average Treatment Effect on the Treated (ATT)</h3>
+        <div class="att-display">
+          <div class="att-main">
+            <span class="att-label">Estimated ATT:</span>
+            <span class="att-value" id="att-estimate">--</span>
+          </div>
+          <div class="att-details">
+            <div class="att-detail">
+              <span class="label">Standard Error:</span>
+              <span id="att-se">--</span>
+            </div>
+            <div class="att-detail">
+              <span class="label">95% CI:</span>
+              <span id="att-ci">--</span>
+            </div>
+            <div class="att-detail">
+              <span class="label">t-statistic:</span>
+              <span id="att-tstat">--</span>
+            </div>
+            <div class="att-detail">
+              <span class="label">p-value:</span>
+              <span id="att-pvalue">--</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="outcome-means-grid" style="margin-top: 1.5rem;">
+          <div class="outcome-mean">
+            <span class="label">Mean Outcome (Treated):</span>
+            <span id="mean-outcome-treated">--</span>
+          </div>
+          <div class="outcome-mean">
+            <span class="label">Mean Outcome (Matched Control):</span>
+            <span id="mean-outcome-control">--</span>
+          </div>
+        </div>
+        
+        <details class="interpretation-aid">
+          <summary>Interpreting the ATT</summary>
+          <p class="muted">
+            <strong>What it means:</strong> The ATT estimates how much the treatment changed the outcome, on average, for those who received treatment. A positive ATT means treated units had higher outcomes than comparable controls; negative means lower.
           </p>
           <p class="muted">
-            <strong>Pseudo R-squared:</strong> A rough analogue of R-squared that summarizes how much the model improves fit relative to the null model. It is useful as a descriptive measure but should not be overinterpreted as “percent of variance explained.”
+            <strong>Statistical significance:</strong> If the p-value &lt; 0.05, we have evidence that the treatment had a non-zero effect. The confidence interval shows the plausible range of the true effect.
           </p>
           <p class="muted">
-            <strong>n:</strong> Sample size and available information for estimating effects. Very small n can make estimates unstable or produce separation issues where a predictor perfectly predicts the outcome.
-          </p>
-          <p class="muted">
-            <strong>Alpha:</strong> Your chosen significance level. P-values below alpha are treated as statistically reliable; above alpha are treated as not statistically reliable.
+            <strong>Practical significance:</strong> Even a statistically significant effect may be too small to matter practically. Consider the effect size in the context of your business goals.
           </p>
         </details>
       </div>
 
       <div class="dual-panels">
         <article class="card dual-panel">
-          <h3>APA-Style Statistical Reporting</h3>
-          <p id="apa-report"></p>
+          <h3>Statistical Interpretation</h3>
+          <p id="statistical-report">Run matching analysis to see results.</p>
         </article>
         <article class="card dual-panel">
-          <h3>Managerial Interpretation</h3>
-          <p id="managerial-report"></p>
+          <h3>Managerial Takeaway</h3>
+          <p id="managerial-report">Run matching analysis to see actionable insights.</p>
         </article>
       </div>
-
-      <div class="card summary-section">
-        <h3>Coefficient Estimates (Log-odds and Odds Ratios)</h3>
-        <table class="summary-table">
-          <thead>
-            <tr>
-              <th>Predictor</th>
-              <th>Level / Term</th>
-              <th>Estimate (log-odds)</th>
-              <th>Standard Error</th>
-              <th>z</th>
-              <th>p-value</th>
-              <th>Odds Ratio</th>
-              <th>Partial &eta;<sup>2</sup></th>
-              <th id="coef-ci-lower-header">Lower Bound</th>
-              <th id="coef-ci-upper-header">Upper Bound</th>
-            </tr>
-          </thead>
-          <tbody id="coef-table-body">
-            <tr><td colspan="9">Provide data to see coefficient estimates.</td></tr>
-          </tbody>
-        </table>
-        <details class="interpretation-aid">
-          <summary>Interpretation Aid</summary>
-          <div id="coef-interpretation" class="muted"></div>
-        </details>
+      
+      <div class="card">
+        <button type="button" id="download-matched-data" class="secondary" disabled>
+          Download Matched Sample Data (CSV)
+        </button>
+        <p class="hint">
+          The downloaded file includes the matched sample with propensity scores, match IDs, and outcomes.
+        </p>
       </div>
     </section>
 
-    <section class="diagnostics-section">
-      <h2>DIAGNOSTICS &amp; ASSUMPTIONS</h2>
+    <!-- Propensity Model Details (collapsed) -->
+    <section class="propensity-model-section">
+      <h2>PROPENSITY MODEL DETAILS</h2>
       <div class="card">
-        <details class="diagnostics-details">
-          <summary>Diagnostics &amp; Assumption Checks</summary>
-          <div id="diagnostics-content">
-            <p class="muted">Run the analysis to see checks on multicollinearity, variance patterns, and normality of residuals. Use these as prompts for plots and follow-up modeling, not as strict pass/fail gates.</p>
-            <div id="diag-row-screening" class="diagnostic-block"></div>
-            <div id="diag-outcome-balance" class="diagnostic-block"></div>
-            <div id="diag-rare-levels" class="diagnostic-block"></div>
-            <div id="diag-collinearity" class="diagnostic-block"></div>
-            <div id="diag-residuals" class="diagnostic-block"></div>
-            <div class="chart-card">
-              <h4>Residuals vs. Fitted</h4>
-              <div id="plot-residuals" class="chart-placeholder" role="img" aria-live="polite"
-                aria-label="Residuals versus fitted values."></div>
-              <p id="plot-residuals-caption" class="chart-note"></p>
-            </div>
+        <details class="propensity-model-details">
+          <summary>View Propensity Score Model Coefficients</summary>
+          <p class="muted">The propensity score model predicts treatment assignment from covariates using logistic regression.</p>
+          <div id="ps-model-equation" class="regression-equation-text" style="margin: 1rem 0;">
+            Run matching to see the propensity model.
+          </div>
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Covariate</th>
+                <th>Coefficient</th>
+                <th>Std. Error</th>
+                <th>z</th>
+                <th>p-value</th>
+                <th>Odds Ratio</th>
+              </tr>
+            </thead>
+            <tbody id="ps-coef-table-body">
+              <tr><td colspan="6">Run matching to see coefficients.</td></tr>
+            </tbody>
+          </table>
+          <div class="ps-model-metrics" style="margin-top: 1rem;">
+            <span><strong>Pseudo R²:</strong> <span id="ps-pseudo-r2">--</span></span>
+            <span style="margin-left: 2rem;"><strong>Model χ²:</strong> <span id="ps-chi2">--</span></span>
+            <span style="margin-left: 2rem;"><strong>p-value:</strong> <span id="ps-model-pvalue">--</span></span>
           </div>
         </details>
       </div>
     </section>
   </main>
 
-    <footer class="app-footer">
-        <div class="footer-content">
-            <div class="footer-nav">
-                <a href="../../../index.html" class="back-link">← Back to Tool Selection</a>
-            </div>
-            <div class="footer-meta">
-                <span class="meta-item">Created: 2025-11-15</span>
-                <span class="separator">•</span>
-                <span class="meta-item">Last Updated: 2025-02-23</span>
-            </div>
-            <div class="footer-citation">
-                <div class="citation-label">Cite this tool:</div>
-                <div class="citation-text">Baker, A. (2025). Propensity Score Matching Tool. <em>Dr. Baker's Marketing Tools</em>. Retrieved from <a href="https://drbakermarketing.com/apps/advanced/ps_matching/main_ps_matching.html" target="_blank">https://drbakermarketing.com/apps/advanced/ps_matching/main_ps_matching.html</a></div>
-            </div>
-            <div class="footer-copyright">
-                &copy; 2025 Andrew Baker. All rights reserved.
-            </div>
-        </div>
-    </footer>
+  <footer class="app-footer">
+    <div class="footer-content">
+      <div class="footer-nav">
+        <a href="../../../index.html" class="back-link">← Back to Tool Selection</a>
+      </div>
+      <div class="footer-meta">
+        <span class="meta-item">Created: 2025-01-15</span>
+        <span class="separator">•</span>
+        <span class="meta-item">Last Updated: 2025-05-28</span>
+      </div>
+      <div class="footer-citation">
+        <div class="citation-label">Cite this tool:</div>
+        <div class="citation-text">Baker, A. (2025). Propensity Score Matching Tool. <em>Dr. Baker's Marketing Tools</em>. Retrieved from <a href="https://drbakermarketing.com/apps/advanced/ps_matching/main_ps_matching.html" target="_blank">https://drbakermarketing.com/apps/advanced/ps_matching/main_ps_matching.html</a></div>
+      </div>
+      <div class="footer-copyright">
+        &copy; 2025 Andrew Baker. All rights reserved.
+      </div>
+    </div>
+  </footer>
 
   <script src="../../../shared/js/csv_utils.js"></script>
   <script src="../../../shared/js/stats_utils.js"></script>
-  <script src="../../../shared/js/fan_chart_utils.js"></script>
-  <script src="../../../shared/js/stacked_bar_utils.js"></script>
   <script src="../../../shared/js/ui_utils.js"></script>
   <script src="../../../shared/js/auth_tracking.js"></script>
   <script src="../../../shared/js/auth_bar.js"></script>
@@ -399,10 +487,10 @@
       initQuizButton('ps_matching');
     });
   </script>
-  <div id="logreg-loading-overlay" class="loading-overlay" aria-hidden="true">
+  <div id="psm-loading-overlay" class="loading-overlay" aria-hidden="true">
     <div class="loading-content">
-      <p><strong>Fitting logistic regression model…</strong></p>
-      <p class="muted">For larger datasets this may take a moment. Please wait.</p>
+      <p><strong>Running propensity score matching…</strong></p>
+      <p class="muted">Fitting model and matching units. Please wait.</p>
     </div>
   </div>
 </body>

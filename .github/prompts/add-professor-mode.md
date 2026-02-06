@@ -16,6 +16,96 @@ A tutorial system consisting of:
 - Dynamic quizzes that pull from actual model results
 - Progress tracking and completion analytics
 
+## 🎨 Professor Mode Banner (Required UI Pattern)
+
+**Every tool with Professor Mode must include a banner card placed immediately after the hero header.** This provides discoverability and explains the feature to students.
+
+### Required HTML Structure
+
+Place this immediately after your `</header>` (hero header) tag:
+
+```html
+<!-- Professor Mode Banner -->
+<div class="professor-mode-banner">
+    <div class="professor-mode-content">
+        <div class="professor-mode-info">
+            <h3>👨‍🏫 Professor Mode: Guided Learning Experience</h3>
+            <p>New to [TOOL NAME]? Enable Professor Mode for step-by-step guidance through [BRIEF DESCRIPTION OF WHAT THEY'LL LEARN]!</p>
+        </div>
+        <label class="professor-mode-toggle">
+            <input type="checkbox" id="professorMode">
+            <span>Enable Professor Mode</span>
+        </label>
+    </div>
+</div>
+```
+
+### Visual Design (Handled by Shared CSS)
+
+The banner automatically gets:
+- **Gradient blue background** (`linear-gradient(135deg, #2563eb 0%, #1e40af 100%)`)
+- **Flexbox layout** with info on left, toggle button on right
+- **Pill-style toggle** with semi-transparent hover effects
+- **Mobile responsive** (stacks vertically on screens < 768px)
+- **Max-width: 1200px** with auto margins for centering
+
+All styles are in `shared/css/main.css` — do NOT add banner CSS to your app's stylesheet.
+
+### Customization Points
+
+| Element | What to Customize |
+|---------|-------------------|
+| `<h3>` title | Keep the emoji and "Professor Mode: Guided Learning Experience" text **unchanged** |
+| `<p>` description | Replace `[TOOL NAME]` with your tool name and `[BRIEF DESCRIPTION]` with what students will learn |
+| Checkbox ID | Always use `id="professorMode"` (required for JavaScript hook) |
+
+### Examples
+
+**Decision Tree Classifier:**
+```html
+<p>New to decision trees? Enable Professor Mode for step-by-step guidance through building and interpreting your first tree!</p>
+```
+
+**Logistic Regression:**
+```html
+<p>New to logistic regression? Enable Professor Mode for step-by-step guidance through fitting and interpreting your first binary classifier!</p>
+```
+
+**Conjoint Analysis:**
+```html
+<p>New to conjoint analysis? Enable Professor Mode for step-by-step guidance through understanding customer preferences and calculating willingness-to-pay!</p>
+```
+
+### Page Structure Reference
+
+```
+┌─────────────────────────────────────────┐
+│  Hero Header (.hero-header)             │
+│  - Tool title, lede text                │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│  Professor Mode Banner                  │ ← INSERT HERE
+│  (.professor-mode-banner)               │
+│  ┌─────────────────────┬──────────────┐ │
+│  │ 👨‍🏫 Title + Desc    │ [✓] Enable   │ │
+│  └─────────────────────┴──────────────┘ │
+└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│  Overview Section / First Content       │
+│  (.test-overview or similar)            │
+└─────────────────────────────────────────┘
+```
+
+### ⚠️ Common Mistakes
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Place banner inside the hero header | Place banner immediately **after** closing `</header>` tag |
+| Use custom colors or styles | Use the default gradient from shared CSS |
+| Change the h3 title structure | Keep "👨‍🏫 Professor Mode: Guided Learning Experience" |
+| Use a different checkbox ID | Always use `id="professorMode"` |
+| Add banner CSS to app stylesheet | All banner styles are in `shared/css/main.css` |
+
 ## Core Architecture
 
 Create a tutorial object with this structure:
@@ -460,9 +550,9 @@ stop() {
 
 ### Setup Phase
 - [ ] Create tutorial object with required methods
+- [ ] Add Professor Mode Banner after hero header (see "Professor Mode Banner" section above)
 - [ ] Add sidebar HTML container (use standard structure)
 - [ ] Add overlay HTML container
-- [ ] Add Professor Mode toggle using `.professor-mode-toggle` class
 - [ ] Add comment to app CSS pointing to `shared/css/main.css` (DO NOT duplicate CSS)
 - [ ] Verify `shared/css/main.css` is linked in your HTML
 
@@ -533,7 +623,10 @@ apps/
 ### What's Already in shared/css/main.css
 
 The shared CSS file includes all standard Professor Mode styles:
-- `.professor-mode-toggle` - Standard toggle button styling
+- `.professor-mode-banner` - Banner container with max-width and margins
+- `.professor-mode-content` - Gradient background, flexbox layout
+- `.professor-mode-info` - Title and description text styling
+- `.professor-mode-toggle` - Pill-style toggle button (both standalone and in-banner variants)
 - `#tutorial-sidebar` - Right-side panel (380px wide, slides from right)
 - `#tutorial-overlay` - Dark overlay behind highlighted elements
 - `.tutorial-highlight` - Green pulsing highlight effect
@@ -552,7 +645,9 @@ Simply add this comment to indicate CSS is centralized:
 
 ### Standard HTML for Professor Mode Toggle
 
-Use this exact structure in your HTML header:
+**⚠️ PREFERRED:** Use the full **Professor Mode Banner** pattern described earlier in this document. The banner provides better discoverability and explains the feature to students.
+
+The simple toggle below is only for **fallback/inline use** when space constraints prevent using the full banner (rare):
 
 ```html
 <label class="professor-mode-toggle">
@@ -566,6 +661,7 @@ Use this exact structure in your HTML header:
 - Add `#tutorial-sidebar` CSS to your app's CSS file
 - Use `.professor-toggle` (old class name) - use `.professor-mode-toggle`
 - Position sidebar on the left (standard is right-side)
+- Skip the banner in favor of inline toggle unless absolutely necessary
 
 ### Standard HTML for Sidebar and Overlay
 
@@ -764,7 +860,7 @@ Add these containers to your HTML (usually at the end of `<body>`):
 ## The 12 Most Important Rules
 
 1. **Use centralized CSS from `shared/css/main.css`** - Don't duplicate Professor Mode styles in app CSS files
-2. **Use standard `.professor-mode-toggle` class** - Don't create custom toggle styles
+2. **Use the Professor Mode Banner pattern** - Place the full banner after the hero header (see "Professor Mode Banner" section)
 3. **Store quizzes once in `step.currentQuizzes`, never regenerate**
 4. **Calculate all model properties immediately after fitting, before window sync**
 5. **Return `null` (not `[]`) from `getDynamicQuizzes()` when data unavailable**
@@ -909,19 +1005,18 @@ Add this block to EVERY conclusion step:
 
 ---
 
-## � Long-Term TODOs
+## 📋 Long-Term TODOs
 
 > **Technical Debt & Future Improvements**
 
-1. **Consolidate all Professor Mode CSS into `shared/css/main.css`**
-   - Currently, some styles (sidebar, overlay, highlight) are in shared CSS
-   - But banner styles (`.professor-mode-banner`, `.professor-mode-content`, `.professor-mode-info`, `.professor-mode-toggle`) are duplicated in each app's CSS file
-   - Should move ALL Professor Mode styles to shared CSS for consistency and easier maintenance
-   - Affected files: `apps/decisiontrees/classifier/styles.css`, `apps/regression/log_regression/main_log_regression.css`, `apps/advanced/conjoint/main_conjoint.css`, and others
+1. **Audit and remove duplicate banner CSS from individual app files**
+   - Banner styles (`.professor-mode-banner`, etc.) are now centralized in `shared/css/main.css`
+   - Some older apps may still have duplicate banner CSS in their local stylesheets
+   - Audit and remove duplicates from: `apps/decisiontrees/classifier/styles.css`, `apps/regression/log_regression/main_log_regression.css`, `apps/advanced/conjoint/main_conjoint.css`, and others
 
 ---
 
-## �📋 Apps with Professor Mode Implemented
+## 📋 Apps with Professor Mode Implemented
 
 > **Last Updated:** February 2, 2026
 
@@ -955,6 +1050,10 @@ The following apps already have Professor Mode tutorials implemented. Use these 
 | [Sampling Visualizer](../../apps/sample_size/sampling_visualizer/) | Sample Size | `sampling_visualizer_tutorial.js` | CLT demonstration with visual distributions |
 | [Decision Tree Classifier](../../apps/decisiontrees/classifier/) | Advanced | `dt_tutorial.js` | CART algorithm, overfitting experiment, auto-scroll on rebuild |
 | [Conjoint Analysis](../../apps/advanced/conjoint/) | Advanced | `conjoint_tutorial.js` | 20-step comprehensive CBC tutorial, dynamic quizzes from estimationResult, WTP, IIA, segmentation |
+| [Neural Network Playground](../../apps/advanced/neural_network/) | Advanced | `tutorial.js` | Interactive network architecture visualization |
+| [Log-Loss Lab](../../apps/model_fitting/logloss/) | Model Fitting | `logloss_tutorial.js` | Classification loss function intuition |
+| [MAE Lab](../../apps/model_fitting/mae/) | Model Fitting | `mae_tutorial.js` | Regression loss function intuition |
+| [ARIMAX Forecasting](../../apps/time_series/arimax/) | Time Series | `tutorial.js` | ARIMAX/SARIMAX with exogenous variables |
 
 ### Apps Still Needing Professor Mode
 
@@ -963,8 +1062,6 @@ The following apps already have Professor Mode tutorials implemented. Use these 
 | Univariate Analyzer | Descriptive | 🟡 Medium | |
 | Qualitative Analyzer | Text Analysis | 🟡 Medium | |
 | Theme Extractor | Text Analysis | 🟡 Medium | |
-| ARIMAX | Time Series | 🟡 Medium | |
-| Neural Network | Advanced | 🟡 Medium | |
 | Propensity Score Matching | Advanced | 🔴 High | Important for causal inference |
 | Resource Allocation | Advanced | 🟢 Lower | |
 

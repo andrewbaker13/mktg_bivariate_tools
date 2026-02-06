@@ -156,3 +156,162 @@
   text-align: center;
   max-width: 320px;
 }
+
+/* ===== PSM-Specific Styles ===== */
+
+/* Variable selection grid for PSM */
+.psm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.covariates-column {
+  grid-column: span 2;
+}
+
+@media (max-width: 600px) {
+  .covariates-column {
+    grid-column: span 1;
+  }
+}
+
+/* Matching options grid */
+.matching-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.matching-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.matching-option label {
+  font-weight: 500;
+}
+
+.matching-option input[type="number"] {
+  max-width: 120px;
+}
+
+/* Matching summary stats grid */
+.matching-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--app-muted);
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+/* ATT display */
+.att-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.att-main {
+  flex: 0 0 auto;
+}
+
+.att-label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--app-muted);
+  margin-bottom: 0.25rem;
+}
+
+.att-value {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--app-accent);
+}
+
+.att-details {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.att-detail {
+  font-size: 0.95rem;
+}
+
+.att-detail .label {
+  color: var(--app-muted);
+  margin-right: 0.5rem;
+}
+
+/* Outcome means */
+.outcome-means-grid {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  padding-top: 1rem;
+  border-top: 1px solid var(--app-border);
+}
+
+.outcome-mean .label {
+  color: var(--app-muted);
+  margin-right: 0.5rem;
+}
+
+/* Balance table styling */
+.balance-table td.smd-good {
+  color: #059669;
+  font-weight: 600;
+}
+
+.balance-table td.smd-ok {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.balance-table td.smd-bad {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* Propensity model section */
+.propensity-model-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem 0;
+}
+
+.ps-model-metrics {
+  font-size: 0.95rem;
+  color: var(--app-muted);
+}
+
+/* Treatment effect card highlight */
+.treatment-effect-card {
+  border-left: 4px solid var(--app-accent);
+}
+

@@ -385,13 +385,22 @@
 </head>
 <body>
     <div class="admin-container">
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb-nav" style="background: rgba(255,255,255,0.9); padding: 0.75rem 1.5rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem;">
+            <a href="instructor.html" style="color: #6366f1; text-decoration: none;">📚 My Courses</a>
+            <span style="color: #9ca3af; margin: 0 0.5rem;">›</span>
+            <a href="instructor-analytics.html" style="color: #6366f1; text-decoration: none;">📊 Course Analytics</a>
+            <span style="color: #9ca3af; margin: 0 0.5rem;">›</span>
+            <span style="color: #374151; font-weight: 500;" id="breadcrumb-course-name">Settings</span>
+        </nav>
+
         <!-- Header -->
         <div class="page-header">
             <div>
                 <h1>⚙️ Course Settings</h1>
                 <div class="course-name" id="course-name-display">Loading...</div>
             </div>
-            <a href="admin-courses.html" class="back-btn">← Back to Courses</a>
+            <a href="instructor-analytics.html" class="back-btn">← Back to Analytics</a>
         </div>
 
         <!-- Messages -->
@@ -520,7 +529,7 @@
         
         if (!courseId) {
             alert('No course selected');
-            window.location.href = 'admin-courses.html';
+            window.location.href = 'instructor-analytics.html';
         }
 
         let currentCourse = null;
@@ -617,6 +626,16 @@
                     const courseTitleElement = document.querySelector('h2');
                     if (courseTitleElement) {
                         courseTitleElement.textContent = `Customize Course Homepage: ${data.course_name}`;
+                    }
+                    // Update breadcrumb with course name
+                    const breadcrumbCourse = document.getElementById('breadcrumb-course-name');
+                    if (breadcrumbCourse) {
+                        breadcrumbCourse.textContent = data.course_name + ' Settings';
+                    }
+                    // Update page header course name
+                    const courseNameDisplay = document.getElementById('course-name-display');
+                    if (courseNameDisplay) {
+                        courseNameDisplay.textContent = data.course_name;
                     }
                 }
                 

@@ -47,16 +47,21 @@
         Upload time series data, select external predictors like ad spend or seasonality indicators, and generate
         forecasts with confidence intervals.
       </p>
-      
-      <!-- Professor Mode Toggle -->
-      <div class="guided-mode-toggle">
-        <label>
-          <input type="checkbox" id="guidedMode">
-          <span>🎓 Professor Mode</span>
-        </label>
-        <span class="toggle-hint">New to ARIMAX? Get step-by-step guidance!</span>
-      </div>
     </header>
+
+    <!-- Professor Mode Banner -->
+    <div class="professor-mode-banner">
+      <div class="professor-mode-content">
+        <div class="professor-mode-info">
+          <h3>👨‍🏫 Professor Mode: Guided Learning Experience</h3>
+          <p>New to ARIMAX? Enable Professor Mode for step-by-step guidance through time series forecasting with external predictors!</p>
+        </div>
+        <label class="professor-mode-toggle">
+          <input type="checkbox" id="professorMode">
+          <span>Enable Professor Mode</span>
+        </label>
+      </div>
+    </div>
 
     <section class="test-overview" aria-labelledby="test-overview-heading">
       <h2 id="test-overview-heading">TEST OVERVIEW &amp; EQUATIONS</h2>

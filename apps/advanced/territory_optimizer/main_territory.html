@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sales Territory Optimizer</title>
+  <link rel="stylesheet" href="../../../shared/css/main.css">
+  <script src="../../../shared/js/tracking.js"></script>
+  <link rel="stylesheet" href="../../../shared/css/auth_bar.css">
+  <link rel="stylesheet" href="main_territory.css">
+  
+  <!-- Leaflet for mapping -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  
+  <!-- Turf.js for geospatial operations -->
+  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+  
+  <!-- Plotly for charts -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-290ZJ9RE04"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-290ZJ9RE04');
+  </script>
+</head>
+
+<body>
+  <div class="auth-bar">
+    <div class="auth-bar__container">
+      <div></div>
+      <div id="auth-bar-content" class="auth-bar__links">
+        <a href="../../../admin_pages/login.html">Login</a>
+        <a href="../../../admin_pages/register.html">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="intro hero-header">
+    <div class="hero-header__top">
+      <h1>Sales Territory Optimizer</h1>
+      <div class="hero-context">
+        <span class="badge">Sales Operations</span>
+        <span class="badge badge--secondary">Optimization</span>
+      </div>
+    </div>
+    <p class="hero-header__lede">
+      Assign accounts to sales representatives optimizing for workload balance, travel efficiency, and revenue coverage. Upload your data, run optimization algorithms, or manually draw territories and compare outcomes.
+    </p>
+  </header>
+
+  <main class="app-main">
+    <!-- Overview Section -->
+    <section class="test-overview">
+      <h2>OVERVIEW &amp; APPROACH</h2>
+      <div class="card">
+        <p>
+          <strong>Sales territory optimization</strong> is a classic operations research problem: partition a set of accounts among sales reps to maximize coverage while respecting constraints like workload capacity and travel limits.
+        </p>
+        <details class="additional-notes" open>
+          <summary>Key Optimization Objectives</summary>
+          <div class="objectives-grid">
+            <div class="objective-item">
+              <strong>Workload Balance</strong>
+              <p>Distribute accounts so each rep has similar total potential (weighted by deal size, probability, etc.)</p>
+            </div>
+            <div class="objective-item">
+              <strong>Travel Efficiency</strong>
+              <p>Minimize total distance reps must travel from their home base to assigned accounts</p>
+            </div>
+            <div class="objective-item">
+              <strong>Revenue Alignment</strong>
+              <p>Match high-performing reps with high-potential accounts to maximize expected revenue</p>
+            </div>
+            <div class="objective-item">
+              <strong>Territory Compactness</strong>
+              <p>Create geographically contiguous territories that are easy to cover efficiently</p>
+            </div>
+          </div>
+        </details>
+        <details class="additional-notes">
+          <summary>Algorithms Available</summary>
+          <ul>
+            <li><strong>Balanced K-Means:</strong> Iteratively clusters accounts around rep locations, respecting capacity constraints. Fast and produces compact territories.</li>
+            <li><strong>Greedy Nearest Neighbor:</strong> Assigns each account to the nearest available rep. Simple baseline for comparison.</li>
+            <li><strong>Weighted Voronoi:</strong> Partitions space based on rep "influence" (location + capacity). Visual and intuitive.</li>
+          </ul>
+        </details>
+        <details class="additional-notes">
+          <summary>How Scoring Works</summary>
+          <p>Each territory is scored on four dimensions:</p>
+          <ul>
+            <li><strong>Balance (CV):</strong> Coefficient of variation of workload across reps. Lower = more balanced.</li>
+            <li><strong>Travel:</strong> Average miles from rep home to assigned accounts. Lower = more efficient.</li>
+            <li><strong>Revenue Alignment:</strong> Correlation between rep effectiveness and territory potential. Higher = better matching.</li>
+            <li><strong>Compactness:</strong> Ratio of territory area to convex hull. Higher = tighter clustering.</li>
+          </ul>
+        </details>
+      </div>
+    </section>
+
+    <!-- Mode Toggle -->
+    <section class="mode-section">
+      <h2>DATA INPUT MODE</h2>
+      <div class="card">
+        <div class="mode-toggle">
+          <button class="mode-button active" data-mode="demo">
+            <span class="mode-icon">📊</span>
+            <span class="mode-label">Demo Scenario</span>
+          </button>
+          <button class="mode-button" data-mode="upload">
+            <span class="mode-icon">📤</span>
+            <span class="mode-label">Upload Data</span>
+          </button>
+          <button class="mode-button" data-mode="manual">
+            <span class="mode-icon">✏️</span>
+            <span class="mode-label">Manual Draw</span>
+          </button>
+        </div>
+        <p class="mode-description" id="mode-description">
+          Explore pre-built marketing scenarios with realistic account and rep data.
+        </p>
+      </div>
+    </section>
+
+    <!-- Demo Scenario Section -->
+    <section id="scenario-section" class="scenario-section">
+      <h2>MARKETING SCENARIOS</h2>
+      <div class="card">
+        <div class="scenario-controls">
+          <label for="scenario-select">Load a territory scenario:</label>
+          <div class="scenario-controls__input">
+            <select id="scenario-select">
+              <option value="">-- Select a scenario --</option>
+              <option value="regional_b2b">Regional B2B Sales Team (NYC Metro)</option>
+              <option value="retail_expansion">Retail Expansion (Chicago)</option>
+              <option value="pharma_reps">Pharmaceutical Sales (Northeast)</option>
+            </select>
+          </div>
+        </div>
+        <div id="scenario-description" class="scenario-description"></div>
+      </div>
+    </section>
+
+    <!-- Upload Section (hidden by default) -->
+    <section id="upload-section" class="upload-section hidden">
+      <h2>UPLOAD YOUR DATA</h2>
+      <div class="card">
+        <div class="upload-grid">
+          <!-- Accounts Upload -->
+          <div class="upload-box">
+            <h3>Accounts / Prospects</h3>
+            <p class="panel-intro">
+              CSV with account locations, potential value, and close probability.
+            </p>
+            <div class="dropzone" id="accounts-dropzone" role="button" tabindex="0">
+              <p class="dropzone-title">Drag & Drop accounts file</p>
+              <p class="dropzone-note">.csv or .tsv with headers</p>
+              <button type="button" id="accounts-browse" class="secondary">Browse</button>
+            </div>
+            <input type="file" id="accounts-input" accept=".csv,.tsv,.txt" hidden>
+            <div class="template-buttons">
+              <button type="button" id="accounts-template-download" class="secondary small">Download template</button>
+            </div>
+            <p class="upload-status" id="accounts-upload-status">No file uploaded.</p>
+          </div>
+          
+          <!-- Reps Upload -->
+          <div class="upload-box">
+            <h3>Sales Representatives</h3>
+            <p class="panel-intro">
+              CSV with rep locations, capacity constraints, and effectiveness.
+            </p>
+            <div class="dropzone" id="reps-dropzone" role="button" tabindex="0">
+              <p class="dropzone-title">Drag & Drop reps file</p>
+              <p class="dropzone-note">.csv or .tsv with headers</p>
+              <button type="button" id="reps-browse" class="secondary">Browse</button>
+            </div>
+            <input type="file" id="reps-input" accept=".csv,.tsv,.txt" hidden>
+            <div class="template-buttons">
+              <button type="button" id="reps-template-download" class="secondary small">Download template</button>
+            </div>
+            <p class="upload-status" id="reps-upload-status">No file uploaded.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Manual Draw Instructions (hidden by default) -->
+    <section id="manual-section" class="manual-section hidden">
+      <h2>MANUAL TERRITORY DRAWING</h2>
+      <div class="card">
+        <p>
+          Use the drawing tools on the map to create territory polygons. After drawing each polygon, 
+          assign it to a sales rep. Your hand-drawn territories will be scored against the algorithmic solutions.
+        </p>
+        <div class="manual-controls">
+          <button id="clear-drawings" class="secondary">Clear All Drawings</button>
+          <button id="score-manual" class="primary" disabled>Score My Territories</button>
+        </div>
+        <p class="muted" id="manual-status">Draw polygons on the map to define territories.</p>
+      </div>
+    </section>
+
+    <!-- Configuration Panel -->
+    <section id="config-section" class="config-section">
+      <h2>OPTIMIZATION SETTINGS</h2>
+      <div class="card">
+        <div class="config-grid">
+          <!-- Algorithm Selection -->
+          <div class="config-item">
+            <label for="algorithm-select">Algorithm</label>
+            <select id="algorithm-select">
+              <option value="kmeans" selected>Balanced K-Means</option>
+              <option value="greedy">Greedy Nearest Neighbor</option>
+              <option value="voronoi">Weighted Voronoi</option>
+            </select>
+          </div>
+          
+          <!-- Priority -->
+          <div class="config-item">
+            <label>Optimization Priority</label>
+            <div class="radio-group">
+              <label><input type="radio" name="priority" value="balance" checked> Balance workloads</label>
+              <label><input type="radio" name="priority" value="travel"> Minimize travel</label>
+              <label><input type="radio" name="priority" value="revenue"> Maximize revenue</label>
+            </div>
+          </div>
+          
+          <!-- Constraints -->
+          <div class="config-item">
+            <label for="max-accounts">Max Accounts per Rep</label>
+            <input type="number" id="max-accounts" min="1" max="100" value="30">
+          </div>
+          
+          <div class="config-item">
+            <label for="max-travel">Max Travel (miles)</label>
+            <input type="number" id="max-travel" min="1" max="500" value="75">
+          </div>
+        </div>
+        
+        <!-- Weight Sliders -->
+        <div class="weight-sliders">
+          <h4>Scoring Weights</h4>
+          <div class="slider-row">
+            <label>Potential Weight</label>
+            <input type="range" id="weight-potential" min="0" max="1" step="0.1" value="0.8">
+            <span id="weight-potential-value">0.8</span>
+          </div>
+          <div class="slider-row">
+            <label>Probability Weight</label>
+            <input type="range" id="weight-probability" min="0" max="1" step="0.1" value="0.6">
+            <span id="weight-probability-value">0.6</span>
+          </div>
+          <div class="slider-row">
+            <label>Travel Cost Weight</label>
+            <input type="range" id="weight-travel" min="0" max="1" step="0.1" value="0.4">
+            <span id="weight-travel-value">0.4</span>
+          </div>
+        </div>
+        
+        <div class="action-buttons">
+          <button id="run-optimization" class="primary" disabled>Run Optimization</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Map Visualization -->
+    <section id="map-section" class="map-section">
+      <h2>TERRITORY MAP</h2>
+      <div class="card map-card">
+        <div id="territory-map" class="territory-map"></div>
+        <div class="map-legend" id="map-legend">
+          <p class="muted">Load data to see territories</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Scorecard -->
+    <section id="scorecard-section" class="scorecard-section hidden">
+      <h2>TERRITORY SCORECARD</h2>
+      <div class="card">
+        <div class="scorecard-grid">
+          <div class="score-item">
+            <div class="score-label">Balance</div>
+            <div class="score-bar">
+              <div class="score-fill" id="score-balance" style="width: 0%"></div>
+            </div>
+            <div class="score-value" id="score-balance-value">--</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Travel Efficiency</div>
+            <div class="score-bar">
+              <div class="score-fill" id="score-travel" style="width: 0%"></div>
+            </div>
+            <div class="score-value" id="score-travel-value">--</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Revenue Alignment</div>
+            <div class="score-bar">
+              <div class="score-fill" id="score-revenue" style="width: 0%"></div>
+            </div>
+            <div class="score-value" id="score-revenue-value">--</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">Compactness</div>
+            <div class="score-bar">
+              <div class="score-fill" id="score-compactness" style="width: 0%"></div>
+            </div>
+            <div class="score-value" id="score-compactness-value">--</div>
+          </div>
+        </div>
+        <div class="overall-score">
+          <span class="overall-label">Overall Score:</span>
+          <span class="overall-value" id="overall-score">--</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Territory Breakdown -->
+    <section id="breakdown-section" class="breakdown-section hidden">
+      <h2>TERRITORY BREAKDOWN</h2>
+      <div class="card">
+        <div class="breakdown-grid" id="breakdown-grid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison Section (for manual vs. algorithm) -->
+    <section id="comparison-section" class="comparison-section hidden">
+      <h2>ALGORITHM vs. MANUAL COMPARISON</h2>
+      <div class="card">
+        <div class="comparison-grid">
+          <div class="comparison-col">
+            <h3>Your Territories</h3>
+            <div id="manual-scores"></div>
+          </div>
+          <div class="comparison-col">
+            <h3>Algorithm Solution</h3>
+            <div id="algorithm-scores"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Export Section -->
+    <section id="export-section" class="export-section hidden">
+      <h2>EXPORT RESULTS</h2>
+      <div class="card">
+        <div class="export-buttons">
+          <button id="export-assignments" class="secondary">Download Assignments (CSV)</button>
+          <button id="export-map" class="secondary">Download Map (PNG)</button>
+          <button id="copy-summary" class="secondary">Copy Summary to Clipboard</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>&copy; 2026 Marketing Analytics Education Tools</p>
+  </footer>
+
+  <script src="main_territory.js"></script>
+</body>
+
+</html>

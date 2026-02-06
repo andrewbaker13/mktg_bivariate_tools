@@ -884,7 +884,7 @@ function setupEventListeners() {
     });
 
     // Guided mode toggle
-    document.getElementById('guidedMode').addEventListener('change', (e) => {
+    document.getElementById('professorMode').addEventListener('change', (e) => {
         const advanced = document.querySelectorAll('.advanced-controls');
         advanced.forEach(el => {
             el.style.display = e.target.checked ? 'none' : 'block';

@@ -1,0 +1,525 @@
+/* Sales Territory Optimizer - Tool-Specific Styles */
+
+/* Badge variants */
+.badge--secondary {
+  background: #64748b;
+}
+
+/* Mode Toggle */
+.mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mode-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem 1.5rem;
+  border: 2px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-card-bg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 120px;
+}
+
+.mode-button:hover {
+  border-color: var(--app-accent);
+  background: #f0f7ff;
+}
+
+.mode-button.active {
+  border-color: var(--app-accent);
+  background: #e0f0ff;
+}
+
+.mode-icon {
+  font-size: 1.5rem;
+}
+
+.mode-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.mode-description {
+  margin-top: 1rem;
+  color: var(--app-muted);
+  font-style: italic;
+}
+
+/* Upload Grid */
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.upload-box {
+  padding: 1rem;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: #fafbfc;
+}
+
+.upload-box h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+/* Dropzone */
+.dropzone {
+  border: 2px dashed var(--app-border);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--app-card-bg);
+}
+
+.dropzone:hover,
+.dropzone.dropzone--dragover {
+  border-color: var(--app-accent);
+  background: #f0f7ff;
+}
+
+.dropzone-title {
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+.dropzone-note {
+  color: var(--app-muted);
+  font-size: 0.85rem;
+  margin: 0 0 1rem 0;
+}
+
+.template-buttons {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.upload-status {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--app-muted);
+}
+
+.upload-status.success {
+  color: var(--app-success);
+}
+
+.upload-status.error {
+  color: var(--app-danger);
+}
+
+/* Config Grid */
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.config-item label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.config-item select,
+.config-item input[type="number"] {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.radio-group label {
+  font-weight: normal;
+  cursor: pointer;
+}
+
+/* Weight Sliders */
+.weight-sliders {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--app-border);
+}
+
+.weight-sliders h4 {
+  margin: 0 0 1rem 0;
+  color: var(--app-muted);
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.slider-row label {
+  width: 140px;
+  font-size: 0.9rem;
+}
+
+.slider-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--app-accent);
+}
+
+.slider-row span {
+  width: 40px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--app-accent);
+}
+
+/* Action Buttons */
+.action-buttons {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-buttons .primary {
+  flex: 1;
+}
+
+/* Map Styling */
+.map-card {
+  position: relative;
+}
+
+.territory-map {
+  height: 500px;
+  width: 100%;
+  border-radius: 8px;
+  z-index: 1;
+}
+
+.map-legend {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f8f9fb;
+  border-radius: 6px;
+}
+
+.legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+/* Scorecard */
+.scorecard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.score-item {
+  padding: 1rem;
+  background: #f8f9fb;
+  border-radius: 8px;
+}
+
+.score-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.score-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--app-accent), var(--app-success));
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.score-value {
+  margin-top: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--app-accent);
+}
+
+.overall-score {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+}
+
+.overall-label {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.overall-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* Territory Breakdown */
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.territory-card {
+  padding: 1rem;
+  border: 2px solid;
+  border-radius: 8px;
+  background: var(--app-card-bg);
+}
+
+.territory-card h4 {
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.territory-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.territory-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.territory-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.territory-stat .stat-label {
+  color: var(--app-muted);
+  font-size: 0.75rem;
+}
+
+.territory-stat .stat-value {
+  font-weight: 600;
+}
+
+/* Comparison Section */
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.comparison-col h3 {
+  margin-top: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--app-border);
+}
+
+/* Export Buttons */
+.export-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Objectives Grid */
+.objectives-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.objective-item {
+  padding: 1rem;
+  background: #f8f9fb;
+  border-radius: 8px;
+  border-left: 4px solid var(--app-accent);
+}
+
+.objective-item strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #1e40af;
+}
+
+.objective-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--app-muted);
+}
+
+/* Manual Drawing Controls */
+.manual-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+/* Hidden utility */
+.hidden {
+  display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mode-toggle {
+    flex-direction: column;
+  }
+  
+  .mode-button {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 0.75rem 1rem;
+  }
+  
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .territory-map {
+    height: 350px;
+  }
+  
+  .slider-row {
+    flex-wrap: wrap;
+  }
+  
+  .slider-row label {
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* Small button variant */
+button.small {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* Panel intro text */
+.panel-intro {
+  margin: 0 0 1rem 0;
+  color: var(--app-muted);
+  font-size: 0.9rem;
+}
+
+/* Scenario description */
+.scenario-description {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8f9fb;
+  border-radius: 8px;
+  border-left: 4px solid var(--app-accent);
+}
+
+.scenario-description:empty {
+  display: none;
+}
+
+.scenario-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.scenario-controls__input {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.scenario-controls__input select {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5rem;
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+/* Additional notes (details) styling */
+details.additional-notes {
+  background: #f0f7ff;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0;
+}
+
+details.additional-notes summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+details.additional-notes[open] summary {
+  margin-bottom: 0.75rem;
+}
+
+details.additional-notes ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+details.additional-notes li {
+  margin-bottom: 0.5rem;
+}
+
+/* Leaflet overrides */
+.leaflet-control-zoom {
+  border: none !important;
+}
+
+.leaflet-control-zoom a {
+  background: var(--app-card-bg) !important;
+  color: var(--app-text) !important;
+}
+
+.leaflet-draw-toolbar a {
+  background: var(--app-card-bg) !important;
+}

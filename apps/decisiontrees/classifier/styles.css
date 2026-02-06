@@ -25,47 +25,6 @@
     font-size: 1.3rem;
 }
 
-/* ===== Professor Mode Banner ===== */
-.professor-mode-banner {
-    max-width: 1200px;
-    margin: 0 auto 1.5rem;
-    padding: 0 clamp(1rem, 4vw, 3rem);
-}
-
-.professor-mode-content {
-    background: linear-gradient(135deg, var(--app-accent, #2563eb) 0%, #1e40af 100%);
-    border-radius: 12px;
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: white;
-}
-
-.professor-mode-info h3 {
-    margin: 0 0 0.25rem;
-    font-size: 1rem;
-}
-
-.professor-mode-info p {
-    margin: 0;
-    opacity: 0.9;
-    font-size: 0.9rem;
-}
-
-.professor-mode-toggle {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    white-space: nowrap;
-}
-
-.professor-mode-toggle input {
-    width: 18px;
-    height: 18px;
-}
-
 /* ===== Scenario Section ===== */
 .scenario-controls {
     margin-bottom: 1rem;

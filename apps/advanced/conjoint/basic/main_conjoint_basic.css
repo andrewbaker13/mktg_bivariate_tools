@@ -1,35 +1,6 @@
 /* Basic Conjoint Analysis Tool - ONLY tool-specific styles
    Everything else comes from shared/css/main.css */
 
-/* ===== Professor Mode Banner ===== */
-.professor-mode-banner {
-    max-width: 1200px;
-    margin: 0 auto 1.5rem;
-    padding: 0 clamp(1rem, 4vw, 3rem);
-}
-
-.professor-mode-content {
-    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-    border-radius: 12px;
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: white;
-}
-
-.professor-mode-info h3 {
-    margin: 0 0 0.25rem;
-    font-size: 1rem;
-    color: white;
-}
-
-.professor-mode-info p {
-    margin: 0;
-    opacity: 0.9;
-    font-size: 0.9rem;
-}
-
 /* ===== Workflow Stepper (4-step variant) ===== */
 .workflow-stepper {
     display: flex;

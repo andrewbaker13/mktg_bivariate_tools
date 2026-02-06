@@ -37,14 +37,24 @@
             <h1>Pearson Correlation Studio</h1>
             <div class="hero-context">
                 <span class="badge">Correlation tool</span>
-                <label class="professor-mode-toggle">
-                    <input type="checkbox" id="professorMode" />
-                    <span>🎓 Professor Mode</span>
-                </label>
             </div>
         </div>
         <p class="hero-header__lede">Explore how two metrics move together with narratives, diagnostics, and ready-to-share visuals.</p>
     </header>
+
+    <!-- Professor Mode Banner -->
+    <div class="professor-mode-banner">
+        <div class="professor-mode-content">
+            <div class="professor-mode-info">
+                <h3>👨‍🏫 Professor Mode: Guided Learning Experience</h3>
+                <p>New to correlation analysis? Enable Professor Mode for step-by-step guidance through measuring and interpreting linear relationships!</p>
+            </div>
+            <label class="professor-mode-toggle">
+                <input type="checkbox" id="professorMode">
+                <span>Enable Professor Mode</span>
+            </label>
+        </div>
+    </div>
 
     <main class="app-main">
         <section class="test-overview" id="tut-overview-section">
@@ -345,6 +355,18 @@
             </div>
         </div>
     </footer>
+
+    <!-- Tutorial Overlay -->
+    <div id="tutorial-overlay" class="tutorial-overlay" onclick="PearsonTutorial.stop()"></div>
+
+    <!-- Tutorial Sidebar -->
+    <aside id="tutorial-sidebar" class="tutorial-sidebar">
+        <div class="sidebar-header">
+            <h2>📚 Tutorial</h2>
+            <button class="close-tutorial" onclick="PearsonTutorial.stop()">&times;</button>
+        </div>
+        <div id="tutorial-content" class="tutorial-content"></div>
+    </aside>
 
     <script src="../../../shared/js/csv_utils.js"></script>
     <script src="../../../shared/js/ui_utils.js"></script>

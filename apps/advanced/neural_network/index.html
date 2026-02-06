@@ -630,31 +630,7 @@
             line-height: 1.6;
         }
 
-        .guided-mode-banner {
-            background: linear-gradient(135deg, var(--app-accent) 0%, #1e40af 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1000px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .guided-mode-banner h3 {
-            margin: 0;
-            font-size: 1em;
-        }
-
-        .guided-mode-banner label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
+        /* Professor Mode banner styles are in shared/css/main.css */
 
         @media (max-width: 768px) {
             .playground-grid {
@@ -684,14 +660,19 @@
             <p>Understand and visualize how neural 🧠 networks (an "A.I." tool) can be designed to predict consumer behavior</p>
         </div>
 
-        <!-- Guided Mode Banner -->
-        <div class="guided-mode-banner">
-            <h3>👨‍🏫 Professor Mode: Guided Educational Experience</h3>
-            <label>
-                <input type="checkbox" id="guidedMode" checked>
+    <!-- Professor Mode Banner -->
+    <div class="professor-mode-banner">
+        <div class="professor-mode-content">
+            <div class="professor-mode-info">
+                <h3>👨‍🏫 Professor Mode: Guided Learning Experience</h3>
+                <p>New to neural networks? Enable Professor Mode for step-by-step guidance through building and training your first model!</p>
+            </div>
+            <label class="professor-mode-toggle">
+                <input type="checkbox" id="professorMode" checked>
                 <span>Enable Professor Mode</span>
             </label>
         </div>
+    </div>
 
         <!-- Info Box -->
         <div class="info-box">

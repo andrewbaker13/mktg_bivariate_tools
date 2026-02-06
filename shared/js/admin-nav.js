@@ -32,12 +32,22 @@
             if (container) {
                 container.innerHTML = html;
                 
-                // Check user permissions and hide staff-only links
+                // Check user permissions and hide role-specific links
                 const isStaff = localStorage.getItem('is_staff') === 'true';
+                const isSuperuser = localStorage.getItem('is_superuser') === 'true';
+                
                 if (!isStaff) {
                     // Hide all links marked with data-role="staff"
                     const staffLinks = container.querySelectorAll('[data-role="staff"]');
                     staffLinks.forEach(link => {
+                        link.style.display = 'none';
+                    });
+                }
+                
+                if (!isSuperuser) {
+                    // Hide all links marked with data-role="superuser"
+                    const superuserLinks = container.querySelectorAll('[data-role="superuser"]');
+                    superuserLinks.forEach(link => {
                         link.style.display = 'none';
                     });
                 }

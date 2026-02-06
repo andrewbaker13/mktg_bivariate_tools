@@ -892,7 +892,7 @@ const Tutorial = {
         this.attachListeners();
         
         // Check initial state
-        const checkbox = document.getElementById('guidedMode');
+        const checkbox = document.getElementById('professorMode');
         if (checkbox && checkbox.checked) {
             this.start();
         }
@@ -920,7 +920,7 @@ const Tutorial = {
         this.hideOverlay();
         
         // Uncheck the box
-        const checkbox = document.getElementById('guidedMode');
+        const checkbox = document.getElementById('professorMode');
         if (checkbox) checkbox.checked = false;
     },
 
@@ -1188,8 +1188,8 @@ const Tutorial = {
     // ═══════════════════════════════════════════════════════════════════
 
     attachListeners() {
-        // Listen for guided mode checkbox
-        const checkbox = document.getElementById('guidedMode');
+        // Listen for Professor Mode checkbox
+        const checkbox = document.getElementById('professorMode');
         if (checkbox) {
             checkbox.addEventListener('change', (e) => {
                 if (e.target.checked) {
