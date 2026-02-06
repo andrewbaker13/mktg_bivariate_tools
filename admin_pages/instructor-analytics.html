@@ -1776,11 +1776,11 @@
                 }
                 
                 const studentName = formatStudentName(student);
-                const usernameTag = student.username && studentName.toLowerCase() !== student.username.toLowerCase() ? 
-                    `<div style="font-size: 0.75rem; color: #6b7280;">@${student.username}</div>` : '';
+                const emailTag = student.email ? 
+                    `<div style="font-size: 0.75rem; color: #6b7280;">${student.email}</div>` : '';
 
                 tr.innerHTML = `
-                    <td><strong>${studentName}</strong>${usernameTag}</td>
+                    <td><strong>${studentName}</strong>${emailTag}</td>
                     <td>${student.email || '-'}</td>
                     <td>${student.total_runs}${isFiltered ? '*' : ''}</td>
                     <td>${student.tools_used}${isFiltered ? '*' : ''}</td>
