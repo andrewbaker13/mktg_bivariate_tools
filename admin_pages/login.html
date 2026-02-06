@@ -156,8 +156,8 @@
             <div id="login-tab" class="tab-content active">
                 <form id="login-form">
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required autocomplete="username">
+                    <label for="username">Username or Email</label>
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder="Enter username or email">
                 </div>
                 
                 <div class="form-group">
@@ -301,6 +301,26 @@
             errorMsg.style.display = 'none';
             successMsg.style.display = 'none';
         }
+        
+        // Check URL parameters for auto-fill and tab switching
+        function checkUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tab = urlParams.get('tab');
+            const code = urlParams.get('code');
+            
+            // Switch to reset tab if specified in URL
+            if (tab === 'reset') {
+                switchTab('reset');
+            }
+            
+            // Pre-fill reset code if provided in URL
+            if (code) {
+                document.getElementById('reset-code').value = code;
+            }
+        }
+        
+        // Run on page load
+        checkUrlParameters();
         
         // Check if already logged in
         if (isAuthenticated()) {
